@@ -146,6 +146,8 @@ package final class AudioMonitor: @unchecked Sendable {
         self.tracker = SourceActivityTracker(configuration: configuration)
 
         // A single consumer keeps started/stopped events in emission order.
+        // The arbiter returns at once (its pauses run on their own), so an
+        // event never waits for a fade.
         let (stream, continuation) = AsyncStream.makeStream(of: ArbiterEvent.self)
         self.events = continuation
         self.forwardingTask = Task {

@@ -15,6 +15,9 @@ package struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
 
 // MARK: - Playback arbiting protocol
 
+/// Takes AudioMonitor's events. Each call returns promptly: whatever it leads
+/// to (a pause with its fade-out) runs on its own, so the next event is never
+/// held up by it.
 package protocol PlaybackArbiting: Actor {
     func handleSourceChange(sourceID: String, isPlaying: Bool) async
     /// Whether the player's audio currently comes out of this Mac (as opposed
@@ -36,6 +39,11 @@ package protocol PlaybackArbiting: Actor {
 // The player is only paused while its audio plays on this Mac: playback on
 // another device (e.g. through Spotify Connect) does not compete with local
 // audio.
+//
+// Pauses and resumes run in tasks of their own (`pauseTask`,
+// `pendingResumeTask`), so events keep arriving while the music fades: a
+// source that stops during the fade-out brings the music back up, and one
+// that starts during a fade-in fades it out again.
 
 package actor PlaybackArbiter: PlaybackArbiting {
     private let player: any MusicPlayer
@@ -59,6 +67,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private var activeSources: Set<String> = []
     private var pendingResumeTask: Task<Void, Never>?
     private var pendingResumeID: UUID?
+    /// The pause under way: the player's state is checked, then the music
+    /// fades out and pauses.
+    private var pauseTask: Task<Void, Never>?
 
     /// A resume is retried this often, this far apart, while the player does
     /// not answer: a timed-out query is not the user changing the player.
@@ -88,18 +99,20 @@ package actor PlaybackArbiter: PlaybackArbiting {
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
     }
 
+    /// Records that a source started or stopped. Returns without waiting for
+    /// the pause it may start (`waitForPause()` does).
     package func handleSourceChange(sourceID: String, isPlaying: Bool) async {
         guard !isShutDown, configuration.isMediaSource(sourceID) else { return }
 
         if isPlaying {
-            cancelPendingResume()
+            // With auto-pause off, music we paused comes back regardless.
+            if autoPauseEnabled { cancelPendingResume() }
             activeSources.insert(sourceID)
             logger.debug("[arbiter] +\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
             // The music may be coming back up after a cancelled fade-out: stop
             // that, so the pause in progress fades out again.
             if isFadingOut { await fader.stopComeback() }
-            await pauseMusicIfNeeded()
-            publishPlaybackState()
+            startPause() // publishes the outcome
         } else {
             activeSources.remove(sourceID)
             logger.debug("[arbiter] -\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
@@ -130,11 +143,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
         autoPauseEnabled = enabled
         logger.debug("[arbiter] auto-pause \(enabled ? "on" : "off", privacy: .public)")
         if enabled {
-            if !activeSources.isEmpty { await pauseMusicIfNeeded() }
+            if !activeSources.isEmpty { startPause() }
         } else {
             cancelPendingResume()
             if isFadingOut { await fader.cancel() }
-            if pausedByUs { await resumeNow() }
+            if pausedByUs { scheduleResume(after: nil) }
         }
         publishPlaybackState()
     }
@@ -185,6 +198,22 @@ package actor PlaybackArbiter: PlaybackArbiting {
         return state
     }
 
+    /// Pauses the music in a task of its own, unless a pause is already
+    /// under way: that one sees the new sources too.
+    private func startPause() {
+        guard pauseTask == nil else { return }
+        pauseTask = Task {
+            await pauseMusicIfNeeded()
+            pauseTask = nil
+            publishPlaybackState()
+        }
+    }
+
+    /// Waits until no pause is under way. Tests use it to see a pause's outcome.
+    package func waitForPause() async {
+        while let pauseTask { await pauseTask.value }
+    }
+
     private func cancelPendingResume() {
         pendingResumeTask?.cancel()
         pendingResumeTask = nil
@@ -225,20 +254,22 @@ package actor PlaybackArbiter: PlaybackArbiting {
         logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
         if !autoPauseEnabled {
             // Auto-pause was turned off while we were pausing: undo it.
-            await resumeNow()
+            scheduleResume(after: nil)
         } else if activeSources.isEmpty, !isShutDown {
             // Every app stopped while we were pausing, too late to call it off.
             scheduleResume(after: configuration.debounceSeconds)
         }
     }
 
-    private func scheduleResume(after delay: TimeInterval, retriesLeft: Int = PlaybackArbiter.resumeRetries) {
+    /// Resumes the music in a task of its own: after `delay`, or right away
+    /// when it is `nil`. A newer resume or a source starting calls it off.
+    private func scheduleResume(after delay: TimeInterval?, retriesLeft: Int = PlaybackArbiter.resumeRetries) {
         cancelPendingResume()
         let id = UUID()
         pendingResumeID = id
-        let debounceTask = debounceScheduler.scheduleDebounce(after: delay)
+        let debounceTask = delay.map { debounceScheduler.scheduleDebounce(after: $0) }
         pendingResumeTask = Task { [weak self] in
-            _ = await debounceTask.value
+            _ = await debounceTask?.value
             await self?.resumeIfStillPending(id: id, retriesLeft: retriesLeft)
         }
     }
@@ -251,16 +282,16 @@ package actor PlaybackArbiter: PlaybackArbiting {
             publishPlaybackState()
             return
         }
-        await resumeNow(unlessSuperseded: id, retriesLeft: retriesLeft)
+        await resumeNow(id: id, retriesLeft: retriesLeft)
     }
 
     /// Resumes the player after re-checking its live state: if the user manually
     /// paused, resumed, or quit it while the source was active, respect
-    /// that and do not override their intent. With `id`, gives up when that
-    /// pending resume was cancelled or replaced while the player was queried.
-    private func resumeNow(unlessSuperseded id: UUID? = nil, retriesLeft: Int = PlaybackArbiter.resumeRetries) async {
+    /// that and do not override their intent. Gives up when the pending
+    /// resume `id` was cancelled or replaced while the player was queried.
+    private func resumeNow(id: UUID, retriesLeft: Int) async {
         let currentState = await livePlayerState()
-        guard !isShutDown, id == nil || pendingResumeID == id else { return }
+        guard !isShutDown, pendingResumeID == id else { return }
         if currentState == .unknown, retriesLeft > 0 {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
