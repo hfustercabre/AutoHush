@@ -4,8 +4,8 @@
 #   brew tap hfustercabre/autohush https://github.com/hfustercabre/AutoHush
 #   brew install --cask autohush
 cask "autohush" do
-  version "0.1.0"
-  sha256 "85e03c54964fe79144eb31c993fbc3ec92b5ec315a5f38e7ef90b84c889064dc"
+  version "0.2.0"
+  sha256 "3734f1d82e143134aa8048bf634a23448438c0792889f75b97235409df1b4d23"
 
   url "https://github.com/hfustercabre/AutoHush/releases/download/v#{version}/AutoHush-#{version}.dmg"
   name "AutoHush"
