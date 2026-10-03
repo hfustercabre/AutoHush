@@ -7,13 +7,13 @@ import Testing
 struct SpotifyPlaybackObserverTests {
 
     @Test("maps Spotify's Player State values", arguments: [
-        ("Playing", SpotifyPlayerState.playing),
+        ("Playing", PlayerState.playing),
         ("Paused", .paused),
         ("Stopped", .stopped),
         ("playing", .playing),
         ("Buffering", .unknown),
     ])
-    func mapsPlayerState(value: String, expected: SpotifyPlayerState) {
+    func mapsPlayerState(value: String, expected: PlayerState) {
         #expect(SpotifyPlaybackObserver.playerState(from: ["Player State": value]) == expected)
     }
 
@@ -27,12 +27,12 @@ struct SpotifyPlaybackObserverTests {
     @Test("Spotify terminating is reported as notRunning; other apps are ignored")
     func terminationReportsNotRunning() async {
         let workspaceCenter = NotificationCenter()
-        var received: [SpotifyPlayerState] = []
+        var received: [PlayerState] = []
         let observer = SpotifyPlaybackObserver(workspaceCenter: workspaceCenter) { received.append($0) }
         observer.start()
 
         postTermination(of: "com.apple.Safari", on: workspaceCenter)
-        postTermination(of: AppConfiguration.spotifyBundleID, on: workspaceCenter)
+        postTermination(of: SpotifyPlayer.appBundleID, on: workspaceCenter)
         // The workspace observer delivers on the main queue.
         for _ in 0..<50 where received.isEmpty { try? await Task.sleep(for: .milliseconds(10)) }
 
@@ -44,12 +44,12 @@ struct SpotifyPlaybackObserverTests {
     @Test("nothing is delivered after stop")
     func nothingAfterStop() async {
         let workspaceCenter = NotificationCenter()
-        var received: [SpotifyPlayerState] = []
+        var received: [PlayerState] = []
         let observer = SpotifyPlaybackObserver(workspaceCenter: workspaceCenter) { received.append($0) }
         observer.start()
         observer.stop()
 
-        postTermination(of: AppConfiguration.spotifyBundleID, on: workspaceCenter)
+        postTermination(of: SpotifyPlayer.appBundleID, on: workspaceCenter)
         try? await Task.sleep(for: .milliseconds(50))
 
         #expect(received.isEmpty)

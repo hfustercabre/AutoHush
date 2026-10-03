@@ -1,18 +1,18 @@
 import Foundation
 
-/// Describes what Spotify and the monitor are doing right now.
+/// Describes what the music player and the monitor are doing right now.
 /// Separate from AppHealthState so icons can reflect real-time playback
 /// without coupling to error conditions.
 enum PlaybackState: Equatable, Sendable {
-    /// App just started; Spotify state not yet known.
+    /// App just started; the player's state is not yet known.
     case unknown
-    /// Spotify is playing and no foreign audio source is active.
-    case spotifyPlaying
-    /// Monitor paused Spotify because a foreign audio source started.
+    /// The music is playing and no foreign audio source is active.
+    case musicPlaying
+    /// Monitor paused the music because a foreign audio source started.
     case pausedByMonitor
-    /// Spotify is stopped/paused and no foreign audio source is active
-    /// (user paused manually or Spotify is idle).
-    case spotifyIdle
-    /// Spotify plays on another Spotify Connect device; it is never paused.
-    case spotifyPlayingElsewhere
+    /// The player is stopped/paused and no foreign audio source is active
+    /// (user paused manually or the player is idle).
+    case musicIdle
+    /// The music plays on another device (e.g. Spotify Connect); it is never paused.
+    case playingElsewhere
 }

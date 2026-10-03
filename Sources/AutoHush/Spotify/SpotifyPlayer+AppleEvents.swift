@@ -2,9 +2,9 @@ import AppKit
 import Foundation
 
 // Pure Apple event construction, reply decoding and error mapping for
-// SpotifyController. Nothing here sends events, so it is fully unit-tested.
+// SpotifyPlayer. Nothing here sends events, so it is fully unit-tested.
 
-extension SpotifyController {
+extension SpotifyPlayer {
     /// Four-char codes from `Spotify.app/Contents/Resources/Spotify.sdef`
     /// and the standard Apple event suites.
     enum Code {
@@ -68,12 +68,12 @@ extension SpotifyController {
 
     // MARK: - Reply decoding and error mapping (pure, unit-tested)
 
-    static func playerState(fromReply reply: SpotifyReply) -> SpotifyPlayerState {
+    static func playerState(fromReply reply: SpotifyReply) -> PlayerState {
         guard let code = reply.directObjectCode else { return .unknown }
         return playerState(fromEnumCode: code)
     }
 
-    static func playerState(fromEnumCode code: OSType) -> SpotifyPlayerState {
+    static func playerState(fromEnumCode code: OSType) -> PlayerState {
         switch code {
         case Code.statePlaying: return .playing
         case Code.statePaused: return .paused
@@ -104,17 +104,17 @@ extension SpotifyController {
         case -1743: // errAEEventNotPermitted
             return .automationPermissionDenied
         case -600:  // procNotFound: Spotify quit between the check and the send
-            return .spotifyUnavailable
+            return .playerNotRunning
         case -1712: // errAETimeout: Spotify is busy or still starting up
-            return .spotifyNotResponding
+            return .playerNotResponding
         default:
             let detail = message.flatMap { $0.isEmpty ? nil : $0 }
-            return .spotifyCommandFailed(detail.map { "\($0) (OSStatus \(number))" } ?? "OSStatus \(number)")
+            return .playerCommandFailed(detail.map { "\($0) (OSStatus \(number))" } ?? "OSStatus \(number)")
         }
     }
 }
 
-/// The parts of an Apple event reply SpotifyController reads, extracted on
+/// The parts of an Apple event reply SpotifyPlayer reads, extracted on
 /// the event queue so they can cross into the actor.
 struct SpotifyReply: Sendable, Equatable {
     /// Enum or type code of the reply's direct object (`----`), if any.
@@ -125,7 +125,7 @@ struct SpotifyReply: Sendable, Equatable {
     }
 
     init(_ reply: NSAppleEventDescriptor) {
-        guard let direct = reply.paramDescriptor(forKeyword: SpotifyController.Code.directObject) else {
+        guard let direct = reply.paramDescriptor(forKeyword: SpotifyPlayer.Code.directObject) else {
             directObjectCode = nil
             return
         }

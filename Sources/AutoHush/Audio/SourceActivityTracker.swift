@@ -8,7 +8,7 @@ import Foundation
 //   - A source starts only after it has been audible for `startConfirmation`
 //     (gaps up to `gapTolerance` allowed), so notification blips never count.
 //   - A started source stops only after it has been inaudible for `stopGrace`,
-//     so gaps between tracks or videos do not bounce Spotify.
+//     so gaps between tracks or videos do not bounce the music.
 //
 // Pure value type driven by explicit timestamps, so it is fully deterministic.
 

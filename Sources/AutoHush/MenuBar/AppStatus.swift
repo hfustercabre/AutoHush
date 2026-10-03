@@ -12,17 +12,19 @@ struct AppStatus: Equatable {
 
     /// A problem the user can fix; shown as a single menu item.
     enum Warning: Equatable {
-        case automationAccess
+        case automationAccess(player: String)
         case audioRecordingAccess
 
         var title: String {
             switch self {
-            case .automationAccess:     return "Allow Spotify Automation Access…"
+            case .automationAccess(let player): return "Allow \(player) Automation Access…"
             case .audioRecordingAccess: return "Allow Audio Recording Access…"
             }
         }
     }
 
+    /// The music player AutoHush controls, e.g. "Spotify".
+    var playerName = ""
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
@@ -47,7 +49,7 @@ struct AppStatus: Equatable {
         ignoredApps.contains { $0.id == id }
     }
 
-    /// Playing sources that pause Spotify.
+    /// Playing sources that pause the music.
     var pausingSources: [AudioSource] {
         activeSources.filter { !isIgnored($0.id) }
     }
@@ -79,7 +81,7 @@ struct AppStatus: Equatable {
     }
 
     var warning: Warning? {
-        if case .needsPermission = health { return .automationAccess }
+        if case .needsPermission = health { return .automationAccess(player: playerName) }
         if isReady, detection == .unavailable { return .audioRecordingAccess }
         return nil
     }

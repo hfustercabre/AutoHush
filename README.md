@@ -200,7 +200,7 @@ AppDelegate ── lifecycle, bootstrap (launch, Retry, Spotify relaunch), menu 
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
   └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
-        SpotifyPlaybackObserver ── Spotify state (distributed notification, quit) ──┐
+        PlayerStateObserving ── the player's state (Spotify: distributed notification, quit) ┐
         AudioMonitor                                                                │
           ├── HALAudioProcessSnapshotProvider: process list + is-running listeners  │
           ├── ProcessTapLevelMeter: per-app peak level (normal mode)                 │
@@ -211,7 +211,7 @@ AppDelegate ── lifecycle, bootstrap (launch, Retry, Spotify relaunch), menu 
                                                               PlaybackArbiter
                                                                 ├── pauses Spotify on the first app
                                                                 ├── resumes after all apps stop
-                                                                └── SpotifyController (Apple events)
+                                                                └── MusicPlayer (Spotify: SpotifyPlayer, Apple events)
 ```
 
 ```text
@@ -226,10 +226,13 @@ Sources/AutoHush/
               AudioCapturePermission, DetectionMethod (your choice),
               DetectionMode (what's in effect), CoreAudioProperty
   Playback/   PlaybackArbiter, PlaybackState, AutoPause
-  Spotify/    SpotifyController (+AppleEvents), SpotifyPlaybackObserver, SpotifyPlayerState
+  Players/    MusicPlayer (the interface every player implements), PlayerState
+  Spotify/    SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
 Tests/AutoHushTests/   same folders, plus Support/ for shared mocks
 Resources/  Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
 ```
+
+**Adding a music player:** everything outside `Players/` and `Spotify/` talks to the player through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, and a `PlayerStateObserving` that reports state changes. A new player is a new type implementing it, plus its bundle ID in `SupportedPlayers` so its own audio never counts as another app playing.
 
 Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHush/App/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 

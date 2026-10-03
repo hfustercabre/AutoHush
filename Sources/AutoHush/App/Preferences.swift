@@ -127,7 +127,7 @@ final class Preferences {
         if updated != current { seenApps = updated }
     }
 
-    /// Apps that never pause Spotify, sorted by name.
+    /// Apps that never pause the music, sorted by name.
     var ignoredApps: [AudioSource] {
         get {
             let stored = defaults.object(forKey: Key.ignoredApps) as? [String: String] ?? [:]

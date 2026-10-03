@@ -203,7 +203,7 @@ struct AudioMonitorTests {
     func spotifyTappedOnlyForVerification() async {
         let h = Harness()
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID), Self.process(2, "com.apple.Safari")])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID), Self.process(2, "com.apple.Safari")])
         #expect(h.meter.lastMetered == [1, 2])
 
         h.step(after: 0.25, peaks: [1: 0.4, 2: 0])
@@ -216,7 +216,7 @@ struct AudioMonitorTests {
     func spotifyNotTappedWithPermission() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID), Self.process(2, "com.apple.Safari")])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID), Self.process(2, "com.apple.Safari")])
         #expect(h.meter.lastMetered == [2])
         h.monitor.stop()
     }
@@ -399,9 +399,9 @@ struct AudioMonitorTests {
     @Test("Spotify playing with a silent tap marks level detection unavailable")
     func silentSpotifyTapMeansUnavailable() async {
         let h = Harness()
-        h.monitor.setSpotifyPlaying(true)
+        h.monitor.setPlayerPlaying(true)
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID)], peaks: [1: 0])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID)], peaks: [1: 0])
         h.step(after: 14.0)
         #expect(h.modes.values.isEmpty)
 
@@ -413,9 +413,9 @@ struct AudioMonitorTests {
     @Test("an unavailable verdict is revised once real samples arrive")
     func unavailableRecoversOnSignal() async {
         let h = Harness()
-        h.monitor.setSpotifyPlaying(true)
+        h.monitor.setPlayerPlaying(true)
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID)], peaks: [1: 0])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID)], peaks: [1: 0])
         h.step(after: 15.0)
         h.step(after: 0.25, peaks: [1: 0.2])
         #expect(h.modes.values == [.unavailable, .audioLevel])
@@ -498,10 +498,10 @@ struct AudioMonitorTests {
     @Test("a known permission is not overridden by sample-based inference")
     func knownPermissionIgnoresSampleInference() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
-        h.monitor.setSpotifyPlaying(true)
+        h.monitor.setPlayerPlaying(true)
         h.start()
         // Spotify's tap silent for long: inference would say "unavailable".
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID)], peaks: [1: 0])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID)], peaks: [1: 0])
         h.step(after: 20.0)
         #expect(h.modes.values == [.audioLevel])
         h.monitor.stop()
@@ -539,7 +539,7 @@ struct AudioMonitorTests {
     func spotifyOutputIsLocalWithoutLevels() async {
         let h = Harness(meter: false)
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID)])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID)])
         await h.recorder.waitForSpotifyLocal(count: 2)
         // The start-up evaluation runs before any process exists.
         #expect(await h.recorder.spotifyLocal == [false, true])
@@ -550,7 +550,7 @@ struct AudioMonitorTests {
     func spotifyLocalFollowsOutput() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID)])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID)])
         await h.recorder.waitForSpotifyLocal(count: 2)
         h.step(after: 0.25, [])
         await h.recorder.waitForSpotifyLocal(count: 3)
@@ -563,7 +563,7 @@ struct AudioMonitorTests {
     func spotifyLocalStatusPrecedesSourceEvents() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID), Self.process(2, "org.videolan.vlc")])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID), Self.process(2, "org.videolan.vlc")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.log == ["spotifyLocal false", "spotifyLocal true", "+org.videolan.vlc"])
         h.monitor.stop()
@@ -594,7 +594,7 @@ struct AudioMonitorTests {
     @Test("a process owned by an excluded app (a Spotify helper) is never a source")
     func excludedOwnerIsIgnored() async {
         let identifier = StubSourceIdentifier([
-            "com.spotify.client.helper": AudioSource(id: AppConfiguration.spotifyBundleID, name: "Spotify"),
+            "com.spotify.client.helper": AudioSource(id: SpotifyPlayer.appBundleID, name: "Spotify"),
         ])
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
         h.start()
@@ -656,7 +656,7 @@ struct AudioMonitorTests {
     func excludedBundleIDIsNotForwarded() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.step([Self.process(1, AppConfiguration.spotifyBundleID), Self.process(2, "com.apple.coreaudiod")])
+        h.step([Self.process(1, SpotifyPlayer.appBundleID), Self.process(2, "com.apple.coreaudiod")])
         h.step(after: 1.0)
         try? await Task.sleep(for: .milliseconds(50))
         #expect(await h.recorder.events.isEmpty)
@@ -819,7 +819,7 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
         log.append("\(isPlaying ? "+" : "-")\(sourceID)")
     }
 
-    func handleSpotifyLocalPlaybackChange(_ isLocal: Bool) async {
+    func handleLocalPlaybackChange(_ isLocal: Bool) async {
         spotifyLocal.append(isLocal)
         log.append("spotifyLocal \(isLocal)")
     }

@@ -1,9 +1,9 @@
 import Foundation
 
-/// Everything one bootstrap creates — arbiter, audio monitor and Spotify
+/// Everything one bootstrap creates — arbiter, audio monitor and player
 /// observer — wired together, started and torn down as a unit.
 ///
-/// Commands to the arbiter (Spotify state changes, auto-pause on/off) and
+/// Commands to the arbiter (player state changes, auto-pause on/off) and
 /// status updates for the menu each travel through a single ordered stream,
 /// so neither side can see them out of order.
 @MainActor
@@ -17,21 +17,21 @@ final class MonitoringPipeline {
     }
 
     private enum ArbiterCommand: Sendable {
-        case spotifyState(SpotifyPlayerState)
+        case playerState(PlayerState)
         case autoPause(Bool)
         case configuration(AppConfiguration)
     }
 
     private let arbiter: PlaybackArbiter
     private let monitor: AudioMonitor
-    private let spotifyObserver: SpotifyPlaybackObserver
+    private let playerObserver: any PlayerStateObserving
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
     private let forwarders: [Task<Void, Never>]
     private var isStopped = false
 
     init(
-        spotify: any SpotifyControlling,
+        player: any MusicPlayer,
         configuration: AppConfiguration,
         autoPauseEnabled: Bool,
         ignoredSourceIDs: Set<String>,
@@ -46,7 +46,7 @@ final class MonitoringPipeline {
         // after it, captures audio only then.
         let monitorLink = MonitorLink()
         let arbiter = PlaybackArbiter(
-            spotify: spotify,
+            player: player,
             configuration: configuration,
             autoPauseEnabled: autoPauseEnabled,
             onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
@@ -62,14 +62,14 @@ final class MonitoringPipeline {
             announcingSourceIDs: announcingSourceIDs,
             onAnnouncingSourceLearned: { statusUpdates.yield(.announcingApp($0)) },
             detectionMethod: detectionMethod,
-            audioLevelsNeeded: false, // until the arbiter knows Spotify's state
+            audioLevelsNeeded: false, // until the arbiter knows the player's state
             onActiveSourcesChange: { statusUpdates.yield(.activeSources($0)) },
             onDetectionModeChange: { statusUpdates.yield(.detection($0)) }
         )
         monitorLink.monitor = monitor
-        self.spotifyObserver = SpotifyPlaybackObserver { [weak monitor] state in
-            arbiterCommands.yield(.spotifyState(state))
-            monitor?.setSpotifyPlaying(state == .playing)
+        self.playerObserver = player.makeStateObserver { [weak monitor] state in
+            arbiterCommands.yield(.playerState(state))
+            monitor?.setPlayerPlaying(state == .playing)
         }
         self.arbiter = arbiter
         self.monitor = monitor
@@ -79,7 +79,7 @@ final class MonitoringPipeline {
             Task {
                 for await command in commandStream {
                     switch command {
-                    case .spotifyState(let state): await arbiter.handleSpotifyStateChange(state)
+                    case .playerState(let state): await arbiter.handlePlayerStateChange(state)
                     case .autoPause(let enabled):  await arbiter.setAutoPauseEnabled(enabled)
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
                     }
@@ -93,21 +93,21 @@ final class MonitoringPipeline {
         ]
     }
 
-    /// Observes Spotify, seeds the arbiter with Spotify's live state, then
+    /// Observes the player, seeds the arbiter with its live state, then
     /// starts audio monitoring — unless `stop()` was called in the meantime.
     func start() async {
         // Observe before seeding so no state change can slip in between.
-        spotifyObserver.start()
+        playerObserver.start()
         let initialState = await arbiter.refreshPlaybackState()
         guard !isStopped else { return }
-        monitor.setSpotifyPlaying(initialState == .playing)
+        monitor.setPlayerPlaying(initialState == .playing)
         monitor.start()
     }
 
     func stop() {
         guard !isStopped else { return }
         isStopped = true
-        spotifyObserver.stop()
+        playerObserver.stop()
         monitor.stop()
         arbiterCommands.finish()
         statusUpdates.finish()

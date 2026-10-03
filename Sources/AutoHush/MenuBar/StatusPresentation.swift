@@ -6,30 +6,30 @@ extension PlaybackState {
     var symbolName: String {
         switch self {
         case .unknown:                 return "arrow.triangle.2.circlepath"
-        case .spotifyPlaying:          return "play.circle.fill"
+        case .musicPlaying:          return "play.circle.fill"
         case .pausedByMonitor:         return "pause.circle.fill"
-        case .spotifyIdle:             return "music.note"
-        case .spotifyPlayingElsewhere: return "hifispeaker.fill"
+        case .musicIdle:             return "music.note"
+        case .playingElsewhere: return "hifispeaker.fill"
         }
     }
 
     var accessibilityLabel: String {
         switch self {
         case .unknown:                 return "AutoHush: starting"
-        case .spotifyPlaying:          return "AutoHush: music is playing"
+        case .musicPlaying:          return "AutoHush: music is playing"
         case .pausedByMonitor:         return "AutoHush: music paused"
-        case .spotifyIdle:             return "AutoHush: no music playing"
-        case .spotifyPlayingElsewhere: return "AutoHush: music is playing on another device"
+        case .musicIdle:             return "AutoHush: no music playing"
+        case .playingElsewhere: return "AutoHush: music is playing on another device"
         }
     }
 
     var statusLine: String {
         switch self {
         case .unknown:                 return "Starting services"
-        case .spotifyPlaying:          return "Music is playing"
+        case .musicPlaying:          return "Music is playing"
         case .pausedByMonitor:         return "Music paused — another app is playing"
-        case .spotifyIdle:             return "No music playing"
-        case .spotifyPlayingElsewhere: return "Music is playing on another device"
+        case .musicIdle:             return "No music playing"
+        case .playingElsewhere: return "Music is playing on another device"
         }
     }
 }

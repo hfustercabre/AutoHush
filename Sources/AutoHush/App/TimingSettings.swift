@@ -2,11 +2,11 @@ import Foundation
 
 /// The detection timings users can tune in Settings → Advanced.
 struct TimingSettings: Equatable, Sendable {
-    /// Seconds another app must be audible before Spotify pauses.
+    /// Seconds another app must be audible before the music pauses.
     var startConfirmation: TimeInterval = 0.5
     /// Seconds another app must be silent before it counts as stopped.
     var stopGrace: TimeInterval = 2.0
-    /// Seconds to wait after all other apps stopped before resuming Spotify.
+    /// Seconds to wait after all other apps stopped before resuming the music.
     var resumeDelay: TimeInterval = 0.2
     /// Peak level (dBFS) below which an app counts as silent.
     var silenceThresholdDB: Double = -60

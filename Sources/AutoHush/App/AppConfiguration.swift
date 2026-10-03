@@ -3,9 +3,8 @@ import Foundation
 // MARK: - Configuration
 
 struct AppConfiguration: Sendable {
-    static let spotifyBundleID = "com.spotify.client"
 
-    /// Seconds to wait after all foreign audio stops before resuming Spotify.
+    /// Seconds to wait after all foreign audio stops before resuming the music.
     var debounceSeconds: TimeInterval = 0.2
 
     /// Peak sample value (linear, 0…1) above which a metered process counts as
@@ -30,9 +29,11 @@ struct AppConfiguration: Sendable {
     /// Monitor tick (and full process-list resync period) while idle.
     var idleSampleInterval: TimeInterval = 1.0
 
-    /// Bundle IDs that must NEVER trigger a pause.
+    /// The music players' own apps: their audio is the music being protected.
+    var musicPlayerBundleIDs: Set<String> = SupportedPlayers.bundleIDs
+
+    /// System processes that must NEVER trigger a pause.
     let excludedBundleIDs: Set<String> = [
-        AppConfiguration.spotifyBundleID,
         "com.apple.coreaudiod",
         "com.apple.audio.SandboxHelper",
         "com.apple.audio.AudioComponentRegistrar",
@@ -56,7 +57,7 @@ struct AppConfiguration: Sendable {
     /// Returns true if the bundle ID should trigger pause/resume logic.
     func isMediaSource(_ bundleID: String) -> Bool {
         guard !bundleID.isEmpty else { return false }
-        guard !excludedBundleIDs.contains(bundleID) else { return false }
+        guard !musicPlayerBundleIDs.contains(bundleID), !excludedBundleIDs.contains(bundleID) else { return false }
         return !excludedBundleIDPrefixes.contains(where: { bundleID.hasPrefix($0) })
     }
 }
