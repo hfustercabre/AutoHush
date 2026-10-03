@@ -2,7 +2,7 @@
 # Packages AutoHush.app into dist/AutoHush-<version>.dmg: a compressed
 # disk image that opens as an installer window, with the app on the left, an
 # arrow to an Applications shortcut on the right, and a note about the first
-# launch (the app is not notarized).
+# launch (the app is not notarized). The mounted disk shows the app's icon.
 #
 # Usage: bash Scripts/build-dmg.sh [version]
 # Environment:
@@ -19,11 +19,15 @@ VERSION="${1:-$(plist_value "$INFO_PLIST" CFBundleShortVersionString)}"
 DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 
 # Window geometry in points; icon centres must match Scripts/lib/dmg-background.swift.
+# The bottom 80 points are room for Finder's tab and path bars.
 WINDOW_WIDTH=640
-WINDOW_HEIGHT=400
-APP_ICON_POSITION="170, 190"
-APPLICATIONS_POSITION="470, 190"
+WINDOW_HEIGHT=480
+APP_ICON_POSITION="170, 200"
+APPLICATIONS_POSITION="470, 200"
 ICON_SIZE=112
+# The volume's own files go below the window, out of sight for people who
+# show hidden files.
+HIDDEN_ITEMS_TOP=640
 
 if [[ "${SKIP_BUILD:-0}" != 1 ]]; then
     VERSION="$VERSION" bash "$PROJECT_DIR/Scripts/build-app.sh" release
@@ -49,8 +53,11 @@ styled=0
 if [[ "${PLAIN_DMG:-0}" != 1 ]]; then
     note "drawing the window background"
     mkdir "$STAGING/.background"
-    swift "$PROJECT_DIR/Scripts/lib/dmg-background.swift" "$WORK/background.png" 1
-    swift "$PROJECT_DIR/Scripts/lib/dmg-background.swift" "$WORK/background@2x.png" 2
+    # Built with the app's menu bar icon, which the background shows.
+    swiftc -O -parse-as-library "$PROJECT_DIR/Sources/AutoHushApp/MenuBar/MenuBarIcon.swift" \
+        "$PROJECT_DIR/Scripts/lib/dmg-background.swift" -o "$WORK/dmg-background"
+    "$WORK/dmg-background" "$WORK/background.png" 1
+    "$WORK/dmg-background" "$WORK/background@2x.png" 2
     tiffutil -cathidpicheck "$WORK/background.png" "$WORK/background@2x.png" \
         -out "$STAGING/.background/background.tiff" >/dev/null 2>&1
     styled=1
@@ -85,9 +92,39 @@ on run argv
         set background picture of viewOptions to file ".background:background.tiff" of theVolume
         set position of item "$APP_NAME.app" of theVolume to {$APP_ICON_POSITION}
         set position of item "Applications" of theVolume to {$APPLICATIONS_POSITION}
+        -- Only reachable while Finder shows hidden files; harmless otherwise.
+        set hiddenItems to {".background", ".fseventsd"}
+        repeat with i from 1 to count of hiddenItems
+            try
+                set position of item (item i of hiddenItems) of theVolume to {i * 160, $HIDDEN_ITEMS_TOP}
+            end try
+        end repeat
         update theVolume without registering applications
         delay 1
         close theWindow
+    end tell
+end run
+APPLESCRIPT
+}
+
+# Gives the volume mounted at $1 the app's icon. Runs after layout_window,
+# whose Finder update would delete it, and parks the icon file below the
+# window like the volume's other files.
+add_volume_icon() {
+    local icns="$APP_BUNDLE/Contents/Resources/$APP_NAME.icns"
+    [[ -f "$icns" ]] || return 0
+    cp "$icns" "$1/.VolumeIcon.icns"
+    SetFile -a C "$1"
+    osascript - "$1" >/dev/null <<APPLESCRIPT || true
+on run argv
+    tell application "Finder"
+        set theVolume to disk (name of (info for (POSIX file (item 1 of argv) as alias)))
+        open theVolume
+        delay 1
+        try
+            set position of item ".VolumeIcon.icns" of theVolume to {480, $HIDDEN_ITEMS_TOP}
+        end try
+        close container window of theVolume
     end tell
 end run
 APPLESCRIPT
@@ -100,6 +137,7 @@ if [[ "$styled" == 1 ]]; then
     DEVICE="$(awk 'NR == 1 { print $1 }' <<<"$attach_output")"
     MOUNT_POINT="$(grep -o '/Volumes/.*' <<<"$attach_output" | head -n 1)"
     if [[ -n "$MOUNT_POINT" ]] && layout_window "$MOUNT_POINT"; then
+        add_volume_icon "$MOUNT_POINT"
         sync
         diskutil eject "$DEVICE" >/dev/null
         DEVICE=""
