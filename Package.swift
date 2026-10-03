@@ -11,8 +11,9 @@ let package = Package(
     ],
     targets: [
         // App sources are grouped by feature: App, MenuBar, Settings, Audio,
-        // Playback and Spotify. Bundle metadata lives in Resources/ and is
-        // assembled into AutoHush.app by Scripts/build-app.sh.
+        // Playback and MusicPlayers (one subfolder per supported app). Bundle
+        // metadata lives in Resources/ and is assembled into AutoHush.app by
+        // Scripts/build-app.sh.
         .executableTarget(name: "AutoHush"),
         .testTarget(
             name: "AutoHushTests",
