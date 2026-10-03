@@ -40,6 +40,12 @@
             "value" : "%1$@ (%2$@)"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -118,6 +124,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ et %2$@ sont en lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ et %2$@ sont en lecture"
@@ -206,6 +218,12 @@
             "value" : "%1$@ et %2$lld autres apps sont en lecture"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ et %2$lld autres apps sont en lecture"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -289,6 +307,12 @@
             "value" : "Erreur de contrôle de %1$@ : %2$@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur de contrôle de %1$@ : %2$@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -361,6 +385,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne répond pas"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ ne répond pas"
@@ -443,6 +473,12 @@
             "value" : "%@ n'est pas ouvert"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'est pas ouvert"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -520,6 +556,12 @@
             "value" : "%@ est en lecture"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est en lecture"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -592,6 +634,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ s"
@@ -680,6 +728,12 @@
             "value" : "%1$@ — %2$@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -763,6 +817,12 @@
             "value" : "%1$@ — %2$@ (%3$@)"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -835,6 +895,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — mode AntiDot"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ — mode AntiDot"
@@ -917,6 +983,12 @@
             "value" : "%lld dB"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -989,6 +1061,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld dBFS"
@@ -1071,6 +1149,12 @@
             "value" : "1 heure"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 heure"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1143,6 +1227,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutes"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "15 minutes"
@@ -1225,6 +1315,12 @@
             "value" : "À propos d'AutoHush"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos d'AutoHush"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1297,6 +1393,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancé"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avancé"
@@ -1379,6 +1481,12 @@
             "value" : "Autoriser l'accès « Automatisation » pour %@…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser l'accès « Automatisation » pour %@…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1451,6 +1559,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser l'accès à l'enregistrement audio…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autoriser l'accès à l'enregistrement audio…"
@@ -1532,6 +1646,12 @@
             "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1603,6 +1723,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un délai supplémentaire une fois que toutes les autres apps se sont arrêtées."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un délai supplémentaire une fois que toutes les autres apps se sont arrêtées."
@@ -1684,6 +1810,12 @@
             "value" : "Mode AntiDot"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode AntiDot"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1755,6 +1887,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute app dont l'audio est ouvert compte comme en lecture, même en pause."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Toute app dont l'audio est ouvert compte comme en lecture, même en pause."
@@ -1837,6 +1975,12 @@
             "value" : "Apps"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1908,6 +2052,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps apparaissent ici dès qu'elles ont lu du son."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les apps apparaissent ici dès qu'elles ont lu du son."
@@ -1990,6 +2140,12 @@
             "value" : "Mettre la musique en pause automatiquement"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre la musique en pause automatiquement"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2062,6 +2218,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pause automatique est désactivée"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "La pause automatique est désactivée"
@@ -2144,6 +2306,12 @@
             "value" : "La pause automatique est désactivée %@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pause automatique est désactivée %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2216,6 +2384,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause automatique : désactivée"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pause automatique : désactivée"
@@ -2298,6 +2472,12 @@
             "value" : "Pause automatique : désactivée %@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause automatique : désactivée %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2370,6 +2550,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause automatique : activée"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pause automatique : activée"
@@ -2452,6 +2638,12 @@
             "value" : "AutoHush %@ est disponible"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ est disponible"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2524,6 +2716,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ est à jour."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush %@ est à jour."
@@ -2606,6 +2804,12 @@
             "value" : "Diagnostic d'AutoHush"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostic d'AutoHush"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2678,6 +2882,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush est à jour"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush est à jour"
@@ -2760,6 +2970,12 @@
             "value" : "AutoHush : fonctionnement limité"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : fonctionnement limité"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2832,6 +3048,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : erreur"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush : erreur"
@@ -2914,6 +3136,12 @@
             "value" : "AutoHush : surveillance"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : surveillance"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2986,6 +3214,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : musique en lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush : musique en lecture"
@@ -3068,6 +3302,12 @@
             "value" : "AutoHush : musique lue sur un autre appareil"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : musique lue sur un autre appareil"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3140,6 +3380,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : musique en pause"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush : musique en pause"
@@ -3222,6 +3468,12 @@
             "value" : "AutoHush : autorisation requise"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : autorisation requise"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3294,6 +3546,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : aucune musique en lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush : aucune musique en lecture"
@@ -3376,6 +3634,12 @@
             "value" : "AutoHush : démarrage"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush : démarrage"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3447,6 +3711,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher maintenant"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher maintenant"
@@ -3529,6 +3799,12 @@
             "value" : "Rechercher des mises à jour…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des mises à jour…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3600,6 +3876,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher automatiquement les mises à jour"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher automatiquement les mises à jour"
@@ -3682,6 +3964,12 @@
             "value" : "Recherche…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3759,6 +4047,12 @@
             "value" : "Choisir une app à ignorer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une app à ignorer"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3830,6 +4124,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez dans l'onglet Apps les apps qui mettent votre musique en pause."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez dans l'onglet Apps les apps qui mettent votre musique en pause."
@@ -3912,6 +4212,12 @@
             "value" : "Cliquez sur une app pour ne plus l'ignorer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur une app pour ne plus l'ignorer"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3984,6 +4290,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier l'élément d'ouverture : %@"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de modifier l'élément d'ouverture : %@"
@@ -4066,6 +4378,12 @@
             "value" : "Impossible de rechercher des mises à jour"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de rechercher des mises à jour"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4138,6 +4456,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de rechercher des mises à jour."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de rechercher des mises à jour."
@@ -4219,6 +4543,12 @@
             "value" : "Détecter les apps en lecture d'après"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détecter les apps en lecture d'après"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4290,6 +4620,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection : niveaux audio"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détection : niveaux audio"
@@ -4371,6 +4707,12 @@
             "value" : "Détection : flux audio ouverts (pas d'accès aux niveaux audio)"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection : flux audio ouverts (pas d'accès aux niveaux audio)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4442,6 +4784,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection : flux audio ouverts (vérification des niveaux)"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détection : flux audio ouverts (vérification des niveaux)"
@@ -4523,6 +4871,12 @@
             "value" : "Détection : flux audio ouverts uniquement"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection : flux audio ouverts uniquement"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4594,6 +4948,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection : ce que les apps indiquent à macOS"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détection : ce que les apps indiquent à macOS"
@@ -4676,6 +5036,12 @@
             "value" : "Diagnostic…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostic…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4747,6 +5113,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les apps sont retirées, et celles que vous avez désactivées mettront de nouveau votre musique en pause. Les apps réapparaissent à mesure qu'elles lisent du son."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Toutes les apps sont retirées, et celles que vous avez désactivées mettront de nouveau votre musique en pause. Les apps réapparaissent à mesure qu'elles lisent du son."
@@ -4828,6 +5200,12 @@
             "value" : "Fondu entrant à la reprise"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondu entrant à la reprise"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4899,6 +5277,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondu sortant avant la pause"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fondu sortant avant la pause"
@@ -4981,6 +5365,12 @@
             "value" : "Général"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Général"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5053,6 +5443,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub a répondu avec le code HTTP %lld."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GitHub a répondu avec le code HTTP %lld."
@@ -5135,6 +5531,12 @@
             "value" : "Impossible de lire les informations de version de GitHub."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire les informations de version de GitHub."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5207,6 +5609,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
@@ -5288,6 +5696,12 @@
             "value" : "Masque l'indicateur d'enregistrement violet en ne mesurant jamais le son. La détection est moins précise : certaines apps en pause peuvent maintenir votre musique en pause."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masque l'indicateur d'enregistrement violet en ne mesurant jamais le son. La détection est moins précise : certaines apps en pause peuvent maintenir votre musique en pause."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5364,6 +5778,12 @@
             "value" : "Durée pendant laquelle une autre app doit être audible. Filtre les sons brefs des apps ; les sons de notification du système sont toujours ignorés."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée pendant laquelle une autre app doit être audible. Filtre les sons brefs des apps; les sons de notification du système sont toujours ignorés."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5435,6 +5855,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée pendant laquelle une autre app doit rester silencieuse. Comble les pauses entre les morceaux et les vidéos."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durée pendant laquelle une autre app doit rester silencieuse. Comble les pauses entre les morceaux et les vidéos."
@@ -5516,6 +5942,12 @@
             "value" : "Durée du fondu de la musique avant la pause. 0 la met en pause immédiatement."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée du fondu de la musique avant la pause. 0 la met en pause immédiatement."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5587,6 +6019,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée du retour progressif de la musique à la reprise. 0 la reprend à plein volume."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durée du retour progressif de la musique à la reprise. 0 la reprend à plein volume."
@@ -5669,6 +6107,12 @@
             "value" : "Ignorer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5740,6 +6184,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer une autre app…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorer une autre app…"
@@ -5822,6 +6272,12 @@
             "value" : "Apps ignorées"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorées"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5894,6 +6350,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorées : %@"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps ignorées : %@"
@@ -5976,6 +6438,12 @@
             "value" : "Apps ignorées : aucune"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorées : aucune"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6048,6 +6516,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée — la musique continue"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorée — la musique continue"
@@ -6130,6 +6604,12 @@
             "value" : "Plus tard"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6201,6 +6681,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir à l'ouverture de session"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir à l'ouverture de session"
@@ -6283,6 +6769,12 @@
             "value" : "Mesure des niveaux audio"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesure des niveaux audio"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6354,6 +6846,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveillance de la lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Surveillance de la lecture"
@@ -6435,6 +6933,12 @@
             "value" : "La plus précise : une vidéo en pause cesse de compter dès qu'elle devient silencieuse. macOS affiche son indicateur d'enregistrement violet pendant qu'AutoHush mesure."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plus précise : une vidéo en pause cesse de compter dès qu'elle devient silencieuse. macOS affiche son indicateur d'enregistrement violet pendant qu'AutoHush mesure."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6511,6 +7015,12 @@
             "value" : "Musique en lecture"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique en lecture"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6582,6 +7092,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La musique est lue sur un autre appareil"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "La musique est lue sur un autre appareil"
@@ -6664,6 +7180,12 @@
             "value" : "Musique en pause — %@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique en pause — %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6735,6 +7257,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique en pause — une autre app est en lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Musique en pause — une autre app est en lecture"
@@ -6817,6 +7345,12 @@
             "value" : "Ne jamais mettre la musique en pause pour %@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne jamais mettre la musique en pause pour %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6889,6 +7423,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version d'AutoHush n'a encore été publiée sur GitHub."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune version d'AutoHush n'a encore été publiée sur GitHub."
@@ -6971,6 +7511,12 @@
             "value" : "Aucune version pour l'instant"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version pour l'instant"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7048,6 +7594,12 @@
             "value" : "Aucun son d'une autre app détecté pour le moment."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun son d'une autre app détecté pour le moment."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7119,6 +7671,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune musique en lecture"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune musique en lecture"
@@ -7201,6 +7759,12 @@
             "value" : "Aucune version n'a encore été publiée."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version n'a encore été publiée."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7272,6 +7836,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages des éléments d'ouverture…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir les réglages des éléments d'ouverture…"
@@ -7354,6 +7924,12 @@
             "value" : "Ouvrir la page de la version"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la page de la version"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7426,6 +8002,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flux audio ouverts uniquement"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flux audio ouverts uniquement"
@@ -7507,6 +8089,12 @@
             "value" : "Mettre en pause après"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre en pause après"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7578,6 +8166,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Met la musique en pause"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Met la musique en pause"
@@ -7660,6 +8254,12 @@
             "value" : "Met votre musique en pause pendant que d'autres apps lisent du son, puis la reprend. Fonctionne avec %@."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Met votre musique en pause pendant que d'autres apps lisent du son, puis la reprend. Fonctionne avec %@."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7731,6 +8331,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un son plus faible compte comme du silence. Utilisé uniquement lors de la mesure des niveaux audio (mode AntiDot désactivé)."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un son plus faible compte comme du silence. Utilisé uniquement lors de la mesure des niveaux audio (mode AntiDot désactivé)."
@@ -7813,6 +8419,12 @@
             "value" : "Quitter AutoHush"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter AutoHush"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7884,6 +8496,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de la liste"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retirer de la liste"
@@ -7965,6 +8583,12 @@
             "value" : "Réinitialiser la liste"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser la liste"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8036,6 +8660,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser la liste…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réinitialiser la liste…"
@@ -8117,6 +8747,12 @@
             "value" : "Réinitialiser la liste des apps ?"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réinitialiser la liste des apps?"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8193,6 +8829,12 @@
             "value" : "Restaurer les valeurs par défaut"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer les valeurs par défaut"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8264,6 +8906,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre la musique après"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reprendre la musique après"
@@ -8346,6 +8994,12 @@
             "value" : "Réessayer"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8418,6 +9072,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages…"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages…"
@@ -8499,6 +9159,12 @@
             "value" : "Seuil de silence"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuil de silence"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8570,6 +9236,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrage des services"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Démarrage des services"
@@ -8652,6 +9324,12 @@
             "value" : "La version de l'app est inconnue."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version de l'app est inconnue."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8723,6 +9401,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Considérer une app arrêtée après"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Considérer une app arrêtée après"
@@ -8805,6 +9489,12 @@
             "value" : "Désactiver pendant"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver pendant"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8876,6 +9566,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Cliquez sur une app avec le bouton droit pour la retirer de la liste."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Cliquez sur une app avec le bouton droit pour la retirer de la liste."
@@ -8958,6 +9654,12 @@
             "value" : "Désactivée %@."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivée %@."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9030,6 +9732,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jusqu'à demain"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Jusqu'à demain"
@@ -9112,6 +9820,12 @@
             "value" : "Mise à jour"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9189,6 +9903,12 @@
             "value" : "Mise à jour disponible : %@…"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour disponible : %@…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9260,6 +9980,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mises à jour"
@@ -9342,6 +10068,12 @@
             "value" : "La version %@ est disponible."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est disponible."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9414,6 +10146,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertissement"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avertissement"
@@ -9496,6 +10234,12 @@
             "value" : "Ce que les apps indiquent à macOS"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que les apps indiquent à macOS"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9568,6 +10312,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la dernière version, la %@."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vous avez la dernière version, la %@."
@@ -9650,6 +10400,12 @@
             "value" : "Vous avez la version %@. Téléchargez la nouvelle sur GitHub et remplacez AutoHush dans votre dossier Applications."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. Téléchargez la nouvelle sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9722,6 +10478,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. Mettez à jour avec Homebrew :"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vous avez la version %@. Mettez à jour avec Homebrew :"
@@ -9804,6 +10566,12 @@
             "value" : "une autre app est en lecture"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "une autre app est en lecture"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9876,6 +10644,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "n'indique pas à macOS qu'elle lit du son"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "n'indique pas à macOS qu'elle lit du son"
@@ -9958,6 +10732,12 @@
             "value" : "sortie ouverte, silencieuse"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sortie ouverte, silencieuse"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10030,6 +10810,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sortie ouverte, silencieuse, ignorée"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "sortie ouverte, silencieuse, ignorée"
@@ -10112,6 +10898,12 @@
             "value" : "en lecture"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en lecture"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10184,6 +10976,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en lecture, ignorée"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "en lecture, ignorée"
@@ -10266,6 +11064,12 @@
             "value" : "silence"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silence"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10338,6 +11142,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "démarre"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "démarre"
@@ -10420,6 +11230,12 @@
             "value" : "démarre, ignorée"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "démarre, ignorée"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10497,6 +11313,12 @@
             "value" : "indique à macOS qu'elle lit du son"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "indique à macOS qu'elle lit du son"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10569,6 +11391,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jusqu'à %@"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "jusqu'à %@"
@@ -10657,6 +11485,12 @@
             "value" : "jusqu'à %1$@ à %2$@"
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jusqu'à %1$@ à %2$@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10729,6 +11563,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jusqu'à demain à %@"
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "jusqu'à demain à %@"
