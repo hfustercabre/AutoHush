@@ -47,11 +47,19 @@ enum MeasureVolumeCurve {
         let wasPlaying = await player.playerState() == .playing
         print("\(player.name): volume \(originalVolume), \(wasPlaying ? "playing" : "not playing")")
 
+        func restore() async {
+            try? await player.setVolume(originalVolume)
+            if !wasPlaying { try? await player.pause() }
+        }
+
         try await player.play()
         try await Task.sleep(for: .seconds(1))
         let processes = HALAudioProcessSnapshotProvider().activeProcesses()
             .filter { $0.bundleID == player.bundleID || $0.bundleID.hasPrefix(player.bundleID + ".") }
-        guard !processes.isEmpty else { fail("no audio output from \(player.name); is it playing on this Mac?") }
+        guard !processes.isEmpty else {
+            await restore()
+            fail("no audio output from \(player.name); is it playing on this Mac?")
+        }
         let meter = ProcessTapLevelMeter()
         meter.setMeteredProcesses(Set(processes.map(\.objectID)))
         defer { meter.stopAll() }
@@ -65,27 +73,31 @@ enum MeasureVolumeCurve {
             return Double(meter.drainLevels().values.map(\.rms).max() ?? 0)
         }
 
-        func restore() async {
-            try? await player.setVolume(originalVolume)
-            if !wasPlaying { try? await player.pause() }
-        }
-
-        guard try await level(at: 100) > 0 else {
-            await restore()
-            fail("the tap hears silence: allow system audio recording for this tool (or the terminal running it) and try again")
-        }
-
         var results: [(volume: Int, dB: Double)] = []
-        for volume in volumes {
-            var differences: [Double] = []
-            for _ in 0..<pairsPerVolume {
-                let full = try await level(at: 100)
-                let reduced = try await level(at: volume)
-                if full > 0 { differences.append(reduced > 0 ? 20 * log10(reduced / full) : -.infinity) }
+        do {
+            guard try await level(at: 100) > 0 else {
+                await restore()
+                fail("the tap hears silence: allow system audio recording for this tool (or the terminal running it) and try again")
             }
-            let median = differences.sorted()[differences.count / 2]
-            results.append((volume, median))
-            print(median.isFinite ? String(format: "  volume %3d → %6.1f dB", volume, median) : String(format: "  volume %3d → silent", volume))
+            for volume in volumes {
+                var differences: [Double] = []
+                for _ in 0..<pairsPerVolume {
+                    let full = try await level(at: 100)
+                    let reduced = try await level(at: volume)
+                    if full > 0 { differences.append(reduced > 0 ? 20 * log10(reduced / full) : -.infinity) }
+                }
+                // Every reading at 100 was silent: the music paused or hit a quiet passage.
+                guard !differences.isEmpty else {
+                    print(String(format: "  volume %3d → no reading (the music was silent)", volume))
+                    continue
+                }
+                let median = differences.sorted()[differences.count / 2]
+                results.append((volume, median))
+                print(median.isFinite ? String(format: "  volume %3d → %6.1f dB", volume, median) : String(format: "  volume %3d → silent", volume))
+            }
+        } catch {
+            await restore() // never leave the player at a test volume
+            throw error
         }
         await restore()
         printFit(results)
@@ -95,14 +107,18 @@ enum MeasureVolumeCurve {
     private static func printFit(_ results: [(volume: Int, dB: Double)]) {
         let measured = results.filter { $0.volume >= 5 && $0.dB.isFinite }
         guard !measured.isEmpty else { return }
-        let models: [(name: String, curve: VolumeCurve?, dB: (Double) -> Double)] = [
-            ("linear (VolumeCurve.linear)", .linear, { VolumeCurve.linear.decibels(atVolume: $0) }),
-            ("squared", VolumeCurve(exponent: 2), { VolumeCurve(exponent: 2).decibels(atVolume: $0) }),
-            ("cubic (VolumeCurve.cubic)", .cubic, { VolumeCurve.cubic.decibels(atVolume: $0) }),
-            ("x⁴", VolumeCurve(exponent: 4), { VolumeCurve(exponent: 4).decibels(atVolume: $0) }),
-            ("dB-linear, 50 dB range", nil, { ($0 / 100 - 1) * 50 }),
-            ("dB-linear, 60 dB range", nil, { ($0 / 100 - 1) * 60 }),
+        let curves: [(name: String, curve: VolumeCurve)] = [
+            ("linear (VolumeCurve.linear)", .linear),
+            ("squared", VolumeCurve(exponent: 2)),
+            ("cubic (VolumeCurve.cubic)", .cubic),
+            ("x⁴", VolumeCurve(exponent: 4)),
         ]
+        var models: [(name: String, dB: (Double) -> Double)] = curves.map { name, curve in
+            (name, { curve.decibels(atVolume: $0) })
+        }
+        for range in [50.0, 60.0] {
+            models.append(("dB-linear, \(Int(range)) dB range", { ($0 / 100 - 1) * range }))
+        }
         func error(_ model: (Double) -> Double) -> Double {
             (measured.map { pow(model(Double($0.volume)) - $0.dB, 2) }.reduce(0, +) / Double(measured.count)).squareRoot()
         }

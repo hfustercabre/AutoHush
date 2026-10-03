@@ -51,17 +51,3 @@ package struct TimingSettings: Equatable, Sendable {
         )
     }
 }
-
-extension AppConfiguration {
-    /// The default configuration with the user's timings applied.
-    package init(timings: TimingSettings) {
-        self.init()
-        let timings = timings.clamped
-        sourceStartConfirmation = timings.startConfirmation
-        sourceStopGrace = timings.stopGrace
-        debounceSeconds = timings.resumeDelay
-        audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
-        fadeOutDuration = timings.fadeOutDuration
-        fadeInDuration = timings.fadeInDuration
-    }
-}

@@ -4,7 +4,7 @@ import Foundation
 /// gain = (volume / 100) ^ exponent. Fades use it to move at a steady rate
 /// in decibels, which is how loudness is heard.
 ///
-/// Measure a player's curve with `Scripts/measure-volume-curve.swift`.
+/// Measure a player's curve with `swift run measure-volume-curve`.
 package struct VolumeCurve: Equatable, Sendable {
     package let exponent: Double
 

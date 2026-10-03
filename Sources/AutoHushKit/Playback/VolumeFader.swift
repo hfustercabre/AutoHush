@@ -39,6 +39,9 @@ package actor VolumeFader {
     private var userVolume: Int?
     /// Bumped by every fade and by `cancel()`; a fade stops once it changes.
     private var generation = 0
+    /// The `generation` the latest fade started with. Unlike `generation` it
+    /// ignores `cancel()`, so a pause still gets its volume back.
+    private var latestFade = 0
     /// True while a cancelled fade-out brings the music back up.
     private var isComingBack = false
     /// Set by `abandon()`: fades stop where they are, without coming back.
@@ -65,15 +68,12 @@ package actor VolumeFader {
     /// Fades the music out, then pauses it. Returns `false` when `cancel()`
     /// stopped the fade first: the music then fades back up and keeps playing.
     package func fadeOutAndPause() async throws -> Bool {
-        generation += 1
-        let fade = generation
-        guard fadeOut > 0, let current = await player.volume(), (userVolume ?? current) > 0 else {
+        let fade = startFade()
+        guard case let (current, target)? = await fadeVolumes(lasting: fadeOut) else {
             try await player.pause()
             await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
             return true
         }
-        let target = userVolume ?? current
-        userVolume = target
         let top = level(of: target)
         let bottom = top - Self.fadeRange
         logger.debug("[fade] out from \(current, privacy: .public) (user volume \(target, privacy: .public))")
@@ -108,25 +108,20 @@ package actor VolumeFader {
             throw error
         }
         await sleep(Self.restoreDelay)
-        if generation == fade {
-            try? await player.setVolume(target)
-            userVolume = nil
-        }
+        // Unless a newer fade took over the volume meanwhile.
+        if latestFade == fade { await restoreUserVolume() }
         return true
     }
 
     /// Plays from near silence, then fades the music in to the user's volume.
     package func playAndFadeIn() async throws {
-        generation += 1
-        let fade = generation
-        guard fadeIn > 0, let current = await player.volume(), (userVolume ?? current) > 0 else {
+        let fade = startFade()
+        guard let target = await fadeVolumes(lasting: fadeIn)?.user else {
             logger.debug("[fade] none: fade-in \(self.fadeIn, privacy: .public) s, volume unknown or off")
             await restoreUserVolume() // e.g. a fade-out interrupted halfway
             try await player.play()
             return
         }
-        let target = userVolume ?? current
-        userVolume = target
         let top = level(of: target)
         let bottom = top - Self.fadeRange
         logger.debug("[fade] in to \(target, privacy: .public)")
@@ -161,6 +156,24 @@ package actor VolumeFader {
         isAbandoned = true
         generation += 1
         await restoreUserVolume()
+    }
+
+    /// Starts a new fade, stopping the one in progress; returns its generation.
+    private func startFade() -> Int {
+        generation += 1
+        latestFade = generation
+        return generation
+    }
+
+    /// The volume now and the user's volume to fade from or back to, which is
+    /// remembered until the fade ends. `nil` when there is nothing to fade:
+    /// no fade time, the volume can't be read, or it is off.
+    private func fadeVolumes(lasting duration: TimeInterval) async -> (current: Int, user: Int)? {
+        guard duration > 0, let current = await player.volume() else { return nil }
+        let user = userVolume ?? current
+        guard user > 0 else { return nil }
+        userVolume = user
+        return (current, user)
     }
 
     private func restoreUserVolume() async {

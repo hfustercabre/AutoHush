@@ -2,7 +2,7 @@ import Foundation
 
 /// Whether AutoHush pauses the music automatically, as chosen by the user.
 package struct AutoPauseSetting: Equatable, Sendable {
-    package var isEnabled = true
+    package var isEnabled: Bool
     /// Temporarily off until this moment ("Turn Off For…").
     package var snoozedUntil: Date?
 

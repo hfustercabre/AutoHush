@@ -1,5 +1,4 @@
 import AppKit
-import AutoHushKit
 
 /// A plain informational alert with an OK button, brought to the front.
 @MainActor

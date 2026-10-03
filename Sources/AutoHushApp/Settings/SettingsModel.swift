@@ -22,7 +22,7 @@ final class SettingsModel {
     struct AppRow: Identifiable, Equatable {
         let source: AudioSource
         let isIgnored: Bool
-        package var id: String { source.id }
+        var id: String { source.id }
     }
 
     // General

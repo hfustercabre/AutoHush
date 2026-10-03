@@ -242,7 +242,7 @@ Sources/
     Updates/             UpdateController, UpdateChecker
     Diagnostics/         DiagnosticsReport
     About/               AboutPanel
-    General/             InfoAlert, ProjectInfo, AppIcon
+    General/             InfoAlert, ProjectInfo, AppIcon, SystemSettingsPane+Open
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
                          PowerAssertionReader, DetectionMethod (your choice), DetectionMode (in effect),
@@ -267,7 +267,7 @@ Resources/               Info.plist and entitlements, assembled into the .app by
 
 **Where things go:**
 
-- **`AutoHushKit`** is the engine. It has no user interface and knows no player by name; the app tells it which players it supports. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushKit`** is the engine. It has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which players it supports. It can't import the app or a player module, and the compiler enforces that.
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
 - **A player module** (`<App>Support`) holds everything specific to one music app.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.

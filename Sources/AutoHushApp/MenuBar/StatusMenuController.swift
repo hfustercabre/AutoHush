@@ -1,5 +1,4 @@
 import AppKit
-import UniformTypeIdentifiers
 import AutoHushKit
 
 /// Owns the menu bar item and its menu, and renders an `AppStatus` into them.

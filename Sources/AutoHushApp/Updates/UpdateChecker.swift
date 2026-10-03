@@ -1,5 +1,4 @@
 import Foundation
-import AutoHushKit
 
 /// A dotted numeric version such as "0.3.0" (a leading "v" is accepted).
 struct AppVersion: Comparable, CustomStringConvertible, Sendable {
@@ -60,7 +59,6 @@ enum UpdateCheckError: LocalizedError, Equatable {
 /// contacted, and only the release's tag and page URL are read.
 struct UpdateChecker: Sendable {
     typealias Fetch = @Sendable (URLRequest) async throws -> (Data, URLResponse)
-
 
     private let fetch: Fetch
 

@@ -15,7 +15,7 @@ package actor SpotifyPlayer: MusicPlayer {
 
     package nonisolated var bundleID: String { Self.appBundleID }
     package nonisolated var name: String { "Spotify" }
-    /// Measured on Spotify 1.3.3 for macOS (Scripts/measure-volume-curve.swift):
+    /// Measured on Spotify 1.3.3 for macOS (`swift run measure-volume-curve`):
     /// within 2 dB of a cube law from 15 to 90 (50 → −18 dB, 20 → −40 dB);
     /// 11 is about −54 dB and 10 or less is silent.
     package nonisolated var volumeCurve: VolumeCurve { .cubic }
