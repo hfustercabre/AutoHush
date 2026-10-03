@@ -39,6 +39,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- An app that stops while the music fades out now brings the music back up
+  at once, without pausing it. Before, the pause always finished first (the
+  fade held up every later event), then the music resumed. This showed with
+  a fade-out at least as long as "Treat an app as stopped after".
+- Turning auto-pause off no longer holds up player updates while the music
+  fades back in.
 - Music paused just as the other app stopped (after the fade-out, while the
   volume was being set back) stayed paused, and faded down. It now resumes.
 - `measure-volume-curve` no longer crashes when the music goes silent during
