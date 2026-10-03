@@ -10,10 +10,13 @@ extension SpotifyPlayer {
     enum Code {
         static let coreSuite = fourCharCode("core")
         static let getData = fourCharCode("getd")
+        static let setData = fourCharCode("setd")
+        static let setDataValue = fourCharCode("data")
         static let spotifySuite = fourCharCode("spfy")
         static let pause = fourCharCode("Paus")
         static let play = fourCharCode("Play")
         static let playerStateProperty = fourCharCode("pPlS")
+        static let soundVolumeProperty = fourCharCode("pVol")
         static let stateStopped = fourCharCode("kPSS")
         static let statePlaying = fourCharCode("kPSP")
         static let statePaused = fourCharCode("kPSp")
@@ -34,15 +37,36 @@ extension SpotifyPlayer {
     /// `get player state` — a `core/getd` event whose direct object is an
     /// object specifier for the application's `pPlS` property.
     static func makeGetPlayerStateEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = NSAppleEventDescriptor.appleEvent(
+        makeGetPropertyEvent(Code.playerStateProperty, processIdentifier: pid)
+    }
+
+    /// `get sound volume` (`pVol`, 0–100).
+    static func makeGetVolumeEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        makeGetPropertyEvent(Code.soundVolumeProperty, processIdentifier: pid)
+    }
+
+    /// `set sound volume to <volume>` — a `core/setd` event.
+    static func makeSetVolumeEvent(_ volume: Int, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        let event = coreEvent(Code.setData, processIdentifier: pid)
+        event.setParam(propertySpecifier(Code.soundVolumeProperty), forKeyword: Code.directObject)
+        event.setParam(NSAppleEventDescriptor(int32: Int32(volume)), forKeyword: Code.setDataValue)
+        return event
+    }
+
+    private static func makeGetPropertyEvent(_ property: DescType, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        let event = coreEvent(Code.getData, processIdentifier: pid)
+        event.setParam(propertySpecifier(property), forKeyword: Code.directObject)
+        return event
+    }
+
+    private static func coreEvent(_ eventID: AEEventID, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        NSAppleEventDescriptor.appleEvent(
             withEventClass: Code.coreSuite,
-            eventID: Code.getData,
+            eventID: eventID,
             targetDescriptor: NSAppleEventDescriptor(processIdentifier: pid),
             returnID: AEReturnID(kAutoGenerateReturnID),
             transactionID: AETransactionID(kAnyTransactionID)
         )
-        event.setParam(propertySpecifier(Code.playerStateProperty), forKeyword: Code.directObject)
-        return event
     }
 
     /// A parameterless Spotify suite command such as `pause` or `play`.
@@ -71,6 +95,14 @@ extension SpotifyPlayer {
     static func playerState(fromReply reply: SpotifyReply) -> PlayerState {
         guard let code = reply.directObjectCode else { return .unknown }
         return playerState(fromEnumCode: code)
+    }
+
+    /// Spotify reports one less than the volume it was set to (set 50, read
+    /// 49; measured for 1–99), so readings are corrected. Otherwise every
+    /// fade that restores the volume it read would lower it by one.
+    static func volume(fromReply reply: SpotifyReply) -> Int? {
+        guard let reported = reply.directObjectInteger else { return nil }
+        return (1...99).contains(reported) ? reported + 1 : min(max(reported, 0), 100)
     }
 
     static func playerState(fromEnumCode code: OSType) -> PlayerState {
@@ -119,14 +151,18 @@ extension SpotifyPlayer {
 struct SpotifyReply: Sendable, Equatable {
     /// Enum or type code of the reply's direct object (`----`), if any.
     let directObjectCode: OSType?
+    /// The direct object as a number, if it is one (e.g. the volume).
+    let directObjectInteger: Int?
 
-    init(directObjectCode: OSType?) {
+    init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil) {
         self.directObjectCode = directObjectCode
+        self.directObjectInteger = directObjectInteger
     }
 
     init(_ reply: NSAppleEventDescriptor) {
         guard let direct = reply.paramDescriptor(forKeyword: SpotifyPlayer.Code.directObject) else {
             directObjectCode = nil
+            directObjectInteger = nil
             return
         }
         switch direct.descriptorType {
@@ -134,6 +170,7 @@ struct SpotifyReply: Sendable, Equatable {
         case typeType: directObjectCode = direct.typeCodeValue
         default: directObjectCode = nil
         }
+        directObjectInteger = direct.coerce(toDescriptorType: typeSInt32).map { Int($0.int32Value) }
     }
 }
 

@@ -178,6 +178,18 @@ struct AdvancedSettingsView: View {
                     help: "An extra delay once every other app has stopped."
                 )
                 slider(
+                    "Fade out before pausing",
+                    value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                    format: seconds,
+                    help: "How long the music fades out before it pauses. 0 pauses it at once."
+                )
+                slider(
+                    "Fade in when resuming",
+                    value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                    format: seconds,
+                    help: "How long the music takes to fade back in once it resumes. 0 resumes at full volume."
+                )
+                slider(
                     "Silence threshold",
                     value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
                     format: { "\(Int($0)) dB" },

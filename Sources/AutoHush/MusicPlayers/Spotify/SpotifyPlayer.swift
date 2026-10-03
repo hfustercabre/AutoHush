@@ -14,6 +14,10 @@ actor SpotifyPlayer: MusicPlayer {
 
     nonisolated var bundleID: String { Self.appBundleID }
     nonisolated var name: String { "Spotify" }
+    /// Measured on Spotify 1.3.3 for macOS (Scripts/measure-volume-curve.swift):
+    /// within 2 dB of a cube law from 15 to 90 (50 → −18 dB, 20 → −40 dB);
+    /// 11 is about −54 dB and 10 or less is silent.
+    nonisolated var volumeCurve: VolumeCurve { .cubic }
 
     private let logger = Logger(category: "SpotifyPlayer")
 
@@ -59,6 +63,19 @@ actor SpotifyPlayer: MusicPlayer {
     func play() async throws {
         guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.playerNotRunning }
         _ = try await send({ Self.makeCommandEvent(Code.play, processIdentifier: $0) }, to: pid)
+    }
+
+    func volume() async -> Int? {
+        guard let pid = spotifyProcessIdentifier(),
+              let reply = try? await send(Self.makeGetVolumeEvent(processIdentifier:), to: pid)
+        else { return nil }
+        return Self.volume(fromReply: reply)
+    }
+
+    func setVolume(_ volume: Int) async throws {
+        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.playerNotRunning }
+        let volume = min(max(volume, 0), 100)
+        _ = try await send({ Self.makeSetVolumeEvent(volume, processIdentifier: $0) }, to: pid)
     }
 
     @MainActor

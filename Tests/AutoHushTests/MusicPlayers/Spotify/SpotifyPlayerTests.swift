@@ -55,6 +55,31 @@ struct SpotifyPlayerTests {
         #expect(specifier.forKeyword(fourCharCode("from"))?.descriptorType == fourCharCode("null"))
     }
 
+    @Test("volume is read with core/getd and set with core/setd on property pVol")
+    func volumeEvents() throws {
+        let get = SpotifyPlayer.makeGetVolumeEvent(processIdentifier: pid)
+        #expect(get.eventClass == fourCharCode("core") && get.eventID == fourCharCode("getd"))
+        #expect(get.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("pVol"))
+
+        let set = SpotifyPlayer.makeSetVolumeEvent(42, processIdentifier: pid)
+        #expect(set.eventClass == fourCharCode("core") && set.eventID == fourCharCode("setd"))
+        #expect(set.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("pVol"))
+        #expect(set.paramDescriptor(forKeyword: fourCharCode("data"))?.int32Value == 42)
+    }
+
+    @Test("Spotify's volume reading is corrected for its off-by-one", arguments: [
+        (Int32(49), 50), (Int32(0), 0), (Int32(1), 2), (Int32(99), 100), (Int32(100), 100),
+    ])
+    func volumeReading(reported: Int32, volume: Int) {
+        let answer = SpotifyReply(reply(directObject: NSAppleEventDescriptor(int32: reported)))
+        #expect(SpotifyPlayer.volume(fromReply: answer) == volume)
+    }
+
+    @Test("a reply without a number has no volume")
+    func volumeMissing() {
+        #expect(SpotifyPlayer.volume(fromReply: SpotifyReply(reply())) == nil)
+    }
+
     @Test("events target the given process, never a bundle ID that could launch Spotify")
     func eventsTargetProcessIdentifier() throws {
         let events = [

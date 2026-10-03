@@ -39,6 +39,10 @@ protocol PlaybackArbiting: Actor {
 
 actor PlaybackArbiter: PlaybackArbiting {
     private let player: any MusicPlayer
+    /// Fades the player out before pausing and back in after playing.
+    private let fader: VolumeFader
+    /// True while the music fades out ahead of a pause.
+    private var isFadingOut = false
     private var configuration: AppConfiguration
     private let debounceScheduler: PlaybackArbiterDebounceScheduling
     private let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
@@ -65,11 +69,18 @@ actor PlaybackArbiter: PlaybackArbiting {
         player: any MusicPlayer,
         configuration: AppConfiguration,
         debounceScheduler: PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
+        fadeSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
         autoPauseEnabled: Bool = true,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in }
     ) {
         self.player = player
+        self.fader = VolumeFader(
+            player: player,
+            fadeOut: configuration.fadeOutDuration,
+            fadeIn: configuration.fadeInDuration,
+            sleep: fadeSleep
+        )
         self.configuration = configuration
         self.debounceScheduler = debounceScheduler
         self.autoPauseEnabled = autoPauseEnabled
@@ -90,6 +101,8 @@ actor PlaybackArbiter: PlaybackArbiting {
             activeSources.remove(sourceID)
             logger.debug("[arbiter] -\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
             if activeSources.isEmpty {
+                // Stopped during the fade-out: the music comes back up unpaused.
+                if isFadingOut { await fader.cancel() }
                 scheduleResume(after: configuration.debounceSeconds)
             } else {
                 publishPlaybackState()
@@ -98,8 +111,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Applies new settings; a resume already scheduled keeps its delay.
-    func setConfiguration(_ configuration: AppConfiguration) {
+    func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
+        await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
     }
 
     /// Turns automatic pausing on or off (the menu's "Auto-Pause Music").
@@ -116,6 +130,7 @@ actor PlaybackArbiter: PlaybackArbiting {
             if !activeSources.isEmpty { await pauseMusicIfNeeded() }
         } else {
             cancelPendingResume()
+            if isFadingOut { await fader.cancel() }
             if pausedByUs { await resumeNow() }
         }
         publishPlaybackState()
@@ -183,9 +198,14 @@ actor PlaybackArbiter: PlaybackArbiting {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
-        guard !isShutDown, autoPauseEnabled else { return }
+        guard !isShutDown, autoPauseEnabled, !isFadingOut else { return }
+        isFadingOut = true
+        defer { isFadingOut = false }
         do {
-            try await player.pause()
+            guard try await fader.fadeOutAndPause() else {
+                logger.debug("[arbiter] pause cancelled during the fade-out")
+                return
+            }
             pausedByUs = true
             playerState = .paused
             logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
@@ -237,10 +257,13 @@ actor PlaybackArbiter: PlaybackArbiting {
             return
         }
 
-        cancelPendingResume()
+        // Forget the pending resume without cancelling it: this may be running
+        // inside it, and a cancelled task would rush the fade-in's steps.
+        pendingResumeTask = nil
+        pendingResumeID = nil
         pausedByUs = false
         do {
-            try await player.play()
+            try await fader.playAndFadeIn()
             playerState = .playing
             logger.debug("[arbiter] \(self.player.name, privacy: .public) resumed")
         } catch {

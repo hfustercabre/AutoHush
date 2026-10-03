@@ -9,6 +9,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Fading** (`VolumeFader`): the music fades out over 2 s before pausing
+  and fades back in over 3 s after resuming, by moving the player's own
+  volume logarithmically: a steady rate in decibels, down to 50 dB below the
+  user's volume, in 0.1 s steps. Each player declares how its volume number
+  maps to loudness (`VolumeCurve`); Spotify's is a cube law, measured with the
+  new `Scripts/measure-volume-curve.swift` (half volume ≈ −18 dB; 10 or less is
+  silent). The volume is set back right after pausing,
+  and the user's volume is remembered when a fade starts, so an interrupted
+  fade never leaves it lower. An app that stops during the fade-out leaves
+  the music playing. Works with any `MusicPlayer` that reports its volume
+  (Spotify: `sound volume`, corrected for Spotify reporting one less than it
+  was set to). Both durations are in Settings → Advanced (0–5 s each; 0
+  turns that fade off).
 - **Audio level detection**: other apps are metered through private CoreAudio
   process taps (`ProcessTapLevelMeter`), so only *audible* output counts.
   Spotify now resumes about 2 s after a browser or call app goes silent, instead
