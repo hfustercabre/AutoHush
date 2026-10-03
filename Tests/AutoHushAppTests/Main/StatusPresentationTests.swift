@@ -8,15 +8,15 @@ struct StatusPresentationTests {
 
     // MARK: - States
 
-    @Test("each playback state has its symbol, label and status line", arguments: [
-        (PlaybackState.musicPlaying, "play.circle.fill", "AutoHush: music is playing", "Music is playing"),
-        (.pausedByMonitor, "pause.circle.fill", "AutoHush: music paused", "Music paused — another app is playing"),
-        (.musicIdle, "music.note", "AutoHush: no music playing", "No music playing"),
-        (.playingElsewhere, "hifispeaker.fill", "AutoHush: music is playing on another device",
+    @Test("each playback state has its icon, label and status line", arguments: [
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: music is playing", "Music is playing"),
+        (.pausedByMonitor, .pausedForApp, "AutoHush: music paused", "Music paused — another app is playing"),
+        (.musicIdle, .noMusic, "AutoHush: no music playing", "No music playing"),
+        (.playingElsewhere, .elsewhere, "AutoHush: music is playing on another device",
          "Music is playing on another device"),
     ])
-    func playbackState(state: PlaybackState, symbol: String, label: String, line: String) {
-        #expect(state.presentation == StatePresentation(symbol: symbol, label: label, line: line))
+    func playbackState(state: PlaybackState, icon: MenuBarIcon, label: String, line: String) {
+        #expect(state.presentation == StatePresentation(icon: icon, label: label, line: line))
     }
 
     @Test("an unknown playback state looks like starting up")
@@ -24,17 +24,16 @@ struct StatusPresentationTests {
         #expect(PlaybackState.unknown.presentation == AppHealthState.starting.presentation)
     }
 
-    @Test("each health state has its symbol, label and status line; problems show their message", arguments: [
-        (AppHealthState.starting, "arrow.triangle.2.circlepath", "AutoHush: starting", "Starting services"),
-        (.ready, "speaker.wave.2.fill", "AutoHush: monitoring", "Monitoring media playback"),
-        (.degraded("Spotify is not running"), "exclamationmark.triangle.fill", "AutoHush: degraded",
-         "Spotify is not running"),
-        (.needsPermission("Grant Automation access to control Spotify"), "lock.trianglebadge.exclamationmark.fill",
+    @Test("each health state has its icon, label and status line; problems show their message", arguments: [
+        (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
+        (.ready, .playing, "AutoHush: monitoring", "Monitoring media playback"),
+        (.degraded("Spotify is not running"), .attention, "AutoHush: degraded", "Spotify is not running"),
+        (.needsPermission("Grant Automation access to control Spotify"), .attention,
          "AutoHush: needs permission", "Grant Automation access to control Spotify"),
-        (.failed("Monitor failed hard"), "speaker.slash.fill", "AutoHush: failed", "Monitor failed hard"),
+        (.failed("Monitor failed hard"), .attention, "AutoHush: failed", "Monitor failed hard"),
     ])
-    func healthState(state: AppHealthState, symbol: String, label: String, line: String) {
-        #expect(state.presentation == StatePresentation(symbol: symbol, label: label, line: line))
+    func healthState(state: AppHealthState, icon: MenuBarIcon, label: String, line: String) {
+        #expect(state.presentation == StatePresentation(icon: icon, label: label, line: line))
     }
 
     // MARK: - Menu text for the engine's choices

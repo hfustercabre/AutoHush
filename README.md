@@ -106,7 +106,7 @@ Music paused — Google Chrome is playing
 - **Auto-Pause Music** switches everything on or off. Turning it off brings back music that AutoHush paused.
 - **Turn Off For** pauses AutoHush itself for 15 minutes, an hour, or until 8:00 tomorrow.
 - **Ignored Apps** lists every app you've told to leave your music alone. Click one to undo.
-- The **icon** shows your music's state, and is dimmed while auto-pause is off.
+- The **icon**, sound bars cut out of a rounded square, shows what's happening: bars while your music plays, a dot and a pause sign when AutoHush paused it for another app, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
 
 ### Settings
 
@@ -236,7 +236,7 @@ Sources/
     Main/                AutoHushApplication, AppDelegate (wiring), MonitoringPipeline (builds the
                          engine for each start), AppStatus (what the app shows), StatusPresentation
                          (icons and text for the engine's states and choices), AppHealthState
-    MenuBar/             StatusMenuController
+    MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
                          Views/ (General, Apps, Advanced)
     Updates/             UpdateController, UpdateChecker
