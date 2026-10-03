@@ -9,13 +9,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Ready for translation**: every text AutoHush shows (the menu, Settings,
-  alerts, Diagnostics, VoiceOver labels and the permission prompts) comes
-  from String Catalogs in `Resources/`. AutoHush uses the first of your Mac's
-  preferred languages that it has, and English otherwise; so far it has only
-  English. Each build adds new text from the code to the catalog by itself,
-  as Xcode does, and the engine now hands Diagnostics plain facts that the
-  app words.
+- **Spanish and Catalan**: AutoHush now speaks English, Spanish and
+  Catalan, following your Mac's language: it uses the first of your
+  preferred languages that it has, and English otherwise. Every text it
+  shows (the menu, Settings, alerts, Diagnostics, VoiceOver labels and the
+  permission prompts) comes from String Catalogs in `Resources/`. Each build
+  adds new text from the code to the catalog by itself, as Xcode does, and
+  the engine now hands Diagnostics plain facts that the app words.
 - **A redesigned installer**: the disk image window now uses AutoHush's
   colours and mark, the mounted disk shows the app's icon, and the window
   leaves room for Finder's tab and path bars, so the first-launch note is
