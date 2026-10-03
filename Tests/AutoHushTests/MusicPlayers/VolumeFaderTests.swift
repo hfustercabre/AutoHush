@@ -116,6 +116,34 @@ struct VolumeFaderTests {
         #expect(await player.volumeLevel == 80)
     }
 
+    @Test("pausing without a fade-out mid fade-in still leaves the user's volume")
+    func instantPauseDuringFadeIn() async throws {
+        let player = MockMusicPlayer(state: .paused, volumeCurve: .cubic)
+        await player.setVolumeLevel(70)
+        let gate = StepGate()
+        let fader = makeFader(player, fadeOut: 0, fadeIn: 3, gate: gate)
+        // Another app starts mid fade-in; with no fade-out it pauses at once.
+        await gate.at(step: 6) { _ = try? await fader.fadeOutAndPause() }
+
+        try await fader.playAndFadeIn()
+
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.volumeLevel == 70)
+    }
+
+    @Test("abandoning a fade sets the user's volume back")
+    func abandon() async throws {
+        let player = MockMusicPlayer(state: .playing, volumeCurve: .cubic)
+        await player.setVolumeLevel(80)
+        let gate = StepGate()
+        let fader = makeFader(player, gate: gate)
+        await gate.at(step: 5) { await fader.abandon() }
+
+        #expect(try await !fader.fadeOutAndPause())
+        #expect(await player.volumeLevel == 80)
+        #expect(await gate.steps == 5) // set back at once, not faded back up
+    }
+
     @Test("a fade-out that interrupts a fade-in restores the user's volume, not the partly faded one")
     func interruptedFadeIn() async throws {
         let player = MockMusicPlayer(state: .paused)

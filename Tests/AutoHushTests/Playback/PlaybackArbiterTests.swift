@@ -255,6 +255,47 @@ struct PlaybackArbiterTests {
         #expect(await spotify.volumeLevel == 60)
     }
 
+    @Test("an app that starts while the music comes back up after a cancelled fade-out still pauses it")
+    func restartDuringComeback() async {
+        let spotify = MockMusicPlayer()
+        await spotify.setVolumeLevel(60)
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in try? await Task.sleep(for: .milliseconds(5)) })
+
+        let first = Task { await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) }
+        await waitUntil { await !spotify.volumeHistory.isEmpty }
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false) // music comes back up
+        await waitUntil { await (spotify.volumeLevel ?? 0) > 20 }
+        await arbiter.handleSourceChange(sourceID: "com.google.Chrome", isPlaying: true) // and another app starts
+        await first.value
+
+        await waitUntil { await spotify.pauseCallCount == 1 }
+        #expect(await spotify.pauseCallCount == 1)
+    }
+
+    @Test("music the user pauses during the fade-out is not taken over, and not resumed later")
+    func userPausesDuringFadeOut() async {
+        let spotify = MockMusicPlayer()
+        await spotify.setVolumeLevel(60)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(),
+                                      debounceScheduler: scheduler,
+                                      fadeSleep: { _ in try? await Task.sleep(for: .milliseconds(5)) })
+
+        let pausing = Task { await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) }
+        await waitUntil { await !spotify.volumeHistory.isEmpty }
+        await spotify.overrideState(.paused) // the user pauses Spotify mid-fade
+        await pausing.value
+
+        #expect(await spotify.pauseCallCount == 0)
+        #expect(await spotify.volumeLevel == 60)
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await scheduler.completeNext()
+        for _ in 0..<20 { await Task.yield() }
+        #expect(await spotify.playCallCount == 0)
+    }
+
     @Test("does not resume Spotify that it did not pause")
     func doesNotResumeIfNotPausedByUs() async {
         let spotify = MockMusicPlayer(state: .paused)

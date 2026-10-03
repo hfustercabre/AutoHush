@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import AutoHush
@@ -191,6 +192,13 @@ struct AppDelegateTests {
         #expect(scratch.preferences.ignoredApps.isEmpty)
         #expect(scratch.preferences.seenApps.isEmpty)
         #expect(sut.settingsModel.apps.isEmpty)
+    }
+
+    @MainActor
+    @Test("with nothing monitored, quitting doesn't wait")
+    func quitsAtOnceWithoutPipeline() {
+        let (sut, _) = makeSUT()
+        #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
     }
 
     @Test("startup retries only while Spotify is not ready yet")
