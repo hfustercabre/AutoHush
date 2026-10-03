@@ -11,9 +11,9 @@ struct TimingSettings: Equatable, Sendable {
     /// Peak level (dBFS) below which an app counts as silent.
     var silenceThresholdDB: Double = -60
     /// Seconds the music fades out before pausing.
-    var fadeOutDuration: TimeInterval = 2
+    var fadeOutDuration: TimeInterval = 1
     /// Seconds the music fades back in after resuming.
-    var fadeInDuration: TimeInterval = 3
+    var fadeInDuration: TimeInterval = 2
 
     static let defaults = TimingSettings()
 
