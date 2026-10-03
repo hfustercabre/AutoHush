@@ -649,15 +649,76 @@ struct PlaybackArbiterTests {
         #expect(await spotify.playCallCount == 1)
     }
 
-    @Test("turning auto-pause back on pauses Spotify if an app is already playing")
+    @Test("turning auto-pause back on pauses Spotify for an app still playing once it is measured again")
     func turningOnPausesForActiveSource() async {
         let spotify = MockMusicPlayer(state: .playing)
-        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: spotify, configuration: .testing, debounceScheduler: scheduler, autoPauseEnabled: false
+        )
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.setAutoPauseEnabled(true)
-        await arbiter.waitForPause()
+        #expect(await spotify.pauseCallCount == 0) // not until VLC has been measured again
+        #expect(scheduler.scheduledDelays == [AppConfiguration.testing.sourceStopGrace + PlaybackArbiter.remeasureMargin])
 
+        await scheduler.completeNext()
+        await waitUntil { await spotify.pauseCallCount == 1 }
+        #expect(await spotify.pauseCallCount == 1)
+    }
+
+    @Test("turning auto-pause back on doesn't pause Spotify for an app found silent meanwhile")
+    func turningOnIgnoresAppFoundSilent() async {
+        let spotify = MockMusicPlayer(state: .playing)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: spotify, configuration: .testing, debounceScheduler: scheduler, autoPauseEnabled: false
+        )
+
+        // While auto-pause is off nothing is measured: a muted call with its
+        // output open counts as playing until the monitor measures it again.
+        await arbiter.sourceChanged("us.zoom.xos", playing: true)
+        await arbiter.setAutoPauseEnabled(true) // e.g. a snooze ends
+        await arbiter.sourceChanged("us.zoom.xos", playing: false)
+        await scheduler.completeNext()
+        await settle()
+
+        #expect(await spotify.pauseCallCount == 0)
+        #expect(await spotify.playCallCount == 0)
+    }
+
+    @Test("turning auto-pause off again calls off the pause it was waiting to make")
+    func turningOffCancelsPendingPause() async {
+        let spotify = MockMusicPlayer(state: .playing)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: spotify, configuration: .testing, debounceScheduler: scheduler, autoPauseEnabled: false
+        )
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.setAutoPauseEnabled(true)
+        await arbiter.setAutoPauseEnabled(false)
+        await scheduler.completeNext()
+        await settle()
+
+        #expect(await spotify.pauseCallCount == 0)
+    }
+
+    @Test("an app that starts while auto-pause waits to re-measure pauses Spotify at once")
+    func newSourceDuringRemeasurePausesAtOnce() async {
+        let spotify = MockMusicPlayer(state: .playing)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: spotify, configuration: .testing, debounceScheduler: scheduler, autoPauseEnabled: false
+        )
+
+        await arbiter.sourceChanged("us.zoom.xos", playing: true)
+        await arbiter.setAutoPauseEnabled(true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await spotify.pauseCallCount == 1)
+
+        await scheduler.completeNext() // the wait it called off
+        await settle()
         #expect(await spotify.pauseCallCount == 1)
     }
 

@@ -36,12 +36,11 @@ struct AutoPauseTests {
         #expect(setting.clearingExpiredSnooze(at: date(2, 14)) == AutoPauseSetting(isEnabled: true, snoozedUntil: nil))
     }
 
-    @Test("snooze end dates")
+    @Test("snooze end dates, in menu order")
     func endDates() {
         let now = date(2, 23, 30)
-        #expect(AutoPauseSnooze.fifteenMinutes.endDate(from: now, calendar: calendar) == date(2, 23, 45))
-        #expect(AutoPauseSnooze.oneHour.endDate(from: now, calendar: calendar) == date(3, 0, 30))
-        #expect(AutoPauseSnooze.untilTomorrow.endDate(from: now, calendar: calendar) == date(3, 8))
-        #expect(AutoPauseSnooze.untilTomorrow.endDate(from: date(3, 1), calendar: calendar) == date(4, 8))
+        #expect(AutoPauseSnooze.allCases.map { $0.endDate(from: now) } == [
+            date(2, 23, 35), date(2, 23, 45), date(3, 0), date(3, 0, 30), date(3, 23, 30),
+        ])
     }
 }

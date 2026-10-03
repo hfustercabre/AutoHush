@@ -115,12 +115,16 @@ extension AutoPauseSnooze {
     /// The choice in the menu's "Turn Off For" submenu.
     var title: String {
         switch self {
+        case .fiveMinutes:
+            return String(localized: "5 Minutes", comment: "In the menu: turn auto-pause off for 5 minutes")
         case .fifteenMinutes:
             return String(localized: "15 Minutes", comment: "In the menu: turn auto-pause off for 15 minutes")
+        case .thirtyMinutes:
+            return String(localized: "30 Minutes", comment: "In the menu: turn auto-pause off for 30 minutes")
         case .oneHour:
             return String(localized: "1 Hour", comment: "In the menu: turn auto-pause off for 1 hour")
-        case .untilTomorrow:
-            return String(localized: "Until Tomorrow", comment: "In the menu: turn auto-pause off until tomorrow at 8:00")
+        case .twentyFourHours:
+            return String(localized: "24 Hours", comment: "In the menu: turn auto-pause off for 24 hours")
         }
     }
 

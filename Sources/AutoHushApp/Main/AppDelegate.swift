@@ -213,7 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,
-    /// passes it to the pipeline and schedules the end of a snooze.
+    /// passes it to the pipeline and schedules its next change.
     private func applyAutoPause(now: Date = Date()) {
         let setting = preferences.autoPause.clearingExpiredSnooze(at: now)
         if setting != preferences.autoPause { preferences.autoPause = setting }
@@ -221,16 +221,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.autoPause = AppStatus.AutoPause(setting, now: now)
         settingsModel.isAutoPauseOn = status.autoPause == .on
         settingsModel.autoPauseNote = status.autoPause.settingsNote
-        scheduleSnoozeEnd(at: setting.isEnabled ? setting.snoozedUntil : nil)
+        let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil
+        scheduleAutoPauseUpdate(at: snoozeEnd.map { AppStatus.AutoPause.nextChange(snoozedUntil: $0, now: now) })
         pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
     }
 
-    /// Applies auto-pause again when the snooze ends (`nil`: no snooze).
-    private func scheduleSnoozeEnd(at end: Date?) {
+    /// Applies auto-pause again at `date`: when the snooze ends, or at midnight
+    /// so the menu's "until tomorrow 8:00" becomes "until 8:00" (`nil`: no snooze).
+    private func scheduleAutoPauseUpdate(at date: Date?) {
         snoozeTimer?.invalidate()
         snoozeTimer = nil
-        guard let end else { return }
-        let timer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
+        guard let date else { return }
+        let timer = Timer(fire: date, interval: 0, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.applyAutoPause() }
         }
         RunLoop.main.add(timer, forMode: .common)

@@ -58,7 +58,7 @@ struct StatusMenuControllerTests {
         #expect(sut.menu.items.first?.isEnabled == false)
         #expect(try item("Auto-Pause Music", in: sut.menu).state == .on)
         #expect(try item("Turn Off For", in: sut.menu).submenu?.items.map(\.title)
-            == ["15 Minutes", "1 Hour", "Until Tomorrow"])
+            == ["5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "24 Hours"])
         #expect(sut.menu.items.contains { $0.title == "Settings…" })
         #expect(sut.menu.items.contains { $0.title == "Quit AutoHush" })
         #expect(!sut.menu.items.contains { $0.title == "Retry" || $0.title == "Ignored Apps" })
@@ -168,7 +168,7 @@ struct StatusMenuControllerTests {
         sut.status = status
 
         try perform(try item("Auto-Pause Music", in: sut.menu))
-        try perform(try #require(try item("Turn Off For", in: sut.menu).submenu?.items[1]))
+        try perform(try #require(try item("Turn Off For", in: sut.menu).submenu?.items[3]))
         try perform(try #require(try item("Google Chrome", in: sut.menu).submenu?.items.first))
         try perform(try item("Settings…", in: sut.menu))
         try perform(try item("Diagnostics…", in: sut.menu))

@@ -24,22 +24,27 @@ package struct AutoPauseSetting: Equatable, Sendable {
     }
 }
 
-/// The "Turn Off For" choices of the menu (the app has their text).
+/// The "Turn Off For" choices of the menu, in menu order (the app has their text).
 package enum AutoPauseSnooze: CaseIterable, Sendable {
+    case fiveMinutes
     case fifteenMinutes
+    case thirtyMinutes
     case oneHour
-    case untilTomorrow
+    case twentyFourHours
 
-    /// When the snooze ends; "until tomorrow" means tomorrow at 8:00.
-    package func endDate(from now: Date, calendar: Calendar = .current) -> Date {
+    /// How long auto-pause stays off.
+    package var duration: TimeInterval {
         switch self {
-        case .fifteenMinutes:
-            return now.addingTimeInterval(15 * 60)
-        case .oneHour:
-            return now.addingTimeInterval(60 * 60)
-        case .untilTomorrow:
-            let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-            return calendar.date(bySettingHour: 8, minute: 0, second: 0, of: tomorrow)!
+        case .fiveMinutes:     return 5 * 60
+        case .fifteenMinutes:  return 15 * 60
+        case .thirtyMinutes:   return 30 * 60
+        case .oneHour:         return 60 * 60
+        case .twentyFourHours: return 24 * 60 * 60
         }
+    }
+
+    /// When the snooze ends.
+    package func endDate(from now: Date) -> Date {
+        now.addingTimeInterval(duration)
     }
 }

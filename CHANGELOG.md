@@ -9,6 +9,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Turn Off For** now offers 5, 15 and 30 minutes, 1 hour and 24 hours.
+  24 hours replaces Until Tomorrow, which ended at 8:00 the next day: up to
+  31 hours when chosen after midnight.
 - **Eleven languages**: AutoHush now speaks English, Spanish (Spain and
   Latin America), Catalan, German, French (France and Canada), Italian,
   Portuguese (Brazil and Portugal), Japanese, Korean and Chinese (Simplified
@@ -87,6 +90,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 - `measure-volume-curve` no longer crashes when the music goes silent during
   a measurement, and gives the player its volume and play state back when it
   stops early.
+- Turning auto-pause back on (or a snooze ending) no longer pauses the music
+  for a moment because of an app that only has its sound output open, such as
+  a muted call or a paused video. While auto-pause is off nothing is
+  measured, so such apps count as playing; AutoHush now measures them again
+  before pausing, which takes about 2.5 s.
+- A snooze that ends the next day no longer reads "until tomorrow 22:00"
+  after midnight: the menu and Settings now say "until 22:00".
+- Clicking Check Now twice, or checking while the automatic check runs, no
+  longer asks GitHub twice and shows the answer twice.
 
 ## [0.1.0] — 2026-10-03
 

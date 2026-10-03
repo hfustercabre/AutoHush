@@ -89,7 +89,7 @@ Music paused — Google Chrome is playing
 [icon] VLC   Ignored — music keeps playing
 ───────────────
 ✓ Auto-Pause Music
-  Turn Off For                      ▸ 15 Minutes · 1 Hour · Until Tomorrow
+  Turn Off For                      ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
   Ignored Apps                      ▸ click an app to stop ignoring it
 ───────────────
 ⚠ Allow Audio Recording Access…        (only when something needs fixing)
@@ -104,7 +104,7 @@ Music paused — Google Chrome is playing
 - **The first line** tells you what's happening, for example "Music is playing", "Music paused — Google Chrome is playing" or "Music is playing on another device".
 - **Playing apps** are listed with their icons. Open an app's submenu and choose **Never Pause Music for …** if that app shouldn't interrupt your music, for example a game whose soundtrack you don't mind.
 - **Auto-Pause Music** switches everything on or off. Turning it off brings back music that AutoHush paused.
-- **Turn Off For** pauses AutoHush itself for 15 minutes, an hour, or until 8:00 tomorrow.
+- **Turn Off For** pauses AutoHush itself for 5, 15 or 30 minutes, an hour, or 24 hours.
 - **Ignored Apps** lists every app you've told to leave your music alone. Click one to undo.
 - The **icon**, sound bars cut out of a rounded square, shows what's happening: bars while your music plays, a dot and a pause sign when AutoHush paused it for another app, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
 

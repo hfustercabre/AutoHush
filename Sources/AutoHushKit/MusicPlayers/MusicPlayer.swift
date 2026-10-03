@@ -12,7 +12,7 @@ package protocol MusicPlayer: Sendable {
     var name: String { get }
 
     /// Asks for (if needed) and checks permission to control the player.
-    /// Throws an `MusicPlayerError` when the player can't be controlled.
+    /// Throws a `MusicPlayerError` when the player can't be controlled.
     func verifyControlAccess() async throws
     /// The player's live state; `.unknown` when it does not answer.
     func playerState() async -> PlayerState
