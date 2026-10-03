@@ -5,11 +5,13 @@ import Testing
 @Suite("MenuBarIcon")
 @MainActor
 struct MenuBarIconTests {
-    /// Draws an icon at 2× (36 × 36 pixels), optionally over a background colour.
+    /// Draws an icon at 2×, optionally over a background colour.
     private func render(_ icon: MenuBarIcon, over background: NSColor? = nil) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil, pixelsWide: 36, pixelsHigh: 36, bitsPerSample: 8, samplesPerPixel: 4,
-            hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(MenuBarIcon.size.width * 2), pixelsHigh: Int(MenuBarIcon.size.height * 2),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         )!
         rep.size = MenuBarIcon.size
         NSGraphicsContext.saveGraphicsState()
@@ -23,7 +25,10 @@ struct MenuBarIconTests {
         return rep
     }
 
-    /// The colour at a point of the 18 × 18 pt grid (y pointing down).
+    /// The middle of the image, where the tall middle bar of `.playing` is.
+    private let center = MenuBarIcon.size.width / 2
+
+    /// The colour at a point of the image, in points (y pointing down).
     private func color(_ rep: NSBitmapImageRep, at x: CGFloat, _ y: CGFloat) -> NSColor {
         rep.colorAt(x: Int(x * 2), y: Int(y * 2))!.usingColorSpace(.deviceRGB)!
     }
@@ -42,14 +47,14 @@ struct MenuBarIconTests {
     func cutOutOfTile() {
         let rep = render(.playing)
         #expect(color(rep, at: 3, 3).alphaComponent > 0.9)   // the tile
-        #expect(color(rep, at: 9, 9).alphaComponent < 0.1)   // inside the middle bar
+        #expect(color(rep, at: center, center).alphaComponent < 0.1) // inside the middle bar
         #expect(color(rep, at: 0.4, 0.4).alphaComponent < 0.1) // outside the rounded corner
     }
 
     @Test("the cut-outs show what is behind the icon, rather than punching through it")
     func cutOutsKeepTheBackground() {
         let rep = render(.playing, over: .red)
-        let inBar = color(rep, at: 9, 9)
+        let inBar = color(rep, at: center, center)
         #expect(inBar.redComponent > 0.9 && inBar.greenComponent < 0.1)
     }
 
