@@ -116,6 +116,10 @@ Music paused — Google Chrome is playing
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped (2 s), an extra wait before resuming (0.2 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
+### Language
+
+AutoHush speaks English, Spanish and Catalan. It uses the first of your Mac's preferred languages that it has (System Settings → General → Language & Region), and English otherwise. To give AutoHush a language of its own, add it to the Applications list in that same pane.
+
 ## The purple dot and AntiDot mode
 
 To hear whether another app is *really* playing, AutoHush has to listen to its sound level. Whenever an app does that, macOS shows a **purple dot** in the menu bar. It's a privacy feature that no app can hide, and that's a good thing.
@@ -278,7 +282,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon, 
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
-- **Text people read** lives in the app, never in the engine: the text for the engine's states and choices is mostly in `Main/StatusPresentation.swift`, and Diagnostics gets plain facts from the engine (`ActiveAudioReport`) that the app words. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Languages](#languages)). Logs stay in English.
+- **Text people read** lives in the app, never in the engine: the text for the engine's states and choices is mostly in `Main/StatusPresentation.swift`, and Diagnostics gets plain facts from the engine (`ActiveAudioReport`) that the app words. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
 - **`General/`** folders stay small: only helpers several parts of a module need.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 - **Tests** mirror their module's folders; `AutoHushAppTests/Localization/` checks the String Catalogs.
@@ -306,13 +310,13 @@ The app icon is `Resources/AutoHush.icon`, made of one layer (`Assets/bars.svg`)
 
 `measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
 
-### Languages
+### Translations
 
-AutoHush shows the first of the Mac's preferred languages (System Settings → General → Language & Region) that it has, and English otherwise. The Applications list in that pane can also give AutoHush a language of its own. So far AutoHush has only English.
+AutoHush is translated into Spanish and Catalan; English is the source language and the fallback (see [Language](#language) for how macOS picks one).
 
 - **Where the text lives:** `Resources/Localizable.xcstrings`, a String Catalog with all of the app's text, keyed by the English text; and `Resources/InfoPlist.xcstrings`, with the permission prompts and the copyright line from `Info.plist`.
 - **New text** needs no extra step: write it as `String(localized: "…", comment: "…")` or as a SwiftUI text. While building, the compiler lists every such string; `build-app.sh` adds new ones to `Localizable.xcstrings` and marks those no longer used as stale, as Xcode does, then compiles each language into the app (`<language>.lproj`).
-- **Adding a language:** open both catalogs in Xcode, add the language and translate (or edit the JSON), then build. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`) and that `InfoPlist.xcstrings` matches `Info.plist`.
+- **Adding a language:** open both catalogs in Xcode, add the language and translate (or edit the JSON), then build. Use the words macOS itself uses in that language (Ajustes, Configuració…), and keep each `comment` in mind: it says where the text appears. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`) and that `InfoPlist.xcstrings` matches `Info.plist`.
 - **Trying a language:** quit AutoHush, then start it with `AutoHush.app/Contents/MacOS/AutoHush -AppleLanguages '(es)'`.
 - **Not translated:** logs, the measuring tool and the disk image's background stay in English.
 

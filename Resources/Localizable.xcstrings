@@ -4,9 +4,21 @@
     "%@ (%@)" : {
       "comment" : "Diagnostics: an app's name, then its bundle ID",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@ (%2$@)"
           }
         }
@@ -15,10 +27,22 @@
     "%@ and %@ are playing" : {
       "comment" : "Completes “Music paused — %@”; two apps",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sonen %1$@ i %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ and %2$@ are playing"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suenan %1$@ y %2$@"
           }
         }
       }
@@ -26,10 +50,22 @@
     "%@ and %lld other apps are playing" : {
       "comment" : "Completes “Music paused — %@”; an app, then how many others (2 or more)",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sonen %1$@ i %2$lld apps més"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ and %2$lld other apps are playing"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suenan %1$@ y %2$lld apps más"
           }
         }
       }
@@ -37,32 +73,112 @@
     "%@ control error: %@" : {
       "comment" : "Status line; the music player, then the error it reported",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error en controlar %1$@: %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ control error: %2$@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error al controlar %1$@: %2$@"
+          }
         }
       }
     },
     "%@ is not responding" : {
-      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+      "comment" : "Status line; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no respon"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no responde"
+          }
+        }
+      }
     },
     "%@ is not running" : {
-      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+      "comment" : "Status line; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no s'està executant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se está ejecutando"
+          }
+        }
+      }
     },
     "%@ is playing" : {
-      "comment" : "Completes “Music paused — %@”; %@ is an app"
+      "comment" : "Completes “Music paused — %@”; %@ is an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sona %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suena %@"
+          }
+        }
+      }
     },
     "%@ s" : {
-      "comment" : "A duration in seconds"
+      "comment" : "A duration in seconds",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
+          }
+        }
+      }
     },
     "%@ — %@" : {
       "comment" : "Diagnostics: an app, then how AutoHush judges it",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "%1$@ — %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@ — %2$@"
           }
         }
@@ -71,411 +187,2196 @@
     "%@ — %@ (%@)" : {
       "comment" : "Diagnostics: an app, how AutoHush judges it, and what that rests on",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@ — %2$@ (%3$@)"
           }
         }
       }
     },
     "%@ — AntiDot mode" : {
-      "comment" : "Diagnostics: the detection in effect, then that AntiDot mode is on"
+      "comment" : "Diagnostics: the detection in effect, then that AntiDot mode is on",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — mode AntiDot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — modo AntiDot"
+          }
+        }
+      }
     },
     "%lld dB" : {
-      "comment" : "A sound level in decibels"
+      "comment" : "A sound level in decibels",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        }
+      }
     },
     "%lld dBFS" : {
-      "comment" : "Diagnostics: an app's loudest level, in decibels"
+      "comment" : "Diagnostics: an app's loudest level, in decibels",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        }
+      }
     },
     "1 Hour" : {
-      "comment" : "In the menu: turn auto-pause off for 1 hour"
+      "comment" : "In the menu: turn auto-pause off for 1 hour",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 hora"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 hora"
+          }
+        }
+      }
     },
     "15 Minutes" : {
-      "comment" : "In the menu: turn auto-pause off for 15 minutes"
+      "comment" : "In the menu: turn auto-pause off for 15 minutes",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minuts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutos"
+          }
+        }
+      }
     },
     "About AutoHush" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre AutoHush"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de AutoHush"
+          }
+        }
+      }
     },
     "Advanced" : {
-      "comment" : "Settings tab"
+      "comment" : "Settings tab",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avançat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanzado"
+          }
+        }
+      }
     },
     "Allow %@ Automation Access…" : {
-      "comment" : "Menu item; %@ is the music player, e.g. Spotify"
+      "comment" : "Menu item; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet l'accés d'Automatització a %@…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir el acceso de Automatización a %@…"
+          }
+        }
+      }
     },
     "Allow Audio Recording Access…" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet l'accés a la gravació d'àudio…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir el acceso a la grabación de audio…"
+          }
+        }
+      }
     },
     "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una app compta com a reproduint mentre indica a macOS que reprodueix, i com a en pausa tan bon punt deixa de fer-ho, encara que l'àudio continuï obert. Les apps que mai ho indiquen a macOS compten mentre tenen l'àudio obert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto."
+          }
+        }
+      }
     },
     "An extra delay once every other app has stopped." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un retard addicional quan totes les altres apps s'han aturat."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un retardo adicional cuando todas las demás apps se han detenido."
+          }
+        }
+      }
     },
     "AntiDot mode" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode AntiDot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo AntiDot"
+          }
+        }
+      }
     },
     "Any app with its audio open counts as playing, even when paused." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualsevol app amb l'àudio obert compta com a reproduint, encara que estigui en pausa."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa."
+          }
+        }
+      }
     },
     "Apps" : {
-      "comment" : "Settings tab: which apps pause the music"
+      "comment" : "Settings tab: which apps pause the music",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        }
+      }
     },
     "Apps appear here once they have played audio." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps apareixen aquí quan han reproduït àudio."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las apps aparecen aquí cuando han reproducido audio."
+          }
+        }
+      }
     },
     "Auto-Pause Music" : {
-      "comment" : "Menu item and Settings switch"
+      "comment" : "Menu item and Settings switch",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posa la música en pausa automàticament"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar la música automáticamente"
+          }
+        }
+      }
     },
     "Auto-pause is off" : {
-      "comment" : "Status line at the top of the menu"
+      "comment" : "Status line at the top of the menu",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automàtica està desactivada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automática está desactivada"
+          }
+        }
+      }
     },
     "Auto-pause is off %@" : {
-      "comment" : "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”"
+      "comment" : "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automàtica està desactivada %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automática está desactivada %@"
+          }
+        }
+      }
     },
     "Auto-pause: off" : {
-      "comment" : "Diagnostics"
+      "comment" : "Diagnostics",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automàtica: desactivada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desactivada"
+          }
+        }
+      }
     },
     "Auto-pause: off %@" : {
-      "comment" : "Diagnostics; %@ says until when, e.g. “until 15:30”"
+      "comment" : "Diagnostics; %@ says until when, e.g. “until 15:30”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automàtica: desactivada %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desactivada %@"
+          }
+        }
+      }
     },
     "Auto-pause: on" : {
-      "comment" : "Diagnostics"
+      "comment" : "Diagnostics",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automàtica: activada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: activada"
+          }
+        }
+      }
     },
     "AutoHush %@ Is Available" : {
-      "comment" : "Alert title; %@ is the new version number"
+      "comment" : "Alert title; %@ is the new version number",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush %@ està disponible"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ está disponible"
+          }
+        }
+      }
     },
     "AutoHush %@ is up to date." : {
-      "comment" : "Update status in Settings; %@ is a version number"
+      "comment" : "Update status in Settings; %@ is a version number",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush %@ està actualitzat."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ está actualizado."
+          }
+        }
+      }
     },
     "AutoHush Diagnostics" : {
-      "comment" : "Title of the Diagnostics alert"
+      "comment" : "Title of the Diagnostics alert",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnòstic de l'AutoHush"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico de AutoHush"
+          }
+        }
+      }
     },
     "AutoHush Is Up to Date" : {
-      "comment" : "Alert title"
+      "comment" : "Alert title",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush està actualitzat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush está actualizado"
+          }
+        }
+      }
     },
     "AutoHush: degraded" : {
-      "comment" : "VoiceOver label of the menu bar icon: something keeps AutoHush from working"
+      "comment" : "VoiceOver label of the menu bar icon: something keeps AutoHush from working",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: funcionament limitat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: funcionamiento limitado"
+          }
+        }
+      }
     },
     "AutoHush: failed" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: error"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: error"
+          }
+        }
+      }
     },
     "AutoHush: monitoring" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: supervisant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: supervisando"
+          }
+        }
+      }
     },
     "AutoHush: music is playing" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: sona música"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: suena música"
+          }
+        }
+      }
     },
     "AutoHush: music is playing on another device" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: la música sona en un altre dispositiu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: la música suena en otro dispositivo"
+          }
+        }
+      }
     },
     "AutoHush: music paused" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música en pausa"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música en pausa"
+          }
+        }
+      }
     },
     "AutoHush: needs permission" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: necessita permís"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: necesita permiso"
+          }
+        }
+      }
     },
     "AutoHush: no music playing" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: no sona música"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: no suena música"
+          }
+        }
+      }
     },
     "AutoHush: starting" : {
-      "comment" : "VoiceOver label of the menu bar icon"
+      "comment" : "VoiceOver label of the menu bar icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: s'està iniciant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: iniciándose"
+          }
+        }
+      }
     },
     "Check Now" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprova-ho ara"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar ahora"
+          }
+        }
+      }
     },
     "Check for Updates…" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprova si hi ha actualitzacions…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones…"
+          }
+        }
+      }
     },
     "Check for updates automatically" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprova automàticament si hi ha actualitzacions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones automáticamente"
+          }
+        }
+      }
     },
     "Checking…" : {
-      "comment" : "Update status in Settings: a check is running"
+      "comment" : "Update status in Settings: a check is running",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'està comprovant…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando…"
+          }
+        }
+      }
     },
     "Choose an App to Ignore" : {
-      "comment" : "Title of the panel that picks an app"
+      "comment" : "Title of the panel that picks an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tria una app per ignorar-la"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una app para ignorarla"
+          }
+        }
+      }
     },
     "Choose which apps pause your music in the Apps tab." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tria quines apps posen la música en pausa a la pestanya Apps."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige qué apps pausan tu música en la pestaña Apps."
+          }
+        }
+      }
     },
     "Click an app to stop ignoring it" : {
-      "comment" : "Hint atop the Ignored Apps submenu"
+      "comment" : "Hint atop the Ignored Apps submenu",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fes clic en una app per deixar d'ignorar-la"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en una app para dejar de ignorarla"
+          }
+        }
+      }
     },
     "Could not change the login item: %@" : {
-      "comment" : "Settings, under Launch at login; %@ is the error macOS reported"
+      "comment" : "Settings, under Launch at login; %@ is the error macOS reported",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut canviar l'ítem d'inici: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido cambiar el ítem de inicio: %@"
+          }
+        }
+      }
     },
     "Couldn't Check for Updates" : {
-      "comment" : "Alert title"
+      "comment" : "Alert title",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut comprovar si hi ha actualitzacions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se han podido buscar actualizaciones"
+          }
+        }
+      }
     },
     "Couldn't check for updates." : {
-      "comment" : "Update status in Settings"
+      "comment" : "Update status in Settings",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut comprovar si hi ha actualitzacions."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se han podido buscar actualizaciones."
+          }
+        }
+      }
     },
     "Detect playing apps by" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecta les apps que sonen segons"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detectar las apps que suenan según"
+          }
+        }
+      }
     },
     "Detection: audio levels" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció: nivells d'àudio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: niveles de audio"
+          }
+        }
+      }
     },
     "Detection: open audio streams (no audio level access)" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció: fluxos d'àudio oberts (sense accés als nivells d'àudio)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: flujos de audio abiertos (sin acceso a los niveles de audio)"
+          }
+        }
+      }
     },
     "Detection: open audio streams (verifying levels)" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció: fluxos d'àudio oberts (verificant els nivells)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: flujos de audio abiertos (verificando niveles)"
+          }
+        }
+      }
     },
     "Detection: open audio streams only" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció: només fluxos d'àudio oberts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: solo flujos de audio abiertos"
+          }
+        }
+      }
     },
     "Detection: what apps tell macOS" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció: el que les apps indiquen a macOS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: lo que las apps indican a macOS"
+          }
+        }
+      }
     },
     "Diagnostics…" : {
-      "comment" : "Menu item, shown while ⌥ is held"
+      "comment" : "Menu item, shown while ⌥ is held",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnòstic…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico…"
+          }
+        }
+      }
     },
     "Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'eliminaran totes les apps, i les que vas desactivar tornaran a posar la música en pausa. Les apps reapareixen a mesura que reprodueixen àudio."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se eliminarán todas las apps, y las que desactivaste volverán a pausar tu música. Las apps reaparecen a medida que reproducen audio."
+          }
+        }
+      }
     },
     "Fade in when resuming" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparició gradual en reprendre"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundido de entrada al reanudar"
+          }
+        }
+      }
     },
     "Fade out before pausing" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esvaïment abans de posar en pausa"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundido de salida antes de pausar"
+          }
+        }
+      }
     },
     "General" : {
-      "comment" : "Settings tab"
+      "comment" : "Settings tab",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        }
+      }
     },
     "GitHub answered with HTTP status %lld." : {
-      "comment" : "Update check error; %lld is an HTTP status code"
+      "comment" : "Update check error; %lld is an HTTP status code",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub ha respost amb el codi HTTP %lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub ha respondido con el código HTTP %lld."
+          }
+        }
+      }
     },
     "GitHub's release information could not be read." : {
-      "comment" : "Update check error"
+      "comment" : "Update check error",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut llegir la informació de la versió a GitHub."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido leer la información de la versión en GitHub."
+          }
+        }
+      }
     },
     "Grant Automation access to control %@" : {
-      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+      "comment" : "Status line; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concedeix l'accés d'Automatització per controlar %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concede el acceso de Automatización para controlar %@"
+          }
+        }
+      }
     },
     "Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amaga l'indicador lila de gravació perquè no mesura mai el so. La detecció és menys precisa: algunes apps en pausa poden mantenir la música en pausa."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculta el indicador morado de grabación porque nunca mide el sonido. La detección es menos precisa: algunas apps en pausa pueden mantener tu música en pausa."
+          }
+        }
+      }
     },
     "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quant de temps s'ha de sentir una altra app. Filtra els sons breus de les mateixes apps; els sons de notificació del sistema s'ignoren sempre."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tiempo debe oírse otra app. Filtra los sonidos breves de las propias apps; los sonidos de notificación del sistema se ignoran siempre."
+          }
+        }
+      }
     },
     "How long another app must be silent. Bridges gaps between tracks and videos." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quant de temps ha d'estar en silenci una altra app. Salva les pauses entre cançons i vídeos."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tiempo debe estar en silencio otra app. Salva las pausas entre canciones y vídeos."
+          }
+        }
+      }
     },
     "How long the music fades out before it pauses. 0 pauses it at once." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quant triga la música a esvair-se abans de posar-se en pausa. Amb 0, es posa en pausa a l'instant."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tarda la música en desvanecerse antes de pausarse. Con 0 se pausa al instante."
+          }
+        }
+      }
     },
     "How long the music takes to fade back in once it resumes. 0 resumes at full volume." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quant triga la música a recuperar el volum quan es reprèn. Amb 0, es reprèn a tot volum."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tarda la música en recuperar el volumen al reanudarse. Con 0 se reanuda a todo volumen."
+          }
+        }
+      }
     },
     "Ignore" : {
-      "comment" : "Button of the panel that picks an app to ignore"
+      "comment" : "Button of the panel that picks an app to ignore",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignora"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar"
+          }
+        }
+      }
     },
     "Ignore Another App…" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignora una altra app…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar otra app…"
+          }
+        }
+      }
     },
     "Ignored Apps" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorades"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas"
+          }
+        }
+      }
     },
     "Ignored apps: %@" : {
-      "comment" : "Diagnostics; %@ lists app names"
+      "comment" : "Diagnostics; %@ lists app names",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorades: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: %@"
+          }
+        }
+      }
     },
     "Ignored apps: none" : {
-      "comment" : "Diagnostics"
+      "comment" : "Diagnostics",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorades: cap"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: ninguna"
+          }
+        }
+      }
     },
     "Ignored — music keeps playing" : {
-      "comment" : "Under an app in the menu that never pauses the music"
+      "comment" : "Under an app in the menu that never pauses the music",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorada — la música continua sonant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorada — la música sigue sonando"
+          }
+        }
+      }
     },
     "Later" : {
-      "comment" : "Update alert button: close it without updating"
+      "comment" : "Update alert button: close it without updating",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Més tard"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más tarde"
+          }
+        }
+      }
     },
     "Launch at login" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre en iniciar la sessió"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir al iniciar sesión"
+          }
+        }
+      }
     },
     "Measure audio levels" : {
-      "comment" : "Settings: a way to detect playing apps"
+      "comment" : "Settings: a way to detect playing apps",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesurar els nivells d'àudio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medir los niveles de audio"
+          }
+        }
+      }
     },
     "Monitoring media playback" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'està supervisant la reproducció"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supervisando la reproducción"
+          }
+        }
+      }
     },
     "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La més precisa: un vídeo en pausa deixa de comptar tan bon punt queda en silenci. macOS mostra l'indicador lila de gravació mentre l'AutoHush mesura."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La más precisa: un vídeo en pausa deja de contar en cuanto se queda en silencio. macOS muestra su indicador morado de grabación mientras AutoHush mide."
+          }
+        }
+      }
     },
     "Music is playing" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sona música"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suena música"
+          }
+        }
+      }
     },
     "Music is playing on another device" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La música sona en un altre dispositiu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La música suena en otro dispositivo"
+          }
+        }
+      }
     },
     "Music paused — %@" : {
-      "comment" : "Status line at the top of the menu; %@ says which apps play, e.g. “VLC is playing”"
+      "comment" : "Status line at the top of the menu; %@ says which apps play, e.g. “VLC is playing”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — %@"
+          }
+        }
+      }
     },
     "Music paused — another app is playing" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — sona una altra app"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — suena otra app"
+          }
+        }
+      }
     },
     "Never Pause Music for %@" : {
-      "comment" : "Menu item; %@ is an app"
+      "comment" : "Menu item; %@ is an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No posis mai la música en pausa per %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausar nunca la música por %@"
+          }
+        }
+      }
     },
     "No AutoHush release has been published on GitHub yet." : {
-      "comment" : "Alert text"
+      "comment" : "Alert text",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encara no s'ha publicat cap versió de l'AutoHush a GitHub."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no se ha publicado ninguna versión de AutoHush en GitHub."
+          }
+        }
+      }
     },
     "No Releases Yet" : {
-      "comment" : "Alert title"
+      "comment" : "Alert title",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encara no hi ha versions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay versiones"
+          }
+        }
+      }
     },
     "No foreign audio output currently detected." : {
-      "comment" : "Diagnostics"
+      "comment" : "Diagnostics",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ara no es detecta àudio d'altres apps."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no se detecta audio de otras apps."
+          }
+        }
+      }
     },
     "No music playing" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sona música"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No suena música"
+          }
+        }
+      }
     },
     "No releases have been published yet." : {
-      "comment" : "Update status in Settings"
+      "comment" : "Update status in Settings",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encara no s'ha publicat cap versió."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no se ha publicado ninguna versión."
+          }
+        }
+      }
     },
     "Open Login Items Settings…" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre la configuració dels ítems d'inici…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir los ajustes de ítems de inicio…"
+          }
+        }
+      }
     },
     "Open Release Page" : {
-      "comment" : "Update alert button"
+      "comment" : "Update alert button",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre la pàgina de la versió"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la página de la versión"
+          }
+        }
+      }
     },
     "Open audio streams only" : {
-      "comment" : "Settings, AntiDot mode: a way to detect playing apps"
+      "comment" : "Settings, AntiDot mode: a way to detect playing apps",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Només els fluxos d'àudio oberts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo los flujos de audio abiertos"
+          }
+        }
+      }
     },
     "Pause music after" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posa la música en pausa després de"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar la música tras"
+          }
+        }
+      }
     },
     "Pauses Music" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posen la música en pausa"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausan la música"
+          }
+        }
+      }
     },
     "Pauses your music while other apps play audio, and resumes it afterwards. Works with %@." : {
-      "comment" : "About panel; %@ is the music player, e.g. Spotify"
+      "comment" : "About panel; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posa la música en pausa mentre altres apps reprodueixen àudio i la reprèn després. Funciona amb %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después. Funciona con %@."
+          }
+        }
+      }
     },
     "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un so més fluix compta com a silenci. Només s'utilitza en mesurar els nivells d'àudio (mode AntiDot desactivat)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un sonido más bajo cuenta como silencio. Solo se usa al medir los niveles de audio (modo AntiDot desactivado)."
+          }
+        }
+      }
     },
     "Quit AutoHush" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surt de l'AutoHush"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir de AutoHush"
+          }
+        }
+      }
     },
     "Remove from List" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina de la llista"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar de la lista"
+          }
+        }
+      }
     },
     "Reset List" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restableix la llista"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer la lista"
+          }
+        }
+      }
     },
     "Reset List…" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restableix la llista…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer la lista…"
+          }
+        }
+      }
     },
     "Reset the list of apps?" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vols restablir la llista d'apps?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Restablecer la lista de apps?"
+          }
+        }
+      }
     },
     "Restore Defaults" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaura els valors per defecte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar valores por omisión"
+          }
+        }
+      }
     },
     "Resume music after" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprèn la música després de"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar la música tras"
+          }
+        }
+      }
     },
     "Retry" : {
-      "comment" : "Menu item: start monitoring again after a problem"
+      "comment" : "Menu item: start monitoring again after a problem",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Torna-ho a provar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        }
+      }
     },
     "Settings…" : {
-      "comment" : "Menu item"
+      "comment" : "Menu item",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuració…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes…"
+          }
+        }
+      }
     },
     "Silence threshold" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llindar de silenci"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbral de silencio"
+          }
+        }
+      }
     },
     "Starting services" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'estan iniciant els serveis"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando servicios"
+          }
+        }
+      }
     },
     "The app's version is unknown." : {
-      "comment" : "Update status in Settings"
+      "comment" : "Update status in Settings",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es desconeix la versió de l'app."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se desconoce la versión de la app."
+          }
+        }
+      }
     },
     "Treat an app as stopped after" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Considera aturada una app després de"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Considerar detenida una app tras"
+          }
+        }
+      }
     },
     "Turn Off For" : {
-      "comment" : "Menu item; its submenu offers 15 Minutes, 1 Hour and Until Tomorrow"
+      "comment" : "Menu item; its submenu offers 15 Minutes, 1 Hour and Until Tomorrow",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva durant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar durante"
+          }
+        }
+      }
     },
     "Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list." : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva una app perquè la música continuï sonant mentre aquesta app fa so. Fes clic amb el botó dret en una app per eliminar-la de la llista."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Haz clic con el botón derecho en una app para eliminarla de la lista."
+          }
+        }
+      }
     },
     "Turned off %@." : {
-      "comment" : "Settings, under Auto-Pause Music; %@ says until when, e.g. “until 15:30”"
+      "comment" : "Settings, under Auto-Pause Music; %@ says until when, e.g. “until 15:30”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivada %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivada %@."
+          }
+        }
+      }
     },
     "Until Tomorrow" : {
-      "comment" : "In the menu: turn auto-pause off until tomorrow at 8:00"
+      "comment" : "In the menu: turn auto-pause off until tomorrow at 8:00",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fins demà"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasta mañana"
+          }
+        }
+      }
     },
     "Update" : {
-      "comment" : "VoiceOver label of the update icon"
+      "comment" : "VoiceOver label of the update icon",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualització"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualización"
+          }
+        }
+      }
     },
     "Update Available: %@…" : {
-      "comment" : "Menu item; %@ is a version number"
+      "comment" : "Menu item; %@ is a version number",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualització disponible: %@…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualización disponible: %@…"
+          }
+        }
+      }
     },
     "Updates" : {
-
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualitzacions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizaciones"
+          }
+        }
+      }
     },
     "Version %@ is available." : {
-      "comment" : "Update status in Settings; %@ is a version number"
+      "comment" : "Update status in Settings; %@ is a version number",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versió %@ està disponible."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ está disponible."
+          }
+        }
+      }
     },
     "Warning" : {
-      "comment" : "VoiceOver label: this menu item needs attention"
+      "comment" : "VoiceOver label: this menu item needs attention",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avís"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso"
+          }
+        }
+      }
     },
     "What apps tell macOS" : {
-      "comment" : "Settings, AntiDot mode: a way to detect playing apps"
+      "comment" : "Settings, AntiDot mode: a way to detect playing apps",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El que les apps indiquen a macOS"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que las apps indican a macOS"
+          }
+        }
+      }
     },
     "You have the latest version, %@." : {
-      "comment" : "Alert text; %@ is the installed version"
+      "comment" : "Alert text; %@ is the installed version",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tens la versió més recent, la %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión más reciente, la %@."
+          }
+        }
+      }
     },
     "You have version %@. Download it from GitHub and replace AutoHush in your Applications folder." : {
-      "comment" : "Update alert; %@ is the installed version"
+      "comment" : "Update alert; %@ is the installed version",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tens la versió %@. Baixa la nova de GitHub i substitueix l'AutoHush a la carpeta Aplicacions."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. Descarga la nueva de GitHub y sustituye AutoHush en tu carpeta Aplicaciones."
+          }
+        }
+      }
     },
     "You have version %@. Update with Homebrew:" : {
-      "comment" : "Update alert; %@ is the installed version. The Homebrew command follows."
+      "comment" : "Update alert; %@ is the installed version. The Homebrew command follows.",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tens la versió %@. Actualitza amb Homebrew:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. Actualiza con Homebrew:"
+          }
+        }
+      }
     },
     "another app is playing" : {
-      "comment" : "Completes “Music paused — %@”"
+      "comment" : "Completes “Music paused — %@”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sona una altra app"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suena otra app"
+          }
+        }
+      }
     },
     "not telling macOS it is playing" : {
-      "comment" : "Diagnostics, AntiDot mode: why an app counts as paused"
+      "comment" : "Diagnostics, AntiDot mode: why an app counts as paused",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no indica a macOS que estigui reproduint"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no indica a macOS que esté reproduciendo"
+          }
+        }
+      }
     },
     "output open, silent" : {
-      "comment" : "Diagnostics: how AutoHush judges an app"
+      "comment" : "Diagnostics: how AutoHush judges an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sortida oberta, en silenci"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "salida abierta, en silencio"
+          }
+        }
+      }
     },
     "output open, silent, ignored" : {
-      "comment" : "Diagnostics: how AutoHush judges an app"
+      "comment" : "Diagnostics: how AutoHush judges an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sortida oberta, en silenci, ignorada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "salida abierta, en silencio, ignorada"
+          }
+        }
+      }
     },
     "playing" : {
-      "comment" : "Diagnostics: how AutoHush judges an app"
+      "comment" : "Diagnostics: how AutoHush judges an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduint"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduciendo"
+          }
+        }
+      }
     },
     "playing, ignored" : {
-      "comment" : "Diagnostics: how AutoHush judges an app"
+      "comment" : "Diagnostics: how AutoHush judges an app",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduint, ignorada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduciendo, ignorada"
+          }
+        }
+      }
     },
     "silence" : {
-      "comment" : "Diagnostics: the level of an app that makes no sound"
+      "comment" : "Diagnostics: the level of an app that makes no sound",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silenci"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silencio"
+          }
+        }
+      }
     },
     "starting" : {
-      "comment" : "Diagnostics: an app audible too briefly to count yet"
+      "comment" : "Diagnostics: an app audible too briefly to count yet",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "començant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "empezando"
+          }
+        }
+      }
     },
     "starting, ignored" : {
-      "comment" : "Diagnostics: an app audible too briefly to count yet"
+      "comment" : "Diagnostics: an app audible too briefly to count yet",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "començant, ignorada"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "empezando, ignorada"
+          }
+        }
+      }
     },
     "tells macOS it is playing" : {
-      "comment" : "Diagnostics, AntiDot mode: why an app counts as playing"
+      "comment" : "Diagnostics, AntiDot mode: why an app counts as playing",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "indica a macOS que està reproduint"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "indica a macOS que está reproduciendo"
+          }
+        }
+      }
     },
     "until %@" : {
-      "comment" : "When auto-pause turns back on today; %@ is a time"
+      "comment" : "When auto-pause turns back on today; %@ is a time",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fins a les %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta las %@"
+          }
+        }
+      }
     },
     "until %@ %@" : {
       "comment" : "When auto-pause turns back on; a weekday, then a time",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fins %1$@ a les %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "until %1$@ %2$@"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta el %1$@ a las %2$@"
+          }
         }
       }
     },
     "until tomorrow %@" : {
-      "comment" : "When auto-pause turns back on; %@ is a time"
+      "comment" : "When auto-pause turns back on; %@ is a time",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fins demà a les %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta mañana a las %@"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

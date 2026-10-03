@@ -5,10 +5,22 @@
       "comment" : "Shown when macOS asks whether AutoHush may control the music player",
       "extractionState" : "manual",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush posa en pausa i reprèn l'Spotify."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "AutoHush pauses and resumes Spotify."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa y reanuda Spotify."
           }
         }
       }
@@ -17,10 +29,22 @@
       "comment" : "Shown when macOS asks whether AutoHush may record system audio",
       "extractionState" : "manual",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush mesura el volum de les altres apps per posar la música en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "AutoHush measures how loud other apps are, so it only pauses your music for audible sound. Audio is never recorded, stored or sent anywhere."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ningún sitio."
           }
         }
       }
@@ -29,10 +53,22 @@
       "comment" : "Copyright line of the About panel",
       "extractionState" : "manual",
       "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Llicència MIT."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Copyright © 2026 hfc. MIT License."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licencia MIT."
           }
         }
       }
