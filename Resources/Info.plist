@@ -8,6 +8,10 @@
 	<string>AutoHush</string>
 	<key>CFBundleExecutable</key>
 	<string>AutoHush</string>
+	<key>CFBundleIconFile</key>
+	<string>AutoHush</string>
+	<key>CFBundleIconName</key>
+	<string>AutoHush</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.autohush.AutoHush</string>
 	<key>CFBundleInfoDictionaryVersion</key>

@@ -266,7 +266,8 @@ Tests/
   AutoHushTestSupport/   fakes shared by the test modules
 Tools/
   MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)
-Resources/               Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
+Resources/               Info.plist, entitlements and AutoHush.icon (the app icon, an Icon Composer
+                         document), assembled into the .app by Scripts/build-app.sh
 ```
 
 **Where things go:**
@@ -298,6 +299,8 @@ swift run measure-volume-curve      # measure the default player's volume curve
 ```
 
 The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts.
+
+The app icon is `Resources/AutoHush.icon`, made of one layer (`Assets/bars.svg`) on a background that changes with the light and dark appearance. Edit it in Icon Composer (it comes with Xcode) or by hand. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, render it with Icon Composer's `ictool`, which is inside the Icon Composer app bundle (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 
 `measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
 

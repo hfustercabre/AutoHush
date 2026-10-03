@@ -8,6 +8,8 @@ APP_BUNDLE="$PROJECT_DIR/$APP_NAME.app"
 DIST_DIR="$PROJECT_DIR/dist"
 INFO_PLIST="$PROJECT_DIR/Resources/Info.plist"
 ENTITLEMENTS="$PROJECT_DIR/Resources/$APP_NAME.entitlements"
+# Icon Composer document; compiled into the app by Scripts/build-app.sh.
+APP_ICON="$PROJECT_DIR/Resources/$APP_NAME.icon"
 # Created by Scripts/create-signing-certificate.sh.
 SELF_SIGNED_IDENTITY="AutoHush Self-Signed"
 

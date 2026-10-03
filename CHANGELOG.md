@@ -9,6 +9,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **An app icon**: the menu bar's sound bars in purple, on a background that
+  follows your Mac's appearance (light, dark, clear or tinted on macOS 26 and
+  later). Made in Icon Composer and compiled into the app; macOS 15 gets a
+  flat version.
 - **A menu bar icon of its own**: sound bars cut out of a rounded square,
   replacing eight unrelated system symbols. Every state uses the same tile:
   the bars play, become a dot and a pause sign when AutoHush pauses your

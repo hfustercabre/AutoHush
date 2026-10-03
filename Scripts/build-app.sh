@@ -37,6 +37,24 @@ fi
 note "version $(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString)" \
      "($(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleVersion))"
 
+# The icon follows the light, dark, clear and tinted appearances on macOS 26
+# and later (Assets.car); older systems get the flat AutoHush.icns. Info.plist
+# names both. actool comes with Xcode.
+step "Compiling the app icon"
+if xcrun --find actool >/dev/null 2>&1; then
+    ICON_INFO="$(mktemp)"
+    if ! ICON_LOG="$(xcrun actool "$APP_ICON" --compile "$APP_BUNDLE/Contents/Resources" \
+            --platform macosx --minimum-deployment-target "$(plist_value "$INFO_PLIST" LSMinimumSystemVersion)" \
+            --app-icon "$APP_NAME" --output-partial-info-plist "$ICON_INFO" \
+            --output-format human-readable-text 2>&1)"; then
+        echo "$ICON_LOG" >&2
+        fail "actool could not compile $APP_ICON"
+    fi
+    rm -f "$ICON_INFO"
+else
+    note "warning: actool not found (it comes with Xcode); the app keeps the generic icon"
+fi
+
 IDENTITY="$(resolve_signing_identity)"
 if [[ "$IDENTITY" == "-" ]]; then
     step "Signing ad hoc (hardened runtime)"
