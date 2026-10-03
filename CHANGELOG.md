@@ -9,6 +9,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Lighter on the battery**: AutoHush now wakes the Mac about once a
+  second when idle instead of about 30 times, and uses half the CPU or less
+  (measured: 0.18 % idle, 0.26 % with the music playing, 0.35 % while
+  measuring another app; Energy Impact 0.2–0.4). Its once-a-second check
+  only asks the processes with audio running, instead of every audio
+  process on the Mac.
 - **Turn Off For** now offers 5, 15 and 30 minutes, 1 hour and 24 hours.
   24 hours replaces Until Tomorrow, which ended at 8:00 the next day: up to
   31 hours when chosen after midnight.
@@ -104,6 +110,12 @@ This project follows [Semantic Versioning](https://semver.org/).
   after midnight: the menu and Settings now say "until 22:00".
 - Clicking Check Now twice, or checking while the automatic check runs, no
   longer asks GitHub twice and shows the answer twice.
+
+### Security
+
+- The update check only ever opens one of AutoHush's release pages on
+  github.com: an answer pointing anywhere else (another site, a file, a
+  network share, another app) is refused.
 
 ## [0.1.0] — 2026-10-03
 

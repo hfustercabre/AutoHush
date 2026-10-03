@@ -189,7 +189,7 @@ tccutil reset All com.autohush.AutoHush
 
 ### How it works
 
-1. **Which apps have sound on.** AutoHush watches CoreAudio's list of audio processes, with change listeners plus a once-per-second resync. Helper processes are grouped under their app (Chrome's helpers count as "Google Chrome") using the process macOS holds responsible for them (`responsibility_get_pid_responsible_for_pid`, a private function resolved at runtime, with a fallback to the enclosing `.app`).
+1. **Which apps have sound on.** AutoHush watches CoreAudio's list of audio processes with change listeners, plus a once-per-second resync that only asks the processes with audio running (each question is a round trip to the audio server). Helper processes are grouped under their app (Chrome's helpers count as "Google Chrome") using the process macOS holds responsible for them (`responsibility_get_pid_responsible_for_pid`, a private function resolved at runtime, with a fallback to the enclosing `.app`).
 2. **Whether they're actually audible.**
    - *Normal mode:* each app is metered through a private, unmuted CoreAudio **process tap** that computes only its peak level.
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open; these apps are remembered across launches. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) and display-only assertions are ignored.

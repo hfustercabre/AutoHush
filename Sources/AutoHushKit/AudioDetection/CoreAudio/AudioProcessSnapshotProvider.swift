@@ -22,6 +22,11 @@ package protocol AudioProcessSnapshotProviding: AnyObject, Sendable {
 
 /// Reads processes from the CoreAudio HAL and observes it with block-based
 /// property listeners.
+///
+/// Every read is a round trip to the audio server, so while observing, only
+/// processes with audio running (input or output, as their is-running
+/// listeners report) are asked whether their output runs: usually a few of
+/// the dozens of audio processes.
 package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProviding, @unchecked Sendable {
     package init() {}
 
@@ -30,9 +35,12 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
     private var onChange: (@Sendable () -> Void)?
     private var processListListener: AudioObjectPropertyListenerBlock?
     private var runningListeners: [AudioObjectID: AudioObjectPropertyListenerBlock] = [:]
+    /// Process objects with audio running, kept by the is-running listeners.
+    private var runningObjects: Set<AudioObjectID> = []
 
     package func activeProcesses() -> [AudioProcessInfo] {
-        processObjectIDs().compactMap { objectID in
+        let objectIDs = processListListener == nil ? processObjectIDs() : runningObjects
+        return objectIDs.compactMap { objectID in
             // Read the cheap output flag first; only playing processes need more lookups.
             guard CoreAudioProperty.value(kAudioProcessPropertyIsRunningOutput, of: objectID, initial: UInt32(0)) == 1,
                   let bundleID = CoreAudioProperty.string(kAudioProcessPropertyBundleID, of: objectID)
@@ -70,12 +78,14 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
         for objectID in Array(runningListeners.keys) {
             removeRunningListener(from: objectID)
         }
+        runningObjects = []
         onChange = nil
     }
 
     // MARK: Private
 
-    /// Keeps one is-running listener per process object.
+    /// Keeps one is-running listener per process object, and `runningObjects`
+    /// up to date.
     ///
     /// `kAudioProcessPropertyIsRunningOutput` never sends change notifications
     /// (verified on macOS 27); `kAudioProcessPropertyIsRunning` does, so it is
@@ -84,7 +94,10 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
         guard let queue, let onChange else { return }
         let current = processObjectIDs()
         for objectID in current where runningListeners[objectID] == nil {
-            let listener: AudioObjectPropertyListenerBlock = { _, _ in onChange() }
+            let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+                self?.updateRunning(objectID)
+                onChange()
+            }
             var address = CoreAudioProperty.address(kAudioProcessPropertyIsRunning)
             let status = AudioObjectAddPropertyListenerBlock(objectID, &address, queue, listener)
             if status == noErr {
@@ -92,9 +105,24 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
             } else {
                 logger.error("[monitor] failed to register is-running listener for object \(objectID, privacy: .public): \(status, privacy: .public)")
             }
+            // Read after listening, so a change in between can't be missed.
+            updateRunning(objectID)
         }
+        runningObjects.formIntersection(current)
         for objectID in Array(runningListeners.keys) where !current.contains(objectID) {
             removeRunningListener(from: objectID)
+        }
+    }
+
+    /// Re-reads whether the process has audio running (input or output).
+    /// A process whose listener could not be registered always counts as
+    /// running, so its output is still read on every refresh.
+    private func updateRunning(_ objectID: AudioObjectID) {
+        let isRunning = CoreAudioProperty.value(kAudioProcessPropertyIsRunning, of: objectID, initial: UInt32(0)) == 1
+        if isRunning || runningListeners[objectID] == nil {
+            runningObjects.insert(objectID)
+        } else {
+            runningObjects.remove(objectID)
         }
     }
 
