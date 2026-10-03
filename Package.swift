@@ -12,7 +12,7 @@ import PackageDescription
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
 //
-//   measure-volume-curve (executable) → AutoHushPlayers, AutoHushKit
+//   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 //
 // Code inside a module is grouped by domain. Types shared between modules use
 // `package` access: visible inside this package, not to anyone else. Bundle
@@ -34,8 +34,13 @@ let package = Package(
         .target(name: "SpotifySupport", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/SpotifySupport"),
         .target(name: "AutoHushKit"),
 
-        // Measures a player's volume curve with the engine's own meter.
-        .executableTarget(name: "MeasureVolumeCurve", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
+        // Measures a player's volume curve with the engine's own meter. A
+        // developer tool: never part of AutoHush.app.
+        .executableTarget(
+            name: "MeasureVolumeCurve",
+            dependencies: ["AutoHushKit", "AutoHushPlayers"],
+            path: "Tools/MeasureVolumeCurve"
+        ),
 
         // Fakes shared by the test targets.
         .target(name: "AutoHushTestSupport", dependencies: ["AutoHushKit"], path: "Tests/AutoHushTestSupport"),
