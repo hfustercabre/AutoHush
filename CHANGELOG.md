@@ -21,7 +21,8 @@ This project follows [Semantic Versioning](https://semver.org/).
     `AppDelegate` (`UpdateController`, `DiagnosticsReport`, `AboutPanel`).
   - `AutoHush`: a one-file executable that only starts the app.
   - `SpotifySupport`: everything Spotify-specific; each new player gets its
-    own `<App>Support` module, listed in `AutoHushPlayers`.
+    own `<App>Support` module, listed in `AutoHushPlayers`. Player modules
+    and their tests live in `PlayersSupport/` folders.
   - `AutoHushKit/PrivateAPI`: the only place calling undocumented macOS
     functions (TCC, `responsibility_get_pid_responsible_for_pid`).
   - `AutoHushKit/Permissions`: what each permission is for and where it is

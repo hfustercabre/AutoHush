@@ -224,7 +224,7 @@ AutoHush is a Swift package of several modules, so the compiler keeps the layers
 AutoHush (executable: the entry point only)
   └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, About, wiring
        ├─ AutoHushPlayers   the supported music players
-       │    └─ SpotifySupport   one <App>Support module per player
+       │    └─ SpotifySupport   one <App>Support module per player, all in PlayersSupport/
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (executable) → AutoHushPlayers, AutoHushKit
 ```
@@ -257,10 +257,11 @@ Sources/
     Storage/             Preferences
     General/             Logging, Comparable+Clamped
   AutoHushPlayers/       SupportedPlayers (the list of players, and the default one)
-  SpotifySupport/        SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
+  PlayersSupport/        one module per music player:
+    SpotifySupport/      SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
   MeasureVolumeCurve/    the measuring tool
 Tests/
-  AutoHushAppTests/  AutoHushKitTests/  SpotifySupportTests/   (each mirrors its module)
+  AutoHushAppTests/  AutoHushKitTests/  PlayersSupport/SpotifySupportTests/   (each mirrors its module)
   AutoHushTestSupport/   fakes shared by the test modules
 Resources/               Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
 ```
@@ -269,7 +270,7 @@ Resources/               Info.plist and entitlements, assembled into the .app by
 
 - **`AutoHushKit`** is the engine. It has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which players it supports. It can't import the app or a player module, and the compiler enforces that.
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
-- **A player module** (`<App>Support`) holds everything specific to one music app.
+- **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
 - **`General/`** folders stay small: only helpers several parts of a module need.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
@@ -277,7 +278,7 @@ Resources/               Info.plist and entitlements, assembled into the .app by
 
 **Adding a music player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
-1. a new module, `Sources/<App>Support/`, with a type implementing `MusicPlayer`, and its tests in `Tests/<App>SupportTests/`;
+1. a new module, `Sources/PlayersSupport/<App>Support/`, with a type implementing `MusicPlayer`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`);
 2. an entry in `SupportedPlayers` (and a dependency of `AutoHushPlayers` in `Package.swift`), so AutoHush knows it and its own audio never counts as another app playing;
 3. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
 

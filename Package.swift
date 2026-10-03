@@ -6,7 +6,8 @@ import PackageDescription
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
 //          ├─ AutoHushPlayers   the supported music players
-//          │    └─ SpotifySupport   (one <App>Support target per player)
+//          │    └─ SpotifySupport   one <App>Support target per player,
+//          │                        all in Sources/PlayersSupport/
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
@@ -30,7 +31,7 @@ let package = Package(
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
         .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
         .target(name: "AutoHushPlayers", dependencies: ["AutoHushKit", "SpotifySupport"]),
-        .target(name: "SpotifySupport", dependencies: ["AutoHushKit"]),
+        .target(name: "SpotifySupport", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/SpotifySupport"),
         .target(name: "AutoHushKit"),
 
         // Measures a player's volume curve with the engine's own meter.
@@ -39,7 +40,11 @@ let package = Package(
         // Fakes shared by the test targets.
         .target(name: "AutoHushTestSupport", dependencies: ["AutoHushKit"], path: "Tests/AutoHushTestSupport"),
         .testTarget(name: "AutoHushKitTests", dependencies: ["AutoHushKit", "AutoHushTestSupport"]),
-        .testTarget(name: "SpotifySupportTests", dependencies: ["SpotifySupport", "AutoHushKit", "AutoHushTestSupport"]),
+        .testTarget(
+            name: "SpotifySupportTests",
+            dependencies: ["SpotifySupport", "AutoHushKit", "AutoHushTestSupport"],
+            path: "Tests/PlayersSupport/SpotifySupportTests"
+        ),
         .testTarget(
             name: "AutoHushAppTests",
             dependencies: ["AutoHushApp", "AutoHushPlayers", "SpotifySupport", "AutoHushKit", "AutoHushTestSupport"]
