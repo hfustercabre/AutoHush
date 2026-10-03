@@ -137,12 +137,7 @@ final class StatusMenuController: NSObject {
 
     private func renderIcon() {
         guard let button = statusItem.button else { return }
-        let image = NSImage(
-            systemSymbolName: status.iconSymbolName,
-            accessibilityDescription: status.iconAccessibilityLabel
-        )
-        image?.isTemplate = true // adapts to light/dark menu bar
-        button.image = image
+        button.image = status.icon.image(accessibilityDescription: status.iconAccessibilityLabel)
         button.title = ""
         button.imagePosition = .imageOnly
         button.appearsDisabled = status.dimsIcon

@@ -1,13 +1,13 @@
 import Foundation
 import AutoHushKit
 
-// What the user sees for the engine's states and choices: SF Symbols,
+// What the user sees for the engine's states and choices: menu bar icons,
 // VoiceOver labels and menu text. The engine itself has no text for them.
 
-/// How a state looks in the menu bar: its SF Symbol, its VoiceOver label and
-/// the status line at the top of the menu.
+/// How a state looks in the menu bar: its icon, its VoiceOver label and the
+/// status line at the top of the menu.
 struct StatePresentation: Equatable {
-    let symbol: String
+    let icon: MenuBarIcon
     let label: String
     let line: String
 }
@@ -18,16 +18,14 @@ extension PlaybackState {
         case .unknown: // the player's state is not known yet: as when starting up
             return AppHealthState.starting.presentation
         case .musicPlaying:
-            return StatePresentation(symbol: "play.circle.fill", label: "AutoHush: music is playing",
-                                     line: "Music is playing")
+            return StatePresentation(icon: .playing, label: "AutoHush: music is playing", line: "Music is playing")
         case .pausedByMonitor:
-            return StatePresentation(symbol: "pause.circle.fill", label: "AutoHush: music paused",
+            return StatePresentation(icon: .pausedForApp, label: "AutoHush: music paused",
                                      line: "Music paused — another app is playing")
         case .musicIdle:
-            return StatePresentation(symbol: "music.note", label: "AutoHush: no music playing",
-                                     line: "No music playing")
+            return StatePresentation(icon: .noMusic, label: "AutoHush: no music playing", line: "No music playing")
         case .playingElsewhere:
-            return StatePresentation(symbol: "hifispeaker.fill", label: "AutoHush: music is playing on another device",
+            return StatePresentation(icon: .elsewhere, label: "AutoHush: music is playing on another device",
                                      line: "Music is playing on another device")
         }
     }
@@ -38,20 +36,15 @@ extension AppHealthState {
     var presentation: StatePresentation {
         switch self {
         case .starting:
-            return StatePresentation(symbol: "arrow.triangle.2.circlepath", label: "AutoHush: starting",
-                                     line: "Starting services")
+            return StatePresentation(icon: .starting, label: "AutoHush: starting", line: "Starting services")
         case .ready:
-            return StatePresentation(symbol: "speaker.wave.2.fill", label: "AutoHush: monitoring",
-                                     line: "Monitoring media playback")
+            return StatePresentation(icon: .playing, label: "AutoHush: monitoring", line: "Monitoring media playback")
         case .degraded(let message):
-            return StatePresentation(symbol: "exclamationmark.triangle.fill", label: "AutoHush: degraded",
-                                     line: message)
+            return StatePresentation(icon: .attention, label: "AutoHush: degraded", line: message)
         case .needsPermission(let message):
-            return StatePresentation(symbol: "lock.trianglebadge.exclamationmark.fill", label: "AutoHush: needs permission",
-                                     line: message)
+            return StatePresentation(icon: .attention, label: "AutoHush: needs permission", line: message)
         case .failed(let message):
-            return StatePresentation(symbol: "speaker.slash.fill", label: "AutoHush: failed",
-                                     line: message)
+            return StatePresentation(icon: .attention, label: "AutoHush: failed", line: message)
         }
     }
 }

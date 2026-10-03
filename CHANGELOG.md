@@ -9,6 +9,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **A menu bar icon of its own**: sound bars cut out of a rounded square,
+  replacing eight unrelated system symbols. Every state uses the same tile:
+  the bars play, become a dot and a pause sign when AutoHush pauses your
+  music, drop to three dots when nothing plays, point away when the music
+  plays on another device, show hollow while starting, and make room for "!"
+  when something needs your attention. Drawn in code, so it stays sharp at any
+  size.
+
 - **Modular project structure**, following Apple's sample apps (Food Truck,
   Backyard Birds) and popular open-source Mac apps (AeroSpace, Ice, Stats):
   - `AutoHushKit`: the engine (audio detection, playback decisions, fades,

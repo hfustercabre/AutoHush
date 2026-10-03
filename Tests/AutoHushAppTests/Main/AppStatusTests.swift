@@ -23,18 +23,18 @@ struct AppStatusTests {
         let status = AppStatus()
         #expect(status.health == .starting)
         #expect(status.statusLine == "Starting services")
-        #expect(status.iconSymbolName == "arrow.triangle.2.circlepath")
+        #expect(status.icon == .starting)
         #expect(status.warning == nil && !status.showsRetry && !status.dimsIcon)
     }
 
     @Test("when ready, icon and status line follow playback", arguments: [
-        (PlaybackState.musicPlaying, "play.circle.fill", "Music is playing"),
-        (.musicIdle, "music.note", "No music playing"),
-        (.playingElsewhere, "hifispeaker.fill", "Music is playing on another device"),
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Music is playing"),
+        (.musicIdle, .noMusic, "No music playing"),
+        (.playingElsewhere, .elsewhere, "Music is playing on another device"),
     ])
-    func readyFollowsPlayback(playback: PlaybackState, symbol: String, line: String) {
+    func readyFollowsPlayback(playback: PlaybackState, icon: MenuBarIcon, line: String) {
         let status = ready(playback)
-        #expect(status.iconSymbolName == symbol)
+        #expect(status.icon == icon)
         #expect(status.statusLine == line)
     }
 
@@ -90,7 +90,7 @@ struct AppStatusTests {
         status.setActiveSources([chrome])
         status.setHealth(.degraded("Audio monitor restarting"))
         #expect(status.activeSources.isEmpty)
-        #expect(status.iconSymbolName == "exclamationmark.triangle.fill")
+        #expect(status.icon == .attention)
         #expect(status.showsRetry)
         #expect(status.warning == nil)
     }

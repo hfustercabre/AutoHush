@@ -68,7 +68,7 @@ struct AppStatus: Equatable {
         isReady ? playback.presentation : health.presentation
     }
 
-    var iconSymbolName: String { presentation.symbol }
+    var icon: MenuBarIcon { presentation.icon }
     var iconAccessibilityLabel: String { presentation.label }
 
     /// The menu bar icon is dimmed while auto-pause is off.
