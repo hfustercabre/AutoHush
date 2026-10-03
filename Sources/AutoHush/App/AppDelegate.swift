@@ -92,6 +92,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         scheduleAutomaticUpdateChecks()
     }
 
+    /// Waits (briefly) for a fade in progress to give the player its volume
+    /// back, so quitting never leaves the music faded down.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let pipeline else { return .terminateNow }
+        self.pipeline = nil
+        var replied = false
+        let reply = {
+            guard !replied else { return }
+            replied = true
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        Task { @MainActor in
+            await pipeline.stopAndRestoreVolume()
+            reply()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { reply() } // never hang the quit
+        return .terminateLater
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         unregisterPlayerLaunchObserver()
         tearDownPipeline()

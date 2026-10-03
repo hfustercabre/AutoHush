@@ -95,6 +95,9 @@ actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingResume()
             activeSources.insert(sourceID)
             logger.debug("[arbiter] +\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
+            // The music may be coming back up after a cancelled fade-out: stop
+            // that, so the pause in progress fades out again.
+            if isFadingOut { await fader.stopComeback() }
             await pauseMusicIfNeeded()
             publishPlaybackState()
         } else {
@@ -168,9 +171,10 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// Stops all future actions, including an already scheduled resume.
     /// Called when this arbiter is replaced by a new bootstrap.
-    func shutdown() {
+    func shutdown() async {
         isShutDown = true
         cancelPendingResume()
+        await fader.abandon() // never leave the music faded down
     }
 
     // MARK: - Private
@@ -200,20 +204,26 @@ actor PlaybackArbiter: PlaybackArbiting {
         }
         guard !isShutDown, autoPauseEnabled, !isFadingOut else { return }
         isFadingOut = true
-        defer { isFadingOut = false }
+        let paused: Bool
         do {
-            guard try await fader.fadeOutAndPause() else {
-                logger.debug("[arbiter] pause cancelled during the fade-out")
-                return
-            }
-            pausedByUs = true
-            playerState = .paused
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
-            // Auto-pause was turned off while we were pausing: undo it.
-            if !autoPauseEnabled { await resumeNow() }
+            paused = try await fader.fadeOutAndPause()
         } catch {
+            isFadingOut = false
             logger.error("[arbiter] pause failed: \(error.localizedDescription, privacy: .public)")
+            return
         }
+        isFadingOut = false
+        guard paused else {
+            logger.debug("[arbiter] pause called off during the fade-out")
+            // Another app may have started while the music came back up.
+            if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
+            return
+        }
+        pausedByUs = true
+        playerState = .paused
+        logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
+        // Auto-pause was turned off while we were pausing: undo it.
+        if !autoPauseEnabled { await resumeNow() }
     }
 
     private func scheduleResume(after delay: TimeInterval, retriesLeft: Int = PlaybackArbiter.resumeRetries) {

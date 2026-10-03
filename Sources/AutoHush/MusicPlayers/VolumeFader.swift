@@ -39,6 +39,10 @@ actor VolumeFader {
     private var userVolume: Int?
     /// Bumped by every fade and by `cancel()`; a fade stops once it changes.
     private var generation = 0
+    /// True while a cancelled fade-out brings the music back up.
+    private var isComingBack = false
+    /// Set by `abandon()`: fades stop where they are, without coming back.
+    private var isAbandoned = false
 
     init(
         player: any MusicPlayer,
@@ -65,6 +69,7 @@ actor VolumeFader {
         let fade = generation
         guard fadeOut > 0, let current = await player.volume(), (userVolume ?? current) > 0 else {
             try await player.pause()
+            await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
             return true
         }
         let target = userVolume ?? current
@@ -74,13 +79,25 @@ actor VolumeFader {
         logger.debug("[fade] out from \(current, privacy: .public) (user volume \(target, privacy: .public))")
 
         guard await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade) else {
+            guard !isAbandoned else { return false } // `abandon()` set the volume back
             // Cancelled: bring the music back up from wherever the fade got to.
             let reached = level(of: await player.volume() ?? 0, floor: bottom)
             generation += 1
+            isComingBack = true
+            defer { isComingBack = false }
             if await ramp(from: reached, to: top, fullTime: fadeIn, fade: generation) {
                 userVolume = nil
             }
             return false
+        }
+
+        // The user paused it during the fade: it is theirs, not ours to pause.
+        switch await player.playerState() {
+        case .paused, .stopped, .notRunning:
+            await restoreUserVolume()
+            return false
+        case .playing, .unknown:
+            break
         }
 
         do {
@@ -104,6 +121,7 @@ actor VolumeFader {
         let fade = generation
         guard fadeIn > 0, let current = await player.volume(), (userVolume ?? current) > 0 else {
             logger.debug("[fade] none: fade-in \(self.fadeIn, privacy: .public) s, volume unknown or off")
+            await restoreUserVolume() // e.g. a fade-out interrupted halfway
             try await player.play()
             return
         }
@@ -129,6 +147,26 @@ actor VolumeFader {
     /// Stops the fade in progress; a fade-out then comes back up without pausing.
     func cancel() {
         generation += 1
+    }
+
+    /// Stops a cancelled fade-out from coming back up, so a new fade-out can
+    /// start from where it is. Does nothing otherwise.
+    func stopComeback() {
+        if isComingBack { generation += 1 }
+    }
+
+    /// Stops any fade for good and sets the user's volume back at once, e.g.
+    /// when AutoHush quits or restarts monitoring.
+    func abandon() async {
+        isAbandoned = true
+        generation += 1
+        await restoreUserVolume()
+    }
+
+    private func restoreUserVolume() async {
+        guard let volume = userVolume else { return }
+        userVolume = nil
+        try? await player.setVolume(volume)
     }
 
     // MARK: - Levels

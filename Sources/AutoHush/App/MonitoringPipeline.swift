@@ -116,6 +116,12 @@ final class MonitoringPipeline {
         Task { await arbiter.shutdown() }
     }
 
+    /// Stops, and waits until a faded-down player has its volume back.
+    func stopAndRestoreVolume() async {
+        stop()
+        await arbiter.shutdown()
+    }
+
     func setAutoPauseEnabled(_ enabled: Bool) {
         arbiterCommands.yield(.autoPause(enabled))
     }

@@ -18,7 +18,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   silent). The volume is set back right after pausing,
   and the user's volume is remembered when a fade starts, so an interrupted
   fade never leaves it lower. An app that stops during the fade-out leaves
-  the music playing. Works with any `MusicPlayer` that reports its volume
+  the music playing (and one that starts while it comes back up pauses it
+  again); music the user pauses during the fade-out stays theirs, so it is
+  not resumed later; quitting AutoHush or restarting monitoring mid-fade
+  sets the volume straight back. Works with any `MusicPlayer` that reports its volume
   (Spotify: `sound volume`, corrected for Spotify reporting one less than it
   was set to). Both durations are in Settings → Advanced (0–5 s each; 0
   turns that fade off).
