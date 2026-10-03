@@ -33,10 +33,6 @@ package protocol AudioSourceIdentifying: Sendable {
     func sourceID(forPID pid: pid_t) -> String?
 }
 
-extension AudioSourceIdentifying {
-    package func sourceID(forPID pid: pid_t) -> String? { nil }
-}
-
 /// Finds the app that owns an audio process.
 ///
 /// Browsers and other apps often play audio from helper processes (Chrome's

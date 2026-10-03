@@ -28,15 +28,6 @@ struct UpdateControllerTests {
         }
     }
 
-    private static func releaseChecker(_ tag: String) -> UpdateChecker {
-        UpdateChecker { request in
-            let body = #"{"tag_name": "\#(tag)", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/\#(tag)"}"#
-            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
-        }
-    }
-
-    private static let offline = UpdateChecker { _ in throw URLError(.notConnectedToInternet) }
-
     private actor FetchCount {
         private(set) var value = 0
         func increment() { value += 1 }
@@ -45,12 +36,10 @@ struct UpdateControllerTests {
     @Test("a check asked for while one is under way doesn't start another")
     func overlappingChecks() async {
         let fetches = FetchCount()
-        let h = Harness(checker: UpdateChecker { request in
+        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: {
             await fetches.increment()
             try? await Task.sleep(for: .milliseconds(50)) // still under way when the second check is asked for
-            let body = #"{"tag_name": "v0.2.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.2.0"}"#
-            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
-        })
+        }))
 
         async let first: Void = h.controller.check(userInitiated: false)
         async let second: Void = h.controller.check(userInitiated: false)
@@ -62,7 +51,7 @@ struct UpdateControllerTests {
 
     @Test("a check that finds a newer release offers it and remembers when it ran")
     func updateAvailable() async {
-        let h = Harness(checker: Self.releaseChecker("v0.3.0"))
+        let h = Harness(checker: .latestRelease("v0.3.0"))
         await h.controller.check(userInitiated: false)
         #expect(h.controller.availableUpdate?.version == AppVersion("0.3.0"))
         #expect(h.offered.last??.version == AppVersion("0.3.0"))
@@ -73,11 +62,7 @@ struct UpdateControllerTests {
     @Test("an up-to-date check clears an earlier offer")
     func upToDate() async {
         let latest = LatestTag("v0.3.0")
-        let h = Harness(checker: UpdateChecker { request in
-            let tag = latest.value
-            let body = #"{"tag_name": "\#(tag)", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/\#(tag)"}"#
-            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
-        })
+        let h = Harness(checker: .latestRelease { latest.value })
         await h.controller.check(userInitiated: false)
         #expect(h.controller.availableUpdate != nil)
 
@@ -90,7 +75,7 @@ struct UpdateControllerTests {
 
     @Test("a failed automatic check is quiet and doesn't count as a check")
     func failedCheck() async {
-        let h = Harness(checker: Self.offline)
+        let h = Harness(checker: .offline)
         await h.controller.check(userInitiated: false)
         #expect(h.statuses.last == "Couldn't check for updates.")
         #expect(h.preferences.lastUpdateCheck == nil)
@@ -99,14 +84,14 @@ struct UpdateControllerTests {
 
     @Test("without a known app version nothing is asked")
     func unknownVersion() async {
-        let h = Harness(checker: Self.offline, currentVersion: nil)
+        let h = Harness(checker: .offline, currentVersion: nil)
         await h.controller.check(userInitiated: false)
         #expect(h.statuses == ["The app's version is unknown."])
     }
 
     @Test("automatic checks are due daily, and never when turned off")
     func checkDue() {
-        let h = Harness(checker: Self.offline)
+        let h = Harness(checker: .offline)
         let now = Date()
         #expect(h.controller.isCheckDue(now: now))
         h.preferences.lastUpdateCheck = now.addingTimeInterval(-3600)

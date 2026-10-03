@@ -38,13 +38,6 @@ struct AppDelegateTests {
         return (sut, counter)
     }
 
-    private static func releaseChecker(_ tag: String) -> UpdateChecker {
-        UpdateChecker { request in
-            let body = #"{"tag_name": "\#(tag)", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/\#(tag)"}"#
-            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
-        }
-    }
-
     @MainActor
     @Test("non-Spotify launch does not change health state or re-bootstrap")
     func nonSpotifyLaunchDoesNothing() {
@@ -218,7 +211,7 @@ struct AppDelegateTests {
     @Test("a newer release found by an update check is offered in the menu and Settings")
     func updateAvailable() async {
         let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch, updateChecker: Self.releaseChecker("v0.3.0"))
+        let (sut, _) = makeSUT(scratch, updateChecker: .latestRelease("v0.3.0"))
         await sut.updates.check(userInitiated: false)
         #expect(sut.status.availableUpdate?.version == AppVersion("0.3.0"))
         #expect(sut.settingsModel.updateStatus == "Version 0.3.0 is available.")

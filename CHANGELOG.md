@@ -74,6 +74,11 @@ This project follows [Semantic Versioning](https://semver.org/).
     tool), repeated code is shared (process caches, Spotify commands,
     the auto-pause display), and every type has a doc comment.
   - Repetitive tests are parameterized.
+  - Unused code is gone: the menu's "monitoring" look and "until Thursday"
+    snooze text (never shown, yet translated into every language),
+    options nothing used (opening Settings on a given tab, a custom status
+    bar, a second check that audio output is running), and test helpers
+    copied between files (fixed dates, the fake GitHub answer).
 - Less duplicated code: the timing defaults are defined once (in
   `TimingSettings`), and each supported player is listed once.
 

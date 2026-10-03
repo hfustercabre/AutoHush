@@ -34,7 +34,7 @@ struct AudioSourceIdentifierTests {
 
     @Test("an unknown process falls back to its own bundle ID")
     func fallback() {
-        let process = AudioProcessInfo(objectID: 1, bundleID: "com.example.gone", pid: 999_999, isRunningOutput: true)
+        let process = AudioProcessInfo(objectID: 1, bundleID: "com.example.gone", pid: 999_999)
         #expect(ProcessAudioSourceIdentifier().source(for: process) == AudioSource(id: "com.example.gone", name: "com.example.gone"))
     }
 

@@ -140,6 +140,5 @@ struct SettingsWindowControllerTests {
         #expect(tabController.tabStyle == .toolbar)
         #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced"])
         #expect(tabController.tabViewItems.allSatisfy { $0.image != nil })
-        #expect(sut.selectedTab == .general)
     }
 }

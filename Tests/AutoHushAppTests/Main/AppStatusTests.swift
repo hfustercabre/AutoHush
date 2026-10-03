@@ -78,16 +78,12 @@ struct AppStatusTests {
 
     @Test("a snooze's description is refreshed at midnight before it ends, then when it ends")
     func snoozeDescriptionRefresh() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Madrid")!
-        func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
-            calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute))!
-        }
+        let calendar = TestDates.calendar
         // Off for 24 hours at 22:00: "until tomorrow 22:00" until midnight, then "until 22:00".
-        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: date(3, 22), now: date(2, 22), calendar: calendar) == date(3, 0))
-        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: date(3, 22), now: date(3, 0), calendar: calendar) == date(3, 22))
+        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: TestDates.date(3, 22), now: TestDates.date(2, 22), calendar: calendar) == TestDates.date(3, 0))
+        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: TestDates.date(3, 22), now: TestDates.date(3, 0), calendar: calendar) == TestDates.date(3, 22))
         // A snooze that ends today only changes when it ends.
-        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: date(2, 15, 30), now: date(2, 15), calendar: calendar) == date(2, 15, 30))
+        #expect(AppStatus.AutoPause.nextChange(snoozedUntil: TestDates.date(2, 15, 30), now: TestDates.date(2, 15), calendar: calendar) == TestDates.date(2, 15, 30))
     }
 
     @Test("health problems take precedence over auto-pause")
