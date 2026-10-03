@@ -11,6 +11,12 @@
             "value" : "L'AutoHush posa en pausa i reprèn l'Spotify."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausiert Spotify und setzt die Wiedergabe fort."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -21,6 +27,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush pausa y reanuda Spotify."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met Spotify en pause et relance la lecture."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mette in pausa e riprende Spotify."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはSpotifyを一時停止して再開します。"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush pausa e retoma o Spotify."
           }
         }
       }
@@ -35,6 +65,12 @@
             "value" : "L'AutoHush mesura el volum de les altres apps per posar la música en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush misst, wie laut andere Apps sind, damit deine Musik nur bei hörbarem Ton pausiert. Audio wird nie aufgenommen, gespeichert oder irgendwohin gesendet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -45,6 +81,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ningún sitio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre musique en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush misura il volume delle altre app per mettere in pausa la musica solo quando c'è un suono udibile. L'audio non viene mai registrato, salvato né inviato altrove."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはほかのAppの音量を測定し、実際に音が聞こえるときだけ音楽を一時停止します。オーディオが録音、保存、送信されることはありません。"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush mede o volume dos outros apps para só pausar sua música quando há som audível. O áudio nunca é gravado, armazenado nem enviado a lugar algum."
           }
         }
       }
@@ -59,6 +119,12 @@
             "value" : "Copyright © 2026 hfc. Llicència MIT."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-Lizenz."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -69,6 +135,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. Licencia MIT."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licence MIT."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licenza MIT."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MITライセンス。"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licença MIT."
           }
         }
       }

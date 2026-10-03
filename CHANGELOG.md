@@ -9,9 +9,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Spanish and Catalan**: AutoHush now speaks English, Spanish and
-  Catalan, following your Mac's language: it uses the first of your
-  preferred languages that it has, and English otherwise. Every text it
+- **Eight languages**: AutoHush now speaks English, Spanish, Catalan,
+  German, French, Italian, Portuguese and Japanese, following your Mac's
+  language: it uses the first of your preferred languages that it has, and
+  English otherwise. Every text it
   shows (the menu, Settings, alerts, Diagnostics, VoiceOver labels and the
   permission prompts) comes from String Catalogs in `Resources/`. Each build
   adds new text from the code to the catalog by itself, as Xcode does, and
