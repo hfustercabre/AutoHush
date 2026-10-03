@@ -21,8 +21,8 @@ struct AudioMonitorTests {
         return configuration
     }
 
-    private static func process(_ objectID: AudioObjectID, _ bundleID: String, output: Bool = true) -> AudioProcessInfo {
-        AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid_t(1000 + objectID), isRunningOutput: output)
+    private static func process(_ objectID: AudioObjectID, _ bundleID: String) -> AudioProcessInfo {
+        AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid_t(1000 + objectID))
     }
 
     private struct Harness {
@@ -170,7 +170,6 @@ struct AudioMonitorTests {
         h.step(after: 2.0)
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events.last == .init(bundleID: "com.google.Chrome.helper", isPlaying: false))
-        #expect(h.provider.processes.first?.isRunningOutput == true)
         h.monitor.stop()
     }
 
@@ -663,22 +662,11 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("input-only processes are never forwarded")
-    func inputOnlyProcessIsNotForwarded() async {
-        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
-        h.start()
-        h.step([Self.process(1, "com.apple.VoiceMemos", output: false)])
-        h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
-    }
-
     @Test("the monitor's own process is ignored")
     func ownProcessIsIgnored() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.step([AudioProcessInfo(objectID: 1, bundleID: "com.example.self", pid: getpid(), isRunningOutput: true)])
+        h.step([AudioProcessInfo(objectID: 1, bundleID: "com.example.self", pid: getpid())])
         h.step(after: 1.0)
         try? await Task.sleep(for: .milliseconds(50))
         #expect(await h.recorder.events.isEmpty)

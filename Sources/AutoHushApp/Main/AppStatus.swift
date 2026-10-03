@@ -73,9 +73,9 @@ struct AppStatus: Equatable {
 
     var isReady: Bool { health == .ready }
 
-    /// The playback state's look once ready, the health's until then.
+    /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
-        isReady ? playback.presentation : health.presentation
+        health.presentation ?? playback.presentation
     }
 
     var icon: MenuBarIcon { presentation.icon }

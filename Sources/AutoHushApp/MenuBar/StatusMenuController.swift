@@ -53,17 +53,15 @@ final class StatusMenuController: NSObject {
     let menu = NSMenu()
 
     private let actions: Actions
-    private let statusBar: NSStatusBar
     /// While the menu is open only the icon and status line follow `status`;
     /// the rest is rebuilt when it closes, so an open submenu never collapses.
     private(set) var isMenuOpen = false
     private var needsRebuild = false
 
-    init(status: AppStatus = AppStatus(), actions: Actions, statusBar: NSStatusBar = .system) {
+    init(status: AppStatus = AppStatus(), actions: Actions) {
         self.status = status
         self.actions = actions
-        self.statusBar = statusBar
-        self.statusItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
+        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         menu.autoenablesItems = false
         menu.delegate = self
@@ -71,9 +69,9 @@ final class StatusMenuController: NSObject {
         render()
     }
 
-    /// Removes the item from the menu bar.
+    /// Removes the item from the menu bar (tests clean up with it).
     func remove() {
-        statusBar.removeStatusItem(statusItem)
+        NSStatusBar.system.removeStatusItem(statusItem)
     }
 
     // MARK: - Rendering

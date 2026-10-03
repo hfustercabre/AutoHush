@@ -12,11 +12,22 @@ struct StatePresentation: Equatable {
     let line: String
 }
 
+extension StatePresentation {
+    /// While AutoHush starts, and until the player's state is known.
+    static var starting: StatePresentation {
+        StatePresentation(
+            icon: .starting,
+            label: String(localized: "AutoHush: starting", comment: "VoiceOver label of the menu bar icon"),
+            line: String(localized: "Starting services")
+        )
+    }
+}
+
 extension PlaybackState {
     var presentation: StatePresentation {
         switch self {
         case .unknown: // the player's state is not known yet: as when starting up
-            return AppHealthState.starting.presentation
+            return .starting
         case .musicPlaying:
             return StatePresentation(
                 icon: .playing,
@@ -47,21 +58,14 @@ extension PlaybackState {
 }
 
 extension AppHealthState {
-    /// Shown while the app isn't `.ready`; then the menu follows `PlaybackState`.
-    var presentation: StatePresentation {
+    /// How AutoHush looks until it is ready; `nil` once it is, when the menu
+    /// follows `PlaybackState` instead.
+    var presentation: StatePresentation? {
         switch self {
         case .starting:
-            return StatePresentation(
-                icon: .starting,
-                label: String(localized: "AutoHush: starting", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Starting services")
-            )
+            return .starting
         case .ready:
-            return StatePresentation(
-                icon: .playing,
-                label: String(localized: "AutoHush: monitoring", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Monitoring media playback")
-            )
+            return nil
         case .degraded(let message):
             return StatePresentation(
                 icon: .attention,
@@ -129,8 +133,8 @@ extension AutoPauseSnooze {
     }
 
     /// When the snooze ends, with its preposition so that each language can
-    /// place it in a sentence: "until 15:30" today, "until tomorrow 8:00",
-    /// otherwise "until Thursday 8:00".
+    /// place it in a sentence: "until 15:30" today, otherwise "until tomorrow
+    /// 8:00" (a snooze lasts 24 hours at most).
     static func describeEnd(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
         style.timeZone = calendar.timeZone
@@ -138,13 +142,6 @@ extension AutoPauseSnooze {
         if calendar.isDate(date, inSameDayAs: now) {
             return String(localized: "until \(time)", comment: "When auto-pause turns back on today; %@ is a time")
         }
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now),
-           calendar.isDate(date, inSameDayAs: tomorrow) {
-            return String(localized: "until tomorrow \(time)", comment: "When auto-pause turns back on; %@ is a time")
-        }
-        var weekday = Date.FormatStyle().weekday(.wide)
-        weekday.timeZone = calendar.timeZone
-        return String(localized: "until \(date.formatted(weekday)) \(time)",
-                      comment: "When auto-pause turns back on; a weekday, then a time")
+        return String(localized: "until tomorrow \(time)", comment: "When auto-pause turns back on; %@ is a time")
     }
 }

@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("StatusPresentation")
 struct StatusPresentationTests {
@@ -19,6 +20,11 @@ struct StatusPresentationTests {
         #expect(state.presentation == StatePresentation(icon: icon, label: label, line: line))
     }
 
+    @Test("once ready, the menu follows the playback state rather than the health")
+    func readyHasNoLookOfItsOwn() {
+        #expect(AppHealthState.ready.presentation == nil)
+    }
+
     @Test("an unknown playback state looks like starting up")
     func unknownPlaybackState() {
         #expect(PlaybackState.unknown.presentation == AppHealthState.starting.presentation)
@@ -26,7 +32,6 @@ struct StatusPresentationTests {
 
     @Test("each health state has its icon, label and status line; problems show their message", arguments: [
         (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
-        (.ready, .playing, "AutoHush: monitoring", "Monitoring media playback"),
         (.degraded("Spotify is not running"), .attention, "AutoHush: degraded", "Spotify is not running"),
         (.needsPermission("Grant Automation access to control Spotify"), .attention,
          "AutoHush: needs permission", "Grant Automation access to control Spotify"),
@@ -48,20 +53,14 @@ struct StatusPresentationTests {
 
     @Test("snooze end times are described relative to today, with their preposition")
     func describeEnd() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Madrid")!
-        func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
-            calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute))!
-        }
+        let calendar = TestDates.calendar
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
         style.timeZone = calendar.timeZone
-        let now = date(2, 12)
+        let now = TestDates.date(2, 12)
 
-        #expect(AutoPauseSnooze.describeEnd(date(2, 15, 30), now: now, calendar: calendar)
-            == "until \(date(2, 15, 30).formatted(style))")
-        #expect(AutoPauseSnooze.describeEnd(date(3, 8), now: now, calendar: calendar)
-            == "until tomorrow \(date(3, 8).formatted(style))")
-        let later = AutoPauseSnooze.describeEnd(date(5, 8), now: now, calendar: calendar)
-        #expect(later.hasPrefix("until ") && later.hasSuffix(date(5, 8).formatted(style)))
+        #expect(AutoPauseSnooze.describeEnd(TestDates.date(2, 15, 30), now: now, calendar: calendar)
+            == "until \(TestDates.date(2, 15, 30).formatted(style))")
+        #expect(AutoPauseSnooze.describeEnd(TestDates.date(3, 8), now: now, calendar: calendar)
+            == "until tomorrow \(TestDates.date(3, 8).formatted(style))")
     }
 }

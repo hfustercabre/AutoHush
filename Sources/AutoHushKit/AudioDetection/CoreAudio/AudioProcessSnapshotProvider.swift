@@ -2,12 +2,11 @@ import CoreAudio
 import Foundation
 import OSLog
 
-/// A CoreAudio client process.
+/// A CoreAudio client process with its audio output running.
 package struct AudioProcessInfo: Equatable, Sendable {
     package let objectID: AudioObjectID
     package let bundleID: String
     package let pid: pid_t
-    package let isRunningOutput: Bool
 }
 
 /// Source of CoreAudio process information. All methods are called on the
@@ -39,7 +38,7 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
                   let bundleID = CoreAudioProperty.string(kAudioProcessPropertyBundleID, of: objectID)
             else { return nil }
             let pid = CoreAudioProperty.value(kAudioProcessPropertyPID, of: objectID, initial: pid_t(0)) ?? 0
-            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid, isRunningOutput: true)
+            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid)
         }
     }
 

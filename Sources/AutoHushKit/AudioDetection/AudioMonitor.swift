@@ -318,9 +318,7 @@ package final class AudioMonitor: @unchecked Sendable {
         needsRefresh = false
         lastRefresh = now
         let ownPID = getpid()
-        candidates = snapshotProvider.activeProcesses().filter {
-            $0.isRunningOutput && $0.pid != ownPID && !$0.bundleID.isEmpty
-        }
+        candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID && !$0.bundleID.isEmpty }
         sourceOfProcess = [:]
         for process in candidates where configuration.isMediaSource(process.bundleID) {
             let source = sourceIdentifier?.source(for: process)
