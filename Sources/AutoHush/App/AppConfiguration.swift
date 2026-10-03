@@ -7,6 +7,12 @@ struct AppConfiguration: Sendable {
     /// Seconds to wait after all foreign audio stops before resuming the music.
     var debounceSeconds: TimeInterval = 0.2
 
+    /// Seconds the music takes to fade out before pausing; 0 pauses at once.
+    var fadeOutDuration: TimeInterval = 2
+    /// Seconds the music takes to fade back in after resuming; 0 resumes at
+    /// full volume.
+    var fadeInDuration: TimeInterval = 3
+
     /// Peak sample value (linear, 0…1) above which a metered process counts as
     /// audible. 0.001 ≈ -60 dBFS: paused players emit digital silence (0).
     var audibleThreshold: Float = 0.001

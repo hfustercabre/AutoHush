@@ -19,9 +19,21 @@ protocol MusicPlayer: Sendable {
     func pause() async throws
     func play() async throws
 
+    /// The player's own volume, 0–100, or `nil` when it can't be read.
+    /// Fades need it; players without one pause and play without fading.
+    func volume() async -> Int?
+    func setVolume(_ volume: Int) async throws
+    /// How the volume number maps to loudness, so fades sound even.
+    var volumeCurve: VolumeCurve { get }
+
     /// Reports the player's state changes (and its quitting) once started.
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving
+}
+
+extension MusicPlayer {
+    /// Until a player's curve is measured, its volume is taken as linear.
+    var volumeCurve: VolumeCurve { .linear }
 }
 
 /// Watches a player's state; created by `MusicPlayer.makeStateObserver`.

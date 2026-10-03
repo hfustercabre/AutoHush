@@ -10,6 +10,10 @@ struct TimingSettings: Equatable, Sendable {
     var resumeDelay: TimeInterval = 0.2
     /// Peak level (dBFS) below which an app counts as silent.
     var silenceThresholdDB: Double = -60
+    /// Seconds the music fades out before pausing.
+    var fadeOutDuration: TimeInterval = 2
+    /// Seconds the music fades back in after resuming.
+    var fadeInDuration: TimeInterval = 3
 
     static let defaults = TimingSettings()
 
@@ -17,6 +21,7 @@ struct TimingSettings: Equatable, Sendable {
     static let stopGraceRange: ClosedRange<TimeInterval> = 0...10
     static let resumeDelayRange: ClosedRange<TimeInterval> = 0...5
     static let silenceThresholdRange: ClosedRange<Double> = -90 ... -30
+    static let fadeDurationRange: ClosedRange<TimeInterval> = 0...5
 
     /// The same settings with every value clamped to its allowed range.
     var clamped: TimingSettings {
@@ -24,7 +29,9 @@ struct TimingSettings: Equatable, Sendable {
             startConfirmation: startConfirmation.clamped(to: Self.startConfirmationRange),
             stopGrace: stopGrace.clamped(to: Self.stopGraceRange),
             resumeDelay: resumeDelay.clamped(to: Self.resumeDelayRange),
-            silenceThresholdDB: silenceThresholdDB.clamped(to: Self.silenceThresholdRange)
+            silenceThresholdDB: silenceThresholdDB.clamped(to: Self.silenceThresholdRange),
+            fadeOutDuration: fadeOutDuration.clamped(to: Self.fadeDurationRange),
+            fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange)
         )
     }
 }
@@ -38,6 +45,8 @@ extension AppConfiguration {
         sourceStopGrace = timings.stopGrace
         debounceSeconds = timings.resumeDelay
         audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
+        fadeOutDuration = timings.fadeOutDuration
+        fadeInDuration = timings.fadeInDuration
     }
 }
 

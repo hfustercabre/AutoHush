@@ -55,7 +55,9 @@ final class Preferences {
                 startConfirmation: stored["startConfirmation"] ?? defaults.startConfirmation,
                 stopGrace: stored["stopGrace"] ?? defaults.stopGrace,
                 resumeDelay: stored["resumeDelay"] ?? defaults.resumeDelay,
-                silenceThresholdDB: stored["silenceThresholdDB"] ?? defaults.silenceThresholdDB
+                silenceThresholdDB: stored["silenceThresholdDB"] ?? defaults.silenceThresholdDB,
+                fadeOutDuration: stored["fadeOutDuration"] ?? defaults.fadeOutDuration,
+                fadeInDuration: stored["fadeInDuration"] ?? defaults.fadeInDuration
             ).clamped
         }
         set {
@@ -65,6 +67,8 @@ final class Preferences {
                 "stopGrace": value.stopGrace,
                 "resumeDelay": value.resumeDelay,
                 "silenceThresholdDB": value.silenceThresholdDB,
+                "fadeOutDuration": value.fadeOutDuration,
+                "fadeInDuration": value.fadeInDuration,
             ], forKey: Key.timings)
         }
     }

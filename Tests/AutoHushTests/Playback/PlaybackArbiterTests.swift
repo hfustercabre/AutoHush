@@ -199,6 +199,62 @@ struct PlaybackArbiterTests {
         #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries + 1)
     }
 
+    @Test("fades the music out before pausing and back in after resuming")
+    func fadesAroundPauseAndResume() async {
+        let spotify = MockMusicPlayer()
+        await spotify.setVolumeLevel(60)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(),
+                                      debounceScheduler: scheduler, fadeSleep: { _ in })
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        #expect(await spotify.pauseCallCount == 1)
+        #expect(await spotify.volumeHistory.contains(0))
+        #expect(await spotify.volumeLevel == 60) // set back while paused
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await scheduler.completeNext()
+        await waitUntil { await spotify.playCallCount == 1 }
+        await waitUntil { await spotify.volumeLevel == 60 }
+        #expect(await spotify.commandLog.contains("volume 0"))
+        #expect(await spotify.volumeLevel == 60)
+    }
+
+    @Test("the fade-in after a resume is not rushed by a cancelled task")
+    func fadeInIsNotRushed() async {
+        let spotify = MockMusicPlayer()
+        await spotify.setVolumeLevel(60)
+        let scheduler = ManualDebounceScheduler()
+        let rushedSteps = Counter()
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(),
+                                      debounceScheduler: scheduler,
+                                      fadeSleep: { _ in if Task.isCancelled { await rushedSteps.increment() } })
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await scheduler.completeNext()
+        await waitUntil { await spotify.playCallCount == 1 }
+        await waitUntil { await spotify.volumeLevel == 60 }
+        #expect(await rushedSteps.value == 0)
+    }
+
+    @Test("an app that stops during the fade-out leaves the music playing")
+    func stopDuringFadeOut() async {
+        let spotify = MockMusicPlayer()
+        await spotify.setVolumeLevel(60)
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in try? await Task.sleep(for: .milliseconds(5)) })
+
+        let pausing = Task { await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) }
+        await waitUntil { await !spotify.volumeHistory.isEmpty } // the fade-out has begun
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await pausing.value
+
+        #expect(await spotify.pauseCallCount == 0)
+        #expect(await spotify.volumeLevel == 60)
+    }
+
     @Test("does not resume Spotify that it did not pause")
     func doesNotResumeIfNotPausedByUs() async {
         let spotify = MockMusicPlayer(state: .paused)
@@ -792,4 +848,9 @@ struct PlaybackArbiterTests {
 
         #expect(scheduler.scheduledDelays == [1.5])
     }
+}
+
+private actor Counter {
+    private(set) var value = 0
+    func increment() { value += 1 }
 }

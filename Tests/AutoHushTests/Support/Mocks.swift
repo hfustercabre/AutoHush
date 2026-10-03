@@ -8,6 +8,7 @@ import Testing
 actor MockMusicPlayer: MusicPlayer {
     nonisolated var bundleID: String { "com.example.player" }
     nonisolated var name: String { "Spotify" }
+    nonisolated let volumeCurve: VolumeCurve
     var state: PlayerState
     var pauseCallCount = 0
     var playCallCount = 0
@@ -22,11 +23,13 @@ actor MockMusicPlayer: MusicPlayer {
 
     init(
         state: PlayerState = .playing,
+        volumeCurve: VolumeCurve = .linear,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
     ) {
         self.state = state
+        self.volumeCurve = volumeCurve
         self.failPauseWith = failPauseWith
         self.failPlayWith = failPlayWith
         self.failVerifyWith = failVerifyWith
@@ -48,6 +51,23 @@ actor MockMusicPlayer: MusicPlayer {
 
     func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
 
+    /// The player's volume; `nil` (the default) means it has none, so no fades.
+    var volumeLevel: Int?
+    /// Every volume set, in order.
+    var volumeHistory: [Int] = []
+    /// Pauses, plays and volume changes, in order.
+    var commandLog: [String] = []
+
+    func setVolumeLevel(_ level: Int?) { volumeLevel = level }
+
+    func volume() async -> Int? { volumeLevel }
+
+    func setVolume(_ volume: Int) async throws {
+        volumeLevel = volume
+        volumeHistory.append(volume)
+        commandLog.append("volume \(volume)")
+    }
+
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
         MockStateObserver()
@@ -58,12 +78,14 @@ actor MockMusicPlayer: MusicPlayer {
 
     func pause() async throws {
         pauseCallCount += 1
+        commandLog.append("pause")
         if let error = failPauseWith { throw error }
         state = .paused
     }
 
     func play() async throws {
         playCallCount += 1
+        commandLog.append("play")
         if let error = failPlayWith { throw error }
         state = .playing
     }

@@ -5,6 +5,7 @@
 AutoHush is a small menu bar app for macOS. When another app starts making sound (a YouTube video, a call, a game), it pauses your music. When that sound stops, it brings your music back. You don't have to touch anything.
 
 - 🎵 **Automatic:** pauses your music when another app plays, resumes it about 2 seconds after that app goes quiet.
+- 🎚️ **Gentle:** the music fades out over 2 seconds before pausing and fades back in over 3 seconds when it resumes, and your volume is always left as it was.
 - 🙋 **Respects you:** if you pause, play or quit your music player yourself, AutoHush takes that as your decision and won't override it.
 - 🔕 **Ignores the noise:** notification sounds, alert beeps and short chat tones don't interrupt your music.
 - 📱 **Knows where you're listening:** if Spotify plays on your phone, speaker or TV (Spotify Connect), it's left alone.
@@ -113,7 +114,7 @@ Music paused — Google Chrome is playing
 |---|---|
 | **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
-| **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped (2 s), an extra wait before resuming (0.2 s), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
+| **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped (2 s), an extra wait before resuming (0.2 s), how long the music fades out before pausing (2 s) and back in when it resumes (3 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
 ## The purple dot and AntiDot mode
 
@@ -187,7 +188,8 @@ tccutil reset All com.autohush.AutoHush
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open; these apps are remembered across launches. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) and display-only assertions are ignored.
 3. **Filtering.** System sounds are played by `systemsoundserverd`, which is excluded outright. An app must be audible for 0.5 s to count as playing (this filters out chat tones) and silent for 2 s to count as stopped (this bridges gaps between tracks).
 4. **Deciding.** `PlaybackArbiter` pauses Spotify when the first app starts, and resumes it 0.2 s after the last one stops, but only if it paused Spotify itself and Spotify is still paused.
-5. **Spotify.** Its state arrives as a push notification (`com.spotify.client.PlaybackStateChanged`) and is confirmed with an Apple event right before each pause or resume. Spotify plays "on this Mac" only when its own process has output running; otherwise it's on a Spotify Connect device and is left alone.
+5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: the level drops at a steady rate in decibels to 50 dB below the user's volume over 2 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 3 s. Each player's `VolumeCurve` turns decibels into its volume number (Spotify's is a cube law, measured with `Scripts/measure-volume-curve.swift`). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower. If the other app stops during the fade-out, the music comes back up without pausing. It works with any player that reports its volume; others pause and play directly.
+6. **Spotify.** Its state arrives as a push notification (`com.spotify.client.PlaybackStateChanged`) and is confirmed with an Apple event right before each pause or resume. Spotify plays "on this Mac" only when its own process has output running; otherwise it's on a Spotify Connect device and is left alone.
 
 **The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and Spotify playing here or paused by us), with a 2 s release delay. Spotify itself is never tapped, except to prove the permission works when TCC can't be read.
 
@@ -232,7 +234,7 @@ Tests/AutoHushTests/   same folders, plus Support/ for shared mocks
 Resources/  Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
 ```
 
-**Adding a music player:** everything outside `MusicPlayers/` talks to the player through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, and a `PlayerStateObserving` that reports state changes. A new player gets its own subfolder, `MusicPlayers/<App>/` in both `Sources` and `Tests`, with a type implementing the protocol, plus its bundle ID in `SupportedPlayers` so its own audio never counts as another app playing.
+**Adding a music player:** everything outside `MusicPlayers/` talks to the player through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`, measured with `Scripts/measure-volume-curve.swift`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player gets its own subfolder, `MusicPlayers/<App>/` in both `Sources` and `Tests`, with a type implementing the protocol, plus its bundle ID in `SupportedPlayers` so its own audio never counts as another app playing.
 
 Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHush/App/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 
@@ -263,6 +265,7 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 | `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`, which opens as a drag-to-Applications window with a first-launch note. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
+| `Scripts/measure-volume-curve.swift [bundle-id] [volume …]` | Measures how a player's volume number maps to loudness (dB), for its `VolumeCurve`. Plays the music for about 50 s at changing volumes, then restores it; needs permission to record system audio |
 | `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG, cask checksum and release notes. It refuses unsigned builds and never commits, tags or publishes |
 
 The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
