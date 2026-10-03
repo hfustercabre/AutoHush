@@ -195,10 +195,10 @@ struct AppDelegateTests {
 
     @Test("startup retries only while Spotify is not ready yet")
     func transientStartupErrors() {
-        #expect(AppDelegate.isTransientStartupError(AutoHushError.spotifyNotResponding))
-        #expect(AppDelegate.isTransientStartupError(AutoHushError.spotifyUnavailable))
+        #expect(AppDelegate.isTransientStartupError(AutoHushError.playerNotResponding))
+        #expect(AppDelegate.isTransientStartupError(AutoHushError.playerNotRunning))
         #expect(!AppDelegate.isTransientStartupError(AutoHushError.automationPermissionDenied))
-        #expect(!AppDelegate.isTransientStartupError(AutoHushError.spotifyCommandFailed("OSStatus -50")))
+        #expect(!AppDelegate.isTransientStartupError(AutoHushError.playerCommandFailed("OSStatus -50")))
         #expect(!AppDelegate.isTransientStartupError(StubError.failed))
     }
 

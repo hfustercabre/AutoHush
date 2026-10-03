@@ -8,7 +8,7 @@ enum DetectionMode: Equatable, Sendable {
     case pending
     /// Process taps deliver real samples; sources are judged by loudness.
     case audioLevel
-    /// Spotify played but its tap stayed silent: System Audio Recording
+    /// The music player played but its tap stayed silent: System Audio Recording
     /// permission is most likely missing. Open output streams count as playing.
     case unavailable
     /// AntiDot mode with "What apps tell macOS": apps are judged by their

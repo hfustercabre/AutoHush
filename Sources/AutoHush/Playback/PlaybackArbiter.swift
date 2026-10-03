@@ -17,27 +17,28 @@ struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
 
 protocol PlaybackArbiting: Actor {
     func handleSourceChange(sourceID: String, isPlaying: Bool) async
-    /// Whether Spotify's audio currently comes out of this Mac (as opposed to
-    /// another Spotify Connect device).
-    func handleSpotifyLocalPlaybackChange(_ isLocal: Bool) async
+    /// Whether the player's audio currently comes out of this Mac (as opposed
+    /// to another device, e.g. through Spotify Connect).
+    func handleLocalPlaybackChange(_ isLocal: Bool) async
 }
 
 // MARK: - Playback arbiter
 //
 // Receives play/stop events from AudioMonitor and decides when to pause
-// and resume Spotify. Rule: pause when any foreign source starts; resume
+// and resume the music player. Rule: pause when any foreign source starts; resume
 // (after debounce) when ALL foreign sources have stopped.
 //
-// Spotify's state is pushed in through `handleSpotifyStateChange` (from
-// Spotify's PlaybackStateChanged notification) and cached for status display.
-// Spotify is only queried (via Apple events) right before pausing or resuming, so those
-// decisions always use Spotify's live state.
+// The player's state is pushed in through `handlePlayerStateChange` (from its
+// state observer) and cached for status display. The player is only queried
+// right before pausing or resuming, so those decisions always use its live
+// state.
 //
-// Spotify is only paused while its audio plays on this Mac: playback on
-// another Spotify Connect device does not compete with local audio.
+// The player is only paused while its audio plays on this Mac: playback on
+// another device (e.g. through Spotify Connect) does not compete with local
+// audio.
 
 actor PlaybackArbiter: PlaybackArbiting {
-    private let spotify: any SpotifyControlling
+    private let player: any MusicPlayer
     private var configuration: AppConfiguration
     private let debounceScheduler: PlaybackArbiterDebounceScheduling
     private let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
@@ -47,28 +48,28 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     private var pausedByUs = false
     private var isShutDown = false
-    private var spotifyState: SpotifyPlayerState = .unknown
+    private var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
-    private var spotifyPlaysLocally = true
+    private var playsLocally = true
     private var autoPauseEnabled: Bool
     private var activeSources: Set<String> = []
     private var pendingResumeTask: Task<Void, Never>?
     private var pendingResumeID: UUID?
 
-    /// A resume is retried this often, this far apart, while Spotify does not
-    /// answer: a timed-out query is not the user changing Spotify.
+    /// A resume is retried this often, this far apart, while the player does
+    /// not answer: a timed-out query is not the user changing the player.
     static let resumeRetries = 2
     static let resumeRetryDelay: TimeInterval = 1
 
     init(
-        spotify: any SpotifyControlling,
+        player: any MusicPlayer,
         configuration: AppConfiguration,
         debounceScheduler: PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
         autoPauseEnabled: Bool = true,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in }
     ) {
-        self.spotify = spotify
+        self.player = player
         self.configuration = configuration
         self.debounceScheduler = debounceScheduler
         self.autoPauseEnabled = autoPauseEnabled
@@ -103,9 +104,9 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// Turns automatic pausing on or off (the menu's "Auto-Pause Music").
     ///
-    /// Off: a pending resume is cancelled and Spotify, if we paused it, resumes
+    /// Off: a pending resume is cancelled and the player, if we paused it, resumes
     /// right away — the user wants it playing alongside the other audio.
-    /// On: if another app is already playing, Spotify is paused as if that app
+    /// On: if another app is already playing, the player is paused as if that app
     /// had just started. Sources keep being tracked while off.
     func setAutoPauseEnabled(_ enabled: Bool) async {
         guard !isShutDown, enabled != autoPauseEnabled else { return }
@@ -120,32 +121,32 @@ actor PlaybackArbiter: PlaybackArbiting {
         publishPlaybackState()
     }
 
-    /// Called whenever Spotify reports a new player state. If the user resumed,
-    /// stopped or quit Spotify while we held it paused, we are no longer
+    /// Called whenever the player reports a new state. If the user resumed,
+    /// stopped or quit it while we held it paused, we are no longer
     /// responsible for it and must not resume it later.
     ///
     /// `.unknown` carries no information and is ignored.
-    func handleSpotifyStateChange(_ state: SpotifyPlayerState) {
+    func handlePlayerStateChange(_ state: PlayerState) {
         guard !isShutDown, state != .unknown else { return }
-        spotifyState = state
+        playerState = state
         if pausedByUs, state != .paused {
-            logger.debug("[arbiter] Spotify is \(state.rawValue, privacy: .public) — clearing pausedByUs")
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — clearing pausedByUs")
             pausedByUs = false
         }
         publishPlaybackState()
     }
 
-    func handleSpotifyLocalPlaybackChange(_ isLocal: Bool) {
-        guard !isShutDown, isLocal != spotifyPlaysLocally else { return }
-        spotifyPlaysLocally = isLocal
+    func handleLocalPlaybackChange(_ isLocal: Bool) {
+        guard !isShutDown, isLocal != playsLocally else { return }
+        playsLocally = isLocal
         publishPlaybackState()
     }
 
-    /// Queries Spotify's live state, caches it and publishes the resulting
+    /// Queries the player's live state, caches it and publishes the resulting
     /// playback state. Used once at bootstrap to seed the cache.
     @discardableResult
-    func refreshPlaybackState() async -> SpotifyPlayerState {
-        let state = await liveSpotifyState()
+    func refreshPlaybackState() async -> PlayerState {
+        let state = await livePlayerState()
         publishPlaybackState()
         return state
     }
@@ -159,9 +160,9 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     // MARK: - Private
 
-    private func liveSpotifyState() async -> SpotifyPlayerState {
-        let state = await spotify.playerState()
-        if state != .unknown { spotifyState = state }
+    private func livePlayerState() async -> PlayerState {
+        let state = await player.playerState()
+        if state != .unknown { playerState = state }
         return state
     }
 
@@ -173,21 +174,21 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     private func pauseMusicIfNeeded() async {
         guard autoPauseEnabled else { return }
-        guard spotifyPlaysLocally else {
-            logger.debug("[arbiter] Spotify is not playing on this Mac — not pausing")
+        guard playsLocally else {
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
             return
         }
-        let state = await liveSpotifyState()
+        let state = await livePlayerState()
         guard state == .playing else {
-            logger.debug("[arbiter] Spotify is \(state.rawValue, privacy: .public) — not pausing")
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
         guard !isShutDown, autoPauseEnabled else { return }
         do {
-            try await spotify.pause()
+            try await player.pause()
             pausedByUs = true
-            spotifyState = .paused
-            logger.debug("[arbiter] Spotify paused")
+            playerState = .paused
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
             // Auto-pause was turned off while we were pausing: undo it.
             if !autoPauseEnabled { await resumeNow() }
         } catch {
@@ -217,20 +218,20 @@ actor PlaybackArbiter: PlaybackArbiting {
         await resumeNow(unlessSuperseded: id, retriesLeft: retriesLeft)
     }
 
-    /// Resumes Spotify after re-checking its live state: if the user manually
-    /// paused, resumed, or quit Spotify while the source was active, respect
+    /// Resumes the player after re-checking its live state: if the user manually
+    /// paused, resumed, or quit it while the source was active, respect
     /// that and do not override their intent. With `id`, gives up when that
-    /// pending resume was cancelled or replaced while Spotify was queried.
+    /// pending resume was cancelled or replaced while the player was queried.
     private func resumeNow(unlessSuperseded id: UUID? = nil, retriesLeft: Int = PlaybackArbiter.resumeRetries) async {
-        let currentState = await liveSpotifyState()
+        let currentState = await livePlayerState()
         guard !isShutDown, id == nil || pendingResumeID == id else { return }
         if currentState == .unknown, retriesLeft > 0 {
-            logger.debug("[arbiter] Spotify did not answer — trying the resume again")
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             return
         }
         guard currentState == .paused else {
-            logger.debug("[arbiter] resume skipped — Spotify is \(currentState.rawValue, privacy: .public) (user interaction detected)")
+            logger.debug("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
             pausedByUs = false
             publishPlaybackState()
             return
@@ -239,9 +240,9 @@ actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingResume()
         pausedByUs = false
         do {
-            try await spotify.play()
-            spotifyState = .playing
-            logger.debug("[arbiter] Spotify resumed")
+            try await player.play()
+            playerState = .playing
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) resumed")
         } catch {
             logger.error("[arbiter] resume failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -259,20 +260,20 @@ actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Audio levels only matter while they can change a decision: whether to
-    /// pause a Spotify playing on this Mac, or when to resume one we paused.
+    /// pause a player playing on this Mac, or when to resume one we paused.
     /// Otherwise the monitor captures nothing (no recording indicator).
     private var audioLevelsNeeded: Bool {
         guard autoPauseEnabled, !isShutDown else { return false }
-        return pausedByUs || (spotifyState == .playing && spotifyPlaysLocally)
+        return pausedByUs || (playerState == .playing && playsLocally)
     }
 
     private func mapPlaybackState() -> PlaybackState {
         if pausedByUs, !activeSources.isEmpty { return .pausedByMonitor }
-        if spotifyState == .playing, !spotifyPlaysLocally { return .spotifyPlayingElsewhere }
+        if playerState == .playing, !playsLocally { return .playingElsewhere }
 
-        switch spotifyState {
-        case .playing:                       return .spotifyPlaying
-        case .paused, .stopped, .notRunning: return .spotifyIdle
+        switch playerState {
+        case .playing:                       return .musicPlaying
+        case .paused, .stopped, .notRunning: return .musicIdle
         case .unknown:                       return .unknown
         }
     }

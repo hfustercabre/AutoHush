@@ -17,11 +17,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
     let updateChecker: UpdateChecker
+    /// The music player AutoHush pauses and resumes.
+    let player: any MusicPlayer
     let currentVersion: AppVersion?
     var updateCheckTimer: Timer?
-    private var spotifyLaunchObserver: (any NSObjectProtocol)?
+    private var playerLaunchObserver: (any NSObjectProtocol)?
     private let logger = Logger(category: "AppDelegate")
-    /// Replaces the real bootstrap in tests, so they never script Spotify or
+    /// Replaces the real bootstrap in tests, so they never script the music player or
     /// tap real audio processes.
     private let bootstrapOverride: (@MainActor () -> Void)?
 
@@ -29,11 +31,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences: Preferences = Preferences(),
         launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
         updateChecker: UpdateChecker = UpdateChecker(),
+        player: any MusicPlayer = SpotifyPlayer(),
         currentVersion: AppVersion? = .current,
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
         self.updateChecker = updateChecker
+        self.player = player
         self.currentVersion = currentVersion
         self.bootstrapOverride = bootstrapOverride
         super.init()
@@ -53,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.timings = preferences.timings
         settingsModel.detectionMethod = preferences.detectionMethod
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
+        status.playerName = player.name
         status.ignoredApps = preferences.ignoredApps
         syncSettingsApps()
         applyAutoPause()
@@ -82,13 +87,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 quit: { NSApp.terminate(nil) }
             )
         )
-        registerSpotifyLaunchObserver()
+        registerPlayerLaunchObserver()
         requestBootstrap()
         scheduleAutomaticUpdateChecks()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        unregisterSpotifyLaunchObserver()
+        unregisterPlayerLaunchObserver()
         tearDownPipeline()
     }
 
@@ -206,11 +211,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
     }
 
-    // MARK: - Spotify relaunch
+    // MARK: - Player relaunch
 
-    private func registerSpotifyLaunchObserver() {
-        guard spotifyLaunchObserver == nil else { return }
-        spotifyLaunchObserver = NSWorkspace.shared.notificationCenter.addObserver(
+    private func registerPlayerLaunchObserver() {
+        guard playerLaunchObserver == nil else { return }
+        playerLaunchObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
             object: nil,
             queue: nil
@@ -225,23 +230,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func handleApplicationDidLaunch(bundleIdentifier: String?) {
-        guard bundleIdentifier == AppConfiguration.spotifyBundleID else { return }
-        logger.debug("Spotify launch detected — re-running bootstrap")
+        guard bundleIdentifier == player.bundleID else { return }
+        logger.debug("\(self.player.name, privacy: .public) launch detected — re-running bootstrap")
         setHealth(.starting)
-        // Spotify may not answer yet while it finishes starting up.
+        // The player may not answer yet while it finishes starting up.
         requestBootstrap(retries: Self.startupRetries)
     }
 
-    private func unregisterSpotifyLaunchObserver() {
-        guard let spotifyLaunchObserver else { return }
-        NSWorkspace.shared.notificationCenter.removeObserver(spotifyLaunchObserver)
-        self.spotifyLaunchObserver = nil
+    private func unregisterPlayerLaunchObserver() {
+        guard let playerLaunchObserver else { return }
+        NSWorkspace.shared.notificationCenter.removeObserver(playerLaunchObserver)
+        self.playerLaunchObserver = nil
     }
 
     // MARK: - Bootstrap
 
-    /// Startup checks after a Spotify launch are retried this often, this far
-    /// apart, while Spotify is not ready to answer.
+    /// Startup checks after the player launches are retried this often, this
+    /// far apart, while it is not ready to answer.
     static let startupRetries = 3
     static let startupRetryDelay: TimeInterval = 2
 
@@ -253,10 +258,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await bootstrap(retriesLeft: retries) }
     }
 
-    /// Errors that mean Spotify is not ready yet rather than a lasting problem.
+    /// Errors that mean the player is not ready yet rather than a lasting problem.
     nonisolated static func isTransientStartupError(_ error: any Error) -> Bool {
         switch error as? AutoHushError {
-        case .spotifyNotResponding, .spotifyUnavailable: return true
+        case .playerNotResponding, .playerNotRunning: return true
         default:                                         return false
         }
     }
@@ -266,27 +271,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let generation = bootstrapGeneration
         tearDownPipeline()
 
-        let spotify = SpotifyController()
         do {
-            try await spotify.verifyAutomationAccess()
+            try await player.verifyControlAccess()
         } catch {
             guard generation == bootstrapGeneration else { return }
             if retriesLeft > 0, Self.isTransientStartupError(error) {
-                logger.debug("Spotify is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
+                logger.debug("\(self.player.name, privacy: .public) is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
                 try? await Task.sleep(for: .seconds(Self.startupRetryDelay))
                 guard generation == bootstrapGeneration else { return } // Retry or another launch took over
                 await bootstrap(retriesLeft: retriesLeft - 1)
                 return
             }
             logger.error("Automation preflight failed: \(error.localizedDescription, privacy: .public)")
-            setHealth(AppHealthState(startupError: error))
+            setHealth(AppHealthState(startupError: error, playerName: player.name))
             return
         }
-        // A newer bootstrap (Retry, Spotify relaunch) started while we awaited.
+        // A newer bootstrap (Retry, player relaunch) started while we awaited.
         guard generation == bootstrapGeneration else { return }
 
         let pipeline = MonitoringPipeline(
-            spotify: spotify,
+            player: player,
             configuration: AppConfiguration(timings: preferences.timings),
             autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
             ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
@@ -325,7 +329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .paragraphStyle: paragraph,
         ]
         let credits = NSMutableAttributedString(
-            string: "Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify.\n",
+            string: "Pauses your music while other apps play audio, and resumes it afterwards. Works with \(player.name).\n",
             attributes: body
         )
         var link = body

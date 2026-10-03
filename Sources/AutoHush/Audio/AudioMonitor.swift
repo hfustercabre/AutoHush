@@ -17,12 +17,12 @@ import os
 // deliver pure silence, which would make every source look stopped. The
 // permission is read from TCC (re-checked every few seconds, and requested at
 // start when undecided). When TCC cannot be queried, level detection is
-// trusted once a tap delivers a non-zero sample (Spotify's own output is then
-// tapped too, so Spotify playing proves the permission works).
+// trusted once a tap delivers a non-zero sample (the music player's own output
+// is then tapped too, so its playing proves the permission works).
 //
 // Capturing audio makes macOS show its recording indicator, so taps exist only
 // while levels can change a decision (`setAudioLevelsNeeded`, driven by the
-// arbiter: Spotify playing here or paused by us, with auto-pause on) and the
+// arbiter: the music playing here or paused by us, with auto-pause on) and the
 // detection method is `.audioLevels`. With `.playbackSignals` (AntiDot mode)
 // nothing is captured and no app is singled out: every app is judged by its
 // power assertions (PowerAssertionReading). An app announcing "don't sleep"
@@ -30,11 +30,11 @@ import os
 // even with its audio open. Apps that never announce count as playing while
 // their output is open, as with `.openStreams`.
 //
-// Spotify's output also tells whether Spotify plays on THIS Mac. Through
-// Spotify Connect it can report "playing" while the music comes out of
-// another device; then its process has no running output (measured). The
-// monitor reports this to the arbiter, which only pauses Spotify when it plays
-// here.
+// The music player's output also tells whether it plays on THIS Mac. Through
+// Spotify Connect, for example, Spotify reports "playing" while the music
+// comes out of another device; then its process has no running output
+// (measured). The monitor reports this to the arbiter, which only pauses the
+// player when it plays here.
 //
 // Processes are grouped by the app that owns them (AudioSourceIdentifying), so
 // all of Chrome's helpers form one "Google Chrome" source. Sources the user
@@ -43,11 +43,11 @@ import os
 final class AudioMonitor: @unchecked Sendable {
     private enum ArbiterEvent: Sendable {
         case source(id: String, isPlaying: Bool)
-        case spotifyLocalPlayback(Bool)
+        case localPlayback(Bool)
     }
 
-    /// Spotify playing but its tap silent for this long means level detection
-    /// is unavailable. Long enough to outlast the open-but-silent stream Spotify
+    /// The player playing but its tap silent for this long means level detection
+    /// is unavailable. Long enough to outlast the open-but-silent stream a player
     /// keeps for a while after playback moves to another device.
     private static let verificationWindow: TimeInterval = 15
     /// How often the System Audio Recording permission is re-read from TCC.
@@ -90,8 +90,8 @@ final class AudioMonitor: @unchecked Sendable {
     private var tracker: SourceActivityTracker
     private var publishedActive: [AudioSource]?
     private var detectionMode: DetectionMode = .pending
-    private var spotifyPlayingSince: Date?
-    private var spotifyTapSince: Date?
+    private var playerPlayingSince: Date?
+    private var playerTapSince: Date?
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     private var permissionStatus: AudioCapturePermission?
     private var lastPermissionCheck: Date?
@@ -103,10 +103,10 @@ final class AudioMonitor: @unchecked Sendable {
     /// Whether levels can currently change a pause or resume decision.
     private var audioLevelsNeeded: Bool
     /// Taps are released this long after levels stop being needed, so brief
-    /// gaps (Spotify's output restarting after a resume) don't recreate them.
+    /// gaps (the player's output restarting after a resume) don't recreate them.
     private let audioLevelsReleaseDelay: TimeInterval
     private var audioLevelsRelease: DispatchWorkItem?
-    private var publishedSpotifyLocal: Bool?
+    private var publishedLocalPlayback: Bool?
 
     init(
         configuration: AppConfiguration,
@@ -151,8 +151,8 @@ final class AudioMonitor: @unchecked Sendable {
                 switch event {
                 case .source(let id, let isPlaying):
                     await arbiter.handleSourceChange(sourceID: id, isPlaying: isPlaying)
-                case .spotifyLocalPlayback(let isLocal):
-                    await arbiter.handleSpotifyLocalPlaybackChange(isLocal)
+                case .localPlayback(let isLocal):
+                    await arbiter.handleLocalPlaybackChange(isLocal)
                 }
             }
         }
@@ -173,11 +173,11 @@ final class AudioMonitor: @unchecked Sendable {
         queue.async { self.stopOnQueue() }
     }
 
-    /// Tells the monitor whether Spotify is playing, so it can conclude that
-    /// level detection is unavailable when Spotify's tap stays silent.
-    func setSpotifyPlaying(_ isPlaying: Bool) {
+    /// Tells the monitor whether the music player is playing, so it can conclude
+    /// that level detection is unavailable when the player's tap stays silent.
+    func setPlayerPlaying(_ isPlaying: Bool) {
         queue.async {
-            self.spotifyPlayingSince = isPlaying ? (self.spotifyPlayingSince ?? self.clock()) : nil
+            self.playerPlayingSince = isPlaying ? (self.playerPlayingSince ?? self.clock()) : nil
         }
     }
 
@@ -232,7 +232,7 @@ final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// Replaces the sources that must never pause Spotify. Playing sources
+    /// Replaces the sources that must never pause the music. Playing sources
     /// that become ignored stop for the arbiter at once, and vice versa.
     func setIgnoredSources(_ ids: Set<String>) {
         queue.async {
@@ -293,9 +293,9 @@ final class AudioMonitor: @unchecked Sendable {
         tracker.reset()
         lastRefresh = nil
         lastHALChange = nil
-        spotifyTapSince = nil
+        playerTapSince = nil
         lastPermissionCheck = nil
-        publishedSpotifyLocal = nil
+        publishedLocalPlayback = nil
         publishActiveSources()
         report.withLock { $0.lines = [] }
     }
@@ -329,7 +329,7 @@ final class AudioMonitor: @unchecked Sendable {
         for process in candidates where configuration.isMediaSource(process.bundleID) {
             let source = sourceIdentifier?.source(for: process)
                 ?? AudioSource(id: process.bundleID, name: process.bundleID)
-            // An excluded owner (e.g. a Spotify helper) excludes its processes too.
+            // An excluded owner (e.g. the music player's helper) excludes its processes too.
             guard configuration.isMediaSource(source.id) else { continue }
             sourceOfProcess[process.objectID] = source
             knownSources[source.id] = source
@@ -391,14 +391,14 @@ final class AudioMonitor: @unchecked Sendable {
 
     private func updateMeteredProcesses(at now: Date) {
         guard let levelMeter else { return }
-        // Spotify is tapped only to prove the permission when TCC cannot be read.
-        let verifiesWithSpotify = permissionStatus == nil && detectionMode != .audioLevel
+        // The player is tapped only to prove the permission when TCC cannot be read.
+        let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
         let metered = shouldMeterLevels ? candidates.filter {
             sourceOfProcess[$0.objectID] != nil
-                || (verifiesWithSpotify && $0.bundleID == AppConfiguration.spotifyBundleID)
+                || (verifiesWithPlayer && configuration.musicPlayerBundleIDs.contains($0.bundleID))
         } : []
-        let tapsSpotify = metered.contains { $0.bundleID == AppConfiguration.spotifyBundleID }
-        spotifyTapSince = tapsSpotify ? (spotifyTapSince ?? now) : nil
+        let tapsPlayer = metered.contains { configuration.musicPlayerBundleIDs.contains($0.bundleID) }
+        playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
         // May block while macOS shows the System Audio Recording prompt.
         levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
     }
@@ -420,7 +420,7 @@ final class AudioMonitor: @unchecked Sendable {
         }
 
         // Before source events, so a pause decision in this tick sees it.
-        updateSpotifyLocalPlayback()
+        updateLocalPlayback()
 
         let (started, stopped) = tracker.update(audible: audible, at: now)
         if !started.isEmpty || !stopped.isEmpty {
@@ -481,24 +481,24 @@ final class AudioMonitor: @unchecked Sendable {
         guard permissionStatus == nil else { return }
         if detectionMode != .audioLevel, peaks.values.contains(where: { $0 > 0 }) {
             setDetectionMode(.audioLevel)
-            updateMeteredProcesses(at: now) // verification taps on Spotify are no longer needed
+            updateMeteredProcesses(at: now) // verification taps on the player are no longer needed
         } else if detectionMode == .pending,
-                  let playingSince = spotifyPlayingSince,
-                  let tapSince = spotifyTapSince,
+                  let playingSince = playerPlayingSince,
+                  let tapSince = playerTapSince,
                   now.timeIntervalSince(max(playingSince, tapSince)) >= Self.verificationWindow {
             setDetectionMode(.unavailable)
         }
     }
 
-    /// Spotify plays on this Mac when its process has output running. Its
+    /// The player plays on this Mac when its process has output running. Its
     /// output is not tapped: that would keep the recording indicator on for
-    /// as long as Spotify plays.
-    private func updateSpotifyLocalPlayback() {
-        let isLocal = candidates.contains { $0.bundleID == AppConfiguration.spotifyBundleID }
-        guard isLocal != publishedSpotifyLocal else { return }
-        publishedSpotifyLocal = isLocal
-        logger.debug("[monitor] Spotify output on this Mac: \(isLocal, privacy: .public)")
-        events.yield(.spotifyLocalPlayback(isLocal))
+    /// as long as the music plays.
+    private func updateLocalPlayback() {
+        let isLocal = candidates.contains { configuration.musicPlayerBundleIDs.contains($0.bundleID) }
+        guard isLocal != publishedLocalPlayback else { return }
+        publishedLocalPlayback = isLocal
+        logger.debug("[monitor] music player output on this Mac: \(isLocal, privacy: .public)")
+        events.yield(.localPlayback(isLocal))
     }
 
     private func setDetectionMode(_ mode: DetectionMode) {

@@ -10,17 +10,17 @@ enum AppHealthState: Equatable, Sendable {
 }
 
 extension AppHealthState {
-    /// The health shown when the startup check against Spotify fails.
-    init(startupError error: any Error) {
+    /// The health shown when the startup check against the music player fails.
+    init(startupError error: any Error, playerName: String) {
         switch error as? AutoHushError {
         case .automationPermissionDenied:
-            self = .needsPermission("Grant Automation access to control Spotify")
-        case .spotifyUnavailable:
-            self = .degraded("Spotify is not running")
-        case .spotifyNotResponding:
-            self = .degraded("Spotify is not responding")
-        case .spotifyCommandFailed(let message):
-            self = .degraded("Spotify control error: \(message)")
+            self = .needsPermission("Grant Automation access to control \(playerName)")
+        case .playerNotRunning:
+            self = .degraded("\(playerName) is not running")
+        case .playerNotResponding:
+            self = .degraded("\(playerName) is not responding")
+        case .playerCommandFailed(let message):
+            self = .degraded("\(playerName) control error: \(message)")
         case nil:
             self = .failed(error.localizedDescription)
         }

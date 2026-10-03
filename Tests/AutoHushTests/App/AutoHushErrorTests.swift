@@ -11,22 +11,22 @@ struct AutoHushErrorTests {
         #expect(error.localizedDescription.lowercased().contains("automation"))
     }
 
-    @Test("spotifyUnavailable has a human-readable description")
+    @Test("playerNotRunning has a human-readable description")
     func spotifyUnavailableDescription() {
-        let error = AutoHushError.spotifyUnavailable
+        let error = AutoHushError.playerNotRunning
         #expect(error.errorDescription?.isEmpty == false)
-        #expect(error.localizedDescription.lowercased().contains("spotify"))
+        #expect(error.localizedDescription.lowercased().contains("player"))
     }
 
-    @Test("spotifyCommandFailed surfaces the provided message")
+    @Test("playerCommandFailed surfaces the provided message")
     func spotifyCommandFailedDescription() {
-        let error = AutoHushError.spotifyCommandFailed("OSStatus -1712")
+        let error = AutoHushError.playerCommandFailed("OSStatus -1712")
         #expect(error.errorDescription?.contains("OSStatus -1712") == true)
     }
 
-    @Test("spotifyCommandFailed with empty message still produces a description")
+    @Test("playerCommandFailed with empty message still produces a description")
     func spotifyCommandFailedEmptyMessage() {
-        let error = AutoHushError.spotifyCommandFailed("")
+        let error = AutoHushError.playerCommandFailed("")
         #expect(error.errorDescription?.isEmpty == false)
     }
 }

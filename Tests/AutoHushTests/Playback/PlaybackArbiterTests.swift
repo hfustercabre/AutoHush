@@ -17,18 +17,18 @@ struct PlaybackArbiterTests {
     }
 
     private func makeArbiter(
-        spotify: MockSpotifyController = MockSpotifyController(),
+        spotify: MockMusicPlayer = MockMusicPlayer(),
         configuration: AppConfiguration = AppConfiguration(),
         scheduler: ManualDebounceScheduler = ManualDebounceScheduler()
     ) -> PlaybackArbiter {
-        PlaybackArbiter(spotify: spotify, configuration: configuration, debounceScheduler: scheduler)
+        PlaybackArbiter(player: spotify, configuration: configuration, debounceScheduler: scheduler)
     }
 
     // MARK: - Filtering: excluded sources must not trigger pause
 
     @Test("ignores Spotify's own bundle ID")
     func ignoresSpotify() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.spotify.client", isPlaying: true)
@@ -38,7 +38,7 @@ struct PlaybackArbiterTests {
 
     @Test("ignores system audio daemons")
     func ignoresSystemDaemons() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.apple.coreaudiod", isPlaying: true)
@@ -52,7 +52,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify when a foreign media source starts")
     func pausesForForeignSource() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
@@ -63,7 +63,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify for an unknown app")
     func pausesForUnknownApp() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.example.somerandomplayer", isPlaying: true)
@@ -73,7 +73,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify for a Chrome renderer helper")
     func pausesForChromeHelper() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.google.Chrome.helper", isPlaying: true)
@@ -83,7 +83,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify when Safari starts playing")
     func pausesForSafari() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.apple.Safari", isPlaying: true)
@@ -93,7 +93,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify when Firefox starts playing")
     func pausesForFirefox() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.mozilla.firefox", isPlaying: true)
@@ -103,7 +103,7 @@ struct PlaybackArbiterTests {
 
     @Test("pauses Spotify when QuickTime Player starts playing")
     func pausesForQuickTimePlayer() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "com.apple.QuickTimePlayerX", isPlaying: true)
@@ -113,7 +113,7 @@ struct PlaybackArbiterTests {
 
     @Test("does not pause Spotify that is already paused")
     func doesNotPauseAlreadyPaused() async {
-        let spotify = MockSpotifyController(state: .paused)
+        let spotify = MockMusicPlayer(state: .paused)
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
@@ -123,7 +123,7 @@ struct PlaybackArbiterTests {
 
     @Test("does not issue duplicate pause calls for repeated start events from the same source")
     func doesNotDuplicatePauseCalls() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
@@ -134,7 +134,7 @@ struct PlaybackArbiterTests {
 
     @Test("does not pause when the pause call itself throws")
     func pauseErrorIsTolerated() async {
-        let spotify = MockSpotifyController(failPauseWith: StubError.failed)
+        let spotify = MockMusicPlayer(failPauseWith: StubError.failed)
         let arbiter = makeArbiter(spotify: spotify)
 
         // Should not crash; error is swallowed gracefully
@@ -148,7 +148,7 @@ struct PlaybackArbiterTests {
 
     @Test("resumes Spotify after the foreign source stops and debounce completes")
     func resumesAfterSourceStops() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -164,7 +164,7 @@ struct PlaybackArbiterTests {
 
     @Test("retries the resume when Spotify does not answer, instead of giving up")
     func retriesUnansweredResume() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -183,7 +183,7 @@ struct PlaybackArbiterTests {
 
     @Test("stops retrying once Spotify has not answered every retry")
     func givesUpAfterRetries() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -201,9 +201,8 @@ struct PlaybackArbiterTests {
 
     @Test("does not resume Spotify that it did not pause")
     func doesNotResumeIfNotPausedByUs() async {
-        let spotify = MockSpotifyController(state: .paused)
-        let arbiter = PlaybackArbiter(
-            spotify: spotify,
+        let spotify = MockMusicPlayer(state: .paused)
+        let arbiter = PlaybackArbiter(player: spotify,
             configuration: AppConfiguration(debounceSeconds: 0)
         )
 
@@ -215,7 +214,7 @@ struct PlaybackArbiterTests {
 
     @Test("does not resume while another foreign source is still active")
     func doesNotResumeWithActiveSource() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -230,7 +229,7 @@ struct PlaybackArbiterTests {
 
     @Test("cancels the pending resume when a new foreign source starts during debounce")
     func cancelsPendingResumeOnNewSource() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -246,7 +245,7 @@ struct PlaybackArbiterTests {
 
     @Test("resumes Spotify when Safari stops")
     func resumesWhenSafariStops() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -260,7 +259,7 @@ struct PlaybackArbiterTests {
 
     @Test("resumes Spotify when Firefox stops")
     func resumesWhenFirefoxStops() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -274,7 +273,7 @@ struct PlaybackArbiterTests {
 
     @Test("resumes Spotify when QuickTime Player stops")
     func resumesWhenQuickTimePlayerStops() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -288,7 +287,7 @@ struct PlaybackArbiterTests {
 
     @Test("resumes Spotify when a Chrome renderer helper stops")
     func resumesWhenChromeHelperStops() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -320,12 +319,11 @@ struct PlaybackArbiterTests {
     }
 
     private func makeArbiterWithStream(
-        spotify: MockSpotifyController = MockSpotifyController(),
+        spotify: MockMusicPlayer = MockMusicPlayer(),
         scheduler: ManualDebounceScheduler = ManualDebounceScheduler(),
         stream: StateStream
     ) -> PlaybackArbiter {
-        PlaybackArbiter(
-            spotify: spotify,
+        PlaybackArbiter(player: spotify,
             configuration: AppConfiguration(),
             debounceScheduler: scheduler,
             onPlaybackStateChange: { state in stream.yield(state) }
@@ -349,9 +347,9 @@ struct PlaybackArbiterTests {
         }
     }
 
-    @Test("publishes spotifyPlaying immediately after resume without re-querying Spotify")
+    @Test("publishes musicPlaying immediately after resume without re-querying Spotify")
     func resumePublishesSpotifyPlayingWithoutRaceCondition() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -365,14 +363,14 @@ struct PlaybackArbiterTests {
         await spotify.overrideState(.paused)
         await scheduler.completeNext()
 
-        // Must be .spotifyPlaying — not .spotifyIdle — even though playerState() returns .paused.
+        // Must be .musicPlaying — not .musicIdle — even though playerState() returns .paused.
         let state = await nextState(from: stateStream.stream)
-        #expect(state == .spotifyPlaying)
+        #expect(state == .musicPlaying)
     }
 
     @Test("publishes pausedByMonitor while a foreign source is active")
     func publishesPausedByMonitorWhileSourceActive() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -383,35 +381,35 @@ struct PlaybackArbiterTests {
         #expect(state == .pausedByMonitor)
     }
 
-    @Test("refreshPlaybackState publishes spotifyPlaying when Spotify is playing")
+    @Test("refreshPlaybackState publishes musicPlaying when Spotify is playing")
     func refreshPublishesSpotifyPlaying() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, stream: stateStream)
 
         await arbiter.refreshPlaybackState()
 
         let state = await nextState(from: stateStream.stream)
-        #expect(state == .spotifyPlaying)
+        #expect(state == .musicPlaying)
     }
 
-    @Test("refreshPlaybackState publishes spotifyIdle when Spotify is paused")
+    @Test("refreshPlaybackState publishes musicIdle when Spotify is paused")
     func refreshPublishesSpotifyIdle() async {
-        let spotify = MockSpotifyController(state: .paused)
+        let spotify = MockMusicPlayer(state: .paused)
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, stream: stateStream)
 
         await arbiter.refreshPlaybackState()
 
         let state = await nextState(from: stateStream.stream)
-        #expect(state == .spotifyIdle)
+        #expect(state == .musicIdle)
     }
 
     // MARK: - Spotify state notifications / user-intent protection
 
-    @Test("user resuming Spotify while a source plays clears pausedByUs and publishes spotifyPlaying")
+    @Test("user resuming Spotify while a source plays clears pausedByUs and publishes musicPlaying")
     func spotifyPlayingNotificationClearsPausedByUs() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -421,9 +419,9 @@ struct PlaybackArbiterTests {
 
         // User resumes Spotify; Spotify posts PlaybackStateChanged = Playing.
         await spotify.overrideState(.playing)
-        await arbiter.handleSpotifyStateChange(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
         // Spotify plays alongside the other app; we no longer hold it paused.
-        #expect(await nextState(from: stateStream.stream) == .spotifyPlaying)
+        #expect(await nextState(from: stateStream.stream) == .musicPlaying)
 
         // When the source stops, the arbiter must not touch Spotify.
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
@@ -434,7 +432,7 @@ struct PlaybackArbiterTests {
 
     @Test("Spotify quitting clears pausedByUs so nothing is resumed later")
     func spotifyNotRunningClearsPausedByUs() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -443,8 +441,8 @@ struct PlaybackArbiterTests {
         _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
 
         await spotify.overrideState(.notRunning)
-        await arbiter.handleSpotifyStateChange(.notRunning)
-        #expect(await nextState(from: stateStream.stream) == .spotifyIdle)
+        await arbiter.handlePlayerStateChange(.notRunning)
+        #expect(await nextState(from: stateStream.stream) == .musicIdle)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await scheduler.completeNext()
@@ -454,7 +452,7 @@ struct PlaybackArbiterTests {
 
     @Test("Spotify stopping clears pausedByUs so nothing is resumed later")
     func spotifyStoppedClearsPausedByUs() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -463,7 +461,7 @@ struct PlaybackArbiterTests {
         _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
 
         await spotify.overrideState(.stopped)
-        await arbiter.handleSpotifyStateChange(.stopped)
+        await arbiter.handlePlayerStateChange(.stopped)
         _ = await nextState(from: stateStream.stream)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
@@ -474,12 +472,12 @@ struct PlaybackArbiterTests {
 
     @Test("the Paused notification caused by our own pause keeps pausedByUs")
     func ownPauseNotificationKeepsPausedByUs() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
-        await arbiter.handleSpotifyStateChange(.paused)
+        await arbiter.handlePlayerStateChange(.paused)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await scheduler.completeNext()
         for _ in 0..<20 { await Task.yield() }
@@ -489,12 +487,12 @@ struct PlaybackArbiterTests {
 
     @Test("an unknown Spotify state is ignored and the resume still happens")
     func unknownStateIsIgnored() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
-        await arbiter.handleSpotifyStateChange(.unknown)
+        await arbiter.handlePlayerStateChange(.unknown)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await scheduler.completeNext()
         for _ in 0..<20 { await Task.yield() }
@@ -504,14 +502,14 @@ struct PlaybackArbiterTests {
 
     @Test("status updates from notifications do not query Spotify through Apple events")
     func notificationsDoNotQuerySpotify() async {
-        let spotify = MockSpotifyController(state: .paused)
+        let spotify = MockMusicPlayer(state: .paused)
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, stream: stateStream)
 
-        await arbiter.handleSpotifyStateChange(.playing)
-        #expect(await nextState(from: stateStream.stream) == .spotifyPlaying)
-        await arbiter.handleSpotifyStateChange(.paused)
-        #expect(await nextState(from: stateStream.stream) == .spotifyIdle)
+        await arbiter.handlePlayerStateChange(.playing)
+        #expect(await nextState(from: stateStream.stream) == .musicPlaying)
+        await arbiter.handlePlayerStateChange(.paused)
+        #expect(await nextState(from: stateStream.stream) == .musicIdle)
 
         #expect(await spotify.stateQueryCount == 0)
     }
@@ -520,10 +518,10 @@ struct PlaybackArbiterTests {
 
     @Test("does not pause Spotify that plays on another device")
     func doesNotPauseRemotePlayback() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(spotify: spotify)
 
-        await arbiter.handleSpotifyLocalPlaybackChange(false)
+        await arbiter.handleLocalPlaybackChange(false)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
 
         #expect(await spotify.pauseCallCount == 0)
@@ -532,38 +530,38 @@ struct PlaybackArbiterTests {
 
     @Test("pauses again once playback is back on this Mac")
     func pausesAfterPlaybackReturns() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(spotify: spotify)
 
-        await arbiter.handleSpotifyLocalPlaybackChange(false)
+        await arbiter.handleLocalPlaybackChange(false)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
-        await arbiter.handleSpotifyLocalPlaybackChange(true)
+        await arbiter.handleLocalPlaybackChange(true)
         await arbiter.handleSourceChange(sourceID: "com.apple.Safari", isPlaying: true)
 
         #expect(await spotify.pauseCallCount == 1)
     }
 
-    @Test("publishes spotifyPlayingElsewhere while Spotify plays on another device")
+    @Test("publishes playingElsewhere while Spotify plays on another device")
     func publishesPlayingElsewhere() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, stream: stateStream)
 
-        await arbiter.handleSpotifyStateChange(.playing)
-        #expect(await nextState(from: stateStream.stream) == .spotifyPlaying)
-        await arbiter.handleSpotifyLocalPlaybackChange(false)
-        #expect(await nextState(from: stateStream.stream) == .spotifyPlayingElsewhere)
+        await arbiter.handlePlayerStateChange(.playing)
+        #expect(await nextState(from: stateStream.stream) == .musicPlaying)
+        await arbiter.handleLocalPlaybackChange(false)
+        #expect(await nextState(from: stateStream.stream) == .playingElsewhere)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
-        #expect(await nextState(from: stateStream.stream) == .spotifyPlayingElsewhere)
+        #expect(await nextState(from: stateStream.stream) == .playingElsewhere)
     }
 
     // MARK: - Auto-pause on/off
 
     @Test("with auto-pause off, a foreign source does not pause Spotify")
     func autoPauseOffDoesNotPause() async {
-        let spotify = MockSpotifyController(state: .playing)
-        let arbiter = PlaybackArbiter(spotify: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
+        let spotify = MockMusicPlayer(state: .playing)
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
 
@@ -572,7 +570,7 @@ struct PlaybackArbiterTests {
 
     @Test("turning auto-pause off resumes Spotify that we paused")
     func turningOffResumes() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
@@ -584,7 +582,7 @@ struct PlaybackArbiterTests {
 
     @Test("turning auto-pause off leaves a Spotify the user paused alone")
     func turningOffRespectsUserPause() async {
-        let spotify = MockSpotifyController(state: .paused)
+        let spotify = MockMusicPlayer(state: .paused)
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
@@ -595,7 +593,7 @@ struct PlaybackArbiterTests {
 
     @Test("turning auto-pause off cancels a pending resume")
     func turningOffCancelsPendingResume() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -610,8 +608,8 @@ struct PlaybackArbiterTests {
 
     @Test("turning auto-pause back on pauses Spotify if an app is already playing")
     func turningOnPausesForActiveSource() async {
-        let spotify = MockSpotifyController(state: .playing)
-        let arbiter = PlaybackArbiter(spotify: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
+        let spotify = MockMusicPlayer(state: .playing)
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
         await arbiter.setAutoPauseEnabled(true)
@@ -621,8 +619,8 @@ struct PlaybackArbiterTests {
 
     @Test("turning auto-pause back on with nothing playing does nothing")
     func turningOnIdleDoesNothing() async {
-        let spotify = MockSpotifyController(state: .playing)
-        let arbiter = PlaybackArbiter(spotify: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
+        let spotify = MockMusicPlayer(state: .playing)
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(), autoPauseEnabled: false)
 
         await arbiter.setAutoPauseEnabled(true)
 
@@ -631,7 +629,7 @@ struct PlaybackArbiterTests {
 
     @Test("a new configuration's resume delay applies to the next resume")
     func configurationUpdate() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -653,21 +651,20 @@ struct PlaybackArbiterTests {
 
     @Test("levels are needed only while Spotify plays here or is paused by us, with auto-pause on")
     func audioLevelsNeeded() async {
-        let spotify = MockSpotifyController(state: .paused)
+        let spotify = MockMusicPlayer(state: .paused)
         let scheduler = ManualDebounceScheduler()
         let log = NeedsLog()
-        let arbiter = PlaybackArbiter(
-            spotify: spotify, configuration: AppConfiguration(), debounceScheduler: scheduler,
+        let arbiter = PlaybackArbiter(player: spotify, configuration: AppConfiguration(), debounceScheduler: scheduler,
             onAudioLevelsNeededChange: { log.record($0) }
         )
 
         await arbiter.refreshPlaybackState()                       // Spotify paused by the user
-        await arbiter.handleSpotifyStateChange(.playing)           // plays here
+        await arbiter.handlePlayerStateChange(.playing)           // plays here
         await spotify.overrideState(.playing)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) // we pause it: still needed
         await arbiter.setAutoPauseEnabled(false)                   // resumed and off: not needed
         await arbiter.setAutoPauseEnabled(true)                    // on again; VLC is still active, so Spotify is paused again
-        await arbiter.handleSpotifyStateChange(.stopped)           // the user takes over
+        await arbiter.handlePlayerStateChange(.stopped)           // the user takes over
 
         #expect(log.values == [false, true, false, true, false])
     }
@@ -675,12 +672,11 @@ struct PlaybackArbiterTests {
     @Test("levels are not needed while Spotify plays on another device")
     func audioLevelsNotNeededElsewhere() async {
         let log = NeedsLog()
-        let arbiter = PlaybackArbiter(
-            spotify: MockSpotifyController(state: .playing), configuration: AppConfiguration(),
+        let arbiter = PlaybackArbiter(player: MockMusicPlayer(state: .playing), configuration: AppConfiguration(),
             onAudioLevelsNeededChange: { log.record($0) }
         )
-        await arbiter.handleSpotifyStateChange(.playing)
-        await arbiter.handleSpotifyLocalPlaybackChange(false)
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.handleLocalPlaybackChange(false)
         #expect(log.values == [true, false])
     }
 
@@ -688,7 +684,7 @@ struct PlaybackArbiterTests {
 
     @Test("shutdown cancels a pending resume")
     func shutdownCancelsPendingResume() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -703,7 +699,7 @@ struct PlaybackArbiterTests {
 
     @Test("a shut-down arbiter ignores new sources")
     func shutdownIgnoresNewSources() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(spotify: spotify)
 
         await arbiter.shutdown()
@@ -716,7 +712,7 @@ struct PlaybackArbiterTests {
 
     @Test("resume is skipped when user manually paused Spotify during debounce")
     func resumeSkippedWhenUserPausedSpotifyDuringDebounce() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(spotify: spotify, scheduler: scheduler, stream: stateStream)
@@ -735,7 +731,7 @@ struct PlaybackArbiterTests {
         // Debounce completes — arbiter should NOT call play() because Spotify is .stopped.
         await scheduler.completeNext()
         let state = await nextState(from: stateStream.stream)
-        #expect(state == .spotifyIdle)
+        #expect(state == .musicIdle)
         // Confirm play() was never called: Spotify should remain .stopped.
         let finalState = await spotify.playerState()
         #expect(finalState == .stopped)
@@ -743,7 +739,7 @@ struct PlaybackArbiterTests {
 
     @Test("resume is skipped when Spotify is not running at debounce completion")
     func resumeSkippedWhenSpotifyNotRunningAtDebounce() async {
-        let spotify = MockSpotifyController(state: .playing)
+        let spotify = MockMusicPlayer(state: .playing)
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -763,7 +759,7 @@ struct PlaybackArbiterTests {
 
     @Test("multiple consecutive source stops each schedule exactly one debounce")
     func multipleStopsScheduleOneDebounceEach() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
@@ -784,7 +780,7 @@ struct PlaybackArbiterTests {
 
     @Test("passes the configured debounce delay to the scheduler")
     func appliesConfiguredDebounceDelay() async {
-        let spotify = MockSpotifyController()
+        let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let config = AppConfiguration(debounceSeconds: 1.5)
         let arbiter = makeArbiter(spotify: spotify, configuration: config, scheduler: scheduler)

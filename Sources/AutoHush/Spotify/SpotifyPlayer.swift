@@ -2,17 +2,6 @@ import AppKit
 import Foundation
 import OSLog
 
-// MARK: - Protocol
-
-protocol SpotifyControlling: Sendable {
-    func verifyAutomationAccess() async throws
-    func playerState() async -> SpotifyPlayerState
-    func pause() async throws
-    func play() async throws
-}
-
-// MARK: - Implementation
-
 /// Talks to Spotify with raw Apple events instead of NSAppleScript.
 ///
 /// NSAppleScript is main-thread only: run on a background queue it pumps an
@@ -20,18 +9,23 @@ protocol SpotifyControlling: Sendable {
 /// `NSAppleEventDescriptor.sendEvent(options:timeout:)` is built on
 /// `AESendMessage`, which blocks without running an event loop and is safe on
 /// any thread.
-actor SpotifyController: SpotifyControlling {
-    private let logger = Logger(category: "SpotifyController")
+actor SpotifyPlayer: MusicPlayer {
+    static let appBundleID = "com.spotify.client"
+
+    nonisolated var bundleID: String { Self.appBundleID }
+    nonisolated var name: String { "Spotify" }
+
+    private let logger = Logger(category: "SpotifyPlayer")
 
     /// Serial queue for the blocking sends, so they neither occupy the
     /// cooperative thread pool nor overtake one another.
-    private let eventQueue = DispatchQueue(label: "AutoHush.SpotifyController", qos: .userInitiated)
+    private let eventQueue = DispatchQueue(label: "AutoHush.SpotifyPlayer", qos: .userInitiated)
 
     /// How long to wait for Spotify to answer an event.
     static let replyTimeout: TimeInterval = 5
 
-    func verifyAutomationAccess() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.spotifyUnavailable }
+    func verifyControlAccess() async throws {
+        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.playerNotRunning }
         // Ask for consent up front: the send below times out after a few
         // seconds, which is too short for a user reading the TCC prompt.
         let status = try await onEventQueue {
@@ -46,7 +40,7 @@ actor SpotifyController: SpotifyControlling {
         _ = try await send(Self.makeGetPlayerStateEvent(processIdentifier:), to: pid)
     }
 
-    func playerState() async -> SpotifyPlayerState {
+    func playerState() async -> PlayerState {
         guard let pid = spotifyProcessIdentifier() else { return .notRunning }
         do {
             let reply = try await send(Self.makeGetPlayerStateEvent(processIdentifier:), to: pid)
@@ -58,13 +52,18 @@ actor SpotifyController: SpotifyControlling {
     }
 
     func pause() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.spotifyUnavailable }
+        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.playerNotRunning }
         _ = try await send({ Self.makeCommandEvent(Code.pause, processIdentifier: $0) }, to: pid)
     }
 
     func play() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.spotifyUnavailable }
+        guard let pid = spotifyProcessIdentifier() else { throw AutoHushError.playerNotRunning }
         _ = try await send({ Self.makeCommandEvent(Code.play, processIdentifier: $0) }, to: pid)
+    }
+
+    @MainActor
+    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+        SpotifyPlaybackObserver(onChange: onChange)
     }
 
     // MARK: - Private helpers
@@ -72,7 +71,7 @@ actor SpotifyController: SpotifyControlling {
     /// Targeting the running process (rather than the bundle ID) guarantees
     /// that an event can never launch Spotify.
     private func spotifyProcessIdentifier() -> pid_t? {
-        NSRunningApplication.runningApplications(withBundleIdentifier: AppConfiguration.spotifyBundleID)
+        NSRunningApplication.runningApplications(withBundleIdentifier: Self.appBundleID)
             .first { !$0.isTerminated }?
             .processIdentifier
     }

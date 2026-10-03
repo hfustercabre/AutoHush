@@ -7,7 +7,7 @@ struct AppStatusTests {
     private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
     private let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
 
-    private func ready(_ playback: PlaybackState = .spotifyIdle) -> AppStatus {
+    private func ready(_ playback: PlaybackState = .musicIdle) -> AppStatus {
         var status = AppStatus()
         status.setHealth(.ready)
         status.playback = playback
@@ -24,9 +24,9 @@ struct AppStatusTests {
     }
 
     @Test("when ready, icon and status line follow playback", arguments: [
-        (PlaybackState.spotifyPlaying, "play.circle.fill", "Music is playing"),
-        (.spotifyIdle, "music.note", "No music playing"),
-        (.spotifyPlayingElsewhere, "hifispeaker.fill", "Music is playing on another device"),
+        (PlaybackState.musicPlaying, "play.circle.fill", "Music is playing"),
+        (.musicIdle, "music.note", "No music playing"),
+        (.playingElsewhere, "hifispeaker.fill", "Music is playing on another device"),
     ])
     func readyFollowsPlayback(playback: PlaybackState, symbol: String, line: String) {
         let status = ready(playback)
@@ -60,7 +60,7 @@ struct AppStatusTests {
 
     @Test("auto-pause off replaces the status line and dims the icon")
     func autoPauseOff() {
-        var status = ready(.spotifyPlaying)
+        var status = ready(.musicPlaying)
         status.autoPause = .off
         #expect(status.statusLine == "Auto-pause is off")
         #expect(status.dimsIcon)
@@ -82,7 +82,7 @@ struct AppStatusTests {
 
     @Test("degraded health clears sources and offers Retry")
     func degradedClearsSources() {
-        var status = ready(.spotifyPlaying)
+        var status = ready(.musicPlaying)
         status.setActiveSources([chrome])
         status.setHealth(.degraded("Audio monitor restarting"))
         #expect(status.activeSources.isEmpty)
@@ -94,8 +94,9 @@ struct AppStatusTests {
     @Test("missing Automation access is the one warning, with Retry")
     func automationWarning() {
         var status = AppStatus()
+        status.playerName = "Spotify"
         status.setHealth(.needsPermission("Grant Automation access"))
-        #expect(status.warning == .automationAccess)
+        #expect(status.warning == .automationAccess(player: "Spotify"))
         #expect(status.warning?.title == "Allow Spotify Automation Access…")
         #expect(status.showsRetry)
     }

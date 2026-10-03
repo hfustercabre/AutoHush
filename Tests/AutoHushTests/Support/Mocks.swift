@@ -3,10 +3,12 @@ import Foundation
 import Testing
 @testable import AutoHush
 
-// MARK: - MockSpotifyController
+// MARK: - MockMusicPlayer
 
-actor MockSpotifyController: SpotifyControlling {
-    var state: SpotifyPlayerState
+actor MockMusicPlayer: MusicPlayer {
+    nonisolated var bundleID: String { "com.example.player" }
+    nonisolated var name: String { "Spotify" }
+    var state: PlayerState
     var pauseCallCount = 0
     var playCallCount = 0
     var verifyCallCount = 0
@@ -19,7 +21,7 @@ actor MockSpotifyController: SpotifyControlling {
     var unansweredStateQueries = 0
 
     init(
-        state: SpotifyPlayerState = .playing,
+        state: PlayerState = .playing,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
@@ -30,12 +32,12 @@ actor MockSpotifyController: SpotifyControlling {
         self.failVerifyWith = failVerifyWith
     }
 
-    func verifyAutomationAccess() async throws {
+    func verifyControlAccess() async throws {
         verifyCallCount += 1
         if let error = failVerifyWith { throw error }
     }
 
-    func playerState() async -> SpotifyPlayerState {
+    func playerState() async -> PlayerState {
         stateQueryCount += 1
         if unansweredStateQueries > 0 {
             unansweredStateQueries -= 1
@@ -46,8 +48,13 @@ actor MockSpotifyController: SpotifyControlling {
 
     func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
 
+    @MainActor
+    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+        MockStateObserver()
+    }
+
     /// Lets tests override the reported state without going through pause/play.
-    func overrideState(_ newState: SpotifyPlayerState) { state = newState }
+    func overrideState(_ newState: PlayerState) { state = newState }
 
     func pause() async throws {
         pauseCallCount += 1
@@ -146,4 +153,13 @@ final class InMemoryPreferenceStore: PreferenceStore {
     func set(_ value: Any?, forKey key: String) {
         values[key] = value
     }
+}
+
+// MARK: - MockStateObserver
+
+@MainActor
+final class MockStateObserver: PlayerStateObserving {
+    private(set) var isObserving = false
+    func start() { isObserving = true }
+    func stop() { isObserving = false }
 }

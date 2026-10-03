@@ -6,9 +6,9 @@ struct StatusPresentationTests {
 
     // MARK: - PlaybackState symbolName
 
-    @Test("spotifyPlaying uses play.circle.fill")
+    @Test("musicPlaying uses play.circle.fill")
     func spotifyPlayingSymbol() {
-        #expect(PlaybackState.spotifyPlaying.symbolName == "play.circle.fill")
+        #expect(PlaybackState.musicPlaying.symbolName == "play.circle.fill")
     }
 
     @Test("pausedByMonitor uses pause.circle.fill")
@@ -16,22 +16,22 @@ struct StatusPresentationTests {
         #expect(PlaybackState.pausedByMonitor.symbolName == "pause.circle.fill")
     }
 
-    @Test("spotifyIdle uses music.note")
+    @Test("musicIdle uses music.note")
     func spotifyIdleSymbol() {
-        #expect(PlaybackState.spotifyIdle.symbolName == "music.note")
+        #expect(PlaybackState.musicIdle.symbolName == "music.note")
     }
 
-    @Test("spotifyPlayingElsewhere uses a speaker symbol and says where Spotify plays")
+    @Test("playingElsewhere uses a speaker symbol and says where Spotify plays")
     func spotifyPlayingElsewherePresentation() {
-        #expect(PlaybackState.spotifyPlayingElsewhere.symbolName == "hifispeaker.fill")
-        #expect(PlaybackState.spotifyPlayingElsewhere.statusLine == "Music is playing on another device")
+        #expect(PlaybackState.playingElsewhere.symbolName == "hifispeaker.fill")
+        #expect(PlaybackState.playingElsewhere.statusLine == "Music is playing on another device")
     }
 
     // MARK: - PlaybackState statusLine
 
-    @Test("spotifyPlaying status line is descriptive")
+    @Test("musicPlaying status line is descriptive")
     func spotifyPlayingStatusLine() {
-        #expect(PlaybackState.spotifyPlaying.statusLine == "Music is playing")
+        #expect(PlaybackState.musicPlaying.statusLine == "Music is playing")
     }
 
     @Test("pausedByMonitor status line is descriptive")
@@ -39,9 +39,9 @@ struct StatusPresentationTests {
         #expect(PlaybackState.pausedByMonitor.statusLine == "Music paused — another app is playing")
     }
 
-    @Test("spotifyIdle status line is descriptive")
+    @Test("musicIdle status line is descriptive")
     func spotifyIdleStatusLine() {
-        #expect(PlaybackState.spotifyIdle.statusLine == "No music playing")
+        #expect(PlaybackState.musicIdle.statusLine == "No music playing")
     }
 
     // MARK: - AppHealthState symbolName

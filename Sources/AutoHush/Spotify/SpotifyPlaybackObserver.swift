@@ -11,10 +11,10 @@ import OSLog
 // quits, so app termination is observed through NSWorkspace instead.
 
 @MainActor
-final class SpotifyPlaybackObserver: NSObject {
+final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
     static let playbackStateChanged = Notification.Name("com.spotify.client.PlaybackStateChanged")
 
-    private let onChange: @MainActor (SpotifyPlayerState) -> Void
+    private let onChange: @MainActor (PlayerState) -> Void
     private let distributedCenter: DistributedNotificationCenter
     private let workspaceCenter: NotificationCenter
     private var terminationObserver: (any NSObjectProtocol)?
@@ -24,7 +24,7 @@ final class SpotifyPlaybackObserver: NSObject {
     init(
         distributedCenter: DistributedNotificationCenter = .default(),
         workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
-        onChange: @escaping @MainActor (SpotifyPlayerState) -> Void
+        onChange: @escaping @MainActor (PlayerState) -> Void
     ) {
         self.distributedCenter = distributedCenter
         self.workspaceCenter = workspaceCenter
@@ -51,7 +51,7 @@ final class SpotifyPlaybackObserver: NSObject {
         ) { [weak self] notification in
             let bundleID = (notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication)?.bundleIdentifier
-            guard bundleID == AppConfiguration.spotifyBundleID else { return }
+            guard bundleID == SpotifyPlayer.appBundleID else { return }
             MainActor.assumeIsolated { self?.deliver(.notRunning) }
         }
     }
@@ -66,8 +66,8 @@ final class SpotifyPlaybackObserver: NSObject {
         terminationObserver = nil
     }
 
-    /// Maps the notification's "Player State" value to a `SpotifyPlayerState`.
-    nonisolated static func playerState(from userInfo: [AnyHashable: Any]?) -> SpotifyPlayerState {
+    /// Maps the notification's "Player State" value to a `PlayerState`.
+    nonisolated static func playerState(from userInfo: [AnyHashable: Any]?) -> PlayerState {
         switch (userInfo?["Player State"] as? String)?.lowercased() {
         case "playing": return .playing
         case "paused":  return .paused
@@ -80,7 +80,7 @@ final class SpotifyPlaybackObserver: NSObject {
         deliver(Self.playerState(from: notification.userInfo))
     }
 
-    private func deliver(_ state: SpotifyPlayerState) {
+    private func deliver(_ state: PlayerState) {
         guard isObserving else { return }
         logger.debug("Spotify reported \(state.rawValue, privacy: .public)")
         onChange(state)

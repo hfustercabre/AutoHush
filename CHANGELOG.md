@@ -132,6 +132,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Music player interface** (`MusicPlayer`, `PlayerStateObserving`): the
+  arbiter, monitor, pipeline and app talk to the music player only through
+  it, so more players can be added one type at a time. Spotify is its first
+  implementation (`SpotifyPlayer`, formerly `SpotifyController`). States,
+  errors and messages are player-neutral (`PlayerState`, `playerNotRunning`,
+  "<player> is not running"), and the player's own audio is excluded through
+  `SupportedPlayers` instead of a hard-coded Spotify entry.
+
 - **Project structure**: sources and tests are grouped by feature (`App`,
   `MenuBar`, `Settings`, `Audio`, `Playback`, `Spotify`); multi-type files are split.
   `AppDelegate` keeps lifecycle and bootstrap. Menu construction and rendering

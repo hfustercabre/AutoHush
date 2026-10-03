@@ -1,6 +1,6 @@
 import Foundation
 
-/// Whether AutoHush pauses Spotify automatically, as chosen by the user.
+/// Whether AutoHush pauses the music automatically, as chosen by the user.
 struct AutoPauseSetting: Equatable, Sendable {
     var isEnabled = true
     /// Temporarily off until this moment ("Turn Off For…").
