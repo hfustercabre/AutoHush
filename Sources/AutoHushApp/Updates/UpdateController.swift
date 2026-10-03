@@ -22,6 +22,10 @@ final class UpdateController {
     /// The last check's outcome in one line, shown in Settings.
     private let onStatus: @MainActor (String) -> Void
     private var timer: Timer?
+    /// A check is under way; one asked for meanwhile is answered by it.
+    private var isChecking = false
+    /// Someone asked for the check under way, so its result is shown.
+    private var resultWanted = false
     private let logger = Logger(category: "Updates")
 
     init(
@@ -69,8 +73,17 @@ final class UpdateController {
         Task { await check(userInitiated: true) }
     }
 
-    /// Asks GitHub for the latest release.
+    /// Asks GitHub for the latest release. A check asked for while one is
+    /// under way (a double click, the automatic one) doesn't start another:
+    /// the one under way answers, and shows its result if anyone asked.
     func check(userInitiated: Bool, now: Date = Date()) async {
+        resultWanted = resultWanted || userInitiated
+        guard !isChecking else { return }
+        isChecking = true
+        defer {
+            isChecking = false
+            resultWanted = false
+        }
         guard let currentVersion else {
             onStatus(String(localized: "The app's version is unknown.", comment: "Update status in Settings"))
             return
@@ -92,11 +105,11 @@ final class UpdateController {
                 availableUpdate = nil
                 onStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
             }
-            if userInitiated { present(result) }
+            if resultWanted { present(result) }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
             onStatus(String(localized: "Couldn't check for updates.", comment: "Update status in Settings"))
-            if userInitiated {
+            if resultWanted {
                 let title = String(localized: "Couldn't Check for Updates", comment: "Alert title")
                 InfoAlert.show(title, error.localizedDescription)
             }

@@ -6,12 +6,13 @@ import Foundation
 package enum PlaybackState: Equatable, Sendable {
     /// App just started; the player's state is not yet known.
     case unknown
-    /// The music is playing and no foreign audio source is active.
+    /// The music is playing on this Mac (other apps may be playing too, e.g.
+    /// with auto-pause off or after the user resumed it).
     case musicPlaying
     /// Monitor paused the music because a foreign audio source started.
     case pausedByMonitor
-    /// The player is stopped/paused and no foreign audio source is active
-    /// (user paused manually or the player is idle).
+    /// The player is paused, stopped or not running, and not held paused
+    /// for another app (the user paused it, or nothing plays).
     case musicIdle
     /// The music plays on another device (e.g. Spotify Connect); it is never paused.
     case playingElsewhere

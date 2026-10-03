@@ -37,6 +37,29 @@ struct UpdateControllerTests {
 
     private static let offline = UpdateChecker { _ in throw URLError(.notConnectedToInternet) }
 
+    private actor FetchCount {
+        private(set) var value = 0
+        func increment() { value += 1 }
+    }
+
+    @Test("a check asked for while one is under way doesn't start another")
+    func overlappingChecks() async {
+        let fetches = FetchCount()
+        let h = Harness(checker: UpdateChecker { request in
+            await fetches.increment()
+            try? await Task.sleep(for: .milliseconds(50)) // still under way when the second check is asked for
+            let body = #"{"tag_name": "v0.2.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.2.0"}"#
+            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        })
+
+        async let first: Void = h.controller.check(userInitiated: false)
+        async let second: Void = h.controller.check(userInitiated: false)
+        _ = await (first, second)
+
+        #expect(await fetches.value == 1)
+        #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
+    }
+
     @Test("a check that finds a newer release offers it and remembers when it ran")
     func updateAvailable() async {
         let h = Harness(checker: Self.releaseChecker("v0.3.0"))

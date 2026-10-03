@@ -10,7 +10,7 @@ import AutoHushKit
 /// [icon] VLC  (Ignored)           ▸ ✓ Never Pause Music for VLC
 /// ─────────
 /// ✓ Auto-Pause Music
-///   Turn Off For                  ▸ 15 Minutes · 1 Hour · Until Tomorrow
+///   Turn Off For                  ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
 /// ⚠ Allow Audio Recording Access…    (only when something needs fixing)
@@ -202,7 +202,7 @@ final class StatusMenuController: NSObject {
 
     private func snoozeItem() -> NSMenuItem {
         let title = String(localized: "Turn Off For",
-                           comment: "Menu item; its submenu offers 15 Minutes, 1 Hour and Until Tomorrow")
+                           comment: "Menu item; its submenu offers 5, 15 and 30 Minutes, 1 Hour and 24 Hours")
         let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         submenu.autoenablesItems = false

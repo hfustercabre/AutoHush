@@ -22,6 +22,14 @@ struct AppStatus: Equatable {
             }
         }
 
+        /// When the description of a snooze ending at `end` next changes: at
+        /// the end, or at midnight before it ("until tomorrow 8:00" becomes
+        /// "until 8:00").
+        static func nextChange(snoozedUntil end: Date, now: Date, calendar: Calendar = .current) -> Date {
+            guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) else { return end }
+            return min(end, calendar.startOfDay(for: tomorrow))
+        }
+
         /// The note under the switch in Settings, e.g. "Turned off until 15:30."
         var settingsNote: String? {
             guard case .snoozed(let until) = self else { return nil }

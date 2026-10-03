@@ -3,7 +3,8 @@ import OSLog
 
 // MARK: - Debounce scheduling
 
-/// Waits before a resume: the real one sleeps, tests complete it by hand.
+/// Waits before a deferred decision (a resume, or a pause once auto-pause is
+/// back on): the real one sleeps, tests complete it by hand.
 package protocol PlaybackArbiterDebounceScheduling: Sendable {
     /// A task that finishes after `delay` seconds.
     func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never>
@@ -69,6 +70,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private var activeSources: Set<String> = []
     private var pendingResumeTask: Task<Void, Never>?
     private var pendingResumeID: UUID?
+    /// A pause waiting for apps tracked while auto-pause was off to be
+    /// measured again (see `setAutoPauseEnabled`).
+    private var pendingPauseTask: Task<Void, Never>?
+    private var pendingPauseID: UUID?
     /// The pause under way: the player's state is checked, then the music
     /// fades out and pauses.
     private var pauseTask: Task<Void, Never>?
@@ -77,6 +82,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// not answer: a timed-out query is not the user changing the player.
     package static let resumeRetries = 2
     package static let resumeRetryDelay: TimeInterval = 1
+    /// Once auto-pause is back on, the pause for apps already playing waits
+    /// their stop grace plus this: a couple of the monitor's ticks.
+    package static let remeasureMargin: TimeInterval = 0.5
 
     package init(
         player: any MusicPlayer,
@@ -109,6 +117,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         if isPlaying {
             // With auto-pause off, music we paused comes back regardless.
             if autoPauseEnabled { cancelPendingResume() }
+            cancelPendingPause() // this app pauses the music now
             activeSources.insert(sourceID)
             logActiveSources(after: "+\(sourceID)")
             // The music may be coming back up after a cancelled fade-out: stop
@@ -138,15 +147,21 @@ package actor PlaybackArbiter: PlaybackArbiting {
     ///
     /// Off: a pending resume is cancelled and the player, if we paused it, resumes
     /// right away — the user wants it playing alongside the other audio.
-    /// On: if another app is already playing, the player is paused as if that app
-    /// had just started. Sources keep being tracked while off.
+    /// On: if other apps are already playing, the player is paused once they
+    /// have been measured again. Sources keep being tracked while off, but
+    /// without audio levels (the monitor captures nothing then), so an app
+    /// that only has its output open, such as a muted call, counts as
+    /// playing; the monitor drops it within its stop grace.
     package func setAutoPauseEnabled(_ enabled: Bool) async {
         guard !isShutDown, enabled != autoPauseEnabled else { return }
         autoPauseEnabled = enabled
         logger.debug("[arbiter] auto-pause \(enabled ? "on" : "off", privacy: .public)")
         if enabled {
-            if !activeSources.isEmpty { startPause() }
+            if !activeSources.isEmpty {
+                schedulePause(after: configuration.sourceStopGrace + Self.remeasureMargin)
+            }
         } else {
+            cancelPendingPause()
             cancelPendingResume()
             if isFadingOut { await fader.cancel() }
             if pausedByUs { scheduleResume(after: nil) }
@@ -188,6 +203,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Called when this arbiter is replaced by a new bootstrap.
     package func shutdown() async {
         isShutDown = true
+        cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
     }
@@ -218,6 +234,32 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Waits until no pause is under way. Tests use it to see a pause's outcome.
     package func waitForPause() async {
         while let pauseTask { await pauseTask.value }
+    }
+
+    /// Pauses after `delay` if other apps are still playing then. A newer
+    /// pause, an app starting or auto-pause going off calls it off.
+    private func schedulePause(after delay: TimeInterval) {
+        cancelPendingPause()
+        let id = UUID()
+        pendingPauseID = id
+        let wait = debounceScheduler.scheduleDebounce(after: delay)
+        pendingPauseTask = Task { [weak self] in
+            _ = await wait.value
+            await self?.pauseIfStillPending(id: id)
+        }
+    }
+
+    private func pauseIfStillPending(id: UUID) {
+        guard pendingPauseID == id else { return }
+        pendingPauseTask = nil
+        pendingPauseID = nil
+        if !activeSources.isEmpty { startPause() }
+    }
+
+    private func cancelPendingPause() {
+        pendingPauseTask?.cancel()
+        pendingPauseTask = nil
+        pendingPauseID = nil
     }
 
     private func cancelPendingResume() {
