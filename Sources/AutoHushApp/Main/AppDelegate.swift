@@ -218,26 +218,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let setting = preferences.autoPause.clearingExpiredSnooze(at: now)
         if setting != preferences.autoPause { preferences.autoPause = setting }
 
+        status.autoPause = AppStatus.AutoPause(setting, now: now)
+        settingsModel.isAutoPauseOn = status.autoPause == .on
+        settingsModel.autoPauseNote = status.autoPause.settingsNote
+        scheduleSnoozeEnd(at: setting.isEnabled ? setting.snoozedUntil : nil)
+        pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
+    }
+
+    /// Applies auto-pause again when the snooze ends (`nil`: no snooze).
+    private func scheduleSnoozeEnd(at end: Date?) {
         snoozeTimer?.invalidate()
         snoozeTimer = nil
-        if !setting.isEnabled {
-            status.autoPause = .off
-            settingsModel.autoPauseNote = nil
-        } else if let until = setting.snoozedUntil {
-            let description = AutoPauseSnooze.describeEnd(until, now: now)
-            status.autoPause = .snoozed(until: description)
-            settingsModel.autoPauseNote = "Turned off until \(description)."
-            let timer = Timer(fire: until, interval: 0, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.applyAutoPause() }
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            snoozeTimer = timer
-        } else {
-            status.autoPause = .on
-            settingsModel.autoPauseNote = nil
+        guard let end else { return }
+        let timer = Timer(fire: end, interval: 0, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyAutoPause() }
         }
-        settingsModel.isAutoPauseOn = status.autoPause == .on
-        pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
+        RunLoop.main.add(timer, forMode: .common)
+        snoozeTimer = timer
     }
 
     // MARK: - Player relaunch

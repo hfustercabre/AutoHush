@@ -35,6 +35,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   (which now also reports the average level) and the supported players,
   replacing `Scripts/measure-volume-curve.swift`.
 - The engine no longer uses AppKit: opening System Settings moved to the app.
+- **Simpler code**, with no change in behaviour:
+  - `AudioMonitor` hands AntiDot mode's judging to `PlaybackSignals` and the
+    Diagnostics text to `ActiveAudioReport`.
+  - Menu and Settings text for the engine's states and choices lives in the
+    app, with one row per state for its icon, label and status line.
+  - Long functions are split into named steps (the menu, the measuring
+    tool), repeated code is shared (process caches, Spotify commands,
+    the auto-pause display), and every type has a doc comment.
+  - Repetitive tests are parameterized.
 - Less duplicated code: the timing defaults are defined once (in
   `TimingSettings`), and each supported player is listed once.
 

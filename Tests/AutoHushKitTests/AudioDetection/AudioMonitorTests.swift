@@ -30,7 +30,7 @@ struct AudioMonitorTests {
         let provider = MockAudioProcessSnapshotProvider()
         let meter = MockLevelMeter()
         let clock = ManualClock()
-        let activeSources = ValueRecorder<[String]>()
+        let activeSources = ValueRecorder<[AudioSource]>()
         let modes = ValueRecorder<DetectionMode>()
         let learned = ValueRecorder<String>()
         let monitor: AudioMonitor
@@ -59,7 +59,7 @@ struct AudioMonitorTests {
                 audioLevelsNeeded: levelsNeeded,
                 audioLevelsReleaseDelay: 0.05,
                 clock: { [clock] in clock.now },
-                onActiveSourcesChange: { [activeSources] in activeSources.record($0.map(\.id)) },
+                onActiveSourcesChange: { [activeSources] in activeSources.record($0) },
                 onDetectionModeChange: { [modes] in modes.record($0) }
             )
         }
@@ -92,7 +92,7 @@ struct AudioMonitorTests {
         h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
-        #expect(h.activeSources.values.last == ["org.videolan.vlc"])
+        #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
         h.monitor.stop()
     }
 
@@ -581,7 +581,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "com.google.Chrome.helper"), Self.process(2, "com.google.Chrome.helper")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.google.Chrome", isPlaying: true)])
-        #expect(h.monitor.currentActiveSources() == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
+        #expect(h.activeSources.values.last == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
         #expect(h.monitor.activeAudioReport() == ["Google Chrome (com.google.Chrome) — playing"])
 
         // One helper stops: the app keeps playing.
@@ -602,7 +602,7 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.monitor.currentActiveSources().isEmpty)
+        #expect(h.activeSources.values.last?.isEmpty ?? true)
         h.monitor.stop()
     }
 
@@ -614,7 +614,7 @@ struct AudioMonitorTests {
         h.step(after: 0.25)
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last == ["org.videolan.vlc"])
+        #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
         #expect(h.monitor.activeAudioReport() == ["org.videolan.vlc — playing, ignored"])
         h.monitor.stop()
     }
@@ -646,7 +646,7 @@ struct AudioMonitorTests {
         h.step(after: 0.25, [])
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last == [])
+        #expect(h.activeSources.values.last?.map(\.id) == [])
         h.monitor.stop()
     }
 
@@ -709,8 +709,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "org.mozilla.firefox"), Self.process(2, "com.apple.Safari")])
         await h.recorder.waitForEvents(count: 2)
-        #expect(h.activeSources.values.last == ["com.apple.Safari", "org.mozilla.firefox"])
-        #expect(h.monitor.currentActiveSources().map(\.id) == ["com.apple.Safari", "org.mozilla.firefox"])
+        #expect(h.activeSources.values.last?.map(\.id) == ["com.apple.Safari", "org.mozilla.firefox"])
         h.monitor.stop()
     }
 
@@ -750,7 +749,7 @@ struct AudioMonitorTests {
         h.monitor.stop()
         h.provider.flush()
 
-        #expect(h.activeSources.values.last == [])
+        #expect(h.activeSources.values.last?.map(\.id) == [])
         #expect(h.meter.stopAllCount == 1)
         #expect(h.provider.isObserving == false)
     }

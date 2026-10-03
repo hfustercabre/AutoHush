@@ -3,44 +3,41 @@ import Foundation
 import OSLog
 import os
 
-// MARK: - Audio monitor
-//
-// Every tick:
-//   1. (on HAL change, or once per idle interval) re-reads which processes have
-//      output running and taps those that are media sources;
-//   2. classifies each source as audible — by tapped peak level when level
-//      detection works, otherwise by its open output stream;
-//   3. feeds that into SourceActivityTracker and forwards the resulting
-//      started/stopped transitions, in order, to the arbiter.
-//
-// Level detection needs the System Audio Recording permission: without it taps
-// deliver pure silence, which would make every source look stopped. The
-// permission is read from TCC (re-checked every few seconds, and requested at
-// start when undecided). When TCC cannot be queried, level detection is
-// trusted once a tap delivers a non-zero sample (the music player's own output
-// is then tapped too, so its playing proves the permission works).
-//
-// Capturing audio makes macOS show its recording indicator, so taps exist only
-// while levels can change a decision (`setAudioLevelsNeeded`, driven by the
-// arbiter: the music playing here or paused by us, with auto-pause on) and the
-// detection method is `.audioLevels`. With `.playbackSignals` (AntiDot mode)
-// nothing is captured and no app is singled out: every app is judged by its
-// power assertions (PowerAssertionReading). An app announcing "don't sleep"
-// counts as playing; one seen announcing before but not now counts as paused,
-// even with its audio open. Apps that never announce count as playing while
-// their output is open, as with `.openStreams`.
-//
-// The music player's output also tells whether it plays on THIS Mac. Through
-// Spotify Connect, for example, Spotify reports "playing" while the music
-// comes out of another device; then its process has no running output
-// (measured). The monitor reports this to the arbiter, which only pauses the
-// player when it plays here.
-//
-// Processes are grouped by the app that owns them (AudioSourceIdentifying), so
-// all of Chrome's helpers form one "Google Chrome" source. Sources the user
-// ignores are still tracked and published, but never reach the arbiter.
-
+/// Watches which apps play audio and tells the arbiter, in order, when one
+/// starts or stops.
+///
+/// Every tick it:
+///   1. (on a HAL change, or once per idle interval) re-reads which processes
+///      have output running and taps those that are media sources;
+///   2. judges each app: by its tapped peak level when level detection works,
+///      by what it tells macOS in AntiDot mode (`PlaybackSignals`), otherwise
+///      by its open output stream;
+///   3. feeds that into `SourceActivityTracker` and forwards the resulting
+///      started/stopped transitions to the arbiter.
+///
+/// Level detection needs the System Audio Recording permission: without it taps
+/// deliver pure silence, which would make every source look stopped. The
+/// permission is read from TCC (re-checked every few seconds, and requested at
+/// start when undecided). When TCC cannot be queried, level detection is
+/// trusted once a tap delivers a non-zero sample (the music player's own output
+/// is then tapped too, so its playing proves the permission works).
+///
+/// Capturing audio makes macOS show its recording indicator, so taps exist only
+/// while levels can change a decision (`setAudioLevelsNeeded`, driven by the
+/// arbiter: the music playing here or paused by us, with auto-pause on) and the
+/// detection method is `.audioLevels`. AntiDot mode's methods capture nothing.
+///
+/// The music player's output also tells whether it plays on THIS Mac. Through
+/// Spotify Connect, for example, Spotify reports "playing" while the music
+/// comes out of another device; then its process has no running output
+/// (measured). The monitor reports this to the arbiter, which only pauses the
+/// player when it plays here.
+///
+/// Processes are grouped by the app that owns them (`AudioSourceIdentifying`),
+/// so all of Chrome's helpers form one "Google Chrome" source. Sources the user
+/// ignores are still tracked and published, but never reach the arbiter.
 package final class AudioMonitor: @unchecked Sendable {
+    /// What the monitor tells the arbiter, in order.
     private enum ArbiterEvent: Sendable {
         case source(id: String, isPlaying: Bool)
         case localPlayback(Bool)
@@ -62,7 +59,6 @@ package final class AudioMonitor: @unchecked Sendable {
     private let levelMeter: (any AudioLevelMetering)?
     private let permission: (any AudioCapturePermissionChecking)?
     private let sourceIdentifier: (any AudioSourceIdentifying)?
-    private let powerAssertions: (any PowerAssertionReading)?
     private let onAnnouncingSourceLearned: @Sendable (String) -> Void
     private let clock: @Sendable () -> Date
     private let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
@@ -71,7 +67,8 @@ package final class AudioMonitor: @unchecked Sendable {
     private let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
     private let events: AsyncStream<ArbiterEvent>.Continuation
     private let forwardingTask: Task<Void, Never>
-    private let report = OSAllocatedUnfairLock<(active: [AudioSource], lines: [String])>(initialState: ([], []))
+    /// The latest Diagnostics lines, read from any thread.
+    private let reportLines = OSAllocatedUnfairLock<[String]>(initialState: [])
 
     // Queue-confined state.
     private var isStarted = false
@@ -100,8 +97,8 @@ package final class AudioMonitor: @unchecked Sendable {
     private var hasRequestedPermission = false
     /// How playing apps are detected (Settings → General → AntiDot mode).
     private var detectionMethod: DetectionMethod
-    /// Apps seen announcing playback through a power assertion.
-    private var announcingSourceIDs: Set<String>
+    /// AntiDot mode's judge, and the apps it has seen announcing playback.
+    private var signals: PlaybackSignals
     /// Whether levels can currently change a pause or resume decision.
     private var audioLevelsNeeded: Bool
     /// Taps are released this long after levels stop being needed, so brief
@@ -134,8 +131,7 @@ package final class AudioMonitor: @unchecked Sendable {
         self.permission = audioCapturePermission
         self.sourceIdentifier = sourceIdentifier
         self.ignoredSourceIDs = ignoredSourceIDs
-        self.powerAssertions = powerAssertions
-        self.announcingSourceIDs = announcingSourceIDs
+        self.signals = PlaybackSignals(powerAssertions: powerAssertions, announcingSourceIDs: announcingSourceIDs)
         self.onAnnouncingSourceLearned = onAnnouncingSourceLearned
         self.detectionMethod = detectionMethod
         self.audioLevelsNeeded = audioLevelsNeeded
@@ -248,14 +244,9 @@ package final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// Foreign sources currently considered playing, including ignored ones (thread-safe).
-    package func currentActiveSources() -> [AudioSource] {
-        report.withLock { $0.active }
-    }
-
     /// Human-readable per-source state for the Diagnostics alert (thread-safe).
     package func activeAudioReport() -> [String] {
-        report.withLock { $0.lines }
+        reportLines.withLock { $0 }
     }
 
     // MARK: - Lifecycle
@@ -302,7 +293,7 @@ package final class AudioMonitor: @unchecked Sendable {
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
         publishActiveSources()
-        report.withLock { $0.lines = [] }
+        reportLines.withLock { $0 = [] }
     }
 
     // MARK: - Tick
@@ -415,12 +406,12 @@ package final class AudioMonitor: @unchecked Sendable {
 
         var audible: Set<String> = []
         var levels: [String: Float] = [:]
-        let awake = sourcesKeepingSystemAwake()
+        let announcing = appsAnnouncingPlayback()
         for process in candidates {
             guard let source = sourceOfProcess[process.objectID] else { continue }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
             if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
-            if isAudible(source.id, peak: peak, keepsSystemAwake: awake.contains(source.id)) {
+            if isAudible(source.id, peak: peak, isAnnouncing: announcing.contains(source.id)) {
                 audible.insert(source.id)
             }
         }
@@ -443,39 +434,34 @@ package final class AudioMonitor: @unchecked Sendable {
         knownSources = knownSources.filter { tracker.isTracking($0.key) || presentSourceIDs.contains($0.key) }
 
         publishActiveSources()
-        publishReport(audible: audible, levels: levels, awake: awake)
+        publishReport(audible: audible, levels: levels, announcing: announcing)
     }
 
     /// Whether one process of a source counts as audible in this tick.
-    private func isAudible(_ sourceID: String, peak: Float?, keepsSystemAwake: Bool) -> Bool {
+    private func isAudible(_ sourceID: String, peak: Float?, isAnnouncing: Bool) -> Bool {
         if detectionMethod == .playbackSignals {
-            if keepsSystemAwake {
-                learnAnnouncing(sourceID)
-                return true
-            }
-            // Announced playback before but not now: paused with its audio open.
-            if announcingSourceIDs.contains(sourceID) { return false }
+            if isAnnouncing { learnAnnouncing(sourceID) }
+            if let verdict = signals.isPlaying(sourceID, isAnnouncing: isAnnouncing) { return verdict }
         }
         if let peak { return peak >= configuration.audibleThreshold }
         return true // judged by its open output stream
     }
 
-    /// Owning apps of processes that hold a system-sleep assertion, with
-    /// AntiDot mode's `.playbackSignals` method only.
-    private func sourcesKeepingSystemAwake() -> Set<String> {
-        guard detectionMethod == .playbackSignals, let powerAssertions, !sourceOfProcess.isEmpty else { return [] }
-        let holders = powerAssertions.pidsKeepingSystemAwake()
-        guard !holders.isEmpty else { return [] }
-        var sourceByPID: [pid_t: String] = [:]
+    /// Apps announcing playback right now, with AntiDot mode's
+    /// `.playbackSignals` method only.
+    private func appsAnnouncingPlayback() -> Set<String> {
+        guard detectionMethod == .playbackSignals else { return [] }
+        var appOfProcess: [pid_t: String] = [:]
         for process in candidates {
-            if let source = sourceOfProcess[process.objectID] { sourceByPID[process.pid] = source.id }
+            if let source = sourceOfProcess[process.objectID] { appOfProcess[process.pid] = source.id }
         }
-        return Set(holders.compactMap { sourceByPID[$0] ?? sourceIdentifier?.sourceID(forPID: $0) })
-            .intersection(presentSourceIDs)
+        return signals.appsAnnouncingPlayback(among: presentSourceIDs) { pid in
+            appOfProcess[pid] ?? sourceIdentifier?.sourceID(forPID: pid)
+        }
     }
 
     private func learnAnnouncing(_ id: String) {
-        guard announcingSourceIDs.insert(id).inserted else { return }
+        guard signals.remember(id) else { return }
         logger.info("[monitor] \(id, privacy: .public) announces playback with a power assertion")
         onAnnouncingSourceLearned(id)
     }
@@ -531,29 +517,22 @@ package final class AudioMonitor: @unchecked Sendable {
         let active = tracker.activeSources
             .map { knownSources[$0] ?? AudioSource(id: $0, name: $0) }
             .sortedByName()
-        report.withLock { $0.active = active }
         guard active != publishedActive else { return }
         publishedActive = active
         onActiveSourcesChange(active)
     }
 
-    private func publishReport(audible: Set<String>, levels: [String: Float], awake: Set<String>) {
-        let active = tracker.activeSources
-        let ids = presentSourceIDs.union(active)
-        let lines = ids.sorted().map { id -> String in
-            let label = knownSources[id].map { $0.name == id ? id : "\($0.name) (\(id))" } ?? id
-            var state = active.contains(id) ? "playing"
-                : audible.contains(id) ? "starting"
-                : "output open, silent"
-            if ignoredSourceIDs.contains(id) { state += ", ignored" }
-            if detectionMethod == .playbackSignals, awake.contains(id) { return "\(label) — \(state) (tells macOS it is playing)" }
-            if detectionMethod == .playbackSignals, announcingSourceIDs.contains(id) {
-                return "\(label) — \(state) (not telling macOS it is playing)"
-            }
-            guard let level = levels[id] else { return "\(label) — \(state)" }
-            let dBFS = level > 0 ? String(format: "%.0f dBFS", 20 * log10(level)) : "silence"
-            return "\(label) — \(state) (\(dBFS))"
-        }
-        report.withLock { $0.lines = lines }
+    private func publishReport(audible: Set<String>, levels: [String: Float], announcing: Set<String>) {
+        let report = ActiveAudioReport(
+            present: presentSourceIDs,
+            playing: tracker.activeSources,
+            audible: audible,
+            levels: levels,
+            ignored: ignoredSourceIDs,
+            announcing: announcing,
+            announcedBefore: detectionMethod == .playbackSignals ? signals.announcingSourceIDs : [],
+            sources: knownSources
+        )
+        reportLines.withLock { $0 = report.lines }
     }
 }

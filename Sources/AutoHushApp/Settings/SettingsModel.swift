@@ -8,6 +8,7 @@ import AutoHushKit
 @MainActor
 @Observable
 final class SettingsModel {
+    /// What changing a setting does; `AppDelegate` provides them.
     struct Actions {
         var setAutoPause: @MainActor (Bool) -> Void
         var setIgnored: @MainActor (AudioSource, Bool) -> Void
@@ -19,6 +20,7 @@ final class SettingsModel {
         var checkForUpdates: @MainActor () -> Void
     }
 
+    /// One app in Settings → Apps, and whether it is ignored.
     struct AppRow: Identifiable, Equatable {
         let source: AudioSource
         let isIgnored: Bool

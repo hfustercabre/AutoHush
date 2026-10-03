@@ -32,7 +32,7 @@ package actor SpotifyPlayer: MusicPlayer {
     package static let replyTimeout: TimeInterval = 5
 
     package func verifyControlAccess() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
+        let pid = try runningProcessIdentifier()
         // Ask for consent up front: the send below times out after a few
         // seconds, which is too short for a user reading the TCC prompt.
         let status = try await onEventQueue {
@@ -59,13 +59,11 @@ package actor SpotifyPlayer: MusicPlayer {
     }
 
     package func pause() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        _ = try await send({ Self.makeCommandEvent(Code.pause, processIdentifier: $0) }, to: pid)
+        try await sendCommand(Code.pause)
     }
 
     package func play() async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        _ = try await send({ Self.makeCommandEvent(Code.play, processIdentifier: $0) }, to: pid)
+        try await sendCommand(Code.play)
     }
 
     package func volume() async -> Int? {
@@ -76,8 +74,8 @@ package actor SpotifyPlayer: MusicPlayer {
     }
 
     package func setVolume(_ volume: Int) async throws {
-        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let volume = min(max(volume, 0), 100)
+        let pid = try runningProcessIdentifier()
         _ = try await send({ Self.makeSetVolumeEvent(volume, processIdentifier: $0) }, to: pid)
     }
 
@@ -94,6 +92,18 @@ package actor SpotifyPlayer: MusicPlayer {
         NSRunningApplication.runningApplications(withBundleIdentifier: Self.appBundleID)
             .first { !$0.isTerminated }?
             .processIdentifier
+    }
+
+    /// The running Spotify's pid, for commands that can't do without it.
+    private func runningProcessIdentifier() throws -> pid_t {
+        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
+        return pid
+    }
+
+    /// Sends a parameterless Spotify command such as `pause` or `play`.
+    private func sendCommand(_ eventID: AEEventID) async throws {
+        let pid = try runningProcessIdentifier()
+        _ = try await send({ Self.makeCommandEvent(eventID, processIdentifier: $0) }, to: pid)
     }
 
     /// Builds the event on `eventQueue` (descriptors are not Sendable), sends

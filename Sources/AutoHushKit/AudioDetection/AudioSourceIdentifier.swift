@@ -25,7 +25,9 @@ extension Sequence<AudioSource> {
     }
 }
 
+/// Finds the app behind a process.
 package protocol AudioSourceIdentifying: Sendable {
+    /// The app that owns an audio process.
     func source(for process: AudioProcessInfo) -> AudioSource
     /// The owning app of any process (e.g. one holding a power assertion), or `nil`.
     func sourceID(forPID pid: pid_t) -> String?
@@ -48,33 +50,18 @@ extension AudioSourceIdentifying {
 package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, @unchecked Sendable {
     package init() {}
 
-    /// Keyed by pid; the process's own bundle ID guards against pid reuse.
-    private let cache = OSAllocatedUnfairLock<[pid_t: (bundleID: String, source: AudioSource)]>(initialState: [:])
+    /// Owner of each audio process; its bundle ID guards against pid reuse.
+    private let sources = ProcessCache<AudioSource>()
+    /// Owner of any process; its executable path guards against pid reuse.
+    private let owners = ProcessCache<String?>()
 
     package func source(for process: AudioProcessInfo) -> AudioSource {
-        if let cached = cache.withLock({ $0[process.pid] }), cached.bundleID == process.bundleID {
-            return cached.source
-        }
-        let source = resolve(process)
-        cache.withLock { cache in
-            if cache.count > 256 { cache.removeAll() } // entries of processes that quit
-            cache[process.pid] = (process.bundleID, source)
-        }
-        return source
+        sources.value(for: process.pid, key: process.bundleID) { resolve(process) }
     }
-
-    /// Keyed by pid; the executable path guards against pid reuse.
-    private let ownerCache = OSAllocatedUnfairLock<[pid_t: (path: String, id: String?)]>(initialState: [:])
 
     package func sourceID(forPID pid: pid_t) -> String? {
         guard let path = Self.executablePath(of: pid) else { return nil } // the process is gone
-        if let cached = ownerCache.withLock({ $0[pid] }), cached.path == path { return cached.id }
-        let id = resolveOwner(of: pid)?.id
-        ownerCache.withLock { cache in
-            if cache.count > 256 { cache.removeAll() }
-            cache[pid] = (path, id)
-        }
-        return id
+        return owners.value(for: pid, key: path) { resolveOwner(of: pid)?.id }
     }
 
     private func resolve(_ process: AudioProcessInfo) -> AudioSource {
@@ -118,5 +105,24 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, @unche
         guard let identifier = Bundle(url: url)?.bundleIdentifier else { return nil }
         let name = (FileManager.default.displayName(atPath: url.path) as NSString).deletingPathExtension
         return AudioSource(id: identifier, name: name.isEmpty ? identifier : name, bundlePath: url.path)
+    }
+}
+
+/// Remembers one value per process. `key` (something about the process that
+/// changes when its pid is reused) must match for a remembered value to count.
+private final class ProcessCache<Value: Sendable>: Sendable {
+    /// Past this many entries all are dropped: most belong to processes that quit.
+    private static var limit: Int { 256 }
+    private let entries = OSAllocatedUnfairLock<[pid_t: (key: String, value: Value)]>(initialState: [:])
+
+    /// The remembered value, or a newly computed one (computed outside the lock).
+    func value(for pid: pid_t, key: String, compute: () -> Value) -> Value {
+        if let entry = entries.withLock({ $0[pid] }), entry.key == key { return entry.value }
+        let value = compute()
+        entries.withLock { entries in
+            if entries.count > Self.limit { entries.removeAll() }
+            entries[pid] = (key, value)
+        }
+        return value
     }
 }

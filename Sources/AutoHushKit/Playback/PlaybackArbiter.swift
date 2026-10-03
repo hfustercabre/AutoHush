@@ -3,10 +3,13 @@ import OSLog
 
 // MARK: - Debounce scheduling
 
+/// Waits before a resume: the real one sleeps, tests complete it by hand.
 package protocol PlaybackArbiterDebounceScheduling: Sendable {
+    /// A task that finishes after `delay` seconds.
     func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never>
 }
 
+/// Waits with `Task.sleep`.
 package struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
     package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
         Task { try? await Task.sleep(for: .seconds(delay)) }
@@ -26,25 +29,24 @@ package protocol PlaybackArbiting: Actor {
 }
 
 // MARK: - Playback arbiter
-//
-// Receives play/stop events from AudioMonitor and decides when to pause
-// and resume the music player. Rule: pause when any foreign source starts; resume
-// (after debounce) when ALL foreign sources have stopped.
-//
-// The player's state is pushed in through `handlePlayerStateChange` (from its
-// state observer) and cached for status display. The player is only queried
-// right before pausing or resuming, so those decisions always use its live
-// state.
-//
-// The player is only paused while its audio plays on this Mac: playback on
-// another device (e.g. through Spotify Connect) does not compete with local
-// audio.
-//
-// Pauses and resumes run in tasks of their own (`pauseTask`,
-// `pendingResumeTask`), so events keep arriving while the music fades: a
-// source that stops during the fade-out brings the music back up, and one
-// that starts during a fade-in fades it out again.
 
+/// Decides when to pause and resume the music player. Rule: pause when any
+/// foreign source starts; resume (after a short delay) when ALL foreign
+/// sources have stopped, but only music it paused itself.
+///
+/// The player's state is pushed in through `handlePlayerStateChange` (from its
+/// state observer) and cached for status display. The player is only queried
+/// right before pausing or resuming, so those decisions always use its live
+/// state.
+///
+/// The player is only paused while its audio plays on this Mac: playback on
+/// another device (e.g. through Spotify Connect) does not compete with local
+/// audio.
+///
+/// Pauses and resumes run in tasks of their own (`pauseTask`,
+/// `pendingResumeTask`), so events keep arriving while the music fades: a
+/// source that stops during the fade-out brings the music back up, and one
+/// that starts during a fade-in fades it out again.
 package actor PlaybackArbiter: PlaybackArbiting {
     private let player: any MusicPlayer
     /// Fades the player out before pausing and back in after playing.
@@ -108,14 +110,14 @@ package actor PlaybackArbiter: PlaybackArbiting {
             // With auto-pause off, music we paused comes back regardless.
             if autoPauseEnabled { cancelPendingResume() }
             activeSources.insert(sourceID)
-            logger.debug("[arbiter] +\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
+            logActiveSources(after: "+\(sourceID)")
             // The music may be coming back up after a cancelled fade-out: stop
             // that, so the pause in progress fades out again.
             if isFadingOut { await fader.stopComeback() }
             startPause() // publishes the outcome
         } else {
             activeSources.remove(sourceID)
-            logger.debug("[arbiter] -\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
+            logActiveSources(after: "-\(sourceID)")
             if activeSources.isEmpty {
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
@@ -191,6 +193,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     // MARK: - Private
+
+    private func logActiveSources(after change: String) {
+        logger.debug("[arbiter] \(change, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
+    }
 
     private func livePlayerState() async -> PlayerState {
         let state = await player.playerState()

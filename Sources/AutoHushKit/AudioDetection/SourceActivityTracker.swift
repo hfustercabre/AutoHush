@@ -1,18 +1,16 @@
 import Foundation
 
-// MARK: - Source activity tracker
-//
-// Turns raw per-tick "is this source audible right now?" samples into stable
-// started/stopped transitions:
-//
-//   - A source starts only after it has been audible for `startConfirmation`
-//     (gaps up to `gapTolerance` allowed), so notification blips never count.
-//   - A started source stops only after it has been inaudible for `stopGrace`,
-//     so gaps between tracks or videos do not bounce the music.
-//
-// Pure value type driven by explicit timestamps, so it is fully deterministic.
-
+/// Turns raw per-tick "is this source audible right now?" samples into stable
+/// started/stopped transitions:
+///
+///   - A source starts only after it has been audible for `startConfirmation`
+///     (gaps up to `gapTolerance` allowed), so notification blips never count.
+///   - A started source stops only after it has been inaudible for `stopGrace`,
+///     so gaps between tracks or videos do not bounce the music.
+///
+/// A pure value type driven by explicit timestamps, so it is fully deterministic.
 package struct SourceActivityTracker {
+    /// What is known about one source.
     private struct Entry {
         var pendingSince: Date?
         var lastAudible: Date

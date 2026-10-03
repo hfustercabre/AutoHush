@@ -17,6 +17,12 @@ struct PlaybackArbiterTests {
         }
     }
 
+    /// Gives work that hops between actors time to finish before checking
+    /// what happened (or that nothing more did).
+    private func settle() async {
+        try? await Task.sleep(for: .milliseconds(50))
+    }
+
     private func makeArbiter(
         spotify: MockMusicPlayer = MockMusicPlayer(),
         configuration: AppConfiguration = .testing,
@@ -27,89 +33,39 @@ struct PlaybackArbiterTests {
 
     // MARK: - Filtering: excluded sources must not trigger pause
 
-    @Test("ignores Spotify's own bundle ID")
-    func ignoresSpotify() async {
+    @Test("Spotify's own audio and system audio daemons never pause it", arguments: [
+        "com.spotify.client",
+        "com.apple.coreaudiod",
+        "com.apple.audio.SandboxHelper",
+        "com.apple.audio.UISoundsServer",
+    ])
+    func ignoresOwnAndSystemAudio(sourceID: String) async {
         let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
-        await arbiter.sourceChanged("com.spotify.client", playing: true)
-
-        #expect(await spotify.pauseCallCount == 0)
-    }
-
-    @Test("ignores system audio daemons")
-    func ignoresSystemDaemons() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("com.apple.coreaudiod", playing: true)
-        await arbiter.sourceChanged("com.apple.audio.SandboxHelper", playing: true)
-        await arbiter.sourceChanged("com.apple.audio.UISoundsServer", playing: true)
+        await arbiter.sourceChanged(sourceID, playing: true)
 
         #expect(await spotify.pauseCallCount == 0)
     }
 
     // MARK: - Pause behaviour
 
-    @Test("pauses Spotify when a foreign media source starts")
-    func pausesForForeignSource() async {
+    @Test("pauses Spotify when another app starts playing", arguments: [
+        "org.videolan.vlc",
+        "com.example.somerandomplayer", // an app AutoHush knows nothing about
+        "com.google.Chrome.helper",     // a browser's helper process
+        "com.apple.Safari",
+        "org.mozilla.firefox",
+        "com.apple.QuickTimePlayerX",
+    ])
+    func pausesForAnotherApp(sourceID: String) async {
         let spotify = MockMusicPlayer()
         let arbiter = makeArbiter(spotify: spotify)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged(sourceID, playing: true)
 
         #expect(await spotify.pauseCallCount == 1)
         #expect(await spotify.state == .paused)
-    }
-
-    @Test("pauses Spotify for an unknown app")
-    func pausesForUnknownApp() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("com.example.somerandomplayer", playing: true)
-
-        #expect(await spotify.pauseCallCount == 1)
-    }
-
-    @Test("pauses Spotify for a Chrome renderer helper")
-    func pausesForChromeHelper() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("com.google.Chrome.helper", playing: true)
-
-        #expect(await spotify.pauseCallCount == 1)
-    }
-
-    @Test("pauses Spotify when Safari starts playing")
-    func pausesForSafari() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("com.apple.Safari", playing: true)
-
-        #expect(await spotify.pauseCallCount == 1)
-    }
-
-    @Test("pauses Spotify when Firefox starts playing")
-    func pausesForFirefox() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("org.mozilla.firefox", playing: true)
-
-        #expect(await spotify.pauseCallCount == 1)
-    }
-
-    @Test("pauses Spotify when QuickTime Player starts playing")
-    func pausesForQuickTimePlayer() async {
-        let spotify = MockMusicPlayer()
-        let arbiter = makeArbiter(spotify: spotify)
-
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
-
-        #expect(await spotify.pauseCallCount == 1)
     }
 
     @Test("does not pause Spotify that is already paused")
@@ -147,17 +103,22 @@ struct PlaybackArbiterTests {
 
     // MARK: - Resume behaviour
 
-    @Test("resumes Spotify after the foreign source stops and debounce completes")
-    func resumesAfterSourceStops() async {
+    @Test("resumes Spotify once the other app stops and the delay has passed", arguments: [
+        "org.videolan.vlc",
+        "com.google.Chrome.helper",
+        "com.apple.Safari",
+        "org.mozilla.firefox",
+        "com.apple.QuickTimePlayerX",
+    ])
+    func resumesAfterSourceStops(sourceID: String) async {
         let spotify = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged(sourceID, playing: true)
+        await arbiter.sourceChanged(sourceID, playing: false)
         await scheduler.completeNext()
-        // Yield until the actor-reentrant resumeIfStillPending finishes.
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         #expect(await spotify.state == .playing)
         #expect(await spotify.playCallCount == 1)
@@ -286,7 +247,7 @@ struct PlaybackArbiterTests {
         await waitUntil { await spotify.pauseCallCount == 1 } // paused, volume not yet set back
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await scheduler.completeNext() // the resume comes before the pause has finished
-        try? await Task.sleep(for: .milliseconds(50))
+        await settle()
         await restore.open()
         await arbiter.waitForPause()
 
@@ -316,7 +277,7 @@ struct PlaybackArbiterTests {
         #expect(await spotify.volumeLevel == 60)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
         #expect(await spotify.playCallCount == 0)
     }
 
@@ -328,7 +289,7 @@ struct PlaybackArbiterTests {
         )
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         #expect(await spotify.playCallCount == 0)
     }
@@ -343,7 +304,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("com.colliderli.iina", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         #expect(await spotify.playCallCount == 0)
     }
@@ -359,68 +320,10 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await arbiter.sourceChanged("com.colliderli.iina", playing: true)
         await scheduler.completeNext()
-        try? await Task.sleep(for: .milliseconds(50))
+        await settle()
 
         #expect(await spotify.playCallCount == 0)
     }
-
-    @Test("resumes Spotify when Safari stops")
-    func resumesWhenSafariStops() async {
-        let spotify = MockMusicPlayer()
-        let scheduler = ManualDebounceScheduler()
-        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
-
-        await arbiter.sourceChanged("com.apple.Safari", playing: true)
-        await arbiter.sourceChanged("com.apple.Safari", playing: false)
-        await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
-
-        #expect(await spotify.playCallCount == 1)
-    }
-
-    @Test("resumes Spotify when Firefox stops")
-    func resumesWhenFirefoxStops() async {
-        let spotify = MockMusicPlayer()
-        let scheduler = ManualDebounceScheduler()
-        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
-
-        await arbiter.sourceChanged("org.mozilla.firefox", playing: true)
-        await arbiter.sourceChanged("org.mozilla.firefox", playing: false)
-        await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
-
-        #expect(await spotify.playCallCount == 1)
-    }
-
-    @Test("resumes Spotify when QuickTime Player stops")
-    func resumesWhenQuickTimePlayerStops() async {
-        let spotify = MockMusicPlayer()
-        let scheduler = ManualDebounceScheduler()
-        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
-
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false)
-        await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
-
-        #expect(await spotify.playCallCount == 1)
-    }
-
-    @Test("resumes Spotify when a Chrome renderer helper stops")
-    func resumesWhenChromeHelperStops() async {
-        let spotify = MockMusicPlayer()
-        let scheduler = ManualDebounceScheduler()
-        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
-
-        await arbiter.sourceChanged("com.google.Chrome.helper", playing: true)
-        await arbiter.sourceChanged("com.google.Chrome.helper", playing: false)
-        await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
-
-        #expect(await spotify.playCallCount == 1)
-    }
-
-    // MARK: - PlaybackState reporting
 
     // MARK: - PlaybackState reporting
 
@@ -547,7 +450,7 @@ struct PlaybackArbiterTests {
         // When the source stops, the arbiter must not touch Spotify.
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
         #expect(await spotify.playCallCount == 0)
     }
 
@@ -567,7 +470,7 @@ struct PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
         #expect(await spotify.playCallCount == 0)
     }
 
@@ -587,7 +490,7 @@ struct PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
         #expect(await spotify.playCallCount == 0)
     }
 
@@ -601,7 +504,7 @@ struct PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.paused)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         #expect(await spotify.playCallCount == 1)
     }
@@ -616,7 +519,7 @@ struct PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.unknown)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         #expect(await spotify.playCallCount == 1)
     }
@@ -724,7 +627,7 @@ struct PlaybackArbiterTests {
         await arbiter.setAutoPauseEnabled(false)
         await scheduler.completeNext()
         await waitUntil { await spotify.playCallCount == 1 }
-        try? await Task.sleep(for: .milliseconds(50))
+        await settle()
 
         #expect(await spotify.playCallCount == 1) // the immediate resume, not a second one
     }
@@ -835,7 +738,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await arbiter.shutdown()
         await scheduler.completeNext()
-        try? await Task.sleep(for: .milliseconds(50))
+        await settle()
 
         #expect(await spotify.playCallCount == 0)
     }
@@ -892,7 +795,7 @@ struct PlaybackArbiterTests {
         // User quits Spotify before debounce fires.
         await spotify.overrideState(.notRunning)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
 
         let playCount = await spotify.playCallCount
         #expect(playCount == 0)
@@ -915,7 +818,7 @@ struct PlaybackArbiterTests {
         // Now all sources gone — exactly one debounce should be scheduled.
         #expect(scheduler.scheduledDelays.count == 1)
         await scheduler.completeNext()
-        for _ in 0..<20 { await Task.yield() }
+        await settle()
         #expect(await spotify.playCallCount == 1)
     }
 
@@ -931,7 +834,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await scheduler.completeNext()
-        try? await Task.sleep(for: .milliseconds(50))
+        await settle()
 
         #expect(scheduler.scheduledDelays == [1.5])
     }
