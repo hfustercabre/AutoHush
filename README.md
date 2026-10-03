@@ -118,7 +118,7 @@ Music paused — Google Chrome is playing
 
 ### Language
 
-AutoHush speaks English, Spanish (Spain and Latin America), Catalan, German, French, Italian, Portuguese (Brazil and Portugal), Japanese, Korean and Chinese (Simplified and Traditional). It uses the first of your Mac's preferred languages that it has (System Settings → General → Language & Region), and English otherwise. To give AutoHush a language of its own, add it to the Applications list in that same pane.
+AutoHush speaks English, Spanish (Spain and Latin America), Catalan, German, French (France and Canada), Italian, Portuguese (Brazil and Portugal), Japanese, Korean and Chinese (Simplified and Traditional). It uses the first of your Mac's preferred languages that it has (System Settings → General → Language & Region), and English otherwise. To give AutoHush a language of its own, add it to the Applications list in that same pane.
 
 > [!WARNING]
 > Only English, Spanish (Spain) and Catalan have been checked by a native speaker. The other languages were translated automatically, so they may contain mistakes or odd wording. If you spot one, please [open an issue](https://github.com/hfustercabre/AutoHush/issues) with the text and a better wording.
@@ -315,11 +315,12 @@ The app icon is `Resources/AutoHush.icon`, made of one layer (`Assets/bars.svg`)
 
 ### Translations
 
-AutoHush is translated into Spanish, Catalan, German, French, Italian, Portuguese, Japanese, Korean and Chinese; English is the source language and the fallback (see [Language](#language) for how macOS picks one). Three languages come in two variants, and macOS picks the closer one for each country:
+AutoHush is translated into Spanish, Catalan, German, French, Italian, Portuguese, Japanese, Korean and Chinese; English is the source language and the fallback (see [Language](#language) for how macOS picks one). Four languages come in two variants, and macOS picks the closer one for each country:
 
 | Language | Variants |
 |---|---|
 | Spanish | `es` Spain · `es-419` Latin America (Mexico, Argentina, US Spanish…) |
+| French | `fr` France (also Belgium and Switzerland) · `fr-CA` Canada, with Quebec's punctuation: no space before `;` `?` `!` |
 | Portuguese | `pt` Brazil · `pt-PT` Portugal (also Angola and Mozambique) |
 | Chinese | `zh-Hans` Simplified (mainland China, Singapore) · `zh-Hant` Traditional (Taiwan, Hong Kong) |
 

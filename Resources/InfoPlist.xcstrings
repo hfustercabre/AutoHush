@@ -41,6 +41,12 @@
             "value" : "AutoHush met Spotify en pause et relance la lecture."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met Spotify en pause et relance la lecture."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +131,12 @@
             "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre musique en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre musique en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -204,6 +216,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licence MIT."
+          }
+        },
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. Licence MIT."
