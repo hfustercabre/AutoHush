@@ -15,6 +15,12 @@ struct AppHealthStateTests {
             == .degraded("Spotify is not running"))
     }
 
+    @Test("an unresponsive Spotify is degraded")
+    func spotifyNotResponding() {
+        #expect(AppHealthState(startupError: AutoHushError.spotifyNotResponding)
+            == .degraded("Spotify is not responding"))
+    }
+
     @Test("a failed Spotify command is degraded with its message")
     func commandFailed() {
         #expect(AppHealthState(startupError: AutoHushError.spotifyCommandFailed("OSStatus -1712"))

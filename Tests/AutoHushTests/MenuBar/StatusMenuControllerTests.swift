@@ -60,6 +60,25 @@ struct StatusMenuControllerTests {
         #expect(!sut.menu.items.contains { $0.title == "Retry" || $0.title == "Ignored Apps" })
     }
 
+    @Test("while the menu is open only the status line changes; the rest updates when it closes")
+    func deferredRebuildWhileOpen() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        sut.status = readyStatus()
+        let itemCount = sut.menu.items.count
+
+        sut.menuWillOpen(sut.menu)
+        var status = readyStatus()
+        status.setActiveSources([chrome])
+        sut.status = status
+        #expect(sut.menu.items.count == itemCount)          // no rows added under the pointer
+        #expect(sut.menu.items.first?.title == status.statusLine)
+
+        sut.menuDidClose(sut.menu)
+        _ = try item("Google Chrome", in: sut.menu)         // rebuilt once closed
+        #expect(!sut.isMenuOpen)
+    }
+
     @Test("each playing app gets a row with its ignore toggle")
     func sourceRows() throws {
         let sut = makeController()

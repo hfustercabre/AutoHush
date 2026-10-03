@@ -158,11 +158,11 @@ struct SpotifyControllerTests {
         #expect(SpotifyController.mapError(error) == .spotifyUnavailable)
     }
 
-    @Test("other error numbers map to spotifyCommandFailed with the OSStatus")
+    @Test("timeouts mean Spotify is not responding; other error numbers keep their OSStatus")
     func genericErrorCode() {
         let timeout = NSError(domain: NSOSStatusErrorDomain, code: -1712)
 
-        #expect(SpotifyController.mapError(timeout) == .spotifyCommandFailed("OSStatus -1712"))
+        #expect(SpotifyController.mapError(timeout) == .spotifyNotResponding)
         #expect(SpotifyController.mapError(number: -1708, message: "Spotify got an error")
                 == .spotifyCommandFailed("Spotify got an error (OSStatus -1708)"))
     }

@@ -193,6 +193,15 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.apps.isEmpty)
     }
 
+    @Test("startup retries only while Spotify is not ready yet")
+    func transientStartupErrors() {
+        #expect(AppDelegate.isTransientStartupError(AutoHushError.spotifyNotResponding))
+        #expect(AppDelegate.isTransientStartupError(AutoHushError.spotifyUnavailable))
+        #expect(!AppDelegate.isTransientStartupError(AutoHushError.automationPermissionDenied))
+        #expect(!AppDelegate.isTransientStartupError(AutoHushError.spotifyCommandFailed("OSStatus -50")))
+        #expect(!AppDelegate.isTransientStartupError(StubError.failed))
+    }
+
     @MainActor
     @Test("an automatic check that finds a newer release offers it in the menu")
     func updateAvailable() async {

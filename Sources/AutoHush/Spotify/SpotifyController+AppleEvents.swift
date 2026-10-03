@@ -105,6 +105,8 @@ extension SpotifyController {
             return .automationPermissionDenied
         case -600:  // procNotFound: Spotify quit between the check and the send
             return .spotifyUnavailable
+        case -1712: // errAETimeout: Spotify is busy or still starting up
+            return .spotifyNotResponding
         default:
             let detail = message.flatMap { $0.isEmpty ? nil : $0 }
             return .spotifyCommandFailed(detail.map { "\($0) (OSStatus \(number))" } ?? "OSStatus \(number)")

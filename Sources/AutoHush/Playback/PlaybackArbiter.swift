@@ -55,6 +55,11 @@ actor PlaybackArbiter: PlaybackArbiting {
     private var pendingResumeTask: Task<Void, Never>?
     private var pendingResumeID: UUID?
 
+    /// A resume is retried this often, this far apart, while Spotify does not
+    /// answer: a timed-out query is not the user changing Spotify.
+    static let resumeRetries = 2
+    static let resumeRetryDelay: TimeInterval = 1
+
     init(
         spotify: any SpotifyControlling,
         configuration: AppConfiguration,
@@ -84,7 +89,7 @@ actor PlaybackArbiter: PlaybackArbiting {
             activeSources.remove(sourceID)
             logger.debug("[arbiter] -\(sourceID, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
             if activeSources.isEmpty {
-                scheduleResume()
+                scheduleResume(after: configuration.debounceSeconds)
             } else {
                 publishPlaybackState()
             }
@@ -190,34 +195,40 @@ actor PlaybackArbiter: PlaybackArbiting {
         }
     }
 
-    private func scheduleResume() {
+    private func scheduleResume(after delay: TimeInterval, retriesLeft: Int = PlaybackArbiter.resumeRetries) {
         cancelPendingResume()
         let id = UUID()
         pendingResumeID = id
-        let debounceTask = debounceScheduler.scheduleDebounce(after: configuration.debounceSeconds)
+        let debounceTask = debounceScheduler.scheduleDebounce(after: delay)
         pendingResumeTask = Task { [weak self] in
             _ = await debounceTask.value
-            await self?.resumeIfStillPending(id: id)
+            await self?.resumeIfStillPending(id: id, retriesLeft: retriesLeft)
         }
     }
 
-    private func resumeIfStillPending(id: UUID) async {
+    private func resumeIfStillPending(id: UUID, retriesLeft: Int) async {
         guard pendingResumeID == id, !isShutDown else { return }
-        guard activeSources.isEmpty else { return }
+        // With auto-pause off, music we paused comes back even while others play.
+        guard activeSources.isEmpty || !autoPauseEnabled else { return }
         guard pausedByUs else {
             publishPlaybackState()
             return
         }
-        await resumeNow(unlessSuperseded: id)
+        await resumeNow(unlessSuperseded: id, retriesLeft: retriesLeft)
     }
 
     /// Resumes Spotify after re-checking its live state: if the user manually
     /// paused, resumed, or quit Spotify while the source was active, respect
     /// that and do not override their intent. With `id`, gives up when that
     /// pending resume was cancelled or replaced while Spotify was queried.
-    private func resumeNow(unlessSuperseded id: UUID? = nil) async {
+    private func resumeNow(unlessSuperseded id: UUID? = nil, retriesLeft: Int = PlaybackArbiter.resumeRetries) async {
         let currentState = await liveSpotifyState()
         guard !isShutDown, id == nil || pendingResumeID == id else { return }
+        if currentState == .unknown, retriesLeft > 0 {
+            logger.debug("[arbiter] Spotify did not answer — trying the resume again")
+            scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
+            return
+        }
         guard currentState == .paused else {
             logger.debug("[arbiter] resume skipped — Spotify is \(currentState.rawValue, privacy: .public) (user interaction detected)")
             pausedByUs = false

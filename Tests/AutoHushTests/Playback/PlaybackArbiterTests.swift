@@ -7,6 +7,15 @@ struct PlaybackArbiterTests {
 
     // MARK: - Helpers
 
+    /// Yields until `condition` holds (or about a second has passed), for
+    /// work that hops between actors.
+    private func waitUntil(_ condition: () async -> Bool) async {
+        for _ in 0..<1000 {
+            if await condition() { return }
+            try? await Task.sleep(for: .milliseconds(1))
+        }
+    }
+
     private func makeArbiter(
         spotify: MockSpotifyController = MockSpotifyController(),
         configuration: AppConfiguration = AppConfiguration(),
@@ -151,6 +160,43 @@ struct PlaybackArbiterTests {
 
         #expect(await spotify.state == .playing)
         #expect(await spotify.playCallCount == 1)
+    }
+
+    @Test("retries the resume when Spotify does not answer, instead of giving up")
+    func retriesUnansweredResume() async {
+        let spotify = MockSpotifyController()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await spotify.setUnansweredStateQueries(1)
+        await scheduler.completeNext()
+        await waitUntil { scheduler.scheduledDelays.count == 2 } // the retry, a second later
+        #expect(await spotify.playCallCount == 0)
+
+        await scheduler.completeNext()
+        await waitUntil { await spotify.playCallCount == 1 }
+        #expect(await spotify.playCallCount == 1)
+        #expect(scheduler.scheduledDelays == [AppConfiguration().debounceSeconds, PlaybackArbiter.resumeRetryDelay])
+    }
+
+    @Test("stops retrying once Spotify has not answered every retry")
+    func givesUpAfterRetries() async {
+        let spotify = MockSpotifyController()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await spotify.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+        for attempt in 1...PlaybackArbiter.resumeRetries + 1 {
+            await waitUntil { scheduler.scheduledDelays.count == attempt }
+            await scheduler.completeNext()
+        }
+        await waitUntil { await spotify.stateQueryCount == PlaybackArbiter.resumeRetries + 2 }
+        #expect(await spotify.playCallCount == 0)
+        #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries + 1)
     }
 
     @Test("does not resume Spotify that it did not pause")

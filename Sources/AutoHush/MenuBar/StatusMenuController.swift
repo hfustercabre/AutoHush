@@ -53,6 +53,10 @@ final class StatusMenuController: NSObject {
 
     private let actions: Actions
     private let statusBar: NSStatusBar
+    /// While the menu is open only the icon and status line follow `status`;
+    /// the rest is rebuilt when it closes, so an open submenu never collapses.
+    private(set) var isMenuOpen = false
+    private var needsRebuild = false
 
     init(status: AppStatus = AppStatus(), actions: Actions, statusBar: NSStatusBar = .system) {
         self.status = status
@@ -61,6 +65,7 @@ final class StatusMenuController: NSObject {
         self.statusItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         menu.autoenablesItems = false
+        menu.delegate = self
         statusItem.menu = menu
         render()
     }
@@ -74,6 +79,12 @@ final class StatusMenuController: NSObject {
 
     private func render() {
         renderIcon()
+        if isMenuOpen {
+            menu.items.first?.title = status.statusLine
+            needsRebuild = true
+            return
+        }
+        needsRebuild = false
         menu.removeAllItems()
 
         let statusLine = NSMenuItem(title: status.statusLine, action: nil, keyEquivalent: "")
@@ -214,5 +225,18 @@ final class StatusMenuController: NSObject {
     @objc private func resolveWarning(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<AppStatus.Warning> else { return }
         actions.resolveWarning(payload.value)
+    }
+}
+
+// MARK: - NSMenuDelegate
+
+extension StatusMenuController: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+        if needsRebuild { render() }
     }
 }
