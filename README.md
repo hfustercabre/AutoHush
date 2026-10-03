@@ -93,7 +93,7 @@ Music paused — Google Chrome is playing
   Ignored Apps                      ▸ click an app to stop ignoring it
 ───────────────
 ⚠ Allow Audio Recording Access…        (only when something needs fixing)
-  Update Available: 0.3.0…             (only when a newer version exists)
+  Update Available: 0.2.0…             (only when a newer version exists)
   Settings…                     ⌘,     (hold ⌥ for Diagnostics…)
 ───────────────
   About AutoHush
@@ -273,10 +273,10 @@ The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise 
 **Publishing a release:**
 
 ```bash
-bash Scripts/release.sh 0.3.0
+bash Scripts/release.sh 0.2.0
 ```
 
-Then follow the printed steps: commit `Resources/Info.plist`, `CHANGELOG.md` and `Casks/autohush.rb`, tag `v0.3.0` and push, then create the GitHub release with the DMG and the generated notes. The cask in this repository then points at it, so `brew upgrade` picks it up.
+Then follow the printed steps: commit `Resources/Info.plist`, `CHANGELOG.md` and `Casks/autohush.rb`, tag `v0.2.0` and push, then create the GitHub release with the DMG and the generated notes. The cask in this repository then points at it, so `brew upgrade` picks it up.
 
 The Mac App Store and Homebrew's official cask repository aren't options: both require Apple notarization, and the App Store would also reject the private functions AutoHush relies on.
 
