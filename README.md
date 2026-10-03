@@ -188,19 +188,20 @@ tccutil reset All com.autohush.AutoHush
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open; these apps are remembered across launches. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) and display-only assertions are ignored.
 3. **Filtering.** System sounds are played by `systemsoundserverd`, which is excluded outright. An app must be audible for 0.5 s to count as playing (this filters out chat tones) and silent for 2 s to count as stopped (this bridges gaps between tracks).
 4. **Deciding.** `PlaybackArbiter` pauses Spotify when the first app starts, and resumes it 0.2 s after the last one stops, but only if it paused Spotify itself and Spotify is still paused.
-5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: the level drops at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (Spotify's is a cube law, measured with `Scripts/measure-volume-curve.swift`). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower. If the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself during the fade-out, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. It works with any player that reports its volume; others pause and play directly.
+5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: the level drops at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (Spotify's is a cube law, measured with `swift run measure-volume-curve`). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower. If the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself during the fade-out, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. It works with any player that reports its volume; others pause and play directly.
 6. **Spotify.** Its state arrives as a push notification (`com.spotify.client.PlaybackStateChanged`) and is confirmed with an Apple event right before each pause or resume. Spotify plays "on this Mac" only when its own process has output running; otherwise it's on a Spotify Connect device and is left alone.
 
 **The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and Spotify playing here or paused by us), with a 2 s release delay. Spotify itself is never tapped, except to prove the permission works when TCC can't be read.
 
-**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
+**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
 
 ### Architecture
 
 ```text
-AppDelegate ── lifecycle, bootstrap (launch, Retry, Spotify relaunch), menu and Settings actions
+AppDelegate ── lifecycle, bootstrap (launch, Retry, player relaunch), wiring features to the engine
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
+  ├── UpdateController ── daily and manual checks against the latest GitHub release
   └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
         PlayerStateObserving ── the player's state (Spotify: distributed notification, quit) ┐
         AudioMonitor                                                                │
@@ -213,40 +214,87 @@ AppDelegate ── lifecycle, bootstrap (launch, Retry, Spotify relaunch), menu 
                                                               PlaybackArbiter
                                                                 ├── pauses Spotify on the first app
                                                                 ├── resumes after all apps stop
+                                                                ├── VolumeFader: logarithmic fades around both
                                                                 └── MusicPlayer (Spotify: SpotifyPlayer, Apple events)
 ```
 
+AutoHush is a Swift package of several modules, so the compiler keeps the layers apart:
+
 ```text
-Sources/AutoHush/
-  App/        main, AppDelegate (+Updates), MonitoringPipeline, Preferences, AppConfiguration,
-              TimingSettings, UpdateChecker, AppHealthState, AutoHushError,
-              SystemSettingsPane, Logging
-  MenuBar/    AppStatus (what the menu shows), StatusMenuController, StatusPresentation
-  Settings/   SettingsWindowController, SettingsModel, SettingsViews, LaunchAtLoginController
-  Audio/      AudioMonitor, AudioProcessSnapshotProvider, ProcessTapLevelMeter,
-              PowerAssertionReader, SourceActivityTracker, AudioSourceIdentifier,
-              AudioCapturePermission, DetectionMethod (your choice),
-              DetectionMode (what's in effect), CoreAudioProperty
-  Playback/   PlaybackArbiter, PlaybackState, AutoPause
-  MusicPlayers/  MusicPlayer (the interface every player implements), PlayerState
-    Spotify/     SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
-Tests/AutoHushTests/   same folders, plus Support/ for shared mocks
-Resources/  Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
+AutoHush (executable: the entry point only)
+  └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, About, wiring
+       ├─ AutoHushPlayers   the supported music players
+       │    └─ SpotifySupport   one <App>Support module per player
+       └─ AutoHushKit       the engine: no user interface, no specific player
+measure-volume-curve (executable) → AutoHushPlayers, AutoHushKit
 ```
 
-**Adding a music player:** everything outside `MusicPlayers/` talks to the player through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`, measured with `Scripts/measure-volume-curve.swift`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player gets its own subfolder, `MusicPlayers/<App>/` in both `Sources` and `Tests`, with a type implementing the protocol, plus its bundle ID in `SupportedPlayers` so its own audio never counts as another app playing.
+```text
+Sources/
+  AutoHush/              AutoHushMain (starts AutoHushApp)
+  AutoHushApp/
+    Main/                AutoHushApplication, AppDelegate (wiring), MonitoringPipeline (builds the
+                         engine for each start), AppStatus (what the app shows), StatusPresentation,
+                         AppHealthState
+    MenuBar/             StatusMenuController
+    Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
+                         Views/ (General, Apps, Advanced)
+    Updates/             UpdateController, UpdateChecker
+    Diagnostics/         DiagnosticsReport
+    About/               AboutPanel
+    General/             InfoAlert, ProjectInfo, AppIcon
+  AutoHushKit/
+    AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
+                         PowerAssertionReader, DetectionMethod (your choice), DetectionMode (in effect),
+                         CoreAudio/ (process list, process taps and levels, HAL helpers)
+    Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (setting and snooze)
+    MusicPlayers/        MusicPlayer (the interface), PlayerState, VolumeCurve, MusicPlayerError
+    Permissions/         Permission (what's needed and where to grant it), AudioCapturePermission,
+                         SystemSettingsPane
+    PrivateAPI/          TCC, ProcessResponsibility: undocumented macOS functions, resolved at
+                         runtime with fallbacks; check them after every major macOS release
+    Configuration/       AppConfiguration, TimingSettings
+    Storage/             Preferences
+    General/             Logging, Comparable+Clamped
+  AutoHushPlayers/       SupportedPlayers (the list of players, and the default one)
+  SpotifySupport/        SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
+  MeasureVolumeCurve/    the measuring tool
+Tests/
+  AutoHushAppTests/  AutoHushKitTests/  SpotifySupportTests/   (each mirrors its module)
+  AutoHushTestSupport/   fakes shared by the test modules
+Resources/               Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
+```
 
-Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHush/App/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
+**Where things go:**
+
+- **`AutoHushKit`** is the engine. It has no user interface and knows no player by name; the app tells it which players it supports. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
+- **A player module** (`<App>Support`) holds everything specific to one music app.
+- **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
+- **`General/`** folders stay small: only helpers several parts of a module need.
+- **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
+- **Tests** mirror their module's folders.
+
+**Adding a music player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
+
+1. a new module, `Sources/<App>Support/`, with a type implementing `MusicPlayer`, and its tests in `Tests/<App>SupportTests/`;
+2. an entry in `SupportedPlayers` (and a dependency of `AutoHushPlayers` in `Package.swift`), so AutoHush knows it and its own audio never counts as another app playing;
+3. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
+
+Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Configuration/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 
 ### Build and test
 
 ```bash
-swift build      # build
-swift test       # run the tests
+swift build      # build every module and the measuring tool
+swift test       # run the tests of every module
 bash Scripts/build-app.sh release   # build and sign AutoHush.app
+swift run measure-volume-curve      # measure the default player's volume curve
 ```
 
-The tests use mock CoreAudio, level meter, power assertion and Spotify implementations, so they never create real taps, script Spotify or trigger permission prompts.
+The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts.
+
+`measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
 
 ### Signing and releases
 
@@ -265,7 +313,6 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 | `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`, which opens as a drag-to-Applications window with a first-launch note. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
-| `Scripts/measure-volume-curve.swift [bundle-id] [volume …]` | Measures how a player's volume number maps to loudness (dB), for its `VolumeCurve`. Plays the music for about 50 s at changing volumes, then restores it; needs permission to record system audio |
 | `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG, cask checksum and release notes. It refuses unsigned builds and never commits, tags or publishes |
 
 The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.

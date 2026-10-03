@@ -21,7 +21,7 @@ esac
 step "Building $BUILD_CONFIG"
 cd "$PROJECT_DIR"
 HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
-    swift build -c "$BUILD_CONFIG" --scratch-path .build
+    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME"
 
 step "Assembling $APP_NAME.app"
 rm -rf "$APP_BUNDLE"
