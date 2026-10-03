@@ -47,7 +47,7 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).timings == .defaults)
         Preferences(store: scratch.defaults).timings = TimingSettings(startConfirmation: 2.5, stopGrace: 99)
         #expect(Preferences(store: scratch.defaults).timings == TimingSettings(startConfirmation: 2.5, stopGrace: 10))
-        #expect(TimingSettings.defaults.fadeOutDuration == 2 && TimingSettings.defaults.fadeInDuration == 3)
+        #expect(TimingSettings.defaults.fadeOutDuration == 1 && TimingSettings.defaults.fadeInDuration == 2)
         Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 0.5, fadeInDuration: 4)
         #expect(Preferences(store: scratch.defaults).timings.fadeOutDuration == 0.5)
         #expect(Preferences(store: scratch.defaults).timings.fadeInDuration == 4)

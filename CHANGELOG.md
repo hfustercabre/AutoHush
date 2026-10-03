@@ -9,8 +9,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Fading** (`VolumeFader`): the music fades out over 2 s before pausing
-  and fades back in over 3 s after resuming, by moving the player's own
+- **Fading** (`VolumeFader`): the music fades out over 1 s before pausing
+  and fades back in over 2 s after resuming, by moving the player's own
   volume logarithmically: a steady rate in decibels, down to 50 dB below the
   user's volume, in 0.1 s steps. Each player declares how its volume number
   maps to loudness (`VolumeCurve`); Spotify's is a cube law, measured with the
