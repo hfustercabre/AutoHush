@@ -84,6 +84,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- A resume is no longer abandoned when Spotify doesn't answer in time:
+  a timed-out state query was taken as the user changing Spotify, so the
+  music stayed paused. It is now retried twice, a second apart. With
+  auto-pause turned off, music AutoHush paused also comes back while other
+  apps still play.
+- Right after Spotify launches, the startup check is retried (3 times, 2 s
+  apart) while Spotify is not ready to answer, instead of showing an error
+  until Retry. A Spotify that doesn't answer an Apple event in time is now
+  reported as "Spotify is not responding".
+- The menu no longer rebuilds while it is open, which could collapse an open
+  submenu; only the status line updates, and the rest follows once it closes.
+- In AntiDot mode, a "keep awake" assertion could be credited to the wrong
+  app after macOS reused a process ID; cached process owners are now checked
+  against the process's executable.
 - The arbiter logs why it did not pause Spotify when Spotify's live state
   was not "playing", instead of skipping silently.
 - Players that keep their output stream open while paused (VLC and others)

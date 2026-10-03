@@ -69,14 +69,16 @@ final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, @unchecked Sen
         return source
     }
 
-    private let ownerCache = OSAllocatedUnfairLock<[pid_t: String?]>(initialState: [:])
+    /// Keyed by pid; the executable path guards against pid reuse.
+    private let ownerCache = OSAllocatedUnfairLock<[pid_t: (path: String, id: String?)]>(initialState: [:])
 
     func sourceID(forPID pid: pid_t) -> String? {
-        if let cached = ownerCache.withLock({ $0[pid] }) { return cached }
+        guard let path = Self.executablePath(of: pid) else { return nil } // the process is gone
+        if let cached = ownerCache.withLock({ $0[pid] }), cached.path == path { return cached.id }
         let id = resolveOwner(of: pid)?.id
         ownerCache.withLock { cache in
             if cache.count > 256 { cache.removeAll() }
-            cache[pid] = id
+            cache[pid] = (path, id)
         }
         return id
     }

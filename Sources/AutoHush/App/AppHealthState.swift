@@ -17,6 +17,8 @@ extension AppHealthState {
             self = .needsPermission("Grant Automation access to control Spotify")
         case .spotifyUnavailable:
             self = .degraded("Spotify is not running")
+        case .spotifyNotResponding:
+            self = .degraded("Spotify is not responding")
         case .spotifyCommandFailed(let message):
             self = .degraded("Spotify control error: \(message)")
         case nil:

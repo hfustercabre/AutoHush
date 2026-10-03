@@ -228,7 +228,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard bundleIdentifier == AppConfiguration.spotifyBundleID else { return }
         logger.debug("Spotify launch detected — re-running bootstrap")
         setHealth(.starting)
-        requestBootstrap()
+        // Spotify may not answer yet while it finishes starting up.
+        requestBootstrap(retries: Self.startupRetries)
     }
 
     private func unregisterSpotifyLaunchObserver() {
@@ -239,15 +240,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Bootstrap
 
-    private func requestBootstrap() {
+    /// Startup checks after a Spotify launch are retried this often, this far
+    /// apart, while Spotify is not ready to answer.
+    static let startupRetries = 3
+    static let startupRetryDelay: TimeInterval = 2
+
+    private func requestBootstrap(retries: Int = 0) {
         if let bootstrapOverride {
             bootstrapOverride()
             return
         }
-        Task { await bootstrap() }
+        Task { await bootstrap(retriesLeft: retries) }
     }
 
-    private func bootstrap() async {
+    /// Errors that mean Spotify is not ready yet rather than a lasting problem.
+    nonisolated static func isTransientStartupError(_ error: any Error) -> Bool {
+        switch error as? AutoHushError {
+        case .spotifyNotResponding, .spotifyUnavailable: return true
+        default:                                         return false
+        }
+    }
+
+    private func bootstrap(retriesLeft: Int = 0) async {
         bootstrapGeneration += 1
         let generation = bootstrapGeneration
         tearDownPipeline()
@@ -257,6 +271,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try await spotify.verifyAutomationAccess()
         } catch {
             guard generation == bootstrapGeneration else { return }
+            if retriesLeft > 0, Self.isTransientStartupError(error) {
+                logger.debug("Spotify is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
+                try? await Task.sleep(for: .seconds(Self.startupRetryDelay))
+                guard generation == bootstrapGeneration else { return } // Retry or another launch took over
+                await bootstrap(retriesLeft: retriesLeft - 1)
+                return
+            }
             logger.error("Automation preflight failed: \(error.localizedDescription, privacy: .public)")
             setHealth(AppHealthState(startupError: error))
             return

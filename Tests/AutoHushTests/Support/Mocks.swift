@@ -14,6 +14,9 @@ actor MockSpotifyController: SpotifyControlling {
     var failPauseWith: Error?
     var failPlayWith: Error?
     var failVerifyWith: Error?
+    /// The next this many state queries answer `.unknown`, as when Spotify is
+    /// busy and the Apple event times out.
+    var unansweredStateQueries = 0
 
     init(
         state: SpotifyPlayerState = .playing,
@@ -34,8 +37,14 @@ actor MockSpotifyController: SpotifyControlling {
 
     func playerState() async -> SpotifyPlayerState {
         stateQueryCount += 1
+        if unansweredStateQueries > 0 {
+            unansweredStateQueries -= 1
+            return .unknown
+        }
         return state
     }
+
+    func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
 
     /// Lets tests override the reported state without going through pause/play.
     func overrideState(_ newState: SpotifyPlayerState) { state = newState }

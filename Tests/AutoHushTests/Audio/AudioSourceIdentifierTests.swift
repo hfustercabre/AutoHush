@@ -36,4 +36,12 @@ struct AudioSourceIdentifierTests {
         let process = AudioProcessInfo(objectID: 1, bundleID: "com.example.gone", pid: 999_999, isRunningOutput: true)
         #expect(ProcessAudioSourceIdentifier().source(for: process) == AudioSource(id: "com.example.gone", name: "com.example.gone"))
     }
+
+    @Test("a process owner is looked up only while the process exists, and cached consistently")
+    func ownerOfProcess() {
+        let identifier = ProcessAudioSourceIdentifier()
+        #expect(identifier.sourceID(forPID: 999_999) == nil) // no such process
+        let own = identifier.sourceID(forPID: getpid())
+        #expect(identifier.sourceID(forPID: getpid()) == own)
+    }
 }
