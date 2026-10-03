@@ -1,0 +1,28 @@
+# Build artifacts
+.build/
+.build-test/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# App bundle (built artifact, not source)
+*.app/
+
+# Logs & temp
+*.log
+*.tmp
+dist/
