@@ -80,6 +80,8 @@ package final class AudioMonitor: @unchecked Sendable {
     private var candidates: [AudioProcessInfo] = []
     /// Owning app of each candidate process.
     private var sourceOfProcess: [AudioObjectID: AudioSource] = [:]
+    /// IDs of the apps in `sourceOfProcess`.
+    private var presentSourceIDs: Set<String> = []
     /// Every source seen while it is tracked, so active sources keep their
     /// names during the stop grace period after their process is gone.
     private var knownSources: [String: AudioSource] = [:]
@@ -289,6 +291,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
         candidates = []
         sourceOfProcess = [:]
+        presentSourceIDs = []
         knownSources = [:]
         tracker.reset()
         lastRefresh = nil
@@ -334,6 +337,7 @@ package final class AudioMonitor: @unchecked Sendable {
             sourceOfProcess[process.objectID] = source
             knownSources[source.id] = source
         }
+        presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
         updateMeteredProcesses(at: now)
     }
 
@@ -395,9 +399,9 @@ package final class AudioMonitor: @unchecked Sendable {
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
         let metered = shouldMeterLevels ? candidates.filter {
             sourceOfProcess[$0.objectID] != nil
-                || (verifiesWithPlayer && configuration.musicPlayerBundleIDs.contains($0.bundleID))
+                || (verifiesWithPlayer && configuration.isMusicPlayer($0.bundleID))
         } : []
-        let tapsPlayer = metered.contains { configuration.musicPlayerBundleIDs.contains($0.bundleID) }
+        let tapsPlayer = metered.contains { configuration.isMusicPlayer($0.bundleID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
         // May block while macOS shows the System Audio Recording prompt.
         levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
@@ -434,8 +438,7 @@ package final class AudioMonitor: @unchecked Sendable {
         }
 
         // Forget sources that are neither tracked nor currently present.
-        let present = Set(sourceOfProcess.values.map(\.id))
-        knownSources = knownSources.filter { tracker.isTracking($0.key) || present.contains($0.key) }
+        knownSources = knownSources.filter { tracker.isTracking($0.key) || presentSourceIDs.contains($0.key) }
 
         publishActiveSources()
         publishReport(audible: audible, levels: levels, awake: awake)
@@ -465,9 +468,8 @@ package final class AudioMonitor: @unchecked Sendable {
         for process in candidates {
             if let source = sourceOfProcess[process.objectID] { sourceByPID[process.pid] = source.id }
         }
-        let present = Set(sourceOfProcess.values.map(\.id))
         return Set(holders.compactMap { sourceByPID[$0] ?? sourceIdentifier?.sourceID(forPID: $0) })
-            .intersection(present)
+            .intersection(presentSourceIDs)
     }
 
     private func learnAnnouncing(_ id: String) {
@@ -494,7 +496,7 @@ package final class AudioMonitor: @unchecked Sendable {
     /// output is not tapped: that would keep the recording indicator on for
     /// as long as the music plays.
     private func updateLocalPlayback() {
-        let isLocal = candidates.contains { configuration.musicPlayerBundleIDs.contains($0.bundleID) }
+        let isLocal = candidates.contains { configuration.isMusicPlayer($0.bundleID) }
         guard isLocal != publishedLocalPlayback else { return }
         publishedLocalPlayback = isLocal
         logger.debug("[monitor] music player output on this Mac: \(isLocal, privacy: .public)")
@@ -535,7 +537,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
     private func publishReport(audible: Set<String>, levels: [String: Float], awake: Set<String>) {
         let active = tracker.activeSources
-        let ids = Set(sourceOfProcess.values.map(\.id)).union(active)
+        let ids = presentSourceIDs.union(active)
         let lines = ids.sorted().map { id -> String in
             let label = knownSources[id].map { $0.name == id ? id : "\($0.name) (\(id))" } ?? id
             var state = active.contains(id) ? "playing"

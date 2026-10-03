@@ -61,19 +61,19 @@ extension SpotifyPlayer {
     }
 
     private static func coreEvent(_ eventID: AEEventID, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        NSAppleEventDescriptor.appleEvent(
-            withEventClass: Code.coreSuite,
-            eventID: eventID,
-            targetDescriptor: NSAppleEventDescriptor(processIdentifier: pid),
-            returnID: AEReturnID(kAutoGenerateReturnID),
-            transactionID: AETransactionID(kAnyTransactionID)
-        )
+        appleEvent(Code.coreSuite, eventID, processIdentifier: pid)
     }
 
     /// A parameterless Spotify suite command such as `pause` or `play`.
     package static func makeCommandEvent(_ eventID: AEEventID, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        appleEvent(Code.spotifySuite, eventID, processIdentifier: pid)
+    }
+
+    private static func appleEvent(
+        _ eventClass: AEEventClass, _ eventID: AEEventID, processIdentifier pid: pid_t
+    ) -> NSAppleEventDescriptor {
         NSAppleEventDescriptor.appleEvent(
-            withEventClass: Code.spotifySuite,
+            withEventClass: eventClass,
             eventID: eventID,
             targetDescriptor: NSAppleEventDescriptor(processIdentifier: pid),
             returnID: AEReturnID(kAutoGenerateReturnID),

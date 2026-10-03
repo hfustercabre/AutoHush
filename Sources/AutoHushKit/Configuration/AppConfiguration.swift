@@ -2,32 +2,34 @@ import Foundation
 
 // MARK: - Configuration
 
+/// Everything the engine works with. The values users can tune come from
+/// `TimingSettings` (their defaults live there); the rest are fixed.
 package struct AppConfiguration: Sendable {
 
     /// Seconds to wait after all foreign audio stops before resuming the music.
-    package var debounceSeconds: TimeInterval = 0.2
+    package var debounceSeconds: TimeInterval
 
     /// Seconds the music takes to fade out before pausing; 0 pauses at once.
-    package var fadeOutDuration: TimeInterval = 1
+    package var fadeOutDuration: TimeInterval
     /// Seconds the music takes to fade back in after resuming; 0 resumes at
     /// full volume.
-    package var fadeInDuration: TimeInterval = 2
+    package var fadeInDuration: TimeInterval
 
     /// Peak sample value (linear, 0…1) above which a metered process counts as
-    /// audible. 0.001 ≈ -60 dBFS: paused players emit digital silence (0).
-    package var audibleThreshold: Float = 0.001
+    /// audible. Paused players emit digital silence (0).
+    package var audibleThreshold: Float
 
     /// A source must stay audible this long before it counts as playing.
     /// Filters out short sounds apps play themselves (chat tones and the like);
     /// system notification and alert sounds are excluded by process instead.
-    package var sourceStartConfirmation: TimeInterval = 0.5
+    package var sourceStartConfirmation: TimeInterval
 
     /// Inaudible gaps shorter than this do not restart the start confirmation.
     package var audibleGapTolerance: TimeInterval = 0.5
 
     /// A playing source must stay inaudible this long before it counts as
     /// stopped. Bridges gaps between tracks, videos and ads.
-    package var sourceStopGrace: TimeInterval = 2.0
+    package var sourceStopGrace: TimeInterval
 
     /// Monitor tick while any audio stream is open or a source is tracked.
     package var activeSampleInterval: TimeInterval = 0.25
@@ -61,10 +63,26 @@ package struct AppConfiguration: Sendable {
         "com.apple.CoreAudio",
     ]
 
+    /// The fixed values, with the user's timings (clamped to their ranges).
+    package init(timings: TimingSettings = .defaults) {
+        let timings = timings.clamped
+        sourceStartConfirmation = timings.startConfirmation
+        sourceStopGrace = timings.stopGrace
+        debounceSeconds = timings.resumeDelay
+        audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
+        fadeOutDuration = timings.fadeOutDuration
+        fadeInDuration = timings.fadeInDuration
+    }
+
+    /// True for a supported music player's own app.
+    package func isMusicPlayer(_ bundleID: String) -> Bool {
+        musicPlayerBundleIDs.contains(bundleID)
+    }
+
     /// Returns true if the bundle ID should trigger pause/resume logic.
     package func isMediaSource(_ bundleID: String) -> Bool {
         guard !bundleID.isEmpty else { return false }
-        guard !musicPlayerBundleIDs.contains(bundleID), !excludedBundleIDs.contains(bundleID) else { return false }
+        guard !isMusicPlayer(bundleID), !excludedBundleIDs.contains(bundleID) else { return false }
         return !excludedBundleIDPrefixes.contains(where: { bundleID.hasPrefix($0) })
     }
 }

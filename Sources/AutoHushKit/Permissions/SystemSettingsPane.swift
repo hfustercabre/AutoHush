@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 
 /// Privacy panes of System Settings the app links to.
 package enum SystemSettingsPane: String {
@@ -7,10 +7,5 @@ package enum SystemSettingsPane: String {
 
     package var url: URL {
         URL(string: "x-apple.systempreferences:com.apple.preference.security?\(rawValue)")!
-    }
-
-    @MainActor
-    package func open() {
-        NSWorkspace.shared.open(url)
     }
 }

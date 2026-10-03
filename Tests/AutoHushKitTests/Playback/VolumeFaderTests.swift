@@ -117,6 +117,20 @@ struct VolumeFaderTests {
         #expect(await player.volumeLevel == 80)
     }
 
+    @Test("a cancel that comes once the music is paused still sets the user's volume back")
+    func cancelAfterPause() async throws {
+        let player = MockMusicPlayer(state: .playing, volumeCurve: .cubic)
+        await player.setVolumeLevel(60)
+        let gate = StepGate()
+        let fader = makeFader(player, gate: gate)
+        // 20 fade-out steps, then the wait between pausing and setting the volume back.
+        await gate.at(step: 21) { await fader.cancel() }
+
+        #expect(try await fader.fadeOutAndPause())
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.volumeLevel == 60)
+    }
+
     @Test("pausing without a fade-out mid fade-in still leaves the user's volume")
     func instantPauseDuringFadeIn() async throws {
         let player = MockMusicPlayer(state: .paused, volumeCurve: .cubic)

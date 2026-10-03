@@ -1,5 +1,4 @@
 import AppKit
-import AutoHushKit
 
 /// The standard About panel, with a line about AutoHush and the project link.
 @MainActor

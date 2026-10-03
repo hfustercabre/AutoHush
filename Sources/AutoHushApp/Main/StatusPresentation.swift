@@ -3,33 +3,35 @@ import AutoHushKit
 
 // SF Symbols, accessibility labels and menu text for the app's states.
 
+// `PlaybackState.unknown` looks like starting up: the player's state is not known yet.
+
 extension PlaybackState {
     var symbolName: String {
         switch self {
-        case .unknown:                 return "arrow.triangle.2.circlepath"
-        case .musicPlaying:          return "play.circle.fill"
-        case .pausedByMonitor:         return "pause.circle.fill"
-        case .musicIdle:             return "music.note"
+        case .unknown:          return AppHealthState.starting.symbolName
+        case .musicPlaying:     return "play.circle.fill"
+        case .pausedByMonitor:  return "pause.circle.fill"
+        case .musicIdle:        return "music.note"
         case .playingElsewhere: return "hifispeaker.fill"
         }
     }
 
     var accessibilityLabel: String {
         switch self {
-        case .unknown:                 return "AutoHush: starting"
-        case .musicPlaying:          return "AutoHush: music is playing"
-        case .pausedByMonitor:         return "AutoHush: music paused"
-        case .musicIdle:             return "AutoHush: no music playing"
+        case .unknown:          return AppHealthState.starting.accessibilityLabel
+        case .musicPlaying:     return "AutoHush: music is playing"
+        case .pausedByMonitor:  return "AutoHush: music paused"
+        case .musicIdle:        return "AutoHush: no music playing"
         case .playingElsewhere: return "AutoHush: music is playing on another device"
         }
     }
 
     var statusLine: String {
         switch self {
-        case .unknown:                 return "Starting services"
-        case .musicPlaying:          return "Music is playing"
-        case .pausedByMonitor:         return "Music paused — another app is playing"
-        case .musicIdle:             return "No music playing"
+        case .unknown:          return AppHealthState.starting.statusLine
+        case .musicPlaying:     return "Music is playing"
+        case .pausedByMonitor:  return "Music paused — another app is playing"
+        case .musicIdle:        return "No music playing"
         case .playingElsewhere: return "Music is playing on another device"
         }
     }

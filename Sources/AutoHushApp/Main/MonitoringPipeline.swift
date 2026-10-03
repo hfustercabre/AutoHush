@@ -30,7 +30,9 @@ final class MonitoringPipeline {
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
     private let forwarders: [Task<Void, Never>]
-    private var isStopped = false
+    /// Started by `stop()`: the arbiter stopping, which sets back a faded volume.
+    private var shutdown: Task<Void, Never>?
+    private var isStopped: Bool { shutdown != nil }
 
     init(
         player: any MusicPlayer,
@@ -108,20 +110,19 @@ final class MonitoringPipeline {
 
     func stop() {
         guard !isStopped else { return }
-        isStopped = true
         playerObserver.stop()
         monitor.stop()
         arbiterCommands.finish()
         statusUpdates.finish()
         forwarders.forEach { $0.cancel() }
         let arbiter = arbiter
-        Task { await arbiter.shutdown() }
+        shutdown = Task { await arbiter.shutdown() }
     }
 
     /// Stops, and waits until a faded-down player has its volume back.
     func stopAndRestoreVolume() async {
         stop()
-        await arbiter.shutdown()
+        await shutdown?.value
     }
 
     func setAutoPauseEnabled(_ enabled: Bool) {

@@ -33,8 +33,17 @@ This project follows [Semantic Versioning](https://semver.org/).
   measure-volume-curve`) that uses the engine's tap meter (which now also
   reports the average level) and the supported players, replacing
   `Scripts/measure-volume-curve.swift`.
+- The engine no longer uses AppKit: opening System Settings moved to the app.
+- Less duplicated code: the timing defaults are defined once (in
+  `TimingSettings`), and each supported player is listed once.
 
-No change in behaviour.
+### Fixed
+
+- Music paused just as the other app stopped (after the fade-out, while the
+  volume was being set back) stayed paused, and faded down. It now resumes.
+- `measure-volume-curve` no longer crashes when the music goes silent during
+  a measurement, and gives the player its volume and play state back when it
+  stops early.
 
 ## [0.1.0] — 2026-10-03
 

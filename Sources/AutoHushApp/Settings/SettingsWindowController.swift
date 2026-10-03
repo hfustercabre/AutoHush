@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import AutoHushKit
 
 /// The Settings window: General, Apps and Advanced tabs in a toolbar, the
 /// standard layout of macOS settings windows.

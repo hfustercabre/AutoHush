@@ -1,5 +1,4 @@
 import Foundation
-import AutoHushKit
 
 /// Where AutoHush lives on GitHub (update checks, About panel).
 enum ProjectInfo {

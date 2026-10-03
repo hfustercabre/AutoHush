@@ -202,7 +202,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
-        guard !isShutDown, autoPauseEnabled, !isFadingOut else { return }
+        // Things may have changed while the player answered.
+        guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
         let paused: Bool
         do {
@@ -222,8 +223,13 @@ package actor PlaybackArbiter: PlaybackArbiting {
         pausedByUs = true
         playerState = .paused
         logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
-        // Auto-pause was turned off while we were pausing: undo it.
-        if !autoPauseEnabled { await resumeNow() }
+        if !autoPauseEnabled {
+            // Auto-pause was turned off while we were pausing: undo it.
+            await resumeNow()
+        } else if activeSources.isEmpty, !isShutDown {
+            // Every app stopped while we were pausing, too late to call it off.
+            scheduleResume(after: configuration.debounceSeconds)
+        }
     }
 
     private func scheduleResume(after delay: TimeInterval, retriesLeft: Int = PlaybackArbiter.resumeRetries) {

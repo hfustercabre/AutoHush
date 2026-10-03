@@ -47,29 +47,29 @@ package final class Preferences {
         }
     }
 
+    /// Each timing's key in the stored dictionary. A missing key keeps its default.
+    private static let timingKeys: [(key: String, value: WritableKeyPath<TimingSettings, Double>)] = [
+        ("startConfirmation", \.startConfirmation),
+        ("stopGrace", \.stopGrace),
+        ("resumeDelay", \.resumeDelay),
+        ("silenceThresholdDB", \.silenceThresholdDB),
+        ("fadeOutDuration", \.fadeOutDuration),
+        ("fadeInDuration", \.fadeInDuration),
+    ]
+
     package var timings: TimingSettings {
         get {
-            guard let stored = defaults.object(forKey: Key.timings) as? [String: Double] else { return .defaults }
-            let defaults = TimingSettings.defaults
-            return TimingSettings(
-                startConfirmation: stored["startConfirmation"] ?? defaults.startConfirmation,
-                stopGrace: stored["stopGrace"] ?? defaults.stopGrace,
-                resumeDelay: stored["resumeDelay"] ?? defaults.resumeDelay,
-                silenceThresholdDB: stored["silenceThresholdDB"] ?? defaults.silenceThresholdDB,
-                fadeOutDuration: stored["fadeOutDuration"] ?? defaults.fadeOutDuration,
-                fadeInDuration: stored["fadeInDuration"] ?? defaults.fadeInDuration
-            ).clamped
+            let stored = defaults.object(forKey: Key.timings) as? [String: Double] ?? [:]
+            var timings = TimingSettings.defaults
+            for (key, value) in Self.timingKeys {
+                if let number = stored[key] { timings[keyPath: value] = number }
+            }
+            return timings.clamped
         }
         set {
             let value = newValue.clamped
-            defaults.set([
-                "startConfirmation": value.startConfirmation,
-                "stopGrace": value.stopGrace,
-                "resumeDelay": value.resumeDelay,
-                "silenceThresholdDB": value.silenceThresholdDB,
-                "fadeOutDuration": value.fadeOutDuration,
-                "fadeInDuration": value.fadeInDuration,
-            ], forKey: Key.timings)
+            let stored = Dictionary(uniqueKeysWithValues: Self.timingKeys.map { ($0.key, value[keyPath: $0.value]) })
+            defaults.set(stored, forKey: Key.timings)
         }
     }
 
