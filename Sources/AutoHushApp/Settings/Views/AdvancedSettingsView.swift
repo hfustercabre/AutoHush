@@ -1,0 +1,92 @@
+import SwiftUI
+import AutoHushKit
+
+/// Settings → Advanced: detection timings, fades and the silence threshold.
+struct AdvancedSettingsView: View {
+    let model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                slider(
+                    "Pause music after",
+                    value: \.startConfirmation, range: TimingSettings.startConfirmationRange, step: 0.25,
+                    format: seconds,
+                    help: "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored."
+                )
+                slider(
+                    "Treat an app as stopped after",
+                    value: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
+                    format: seconds,
+                    help: "How long another app must be silent. Bridges gaps between tracks and videos."
+                )
+                slider(
+                    "Resume music after",
+                    value: \.resumeDelay, range: TimingSettings.resumeDelayRange, step: 0.25,
+                    format: seconds,
+                    help: "An extra delay once every other app has stopped."
+                )
+                slider(
+                    "Fade out before pausing",
+                    value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                    format: seconds,
+                    help: "How long the music fades out before it pauses. 0 pauses it at once."
+                )
+                slider(
+                    "Fade in when resuming",
+                    value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                    format: seconds,
+                    help: "How long the music takes to fade back in once it resumes. 0 resumes at full volume."
+                )
+                slider(
+                    "Silence threshold",
+                    value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
+                    format: { "\(Int($0)) dB" },
+                    help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
+                )
+            }
+            Section {
+                Button("Restore Defaults") { model.restoreDefaultTimings() }
+                    .disabled(model.timings == .defaults)
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 480)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func seconds(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...2))) + " s"
+    }
+
+    private func slider(
+        _ title: String,
+        value keyPath: WritableKeyPath<TimingSettings, Double>,
+        range: ClosedRange<Double>,
+        step: Double,
+        format: @escaping (Double) -> String,
+        help: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledContent(title) {
+                Text(format(model.timings[keyPath: keyPath]))
+                    .monospacedDigit()
+            }
+            Slider(
+                value: Binding(
+                    get: { model.timings[keyPath: keyPath] },
+                    set: { newValue in
+                        var timings = model.timings
+                        timings[keyPath: keyPath] = newValue
+                        model.setTimings(timings)
+                    }
+                ),
+                in: range,
+                step: step
+            )
+            Text(help)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+    }
+}

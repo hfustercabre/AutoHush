@@ -1,0 +1,25 @@
+import Darwin
+
+/// The undocumented libsystem function `responsibility_get_pid_responsible_for_pid`:
+/// the process macOS holds responsible for another one (the app behind a
+/// helper or XPC service, such as WebKit's audio process for Safari).
+///
+/// Resolved at runtime; if a macOS update removes it, `responsiblePID(for:)`
+/// returns `nil` and callers fall back to the executable's path.
+///
+/// Check after every major macOS release.
+enum ProcessResponsibility {
+    /// The responsible process, or `nil` when unknown or the function is unavailable.
+    static func responsiblePID(for pid: pid_t) -> pid_t? {
+        guard let function, case let owner = function(pid), owner > 0 else { return nil }
+        return owner
+    }
+
+    private typealias Function = @convention(c) (pid_t) -> pid_t
+
+    private static let function: Function? = {
+        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid")
+        else { return nil }
+        return unsafeBitCast(symbol, to: Function.self)
+    }()
+}

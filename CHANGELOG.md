@@ -5,6 +5,37 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Modular project structure**, following Apple's sample apps (Food Truck,
+  Backyard Birds) and popular open-source Mac apps (AeroSpace, Ice, Stats):
+  - `AutoHushKit`: the engine (audio detection, playback decisions, fades,
+    the `MusicPlayer` interface, permissions, configuration, storage). It has
+    no user interface and knows no player by name; the compiler keeps it
+    from depending on the app or a player.
+  - `AutoHushApp`: the app, grouped by feature (MenuBar, Settings, Updates,
+    Diagnostics, About), with `Main/` wiring them to the engine. Update
+    checks, the Diagnostics text and the About panel moved out of
+    `AppDelegate` (`UpdateController`, `DiagnosticsReport`, `AboutPanel`).
+  - `AutoHush`: a one-file executable that only starts the app.
+  - `SpotifySupport`: everything Spotify-specific; each new player gets its
+    own `<App>Support` module, listed in `AutoHushPlayers`.
+  - `AutoHushKit/PrivateAPI`: the only place calling undocumented macOS
+    functions (TCC, `responsibility_get_pid_responsible_for_pid`).
+  - `AutoHushKit/Permissions`: what each permission is for and where it is
+    granted; the menu's warning is now the missing `Permission`.
+  - Types shared between modules use `package` access. Tests are split per
+    module, with shared fakes in `AutoHushTestSupport`. `AutoHushError` is
+    now `MusicPlayerError`.
+- **`measure-volume-curve` is a package tool** (`swift run
+  measure-volume-curve`) that uses the engine's tap meter (which now also
+  reports the average level) and the supported players, replacing
+  `Scripts/measure-volume-curve.swift`.
+
+No change in behaviour.
+
 ## [0.1.0] — 2026-10-03
 
 The first release of AutoHush: a macOS menu bar app that pauses your music
