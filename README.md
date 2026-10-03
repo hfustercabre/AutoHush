@@ -320,7 +320,7 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 |---|---|
 | `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
-| `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`, which opens as a drag-to-Applications window with a first-launch note. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
+| `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`, which opens as a drag-to-Applications window in AutoHush's colours, with a first-launch note, and mounts as a disk with the app's icon. The background is drawn by `Scripts/lib/dmg-background.swift` with the app's own menu bar mark. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
 | `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG, cask checksum and release notes. It refuses unsigned builds and never commits, tags or publishes |
 
 The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.

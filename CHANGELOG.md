@@ -9,6 +9,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **A redesigned installer**: the disk image window now uses AutoHush's
+  colours and mark, the mounted disk shows the app's icon, and the window
+  leaves room for Finder's tab and path bars, so the first-launch note is
+  never cut off. The volume's hidden files stay out of sight even when Finder
+  shows hidden files.
 - **An app icon**: the menu bar's sound bars in purple, on a background that
   follows your Mac's appearance (light, dark, clear or tinted on macOS 26 and
   later). Made in Icon Composer and compiled into the app; macOS 15 gets a
