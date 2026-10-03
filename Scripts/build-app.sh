@@ -58,7 +58,7 @@ else
     note "warning: actool not found (it comes with Xcode); the app keeps the generic icon"
 fi
 
-# Text people read lives in String Catalogs (Resources/*.xcstrings). As Xcode
+# Text people read lives in String Catalogs (Resources/Localization/). As Xcode
 # does, each build adds the strings the code uses to Localizable.xcstrings and
 # marks those it no longer uses as stale; then each translated language is
 # compiled into its .lproj folder. macOS shows the first of the user's
@@ -87,7 +87,7 @@ if xcrun --find xcstringstool >/dev/null 2>&1; then
     fi
 
     step "Compiling the translations"
-    for catalog in "$PROJECT_DIR"/Resources/*.xcstrings; do
+    for catalog in "$LOCALIZATION_DIR"/*.xcstrings; do
         xcrun xcstringstool compile "$catalog" --output-directory "$APP_BUNDLE/Contents/Resources"
     done
     LANGUAGES="$(find "$APP_BUNDLE/Contents/Resources" -maxdepth 1 -name '*.lproj' -exec basename {} .lproj \; | sort | paste -sd ' ' -)"

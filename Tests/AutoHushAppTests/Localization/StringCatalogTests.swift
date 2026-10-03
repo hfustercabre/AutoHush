@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-/// The String Catalogs in Resources/, AutoHush's text in every language.
+/// The String Catalogs in Resources/Localization/, AutoHush's text in every language.
 /// `Scripts/build-app.sh` adds the strings the code uses to
 /// Localizable.xcstrings and compiles both catalogs into the app.
 @Suite("String catalogs")
@@ -12,10 +12,11 @@ struct StringCatalogTests {
         .deletingLastPathComponent() // Tests
         .deletingLastPathComponent() // the package
         .appending(path: "Resources")
+    private static let catalogs = resources.appending(path: "Localization")
 
     @Test("every translation keeps its text's placeholders", arguments: ["Localizable", "InfoPlist"])
     func placeholders(table: String) throws {
-        let catalog = try StringCatalog(contentsOf: Self.resources.appending(path: "\(table).xcstrings"))
+        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
         for (key, entry) in catalog.strings {
             let localizations = entry.localizations ?? [:]
             // The key is the English text, unless English has a text of its own.
@@ -37,7 +38,7 @@ struct StringCatalogTests {
         let plist = try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
         let shown = plist.compactMapValues { $0 as? String }
             .filter { $0.key.hasSuffix("UsageDescription") || $0.key == "NSHumanReadableCopyright" }
-        let catalog = try StringCatalog(contentsOf: Self.resources.appending(path: "InfoPlist.xcstrings"))
+        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "InfoPlist.xcstrings"))
 
         #expect(Set(catalog.strings.keys) == Set(shown.keys))
         for (key, text) in shown {

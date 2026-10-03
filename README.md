@@ -273,10 +273,10 @@ Tests/
   AutoHushTestSupport/   fakes shared by the test modules
 Tools/
   MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)
-Resources/               Info.plist, entitlements, AutoHush.icon (the app icon, an Icon Composer
-                         document) and the String Catalogs (Localizable.xcstrings: the app's text,
-                         InfoPlist.xcstrings: the permission prompts), assembled into the .app by
-                         Scripts/build-app.sh
+Resources/               Info.plist, entitlements and AutoHush.icon (the app icon, an Icon Composer
+                         document), assembled into the .app by Scripts/build-app.sh
+  Localization/          the String Catalogs: Localizable.xcstrings (the app's text) and
+                         InfoPlist.xcstrings (the permission prompts), in every language
 ```
 
 **Where things go:**
@@ -326,7 +326,7 @@ AutoHush is translated into Spanish, Catalan, German, French, Italian, Portugues
 
 A variant must translate every string: a missing one shows in English, not in the other variant.
 
-- **Where the text lives:** `Resources/Localizable.xcstrings`, a String Catalog with all of the app's text, keyed by the English text; and `Resources/InfoPlist.xcstrings`, with the permission prompts and the copyright line from `Info.plist`.
+- **Where the text lives:** in `Resources/Localization/`. `Localizable.xcstrings` is a String Catalog with all of the app's text, keyed by the English text; `InfoPlist.xcstrings` has the permission prompts and the copyright line from `Info.plist`. Both names are fixed: `Localizable` is the table macOS reads by default, and macOS translates `Info.plist` only from `InfoPlist`.
 - **New text** needs no extra step: write it as `String(localized: "…", comment: "…")` or as a SwiftUI text. While building, the compiler lists every such string; `build-app.sh` adds new ones to `Localizable.xcstrings` and marks those no longer used as stale, as Xcode does, then compiles each language into the app (`<language>.lproj`).
 - **Adding a language:** open both catalogs in Xcode, add the language and translate (or edit the JSON), then build. Use the words macOS itself uses in that language (Ajustes, Einstellungen, Réglages…) and its typography (French spaces before `:` and `?`), and keep each `comment` in mind: it says where the text appears. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`) and that `InfoPlist.xcstrings` matches `Info.plist`.
 - **Trying a language:** quit AutoHush, then start it with `AutoHush.app/Contents/MacOS/AutoHush -AppleLanguages '(es)'`.
