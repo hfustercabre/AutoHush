@@ -1,105 +1,67 @@
+import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
-import AutoHushTestSupport
 
 @Suite("StatusPresentation")
 struct StatusPresentationTests {
 
-    // MARK: - PlaybackState symbolName
+    // MARK: - States
 
-    @Test("musicPlaying uses play.circle.fill")
-    func spotifyPlayingSymbol() {
-        #expect(PlaybackState.musicPlaying.symbolName == "play.circle.fill")
+    @Test("each playback state has its symbol, label and status line", arguments: [
+        (PlaybackState.musicPlaying, "play.circle.fill", "AutoHush: music is playing", "Music is playing"),
+        (.pausedByMonitor, "pause.circle.fill", "AutoHush: music paused", "Music paused — another app is playing"),
+        (.musicIdle, "music.note", "AutoHush: no music playing", "No music playing"),
+        (.playingElsewhere, "hifispeaker.fill", "AutoHush: music is playing on another device",
+         "Music is playing on another device"),
+    ])
+    func playbackState(state: PlaybackState, symbol: String, label: String, line: String) {
+        #expect(state.presentation == StatePresentation(symbol: symbol, label: label, line: line))
     }
 
-    @Test("pausedByMonitor uses pause.circle.fill")
-    func pausedByMonitorSymbol() {
-        #expect(PlaybackState.pausedByMonitor.symbolName == "pause.circle.fill")
+    @Test("an unknown playback state looks like starting up")
+    func unknownPlaybackState() {
+        #expect(PlaybackState.unknown.presentation == AppHealthState.starting.presentation)
     }
 
-    @Test("musicIdle uses music.note")
-    func spotifyIdleSymbol() {
-        #expect(PlaybackState.musicIdle.symbolName == "music.note")
+    @Test("each health state has its symbol, label and status line; problems show their message", arguments: [
+        (AppHealthState.starting, "arrow.triangle.2.circlepath", "AutoHush: starting", "Starting services"),
+        (.ready, "speaker.wave.2.fill", "AutoHush: monitoring", "Monitoring media playback"),
+        (.degraded("Spotify is not running"), "exclamationmark.triangle.fill", "AutoHush: degraded",
+         "Spotify is not running"),
+        (.needsPermission("Grant Automation access to control Spotify"), "lock.trianglebadge.exclamationmark.fill",
+         "AutoHush: needs permission", "Grant Automation access to control Spotify"),
+        (.failed("Monitor failed hard"), "speaker.slash.fill", "AutoHush: failed", "Monitor failed hard"),
+    ])
+    func healthState(state: AppHealthState, symbol: String, label: String, line: String) {
+        #expect(state.presentation == StatePresentation(symbol: symbol, label: label, line: line))
     }
 
-    @Test("playingElsewhere uses a speaker symbol and says where Spotify plays")
-    func spotifyPlayingElsewherePresentation() {
-        #expect(PlaybackState.playingElsewhere.symbolName == "hifispeaker.fill")
-        #expect(PlaybackState.playingElsewhere.statusLine == "Music is playing on another device")
+    // MARK: - Menu text for the engine's choices
+
+    @Test("each permission names what to grant", arguments: [
+        (Permission.automation(player: "Spotify"), "Allow Spotify Automation Access…"),
+        (.systemAudioRecording, "Allow Audio Recording Access…"),
+    ])
+    func grantTitle(permission: Permission, title: String) {
+        #expect(permission.grantTitle == title)
     }
 
-    // MARK: - PlaybackState statusLine
+    @Test("snooze end times are described relative to today")
+    func describeEnd() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Madrid")!
+        func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
+            calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute))!
+        }
+        var style = Date.FormatStyle(date: .omitted, time: .shortened)
+        style.timeZone = calendar.timeZone
+        let now = date(2, 12)
 
-    @Test("musicPlaying status line is descriptive")
-    func spotifyPlayingStatusLine() {
-        #expect(PlaybackState.musicPlaying.statusLine == "Music is playing")
-    }
-
-    @Test("pausedByMonitor status line is descriptive")
-    func pausedByMonitorStatusLine() {
-        #expect(PlaybackState.pausedByMonitor.statusLine == "Music paused — another app is playing")
-    }
-
-    @Test("musicIdle status line is descriptive")
-    func spotifyIdleStatusLine() {
-        #expect(PlaybackState.musicIdle.statusLine == "No music playing")
-    }
-
-    // MARK: - AppHealthState symbolName
-
-    @Test("starting uses arrow.triangle.2.circlepath")
-    func startingSymbol() {
-        #expect(AppHealthState.starting.symbolName == "arrow.triangle.2.circlepath")
-    }
-
-    @Test("ready keeps fallback speaker.wave.2.fill")
-    func readySymbol() {
-        #expect(AppHealthState.ready.symbolName == "speaker.wave.2.fill")
-    }
-
-    @Test("degraded uses exclamationmark.triangle.fill")
-    func degradedSymbol() {
-        #expect(AppHealthState.degraded("x").symbolName == "exclamationmark.triangle.fill")
-    }
-
-    @Test("needsPermission uses lock.trianglebadge.exclamationmark.fill")
-    func needsPermissionSymbol() {
-        #expect(AppHealthState.needsPermission("x").symbolName == "lock.trianglebadge.exclamationmark.fill")
-    }
-
-    @Test("failed uses speaker.slash.fill")
-    func failedSymbol() {
-        #expect(AppHealthState.failed("x").symbolName == "speaker.slash.fill")
-    }
-
-    // MARK: - AppHealthState statusLine
-
-    @Test("starting shows Starting services")
-    func startingStatusLine() {
-        #expect(AppHealthState.starting.statusLine == "Starting services")
-    }
-
-    @Test("ready shows Monitoring media playback")
-    func readyStatusLine() {
-        #expect(AppHealthState.ready.statusLine == "Monitoring media playback")
-    }
-
-    @Test("degraded surfaces its associated message")
-    func degradedStatusLine() {
-        #expect(AppHealthState.degraded("Audio monitor restarting").statusLine == "Audio monitor restarting")
-    }
-
-    @Test("needsPermission surfaces its associated message")
-    func needsPermissionStatusLine() {
-        let msg = "Grant Automation access to control Spotify"
-        #expect(AppHealthState.needsPermission(msg).statusLine == msg)
-    }
-
-    @Test("failed surfaces its associated message")
-    func failedStatusLine() {
-        #expect(AppHealthState.failed("Monitor failed hard").statusLine == "Monitor failed hard")
+        #expect(AutoPauseSnooze.describeEnd(date(2, 15, 30), now: now, calendar: calendar)
+            == date(2, 15, 30).formatted(style))
+        #expect(AutoPauseSnooze.describeEnd(date(3, 8), now: now, calendar: calendar)
+            == "tomorrow \(date(3, 8).formatted(style))")
+        #expect(AutoPauseSnooze.describeEnd(date(5, 8), now: now, calendar: calendar).hasSuffix(date(5, 8).formatted(style)))
     }
 }

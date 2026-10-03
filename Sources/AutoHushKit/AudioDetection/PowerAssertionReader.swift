@@ -12,6 +12,7 @@ package protocol PowerAssertionReading: Sendable {
     func pidsKeepingSystemAwake() -> Set<pid_t>
 }
 
+/// Reads the assertions from IOKit's power management.
 package struct IOKitPowerAssertionReader: PowerAssertionReading {
     package init() {}
 

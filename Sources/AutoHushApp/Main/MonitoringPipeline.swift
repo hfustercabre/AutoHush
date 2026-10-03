@@ -10,6 +10,7 @@ import AutoHushPlayers
 /// so neither side can see them out of order.
 @MainActor
 final class MonitoringPipeline {
+    /// What the engine reports for the menu and Settings.
     enum StatusUpdate: Sendable {
         case playback(PlaybackState)
         case activeSources([AudioSource])
@@ -18,6 +19,7 @@ final class MonitoringPipeline {
         case announcingApp(String)
     }
 
+    /// What the app tells the arbiter.
     private enum ArbiterCommand: Sendable {
         case playerState(PlayerState)
         case autoPause(Bool)

@@ -5,6 +5,7 @@ import SwiftUI
 /// standard layout of macOS settings windows.
 @MainActor
 final class SettingsWindowController: NSWindowController {
+    /// The window's tabs, in toolbar order.
     enum Tab: Int, CaseIterable {
         case general, apps, advanced
 

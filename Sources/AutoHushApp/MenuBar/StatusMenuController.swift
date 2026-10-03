@@ -24,6 +24,7 @@ import AutoHushKit
 /// ```
 @MainActor
 final class StatusMenuController: NSObject {
+    /// What the menu's items do; `AppDelegate` provides them.
     struct Actions {
         var toggleAutoPause: @MainActor () -> Void
         var snooze: @MainActor (AutoPauseSnooze) -> Void
@@ -86,43 +87,48 @@ final class StatusMenuController: NSObject {
         }
         needsRebuild = false
         menu.removeAllItems()
+        addStatusLine()
+        addPlayingApps()
+        addAutoPauseItems()
+        addActionItems()
+        addAppItems()
+    }
 
+    /// The status line, always the first item: it alone follows `status`
+    /// while the menu is open.
+    private func addStatusLine() {
         let statusLine = NSMenuItem(title: status.statusLine, action: nil, keyEquivalent: "")
         statusLine.isEnabled = false
         menu.addItem(statusLine)
+    }
 
-        if !status.activeSources.isEmpty {
-            menu.addItem(.separator())
-            status.activeSources.forEach { menu.addItem(sourceItem(for: $0)) }
-        }
+    /// One row per app playing right now.
+    private func addPlayingApps() {
+        guard !status.activeSources.isEmpty else { return }
+        menu.addItem(.separator())
+        status.activeSources.forEach { menu.addItem(sourceItem(for: $0)) }
+    }
 
+    /// Auto-Pause Music, Turn Off For and, when there are any, Ignored Apps.
+    private func addAutoPauseItems() {
         menu.addItem(.separator())
         menu.addItem(autoPauseItem())
         menu.addItem(snoozeItem())
-        if !status.ignoredApps.isEmpty {
-            menu.addItem(ignoredAppsItem())
-        }
+        if !status.ignoredApps.isEmpty { menu.addItem(ignoredAppsItem()) }
+    }
 
+    /// Whatever needs attention (a permission, Retry, an update), then Settings.
+    private func addActionItems() {
         menu.addItem(.separator())
-        if let warning = status.warning {
-            let item = item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
-            item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Warning")
-            menu.addItem(item)
-        }
-        if status.showsRetry {
-            menu.addItem(item("Retry", #selector(retry), key: "r"))
-        }
-        if let update = status.availableUpdate {
-            let item = item("Update Available: \(update.version)\u{2026}", #selector(showAvailableUpdate))
-            item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: "Update")
-            menu.addItem(item)
-        }
+        if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
+        if status.showsRetry { menu.addItem(item("Retry", #selector(retry), key: "r")) }
+        if let update = status.availableUpdate { menu.addItem(updateItem(for: update)) }
         menu.addItem(item("Settings\u{2026}", #selector(openSettings), key: ","))
-        let diagnostics = item("Diagnostics\u{2026}", #selector(showDiagnostics), key: ",")
-        diagnostics.keyEquivalentModifierMask = [.command, .option]
-        diagnostics.isAlternate = true
-        menu.addItem(diagnostics)
+        menu.addItem(diagnosticsItem())
+    }
 
+    /// About, Check for Updates and Quit.
+    private func addAppItems() {
         menu.addItem(.separator())
         menu.addItem(item("About AutoHush", #selector(showAbout)))
         menu.addItem(item("Check for Updates\u{2026}", #selector(checkForUpdates)))
@@ -159,6 +165,26 @@ final class StatusMenuController: NSObject {
         submenu.addItem(toggle)
         row.submenu = submenu
         return row
+    }
+
+    private func warningItem(for warning: Permission) -> NSMenuItem {
+        let item = item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
+        item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Warning")
+        return item
+    }
+
+    private func updateItem(for update: AppRelease) -> NSMenuItem {
+        let item = item("Update Available: \(update.version)\u{2026}", #selector(showAvailableUpdate))
+        item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: "Update")
+        return item
+    }
+
+    /// Takes the place of Settings… while ⌥ is held.
+    private func diagnosticsItem() -> NSMenuItem {
+        let item = item("Diagnostics\u{2026}", #selector(showDiagnostics), key: ",")
+        item.keyEquivalentModifierMask = [.command, .option]
+        item.isAlternate = true
+        return item
     }
 
     private func autoPauseItem() -> NSMenuItem {

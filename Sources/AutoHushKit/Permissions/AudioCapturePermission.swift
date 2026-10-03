@@ -8,6 +8,7 @@ package enum AudioCapturePermission: Equatable, Sendable {
     case notDetermined
 }
 
+/// Reads and requests the System Audio Recording permission.
 package protocol AudioCapturePermissionChecking: Sendable {
     /// The current state, or `nil` when it cannot be determined.
     func status() -> AudioCapturePermission?

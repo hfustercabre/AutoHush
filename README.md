@@ -234,8 +234,8 @@ Sources/
   AutoHush/              AutoHushMain (starts AutoHushApp)
   AutoHushApp/
     Main/                AutoHushApplication, AppDelegate (wiring), MonitoringPipeline (builds the
-                         engine for each start), AppStatus (what the app shows), StatusPresentation,
-                         AppHealthState
+                         engine for each start), AppStatus (what the app shows), StatusPresentation
+                         (icons and text for the engine's states and choices), AppHealthState
     MenuBar/             StatusMenuController
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
                          Views/ (General, Apps, Advanced)
@@ -245,8 +245,10 @@ Sources/
     General/             InfoAlert, ProjectInfo, AppIcon, SystemSettingsPane+Open
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
-                         PowerAssertionReader, DetectionMethod (your choice), DetectionMode (in effect),
-                         CoreAudio/ (process list, process taps and levels, HAL helpers)
+                         PowerAssertionReader, PlaybackSignals (AntiDot mode's judge),
+                         ActiveAudioReport (the Diagnostics lines), DetectionMethod (your choice),
+                         DetectionMode (in effect), CoreAudio/ (process list, process taps and levels,
+                         HAL helpers)
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (setting and snooze)
     MusicPlayers/        MusicPlayer (the interface), PlayerState, VolumeCurve, MusicPlayerError
     Permissions/         Permission (what's needed and where to grant it), AudioCapturePermission,
@@ -273,6 +275,7 @@ Resources/               Info.plist and entitlements, assembled into the .app by
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
+- **Text people read** in the menu and Settings, including the text for the engine's states and choices, lives in the app (mostly `Main/StatusPresentation.swift`). The engine only writes the Diagnostics lines, which describe its own state.
 - **`General/`** folders stay small: only helpers several parts of a module need.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 - **Tests** mirror their module's folders.

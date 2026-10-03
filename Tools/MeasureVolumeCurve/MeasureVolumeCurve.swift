@@ -41,9 +41,11 @@ enum MeasureVolumeCurve {
         }
     }
 
+    /// Measures the player at each volume, prints the results and the best
+    /// fit, and always gives the player back its volume and play state.
     private static func measure(_ player: any MusicPlayer, volumes: [Int]) async throws {
         try await player.verifyControlAccess()
-        guard let originalVolume = await player.volume() else { fail("\(player.name) doesn't report its volume") }
+        guard let originalVolume = await player.volume() else { throw Failure("\(player.name) doesn't report its volume") }
         let wasPlaying = await player.playerState() == .playing
         print("\(player.name): volume \(originalVolume), \(wasPlaying ? "playing" : "not playing")")
 
@@ -52,55 +54,75 @@ enum MeasureVolumeCurve {
             if !wasPlaying { try? await player.pause() }
         }
 
-        try await player.play()
-        try await Task.sleep(for: .seconds(1))
-        let processes = HALAudioProcessSnapshotProvider().activeProcesses()
-            .filter { $0.bundleID == player.bundleID || $0.bundleID.hasPrefix(player.bundleID + ".") }
-        guard !processes.isEmpty else {
-            await restore()
-            fail("no audio output from \(player.name); is it playing on this Mac?")
-        }
-        let meter = ProcessTapLevelMeter()
-        meter.setMeteredProcesses(Set(processes.map(\.objectID)))
-        defer { meter.stopAll() }
-        try await Task.sleep(for: .milliseconds(500))
-
-        func level(at volume: Int) async throws -> Double {
-            try await player.setVolume(volume)
-            try await Task.sleep(for: settle)
-            _ = meter.drainLevels()
-            try await Task.sleep(for: window)
-            return Double(meter.drainLevels().values.map(\.rms).max() ?? 0)
-        }
-
-        var results: [(volume: Int, dB: Double)] = []
+        let results: [(volume: Int, dB: Double)]
         do {
-            guard try await level(at: 100) > 0 else {
-                await restore()
-                fail("the tap hears silence: allow system audio recording for this tool (or the terminal running it) and try again")
-            }
-            for volume in volumes {
-                var differences: [Double] = []
-                for _ in 0..<pairsPerVolume {
-                    let full = try await level(at: 100)
-                    let reduced = try await level(at: volume)
-                    if full > 0 { differences.append(reduced > 0 ? 20 * log10(reduced / full) : -.infinity) }
-                }
-                // Every reading at 100 was silent: the music paused or hit a quiet passage.
-                guard !differences.isEmpty else {
-                    print(String(format: "  volume %3d → no reading (the music was silent)", volume))
-                    continue
-                }
-                let median = differences.sorted()[differences.count / 2]
-                results.append((volume, median))
-                print(median.isFinite ? String(format: "  volume %3d → %6.1f dB", volume, median) : String(format: "  volume %3d → silent", volume))
-            }
+            let meter = try await startMetering(player)
+            defer { meter.stopAll() }
+            results = try await measureLevels(of: player, at: volumes, with: meter)
         } catch {
             await restore() // never leave the player at a test volume
             throw error
         }
         await restore()
         printFit(results)
+    }
+
+    /// Plays the music and taps the player's audio output.
+    private static func startMetering(_ player: any MusicPlayer) async throws -> ProcessTapLevelMeter {
+        try await player.play()
+        try await Task.sleep(for: .seconds(1))
+        let processes = HALAudioProcessSnapshotProvider().activeProcesses()
+            .filter { $0.bundleID == player.bundleID || $0.bundleID.hasPrefix(player.bundleID + ".") }
+        guard !processes.isEmpty else { throw Failure("no audio output from \(player.name); is it playing on this Mac?") }
+        let meter = ProcessTapLevelMeter()
+        meter.setMeteredProcesses(Set(processes.map(\.objectID)))
+        try await Task.sleep(for: .milliseconds(500))
+        return meter
+    }
+
+    /// Each volume's level relative to volume 100, printed as it is measured.
+    private static func measureLevels(
+        of player: any MusicPlayer, at volumes: [Int], with meter: ProcessTapLevelMeter
+    ) async throws -> [(volume: Int, dB: Double)] {
+        guard try await level(of: player, at: 100, with: meter) > 0 else {
+            throw Failure("the tap hears silence: allow system audio recording for this tool (or the terminal running it) and try again")
+        }
+        var results: [(volume: Int, dB: Double)] = []
+        for volume in volumes {
+            guard let dB = try await relativeLevel(of: player, at: volume, with: meter) else {
+                print(String(format: "  volume %3d → no reading (the music was silent)", volume))
+                continue
+            }
+            results.append((volume, dB))
+            print(dB.isFinite ? String(format: "  volume %3d → %6.1f dB", volume, dB) : String(format: "  volume %3d → silent", volume))
+        }
+        return results
+    }
+
+    /// The level at `volume` relative to volume 100, in dB: the median of
+    /// several back-and-forth readings. `nil` when every reading at 100 was
+    /// silent (the music paused or hit a quiet passage).
+    private static func relativeLevel(
+        of player: any MusicPlayer, at volume: Int, with meter: ProcessTapLevelMeter
+    ) async throws -> Double? {
+        var differences: [Double] = []
+        for _ in 0..<pairsPerVolume {
+            let full = try await level(of: player, at: 100, with: meter)
+            let reduced = try await level(of: player, at: volume, with: meter)
+            if full > 0 { differences.append(reduced > 0 ? 20 * log10(reduced / full) : -.infinity) }
+        }
+        return differences.isEmpty ? nil : differences.sorted()[differences.count / 2]
+    }
+
+    /// The music's average level (RMS, 0…1) at `volume`, once it has settled.
+    private static func level(
+        of player: any MusicPlayer, at volume: Int, with meter: ProcessTapLevelMeter
+    ) async throws -> Double {
+        try await player.setVolume(volume)
+        try await Task.sleep(for: settle)
+        _ = meter.drainLevels()
+        try await Task.sleep(for: window)
+        return Double(meter.drainLevels().values.map(\.rms).max() ?? 0)
     }
 
     /// How well common curves match, as root-mean-square error in dB (volumes 5–90).
@@ -126,6 +148,12 @@ enum MeasureVolumeCurve {
         for model in models.sorted(by: { error($0.dB) < error($1.dB) }) {
             print("  " + model.name.padding(toLength: 30, withPad: " ", startingAt: 0) + String(format: "%5.1f dB", error(model.dB)))
         }
+    }
+
+    /// Why a measurement can't be made, as shown to the user.
+    private struct Failure: LocalizedError {
+        let errorDescription: String?
+        init(_ message: String) { errorDescription = message }
     }
 
     private static func fail(_ message: String) -> Never {

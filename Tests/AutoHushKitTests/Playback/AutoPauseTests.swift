@@ -44,16 +44,4 @@ struct AutoPauseTests {
         #expect(AutoPauseSnooze.untilTomorrow.endDate(from: now, calendar: calendar) == date(3, 8))
         #expect(AutoPauseSnooze.untilTomorrow.endDate(from: date(3, 1), calendar: calendar) == date(4, 8))
     }
-
-    @Test("end descriptions are relative to today")
-    func describeEnd() {
-        var style = Date.FormatStyle(date: .omitted, time: .shortened)
-        style.timeZone = calendar.timeZone
-        let now = date(2, 12)
-        #expect(AutoPauseSnooze.describeEnd(date(2, 15, 30), now: now, calendar: calendar)
-            == date(2, 15, 30).formatted(style))
-        #expect(AutoPauseSnooze.describeEnd(date(3, 8), now: now, calendar: calendar)
-            == "tomorrow \(date(3, 8).formatted(style))")
-        #expect(AutoPauseSnooze.describeEnd(date(5, 8), now: now, calendar: calendar).hasSuffix(date(5, 8).formatted(style)))
-    }
 }

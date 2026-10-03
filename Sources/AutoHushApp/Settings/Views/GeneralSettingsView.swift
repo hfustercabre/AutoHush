@@ -84,3 +84,25 @@ struct GeneralSettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 }
+
+/// The detection choices as Settings describes them.
+private extension DetectionMethod {
+    var title: String {
+        switch self {
+        case .audioLevels:     return "Measure audio levels"
+        case .playbackSignals: return "What apps tell macOS"
+        case .openStreams:     return "Open audio streams only"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .audioLevels:
+            return "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures."
+        case .playbackSignals:
+            return "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open."
+        case .openStreams:
+            return "Any app with its audio open counts as playing, even when paused."
+        }
+    }
+}

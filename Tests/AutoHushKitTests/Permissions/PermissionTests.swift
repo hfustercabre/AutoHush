@@ -4,12 +4,11 @@ import AutoHushTestSupport
 
 @Suite("Permission")
 struct PermissionTests {
-    @Test("each permission names what to grant and where", arguments: [
-        (Permission.automation(player: "Spotify"), "Allow Spotify Automation Access…", SystemSettingsPane.automation),
-        (Permission.systemAudioRecording, "Allow Audio Recording Access…", SystemSettingsPane.audioCapture),
+    @Test("each permission is granted in its own System Settings pane", arguments: [
+        (Permission.automation(player: "Spotify"), SystemSettingsPane.automation),
+        (Permission.systemAudioRecording, SystemSettingsPane.audioCapture),
     ])
-    func grant(permission: Permission, title: String, pane: SystemSettingsPane) {
-        #expect(permission.grantTitle == title)
+    func pane(permission: Permission, pane: SystemSettingsPane) {
         #expect(permission.settingsPane == pane)
     }
 

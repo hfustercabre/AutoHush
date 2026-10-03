@@ -3,14 +3,13 @@ import Foundation
 import OSLog
 import AutoHushKit
 
-// MARK: - Spotify playback observer
-//
-// Spotify posts `com.spotify.client.PlaybackStateChanged` as a distributed
-// notification on every play/pause/stop/track change, with the new state in
-// userInfo["Player State"] ("Playing", "Paused" or "Stopped"). Observing it
-// replaces polling Spotify with Apple events. Spotify posts nothing when it
-// quits, so app termination is observed through NSWorkspace instead.
-
+/// Reports Spotify's state changes without asking Spotify.
+///
+/// Spotify posts `com.spotify.client.PlaybackStateChanged` as a distributed
+/// notification on every play/pause/stop/track change, with the new state in
+/// userInfo["Player State"] ("Playing", "Paused" or "Stopped"). Observing it
+/// replaces polling Spotify with Apple events. Spotify posts nothing when it
+/// quits, so app termination is observed through NSWorkspace instead.
 @MainActor
 package final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
     package static let playbackStateChanged = Notification.Name("com.spotify.client.PlaybackStateChanged")

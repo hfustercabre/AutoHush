@@ -4,11 +4,28 @@ import AutoHushKit
 /// Everything the menu bar shows, as plain values. `StatusMenuController`
 /// renders it; keeping the rules here makes them testable without AppKit.
 struct AppStatus: Equatable {
+    /// Whether AutoHush pauses the music, as the menu and Settings show it.
     enum AutoPause: Equatable {
         case on
         case off
         /// Off until the described moment, e.g. "15:30" or "tomorrow 8:00".
         case snoozed(until: String)
+
+        init(_ setting: AutoPauseSetting, now: Date) {
+            if !setting.isEnabled {
+                self = .off
+            } else if let end = setting.snoozedUntil {
+                self = .snoozed(until: AutoPauseSnooze.describeEnd(end, now: now))
+            } else {
+                self = .on
+            }
+        }
+
+        /// The note under the switch in Settings, e.g. "Turned off until 15:30."
+        var settingsNote: String? {
+            guard case .snoozed(let until) = self else { return nil }
+            return "Turned off until \(until)."
+        }
     }
 
     /// The music player AutoHush controls, e.g. "Spotify".
@@ -46,24 +63,24 @@ struct AppStatus: Equatable {
 
     var isReady: Bool { health == .ready }
 
-    var iconSymbolName: String {
-        isReady ? playback.symbolName : health.symbolName
+    /// The playback state's look once ready, the health's until then.
+    private var presentation: StatePresentation {
+        isReady ? playback.presentation : health.presentation
     }
 
-    var iconAccessibilityLabel: String {
-        isReady ? playback.accessibilityLabel : health.accessibilityLabel
-    }
+    var iconSymbolName: String { presentation.symbol }
+    var iconAccessibilityLabel: String { presentation.label }
 
     /// The menu bar icon is dimmed while auto-pause is off.
     var dimsIcon: Bool { isReady && autoPause != .on }
 
     var statusLine: String {
-        guard isReady else { return health.statusLine }
+        guard isReady else { return presentation.line }
         switch autoPause {
         case .off:                     return "Auto-pause is off"
         case .snoozed(let until):      return "Auto-pause is off until \(until)"
         case .on:
-            guard playback == .pausedByMonitor, !pausingSources.isEmpty else { return playback.statusLine }
+            guard playback == .pausedByMonitor, !pausingSources.isEmpty else { return presentation.line }
             return "Music paused — \(Self.describePlaying(pausingSources.map(\.name)))"
         }
     }

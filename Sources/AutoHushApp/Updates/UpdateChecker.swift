@@ -31,11 +31,13 @@ struct AppVersion: Comparable, CustomStringConvertible, Sendable {
     }
 }
 
+/// A published release: its version and its GitHub page.
 struct AppRelease: Equatable, Sendable {
     let version: AppVersion
     let pageURL: URL
 }
 
+/// What an update check found.
 enum UpdateCheckResult: Equatable, Sendable {
     case upToDate(latest: AppVersion)
     case available(AppRelease)
@@ -43,6 +45,7 @@ enum UpdateCheckResult: Equatable, Sendable {
     case noReleases
 }
 
+/// Why an update check could not tell.
 enum UpdateCheckError: LocalizedError, Equatable {
     case badResponse(Int)
     case unreadableRelease
@@ -76,6 +79,7 @@ struct UpdateChecker: Sendable {
         if status == 404 { return .noReleases }
         guard status == 200 else { throw UpdateCheckError.badResponse(status) }
 
+        /// The two fields read from GitHub's answer.
         struct Release: Decodable {
             let tag_name: String
             let html_url: URL

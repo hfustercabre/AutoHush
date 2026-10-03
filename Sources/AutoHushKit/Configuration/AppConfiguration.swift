@@ -42,7 +42,7 @@ package struct AppConfiguration: Sendable {
     package var musicPlayerBundleIDs: Set<String> = []
 
     /// System processes that must NEVER trigger a pause.
-    package let excludedBundleIDs: Set<String> = [
+    package static let excludedBundleIDs: Set<String> = [
         "com.apple.coreaudiod",
         "com.apple.audio.SandboxHelper",
         "com.apple.audio.AudioComponentRegistrar",
@@ -58,7 +58,7 @@ package struct AppConfiguration: Sendable {
     ]
 
     /// Bundle ID prefixes that indicate system/infrastructure processes to exclude.
-    package let excludedBundleIDPrefixes: [String] = [
+    package static let excludedBundleIDPrefixes: [String] = [
         "com.apple.audio.",
         "com.apple.CoreAudio",
     ]
@@ -82,7 +82,7 @@ package struct AppConfiguration: Sendable {
     /// Returns true if the bundle ID should trigger pause/resume logic.
     package func isMediaSource(_ bundleID: String) -> Bool {
         guard !bundleID.isEmpty else { return false }
-        guard !isMusicPlayer(bundleID), !excludedBundleIDs.contains(bundleID) else { return false }
-        return !excludedBundleIDPrefixes.contains(where: { bundleID.hasPrefix($0) })
+        guard !isMusicPlayer(bundleID), !Self.excludedBundleIDs.contains(bundleID) else { return false }
+        return !Self.excludedBundleIDPrefixes.contains(where: { bundleID.hasPrefix($0) })
     }
 }
