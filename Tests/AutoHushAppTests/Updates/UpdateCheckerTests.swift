@@ -45,6 +45,22 @@ struct UpdateCheckerTests {
         )))
     }
 
+    @Test("a release page anywhere but this repository's releases on github.com is refused", arguments: [
+        "https://evil.example/hfustercabre/AutoHush/releases/tag/v0.3.0",
+        "http://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",
+        "https://github.com/someone/else/releases/tag/v0.3.0",
+        "https://github.com/hfustercabre/AutoHush/releases/../../../someone/else",
+        "file:///Applications/Calculator.app",
+        "smb://server/share",
+        "x-apple.systempreferences:com.apple.preference.security",
+    ])
+    func refusesOtherPages(page: String) async {
+        let body = #"{"tag_name": "v0.3.0", "html_url": "\#(page)"}"#
+        await #expect(throws: UpdateCheckError.unreadableRelease) {
+            try await checker(status: 200, body: body).check(currentVersion: AppVersion("0.2.0")!)
+        }
+    }
+
     @Test("the same or an older release is up to date")
     func upToDate() async throws {
         let result = try await checker(status: 200, body: release030).check(currentVersion: AppVersion("0.3.0")!)

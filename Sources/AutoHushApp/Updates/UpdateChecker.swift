@@ -62,7 +62,9 @@ enum UpdateCheckError: LocalizedError, Equatable {
 }
 
 /// Asks GitHub for the latest published release. Only `api.github.com` is
-/// contacted, and only the release's tag and page URL are read.
+/// contacted, and only the release's tag and page URL are read. The page URL
+/// is the only thing AutoHush ever opens from an answer, so it must be one of
+/// this repository's release pages on github.com.
 struct UpdateChecker: Sendable {
     typealias Fetch = @Sendable (URLRequest) async throws -> (Data, URLResponse)
 
@@ -88,12 +90,20 @@ struct UpdateChecker: Sendable {
             let html_url: URL
         }
         guard let release = try? JSONDecoder().decode(Release.self, from: data),
-              let latest = AppVersion(release.tag_name)
+              let latest = AppVersion(release.tag_name),
+              Self.isReleasePage(release.html_url)
         else { throw UpdateCheckError.unreadableRelease }
 
         return latest > currentVersion
             ? .available(AppRelease(version: latest, pageURL: release.html_url))
             : .upToDate(latest: latest)
+    }
+
+    /// True for a release page of this repository on github.com, over HTTPS:
+    /// never another site, a file, a network share or another app's scheme.
+    static func isReleasePage(_ url: URL) -> Bool {
+        url.scheme == "https" && url.host() == "github.com"
+            && url.standardized.path().hasPrefix("/\(ProjectInfo.repository)/releases/")
     }
 
     /// True when AutoHush was installed with the Homebrew cask.
