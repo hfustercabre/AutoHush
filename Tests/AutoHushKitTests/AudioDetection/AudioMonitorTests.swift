@@ -300,7 +300,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "com.example.player")]) // pid 1001
         await h.recorder.waitForEvents(count: 1)
         #expect(h.learned.values == ["com.example.player"])
-        #expect(h.monitor.activeAudioReport() == ["com.example.player — playing (tells macOS it is playing)"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .playing, evidence: .announcing)])
 
         // Paused: the stream stays open but the assertion is gone.
         assertions.pids = []
@@ -310,7 +310,7 @@ struct AudioMonitorTests {
             .init(bundleID: "com.example.player", isPlaying: true),
             .init(bundleID: "com.example.player", isPlaying: false),
         ])
-        #expect(h.monitor.activeAudioReport() == ["com.example.player — output open, silent (not telling macOS it is playing)"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .silent, evidence: .notAnnouncing)])
 
         // Playing again.
         assertions.pids = [1001]
@@ -582,7 +582,7 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.google.Chrome", isPlaying: true)])
         #expect(h.activeSources.values.last == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
-        #expect(h.monitor.activeAudioReport() == ["Google Chrome (com.google.Chrome) — playing"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "com.google.Chrome", name: "Google Chrome", state: .playing)])
 
         // One helper stops: the app keeps playing.
         h.step(after: 0.25, [Self.process(2, "com.google.Chrome.helper")])
@@ -615,7 +615,7 @@ struct AudioMonitorTests {
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await h.recorder.events.isEmpty)
         #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
-        #expect(h.monitor.activeAudioReport() == ["org.videolan.vlc — playing, ignored"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, isIgnored: true)])
         h.monitor.stop()
     }
 
@@ -719,8 +719,8 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "com.apple.Safari"), Self.process(2, "org.videolan.vlc")], peaks: [1: 0.1, 2: 0])
         #expect(h.monitor.activeAudioReport() == [
-            "com.apple.Safari — starting (-20 dBFS)",
-            "org.videolan.vlc — output open, silent (silence)",
+            .init(id: "com.apple.Safari", state: .starting, evidence: .level(0.1)),
+            .init(id: "org.videolan.vlc", state: .silent, evidence: .level(0)),
         ])
         h.monitor.stop()
     }

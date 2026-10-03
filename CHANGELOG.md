@@ -9,6 +9,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Ready for translation**: every text AutoHush shows (the menu, Settings,
+  alerts, Diagnostics, VoiceOver labels and the permission prompts) comes
+  from String Catalogs in `Resources/`. AutoHush uses the first of your Mac's
+  preferred languages that it has, and English otherwise; so far it has only
+  English. Each build adds new text from the code to the catalog by itself,
+  as Xcode does, and the engine now hands Diagnostics plain facts that the
+  app words.
 - **A redesigned installer**: the disk image window now uses AutoHush's
   colours and mark, the mounted disk shows the app's icon, and the window
   leaves room for Finder's tab and path bars, so the first-launch note is
@@ -53,8 +60,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   replacing `Scripts/measure-volume-curve.swift`.
 - The engine no longer uses AppKit: opening System Settings moved to the app.
 - **Simpler code**, with no change in behaviour:
-  - `AudioMonitor` hands AntiDot mode's judging to `PlaybackSignals` and the
-    Diagnostics text to `ActiveAudioReport`.
+  - `AudioMonitor` hands AntiDot mode's judging to `PlaybackSignals` and
+    what Diagnostics shows to `ActiveAudioReport`.
   - Menu and Settings text for the engine's states and choices lives in the
     app, with one row per state for its icon, label and status line.
   - Long functions are split into named steps (the menu, the measuring

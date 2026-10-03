@@ -8,14 +8,15 @@ struct AppStatus: Equatable {
     enum AutoPause: Equatable {
         case on
         case off
-        /// Off until the described moment, e.g. "15:30" or "tomorrow 8:00".
-        case snoozed(until: String)
+        /// Off until a moment, described with its preposition so that each
+        /// language can place it: "until 15:30", "until tomorrow 8:00".
+        case snoozed(String)
 
         init(_ setting: AutoPauseSetting, now: Date) {
             if !setting.isEnabled {
                 self = .off
             } else if let end = setting.snoozedUntil {
-                self = .snoozed(until: AutoPauseSnooze.describeEnd(end, now: now))
+                self = .snoozed(AutoPauseSnooze.describeEnd(end, now: now))
             } else {
                 self = .on
             }
@@ -24,7 +25,8 @@ struct AppStatus: Equatable {
         /// The note under the switch in Settings, e.g. "Turned off until 15:30."
         var settingsNote: String? {
             guard case .snoozed(let until) = self else { return nil }
-            return "Turned off until \(until)."
+            return String(localized: "Turned off \(until).",
+                          comment: "Settings, under Auto-Pause Music; %@ says until when, e.g. “until 15:30”")
         }
     }
 
@@ -77,11 +79,15 @@ struct AppStatus: Equatable {
     var statusLine: String {
         guard isReady else { return presentation.line }
         switch autoPause {
-        case .off:                     return "Auto-pause is off"
-        case .snoozed(let until):      return "Auto-pause is off until \(until)"
+        case .off:
+            return String(localized: "Auto-pause is off", comment: "Status line at the top of the menu")
+        case .snoozed(let until):
+            return String(localized: "Auto-pause is off \(until)",
+                          comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
         case .on:
             guard playback == .pausedByMonitor, !pausingSources.isEmpty else { return presentation.line }
-            return "Music paused — \(Self.describePlaying(pausingSources.map(\.name)))"
+            return String(localized: "Music paused — \(Self.describePlaying(pausingSources.map(\.name)))",
+                          comment: "Status line at the top of the menu; %@ says which apps play, e.g. “VLC is playing”")
         }
     }
 
@@ -102,10 +108,16 @@ struct AppStatus: Equatable {
     /// "VLC is playing", "VLC and Safari are playing", "VLC and 2 other apps are playing".
     static func describePlaying(_ names: [String]) -> String {
         switch names.count {
-        case 0:  return "another app is playing"
-        case 1:  return "\(names[0]) is playing"
-        case 2:  return "\(names[0]) and \(names[1]) are playing"
-        default: return "\(names[0]) and \(names.count - 1) other apps are playing"
+        case 0:
+            return String(localized: "another app is playing", comment: "Completes “Music paused — %@”")
+        case 1:
+            return String(localized: "\(names[0]) is playing", comment: "Completes “Music paused — %@”; %@ is an app")
+        case 2:
+            return String(localized: "\(names[0]) and \(names[1]) are playing",
+                          comment: "Completes “Music paused — %@”; two apps")
+        default:
+            return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
+                          comment: "Completes “Music paused — %@”; an app, then how many others (2 or more)")
         }
     }
 }

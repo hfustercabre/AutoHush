@@ -58,8 +58,8 @@ struct AppsSettingsView: View {
 
     private func chooseAppToIgnore() {
         let panel = NSOpenPanel()
-        panel.title = "Choose an App to Ignore"
-        panel.prompt = "Ignore"
+        panel.title = String(localized: "Choose an App to Ignore", comment: "Title of the panel that picks an app")
+        panel.prompt = String(localized: "Ignore", comment: "Button of the panel that picks an app to ignore")
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         guard panel.runModal() == .OK,

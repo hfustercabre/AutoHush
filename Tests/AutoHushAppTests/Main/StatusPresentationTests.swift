@@ -46,7 +46,7 @@ struct StatusPresentationTests {
         #expect(permission.grantTitle == title)
     }
 
-    @Test("snooze end times are described relative to today")
+    @Test("snooze end times are described relative to today, with their preposition")
     func describeEnd() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/Madrid")!
@@ -58,9 +58,10 @@ struct StatusPresentationTests {
         let now = date(2, 12)
 
         #expect(AutoPauseSnooze.describeEnd(date(2, 15, 30), now: now, calendar: calendar)
-            == date(2, 15, 30).formatted(style))
+            == "until \(date(2, 15, 30).formatted(style))")
         #expect(AutoPauseSnooze.describeEnd(date(3, 8), now: now, calendar: calendar)
-            == "tomorrow \(date(3, 8).formatted(style))")
-        #expect(AutoPauseSnooze.describeEnd(date(5, 8), now: now, calendar: calendar).hasSuffix(date(5, 8).formatted(style)))
+            == "until tomorrow \(date(3, 8).formatted(style))")
+        let later = AutoPauseSnooze.describeEnd(date(5, 8), now: now, calendar: calendar)
+        #expect(later.hasPrefix("until ") && later.hasSuffix(date(5, 8).formatted(style)))
     }
 }

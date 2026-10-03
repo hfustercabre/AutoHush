@@ -1,8 +1,46 @@
 import Foundation
 
-/// The Diagnostics text: one line per app with its sound on, saying how
-/// AutoHush judges it, e.g. "Google Chrome (com.google.Chrome) — playing (-23 dBFS)".
-struct ActiveAudioReport {
+/// What Diagnostics shows about the apps with their sound on: how AutoHush
+/// judges each one, and what the judgement rests on. The app words it.
+package struct ActiveAudioReport {
+    /// One app with its sound on.
+    package struct Entry: Equatable, Sendable {
+        /// How AutoHush judges the app.
+        package enum State: Sendable {
+            /// Counted as playing (its output may have closed since).
+            case playing
+            /// Audible, but not for long enough to count as playing yet.
+            case starting
+            /// Its output is open, but it is silent.
+            case silent
+        }
+
+        /// What the judgement rests on.
+        package enum Evidence: Equatable, Sendable {
+            /// AntiDot mode: the app tells macOS it is playing.
+            case announcing
+            /// AntiDot mode: the app told macOS it was playing before, but doesn't now.
+            case notAnnouncing
+            /// The app's loudest tapped peak (0…1), while audio levels are measured.
+            case level(Float)
+        }
+
+        package let id: String
+        /// The app's name, when it has one other than its ID.
+        package let name: String?
+        package let state: State
+        package let isIgnored: Bool
+        package let evidence: Evidence?
+
+        package init(id: String, name: String? = nil, state: State, isIgnored: Bool = false, evidence: Evidence? = nil) {
+            self.id = id
+            self.name = name
+            self.state = state
+            self.isIgnored = isIgnored
+            self.evidence = evidence
+        }
+    }
+
     /// Apps whose processes have their output open.
     var present: Set<String>
     /// Apps counted as playing (they may have closed their output since).
@@ -18,28 +56,29 @@ struct ActiveAudioReport {
     /// The apps' names; an app without one is shown by its ID.
     var sources: [String: AudioSource]
 
-    var lines: [String] {
+    /// One entry per app, sorted by ID.
+    var entries: [Entry] {
         present.union(playing).sorted().map { id in
-            let line = "\(label(for: id)) — \(state(of: id))"
-            return detail(for: id).map { "\(line) (\($0))" } ?? line
+            Entry(
+                id: id,
+                name: name(of: id),
+                state: playing.contains(id) ? .playing : audible.contains(id) ? .starting : .silent,
+                isIgnored: ignored.contains(id),
+                evidence: evidence(for: id)
+            )
         }
     }
 
-    private func label(for id: String) -> String {
-        guard let name = sources[id]?.name, name != id else { return id }
-        return "\(name) (\(id))"
+    /// The app's name, unless it is only known by its ID.
+    private func name(of id: String) -> String? {
+        guard let name = sources[id]?.name, name != id else { return nil }
+        return name
     }
 
-    private func state(of id: String) -> String {
-        let state = playing.contains(id) ? "playing" : audible.contains(id) ? "starting" : "output open, silent"
-        return ignored.contains(id) ? "\(state), ignored" : state
-    }
-
-    /// What the judgement rests on: what the app tells macOS, or its level.
-    private func detail(for id: String) -> String? {
-        if announcing.contains(id) { return "tells macOS it is playing" }
-        if announcedBefore.contains(id) { return "not telling macOS it is playing" }
-        guard let level = levels[id] else { return nil }
-        return level > 0 ? String(format: "%.0f dBFS", 20 * log10(level)) : "silence"
+    /// What the app tells macOS, or its level.
+    private func evidence(for id: String) -> Entry.Evidence? {
+        if announcing.contains(id) { return .announcing }
+        if announcedBefore.contains(id) { return .notAnnouncing }
+        return levels[id].map { .level($0) }
     }
 }

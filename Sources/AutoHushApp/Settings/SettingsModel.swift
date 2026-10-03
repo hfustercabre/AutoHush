@@ -67,7 +67,8 @@ final class SettingsModel {
         case .success:
             launchAtLoginError = nil
         case .failure(let error):
-            launchAtLoginError = "Could not change the login item: \(error.localizedDescription)"
+            launchAtLoginError = String(localized: "Could not change the login item: \(error.localizedDescription)",
+                                        comment: "Settings, under Launch at login; %@ is the error macOS reported")
         }
         refreshLaunchAtLogin()
     }

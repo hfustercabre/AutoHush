@@ -11,9 +11,9 @@ final class SettingsWindowController: NSWindowController {
 
         var title: String {
             switch self {
-            case .general:  return "General"
-            case .apps:     return "Apps"
-            case .advanced: return "Advanced"
+            case .general:  return String(localized: "General", comment: "Settings tab")
+            case .apps:     return String(localized: "Apps", comment: "Settings tab: which apps pause the music")
+            case .advanced: return String(localized: "Advanced", comment: "Settings tab")
             }
         }
 

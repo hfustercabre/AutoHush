@@ -67,8 +67,8 @@ package final class AudioMonitor: @unchecked Sendable {
     private let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
     private let events: AsyncStream<ArbiterEvent>.Continuation
     private let forwardingTask: Task<Void, Never>
-    /// The latest Diagnostics lines, read from any thread.
-    private let reportLines = OSAllocatedUnfairLock<[String]>(initialState: [])
+    /// The latest Diagnostics entries, read from any thread.
+    private let reportEntries = OSAllocatedUnfairLock<[ActiveAudioReport.Entry]>(initialState: [])
 
     // Queue-confined state.
     private var isStarted = false
@@ -244,9 +244,9 @@ package final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// Human-readable per-source state for the Diagnostics alert (thread-safe).
-    package func activeAudioReport() -> [String] {
-        reportLines.withLock { $0 }
+    /// How each app with its sound on is judged, for Diagnostics (thread-safe).
+    package func activeAudioReport() -> [ActiveAudioReport.Entry] {
+        reportEntries.withLock { $0 }
     }
 
     // MARK: - Lifecycle
@@ -293,7 +293,7 @@ package final class AudioMonitor: @unchecked Sendable {
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
         publishActiveSources()
-        reportLines.withLock { $0 = [] }
+        reportEntries.withLock { $0 = [] }
     }
 
     // MARK: - Tick
@@ -533,6 +533,6 @@ package final class AudioMonitor: @unchecked Sendable {
             announcedBefore: detectionMethod == .playbackSignals ? signals.announcingSourceIDs : [],
             sources: knownSources
         )
-        reportLines.withLock { $0 = report.lines }
+        reportEntries.withLock { $0 = report.entries }
     }
 }

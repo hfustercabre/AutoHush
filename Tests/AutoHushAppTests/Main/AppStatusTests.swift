@@ -68,7 +68,7 @@ struct AppStatusTests {
         status.autoPause = .off
         #expect(status.statusLine == "Auto-pause is off")
         #expect(status.dimsIcon)
-        status.autoPause = .snoozed(until: "15:30")
+        status.autoPause = .snoozed("until 15:30")
         #expect(status.statusLine == "Auto-pause is off until 15:30")
         #expect(status.dimsIcon)
         status.autoPause = .on

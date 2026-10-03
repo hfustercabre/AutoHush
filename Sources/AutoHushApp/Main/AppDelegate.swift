@@ -347,12 +347,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showDiagnostics() {
-        let lines = pipeline?.activeAudioReport() ?? []
-        logger.debug("[diag] active audio: \(lines.joined(separator: "; "), privacy: .public)")
-        InfoAlert.show(
-            "AutoHush Diagnostics",
-            DiagnosticsReport.text(activeAudio: lines, status: status, detectionMethod: preferences.detectionMethod)
+        let report = DiagnosticsReport.text(
+            activeAudio: pipeline?.activeAudioReport() ?? [], status: status, detectionMethod: preferences.detectionMethod
         )
+        logger.debug("[diag] \(report, privacy: .public)")
+        InfoAlert.show(String(localized: "AutoHush Diagnostics", comment: "Title of the Diagnostics alert"), report)
     }
 
     private func retry() {

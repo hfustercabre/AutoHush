@@ -41,7 +41,7 @@ struct AdvancedSettingsView: View {
                 slider(
                     "Silence threshold",
                     value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
-                    format: { "\(Int($0)) dB" },
+                    format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
                     help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
                 )
             }
@@ -56,16 +56,17 @@ struct AdvancedSettingsView: View {
     }
 
     private func seconds(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...2))) + " s"
+        let number = value.formatted(.number.precision(.fractionLength(0...2)))
+        return String(localized: "\(number) s", comment: "A duration in seconds")
     }
 
     private func slider(
-        _ title: String,
+        _ title: LocalizedStringKey,
         value keyPath: WritableKeyPath<TimingSettings, Double>,
         range: ClosedRange<Double>,
         step: Double,
         format: @escaping (Double) -> String,
-        help: String
+        help: LocalizedStringKey
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             LabeledContent(title) {
