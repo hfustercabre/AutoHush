@@ -46,10 +46,28 @@
             "value" : "%1$@（%2$@）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ (%2$@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（%2$@）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（%2$@）"
           }
         }
       }
@@ -99,10 +117,28 @@
             "value" : "%1$@と%2$@が再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 및 %2$@ 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ e %2$@ estão tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 和 %2$@ 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 和 %2$@ 正在播放"
           }
         }
       }
@@ -152,10 +188,28 @@
             "value" : "%1$@とほか%2$lld個のAppが再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 외 %2$lld개의 앱이 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ e mais %2$lld apps estão tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 和其他 %2$lld 个 App 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 和其他 %2$lld 個 App 正在播放"
           }
         }
       }
@@ -205,10 +259,28 @@
             "value" : "%1$@の制御エラー: %2$@"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 제어 오류: %2$@"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erro ao controlar %1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 控制错误：%2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 控制錯誤：%2$@"
           }
         }
       }
@@ -252,10 +324,28 @@
             "value" : "%@が応答しません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 응답 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ não está respondendo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有响应"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有回應"
           }
         }
       }
@@ -299,10 +389,28 @@
             "value" : "%@が起動していません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 실행 중이 아님"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ não está aberto"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未在运行"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未在執行"
           }
         }
       }
@@ -346,10 +454,28 @@
             "value" : "%@が再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ está tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在播放"
           }
         }
       }
@@ -393,10 +519,28 @@
             "value" : "%@秒"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@초"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ s"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 秒"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 秒"
           }
         }
       }
@@ -446,7 +590,25 @@
             "value" : "%1$@ — %2$@"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — %2$@"
@@ -499,10 +661,28 @@
             "value" : "%1$@ — %2$@（%3$@）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@（%3$@）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@（%3$@）"
           }
         }
       }
@@ -546,10 +726,28 @@
             "value" : "%@ — AntiDotモード"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — AntiDot 모드"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ — modo AntiDot"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — AntiDot 模式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — AntiDot 模式"
           }
         }
       }
@@ -593,7 +791,25 @@
             "value" : "%lld dB"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld dB"
@@ -640,7 +856,25 @@
             "value" : "%lld dBFS"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld dBFS"
@@ -687,10 +921,28 @@
             "value" : "1時間"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1시간"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 Hora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 小时"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 小時"
           }
         }
       }
@@ -734,10 +986,28 @@
             "value" : "15分"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15분"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "15 Minutos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 分钟"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 分鐘"
           }
         }
       }
@@ -781,10 +1051,28 @@
             "value" : "AutoHushについて"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush에 관하여"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sobre o AutoHush"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于 AutoHush"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關於 AutoHush"
           }
         }
       }
@@ -828,10 +1116,28 @@
             "value" : "詳細"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "고급"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avançado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高级"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "進階"
           }
         }
       }
@@ -875,10 +1181,28 @@
             "value" : "%@のオートメーションへのアクセスを許可…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 자동화 접근 허용…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permitir Acesso de Automação para %@…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许 %@ 的“自动化”权限…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允許 %@ 的「自動化」權限⋯"
           }
         }
       }
@@ -922,10 +1246,28 @@
             "value" : "オーディオ録音へのアクセスを許可…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오 녹음 접근 허용…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permitir Acesso à Gravação de Áudio…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许录音权限…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允許錄音權限⋯"
           }
         }
       }
@@ -968,10 +1310,28 @@
             "value" : "AppはmacOSに再生中と伝えている間は再生中として扱われ、伝えなくなると、オーディオが開いたままでも一時停止中として扱われます。macOSに何も伝えないAppは、オーディオが開いている間は再生中として扱われます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 macOS에 재생 중이라고 알리는 동안에는 재생 중으로 간주되고, 알리지 않게 되면 오디오가 열려 있어도 일시 정지된 것으로 간주됩니다. macOS에 아무것도 알리지 않는 앱은 오디오가 열려 있는 동안 재생 중으로 간주됩니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um app conta como tocando enquanto informa ao macOS que está tocando, e como pausado assim que para, mesmo com o áudio ainda aberto. Apps que nunca informam o macOS contam enquanto o áudio está aberto."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 告知 macOS 正在播放时视为播放中，停止告知后即视为已暂停，即使音频仍处于打开状态。从不告知 macOS 的 App 在音频打开期间视为播放中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 告知 macOS 正在播放時視為播放中，停止告知後即視為已暫停，即使音訊仍開啟。從不告知 macOS 的 App 會在音訊開啟期間視為播放中。"
           }
         }
       }
@@ -1014,10 +1374,28 @@
             "value" : "ほかのすべてのAppが停止したあとの追加の待ち時間です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 모든 앱이 정지한 후의 추가 대기 시간입니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um atraso extra depois que todos os outros apps pararem."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有其他 App 停止后的额外延迟。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有其他 App 停止後的額外延遲。"
           }
         }
       }
@@ -1060,10 +1438,28 @@
             "value" : "AntiDotモード"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 모드"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo AntiDot"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 模式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 模式"
           }
         }
       }
@@ -1106,10 +1502,28 @@
             "value" : "オーディオが開いているAppは、一時停止中でも再生中として扱われます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오가 열려 있는 앱은 일시 정지되어 있어도 재생 중으로 간주됩니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Qualquer app com o áudio aberto conta como tocando, mesmo pausado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任何打开音频的 App 都会视为播放中，即使已暂停。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任何開啟音訊的 App 都會視為播放中，即使已暫停。"
           }
         }
       }
@@ -1153,10 +1567,28 @@
             "value" : "App"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
           }
         }
       }
@@ -1199,10 +1631,28 @@
             "value" : "オーディオを再生したAppがここに表示されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오를 재생한 앱이 여기에 표시됩니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Os apps aparecem aqui depois de reproduzirem áudio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放过音频的 App 会显示在这里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放過音訊的 App 會顯示在這裡。"
           }
         }
       }
@@ -1246,10 +1696,28 @@
             "value" : "音楽を自動的に一時停止"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 자동 일시 정지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar Música Automaticamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停音樂"
           }
         }
       }
@@ -1293,10 +1761,28 @@
             "value" : "自動一時停止はオフです"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동 일시 정지가 꺼져 있음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A pausa automática está desativada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停已关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停已關閉"
           }
         }
       }
@@ -1340,10 +1826,28 @@
             "value" : "自動一時停止は%@オフです"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 자동 일시 정지가 꺼져 있음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A pausa automática está desativada %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停已关闭%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停已關閉%@"
           }
         }
       }
@@ -1387,10 +1891,28 @@
             "value" : "自動一時停止: オフ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동 일시 정지: 끔"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: desativada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停：关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停：關閉"
           }
         }
       }
@@ -1434,10 +1956,28 @@
             "value" : "自動一時停止: %@オフ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동 일시 정지: %@ 끔"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: desativada %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停：关闭%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停：關閉%@"
           }
         }
       }
@@ -1481,10 +2021,28 @@
             "value" : "自動一時停止: オン"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동 일시 정지: 켬"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: ativada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动暂停：开启"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動暫停：開啟"
           }
         }
       }
@@ -1528,10 +2086,28 @@
             "value" : "AutoHush %@が利用可能です"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ 사용 가능"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush %@ Está Disponível"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ 现已推出"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ 現已推出"
           }
         }
       }
@@ -1575,10 +2151,28 @@
             "value" : "AutoHush %@は最新です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@은(는) 최신 버전입니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush %@ está atualizado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ 已是最新版本。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ 已是最新版本。"
           }
         }
       }
@@ -1622,10 +2216,28 @@
             "value" : "AutoHushの診断"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 진단"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diagnóstico do AutoHush"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 诊断"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 診斷"
           }
         }
       }
@@ -1669,10 +2281,28 @@
             "value" : "AutoHushは最新です"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 최신 버전임"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush Está Atualizado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 已是最新版本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 已是最新版本"
           }
         }
       }
@@ -1716,10 +2346,28 @@
             "value" : "AutoHush: 機能が制限されています"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 기능 제한됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: funcionamento limitado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：功能受限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：功能受限"
           }
         }
       }
@@ -1763,10 +2411,28 @@
             "value" : "AutoHush: エラー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 오류"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: erro"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：发生错误"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：發生錯誤"
           }
         }
       }
@@ -1810,10 +2476,28 @@
             "value" : "AutoHush: 監視中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 모니터링 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: monitorando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在监控"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在監控"
           }
         }
       }
@@ -1857,10 +2541,28 @@
             "value" : "AutoHush: 音楽を再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 음악 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在播放音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在播放音樂"
           }
         }
       }
@@ -1904,10 +2606,28 @@
             "value" : "AutoHush: 音楽はほかのデバイスで再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 다른 기기에서 음악 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música tocando em outro dispositivo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：音乐正在其他设备上播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：音樂正在其他裝置上播放"
           }
         }
       }
@@ -1951,10 +2671,28 @@
             "value" : "AutoHush: 音楽を一時停止中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 음악 일시 정지됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música pausada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：音乐已暂停"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：音樂已暫停"
           }
         }
       }
@@ -1998,10 +2736,28 @@
             "value" : "AutoHush: 許可が必要です"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 권한 필요"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: precisa de permissão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：需要权限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：需要權限"
           }
         }
       }
@@ -2045,10 +2801,28 @@
             "value" : "AutoHush: 音楽は再生されていません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 재생 중인 음악 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: nenhuma música tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：没有播放音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：沒有播放音樂"
           }
         }
       }
@@ -2092,10 +2866,28 @@
             "value" : "AutoHush: 起動中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: 시작 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: iniciando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在启动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush：正在啟動"
           }
         }
       }
@@ -2138,10 +2930,28 @@
             "value" : "今すぐ確認"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 확인"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar Agora"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即检查"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即檢查"
           }
         }
       }
@@ -2185,10 +2995,28 @@
             "value" : "アップデートを確認…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트 확인…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar Atualizações…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查更新…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查更新項目⋯"
           }
         }
       }
@@ -2231,10 +3059,28 @@
             "value" : "アップデートを自動的に確認"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동으로 업데이트 확인"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar atualizações automaticamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动检查更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動檢查更新項目"
           }
         }
       }
@@ -2278,10 +3124,28 @@
             "value" : "確認中…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인 중…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificando…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在檢查⋯"
           }
         }
       }
@@ -2325,10 +3189,28 @@
             "value" : "無視するAppを選択"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시할 앱 선택"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha um App para Ignorar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择要忽略的 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇要忽略的 App"
           }
         }
       }
@@ -2371,10 +3253,28 @@
             "value" : "音楽を一時停止させるAppは「App」タブで選択します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악을 일시 정지시킬 앱은 앱 탭에서 선택하십시오."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha quais apps pausam sua música na aba Apps."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“App”标签页中选择哪些 App 会暂停音乐。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請在「App」標籤頁中選擇哪些 App 會暫停音樂。"
           }
         }
       }
@@ -2418,10 +3318,28 @@
             "value" : "クリックすると無視をやめます"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱을 클릭하면 더 이상 무시하지 않습니다"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clique em um app para deixar de ignorá-lo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按 App 以停止忽略"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下 App 以停止忽略"
           }
         }
       }
@@ -2465,10 +3383,28 @@
             "value" : "ログイン項目を変更できませんでした: %@"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 항목을 변경할 수 없습니다: %@"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível alterar o item de início: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更改登录项：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法更改登入項目：%@"
           }
         }
       }
@@ -2512,10 +3448,28 @@
             "value" : "アップデートを確認できませんでした"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트를 확인할 수 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não Foi Possível Verificar Atualizações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法檢查更新項目"
           }
         }
       }
@@ -2559,10 +3513,28 @@
             "value" : "アップデートを確認できませんでした。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트를 확인할 수 없습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível verificar atualizações."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查更新。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法檢查更新項目。"
           }
         }
       }
@@ -2605,10 +3577,28 @@
             "value" : "再生中のAppの検出方法"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재생 중인 앱 감지 방법"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detectar apps tocando por"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测播放中 App 的方式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測播放中 App 的方式"
           }
         }
       }
@@ -2651,10 +3641,28 @@
             "value" : "検出: オーディオレベル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지: 오디오 레벨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: níveis de áudio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测：音频电平"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測：音訊音量"
           }
         }
       }
@@ -2697,10 +3705,28 @@
             "value" : "検出: 開いているオーディオストリーム（オーディオレベルにアクセスできません）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지: 열린 오디오 스트림(오디오 레벨 접근 불가)"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: fluxos de áudio abertos (sem acesso aos níveis de áudio)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测：打开的音频流（无法访问音频电平）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測：開啟的音訊串流（無法取用音訊音量）"
           }
         }
       }
@@ -2743,10 +3769,28 @@
             "value" : "検出: 開いているオーディオストリーム（レベルを確認中）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지: 열린 오디오 스트림(레벨 확인 중)"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: fluxos de áudio abertos (verificando os níveis)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测：打开的音频流（正在验证电平）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測：開啟的音訊串流（正在驗證音量）"
           }
         }
       }
@@ -2789,10 +3833,28 @@
             "value" : "検出: 開いているオーディオストリームのみ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지: 열린 오디오 스트림만"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: somente fluxos de áudio abertos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测：仅限打开的音频流"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測：僅限開啟的音訊串流"
           }
         }
       }
@@ -2835,10 +3897,28 @@
             "value" : "検出: AppがmacOSに伝える情報"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지: 앱이 macOS에 알리는 정보"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: o que os apps informam ao macOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测：App 告知 macOS 的信息"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測：App 告知 macOS 的資訊"
           }
         }
       }
@@ -2882,10 +3962,28 @@
             "value" : "診断…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "진단…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diagnóstico…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "诊断…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "診斷⋯"
           }
         }
       }
@@ -2928,10 +4026,28 @@
             "value" : "すべてのAppが削除され、オフにしたAppでも再び音楽が一時停止するようになります。Appはオーディオを再生すると再び表示されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 앱이 제거되며, 끈 앱도 다시 음악을 일시 정지시킵니다. 앱은 오디오를 재생하면 다시 나타납니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Todos os apps serão removidos, e os que você desativou voltarão a pausar sua música. Os apps reaparecem conforme reproduzem áudio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有 App 都会被移除，你关闭的 App 也会再次暂停音乐。App 播放音频时会重新出现。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有 App 都會被移除，你關閉的 App 也會再次暫停音樂。App 播放音訊時會重新出現。"
           }
         }
       }
@@ -2974,10 +4090,28 @@
             "value" : "再開時のフェードイン"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재개 시 페이드 인"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fade-in ao retomar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续播放时淡入"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續播放時淡入"
           }
         }
       }
@@ -3020,10 +4154,28 @@
             "value" : "一時停止前のフェードアウト"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일시 정지 전 페이드 아웃"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fade-out antes de pausar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停前淡出"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫停前淡出"
           }
         }
       }
@@ -3067,10 +4219,28 @@
             "value" : "一般"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일반"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geral"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般"
           }
         }
       }
@@ -3114,10 +4284,28 @@
             "value" : "GitHubからHTTPステータス%lldが返されました。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub가 HTTP 상태 %lld(으)로 응답했습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O GitHub respondeu com o status HTTP %lld."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 返回了 HTTP 状态码 %lld。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 回傳了 HTTP 狀態碼 %lld。"
           }
         }
       }
@@ -3161,10 +4349,28 @@
             "value" : "GitHubのリリース情報を読み込めませんでした。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub의 릴리스 정보를 읽을 수 없습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível ler as informações da versão no GitHub."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取 GitHub 的发布信息。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取 GitHub 的發佈資訊。"
           }
         }
       }
@@ -3208,10 +4414,28 @@
             "value" : "%@を制御するには、オートメーションへのアクセスを許可してください"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 제어하려면 자동화 접근을 허용하십시오"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conceda acesso de Automação para controlar %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请允许“自动化”权限以控制 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請允許「自動化」權限以控制 %@"
           }
         }
       }
@@ -3254,10 +4478,28 @@
             "value" : "音を測定しないため、紫色の録音インジケータが表示されません。検出の精度は下がり、一時停止中のAppによって音楽が一時停止したままになることがあります。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소리를 측정하지 않으므로 보라색 녹음 표시기가 나타나지 않습니다. 감지 정확도가 낮아져 일시 정지된 일부 앱 때문에 음악이 계속 일시 정지될 수 있습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oculta o indicador roxo de gravação ao nunca medir o som. A detecção é menos precisa: alguns apps pausados podem manter sua música pausada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从不测量声音，因此不会出现紫色录音指示器。检测不太精确：部分已暂停的 App 可能会让音乐一直暂停。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從不測量聲音，因此不會出現紫色錄音指示器。偵測較不精確：部分已暫停的 App 可能會讓音樂持續暫停。"
           }
         }
       }
@@ -3300,10 +4542,28 @@
             "value" : "ほかのAppの音が聞こえ続ける必要がある時間です。App自身が鳴らす短い音を除外します。システムの通知音は常に無視されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱의 소리가 들려야 하는 시간입니다. 앱 자체에서 나는 짧은 소리를 걸러냅니다. 시스템 알림음은 항상 무시됩니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quanto tempo outro app precisa estar audível. Filtra sons curtos dos próprios apps; sons de notificação do sistema são sempre ignorados."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 需持续发出声音的时间。可过滤 App 本身发出的短暂声音；系统通知音一律忽略。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 需持續發出聲音的時間。可過濾 App 本身發出的短暫聲音；系統通知音一律忽略。"
           }
         }
       }
@@ -3346,10 +4606,28 @@
             "value" : "ほかのAppが無音である必要がある時間です。曲やビデオの合間の無音をつなぎます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱이 조용해야 하는 시간입니다. 트랙과 비디오 사이의 공백을 메웁니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quanto tempo outro app precisa ficar em silêncio. Cobre as pausas entre faixas e vídeos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 需保持无声的时间。可衔接曲目与视频之间的空档。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 需保持無聲的時間。可銜接曲目與影片之間的空檔。"
           }
         }
       }
@@ -3392,10 +4670,28 @@
             "value" : "一時停止する前に音楽をフェードアウトする時間です。0にするとすぐに一時停止します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일시 정지하기 전에 음악이 페이드 아웃되는 시간입니다. 0이면 즉시 일시 정지합니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quanto tempo a música leva para sumir antes de pausar. 0 pausa na hora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音乐暂停前淡出的时间。设为 0 会立即暂停。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音樂暫停前淡出的時間。設為 0 會立即暫停。"
           }
         }
       }
@@ -3438,10 +4734,28 @@
             "value" : "再開したあと、音楽が元の音量に戻るまでの時間です。0にすると元の音量ですぐに再開します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재개 후 음악이 원래 음량으로 돌아오는 시간입니다. 0이면 원래 음량으로 바로 재개합니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quanto tempo a música leva para voltar ao volume ao ser retomada. 0 retoma no volume normal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续播放后音乐恢复原来音量的时间。设为 0 会直接以原来音量继续播放。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續播放後音樂恢復原本音量的時間。設為 0 會直接以原本音量繼續播放。"
           }
         }
       }
@@ -3485,10 +4799,28 @@
             "value" : "無視"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略"
           }
         }
       }
@@ -3531,10 +4863,28 @@
             "value" : "ほかのAppを無視…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱 무시…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorar Outro App…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略其他 App…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略其他 App⋯"
           }
         }
       }
@@ -3578,10 +4928,28 @@
             "value" : "無視するApp"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시된 앱"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps Ignorados"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App"
           }
         }
       }
@@ -3625,10 +4993,28 @@
             "value" : "無視するApp: %@"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시된 앱: %@"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps ignorados: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App：%@"
           }
         }
       }
@@ -3672,10 +5058,28 @@
             "value" : "無視するApp: なし"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시된 앱: 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps ignorados: nenhum"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App：无"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App：無"
           }
         }
       }
@@ -3719,10 +5123,28 @@
             "value" : "無視 — 音楽は再生を続けます"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시됨 — 음악이 계속 재생됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorado — a música continua tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略 — 音乐会继续播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略 — 音樂會繼續播放"
           }
         }
       }
@@ -3766,10 +5188,28 @@
             "value" : "あとで"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais Tarde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍後"
           }
         }
       }
@@ -3812,10 +5252,28 @@
             "value" : "ログイン時に開く"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 시 열기"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir ao iniciar sessão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录时打开"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登入時打開"
           }
         }
       }
@@ -3859,10 +5317,28 @@
             "value" : "オーディオレベルの測定"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오 레벨 측정"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Medição dos níveis de áudio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测量音频电平"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "測量音訊音量"
           }
         }
       }
@@ -3905,10 +5381,28 @@
             "value" : "再生を監視中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미디어 재생 모니터링 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monitorando a reprodução"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在监控媒体播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在監控媒體播放"
           }
         }
       }
@@ -3951,10 +5445,28 @@
             "value" : "最も正確です。一時停止したビデオは、無音になるとすぐに対象外になります。AutoHushが測定している間、macOSは紫色の録音インジケータを表示します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가장 정확합니다. 일시 정지된 비디오는 소리가 멈추는 즉시 제외됩니다. AutoHush가 측정하는 동안 macOS에 보라색 녹음 표시기가 나타납니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais preciso: um vídeo pausado deixa de contar assim que fica em silêncio. O macOS mostra o indicador roxo de gravação enquanto o AutoHush mede."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最精确：已暂停的视频一旦无声便不再计入。AutoHush 测量时，macOS 会显示紫色录音指示器。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色錄音指示器。"
           }
         }
       }
@@ -3997,10 +5509,28 @@
             "value" : "音楽を再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在播放音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在播放音樂"
           }
         }
       }
@@ -4043,10 +5573,28 @@
             "value" : "音楽はほかのデバイスで再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 기기에서 음악 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A música está tocando em outro dispositivo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音乐正在其他设备上播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音樂正在其他裝置上播放"
           }
         }
       }
@@ -4090,10 +5638,28 @@
             "value" : "音楽を一時停止中 — %@"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 일시 정지됨 — %@"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música pausada — %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音乐已暂停 — %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音樂已暫停 — %@"
           }
         }
       }
@@ -4136,10 +5702,28 @@
             "value" : "音楽を一時停止中 — ほかのAppが再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 일시 정지됨 — 다른 앱이 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música pausada — outro app está tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音乐已暂停 — 另一个 App 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音樂已暫停 — 另一個 App 正在播放"
           }
         }
       }
@@ -4183,10 +5767,28 @@
             "value" : "%@の再生中も音楽を一時停止しない"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 재생 시 음악을 일시 정지하지 않음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nunca Pausar Música por %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 播放时从不暂停音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 播放時永不暫停音樂"
           }
         }
       }
@@ -4230,10 +5832,28 @@
             "value" : "AutoHushのリリースはまだGitHubで公開されていません。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 GitHub에 공개된 AutoHush 버전이 없습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma versão do AutoHush foi publicada no GitHub ainda."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 上尚未发布任何 AutoHush 版本。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub 上尚未發佈任何 AutoHush 版本。"
           }
         }
       }
@@ -4277,10 +5897,28 @@
             "value" : "リリースはまだありません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 릴리스 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma Versão Ainda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚无发布版本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚無發佈版本"
           }
         }
       }
@@ -4324,10 +5962,28 @@
             "value" : "現在、ほかのAppのオーディオは検出されていません。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 다른 앱의 오디오가 감지되지 않습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhum áudio de outros apps detectado no momento."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前未检测到其他 App 的音频。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前沒有偵測到其他 App 的音訊。"
           }
         }
       }
@@ -4370,10 +6026,28 @@
             "value" : "音楽は再生されていません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재생 중인 음악 없음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma música tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有播放音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有播放音樂"
           }
         }
       }
@@ -4417,10 +6091,28 @@
             "value" : "まだリリースは公開されていません。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 공개된 버전이 없습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma versão foi publicada ainda."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未发布任何版本。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未發佈任何版本。"
           }
         }
       }
@@ -4463,10 +6155,28 @@
             "value" : "ログイン項目の設定を開く…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 항목 설정 열기…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Ajustes de Itens de Início…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开登录项设置…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開登入項目設定⋯"
           }
         }
       }
@@ -4510,10 +6220,28 @@
             "value" : "リリースページを開く"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "릴리스 페이지 열기"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Página da Versão"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开发布页面"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開發佈頁面"
           }
         }
       }
@@ -4557,10 +6285,28 @@
             "value" : "開いているオーディオストリームのみ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "열린 오디오 스트림만"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Somente fluxos de áudio abertos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅限打开的音频流"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅限開啟的音訊串流"
           }
         }
       }
@@ -4603,10 +6349,28 @@
             "value" : "一時停止までの時間"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 일시 정지까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar a música após"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停音乐前等待"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫停音樂前等待"
           }
         }
       }
@@ -4649,10 +6413,28 @@
             "value" : "音楽を一時停止"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 일시 정지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa a Música"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂停音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫停音樂"
           }
         }
       }
@@ -4696,10 +6478,28 @@
             "value" : "ほかのAppがオーディオを再生している間は音楽を一時停止し、終わると再開します。%@に対応しています。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱이 오디오를 재생하는 동안 음악을 일시 정지하고, 끝나면 다시 재생합니다. %@와(과) 함께 작동합니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa sua música enquanto outros apps reproduzem áudio e a retoma depois. Funciona com %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在其他 App 播放音频时暂停你的音乐，并在之后继续播放。支持 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在其他 App 播放音訊時暫停你的音樂，並在之後繼續播放。支援 %@。"
           }
         }
       }
@@ -4742,10 +6542,28 @@
             "value" : "これより小さい音は無音として扱われます。オーディオレベルを測定する場合（AntiDotモードがオフのとき）にのみ使用されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이보다 작은 소리는 무음으로 간주됩니다. 오디오 레벨을 측정할 때만(AntiDot 모드 끔) 사용됩니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Áudio mais baixo conta como silêncio. Usado apenas ao medir os níveis de áudio (modo AntiDot desativado)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比此更小的声音会视为无声。仅在测量音频电平时使用（AntiDot 模式关闭）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比此更小的聲音會視為無聲。僅在測量音訊音量時使用（AntiDot 模式關閉）。"
           }
         }
       }
@@ -4789,10 +6607,28 @@
             "value" : "AutoHushを終了"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 종료"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Encerrar AutoHush"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出 AutoHush"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束 AutoHush"
           }
         }
       }
@@ -4835,10 +6671,28 @@
             "value" : "リストから削除"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록에서 제거"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover da Lista"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从列表中移除"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從列表中移除"
           }
         }
       }
@@ -4881,10 +6735,28 @@
             "value" : "リストをリセット"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록 재설정"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir Lista"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置列表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置列表"
           }
         }
       }
@@ -4927,10 +6799,28 @@
             "value" : "リストをリセット…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록 재설정…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir Lista…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置列表…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置列表⋯"
           }
         }
       }
@@ -4973,10 +6863,28 @@
             "value" : "Appのリストをリセットしますか?"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 목록을 재설정하겠습니까?"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir a lista de apps?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要重置 App 列表吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要重置 App 列表嗎？"
           }
         }
       }
@@ -5019,10 +6927,28 @@
             "value" : "デフォルトに戻す"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기본값 복원"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar Padrões"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认设置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回復預設值"
           }
         }
       }
@@ -5065,10 +6991,28 @@
             "value" : "再開までの時間"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 재개까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retomar a música após"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续播放音乐前等待"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續播放音樂前等待"
           }
         }
       }
@@ -5112,10 +7056,28 @@
             "value" : "再試行"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재시도"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tentar Novamente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重試"
           }
         }
       }
@@ -5159,10 +7121,28 @@
             "value" : "設定…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定⋯"
           }
         }
       }
@@ -5205,10 +7185,28 @@
             "value" : "無音のしきい値"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무음 임계값"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limite de silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无声阈值"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無聲門檻"
           }
         }
       }
@@ -5251,10 +7249,28 @@
             "value" : "サービスを開始しています"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서비스 시작 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciando serviços"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在启动服务"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在啟動服務"
           }
         }
       }
@@ -5298,10 +7314,28 @@
             "value" : "Appのバージョンが不明です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 버전을 알 수 없습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A versão do app é desconhecida."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 的版本未知。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 的版本不明。"
           }
         }
       }
@@ -5344,10 +7378,28 @@
             "value" : "停止と見なすまでの時間"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱을 정지된 것으로 간주하기까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Considerar um app parado após"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视为 App 已停止前等待"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視為 App 已停止前等待"
           }
         }
       }
@@ -5391,10 +7443,28 @@
             "value" : "オフにする期間"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일시적으로 끄기"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar Por"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫時關閉"
           }
         }
       }
@@ -5437,10 +7507,28 @@
             "value" : "Appをオフにすると、そのAppが音を出しても音楽は再生を続けます。Appを右クリックするとリストから削除できます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱을 끄면 해당 앱에서 소리가 나도 음악이 계속 재생됩니다. 목록에서 제거하려면 앱을 오른쪽 클릭하십시오."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desative um app para manter sua música tocando enquanto ele emite som. Clique com o botão direito em um app para removê-lo da lista."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭 App 后，它发出声音时音乐会继续播放。右键点按 App 可将其从列表中移除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉 App 後，它發出聲音時音樂會繼續播放。在 App 上按一下右鍵即可將其從列表中移除。"
           }
         }
       }
@@ -5484,10 +7572,28 @@
             "value" : "%@オフになっています。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 꺼져 있습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativada %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已关闭%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已關閉%@。"
           }
         }
       }
@@ -5531,10 +7637,28 @@
             "value" : "明日まで"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내일까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Até Amanhã"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直到明天"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直到明天"
           }
         }
       }
@@ -5578,10 +7702,28 @@
             "value" : "アップデート"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualização"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
           }
         }
       }
@@ -5625,10 +7767,28 @@
             "value" : "アップデートあり: %@…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트 가능: %@…"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualização Disponível: %@…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有可用的更新：%@…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有可用的更新：%@⋯"
           }
         }
       }
@@ -5671,10 +7831,28 @@
             "value" : "アップデート"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualizações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新項目"
           }
         }
       }
@@ -5718,10 +7896,28 @@
             "value" : "バージョン%@が利用可能です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %@을(를) 사용할 수 있습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A versão %@ está disponível."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 现已推出。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已有版本 %@ 可用。"
           }
         }
       }
@@ -5765,10 +7961,28 @@
             "value" : "警告"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "경고"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aviso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告"
           }
         }
       }
@@ -5812,10 +8026,28 @@
             "value" : "AppがmacOSに伝える情報"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 macOS에 알리는 정보"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O que os apps informam ao macOS"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 告知 macOS 的信息"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 告知 macOS 的資訊"
           }
         }
       }
@@ -5859,10 +8091,28 @@
             "value" : "最新バージョン（%@）を使用しています。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최신 버전(%@)을 사용 중입니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão mais recente, %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你使用的是最新版本 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你使用的是最新版本 %@。"
           }
         }
       }
@@ -5906,10 +8156,28 @@
             "value" : "現在のバージョンは%@です。GitHubから新しいバージョンをダウンロードし、「アプリケーション」フォルダのAutoHushを置き換えてください。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 버전은 %@입니다. GitHub에서 새 버전을 다운로드하여 응용 프로그램 폴더의 AutoHush를 교체하십시오."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão %@. Baixe a nova no GitHub e substitua o AutoHush na sua pasta Aplicativos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你当前使用的是版本 %@。请从 GitHub 下载新版本，并替换“应用程序”文件夹中的 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。請從 GitHub 下載新版本，並替換「應用程式」檔案夾中的 AutoHush。"
           }
         }
       }
@@ -5953,10 +8221,28 @@
             "value" : "現在のバージョンは%@です。Homebrewでアップデートしてください:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 버전은 %@입니다. Homebrew로 업데이트하십시오:"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão %@. Atualize com o Homebrew:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你当前使用的是版本 %@。请使用 Homebrew 更新："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。請使用 Homebrew 更新："
           }
         }
       }
@@ -6000,10 +8286,28 @@
             "value" : "ほかのAppが再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱이 재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "outro app está tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个 App 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一個 App 正在播放"
           }
         }
       }
@@ -6047,10 +8351,28 @@
             "value" : "macOSに再生中と伝えていません"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS에 재생 중이라고 알리지 않음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "não informa ao macOS que está tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未告知 macOS 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未告知 macOS 正在播放"
           }
         }
       }
@@ -6094,10 +8416,28 @@
             "value" : "出力オープン、無音"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력 열림, 무음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "saída aberta, em silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出已打开，无声"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出已開啟，無聲"
           }
         }
       }
@@ -6141,10 +8481,28 @@
             "value" : "出力オープン、無音、無視"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력 열림, 무음, 무시됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "saída aberta, em silêncio, ignorado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出已打开，无声，已忽略"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出已開啟，無聲，已忽略"
           }
         }
       }
@@ -6188,10 +8546,28 @@
             "value" : "再生中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재생 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放中"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放中"
           }
         }
       }
@@ -6235,10 +8611,28 @@
             "value" : "再生中、無視"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재생 중, 무시됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tocando, ignorado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放中，已忽略"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放中，已忽略"
           }
         }
       }
@@ -6282,10 +8676,28 @@
             "value" : "無音"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무음"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "silêncio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无声"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無聲"
           }
         }
       }
@@ -6329,10 +8741,28 @@
             "value" : "開始中"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작 중"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "começando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刚开始"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剛開始"
           }
         }
       }
@@ -6376,10 +8806,28 @@
             "value" : "開始中、無視"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작 중, 무시됨"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "começando, ignorado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刚开始，已忽略"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剛開始，已忽略"
           }
         }
       }
@@ -6423,10 +8871,28 @@
             "value" : "macOSに再生中と伝えています"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS에 재생 중이라고 알림"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "informa ao macOS que está tocando"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "告知 macOS 正在播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "告知 macOS 正在播放"
           }
         }
       }
@@ -6470,10 +8936,28 @@
             "value" : "%@まで"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até as %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至 %@"
           }
         }
       }
@@ -6523,10 +9007,28 @@
             "value" : "%1$@の%2$@まで"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até %1$@ às %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至%1$@ %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至%1$@ %2$@"
           }
         }
       }
@@ -6570,10 +9072,28 @@
             "value" : "明日の%@まで"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "내일 %@까지"
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até amanhã às %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至明天 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至明天 %@"
           }
         }
       }

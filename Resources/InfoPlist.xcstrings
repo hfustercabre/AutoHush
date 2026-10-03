@@ -47,10 +47,28 @@
             "value" : "AutoHushはSpotifyを一時停止して再開します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 Spotify를 일시 정지하고 다시 재생합니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush pausa e retoma o Spotify."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 会暂停并继续播放 Spotify。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會暫停並繼續播放 Spotify。"
           }
         }
       }
@@ -101,10 +119,28 @@
             "value" : "AutoHushはほかのAppの音量を測定し、実際に音が聞こえるときだけ音楽を一時停止します。オーディオが録音、保存、送信されることはありません。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush는 다른 앱의 소리 크기를 측정하여 실제로 소리가 들릴 때만 음악을 일시 정지합니다. 오디오는 녹음되거나 저장되거나 어디로도 전송되지 않습니다."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush mede o volume dos outros apps para só pausar sua música quando há som audível. O áudio nunca é gravado, armazenado nem enviado a lugar algum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 会测量其他 App 的音量，只在确实听得到声音时才暂停你的音乐。音频绝不会被录制、存储或发送到任何地方。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會測量其他 App 的音量，只在確實聽得到聲音時才暫停你的音樂。音訊絕不會被錄製、儲存或傳送到任何地方。"
           }
         }
       }
@@ -155,10 +191,28 @@
             "value" : "Copyright © 2026 hfc. MITライセンス。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT 라이선스."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. Licença MIT."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc。MIT 许可证。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc。MIT 授權。"
           }
         }
       }
