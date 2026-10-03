@@ -4,9 +4,8 @@ import AppKit
 ///
 /// Every state uses the same tile; only the bars change, and they stand on
 /// one baseline, so a change of state looks like the same bars moving. The
-/// icon is drawn in code on an 18 × 18 pt grid (no image files) and used as a
-/// template image: macOS tints it for light and dark menu bars and dims it
-/// while auto-pause is off.
+/// icon is drawn in code (no image files) and used as a template image: macOS
+/// tints it for light and dark menu bars and dims it while auto-pause is off.
 enum MenuBarIcon: CaseIterable, Sendable {
     /// Sound bars: music is playing and AutoHush is listening.
     case playing
@@ -22,6 +21,7 @@ enum MenuBarIcon: CaseIterable, Sendable {
     /// Bars and an exclamation mark: something needs the user's attention.
     case attention
 
+    /// The image's size; the tile fills it.
     static let size = NSSize(width: 18, height: 18)
 
     func image(accessibilityDescription: String? = nil) -> NSImage {
@@ -35,16 +35,21 @@ enum MenuBarIcon: CaseIterable, Sendable {
         return image
     }
 
-    // MARK: - Drawing (points, y pointing down)
+    // MARK: - Drawing (on an 18-unit design grid, y pointing down)
 
     /// The rounded square the bars are cut out of.
     private static let tile = CGRect(x: 1.2, y: 1.2, width: 15.6, height: 15.6)
     private static let tileCornerRadius: CGFloat = 4.2
-    /// The bars are designed on the full 18 pt grid and drawn at this scale,
-    /// centred, so they sit inside the tile with room around them.
-    private static let glyphScale: CGFloat = 0.75
+    /// The bars are drawn at this scale, centred on the grid, so they sit
+    /// inside the tile with room around them.
+    private static let glyphScale: CGFloat = 0.82
 
     private func draw(in context: CGContext) {
+        // The design grid, scaled so the tile fills the image.
+        let scale = Self.size.width / Self.tile.width
+        context.scaleBy(x: scale, y: scale)
+        context.translateBy(x: -Self.tile.minX, y: -Self.tile.minY)
+
         // A transparency layer keeps the cut-outs inside the tile, rather
         // than through whatever the icon is drawn on.
         context.beginTransparencyLayer(auxiliaryInfo: nil)
@@ -58,7 +63,7 @@ enum MenuBarIcon: CaseIterable, Sendable {
         context.setStrokeColor(.black)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        let center = Self.size.width / 2
+        let center = Self.tile.midX
         context.translateBy(x: center, y: center)
         context.scaleBy(x: Self.glyphScale, y: Self.glyphScale)
         context.translateBy(x: -center, y: -center)
@@ -66,7 +71,7 @@ enum MenuBarIcon: CaseIterable, Sendable {
         context.endTransparencyLayer()
     }
 
-    /// What each state cuts out of the tile, on the 18 pt grid.
+    /// What each state cuts out of the tile, on the design grid.
     private var cutouts: [Cutout] {
         switch self {
         case .playing:
