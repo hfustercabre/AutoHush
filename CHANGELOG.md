@@ -31,9 +31,9 @@ This project follows [Semantic Versioning](https://semver.org/).
     module, with shared fakes in `AutoHushTestSupport`. `AutoHushError` is
     now `MusicPlayerError`.
 - **`measure-volume-curve` is a package tool** (`swift run
-  measure-volume-curve`) that uses the engine's tap meter (which now also
-  reports the average level) and the supported players, replacing
-  `Scripts/measure-volume-curve.swift`.
+  measure-volume-curve`, in `Tools/`) that uses the engine's tap meter
+  (which now also reports the average level) and the supported players,
+  replacing `Scripts/measure-volume-curve.swift`.
 - The engine no longer uses AppKit: opening System Settings moved to the app.
 - Less duplicated code: the timing defaults are defined once (in
   `TimingSettings`), and each supported player is listed once.

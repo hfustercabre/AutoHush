@@ -226,7 +226,7 @@ AutoHush (executable: the entry point only)
        ├─ AutoHushPlayers   the supported music players
        │    └─ SpotifySupport   one <App>Support module per player, all in PlayersSupport/
        └─ AutoHushKit       the engine: no user interface, no specific player
-measure-volume-curve (executable) → AutoHushPlayers, AutoHushKit
+measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 ```
 
 ```text
@@ -259,10 +259,11 @@ Sources/
   AutoHushPlayers/       SupportedPlayers (the list of players, and the default one)
   PlayersSupport/        one module per music player:
     SpotifySupport/      SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
-  MeasureVolumeCurve/    the measuring tool
 Tests/
   AutoHushAppTests/  AutoHushKitTests/  PlayersSupport/SpotifySupportTests/   (each mirrors its module)
   AutoHushTestSupport/   fakes shared by the test modules
+Tools/
+  MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)
 Resources/               Info.plist and entitlements, assembled into the .app by Scripts/build-app.sh
 ```
 
