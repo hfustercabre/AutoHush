@@ -145,7 +145,7 @@ final class MonitoringPipeline {
         monitor.setIgnoredSources(ids)
     }
 
-    func activeAudioReport() -> [String] {
+    func activeAudioReport() -> [ActiveAudioReport.Entry] {
         monitor.activeAudioReport()
     }
 }

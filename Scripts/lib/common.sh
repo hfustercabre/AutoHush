@@ -10,6 +10,9 @@ INFO_PLIST="$PROJECT_DIR/Resources/Info.plist"
 ENTITLEMENTS="$PROJECT_DIR/Resources/$APP_NAME.entitlements"
 # Icon Composer document; compiled into the app by Scripts/build-app.sh.
 APP_ICON="$PROJECT_DIR/Resources/$APP_NAME.icon"
+# The app's text in every language; Scripts/build-app.sh adds the strings the
+# code uses and compiles it, with Resources/InfoPlist.xcstrings, into the app.
+STRING_CATALOG="$PROJECT_DIR/Resources/Localizable.xcstrings"
 # Created by Scripts/create-signing-certificate.sh.
 SELF_SIGNED_IDENTITY="AutoHush Self-Signed"
 

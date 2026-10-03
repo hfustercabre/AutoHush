@@ -246,7 +246,7 @@ Sources/
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
                          PowerAssertionReader, PlaybackSignals (AntiDot mode's judge),
-                         ActiveAudioReport (the Diagnostics lines), DetectionMethod (your choice),
+                         ActiveAudioReport (what Diagnostics shows), DetectionMethod (your choice),
                          DetectionMode (in effect), CoreAudio/ (process list, process taps and levels,
                          HAL helpers)
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (setting and snooze)
@@ -266,8 +266,10 @@ Tests/
   AutoHushTestSupport/   fakes shared by the test modules
 Tools/
   MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)
-Resources/               Info.plist, entitlements and AutoHush.icon (the app icon, an Icon Composer
-                         document), assembled into the .app by Scripts/build-app.sh
+Resources/               Info.plist, entitlements, AutoHush.icon (the app icon, an Icon Composer
+                         document) and the String Catalogs (Localizable.xcstrings: the app's text,
+                         InfoPlist.xcstrings: the permission prompts), assembled into the .app by
+                         Scripts/build-app.sh
 ```
 
 **Where things go:**
@@ -276,10 +278,10 @@ Resources/               Info.plist, entitlements and AutoHush.icon (the app ico
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
-- **Text people read** in the menu and Settings, including the text for the engine's states and choices, lives in the app (mostly `Main/StatusPresentation.swift`). The engine only writes the Diagnostics lines, which describe its own state.
+- **Text people read** lives in the app, never in the engine: the text for the engine's states and choices is mostly in `Main/StatusPresentation.swift`, and Diagnostics gets plain facts from the engine (`ActiveAudioReport`) that the app words. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Languages](#languages)). Logs stay in English.
 - **`General/`** folders stay small: only helpers several parts of a module need.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
-- **Tests** mirror their module's folders.
+- **Tests** mirror their module's folders; `AutoHushAppTests/Localization/` checks the String Catalogs.
 
 **Adding a music player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
@@ -303,6 +305,16 @@ The tests use mock CoreAudio, level meter, power assertion and player implementa
 The app icon is `Resources/AutoHush.icon`, made of one layer (`Assets/bars.svg`) on a background that changes with the light and dark appearance. Edit it in Icon Composer (it comes with Xcode) or by hand. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, render it with Icon Composer's `ictool`, which is inside the Icon Composer app bundle (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 
 `measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
+
+### Languages
+
+AutoHush shows the first of the Mac's preferred languages (System Settings → General → Language & Region) that it has, and English otherwise. The Applications list in that pane can also give AutoHush a language of its own. So far AutoHush has only English.
+
+- **Where the text lives:** `Resources/Localizable.xcstrings`, a String Catalog with all of the app's text, keyed by the English text; and `Resources/InfoPlist.xcstrings`, with the permission prompts and the copyright line from `Info.plist`.
+- **New text** needs no extra step: write it as `String(localized: "…", comment: "…")` or as a SwiftUI text. While building, the compiler lists every such string; `build-app.sh` adds new ones to `Localizable.xcstrings` and marks those no longer used as stale, as Xcode does, then compiles each language into the app (`<language>.lproj`).
+- **Adding a language:** open both catalogs in Xcode, add the language and translate (or edit the JSON), then build. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`) and that `InfoPlist.xcstrings` matches `Info.plist`.
+- **Trying a language:** quit AutoHush, then start it with `AutoHush.app/Contents/MacOS/AutoHush -AppleLanguages '(es)'`.
+- **Not translated:** logs, the measuring tool and the disk image's background stay in English.
 
 ### Signing and releases
 

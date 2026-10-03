@@ -11,11 +11,11 @@ struct DiagnosticsReportTests {
     func fullReport() {
         var status = AppStatus()
         status.detection = .audioLevel
-        status.autoPause = .snoozed(until: "15:30")
+        status.autoPause = .snoozed("until 15:30")
         status.ignoredApps = [AudioSource(id: "org.videolan.vlc", name: "VLC")]
 
         let text = DiagnosticsReport.text(
-            activeAudio: ["Google Chrome (com.google.Chrome) — playing (-20 dBFS)"],
+            activeAudio: [.init(id: "com.google.Chrome", name: "Google Chrome", state: .playing, evidence: .level(0.1))],
             status: status,
             detectionMethod: .audioLevels
         )
@@ -28,6 +28,21 @@ struct DiagnosticsReportTests {
 
             Ignored apps: VLC
             """)
+    }
+
+    @Test("each app's line says how AutoHush judges it, and why", arguments: [
+        (ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .starting), "org.videolan.vlc — starting"),
+        (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),
+         "Safari (com.apple.Safari) — output open, silent, ignored (silence)"),
+        (.init(id: "com.example.a", state: .playing, evidence: .announcing),
+         "com.example.a — playing (tells macOS it is playing)"),
+        (.init(id: "com.example.b", state: .silent, evidence: .notAnnouncing),
+         "com.example.b — output open, silent (not telling macOS it is playing)"),
+        (.init(id: "com.example.c", state: .playing, isIgnored: true, evidence: .level(0.1)),
+         "com.example.c — playing, ignored (-20 dBFS)"),
+    ])
+    func appLines(entry: ActiveAudioReport.Entry, line: String) {
+        #expect(DiagnosticsReport.line(for: entry) == line)
     }
 
     @Test("says when nothing plays, nothing is ignored, and AntiDot mode is on")

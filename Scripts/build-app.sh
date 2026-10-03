@@ -17,11 +17,14 @@ case "$BUILD_CONFIG" in
     debug)   PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Debug" ;;
     *)       fail "unknown configuration '$BUILD_CONFIG' (use release or debug)" ;;
 esac
+# Where the compiler lists each source file's localizable strings.
+STRINGS_DIR="$PROJECT_DIR/.build/localized-strings/$BUILD_CONFIG"
 
 step "Building $BUILD_CONFIG"
 cd "$PROJECT_DIR"
 HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
-    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME"
+    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME" \
+        -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$STRINGS_DIR"
 
 step "Assembling $APP_NAME.app"
 rm -rf "$APP_BUNDLE"
@@ -53,6 +56,44 @@ if xcrun --find actool >/dev/null 2>&1; then
     rm -f "$ICON_INFO"
 else
     note "warning: actool not found (it comes with Xcode); the app keeps the generic icon"
+fi
+
+# Text people read lives in String Catalogs (Resources/*.xcstrings). As Xcode
+# does, each build adds the strings the code uses to Localizable.xcstrings and
+# marks those it no longer uses as stale; then each translated language is
+# compiled into its .lproj folder. macOS shows the first of the user's
+# languages that AutoHush has, or else English (CFBundleDevelopmentRegion).
+# xcstringstool comes with Xcode.
+if xcrun --find xcstringstool >/dev/null 2>&1; then
+    step "Updating the string catalog"
+    # The compiler listed each source file's strings while building. A file
+    # without its own list (one sharing its name with another module's file)
+    # would make its strings look unused, so the catalog is then left alone.
+    STRINGSDATA=()
+    UNLISTED=()
+    while IFS= read -r source; do
+        data="$STRINGS_DIR/$(basename "$source" .swift).stringsdata"
+        if [[ -f "$data" && "$(plutil -extract source raw -o - "$data" 2>/dev/null)" == *"/${source#"$PROJECT_DIR/"}" ]]; then
+            STRINGSDATA+=(--stringsdata "$data")
+        else
+            UNLISTED+=("${source#"$PROJECT_DIR/"}")
+        fi
+    done < <(find "$PROJECT_DIR/Sources" -name '*.swift' | sort)
+    if [[ ${#UNLISTED[@]} -eq 0 ]]; then
+        xcrun xcstringstool sync "$STRING_CATALOG" "${STRINGSDATA[@]}"
+        note "$(xcrun xcstringstool print "$STRING_CATALOG" | grep -c .) strings in ${STRING_CATALOG#"$PROJECT_DIR/"}"
+    else
+        note "warning: no string list for ${UNLISTED[*]}; ${STRING_CATALOG#"$PROJECT_DIR/"} was not updated"
+    fi
+
+    step "Compiling the translations"
+    for catalog in "$PROJECT_DIR"/Resources/*.xcstrings; do
+        xcrun xcstringstool compile "$catalog" --output-directory "$APP_BUNDLE/Contents/Resources"
+    done
+    LANGUAGES="$(find "$APP_BUNDLE/Contents/Resources" -maxdepth 1 -name '*.lproj' -exec basename {} .lproj \; | sort | paste -sd ' ' -)"
+    note "languages: ${LANGUAGES:-en}"
+else
+    note "warning: xcstringstool not found (it comes with Xcode); the app is built in English only"
 fi
 
 IDENTITY="$(resolve_signing_identity)"

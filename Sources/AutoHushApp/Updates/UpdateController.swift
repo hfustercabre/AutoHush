@@ -72,30 +72,33 @@ final class UpdateController {
     /// Asks GitHub for the latest release.
     func check(userInitiated: Bool, now: Date = Date()) async {
         guard let currentVersion else {
-            onStatus("The app's version is unknown.")
+            onStatus(String(localized: "The app's version is unknown.", comment: "Update status in Settings"))
             return
         }
-        onStatus("Checking…")
+        onStatus(String(localized: "Checking…", comment: "Update status in Settings: a check is running"))
         do {
             let result = try await checker.check(currentVersion: currentVersion)
             preferences.lastUpdateCheck = now
             switch result {
             case .available(let release):
                 availableUpdate = release
-                onStatus("Version \(release.version) is available.")
+                onStatus(String(localized: "Version \(release.version.description) is available.",
+                                comment: "Update status in Settings; %@ is a version number"))
             case .upToDate:
                 availableUpdate = nil
-                onStatus("AutoHush \(currentVersion) is up to date.")
+                onStatus(String(localized: "AutoHush \(currentVersion.description) is up to date.",
+                                comment: "Update status in Settings; %@ is a version number"))
             case .noReleases:
                 availableUpdate = nil
-                onStatus("No releases have been published yet.")
+                onStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
             }
             if userInitiated { present(result) }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
-            onStatus("Couldn't check for updates.")
+            onStatus(String(localized: "Couldn't check for updates.", comment: "Update status in Settings"))
             if userInitiated {
-                InfoAlert.show("Couldn't Check for Updates", error.localizedDescription)
+                let title = String(localized: "Couldn't Check for Updates", comment: "Alert title")
+                InfoAlert.show(title, error.localizedDescription)
             }
         }
     }
@@ -107,24 +110,35 @@ final class UpdateController {
     }
 
     private func present(_ result: UpdateCheckResult) {
+        guard let current = currentVersion?.description else { return } // checks need it, so never missing here
         switch result {
         case .available(let release):
-            let howTo = UpdateChecker.isHomebrewInstall
-                ? "Update with Homebrew:\n\nbrew upgrade --cask autohush"
-                : "Download it from GitHub and replace AutoHush in your Applications folder."
             let alert = NSAlert()
-            alert.messageText = "AutoHush \(release.version) Is Available"
-            alert.informativeText = "You have version \(currentVersion?.description ?? "unknown"). \(howTo)"
-            alert.addButton(withTitle: "Open Release Page")
-            alert.addButton(withTitle: "Later")
+            alert.messageText = String(localized: "AutoHush \(release.version.description) Is Available",
+                                       comment: "Alert title; %@ is the new version number")
+            alert.informativeText = UpdateChecker.isHomebrewInstall
+                ? String(localized: "You have version \(current). Update with Homebrew:",
+                         comment: "Update alert; %@ is the installed version. The Homebrew command follows.")
+                    + "\n\nbrew upgrade --cask autohush"
+                : String(localized: "You have version \(current). Download it from GitHub and replace AutoHush in your Applications folder.",
+                         comment: "Update alert; %@ is the installed version")
+            alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
+            alert.addButton(withTitle: String(localized: "Later", comment: "Update alert button: close it without updating"))
             NSApp.activate()
             if alert.runModal() == .alertFirstButtonReturn {
                 NSWorkspace.shared.open(release.pageURL)
             }
         case .upToDate:
-            InfoAlert.show("AutoHush Is Up to Date", "You have the latest version, \(currentVersion?.description ?? "").")
+            InfoAlert.show(
+                String(localized: "AutoHush Is Up to Date", comment: "Alert title"),
+                String(localized: "You have the latest version, \(current).",
+                       comment: "Alert text; %@ is the installed version")
+            )
         case .noReleases:
-            InfoAlert.show("No Releases Yet", "No AutoHush release has been published on GitHub yet.")
+            InfoAlert.show(
+                String(localized: "No Releases Yet", comment: "Alert title"),
+                String(localized: "No AutoHush release has been published on GitHub yet.", comment: "Alert text")
+            )
         }
     }
 }

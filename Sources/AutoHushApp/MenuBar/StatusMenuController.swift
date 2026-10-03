@@ -121,18 +121,21 @@ final class StatusMenuController: NSObject {
     private func addActionItems() {
         menu.addItem(.separator())
         if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
-        if status.showsRetry { menu.addItem(item("Retry", #selector(retry), key: "r")) }
+        if status.showsRetry {
+            let title = String(localized: "Retry", comment: "Menu item: start monitoring again after a problem")
+            menu.addItem(item(title, #selector(retry), key: "r"))
+        }
         if let update = status.availableUpdate { menu.addItem(updateItem(for: update)) }
-        menu.addItem(item("Settings\u{2026}", #selector(openSettings), key: ","))
+        menu.addItem(item(String(localized: "Settings…", comment: "Menu item"), #selector(openSettings), key: ","))
         menu.addItem(diagnosticsItem())
     }
 
     /// About, Check for Updates and Quit.
     private func addAppItems() {
         menu.addItem(.separator())
-        menu.addItem(item("About AutoHush", #selector(showAbout)))
-        menu.addItem(item("Check for Updates\u{2026}", #selector(checkForUpdates)))
-        menu.addItem(item("Quit AutoHush", #selector(quit), key: "q"))
+        menu.addItem(item(String(localized: "About AutoHush", comment: "Menu item"), #selector(showAbout)))
+        menu.addItem(item(String(localized: "Check for Updates…", comment: "Menu item"), #selector(checkForUpdates)))
+        menu.addItem(item(String(localized: "Quit AutoHush", comment: "Menu item"), #selector(quit), key: "q"))
     }
 
     private func renderIcon() {
@@ -147,12 +150,15 @@ final class StatusMenuController: NSObject {
         let isIgnored = status.isIgnored(source.id)
         let row = NSMenuItem(title: source.name, action: nil, keyEquivalent: "")
         row.image = AppIcon.image(for: source)
-        if isIgnored { row.subtitle = "Ignored — music keeps playing" }
+        if isIgnored {
+            row.subtitle = String(localized: "Ignored — music keeps playing",
+                                  comment: "Under an app in the menu that never pauses the music")
+        }
 
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         let toggle = item(
-            "Never Pause Music for \(source.name)",
+            String(localized: "Never Pause Music for \(source.name)", comment: "Menu item; %@ is an app"),
             #selector(toggleIgnored(_:)),
             payload: Payload((source, !isIgnored))
         )
@@ -164,32 +170,40 @@ final class StatusMenuController: NSObject {
 
     private func warningItem(for warning: Permission) -> NSMenuItem {
         let item = item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
-        item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Warning")
+        let description = String(localized: "Warning", comment: "VoiceOver label: this menu item needs attention")
+        item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
         return item
     }
 
     private func updateItem(for update: AppRelease) -> NSMenuItem {
-        let item = item("Update Available: \(update.version)\u{2026}", #selector(showAvailableUpdate))
-        item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: "Update")
+        let title = String(localized: "Update Available: \(update.version.description)…",
+                           comment: "Menu item; %@ is a version number")
+        let item = item(title, #selector(showAvailableUpdate))
+        let description = String(localized: "Update", comment: "VoiceOver label of the update icon")
+        item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: description)
         return item
     }
 
     /// Takes the place of Settings… while ⌥ is held.
     private func diagnosticsItem() -> NSMenuItem {
-        let item = item("Diagnostics\u{2026}", #selector(showDiagnostics), key: ",")
+        let title = String(localized: "Diagnostics…", comment: "Menu item, shown while ⌥ is held")
+        let item = item(title, #selector(showDiagnostics), key: ",")
         item.keyEquivalentModifierMask = [.command, .option]
         item.isAlternate = true
         return item
     }
 
     private func autoPauseItem() -> NSMenuItem {
-        let item = item("Auto-Pause Music", #selector(toggleAutoPause))
+        let title = String(localized: "Auto-Pause Music", comment: "Menu item and Settings switch")
+        let item = item(title, #selector(toggleAutoPause))
         item.state = status.autoPause == .on ? .on : .off
         return item
     }
 
     private func snoozeItem() -> NSMenuItem {
-        let row = NSMenuItem(title: "Turn Off For", action: nil, keyEquivalent: "")
+        let title = String(localized: "Turn Off For",
+                           comment: "Menu item; its submenu offers 15 Minutes, 1 Hour and Until Tomorrow")
+        let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         for snooze in AutoPauseSnooze.allCases {
@@ -200,10 +214,11 @@ final class StatusMenuController: NSObject {
     }
 
     private func ignoredAppsItem() -> NSMenuItem {
-        let row = NSMenuItem(title: "Ignored Apps", action: nil, keyEquivalent: "")
+        let row = NSMenuItem(title: String(localized: "Ignored Apps", comment: "Menu item"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         submenu.autoenablesItems = false
-        let hint = NSMenuItem(title: "Click an app to stop ignoring it", action: nil, keyEquivalent: "")
+        let hintTitle = String(localized: "Click an app to stop ignoring it", comment: "Hint atop the Ignored Apps submenu")
+        let hint = NSMenuItem(title: hintTitle, action: nil, keyEquivalent: "")
         hint.isEnabled = false
         submenu.addItem(hint)
         for app in status.ignoredApps {

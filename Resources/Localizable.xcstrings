@@ -1,0 +1,482 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ (%@)" : {
+      "comment" : "Diagnostics: an app's name, then its bundle ID",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "%@ and %@ are playing" : {
+      "comment" : "Completes “Music paused — %@”; two apps",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ and %2$@ are playing"
+          }
+        }
+      }
+    },
+    "%@ and %lld other apps are playing" : {
+      "comment" : "Completes “Music paused — %@”; an app, then how many others (2 or more)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ and %2$lld other apps are playing"
+          }
+        }
+      }
+    },
+    "%@ control error: %@" : {
+      "comment" : "Status line; the music player, then the error it reported",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ control error: %2$@"
+          }
+        }
+      }
+    },
+    "%@ is not responding" : {
+      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+    },
+    "%@ is not running" : {
+      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+    },
+    "%@ is playing" : {
+      "comment" : "Completes “Music paused — %@”; %@ is an app"
+    },
+    "%@ s" : {
+      "comment" : "A duration in seconds"
+    },
+    "%@ — %@" : {
+      "comment" : "Diagnostics: an app, then how AutoHush judges it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — %2$@"
+          }
+        }
+      }
+    },
+    "%@ — %@ (%@)" : {
+      "comment" : "Diagnostics: an app, how AutoHush judges it, and what that rests on",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        }
+      }
+    },
+    "%@ — AntiDot mode" : {
+      "comment" : "Diagnostics: the detection in effect, then that AntiDot mode is on"
+    },
+    "%lld dB" : {
+      "comment" : "A sound level in decibels"
+    },
+    "%lld dBFS" : {
+      "comment" : "Diagnostics: an app's loudest level, in decibels"
+    },
+    "1 Hour" : {
+      "comment" : "In the menu: turn auto-pause off for 1 hour"
+    },
+    "15 Minutes" : {
+      "comment" : "In the menu: turn auto-pause off for 15 minutes"
+    },
+    "About AutoHush" : {
+      "comment" : "Menu item"
+    },
+    "Advanced" : {
+      "comment" : "Settings tab"
+    },
+    "Allow %@ Automation Access…" : {
+      "comment" : "Menu item; %@ is the music player, e.g. Spotify"
+    },
+    "Allow Audio Recording Access…" : {
+      "comment" : "Menu item"
+    },
+    "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open." : {
+
+    },
+    "An extra delay once every other app has stopped." : {
+
+    },
+    "AntiDot mode" : {
+
+    },
+    "Any app with its audio open counts as playing, even when paused." : {
+
+    },
+    "Apps" : {
+      "comment" : "Settings tab: which apps pause the music"
+    },
+    "Apps appear here once they have played audio." : {
+
+    },
+    "Auto-Pause Music" : {
+      "comment" : "Menu item and Settings switch"
+    },
+    "Auto-pause is off" : {
+      "comment" : "Status line at the top of the menu"
+    },
+    "Auto-pause is off %@" : {
+      "comment" : "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”"
+    },
+    "Auto-pause: off" : {
+      "comment" : "Diagnostics"
+    },
+    "Auto-pause: off %@" : {
+      "comment" : "Diagnostics; %@ says until when, e.g. “until 15:30”"
+    },
+    "Auto-pause: on" : {
+      "comment" : "Diagnostics"
+    },
+    "AutoHush %@ Is Available" : {
+      "comment" : "Alert title; %@ is the new version number"
+    },
+    "AutoHush %@ is up to date." : {
+      "comment" : "Update status in Settings; %@ is a version number"
+    },
+    "AutoHush Diagnostics" : {
+      "comment" : "Title of the Diagnostics alert"
+    },
+    "AutoHush Is Up to Date" : {
+      "comment" : "Alert title"
+    },
+    "AutoHush: degraded" : {
+      "comment" : "VoiceOver label of the menu bar icon: something keeps AutoHush from working"
+    },
+    "AutoHush: failed" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: monitoring" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: music is playing" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: music is playing on another device" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: music paused" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: needs permission" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: no music playing" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "AutoHush: starting" : {
+      "comment" : "VoiceOver label of the menu bar icon"
+    },
+    "Check Now" : {
+
+    },
+    "Check for Updates…" : {
+      "comment" : "Menu item"
+    },
+    "Check for updates automatically" : {
+
+    },
+    "Checking…" : {
+      "comment" : "Update status in Settings: a check is running"
+    },
+    "Choose an App to Ignore" : {
+      "comment" : "Title of the panel that picks an app"
+    },
+    "Choose which apps pause your music in the Apps tab." : {
+
+    },
+    "Click an app to stop ignoring it" : {
+      "comment" : "Hint atop the Ignored Apps submenu"
+    },
+    "Could not change the login item: %@" : {
+      "comment" : "Settings, under Launch at login; %@ is the error macOS reported"
+    },
+    "Couldn't Check for Updates" : {
+      "comment" : "Alert title"
+    },
+    "Couldn't check for updates." : {
+      "comment" : "Update status in Settings"
+    },
+    "Detect playing apps by" : {
+
+    },
+    "Detection: audio levels" : {
+
+    },
+    "Detection: open audio streams (no audio level access)" : {
+
+    },
+    "Detection: open audio streams (verifying levels)" : {
+
+    },
+    "Detection: open audio streams only" : {
+
+    },
+    "Detection: what apps tell macOS" : {
+
+    },
+    "Diagnostics…" : {
+      "comment" : "Menu item, shown while ⌥ is held"
+    },
+    "Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio." : {
+
+    },
+    "Fade in when resuming" : {
+
+    },
+    "Fade out before pausing" : {
+
+    },
+    "General" : {
+      "comment" : "Settings tab"
+    },
+    "GitHub answered with HTTP status %lld." : {
+      "comment" : "Update check error; %lld is an HTTP status code"
+    },
+    "GitHub's release information could not be read." : {
+      "comment" : "Update check error"
+    },
+    "Grant Automation access to control %@" : {
+      "comment" : "Status line; %@ is the music player, e.g. Spotify"
+    },
+    "Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused." : {
+
+    },
+    "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored." : {
+
+    },
+    "How long another app must be silent. Bridges gaps between tracks and videos." : {
+
+    },
+    "How long the music fades out before it pauses. 0 pauses it at once." : {
+
+    },
+    "How long the music takes to fade back in once it resumes. 0 resumes at full volume." : {
+
+    },
+    "Ignore" : {
+      "comment" : "Button of the panel that picks an app to ignore"
+    },
+    "Ignore Another App…" : {
+
+    },
+    "Ignored Apps" : {
+      "comment" : "Menu item"
+    },
+    "Ignored apps: %@" : {
+      "comment" : "Diagnostics; %@ lists app names"
+    },
+    "Ignored apps: none" : {
+      "comment" : "Diagnostics"
+    },
+    "Ignored — music keeps playing" : {
+      "comment" : "Under an app in the menu that never pauses the music"
+    },
+    "Later" : {
+      "comment" : "Update alert button: close it without updating"
+    },
+    "Launch at login" : {
+
+    },
+    "Measure audio levels" : {
+      "comment" : "Settings: a way to detect playing apps"
+    },
+    "Monitoring media playback" : {
+
+    },
+    "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures." : {
+
+    },
+    "Music is playing" : {
+
+    },
+    "Music is playing on another device" : {
+
+    },
+    "Music paused — %@" : {
+      "comment" : "Status line at the top of the menu; %@ says which apps play, e.g. “VLC is playing”"
+    },
+    "Music paused — another app is playing" : {
+
+    },
+    "Never Pause Music for %@" : {
+      "comment" : "Menu item; %@ is an app"
+    },
+    "No AutoHush release has been published on GitHub yet." : {
+      "comment" : "Alert text"
+    },
+    "No Releases Yet" : {
+      "comment" : "Alert title"
+    },
+    "No foreign audio output currently detected." : {
+      "comment" : "Diagnostics"
+    },
+    "No music playing" : {
+
+    },
+    "No releases have been published yet." : {
+      "comment" : "Update status in Settings"
+    },
+    "Open Login Items Settings…" : {
+
+    },
+    "Open Release Page" : {
+      "comment" : "Update alert button"
+    },
+    "Open audio streams only" : {
+      "comment" : "Settings, AntiDot mode: a way to detect playing apps"
+    },
+    "Pause music after" : {
+
+    },
+    "Pauses Music" : {
+
+    },
+    "Pauses your music while other apps play audio, and resumes it afterwards. Works with %@." : {
+      "comment" : "About panel; %@ is the music player, e.g. Spotify"
+    },
+    "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)." : {
+
+    },
+    "Quit AutoHush" : {
+      "comment" : "Menu item"
+    },
+    "Remove from List" : {
+
+    },
+    "Reset List" : {
+
+    },
+    "Reset List…" : {
+
+    },
+    "Reset the list of apps?" : {
+
+    },
+    "Restore Defaults" : {
+
+    },
+    "Resume music after" : {
+
+    },
+    "Retry" : {
+      "comment" : "Menu item: start monitoring again after a problem"
+    },
+    "Settings…" : {
+      "comment" : "Menu item"
+    },
+    "Silence threshold" : {
+
+    },
+    "Starting services" : {
+
+    },
+    "The app's version is unknown." : {
+      "comment" : "Update status in Settings"
+    },
+    "Treat an app as stopped after" : {
+
+    },
+    "Turn Off For" : {
+      "comment" : "Menu item; its submenu offers 15 Minutes, 1 Hour and Until Tomorrow"
+    },
+    "Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list." : {
+
+    },
+    "Turned off %@." : {
+      "comment" : "Settings, under Auto-Pause Music; %@ says until when, e.g. “until 15:30”"
+    },
+    "Until Tomorrow" : {
+      "comment" : "In the menu: turn auto-pause off until tomorrow at 8:00"
+    },
+    "Update" : {
+      "comment" : "VoiceOver label of the update icon"
+    },
+    "Update Available: %@…" : {
+      "comment" : "Menu item; %@ is a version number"
+    },
+    "Updates" : {
+
+    },
+    "Version %@ is available." : {
+      "comment" : "Update status in Settings; %@ is a version number"
+    },
+    "Warning" : {
+      "comment" : "VoiceOver label: this menu item needs attention"
+    },
+    "What apps tell macOS" : {
+      "comment" : "Settings, AntiDot mode: a way to detect playing apps"
+    },
+    "You have the latest version, %@." : {
+      "comment" : "Alert text; %@ is the installed version"
+    },
+    "You have version %@. Download it from GitHub and replace AutoHush in your Applications folder." : {
+      "comment" : "Update alert; %@ is the installed version"
+    },
+    "You have version %@. Update with Homebrew:" : {
+      "comment" : "Update alert; %@ is the installed version. The Homebrew command follows."
+    },
+    "another app is playing" : {
+      "comment" : "Completes “Music paused — %@”"
+    },
+    "not telling macOS it is playing" : {
+      "comment" : "Diagnostics, AntiDot mode: why an app counts as paused"
+    },
+    "output open, silent" : {
+      "comment" : "Diagnostics: how AutoHush judges an app"
+    },
+    "output open, silent, ignored" : {
+      "comment" : "Diagnostics: how AutoHush judges an app"
+    },
+    "playing" : {
+      "comment" : "Diagnostics: how AutoHush judges an app"
+    },
+    "playing, ignored" : {
+      "comment" : "Diagnostics: how AutoHush judges an app"
+    },
+    "silence" : {
+      "comment" : "Diagnostics: the level of an app that makes no sound"
+    },
+    "starting" : {
+      "comment" : "Diagnostics: an app audible too briefly to count yet"
+    },
+    "starting, ignored" : {
+      "comment" : "Diagnostics: an app audible too briefly to count yet"
+    },
+    "tells macOS it is playing" : {
+      "comment" : "Diagnostics, AntiDot mode: why an app counts as playing"
+    },
+    "until %@" : {
+      "comment" : "When auto-pause turns back on today; %@ is a time"
+    },
+    "until %@ %@" : {
+      "comment" : "When auto-pause turns back on; a weekday, then a time",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "until %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "until tomorrow %@" : {
+      "comment" : "When auto-pause turns back on; %@ is a time"
+    }
+  },
+  "version" : "1.0"
+}

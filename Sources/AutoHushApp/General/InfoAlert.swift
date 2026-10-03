@@ -1,6 +1,7 @@
 import AppKit
 
-/// A plain informational alert with an OK button, brought to the front.
+/// A plain informational alert, brought to the front. With no buttons
+/// added, AppKit gives it its own OK button, in the app's language.
 @MainActor
 enum InfoAlert {
     static func show(_ title: String, _ message: String) {
@@ -8,7 +9,6 @@ enum InfoAlert {
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
         NSApp.activate()
         alert.runModal()
     }

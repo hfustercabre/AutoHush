@@ -123,7 +123,7 @@ struct StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        status.autoPause = .snoozed(until: "15:30")
+        status.autoPause = .snoozed("until 15:30")
         sut.status = status
 
         #expect(try item("Auto-Pause Music", in: sut.menu).state == .off)
