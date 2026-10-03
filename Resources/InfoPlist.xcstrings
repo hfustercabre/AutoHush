@@ -29,6 +29,12 @@
             "value" : "AutoHush pausa y reanuda Spotify."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa y reanuda Spotify."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54,6 +60,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush pausa e retoma o Spotify."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush pausa e retoma o Spotify."
@@ -101,6 +113,12 @@
             "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ningún sitio."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ninguna parte."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush mede o volume dos outros apps para só pausar sua música quando há som audível. O áudio nunca é gravado, armazenado nem enviado a lugar algum."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush mede o volume das outras apps para só pausar a sua música quando há som audível. O áudio nunca é gravado, guardado nem enviado para lado nenhum."
           }
         },
         "zh-Hans" : {
@@ -173,6 +197,12 @@
             "value" : "Copyright © 2026 hfc. Licencia MIT."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licencia MIT."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -198,6 +228,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licença MIT."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. Licença MIT."
