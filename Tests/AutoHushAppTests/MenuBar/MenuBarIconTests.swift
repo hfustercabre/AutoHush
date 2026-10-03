@@ -33,12 +33,12 @@ struct MenuBarIconTests {
         rep.colorAt(x: Int(x * 2), y: Int(y * 2))!.usingColorSpace(.deviceRGB)!
     }
 
-    @Test("every state is an 18 pt template image that describes itself")
+    @Test("every state is a 17 pt template image that describes itself")
     func templateImages() {
         for icon in MenuBarIcon.allCases {
             let image = icon.image(accessibilityDescription: "AutoHush")
             #expect(image.isTemplate)
-            #expect(image.size == NSSize(width: 18, height: 18))
+            #expect(image.size == NSSize(width: 17, height: 17))
             #expect(image.accessibilityDescription == "AutoHush")
         }
     }

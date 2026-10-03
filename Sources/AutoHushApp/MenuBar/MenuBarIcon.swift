@@ -22,7 +22,7 @@ enum MenuBarIcon: CaseIterable, Sendable {
     case attention
 
     /// The image's size; the tile fills it.
-    static let size = NSSize(width: 18, height: 18)
+    static let size = NSSize(width: 17, height: 17)
 
     func image(accessibilityDescription: String? = nil) -> NSImage {
         let image = NSImage(size: Self.size, flipped: true) { _ in
