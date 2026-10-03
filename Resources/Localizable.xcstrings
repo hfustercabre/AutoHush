@@ -28,6 +28,12 @@
             "value" : "%1$@ (%2$@)"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53,6 +59,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ (%2$@)"
@@ -99,6 +111,12 @@
             "value" : "suenan %1$@ y %2$@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suenan %1$@ y %2$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -127,6 +145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ e %2$@ estão tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ e %2$@ estão a tocar"
           }
         },
         "zh-Hans" : {
@@ -170,6 +194,12 @@
             "value" : "suenan %1$@ y %2$lld apps más"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suenan %1$@ y %2$lld apps más"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -198,6 +228,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ e mais %2$lld apps estão tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ e mais %2$lld apps estão a tocar"
           }
         },
         "zh-Hans" : {
@@ -241,6 +277,12 @@
             "value" : "Error al controlar %1$@: %2$@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error al controlar %1$@: %2$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -266,6 +308,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro ao controlar %1$@: %2$@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erro ao controlar %1$@: %2$@"
@@ -306,6 +354,12 @@
             "value" : "%@ no responde"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no responde"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -334,6 +388,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ não está respondendo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está a responder"
           }
         },
         "zh-Hans" : {
@@ -371,6 +431,12 @@
             "value" : "%@ no se está ejecutando"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se está ejecutando"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +462,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está aberto"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ não está aberto"
@@ -436,6 +508,12 @@
             "value" : "suena %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suena %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -464,6 +542,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ está tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ está a tocar"
           }
         },
         "zh-Hans" : {
@@ -501,6 +585,12 @@
             "value" : "%@ s"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -526,6 +616,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ s"
@@ -572,6 +668,12 @@
             "value" : "%1$@ — %2$@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +699,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — %2$@"
@@ -643,6 +751,12 @@
             "value" : "%1$@ — %2$@ (%3$@)"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,6 +782,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — %2$@ (%3$@)"
@@ -708,6 +828,12 @@
             "value" : "%@ — modo AntiDot"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — modo AntiDot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -733,6 +859,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — modo AntiDot"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ — modo AntiDot"
@@ -773,6 +905,12 @@
             "value" : "%lld dB"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -798,6 +936,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dB"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld dB"
@@ -838,6 +982,12 @@
             "value" : "%lld dBFS"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -863,6 +1013,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dBFS"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld dBFS"
@@ -903,6 +1059,12 @@
             "value" : "1 hora"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 hora"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -931,6 +1093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 Hora"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 hora"
           }
         },
         "zh-Hans" : {
@@ -968,6 +1136,12 @@
             "value" : "15 minutos"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutos"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -996,6 +1170,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "15 Minutos"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutos"
           }
         },
         "zh-Hans" : {
@@ -1033,6 +1213,12 @@
             "value" : "Acerca de AutoHush"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de AutoHush"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1061,6 +1247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sobre o AutoHush"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca do AutoHush"
           }
         },
         "zh-Hans" : {
@@ -1098,6 +1290,12 @@
             "value" : "Avanzado"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanzado"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1123,6 +1321,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avançado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avançado"
@@ -1163,6 +1367,12 @@
             "value" : "Permitir el acceso de Automatización a %@…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir el acceso de Automatización a %@…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1191,6 +1401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permitir Acesso de Automação para %@…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir acesso de Automação para %@…"
           }
         },
         "zh-Hans" : {
@@ -1228,6 +1444,12 @@
             "value" : "Permitir el acceso a la grabación de audio…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir el acceso a la grabación de audio…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1256,6 +1478,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permitir Acesso à Gravação de Áudio…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir acesso à gravação de áudio…"
           }
         },
         "zh-Hans" : {
@@ -1292,6 +1520,12 @@
             "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1320,6 +1554,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um app conta como tocando enquanto informa ao macOS que está tocando, e como pausado assim que para, mesmo com o áudio ainda aberto. Apps que nunca informam o macOS contam enquanto o áudio está aberto."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma app conta como a tocar enquanto comunica ao macOS que está a tocar, e como em pausa assim que deixa de o fazer, mesmo com o áudio ainda aberto. As apps que nunca comunicam ao macOS contam enquanto têm o áudio aberto."
           }
         },
         "zh-Hans" : {
@@ -1356,6 +1596,12 @@
             "value" : "Un retardo adicional cuando todas las demás apps se han detenido."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un retardo adicional cuando todas las demás apps se han detenido."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1384,6 +1630,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um atraso extra depois que todos os outros apps pararem."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um atraso adicional depois de todas as outras apps pararem."
           }
         },
         "zh-Hans" : {
@@ -1420,6 +1672,12 @@
             "value" : "Modo AntiDot"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo AntiDot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1445,6 +1703,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo AntiDot"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo AntiDot"
@@ -1484,6 +1748,12 @@
             "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1512,6 +1782,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Qualquer app com o áudio aberto conta como tocando, mesmo pausado."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualquer app com o áudio aberto conta como a tocar, mesmo em pausa."
           }
         },
         "zh-Hans" : {
@@ -1549,6 +1825,12 @@
             "value" : "Apps"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1574,6 +1856,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps"
@@ -1613,6 +1901,12 @@
             "value" : "Las apps aparecen aquí cuando han reproducido audio."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las apps aparecen aquí cuando han reproducido audio."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1935,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Os apps aparecem aqui depois de reproduzirem áudio."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As apps aparecem aqui depois de reproduzirem áudio."
           }
         },
         "zh-Hans" : {
@@ -1678,6 +1978,12 @@
             "value" : "Pausar la música automáticamente"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar la música automáticamente"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1706,6 +2012,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar Música Automaticamente"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar música automaticamente"
           }
         },
         "zh-Hans" : {
@@ -1743,6 +2055,12 @@
             "value" : "La pausa automática está desactivada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automática está desactivada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1768,6 +2086,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pausa automática está desativada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A pausa automática está desativada"
@@ -1808,6 +2132,12 @@
             "value" : "La pausa automática está desactivada %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pausa automática está desactivada %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1833,6 +2163,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A pausa automática está desativada %@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A pausa automática está desativada %@"
@@ -1873,6 +2209,12 @@
             "value" : "Pausa automática: desactivada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desactivada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1898,6 +2240,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desativada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: desativada"
@@ -1938,6 +2286,12 @@
             "value" : "Pausa automática: desactivada %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desactivada %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1963,6 +2317,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: desativada %@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: desativada %@"
@@ -2003,6 +2363,12 @@
             "value" : "Pausa automática: activada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: activada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2028,6 +2394,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa automática: ativada"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa automática: ativada"
@@ -2068,6 +2440,12 @@
             "value" : "AutoHush %@ está disponible"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ está disponible"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2096,6 +2474,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush %@ Está Disponível"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush %@ está disponível"
           }
         },
         "zh-Hans" : {
@@ -2133,6 +2517,12 @@
             "value" : "AutoHush %@ está actualizado."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@ está actualizado."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2158,6 +2548,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush %@ está atualizado."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush %@ está atualizado."
@@ -2198,6 +2594,12 @@
             "value" : "Diagnóstico de AutoHush"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico de AutoHush"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2223,6 +2625,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico do AutoHush"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diagnóstico do AutoHush"
@@ -2263,6 +2671,12 @@
             "value" : "AutoHush está actualizado"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush está actualizado"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2291,6 +2705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O AutoHush Está Atualizado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush está atualizado"
           }
         },
         "zh-Hans" : {
@@ -2328,6 +2748,12 @@
             "value" : "AutoHush: funcionamiento limitado"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: funcionamiento limitado"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2353,6 +2779,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: funcionamento limitado"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: funcionamento limitado"
@@ -2393,6 +2825,12 @@
             "value" : "AutoHush: error"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: error"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2418,6 +2856,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: erro"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: erro"
@@ -2458,6 +2902,12 @@
             "value" : "AutoHush: supervisando"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: supervisando"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2486,6 +2936,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: monitorando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: a monitorizar"
           }
         },
         "zh-Hans" : {
@@ -2523,6 +2979,12 @@
             "value" : "AutoHush: suena música"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: suena música"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2551,6 +3013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música a tocar"
           }
         },
         "zh-Hans" : {
@@ -2588,6 +3056,12 @@
             "value" : "AutoHush: la música suena en otro dispositivo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: la música suena en otro dispositivo"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2616,6 +3090,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música tocando em outro dispositivo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música a tocar noutro dispositivo"
           }
         },
         "zh-Hans" : {
@@ -2653,6 +3133,12 @@
             "value" : "AutoHush: música en pausa"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música en pausa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2681,6 +3167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: música pausada"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: música em pausa"
           }
         },
         "zh-Hans" : {
@@ -2718,6 +3210,12 @@
             "value" : "AutoHush: necesita permiso"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: necesita permiso"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2743,6 +3241,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: precisa de permissão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: precisa de permissão"
@@ -2783,6 +3287,12 @@
             "value" : "AutoHush: no suena música"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: no suena música"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2811,6 +3321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: nenhuma música tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: nenhuma música a tocar"
           }
         },
         "zh-Hans" : {
@@ -2848,6 +3364,12 @@
             "value" : "AutoHush: iniciándose"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: iniciándose"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2876,6 +3398,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush: iniciando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush: a iniciar"
           }
         },
         "zh-Hans" : {
@@ -2912,6 +3440,12 @@
             "value" : "Buscar ahora"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar ahora"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2940,6 +3474,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar Agora"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar agora"
           }
         },
         "zh-Hans" : {
@@ -2977,6 +3517,12 @@
             "value" : "Buscar actualizaciones…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3005,6 +3551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar Atualizações…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar atualizações…"
           }
         },
         "zh-Hans" : {
@@ -3041,6 +3593,12 @@
             "value" : "Buscar actualizaciones automáticamente"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones automáticamente"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3069,6 +3627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar atualizações automaticamente"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar atualizações automaticamente"
           }
         },
         "zh-Hans" : {
@@ -3106,6 +3670,12 @@
             "value" : "Comprobando…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobando…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3134,6 +3704,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificando…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A verificar…"
           }
         },
         "zh-Hans" : {
@@ -3171,6 +3747,12 @@
             "value" : "Elige una app para ignorarla"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una app para ignorarla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3199,6 +3781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha um App para Ignorar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher uma app para ignorar"
           }
         },
         "zh-Hans" : {
@@ -3235,6 +3823,12 @@
             "value" : "Elige qué apps pausan tu música en la pestaña Apps."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige qué apps pausan tu música en la pestaña Apps."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3263,6 +3857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha quais apps pausam sua música na aba Apps."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha no separador Apps quais as apps que pausam a música."
           }
         },
         "zh-Hans" : {
@@ -3300,6 +3900,12 @@
             "value" : "Haz clic en una app para dejar de ignorarla"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en una app para dejar de ignorarla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3328,6 +3934,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clique em um app para deixar de ignorá-lo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique numa app para deixar de a ignorar"
           }
         },
         "zh-Hans" : {
@@ -3365,6 +3977,12 @@
             "value" : "No se ha podido cambiar el ítem de inicio: %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cambiar el ítem de inicio: %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3393,6 +4011,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível alterar o item de início: %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível alterar o elemento de início de sessão: %@"
           }
         },
         "zh-Hans" : {
@@ -3430,6 +4054,12 @@
             "value" : "No se han podido buscar actualizaciones"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron buscar actualizaciones"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3458,6 +4088,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não Foi Possível Verificar Atualizações"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível procurar atualizações"
           }
         },
         "zh-Hans" : {
@@ -3495,6 +4131,12 @@
             "value" : "No se han podido buscar actualizaciones."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron buscar actualizaciones."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3523,6 +4165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível verificar atualizações."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível procurar atualizações."
           }
         },
         "zh-Hans" : {
@@ -3559,6 +4207,12 @@
             "value" : "Detectar las apps que suenan según"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detectar las apps que suenan según"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3587,6 +4241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detectar apps tocando por"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detetar apps a tocar através de"
           }
         },
         "zh-Hans" : {
@@ -3623,6 +4283,12 @@
             "value" : "Detección: niveles de audio"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: niveles de audio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3651,6 +4317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: níveis de áudio"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção: níveis de áudio"
           }
         },
         "zh-Hans" : {
@@ -3687,6 +4359,12 @@
             "value" : "Detección: flujos de audio abiertos (sin acceso a los niveles de audio)"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: flujos de audio abiertos (sin acceso a los niveles de audio)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3715,6 +4393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: fluxos de áudio abertos (sem acesso aos níveis de áudio)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção: fluxos de áudio abertos (sem acesso aos níveis de áudio)"
           }
         },
         "zh-Hans" : {
@@ -3751,6 +4435,12 @@
             "value" : "Detección: flujos de audio abiertos (verificando niveles)"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: flujos de audio abiertos (verificando niveles)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3779,6 +4469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: fluxos de áudio abertos (verificando os níveis)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção: fluxos de áudio abertos (a verificar os níveis)"
           }
         },
         "zh-Hans" : {
@@ -3815,6 +4511,12 @@
             "value" : "Detección: solo flujos de audio abiertos"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: solo flujos de audio abiertos"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3843,6 +4545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: somente fluxos de áudio abertos"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção: apenas fluxos de áudio abertos"
           }
         },
         "zh-Hans" : {
@@ -3879,6 +4587,12 @@
             "value" : "Detección: lo que las apps indican a macOS"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección: lo que las apps indican a macOS"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3907,6 +4621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detecção: o que os apps informam ao macOS"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção: o que as apps comunicam ao macOS"
           }
         },
         "zh-Hans" : {
@@ -3944,6 +4664,12 @@
             "value" : "Diagnóstico…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3969,6 +4695,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico…"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diagnóstico…"
@@ -4008,6 +4740,12 @@
             "value" : "Se eliminarán todas las apps, y las que desactivaste volverán a pausar tu música. Las apps reaparecen a medida que reproducen audio."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se eliminarán todas las apps, y las que desactivaste volverán a pausar tu música. Las apps reaparecen a medida que reproducen audio."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4036,6 +4774,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Todos os apps serão removidos, e os que você desativou voltarão a pausar sua música. Os apps reaparecem conforme reproduzem áudio."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as apps são removidas, e as que desativou voltarão a pausar a música. As apps reaparecem à medida que reproduzem áudio."
           }
         },
         "zh-Hans" : {
@@ -4072,6 +4816,12 @@
             "value" : "Fundido de entrada al reanudar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundido de entrada al reanudar"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4097,6 +4847,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade-in ao retomar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fade-in ao retomar"
@@ -4136,6 +4892,12 @@
             "value" : "Fundido de salida antes de pausar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundido de salida antes de pausar"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4161,6 +4923,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade-out antes de pausar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fade-out antes de pausar"
@@ -4201,6 +4969,12 @@
             "value" : "General"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4226,6 +5000,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geral"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geral"
@@ -4266,6 +5046,12 @@
             "value" : "GitHub ha respondido con el código HTTP %lld."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub respondió con el código HTTP %lld."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4294,6 +5080,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O GitHub respondeu com o status HTTP %lld."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O GitHub respondeu com o estado HTTP %lld."
           }
         },
         "zh-Hans" : {
@@ -4331,6 +5123,12 @@
             "value" : "No se ha podido leer la información de la versión en GitHub."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer la información de la versión en GitHub."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4356,6 +5154,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler as informações da versão no GitHub."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível ler as informações da versão no GitHub."
@@ -4396,6 +5200,12 @@
             "value" : "Concede el acceso de Automatización para controlar %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concede el acceso de Automatización para controlar %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4421,6 +5231,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conceda acesso de Automação para controlar %@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conceda acesso de Automação para controlar %@"
@@ -4460,6 +5276,12 @@
             "value" : "Oculta el indicador morado de grabación porque nunca mide el sonido. La detección es menos precisa: algunas apps en pausa pueden mantener tu música en pausa."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculta el indicador morado de grabación porque nunca mide el sonido. La detección es menos precisa: algunas apps en pausa pueden mantener tu música en pausa."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4488,6 +5310,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oculta o indicador roxo de gravação ao nunca medir o som. A detecção é menos precisa: alguns apps pausados podem manter sua música pausada."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculta o indicador de gravação roxo porque nunca mede o som. A deteção é menos precisa: algumas apps em pausa podem manter a música em pausa."
           }
         },
         "zh-Hans" : {
@@ -4524,6 +5352,12 @@
             "value" : "Cuánto tiempo debe oírse otra app. Filtra los sonidos breves de las propias apps; los sonidos de notificación del sistema se ignoran siempre."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tiempo debe escucharse otra app. Filtra los sonidos breves de las propias apps; los sonidos de notificación del sistema se ignoran siempre."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4552,6 +5386,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quanto tempo outro app precisa estar audível. Filtra sons curtos dos próprios apps; sons de notificação do sistema são sempre ignorados."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durante quanto tempo outra app tem de estar audível. Filtra os sons curtos das próprias apps; os sons de notificação do sistema são sempre ignorados."
           }
         },
         "zh-Hans" : {
@@ -4588,6 +5428,12 @@
             "value" : "Cuánto tiempo debe estar en silencio otra app. Salva las pausas entre canciones y vídeos."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tiempo debe estar en silencio otra app. Salva las pausas entre canciones y videos."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4616,6 +5462,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Por quanto tempo outro app precisa ficar em silêncio. Cobre as pausas entre faixas e vídeos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durante quanto tempo outra app tem de estar em silêncio. Cobre as pausas entre faixas e vídeos."
           }
         },
         "zh-Hans" : {
@@ -4652,6 +5504,12 @@
             "value" : "Cuánto tarda la música en desvanecerse antes de pausarse. Con 0 se pausa al instante."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tarda la música en desvanecerse antes de pausarse. Con 0 se pausa al instante."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4680,6 +5538,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quanto tempo a música leva para sumir antes de pausar. 0 pausa na hora."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto tempo a música demora a desvanecer antes de pausar. Com 0, pausa de imediato."
           }
         },
         "zh-Hans" : {
@@ -4716,6 +5580,12 @@
             "value" : "Cuánto tarda la música en recuperar el volumen al reanudarse. Con 0 se reanuda a todo volumen."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto tarda la música en recuperar el volumen al reanudarse. Con 0 se reanuda a todo volumen."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4744,6 +5614,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quanto tempo a música leva para voltar ao volume ao ser retomada. 0 retoma no volume normal."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto tempo a música demora a voltar ao volume ao ser retomada. Com 0, retoma no volume normal."
           }
         },
         "zh-Hans" : {
@@ -4781,6 +5657,12 @@
             "value" : "Ignorar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4806,6 +5688,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorar"
@@ -4845,6 +5733,12 @@
             "value" : "Ignorar otra app…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar otra app…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4873,6 +5767,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorar Outro App…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar outra app…"
           }
         },
         "zh-Hans" : {
@@ -4910,6 +5810,12 @@
             "value" : "Apps ignoradas"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4938,6 +5844,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps Ignorados"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas"
           }
         },
         "zh-Hans" : {
@@ -4975,6 +5887,12 @@
             "value" : "Apps ignoradas: %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5003,6 +5921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps ignorados: %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: %@"
           }
         },
         "zh-Hans" : {
@@ -5040,6 +5964,12 @@
             "value" : "Apps ignoradas: ninguna"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: ninguna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5068,6 +5998,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apps ignorados: nenhum"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignoradas: nenhuma"
           }
         },
         "zh-Hans" : {
@@ -5105,6 +6041,12 @@
             "value" : "Ignorada — la música sigue sonando"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorada — la música sigue sonando"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5133,6 +6075,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorado — a música continua tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorada — a música continua a tocar"
           }
         },
         "zh-Hans" : {
@@ -5170,6 +6118,12 @@
             "value" : "Más tarde"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más tarde"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5198,6 +6152,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais Tarde"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais tarde"
           }
         },
         "zh-Hans" : {
@@ -5234,6 +6194,12 @@
             "value" : "Abrir al iniciar sesión"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir al iniciar sesión"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5259,6 +6225,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ao iniciar sessão"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir ao iniciar sessão"
@@ -5299,6 +6271,12 @@
             "value" : "Medir los niveles de audio"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medir los niveles de audio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5324,6 +6302,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medição dos níveis de áudio"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Medição dos níveis de áudio"
@@ -5363,6 +6347,12 @@
             "value" : "Supervisando la reproducción"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supervisando la reproducción"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5391,6 +6381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monitorando a reprodução"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A monitorizar a reprodução"
           }
         },
         "zh-Hans" : {
@@ -5427,6 +6423,12 @@
             "value" : "La más precisa: un vídeo en pausa deja de contar en cuanto se queda en silencio. macOS muestra su indicador morado de grabación mientras AutoHush mide."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La más precisa: un video en pausa deja de contar en cuanto se queda en silencio. macOS muestra su indicador morado de grabación mientras AutoHush mide."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5455,6 +6457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais preciso: um vídeo pausado deixa de contar assim que fica em silêncio. O macOS mostra o indicador roxo de gravação enquanto o AutoHush mede."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A mais precisa: um vídeo em pausa deixa de contar assim que fica em silêncio. O macOS mostra o indicador de gravação roxo enquanto o AutoHush mede."
           }
         },
         "zh-Hans" : {
@@ -5491,6 +6499,12 @@
             "value" : "Suena música"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suena música"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5519,6 +6533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música a tocar"
           }
         },
         "zh-Hans" : {
@@ -5555,6 +6575,12 @@
             "value" : "La música suena en otro dispositivo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La música suena en otro dispositivo"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5583,6 +6609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A música está tocando em outro dispositivo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A música está a tocar noutro dispositivo"
           }
         },
         "zh-Hans" : {
@@ -5620,6 +6652,12 @@
             "value" : "Música en pausa — %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5648,6 +6686,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música pausada — %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música em pausa — %@"
           }
         },
         "zh-Hans" : {
@@ -5684,6 +6728,12 @@
             "value" : "Música en pausa — suena otra app"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música en pausa — suena otra app"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5712,6 +6762,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Música pausada — outro app está tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música em pausa — outra app está a tocar"
           }
         },
         "zh-Hans" : {
@@ -5749,6 +6805,12 @@
             "value" : "No pausar nunca la música por %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausar nunca la música por %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5777,6 +6839,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nunca Pausar Música por %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca pausar a música por %@"
           }
         },
         "zh-Hans" : {
@@ -5814,6 +6882,12 @@
             "value" : "Aún no se ha publicado ninguna versión de AutoHush en GitHub."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no se publicó ninguna versión de AutoHush en GitHub."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5842,6 +6916,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma versão do AutoHush foi publicada no GitHub ainda."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não foi publicada nenhuma versão do AutoHush no GitHub."
           }
         },
         "zh-Hans" : {
@@ -5879,6 +6959,12 @@
             "value" : "Aún no hay versiones"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay versiones"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5907,6 +6993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma Versão Ainda"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não há versões"
           }
         },
         "zh-Hans" : {
@@ -5944,6 +7036,12 @@
             "value" : "Ahora no se detecta audio de otras apps."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no se detecta audio de otras apps."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5972,6 +7070,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhum áudio de outros apps detectado no momento."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De momento, não é detetado áudio de outras apps."
           }
         },
         "zh-Hans" : {
@@ -6008,6 +7112,12 @@
             "value" : "No suena música"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No suena música"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6036,6 +7146,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma música tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma música a tocar"
           }
         },
         "zh-Hans" : {
@@ -6073,6 +7189,12 @@
             "value" : "Aún no se ha publicado ninguna versión."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no se publicó ninguna versión."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6101,6 +7223,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma versão foi publicada ainda."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não foi publicada nenhuma versão."
           }
         },
         "zh-Hans" : {
@@ -6137,6 +7265,12 @@
             "value" : "Abrir los ajustes de ítems de inicio…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la configuración de ítems de inicio…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6165,6 +7299,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Ajustes de Itens de Início…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir definições dos elementos de início de sessão…"
           }
         },
         "zh-Hans" : {
@@ -6202,6 +7342,12 @@
             "value" : "Abrir la página de la versión"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la página de la versión"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6230,6 +7376,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir Página da Versão"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir página da versão"
           }
         },
         "zh-Hans" : {
@@ -6267,6 +7419,12 @@
             "value" : "Solo los flujos de audio abiertos"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo los flujos de audio abiertos"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6295,6 +7453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Somente fluxos de áudio abertos"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apenas fluxos de áudio abertos"
           }
         },
         "zh-Hans" : {
@@ -6331,6 +7495,12 @@
             "value" : "Pausar la música tras"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar la música tras"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6356,6 +7526,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar a música após"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar a música após"
@@ -6395,6 +7571,12 @@
             "value" : "Pausan la música"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausan la música"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6423,6 +7605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa a Música"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa a música"
           }
         },
         "zh-Hans" : {
@@ -6460,6 +7648,12 @@
             "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después. Funciona con %@."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después. Funciona con %@."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6488,6 +7682,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa sua música enquanto outros apps reproduzem áudio e a retoma depois. Funciona com %@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa a sua música enquanto outras apps reproduzem áudio e retoma-a depois. Funciona com %@."
           }
         },
         "zh-Hans" : {
@@ -6524,6 +7724,12 @@
             "value" : "Un sonido más bajo cuenta como silencio. Solo se usa al medir los niveles de audio (modo AntiDot desactivado)."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un sonido más bajo cuenta como silencio. Solo se usa al medir los niveles de audio (modo AntiDot desactivado)."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6552,6 +7758,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Áudio mais baixo conta como silêncio. Usado apenas ao medir os níveis de áudio (modo AntiDot desativado)."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um som mais baixo conta como silêncio. Só é usado ao medir os níveis de áudio (modo AntiDot desativado)."
           }
         },
         "zh-Hans" : {
@@ -6589,6 +7801,12 @@
             "value" : "Salir de AutoHush"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir de AutoHush"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6617,6 +7835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Encerrar AutoHush"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sair do AutoHush"
           }
         },
         "zh-Hans" : {
@@ -6653,6 +7877,12 @@
             "value" : "Eliminar de la lista"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar de la lista"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6681,6 +7911,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover da Lista"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover da lista"
           }
         },
         "zh-Hans" : {
@@ -6717,6 +7953,12 @@
             "value" : "Restablecer la lista"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer la lista"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6745,6 +7987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir Lista"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor lista"
           }
         },
         "zh-Hans" : {
@@ -6781,6 +8029,12 @@
             "value" : "Restablecer la lista…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer la lista…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6809,6 +8063,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir Lista…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor lista…"
           }
         },
         "zh-Hans" : {
@@ -6845,6 +8105,12 @@
             "value" : "¿Restablecer la lista de apps?"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Restablecer la lista de apps?"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6873,6 +8139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redefinir a lista de apps?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor a lista de apps?"
           }
         },
         "zh-Hans" : {
@@ -6909,6 +8181,12 @@
             "value" : "Restaurar valores por omisión"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar valores predeterminados"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6937,6 +8215,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar Padrões"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repor predefinições"
           }
         },
         "zh-Hans" : {
@@ -6973,6 +8257,12 @@
             "value" : "Reanudar la música tras"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar la música tras"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6998,6 +8288,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar a música após"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retomar a música após"
@@ -7038,6 +8334,12 @@
             "value" : "Reintentar"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7066,6 +8368,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tentar Novamente"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar novamente"
           }
         },
         "zh-Hans" : {
@@ -7103,6 +8411,12 @@
             "value" : "Ajustes…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7131,6 +8445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições…"
           }
         },
         "zh-Hans" : {
@@ -7167,6 +8487,12 @@
             "value" : "Umbral de silencio"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbral de silencio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7195,6 +8521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limite de silêncio"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limiar de silêncio"
           }
         },
         "zh-Hans" : {
@@ -7231,6 +8563,12 @@
             "value" : "Iniciando servicios"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciando servicios"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7259,6 +8597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciando serviços"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A iniciar serviços"
           }
         },
         "zh-Hans" : {
@@ -7296,6 +8640,12 @@
             "value" : "Se desconoce la versión de la app."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se desconoce la versión de la app."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7324,6 +8674,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A versão do app é desconhecida."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão da app é desconhecida."
           }
         },
         "zh-Hans" : {
@@ -7360,6 +8716,12 @@
             "value" : "Considerar detenida una app tras"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Considerar detenida una app tras"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7388,6 +8750,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Considerar um app parado após"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Considerar uma app parada após"
           }
         },
         "zh-Hans" : {
@@ -7425,6 +8793,12 @@
             "value" : "Desactivar durante"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar durante"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7453,6 +8827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar Por"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar durante"
           }
         },
         "zh-Hans" : {
@@ -7489,6 +8869,12 @@
             "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Haz clic con el botón derecho en una app para eliminarla de la lista."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Haz clic con el botón derecho en una app para eliminarla de la lista."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7517,6 +8903,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desative um app para manter sua música tocando enquanto ele emite som. Clique com o botão direito em um app para removê-lo da lista."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desative uma app para que a música continue a tocar enquanto essa app emite som. Clique com o botão direito numa app para a remover da lista."
           }
         },
         "zh-Hans" : {
@@ -7554,6 +8946,12 @@
             "value" : "Desactivada %@."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivada %@."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7579,6 +8977,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativada %@."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativada %@."
@@ -7619,6 +9023,12 @@
             "value" : "Hasta mañana"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasta mañana"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7647,6 +9057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Até Amanhã"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Até amanhã"
           }
         },
         "zh-Hans" : {
@@ -7684,6 +9100,12 @@
             "value" : "Actualización"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualización"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7709,6 +9131,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualização"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualização"
@@ -7749,6 +9177,12 @@
             "value" : "Actualización disponible: %@…"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualización disponible: %@…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7777,6 +9211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualização Disponível: %@…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualização disponível: %@…"
           }
         },
         "zh-Hans" : {
@@ -7813,6 +9253,12 @@
             "value" : "Actualizaciones"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizaciones"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7838,6 +9284,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizações"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualizações"
@@ -7878,6 +9330,12 @@
             "value" : "La versión %@ está disponible."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ está disponible."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7903,6 +9361,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ está disponível."
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A versão %@ está disponível."
@@ -7943,6 +9407,12 @@
             "value" : "Aviso"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7968,6 +9438,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aviso"
@@ -8008,6 +9484,12 @@
             "value" : "Lo que las apps indican a macOS"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que las apps indican a macOS"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8036,6 +9518,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O que os apps informam ao macOS"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que as apps comunicam ao macOS"
           }
         },
         "zh-Hans" : {
@@ -8073,6 +9561,12 @@
             "value" : "Tienes la versión más reciente, la %@."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión más reciente, la %@."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8101,6 +9595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão mais recente, %@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem a versão mais recente, a %@."
           }
         },
         "zh-Hans" : {
@@ -8138,6 +9638,12 @@
             "value" : "Tienes la versión %@. Descarga la nueva de GitHub y sustituye AutoHush en tu carpeta Aplicaciones."
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. Descarga la nueva de GitHub y reemplaza AutoHush en tu carpeta Aplicaciones."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8166,6 +9672,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão %@. Baixe a nova no GitHub e substitua o AutoHush na sua pasta Aplicativos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem a versão %@. Descarregue a nova no GitHub e substitua o AutoHush na pasta Aplicações."
           }
         },
         "zh-Hans" : {
@@ -8203,6 +9715,12 @@
             "value" : "Tienes la versión %@. Actualiza con Homebrew:"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. Actualiza con Homebrew:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8231,6 +9749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Você tem a versão %@. Atualize com o Homebrew:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem a versão %@. Atualize com o Homebrew:"
           }
         },
         "zh-Hans" : {
@@ -8268,6 +9792,12 @@
             "value" : "suena otra app"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suena otra app"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8296,6 +9826,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "outro app está tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "outra app está a tocar"
           }
         },
         "zh-Hans" : {
@@ -8333,6 +9869,12 @@
             "value" : "no indica a macOS que esté reproduciendo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no indica a macOS que esté reproduciendo"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8361,6 +9903,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "não informa ao macOS que está tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "não comunica ao macOS que está a tocar"
           }
         },
         "zh-Hans" : {
@@ -8398,6 +9946,12 @@
             "value" : "salida abierta, en silencio"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "salida abierta, en silencio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8423,6 +9977,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "saída aberta, em silêncio"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "saída aberta, em silêncio"
@@ -8463,6 +10023,12 @@
             "value" : "salida abierta, en silencio, ignorada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "salida abierta, en silencio, ignorada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8491,6 +10057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "saída aberta, em silêncio, ignorado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "saída aberta, em silêncio, ignorada"
           }
         },
         "zh-Hans" : {
@@ -8528,6 +10100,12 @@
             "value" : "reproduciendo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduciendo"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8556,6 +10134,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a tocar"
           }
         },
         "zh-Hans" : {
@@ -8593,6 +10177,12 @@
             "value" : "reproduciendo, ignorada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reproduciendo, ignorada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8621,6 +10211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tocando, ignorado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a tocar, ignorada"
           }
         },
         "zh-Hans" : {
@@ -8658,6 +10254,12 @@
             "value" : "silencio"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silencio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8683,6 +10285,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silêncio"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "silêncio"
@@ -8723,6 +10331,12 @@
             "value" : "empezando"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "empezando"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8751,6 +10365,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "começando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a começar"
           }
         },
         "zh-Hans" : {
@@ -8788,6 +10408,12 @@
             "value" : "empezando, ignorada"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "empezando, ignorada"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8816,6 +10442,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "começando, ignorado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a começar, ignorada"
           }
         },
         "zh-Hans" : {
@@ -8853,6 +10485,12 @@
             "value" : "indica a macOS que está reproduciendo"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "indica a macOS que está reproduciendo"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8881,6 +10519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "informa ao macOS que está tocando"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comunica ao macOS que está a tocar"
           }
         },
         "zh-Hans" : {
@@ -8918,6 +10562,12 @@
             "value" : "hasta las %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta las %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8946,6 +10596,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "até as %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "até às %@"
           }
         },
         "zh-Hans" : {
@@ -8989,6 +10645,12 @@
             "value" : "hasta el %1$@ a las %2$@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta el %1$@ a las %2$@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9014,6 +10676,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "até %1$@ às %2$@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até %1$@ às %2$@"
@@ -9054,6 +10722,12 @@
             "value" : "hasta mañana a las %@"
           }
         },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta mañana a las %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9079,6 +10753,12 @@
           }
         },
         "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "até amanhã às %@"
+          }
+        },
+        "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "até amanhã às %@"
