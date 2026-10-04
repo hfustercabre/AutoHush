@@ -1,16 +1,22 @@
-<p align="center">
-  <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
-</p>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/icon-dark.png">
+    <img src=".github/images/icon-light.png" alt="" width="64" height="64">
+  </picture>
+  <br>AutoHush
+</h1>
+<p align="center"><strong>Your music steps aside when something else needs your ears.</strong></p>
 <p align="center">
   <a href="https://github.com/hfustercabre/AutoHush/releases/latest"><img src="https://img.shields.io/github/v/release/hfustercabre/AutoHush?color=BD5FFF" alt="Latest release"></a>
   <a href="https://github.com/hfustercabre/AutoHush/releases"><img src="https://img.shields.io/github/downloads/hfustercabre/AutoHush/total?color=BD5FFF" alt="Downloads"></a>
   <a href="#install"><img src="https://img.shields.io/badge/macOS-15%2B-BD5FFF" alt="macOS 15 or later"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/hfustercabre/AutoHush?color=BD5FFF" alt="MIT license"></a>
 </p>
+<p align="center">
+  <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
+</p>
 
-# AutoHush
-
-**Your music steps aside when something else needs your ears.**
+## About AutoHush
 
 AutoHush is a small menu bar app for macOS. When another app starts making sound (a YouTube video, a call, a game), it pauses your music. When that sound stops, it brings your music back. You don't have to touch anything.
 
