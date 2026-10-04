@@ -28,7 +28,6 @@ struct StatusMenuControllerTests {
             showAvailableUpdate: { log.calls.append("update") },
             checkForUpdates: { log.calls.append("checkUpdates") },
             showAbout: { log.calls.append("about") },
-            openSupportPage: { log.calls.append("support") },
             quit: { log.calls.append("quit") }
         ))
     }
@@ -175,11 +174,10 @@ struct StatusMenuControllerTests {
         try perform(try item("Diagnostics…", in: sut.menu))
         try perform(try item("About AutoHush", in: sut.menu))
         try perform(try item("Check for Updates…", in: sut.menu))
-        try perform(try item("Buy Me a Coffee", in: sut.menu))
         try perform(try item("Quit AutoHush", in: sut.menu))
         #expect(log.calls == [
             "toggleAutoPause", "snooze 1 Hour", "ignore com.google.Chrome true",
-            "settings", "diagnostics", "about", "checkUpdates", "support", "quit",
+            "settings", "diagnostics", "about", "checkUpdates", "quit",
         ])
     }
 

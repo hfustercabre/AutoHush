@@ -1,7 +1,8 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, auto-pause, AntiDot mode and updates.
+/// Settings → General: launch at login, auto-pause, AntiDot mode, updates and
+/// a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -86,6 +87,18 @@ struct GeneralSettingsView: View {
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+
+            Section {
+                LabeledContent {
+                    Link(destination: ProjectInfo.supportPage) {
+                        Text("Buy me a coffee",
+                             comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
+                    }
+                } label: {
+                    Text("Would you like to support me?",
+                         comment: "About panel and Settings → General, before the Buy me a coffee link")
                 }
             }
         }

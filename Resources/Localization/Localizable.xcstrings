@@ -3934,8 +3934,8 @@
         }
       }
     },
-    "Buy Me a Coffee" : {
-      "comment" : "Menu item: opens the developer's Buy Me a Coffee page",
+    "Buy me a coffee" : {
+      "comment" : "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -3982,13 +3982,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開発者にコーヒーをおごる"
+            "value" : "コーヒーをおごる"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "개발자에게 커피 한 잔 사주기"
+            "value" : "커피 한 잔 사주기"
           }
         },
         "pt" : {
@@ -11195,6 +11195,89 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App 告知 macOS 的資訊"
+          }
+        }
+      }
+    },
+    "Would you like to support me?" : {
+      "comment" : "About panel and Settings → General, before the Buy me a coffee link",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vols donar-me suport?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Möchtest du mich unterstützen?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Quieres apoyarme?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Quieres apoyarme?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous souhaitez me soutenir ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous souhaitez me soutenir?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuoi sostenermi?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開発を応援しませんか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개발을 응원해 주시겠어요?"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quer me apoiar?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quer apoiar-me?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想支持我吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想支持我嗎？"
           }
         }
       }

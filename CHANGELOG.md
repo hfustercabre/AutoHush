@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Buy Me a Coffee** has left the menu: it's now a line in **About
+  AutoHush** and at the bottom of **Settings → General**, "Would you like to
+  support me?", with the link.
+
 ## [0.3.6] — 2026-10-04
 
 ### Added

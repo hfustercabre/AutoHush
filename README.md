@@ -120,7 +120,6 @@ Music paused — Google Chrome is playing
 ───────────────
   About AutoHush
   Check for Updates…
-  Buy Me a Coffee
   Quit AutoHush             ⌘Q
 ```
 
@@ -135,7 +134,7 @@ Music paused — Google Chrome is playing
 
 | Tab | What you'll find |
 |---|---|
-| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks and automatic installs |
+| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks and automatic installs · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped and your music resumes (2 s, at least 1 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
@@ -220,7 +219,7 @@ tccutil reset All com.autohush.AutoHush
 
 ## Support AutoHush
 
-AutoHush is free. If it saves your ears a few times a day and you'd like to say thanks, you can buy me a coffee. It helps me keep improving it.
+AutoHush is free. If it saves your ears a few times a day and you'd like to say thanks, you can buy me a coffee. It helps me keep improving it. The link is also in **About AutoHush** and at the bottom of **Settings → General**.
 
 <p align="center">
   <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
