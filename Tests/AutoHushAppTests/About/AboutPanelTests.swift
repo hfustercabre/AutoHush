@@ -13,7 +13,8 @@ struct AboutPanelTests {
             Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify.
             github.com/hfustercabre/AutoHush
 
-            Would you like to support me? Buy me a coffee
+            Would you like to support me?
+            Buy me a coffee
             """)
         #expect(links(in: credits) == [
             "github.com/hfustercabre/AutoHush": ProjectInfo.homepage,

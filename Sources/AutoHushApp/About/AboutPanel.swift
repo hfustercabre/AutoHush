@@ -10,7 +10,7 @@ enum AboutPanel {
     }
 
     /// The text under the app's name: what AutoHush does, the project link,
-    /// and "Would you like to support me?" with a link to buy me a coffee.
+    /// and "Would you like to support me?" with a link to buy me a coffee below.
     static func credits(playerName: String) -> NSAttributedString {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
@@ -35,7 +35,7 @@ enum AboutPanel {
 
         let credits = NSMutableAttributedString(string: summary + "\n", attributes: body)
         credits.append(link("github.com/\(ProjectInfo.repository)", to: ProjectInfo.homepage))
-        credits.append(NSAttributedString(string: "\n\n" + question + " ", attributes: body))
+        credits.append(NSAttributedString(string: "\n\n" + question + "\n", attributes: body))
         credits.append(link(support, to: ProjectInfo.supportPage))
         return credits
     }
