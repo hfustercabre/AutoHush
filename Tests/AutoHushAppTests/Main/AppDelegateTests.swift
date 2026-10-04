@@ -265,10 +265,26 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         #expect(sut.settingsModel.automaticUpdates == .install)
         #expect(sut.settingsModel.updateInstallNote == nil)
+        sut.setAutomaticUpdates(.install)
+        #expect(scratch.notifier.permissionRequests == 0)
         sut.setAutomaticUpdates(.download)
         #expect(scratch.preferences.automaticUpdates == .download)
         #expect(sut.settingsModel.automaticUpdates == .download)
         #expect(sut.updates.mode == .download)
+        #expect(scratch.notifier.permissionRequests == 1) // a choice that notifies asks, if not answered yet
+    }
+
+    @MainActor
+    @Test("when notifications go off, Settings shows the choice moved to installing, with checks off")
+    func notificationsOffShownInSettings() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        sut.setAutomaticUpdates(.download)
+        #expect(sut.updates.adapt(toNotificationsOff: true))
+        #expect(sut.settingsModel.automaticUpdates == .install)
+        #expect(!sut.settingsModel.checksForUpdatesAutomatically)
+        #expect(scratch.preferences.automaticUpdates == .install)
+        #expect(!scratch.preferences.checksForUpdatesAutomatically)
     }
 
     @MainActor

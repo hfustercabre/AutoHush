@@ -44,6 +44,8 @@ final class UpdateController {
     private let onOffer: @MainActor (UpdateOffer?) -> Void
     /// The last check's, download's or install's outcome in one line, shown in Settings.
     private let onStatus: @MainActor (String) -> Void
+    /// AutoHush changed the update settings by itself (`adapt(toNotificationsOff:)`).
+    private let onSettingsChange: @MainActor () -> Void
     private var timer: Timer?
     /// A check is under way; one asked for meanwhile is answered by it.
     private var isChecking = false
@@ -71,7 +73,8 @@ final class UpdateController {
         quit: @escaping @MainActor () -> Void,
         openURL: @escaping @MainActor (URL) -> Void = { NSWorkspace.shared.open($0) },
         onOffer: @escaping @MainActor (UpdateOffer?) -> Void,
-        onStatus: @escaping @MainActor (String) -> Void
+        onStatus: @escaping @MainActor (String) -> Void,
+        onSettingsChange: @escaping @MainActor () -> Void = {}
     ) {
         self.checker = checker
         self.installer = installer
@@ -85,6 +88,7 @@ final class UpdateController {
         self.openURL = openURL
         self.onOffer = onOffer
         self.onStatus = onStatus
+        self.onSettingsChange = onSettingsChange
         notifier.onClick = { [weak self] kind, version in self?.open(kind, version: version) }
     }
 
@@ -145,6 +149,7 @@ final class UpdateController {
     /// it (or an earlier check) found, as the user chose. Whatever has to
     /// wait (a quiet moment, the network) is tried again at the next run.
     func runAutomaticTasks() async {
+        adapt(toNotificationsOff: await notifier.notificationsAreOff())
         tidy()
         if isCheckDue() { await check(userInitiated: false) }
         await followUp()
@@ -165,6 +170,21 @@ final class UpdateController {
             guard release.version != failedAutomaticInstall, isQuietMoment() else { return }
             await install(release, userInitiated: false)
         }
+    }
+
+    /// With notifications off, "Notify me" and "Download it and notify me"
+    /// can't tell the user anything. AutoHush then moves the choice to
+    /// "Install it automatically" and turns automatic checks off: it still
+    /// installs nothing without the user turning them back on. Returns
+    /// whether it changed the settings.
+    @discardableResult
+    func adapt(toNotificationsOff notificationsOff: Bool) -> Bool {
+        guard notificationsOff, mode != .install else { return false }
+        logger.notice("Notifications are off: update choice set to install, automatic checks off")
+        mode = .install
+        checksAutomatically = false
+        onSettingsChange()
+        return true
     }
 
     // MARK: - Checking

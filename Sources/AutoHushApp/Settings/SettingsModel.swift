@@ -42,8 +42,17 @@ final class SettingsModel {
     /// Why AutoHush can't install updates itself, shown under the choice;
     /// nil when it can. Then only "Notify me" is possible.
     var updateInstallNote: String?
-    /// The user turned AutoHush's notifications off in System Settings.
+    /// The user turned AutoHush's notifications off in System Settings. Then
+    /// the update choices that rely on them are unavailable.
     var notificationsOff = false
+    /// The "notifications are off" note is shown lit: it blinks after a click
+    /// on an unavailable choice (`flashNotificationsNote`).
+    private(set) var notificationsNoteIsLit = false
+    /// How long the note blinks, and how fast.
+    @ObservationIgnored var noteFlashDuration: Duration = .seconds(5)
+    @ObservationIgnored var noteFlashInterval: Duration = .milliseconds(500)
+    @ObservationIgnored private var noteFlashEnd: ContinuousClock.Instant?
+    @ObservationIgnored private var noteFlash: Task<Void, Never>?
     var updateStatus: String?
 
     // Apps
@@ -94,6 +103,30 @@ final class SettingsModel {
     func forgetAllApps() { actions.forgetAllApps() }
     func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
     func setAutomaticUpdates(_ mode: AutomaticUpdates) { actions.setAutomaticUpdates(mode) }
+
+    /// Whether `mode` can be chosen now: notifying needs notifications.
+    func isAvailable(_ mode: AutomaticUpdates) -> Bool {
+        mode == .install || !notificationsOff
+    }
+
+    /// Makes the "notifications are off" note blink for `noteFlashDuration`;
+    /// asked again meanwhile, it blinks that long from then.
+    func flashNotificationsNote() {
+        let clock = ContinuousClock()
+        noteFlashEnd = clock.now + noteFlashDuration
+        guard noteFlash == nil else { return }
+        notificationsNoteIsLit = true
+        let interval = noteFlashInterval
+        noteFlash = Task { [weak self] in
+            while true {
+                try? await Task.sleep(for: interval)
+                guard let self, let end = self.noteFlashEnd, clock.now < end else { break }
+                self.notificationsNoteIsLit.toggle()
+            }
+            self?.notificationsNoteIsLit = false
+            self?.noteFlash = nil
+        }
+    }
     func checkForUpdates() { actions.checkForUpdates() }
     func openNotificationSettings() { actions.openNotificationSettings() }
 

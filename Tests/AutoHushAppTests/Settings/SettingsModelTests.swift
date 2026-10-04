@@ -127,6 +127,42 @@ struct SettingsModelTests {
         model.restoreDefaultTimings()
         #expect(model.timings == .defaults)
     }
+
+    // MARK: - Notifications
+
+    @Test("choices that notify are unavailable while notifications are off")
+    func notifyingChoices() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        #expect(AutomaticUpdates.allCases.allSatisfy(model.isAvailable))
+        model.notificationsOff = true
+        #expect(!model.isAvailable(.notify))
+        #expect(!model.isAvailable(.download))
+        #expect(model.isAvailable(.install))
+    }
+
+    @Test("the notifications note blinks for a while, longer when asked again")
+    func noteBlinks() async throws {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.noteFlashDuration = .milliseconds(300)
+        model.noteFlashInterval = .milliseconds(20)
+
+        model.flashNotificationsNote()
+        #expect(model.notificationsNoteIsLit) // lit at once
+        try await Task.sleep(for: .milliseconds(200))
+        model.flashNotificationsNote() // from now, another 300 ms
+
+        // Past the first 300 ms, it still blinks.
+        var litAgain = false
+        for _ in 0..<10 {
+            try await Task.sleep(for: .milliseconds(20))
+            litAgain = litAgain || model.notificationsNoteIsLit
+        }
+        #expect(litAgain)
+
+        try await Task.sleep(for: .milliseconds(400))
+        #expect(!model.notificationsNoteIsLit)
+    }
+
 }
 
 @Suite("SettingsWindowController")

@@ -6582,6 +6582,7 @@
       }
     },
     "Download it and notify me" : {
+      "comment" : "Settings: an update choice",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -8398,6 +8399,7 @@
       }
     },
     "Install it automatically" : {
+      "comment" : "Settings: an update choice",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -9967,6 +9969,7 @@
       }
     },
     "Notify me" : {
+      "comment" : "Settings: an update choice",
       "localizations" : {
         "ca" : {
           "stringUnit" : {

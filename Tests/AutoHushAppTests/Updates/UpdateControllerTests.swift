@@ -24,6 +24,7 @@ struct UpdateControllerTests {
         var statuses: [String] = []
         var opened: [URL] = []
         var quits = 0
+        var settingsChanges = 0
         private(set) var controller: UpdateController!
 
         init(
@@ -48,7 +49,8 @@ struct UpdateControllerTests {
                 quit: { [unowned self] in quits += 1 },
                 openURL: { [unowned self] in opened.append($0) },
                 onOffer: { [unowned self] in offers.append($0) },
-                onStatus: { [unowned self] in statuses.append($0) }
+                onStatus: { [unowned self] in statuses.append($0) },
+                onSettingsChange: { [unowned self] in settingsChanges += 1 }
             )
         }
 
@@ -320,6 +322,34 @@ struct UpdateControllerTests {
         await h.controller.runAutomaticTasks()
         #expect(h.installer.calls.isEmpty)
         #expect(h.notifier.announced == [.available(v030, running: AppVersion("0.2.0")!)])
+    }
+
+    // MARK: - Notifications turned off
+
+    @Test("with notifications off, a choice that notifies becomes installing, with automatic checks off",
+          arguments: [AutomaticUpdates.notify, .download])
+    func notificationsOffMovesChoice(mode: AutomaticUpdates) async {
+        let h = Harness(checker: .latestRelease("v0.3.0"), mode: mode)
+        h.notifier.areOff = true
+        await h.controller.runAutomaticTasks()
+
+        #expect(h.controller.mode == .install)
+        #expect(!h.controller.checksAutomatically)
+        #expect(h.settingsChanges == 1)
+        #expect(h.installer.calls.isEmpty) // nothing installed without the user's say
+        #expect(h.notifier.announced.isEmpty)
+    }
+
+    @Test("with notifications on, or installing chosen, nothing changes")
+    func notificationsOffLeavesInstalling() async {
+        let on = Harness(checker: .offline, mode: .notify)
+        #expect(!on.controller.adapt(toNotificationsOff: false))
+        #expect(on.controller.mode == .notify)
+
+        let installing = Harness(checker: .offline, mode: .install)
+        #expect(!installing.controller.adapt(toNotificationsOff: true))
+        #expect(installing.controller.checksAutomatically)
+        #expect(installing.settingsChanges == 0)
     }
 
     // MARK: - Install it automatically

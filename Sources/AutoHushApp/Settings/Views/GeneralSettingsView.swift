@@ -70,17 +70,19 @@ struct GeneralSettingsView: View {
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
-                Picker("When an update is found", selection: Binding(
-                    // A copy that can't install itself can only notify.
-                    get: { model.updateInstallNote == nil ? model.automaticUpdates : .notify },
-                    set: { model.setAutomaticUpdates($0) }
-                )) {
-                    Text("Notify me").tag(AutomaticUpdates.notify)
-                    Text("Download it and notify me").tag(AutomaticUpdates.download)
-                    Text("Install it automatically").tag(AutomaticUpdates.install)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("When an update is found")
+                    RadioChoices(
+                        options: [AutomaticUpdates.notify, .download, .install].map {
+                            .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
+                        },
+                        // A copy that can't install itself can only notify.
+                        selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
+                        onSelect: { model.setAutomaticUpdates($0) },
+                        onUnavailableClick: { model.flashNotificationsNote() }
+                    )
+                    .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
                 }
-                .pickerStyle(.radioGroup)
-                .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
                 if let note = model.updateInstallNote {
                     Text(note)
                         .font(.callout)
@@ -90,10 +92,12 @@ struct GeneralSettingsView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                if model.notificationsOff && model.checksForUpdatesAutomatically {
+                // Shown even with checks off: AutoHush turns them off when notifications go off.
+                if model.notificationsOff {
+                    // Blinks in white after a click on a choice that needs notifications.
                     Text("Notifications are off for AutoHush, so it can't tell you about updates.")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(Color.white) : AnyShapeStyle(.secondary))
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
                 }
                 HStack {
@@ -150,8 +154,20 @@ private extension DetectionMethod {
     }
 }
 
-/// What each update choice means, under the choice in Settings.
+/// Each update choice as Settings shows it.
 private extension AutomaticUpdates {
+    var title: String {
+        switch self {
+        case .notify:
+            return String(localized: "Notify me", comment: "Settings: an update choice")
+        case .download:
+            return String(localized: "Download it and notify me", comment: "Settings: an update choice")
+        case .install:
+            return String(localized: "Install it automatically", comment: "Settings: an update choice")
+        }
+    }
+
+    /// What the choice means, under the choices.
     var explanation: String {
         switch self {
         case .notify:

@@ -18,6 +18,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
+    /// Follows the notification setting while Settings is open.
+    private var notificationsWatch: Task<Void, Never>?
     /// The music player AutoHush pauses and resumes.
     let player: any MusicPlayer
     /// Update checks (menu, Settings and the daily automatic one), downloads,
@@ -68,7 +70,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
             quit: { [weak self] in self?.quitToFinishUpdate() },
             onOffer: { [weak self] in self?.status.updateOffer = $0 },
-            onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 }
+            onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 },
+            onSettingsChange: { [weak self] in self?.showUpdateSettings() }
         )
         settingsModel = SettingsModel(
             launchAtLoginController: launchAtLoginController,
@@ -231,11 +234,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if enabled { Task { await updates.runAutomaticTasks() } }
     }
 
+    /// Shows the update settings as they are, after AutoHush changed them.
+    private func showUpdateSettings() {
+        settingsModel.checksForUpdatesAutomatically = updates.checksAutomatically
+        settingsModel.automaticUpdates = updates.mode
+    }
+
     /// Stores what automatic checks lead to, and acts on an update already
-    /// found the new way (e.g. downloads it).
+    /// found the new way (e.g. downloads it). A choice that notifies asks for
+    /// permission to, if the user hasn't answered yet.
     func setAutomaticUpdates(_ mode: AutomaticUpdates) {
         updates.mode = mode
         settingsModel.automaticUpdates = mode
+        if mode != .install { updateNotifier.requestPermission() }
         Task { await updates.runAutomaticTasks() }
     }
 
@@ -399,7 +410,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
         settingsWindowController?.show()
-        Task { settingsModel.notificationsOff = await updateNotifier.notificationsAreOff() }
+        watchNotificationSettings()
+    }
+
+    /// While Settings is open, checks every second whether the user turned
+    /// AutoHush's notifications on or off in System Settings, so the note and
+    /// the choices that need them follow at once. macOS doesn't announce it.
+    private func watchNotificationSettings() {
+        notificationsWatch?.cancel()
+        notificationsWatch = Task { [weak self] in
+            while !Task.isCancelled, let self, self.settingsWindowController?.window?.isVisible == true {
+                let off = await self.updateNotifier.notificationsAreOff()
+                if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
+                self.updates.adapt(toNotificationsOff: off)
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
     }
 
     private func showDiagnostics() {

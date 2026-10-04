@@ -204,7 +204,7 @@ Until it's installed, the menu shows **Install AutoHush 0.3.8…** in place of *
 
 Installing swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
 
-AutoHush asks for permission to send notifications when it first starts (while automatic checks are on). Without it, the menu still offers the update, and Settings has a button to turn notifications on.
+AutoHush asks for permission to send notifications when it first starts (while automatic checks are on). While notifications are off, **Notify me** and **Download it and notify me** are unavailable, since they couldn't tell you anything, and Settings says so, with a button to turn notifications on. If one of them was your choice, AutoHush moves it to **Install it automatically** and turns automatic checks off, so it installs nothing until you turn them back on.
 
 **Downloaded updates** are kept in `~/Library/Caches/com.autohush.AutoHush/Updates`, one at a time, and never for long. A download is deleted when:
 

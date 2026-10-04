@@ -12,6 +12,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **AutoHush asks for permission to send notifications when it first
   starts**, along with its other permissions, instead of with its first
   news about an update.
+- **While notifications are off, the update choices that rely on them are
+  unavailable**: Notify me and Download it and notify me show dimmed, and
+  clicking one makes the "Notifications are off" note blink. If one of them
+  was chosen, AutoHush switches to Install it automatically and turns
+  automatic checks off, so nothing is installed without you. Settings
+  follows changes to the notification setting while it's open.
 
 ### Fixed
 
