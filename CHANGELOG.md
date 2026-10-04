@@ -5,6 +5,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Buy Me a Coffee** in the menu opens AutoHush's Buy Me a Coffee page, if
+  you'd like to support it.
+
 ## [0.3.5] — 2026-10-04
 
 ### Changed
