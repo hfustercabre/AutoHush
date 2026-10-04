@@ -29,11 +29,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Replaces the real bootstrap in tests, so they never script the music player or
     /// tap real audio processes.
     private let bootstrapOverride: (@MainActor () -> Void)?
-    /// When the AutoHush before this one handed over its pause, quitting to
-    /// install an update; taken over by the first monitoring that starts.
-    private var pauseHandedOverAt: Date?
-    /// A restart for an update takes seconds: an older handover is stale.
+    /// The first monitoring that starts may take over a pause handed over by
+    /// the AutoHush before this one; later ones don't.
+    private var pauseHandoverChecked = false
+    /// A restart for an update or by another copy takes seconds: an older
+    /// handover is stale.
     static let pauseHandoverMaxAge: TimeInterval = 60
+    /// Other copies of AutoHush, which quit when this one opens.
+    private let otherInstances: OtherInstances
+    /// Turns SIGTERM into a normal quit.
+    private var terminationSignal: (any DispatchSourceSignal)?
 
     init(
         preferences: Preferences = Preferences(),
@@ -44,14 +49,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         player: any MusicPlayer = SupportedPlayers.makeDefault(),
         currentVersion: AppVersion? = .current,
+        otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
         self.player = player
         self.bootstrapOverride = bootstrapOverride
         self.updateNotifier = updateNotifier
-        pauseHandedOverAt = preferences.pauseHandedOverAt
-        preferences.pauseHandedOverAt = nil
+        self.otherInstances = otherInstances
         super.init()
         updates = UpdateController(
             checker: updateChecker,
@@ -110,8 +115,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 quit: { NSApp.terminate(nil) }
             )
         )
+        quitOnTerminationSignal()
         registerPlayerLaunchObserver()
-        requestBootstrap()
+        // Opened last, this copy is the one that runs: any other quits first,
+        // handing over a pause it held, so they never both pause and resume
+        // the music.
+        let otherInstances = otherInstances
+        Task {
+            let others = await otherInstances.quitAll()
+            if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
+            requestBootstrap()
+        }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
     }
@@ -119,6 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Waits (briefly) for a fade in progress to give the player its volume
     /// back, so quitting never leaves the music faded down.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // A pause AutoHush is holding is handed over: an AutoHush opened next
+        // (an update, another copy, a quick reopen) resumes the music once the
+        // other apps stop. Later than `pauseHandoverMaxAge`, it's ignored.
+        if status.playback == .pausedByMonitor { preferences.pauseHandedOverAt = Date() }
         guard let pipeline else { return .terminateNow }
         self.pipeline = nil
         var replied = false
@@ -399,22 +417,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Updates
 
-    /// Quits so that the installed update opens. A pause AutoHush is holding
-    /// is handed over: the new version resumes the music once the other apps
-    /// stop.
+    /// Quits so that the installed update opens; a pause AutoHush is holding
+    /// is handed over (see `applicationShouldTerminate`).
     private func quitToFinishUpdate() {
-        if status.playback == .pausedByMonitor { preferences.pauseHandedOverAt = Date() }
-        // From the run loop, not from inside the install's task: quitting
-        // waits for main-actor work (restoring the volume), which can't run
-        // while a main-actor job is still under way.
+        quitFromRunLoop()
+    }
+
+    /// Quits from the run loop, not from inside a main-actor job (the install's
+    /// task, a signal handler): quitting waits for main-actor work (restoring
+    /// the volume), which can't run while a main-actor job is still under way.
+    private func quitFromRunLoop() {
         RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } }
     }
 
-    /// Whether monitoring takes over a pause handed over at most
-    /// `pauseHandoverMaxAge` before `now`. Only the first asking does.
+    /// Quits normally on SIGTERM (from an AutoHush opened after this one,
+    /// `kill`, or the system) instead of stopping at once, so the volume is
+    /// restored and a pause handed over.
+    private func quitOnTerminationSignal() {
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler { [weak self] in
+            MainActor.assumeIsolated { self?.quitFromRunLoop() }
+        }
+        source.resume()
+        terminationSignal = source
+    }
+
+    /// Whether monitoring takes over a pause handed over by the AutoHush before
+    /// this one, at most `pauseHandoverMaxAge` before `now`. Only the first
+    /// monitoring asks; it starts after other copies have quit, so their
+    /// handover is in by then.
     func takesOverPause(now: Date = Date()) -> Bool {
-        guard let handedOver = pauseHandedOverAt else { return false }
-        pauseHandedOverAt = nil
+        guard !pauseHandoverChecked else { return false }
+        pauseHandoverChecked = true
+        guard let handedOver = preferences.pauseHandedOverAt else { return false }
+        preferences.pauseHandedOverAt = nil
         return (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handedOver))
     }
 

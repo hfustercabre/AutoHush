@@ -110,10 +110,12 @@ final class UpdateController {
 
     // MARK: - Launch and scheduling
 
-    /// At launch: listens for clicks on notifications, says so when AutoHush
-    /// was updated since it last ran, and tidies a kept download.
+    /// At launch: listens for clicks on notifications, asks for permission to
+    /// send them (on the first launch, as automatic checks start on), says so
+    /// when AutoHush was updated since it last ran, and tidies a kept download.
     func noteLaunch() {
         notifier.activate()
+        if checksAutomatically { notifier.requestPermission() }
         if let currentVersion {
             let last = preferences.lastLaunchedVersion.flatMap(AppVersion.init)
             preferences.lastLaunchedVersion = currentVersion.description
