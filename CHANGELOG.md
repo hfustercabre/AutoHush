@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **After you reset AutoHush's notifications in System Settings** (Reset
+  Notifications…), AutoHush asks for permission again: at once while its
+  Settings window is open, otherwise within the hour. Before, it didn't
+  notice until it was opened again.
+
 ## [0.3.9] — 2026-10-04
 
 ### Changed

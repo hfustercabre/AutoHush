@@ -10,14 +10,14 @@ final class MockUpdateNotifier: UpdateNotifying {
     private(set) var permissionRequests = 0
     private(set) var announced: [UpdateNotice] = []
     private(set) var withdrawals = 0
-    /// Whether the user turned notifications off.
-    var areOff = false
+    /// What the user decided about notifications.
+    var currentPermission = NotificationPermission.allowed
 
     func activate() { isActive = true }
     func requestPermission() { permissionRequests += 1 }
     func announce(_ notice: UpdateNotice) { announced.append(notice) }
     func withdraw() { withdrawals += 1 }
-    func notificationsAreOff() async -> Bool { areOff }
+    func permission() async -> NotificationPermission { currentPermission }
 
     /// Acts as if the user clicked a notification.
     func click(_ kind: UpdateNotice.Kind, _ version: String) {

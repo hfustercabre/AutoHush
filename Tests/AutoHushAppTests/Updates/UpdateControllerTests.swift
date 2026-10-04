@@ -330,7 +330,7 @@ struct UpdateControllerTests {
           arguments: [AutomaticUpdates.notify, .download])
     func notificationsOffMovesChoice(mode: AutomaticUpdates) async {
         let h = Harness(checker: .latestRelease("v0.3.0"), mode: mode)
-        h.notifier.areOff = true
+        h.notifier.currentPermission = .off
         await h.controller.runAutomaticTasks()
 
         #expect(h.controller.mode == .install)
@@ -350,6 +350,30 @@ struct UpdateControllerTests {
         #expect(!installing.controller.adapt(toNotificationsOff: true))
         #expect(installing.controller.checksAutomatically)
         #expect(installing.settingsChanges == 0)
+    }
+
+    @Test("a reset in System Settings is asked about again, once, and only after an answer")
+    func notificationsResetAsksAgain() async {
+        let h = Harness(checker: .offline, mode: .notify)
+        h.notifier.currentPermission = .notAsked // the launch's question, not answered yet
+        await h.controller.followNotificationPermission()
+        #expect(h.notifier.permissionRequests == 0)
+
+        h.notifier.currentPermission = .allowed
+        await h.controller.followNotificationPermission()
+        h.notifier.currentPermission = .notAsked // Reset Notifications…
+        #expect(await h.controller.followNotificationPermission() == .notAsked)
+        #expect(h.notifier.permissionRequests == 1)
+        await h.controller.followNotificationPermission() // still waiting for the answer
+        #expect(h.notifier.permissionRequests == 1)
+        #expect(h.controller.mode == .notify)
+
+        h.notifier.currentPermission = .off
+        await h.controller.followNotificationPermission()
+        #expect(h.controller.mode == .install)
+        h.notifier.currentPermission = .notAsked // reset again, while off
+        await h.controller.runAutomaticTasks()
+        #expect(h.notifier.permissionRequests == 2)
     }
 
     // MARK: - Install it automatically

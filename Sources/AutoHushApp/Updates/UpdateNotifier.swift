@@ -71,6 +71,16 @@ enum UpdateNotice: Equatable, Sendable {
     }
 }
 
+/// What the user decided about AutoHush's notifications.
+enum NotificationPermission: Equatable, Sendable {
+    /// Not asked yet, or asked with no answer yet. Reset Notifications… in
+    /// System Settings brings AutoHush back here, so it can ask again.
+    case notAsked
+    case allowed
+    /// The user turned notifications off.
+    case off
+}
+
 /// Shows update notifications and reports clicks on them.
 /// `SystemUpdateNotifier` is the real one; tests stand in for it.
 @MainActor
@@ -88,8 +98,8 @@ protocol UpdateNotifying: AnyObject {
     func announce(_ notice: UpdateNotice)
     /// Removes the notification shown, which no longer applies.
     func withdraw()
-    /// Whether the user turned AutoHush's notifications off.
-    func notificationsAreOff() async -> Bool
+    /// What the user decided about AutoHush's notifications, now.
+    func permission() async -> NotificationPermission
 }
 
 /// Update notifications through the Notification Center. All of them share
@@ -152,8 +162,12 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
         center.removePendingNotificationRequests(withIdentifiers: [Self.identifier])
     }
 
-    func notificationsAreOff() async -> Bool {
-        await center.notificationSettings().authorizationStatus == .denied
+    func permission() async -> NotificationPermission {
+        switch await center.notificationSettings().authorizationStatus {
+        case .notDetermined: .notAsked
+        case .denied: .off
+        default: .allowed
+        }
     }
 }
 

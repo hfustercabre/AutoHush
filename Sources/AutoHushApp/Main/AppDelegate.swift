@@ -414,15 +414,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// While Settings is open, checks every second whether the user turned
-    /// AutoHush's notifications on or off in System Settings, so the note and
-    /// the choices that need them follow at once. macOS doesn't announce it.
+    /// AutoHush's notifications on or off, or reset them, in System Settings,
+    /// so the note and the choices that need them follow at once, and a reset
+    /// is asked about again. macOS doesn't announce these changes.
     private func watchNotificationSettings() {
         notificationsWatch?.cancel()
         notificationsWatch = Task { [weak self] in
             while !Task.isCancelled, let self, self.settingsWindowController?.window?.isVisible == true {
-                let off = await self.updateNotifier.notificationsAreOff()
+                let off = await self.updates.followNotificationPermission() == .off
                 if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
-                self.updates.adapt(toNotificationsOff: off)
                 try? await Task.sleep(for: .seconds(1))
             }
         }

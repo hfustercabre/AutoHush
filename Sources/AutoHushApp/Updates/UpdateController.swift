@@ -59,6 +59,8 @@ final class UpdateController {
     /// A version that failed to install automatically. It isn't tried
     /// automatically again until AutoHush restarts.
     private var failedAutomaticInstall: AppVersion?
+    /// The notification permission last seen, to notice a reset.
+    private var lastPermission: NotificationPermission?
     private let logger = Logger(category: "Updates")
 
     init(
@@ -149,7 +151,7 @@ final class UpdateController {
     /// it (or an earlier check) found, as the user chose. Whatever has to
     /// wait (a quiet moment, the network) is tried again at the next run.
     func runAutomaticTasks() async {
-        adapt(toNotificationsOff: await notifier.notificationsAreOff())
+        await followNotificationPermission()
         tidy()
         if isCheckDue() { await check(userInitiated: false) }
         await followUp()
@@ -170,6 +172,23 @@ final class UpdateController {
             guard release.version != failedAutomaticInstall, isQuietMoment() else { return }
             await install(release, userInitiated: false)
         }
+    }
+
+    /// Looks at the permission to notify and follows changes to it. Turned
+    /// off, the update choice adapts (`adapt(toNotificationsOff:)`). Reset
+    /// in System Settings (Reset Notifications…), which makes macOS treat
+    /// AutoHush as never asked, AutoHush asks again at once. Called by each
+    /// automatic run and, every second, while Settings is open.
+    @discardableResult
+    func followNotificationPermission() async -> NotificationPermission {
+        let permission = await notifier.permission()
+        if permission == .notAsked, let lastPermission, lastPermission != .notAsked {
+            logger.notice("Notifications were reset in System Settings: asking again")
+            notifier.requestPermission()
+        }
+        lastPermission = permission
+        adapt(toNotificationsOff: permission == .off)
+        return permission
     }
 
     /// With notifications off, "Notify me" and "Download it and notify me"
