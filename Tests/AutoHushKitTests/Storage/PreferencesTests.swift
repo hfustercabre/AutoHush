@@ -86,6 +86,12 @@ struct PreferencesTests {
         #expect(!Preferences(store: scratch.defaults).checksForUpdatesAutomatically)
         #expect(!Preferences(store: scratch.defaults).installsUpdatesAutomatically)
         #expect(Preferences(store: scratch.defaults).lastUpdateCheck == date)
+
+        #expect(preferences.pauseHandedOverAt == nil)
+        preferences.pauseHandedOverAt = date
+        #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == date)
+        preferences.pauseHandedOverAt = nil
+        #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == nil)
     }
 
     @Test("detection defaults to audio levels and persists")

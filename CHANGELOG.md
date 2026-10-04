@@ -5,6 +5,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Updating no longer leaves your music paused**: if you chose **Install
+  and Relaunch** while AutoHush had your music paused for another app, the
+  new version didn't know that pause was its own, so your music stayed
+  paused. Now AutoHush notes the pause as it quits to update, and the new
+  version takes it over. Your music comes back when the other app stops,
+  or within a couple of seconds if nothing is playing any more. Automatic
+  updates still wait until AutoHush isn't holding your music paused.
+
 ## [0.3.2] — 2026-10-04
 
 ### Fixed
