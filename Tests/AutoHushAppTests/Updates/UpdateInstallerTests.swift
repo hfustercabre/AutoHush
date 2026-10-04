@@ -44,7 +44,8 @@ struct UpdateInstallerTests {
         requirement: String? = Fixture.shared.requirement,
         status: Int = 200,
         serving file: URL = Fixture.shared.diskImage,
-        relaunchLog: RelaunchLog = RelaunchLog()
+        relaunchLog: RelaunchLog = RelaunchLog(),
+        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
     ) -> UpdateInstaller {
         UpdateInstaller(
             appURL: scratch.installedApp,
@@ -55,7 +56,8 @@ struct UpdateInstallerTests {
                 try FileManager.default.copyItem(at: file, to: copy)
                 return (copy, HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
             },
-            relaunch: relaunchLog.relaunch
+            relaunch: relaunchLog.relaunch,
+            diskImageTools: diskImageTools
         )
     }
 
@@ -74,8 +76,32 @@ struct UpdateInstallerTests {
 
     @Test("a genuine update is copied out of its disk image, next to the installed app")
     func preparesGenuineUpdate() async throws {
+        try await expectPrepared(openingWith: DiskImageTool.inOrderOfPreference)
+    }
+
+    @Test("diskutil opens and closes the disk image, where macOS has `diskutil image`",
+          .enabled(if: hasDiskutilImage))
+    func opensWithDiskutil() async throws {
+        try await expectPrepared(openingWith: [.diskutil])
+    }
+
+    @Test("hdiutil opens and closes the disk image, as on macOS 15")
+    func opensWithHdiutil() async throws {
+        try await expectPrepared(openingWith: [.hdiutil])
+    }
+
+    @Test("a tool that's missing or fails makes way for the next one")
+    func fallsBackToNextTool() async throws {
+        let missing = DiskImageTool(path: "/nonexistent/diskutil", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
+        let failing = DiskImageTool(path: "/usr/bin/false", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
+        try await expectPrepared(openingWith: [missing, failing, .hdiutil])
+    }
+
+    /// Prepares the fixture's update, opening its disk image with `tools`,
+    /// and checks the result.
+    private func expectPrepared(openingWith tools: [DiskImageTool]) async throws {
         let scratch = try Scratch()
-        let update = try await installer(scratch).prepare(release())
+        let update = try await installer(scratch, diskImageTools: tools).prepare(release())
 
         #expect(update.version == AppVersion(Fixture.version))
         let info = NSDictionary(contentsOf: update.app.appending(path: "Contents/Info.plist"))
@@ -85,6 +111,7 @@ struct UpdateInstallerTests {
         let contents = try FileManager.default.contentsOfDirectory(atPath: update.folder.path)
         #expect(contents.sorted() == ["AutoHush.app", "Volume"])
         #expect(try FileManager.default.contentsOfDirectory(atPath: update.folder.appending(path: "Volume").path).isEmpty)
+        #expect(Self.attachedImages().isEmpty)
 
         installer(scratch).discard(update)
         #expect(!FileManager.default.fileExists(atPath: update.folder.path))
@@ -97,6 +124,7 @@ struct UpdateInstallerTests {
         await #expect(throws: UpdateInstallError.notGenuine) {
             try await installer(scratch, requirement: autoHush).prepare(release())
         }
+        #expect(Self.attachedImages().isEmpty)
     }
 
     @Test("a download that doesn't match GitHub's checksum is refused")
@@ -123,6 +151,7 @@ struct UpdateInstallerTests {
         await #expect(throws: UpdateInstallError.wrongVersion) {
             try await installer(scratch).prepare(release("9.9.9"))
         }
+        #expect(Self.attachedImages().isEmpty)
     }
 
     @Test("a failed download is reported with its HTTP status")
@@ -206,6 +235,18 @@ struct UpdateInstallerTests {
         }
     }
 
+    /// Where the update disk images this test process opened are still
+    /// mounted: in its own staging folders, which macOS names after it.
+    private static func attachedImages() -> [String] {
+        var mounts: UnsafeMutablePointer<statfs>?
+        let count = Int(getmntinfo(&mounts, MNT_NOWAIT))
+        let staging = "/TemporaryItems/NSIRD_\(ProcessInfo.processInfo.processName)_"
+        return (0..<count).compactMap { index in
+            let path = withUnsafeBytes(of: mounts![index].f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+            return path.contains(staging) ? path : nil
+        }
+    }
+
     /// A prepared "new" app, in a folder on the same volume as `installed`.
     private static func preparedUpdate(next installed: URL) throws -> PreparedUpdate {
         let folder = try FileManager.default.url(
@@ -217,6 +258,18 @@ struct UpdateInstallerTests {
         return PreparedUpdate(version: AppVersion("1.2.0")!, app: app, folder: folder)
     }
 }
+
+/// Whether this macOS has `diskutil image` (macOS 15 doesn't).
+private let hasDiskutilImage: Bool = {
+    let process = Process()
+    process.executableURL = URL(filePath: "/usr/sbin/diskutil")
+    process.arguments = ["image", "attach", "--help"]
+    process.standardOutput = FileHandle.nullDevice
+    process.standardError = FileHandle.nullDevice
+    guard (try? process.run()) != nil else { return false }
+    process.waitUntilExit()
+    return process.terminationStatus == 0
+}()
 
 /// A release's disk image in miniature, made once per test run: AutoHush.app
 /// (`/usr/bin/true` with an Info.plist), signed ad hoc as

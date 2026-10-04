@@ -112,17 +112,21 @@ struct UpdateInstaller: UpdateInstalling {
     let requirement: String?
     private let download: Download
     private let relaunch: Relaunch
+    /// The tools tried, in order, to open the disk image.
+    private let diskImageTools: [DiskImageTool]
 
     init(
         appURL: URL = Bundle.main.bundleURL,
         requirement: String? = UpdateInstaller.runningAppRequirement(),
         download: @escaping Download = { try await URLSession.shared.download(for: $0) },
-        relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit
+        relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit,
+        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
     ) {
         self.appURL = appURL
         self.requirement = requirement
         self.download = download
         self.relaunch = relaunch
+        self.diskImageTools = diskImageTools
     }
 
     var unavailability: UpdateInstallUnavailability? {
@@ -191,12 +195,7 @@ struct UpdateInstaller: UpdateInstalling {
     private func copyApp(outOf imageFile: URL, into folder: URL) async throws -> URL {
         let mountPoint = folder.appending(path: "Volume", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: false)
-        // hdiutil works on every macOS AutoHush supports. macOS 27 suggests
-        // `diskutil image` instead, which macOS 15 doesn't have. The image's
-        // own checksum isn't verified (seconds of work): the SHA-256 and the
-        // signature check already cover every byte that matters.
-        let attach = ["attach", imageFile.path, "-readonly", "-nobrowse", "-noautoopen", "-noverify", "-mountpoint", mountPoint.path]
-        guard try await Self.run("/usr/bin/hdiutil", attach) == 0 else { throw UpdateInstallError.damaged }
+        let tool = try await attach(imageFile, at: mountPoint)
 
         let copied = Result {
             let source = mountPoint.appending(path: "AutoHush.app", directoryHint: .isDirectory)
@@ -206,8 +205,24 @@ struct UpdateInstaller: UpdateInstalling {
             try FileManager.default.copyItem(at: source, to: app)
             return app
         }
-        _ = try? await Self.run("/usr/bin/hdiutil", ["detach", mountPoint.path, "-force"])
+        await detach(mountPoint, with: tool)
         return try copied.get()
+    }
+
+    /// Opens the disk image at `mountPoint` with the first tool that manages
+    /// to, and returns that tool, to close it again. A tool this macOS lacks
+    /// fails, and the next one is tried.
+    private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> DiskImageTool {
+        for tool in diskImageTools {
+            let status = try? await Self.run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint)))
+            if status == 0 { return tool }
+        }
+        throw UpdateInstallError.damaged
+    }
+
+    /// Closes the disk image opened at `mountPoint` with `tool`.
+    private func detach(_ mountPoint: URL, with tool: DiskImageTool) async {
+        _ = try? await Self.run(tool.path, tool.detachArguments(Self.resolvedPath(mountPoint)))
     }
 
     /// Accepts `app` only when it's signed like the running app, intact (every
@@ -279,6 +294,17 @@ struct UpdateInstaller: UpdateInstalling {
         return { kill(pid, SIGTERM) }
     }
 
+    /// `url`'s path with symbolic links resolved, the way macOS records where
+    /// a volume is mounted (/var/folders/… is /private/var/folders/…).
+    /// `diskutil eject` finds a volume only by that path.
+    private static func resolvedPath(_ url: URL) -> String {
+        url.withUnsafeFileSystemRepresentation { path in
+            guard let path, let resolved = realpath(path, nil) else { return url.path }
+            defer { free(resolved) }
+            return String(cString: resolved)
+        }
+    }
+
     /// Runs a command-line tool and returns its exit status, without blocking
     /// a thread while it runs.
     private static func run(_ tool: String, _ arguments: [String]) async throws -> Int32 {
@@ -296,4 +322,36 @@ struct UpdateInstaller: UpdateInstalling {
             }
         }
     }
+}
+
+/// A command-line tool that opens a disk image read-only at a given folder,
+/// hidden from Finder, and closes it again.
+struct DiskImageTool: Sendable {
+    let path: String
+    /// The arguments that open the image (first) at the mount point (second).
+    let attachArguments: @Sendable (_ image: String, _ mountPoint: String) -> [String]
+    /// The arguments that close the image opened at the mount point.
+    let detachArguments: @Sendable (_ mountPoint: String) -> [String]
+
+    /// `diskutil image`, which macOS 27 recommends. macOS 15 doesn't have it.
+    static let diskutil = DiskImageTool(
+        path: "/usr/sbin/diskutil",
+        attachArguments: { ["image", "attach", "--readOnly", "--nobrowse", "--mountPoint", $1, $0] },
+        detachArguments: { ["eject", "force", $0] }
+    )
+
+    /// hdiutil, on every macOS AutoHush supports, but deprecated for attaching
+    /// and detaching since macOS 27. The image's own checksum isn't verified
+    /// (seconds of work): the SHA-256 and the signature check already cover
+    /// every byte that matters.
+    static let hdiutil = DiskImageTool(
+        path: "/usr/bin/hdiutil",
+        attachArguments: { ["attach", $0, "-readonly", "-nobrowse", "-noautoopen", "-noverify", "-mountpoint", $1] },
+        detachArguments: { ["detach", $0, "-force"] }
+    )
+
+    /// The newer tool first, so updates keep working once macOS removes
+    /// hdiutil's attach and detach; on macOS 15 it fails at once and hdiutil
+    /// takes over.
+    static let inOrderOfPreference = [diskutil, hdiutil]
 }
