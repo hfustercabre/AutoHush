@@ -5,6 +5,32 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Notifications about updates**: AutoHush now tells you when a new
+  version is available, downloaded, or installed ("AutoHush was updated to
+  0.3.8"), and when an automatic install fails. It asks for permission the
+  first time it has news.
+- **Choose what happens when an update is found** (Settings → General):
+  **Notify me**, **Download it and notify me**, or **Install it
+  automatically** (the default, as before). A downloaded update is kept for
+  at most 7 days, is replaced when a newer version comes out, and is deleted
+  once installed or no longer wanted. Automatic downloads wait while Low Data
+  Mode is on.
+- **The update window shows what's new**, and says which version you're
+  running and which one is available or downloaded. Its button tells you
+  whether it will **Download and Install** or just **Install and Relaunch**.
+
+### Changed
+
+- Once an update is found, **Check for Updates…** in the menu becomes
+  **Install AutoHush 0.3.8…**, which opens the update window. It replaces
+  the separate "Update Available" item.
+- If you had turned off "Install updates automatically", your choice is now
+  **Notify me**.
+
 ## [0.3.7] — 2026-10-04
 
 ### Changed

@@ -115,11 +115,10 @@ Music paused — Google Chrome is playing
   Ignored Apps                      ▸ click an app to stop ignoring it
 ───────────────
 ⚠ Allow Audio Recording Access…        (only when something needs fixing)
-  Update Available: 0.2.0…             (only when a newer version exists)
   Settings…                     ⌘,     (hold ⌥ for Diagnostics…)
 ───────────────
   About AutoHush
-  Check for Updates…
+  Check for Updates…                   (Install AutoHush 0.3.8… once a newer version is found)
   Quit AutoHush             ⌘Q
 ```
 
@@ -134,7 +133,7 @@ Music paused — Google Chrome is playing
 
 | Tab | What you'll find |
 |---|---|
-| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks and automatic installs · a link to support AutoHush |
+| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks, and what happens when one finds an update (see [Updates](#updates)) · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped and your music resumes (2 s, at least 1 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
@@ -185,20 +184,43 @@ AntiDot mode offers two ways to detect playing apps:
 - AutoHush **never records, saves or sends audio**, and never uses the microphone.
 - With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away.
 - In AntiDot mode it doesn't look at any sound at all.
-- It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below).
+- It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below). A downloaded update is kept for at most 7 days.
+- Its only notifications are about updates.
 - It controls Spotify through the standard macOS automation mechanism, and no other app.
 
 ## Updates
 
-AutoHush checks GitHub for a new version once a day and installs it by itself. It waits for a moment when it isn't holding your music paused and none of its windows or menus are open. Then it swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over.
+AutoHush checks GitHub for a new version once a day. What happens when it finds one is up to you (Settings → General → **When an update is found**):
 
-Before installing, it makes sure that:
+| Choice | What happens |
+|---|---|
+| **Notify me** | A notification tells you, and the menu offers **Install AutoHush 0.3.8…** |
+| **Download it and notify me** | AutoHush downloads it, then a notification tells you it's ready. Installing it takes a second |
+| **Install it automatically** (the default) | AutoHush installs it at a moment when it isn't holding your music paused and none of its windows or menus are open, then a notification says it was updated |
+
+Until it's installed, the menu shows **Install AutoHush 0.3.8…** in place of **Check for Updates…**. It opens a window that says which version you're running and which one is available or downloaded, and what's new in it. Its button says what it will do: **Download and Install**, or **Install and Relaunch** when the update is already downloaded. Clicking a notification opens that same window.
+
+Installing swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
+
+AutoHush asks for permission to send notifications the first time it has news. Without it, the menu still offers the update, and Settings has a button to turn notifications on.
+
+**Downloaded updates** are kept in `~/Library/Caches/com.autohush.AutoHush/Updates`, one at a time, and never for long. A download is deleted when:
+
+- it's installed, or you update AutoHush another way;
+- a newer version comes out (that one is downloaded instead), or the release is withdrawn;
+- you choose another option or turn automatic checks off;
+- it's been there for 7 days. Then it isn't downloaded again; the menu still offers it.
+
+Automatic downloads wait while Low Data Mode is on.
+
+Before installing, AutoHush makes sure that:
 
 - the download matches the checksum GitHub lists for it;
 - the app inside is signed with the same certificate as the copy you have, the check macOS itself uses to keep AutoHush's permissions, so nothing but a genuine AutoHush gets installed this way;
-- it's the version GitHub announced.
+- it's the version GitHub announced;
+- a kept download hasn't changed since it was downloaded (otherwise it's downloaded again).
 
-In Settings → General you can turn off automatic installs, or checks altogether. With automatic installs off, **Update Available** appears in the menu instead; there are no pop-ups. Choose it, then **Install and Relaunch**. **Check for Updates…** checks right away. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
+**Check for Updates…** in the menu, or **Check Now** in Settings, checks right away. Turn off automatic checks in Settings to only check when you ask.
 
 AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account. Settings tells you when it can't. To update by hand:
 
@@ -211,7 +233,11 @@ Versions up to 0.2.0 can't update themselves yet: update those once by hand.
 
 1. In Settings, turn off **Launch at login**, then quit AutoHush.
 2. Delete `/Applications/AutoHush.app`, or run `brew uninstall --cask autohush`.
-3. Optional: also forget the permissions you granted:
+3. Optional: also delete a downloaded update that may be waiting, and forget the permissions you granted:
+
+```bash
+rm -rf ~/Library/Caches/com.autohush.AutoHush
+```
 
 ```bash
 tccutil reset All com.autohush.AutoHush
@@ -250,7 +276,7 @@ AutoHush is free. If it saves your ears a few times a day and you'd like to say 
 AppDelegate ── lifecycle, bootstrap (launch, Retry, player relaunch), wiring features to the engine
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
-  ├── UpdateController ── daily and manual checks against the latest GitHub release, and installing it (UpdateInstaller)
+  ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
   └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
         PlayerStateObserving ── the player's state (Spotify: distributed notification, quit) ┐
         AudioMonitor                                                                │
@@ -288,7 +314,9 @@ Sources/
     MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
                          Views/ (General, Apps, Advanced)
-    Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap)
+    Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
+                         UpdateDownloads (the kept download), UpdateNotifier, UpdatePrompt and ReleaseNotes
+                         (the update window), UpdateOffer (what the menu offers)
     Diagnostics/         DiagnosticsReport
     About/               AboutPanel
     General/             InfoAlert, ProjectInfo, AppIcon, SystemSettingsPane+Open
@@ -304,7 +332,7 @@ Sources/
                          SystemSettingsPane
     PrivateAPI/          TCC, ProcessResponsibility: undocumented macOS functions, resolved at
                          runtime with fallbacks; check them after every major macOS release
-    Configuration/       AppConfiguration, TimingSettings
+    Configuration/       AppConfiguration, TimingSettings, AutomaticUpdates (the update choice)
     Storage/             Preferences
     General/             Logging, Comparable+Clamped
   AutoHushPlayers/       SupportedPlayers (the list of players, and the default one)

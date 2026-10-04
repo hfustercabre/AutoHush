@@ -12,9 +12,10 @@ struct PermissionTests {
         #expect(permission.settingsPane == pane)
     }
 
-    @Test("System Settings links open the privacy panes")
+    @Test("System Settings links open the privacy panes and Notifications")
     func paneLinks() {
         #expect(SystemSettingsPane.automation.url.absoluteString == "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")
         #expect(SystemSettingsPane.audioCapture.url.absoluteString.hasSuffix("?Privacy_AudioCapture"))
+        #expect(SystemSettingsPane.notifications.url.absoluteString == "x-apple.systempreferences:com.apple.Notifications-Settings.extension")
     }
 }

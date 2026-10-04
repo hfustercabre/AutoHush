@@ -31,8 +31,8 @@ struct AppVersion: Comparable, CustomStringConvertible, Sendable {
     }
 }
 
-/// A published release: its version, its GitHub page and, when it has one,
-/// the disk image AutoHush installs it from.
+/// A published release: its version, its GitHub page, its notes and, when it
+/// has one, the disk image AutoHush installs it from.
 struct AppRelease: Equatable, Sendable {
     /// The release's `AutoHush-<version>.dmg`, as GitHub lists it.
     struct DiskImage: Equatable, Sendable {
@@ -44,11 +44,14 @@ struct AppRelease: Equatable, Sendable {
     let version: AppVersion
     let pageURL: URL
     let diskImage: DiskImage?
+    /// What's new, in Markdown: the release's CHANGELOG section.
+    let notes: String?
 
-    init(version: AppVersion, pageURL: URL, diskImage: DiskImage? = nil) {
+    init(version: AppVersion, pageURL: URL, diskImage: DiskImage? = nil, notes: String? = nil) {
         self.version = version
         self.pageURL = pageURL
         self.diskImage = diskImage
+        self.notes = notes
     }
 }
 
@@ -77,7 +80,8 @@ enum UpdateCheckError: LocalizedError, Equatable {
 }
 
 /// Asks GitHub for the latest published release. Only `api.github.com` is
-/// contacted, and only the release's tag, page URL and disk image are read.
+/// contacted, and only the release's tag, page URL, notes and disk image are
+/// read.
 /// The page URL is the only thing AutoHush ever opens from an answer, so it
 /// must be one of this repository's release pages on github.com; the disk
 /// image must be one of its release downloads, or the release has none.
@@ -110,6 +114,8 @@ struct UpdateChecker: Sendable {
             }
             let tag_name: String
             let html_url: URL
+            /// The release notes, in Markdown.
+            let body: String?
             let assets: [Asset]?
         }
         guard let release = try? JSONDecoder().decode(Release.self, from: data),
@@ -121,7 +127,9 @@ struct UpdateChecker: Sendable {
         let diskImage = release.assets?
             .first { $0.name == "AutoHush-\(latest).dmg" && Self.isReleaseDownload($0.browser_download_url) }
             .map { AppRelease.DiskImage(url: $0.browser_download_url, sha256: Self.sha256(fromDigest: $0.digest)) }
-        return .available(AppRelease(version: latest, pageURL: release.html_url, diskImage: diskImage))
+        let notes = release.body?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return .available(AppRelease(version: latest, pageURL: release.html_url, diskImage: diskImage,
+                                     notes: notes?.isEmpty == false ? notes : nil))
     }
 
     /// True for a release page of this repository on github.com, over HTTPS:

@@ -47,8 +47,8 @@ struct AppStatus: Equatable {
     /// Sources playing right now, ignored ones included.
     private(set) var activeSources: [AudioSource] = []
     var ignoredApps: [AudioSource] = []
-    /// A newer release found by the update check.
-    var availableUpdate: AppRelease?
+    /// A newer release found by the update check, and how far along it is.
+    var updateOffer: UpdateOffer?
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
     mutating func setHealth(_ health: AppHealthState) {

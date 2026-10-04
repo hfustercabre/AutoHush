@@ -77,14 +77,14 @@ struct PreferencesTests {
         let scratch = Scratch()
         let preferences = Preferences(store: scratch.defaults)
         #expect(preferences.checksForUpdatesAutomatically)
-        #expect(preferences.installsUpdatesAutomatically)
+        #expect(preferences.automaticUpdates == .install)
         #expect(preferences.lastUpdateCheck == nil)
         let date = Date(timeIntervalSinceReferenceDate: 5_000)
         preferences.checksForUpdatesAutomatically = false
-        preferences.installsUpdatesAutomatically = false
+        preferences.automaticUpdates = .download
         preferences.lastUpdateCheck = date
         #expect(!Preferences(store: scratch.defaults).checksForUpdatesAutomatically)
-        #expect(!Preferences(store: scratch.defaults).installsUpdatesAutomatically)
+        #expect(Preferences(store: scratch.defaults).automaticUpdates == .download)
         #expect(Preferences(store: scratch.defaults).lastUpdateCheck == date)
 
         #expect(preferences.pauseHandedOverAt == nil)
@@ -92,6 +92,38 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == date)
         preferences.pauseHandedOverAt = nil
         #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == nil)
+    }
+
+    @Test("the earlier 'install updates automatically' switch becomes the matching choice", arguments: [
+        (false, AutomaticUpdates.notify), (true, .install),
+    ])
+    func legacyInstallSwitch(installed: Bool, choice: AutomaticUpdates) {
+        let scratch = Scratch()
+        scratch.defaults.set(installed, forKey: "installsUpdatesAutomatically")
+        #expect(Preferences(store: scratch.defaults).automaticUpdates == choice)
+        Preferences(store: scratch.defaults).automaticUpdates = .download
+        #expect(scratch.defaults.object(forKey: "installsUpdatesAutomatically") == nil)
+        #expect(Preferences(store: scratch.defaults).automaticUpdates == .download)
+    }
+
+    @Test("a kept download, an expired version, the last notice and the last version persist")
+    func updateRecords() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        #expect(preferences.downloadedUpdate == nil)
+        let download = DownloadedUpdate(version: "0.3.8", sha256: String(repeating: "ab", count: 32),
+                                        downloadedAt: Date(timeIntervalSinceReferenceDate: 9_000))
+        preferences.downloadedUpdate = download
+        preferences.expiredUpdateVersion = "0.3.7"
+        preferences.lastUpdateNotice = "downloaded 0.3.8"
+        preferences.lastLaunchedVersion = "0.3.6"
+        let reread = Preferences(store: scratch.defaults)
+        #expect(reread.downloadedUpdate == download)
+        #expect(reread.expiredUpdateVersion == "0.3.7")
+        #expect(reread.lastUpdateNotice == "downloaded 0.3.8")
+        #expect(reread.lastLaunchedVersion == "0.3.6")
+        preferences.downloadedUpdate = nil
+        #expect(Preferences(store: scratch.defaults).downloadedUpdate == nil)
     }
 
     @Test("detection defaults to audio levels and persists")

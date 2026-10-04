@@ -1,8 +1,8 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, auto-pause, AntiDot mode, updates and
-/// a way to support AutoHush.
+/// Settings → General: launch at login, auto-pause, AntiDot mode, updates
+/// (and what automatic checks lead to), and a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -70,15 +70,31 @@ struct GeneralSettingsView: View {
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
-                Toggle("Install updates automatically", isOn: Binding(
-                    get: { model.installsUpdatesAutomatically && model.updateInstallNote == nil },
-                    set: { model.setInstallsUpdates($0) }
-                ))
+                Picker("When an update is found", selection: Binding(
+                    // A copy that can't install itself can only notify.
+                    get: { model.updateInstallNote == nil ? model.automaticUpdates : .notify },
+                    set: { model.setAutomaticUpdates($0) }
+                )) {
+                    Text("Notify me").tag(AutomaticUpdates.notify)
+                    Text("Download it and notify me").tag(AutomaticUpdates.download)
+                    Text("Install it automatically").tag(AutomaticUpdates.install)
+                }
+                .pickerStyle(.radioGroup)
                 .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
                 if let note = model.updateInstallNote {
                     Text(note)
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                } else if model.checksForUpdatesAutomatically {
+                    Text(model.automaticUpdates.explanation)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                if model.notificationsOff && model.checksForUpdatesAutomatically {
+                    Text("Notifications are off for AutoHush, so it can't tell you about updates.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Button("Open Notifications Settings…") { model.openNotificationSettings() }
                 }
                 HStack {
                     Button("Check Now") { model.checkForUpdates() }
@@ -130,6 +146,23 @@ private extension DetectionMethod {
             return String(localized: "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open.")
         case .openStreams:
             return String(localized: "Any app with its audio open counts as playing, even when paused.")
+        }
+    }
+}
+
+/// What each update choice means, under the choice in Settings.
+private extension AutomaticUpdates {
+    var explanation: String {
+        switch self {
+        case .notify:
+            return String(localized: "AutoHush lets you know. Install the update from its menu whenever you like.",
+                          comment: "Settings, under the update choice Notify me")
+        case .download:
+            return String(localized: "AutoHush downloads it and lets you know. It keeps the download for 7 days.",
+                          comment: "Settings, under the update choice Download it and notify me")
+        case .install:
+            return String(localized: "AutoHush installs it when it isn't holding your music paused, and lets you know afterwards.",
+                          comment: "Settings, under the update choice Install it automatically")
         }
     }
 }
