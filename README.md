@@ -176,7 +176,7 @@ Before installing, it makes sure that:
 - the app inside is signed with the same certificate as the copy you have, the check macOS itself uses to keep AutoHush's permissions, so nothing but a genuine AutoHush gets installed this way;
 - it's the version GitHub announced.
 
-In Settings → General you can turn off automatic installs, or checks altogether. With automatic installs off, **Update Available** appears in the menu instead; there are no pop-ups. Choose it, then **Install and Relaunch**. **Check for Updates…** checks right away.
+In Settings → General you can turn off automatic installs, or checks altogether. With automatic installs off, **Update Available** appears in the menu instead; there are no pop-ups. Choose it, then **Install and Relaunch**. **Check for Updates…** checks right away. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
 
 AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account. Settings tells you when it can't. To update by hand:
 

@@ -27,6 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Replaces the real bootstrap in tests, so they never script the music player or
     /// tap real audio processes.
     private let bootstrapOverride: (@MainActor () -> Void)?
+    /// When the AutoHush before this one handed over its pause, quitting to
+    /// install an update; taken over by the first monitoring that starts.
+    private var pauseHandedOverAt: Date?
+    /// A restart for an update takes seconds: an older handover is stale.
+    static let pauseHandoverMaxAge: TimeInterval = 60
 
     init(
         preferences: Preferences = Preferences(),
@@ -40,6 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.preferences = preferences
         self.player = player
         self.bootstrapOverride = bootstrapOverride
+        pauseHandedOverAt = preferences.pauseHandedOverAt
+        preferences.pauseHandedOverAt = nil
         super.init()
         updates = UpdateController(
             checker: updateChecker,
@@ -47,10 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             preferences: preferences,
             currentVersion: currentVersion,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
-            // From the run loop, not from inside the install's task: quitting
-            // waits for main-actor work (restoring the volume), which can't
-            // run while a main-actor job is still under way.
-            quit: { RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } } },
+            quit: { [weak self] in self?.quitToFinishUpdate() },
             onAvailableUpdate: { [weak self] in self?.status.availableUpdate = $0 },
             onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 }
         )
@@ -347,7 +351,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.pipeline = pipeline
         status.detection = .pending
-        await pipeline.start()
+        await pipeline.start(takingOverPause: takesOverPause())
         guard generation == bootstrapGeneration else { return }
         setHealth(.ready)
     }
@@ -374,17 +378,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         InfoAlert.show(String(localized: "AutoHush Diagnostics", comment: "Title of the Diagnostics alert"), report)
     }
 
+    private func retry() {
+        setHealth(.starting)
+        requestBootstrap()
+    }
+
+    // MARK: - Updates
+
+    /// Quits so that the installed update opens. A pause AutoHush is holding
+    /// is handed over: the new version resumes the music once the other apps
+    /// stop.
+    private func quitToFinishUpdate() {
+        if status.playback == .pausedByMonitor { preferences.pauseHandedOverAt = Date() }
+        // From the run loop, not from inside the install's task: quitting
+        // waits for main-actor work (restoring the volume), which can't run
+        // while a main-actor job is still under way.
+        RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } }
+    }
+
+    /// Whether monitoring takes over a pause handed over at most
+    /// `pauseHandoverMaxAge` before `now`. Only the first asking does.
+    func takesOverPause(now: Date = Date()) -> Bool {
+        guard let handedOver = pauseHandedOverAt else { return false }
+        pauseHandedOverAt = nil
+        return (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handedOver))
+    }
+
     /// A moment when AutoHush can restart for an update unnoticed: it isn't
-    /// holding the music paused (the new instance wouldn't know to resume
-    /// it), and none of its menus, windows or alerts is open.
+    /// holding the music paused (the new version would take that pause over,
+    /// but there is no need to rely on it), and none of its menus, windows or
+    /// alerts is open.
     private var isQuietMoment: Bool {
         status.playback != .pausedByMonitor
             && statusMenu?.isMenuOpen != true
             && !NSApplication.shared.windows.contains { $0.isVisible && $0.canBecomeKey }
-    }
-
-    private func retry() {
-        setHealth(.starting)
-        requestBootstrap()
     }
 }

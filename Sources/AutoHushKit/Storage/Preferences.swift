@@ -20,6 +20,7 @@ package final class Preferences {
         static let checksForUpdates = "checksForUpdatesAutomatically"
         static let installsUpdates = "installsUpdatesAutomatically"
         static let lastUpdateCheck = "lastUpdateCheck"
+        static let pauseHandedOver = "pauseHandedOverAt"
         static let detectionMethod = "detectionMethod"
         static let announcingApps = "announcingApps"
         /// Earlier on/off switch; `false` maps to `.openStreams`.
@@ -107,6 +108,13 @@ package final class Preferences {
     package var lastUpdateCheck: Date? {
         get { defaults.object(forKey: Key.lastUpdateCheck) as? Date }
         set { defaults.set(newValue, forKey: Key.lastUpdateCheck) }
+    }
+
+    /// When AutoHush last quit to install an update while holding the music
+    /// paused; the new version takes that pause over.
+    package var pauseHandedOverAt: Date? {
+        get { defaults.object(forKey: Key.pauseHandedOver) as? Date }
+        set { defaults.set(newValue, forKey: Key.pauseHandedOver) }
     }
 
     /// Apps that have played audio, most recent first (for Settings → Apps).

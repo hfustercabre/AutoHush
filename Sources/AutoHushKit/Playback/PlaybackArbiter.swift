@@ -86,6 +86,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Once auto-pause is back on, the pause for apps already playing waits
     /// their stop grace plus this: a couple of the monitor's ticks.
     package static let remeasureMargin: TimeInterval = 0.5
+    /// After taking over a pause, how long beyond the start confirmation the
+    /// monitor, starting afresh, gets to find an app still playing.
+    package static let takeOverMargin: TimeInterval = 1.5
 
     package init(
         player: any MusicPlayer,
@@ -168,6 +171,24 @@ package actor PlaybackArbiter: PlaybackArbiting {
             if pausedByUs { scheduleResume(after: nil) }
         }
         publishPlaybackState()
+    }
+
+    /// Takes over the pause of the AutoHush that ran before this one, which
+    /// quit to install an update while holding the music paused: if the
+    /// player is still paused, it counts as paused by this arbiter, so the
+    /// music comes back once no other app plays. Apps still playing are found
+    /// again first; when none is, the music resumes after the start
+    /// confirmation plus `takeOverMargin`.
+    package func takeOverPause() async {
+        guard !isShutDown else { return }
+        let state = await livePlayerState()
+        guard !isShutDown, state == .paused else { return }
+        pausedByUs = true
+        logger.debug("[arbiter] took over the pause of the previous AutoHush")
+        publishPlaybackState()
+        if activeSources.isEmpty {
+            scheduleResume(after: autoPauseEnabled ? configuration.sourceStartConfirmation + Self.takeOverMargin : nil)
+        }
     }
 
     /// Called whenever the player reports a new state. If the user resumed,

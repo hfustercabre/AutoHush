@@ -722,6 +722,70 @@ struct PlaybackArbiterTests {
         #expect(scheduler.scheduledDelays == [4 + PlaybackArbiter.remeasureMargin])
     }
 
+    // MARK: - Taking over a pause after an update
+
+    @Test("a pause taken over from before the restart ends when no app is found playing")
+    func takenOverPauseResumes() async {
+        let spotify = MockMusicPlayer(state: .paused)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
+
+        await arbiter.takeOverPause()
+        #expect(scheduler.scheduledDelays == [AppConfiguration.testing.sourceStartConfirmation + PlaybackArbiter.takeOverMargin])
+        #expect(await spotify.playCallCount == 0)
+
+        await scheduler.completeNext() // no app turned up
+        await waitUntil { await spotify.playCallCount == 1 }
+        #expect(await spotify.state == .playing)
+    }
+
+    @Test("a taken-over pause holds while an app is still playing, and ends when it stops")
+    func takenOverPauseHoldsForPlayingApp() async {
+        let spotify = MockMusicPlayer(state: .paused)
+        let scheduler = ManualDebounceScheduler()
+        let stateStream = StateStream()
+        let arbiter = PlaybackArbiter(player: spotify, configuration: .testing, debounceScheduler: scheduler,
+                                      onPlaybackStateChange: { stateStream.yield($0) })
+
+        await arbiter.takeOverPause()
+        _ = await nextState(from: stateStream.stream) // drain the take-over's state
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true) // found again: the resume is called off
+        #expect(await nextState(from: stateStream.stream) == .pausedByMonitor)
+        await scheduler.completeNext() // the wait it called off
+        await settle()
+        #expect(await spotify.playCallCount == 0)
+        #expect(await spotify.pauseCallCount == 0) // already paused
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await spotify.playCallCount == 1 }
+        #expect(await spotify.playCallCount == 1)
+    }
+
+    @Test("music playing again by the time AutoHush restarts is not taken over")
+    func nothingToTakeOver() async {
+        let spotify = MockMusicPlayer(state: .playing) // the user pressed play meanwhile
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(spotify: spotify, scheduler: scheduler)
+
+        await arbiter.takeOverPause()
+        await settle()
+        #expect(scheduler.scheduledDelays.isEmpty)
+        #expect(await spotify.playCallCount == 0)
+    }
+
+    @Test("with auto-pause off, a taken-over pause ends at once")
+    func takenOverPauseWithAutoPauseOff() async {
+        let spotify = MockMusicPlayer(state: .paused)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: spotify, configuration: .testing, debounceScheduler: scheduler,
+                                      autoPauseEnabled: false)
+
+        await arbiter.takeOverPause()
+        await waitUntil { await spotify.playCallCount == 1 }
+        #expect(await spotify.playCallCount == 1)
+        #expect(scheduler.scheduledDelays.isEmpty)
+    }
+
     // MARK: - When audio levels are needed (recording indicator)
 
     private final class NeedsLog: @unchecked Sendable {

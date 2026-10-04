@@ -231,6 +231,23 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("a pause handed over by the AutoHush before is taken over once, and only when recent")
+    func pauseHandover() {
+        let now = Date()
+        let scratch = Scratch()
+        scratch.preferences.pauseHandedOverAt = now.addingTimeInterval(-5)
+        let (sut, _) = makeSUT(scratch)
+        #expect(scratch.preferences.pauseHandedOverAt == nil) // read once, at launch
+        #expect(sut.takesOverPause(now: now))
+        #expect(!sut.takesOverPause(now: now))
+
+        let stale = Scratch()
+        stale.preferences.pauseHandedOverAt = now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1))
+        #expect(!makeSUT(stale).0.takesOverPause(now: now))
+        #expect(!makeSUT().0.takesOverPause(now: now))
+    }
+
+    @MainActor
     @Test("turning automatic installs off is saved and shown in Settings")
     func automaticInstallsSetting() {
         let scratch = Scratch()
