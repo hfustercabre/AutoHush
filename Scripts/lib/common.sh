@@ -17,6 +17,10 @@ LOCALIZATION_DIR="$PROJECT_DIR/Resources/Localization"
 STRING_CATALOG="$LOCALIZATION_DIR/Localizable.xcstrings"
 # Created by Scripts/create-signing-certificate.sh.
 SELF_SIGNED_IDENTITY="AutoHush Self-Signed"
+# GitHub repository whose releases installed copies update from.
+GITHUB_REPO="hfustercabre/AutoHush"
+# Homebrew tap with the AutoHush cask; Scripts/update-tap.sh updates it.
+TAP_REPO="hfustercabre/homebrew-tap"
 
 step() { echo "==> $*"; }
 note() { echo "    $*"; }
