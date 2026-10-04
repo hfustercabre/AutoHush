@@ -52,7 +52,6 @@ package final class Preferences {
     private static let timingKeys: [(key: String, value: WritableKeyPath<TimingSettings, Double>)] = [
         ("startConfirmation", \.startConfirmation),
         ("stopGrace", \.stopGrace),
-        ("resumeDelay", \.resumeDelay),
         ("silenceThresholdDB", \.silenceThresholdDB),
         ("fadeOutDuration", \.fadeOutDuration),
         ("fadeInDuration", \.fadeInDuration),

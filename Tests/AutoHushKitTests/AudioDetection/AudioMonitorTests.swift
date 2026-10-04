@@ -13,7 +13,8 @@ struct AudioMonitorTests {
         startConfirmation: TimeInterval = 1.0,
         stopGrace: TimeInterval = 2.0
     ) -> AppConfiguration {
-        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: startConfirmation, stopGrace: stopGrace))
+        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: startConfirmation))
+        configuration.sourceStopGrace = stopGrace // tests may go below the 1 s users can choose
         configuration.audibleGapTolerance = 0.5
         configuration.activeSampleInterval = 3600
         configuration.idleSampleInterval = 3600
@@ -764,7 +765,8 @@ struct AudioMonitorTests {
         let recorder = ArbiterEventRecorder()
         let provider = MockAudioProcessSnapshotProvider()
         provider.processes = [Self.process(1, "org.videolan.vlc")]
-        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: 0.05, stopGrace: 0.05))
+        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: 0.05))
+        configuration.sourceStopGrace = 0.05
         configuration.activeSampleInterval = 0.01
         configuration.idleSampleInterval = 0.01
         let monitor = AudioMonitor(

@@ -20,6 +20,9 @@ package actor MockMusicPlayer: MusicPlayer {
     /// The next this many state queries answer `.unknown`, as when Spotify is
     /// busy and the Apple event times out.
     package var unansweredStateQueries = 0
+    /// Runs inside every state query before it answers, so a test can hold a
+    /// query while it changes something.
+    package var beforeStateAnswer: (@Sendable () async -> Void)?
 
     package init(
         state: PlayerState = .playing,
@@ -42,6 +45,7 @@ package actor MockMusicPlayer: MusicPlayer {
 
     package func playerState() async -> PlayerState {
         stateQueryCount += 1
+        if let beforeStateAnswer { await beforeStateAnswer() }
         if unansweredStateQueries > 0 {
             unansweredStateQueries -= 1
             return .unknown
@@ -50,6 +54,8 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
+
+    package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
 
     /// The player's volume; `nil` (the default) means it has none, so no fades.
     package var volumeLevel: Int?

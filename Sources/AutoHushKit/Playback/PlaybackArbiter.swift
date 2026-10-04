@@ -3,8 +3,8 @@ import OSLog
 
 // MARK: - Debounce scheduling
 
-/// Waits before a deferred decision (a resume, or a pause once auto-pause is
-/// back on): the real one sleeps, tests complete it by hand.
+/// Waits before a deferred decision (a resume tried again, or a pause once
+/// auto-pause is back on): the real one sleeps, tests complete it by hand.
 package protocol PlaybackArbiterDebounceScheduling: Sendable {
     /// A task that finishes after `delay` seconds.
     func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never>
@@ -32,8 +32,9 @@ package protocol PlaybackArbiting: Actor {
 // MARK: - Playback arbiter
 
 /// Decides when to pause and resume the music player. Rule: pause when any
-/// foreign source starts; resume (after a short delay) when ALL foreign
-/// sources have stopped, but only music it paused itself.
+/// foreign source starts; resume when ALL foreign sources have stopped (each
+/// counts as stopped once silent for its stop grace), but only music it
+/// paused itself.
 ///
 /// The player's state is pushed in through `handlePlayerStateChange` (from its
 /// state observer) and cached for status display. The player is only queried
@@ -130,14 +131,14 @@ package actor PlaybackArbiter: PlaybackArbiting {
             if activeSources.isEmpty {
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
-                scheduleResume(after: configuration.debounceSeconds)
+                scheduleResume(after: nil)
             } else {
                 publishPlaybackState()
             }
         }
     }
 
-    /// Applies new settings; a resume already scheduled keeps its delay.
+    /// Applies new settings.
     package func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
@@ -305,7 +306,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             scheduleResume(after: nil)
         } else if activeSources.isEmpty, !isShutDown {
             // Every app stopped while we were pausing, too late to call it off.
-            scheduleResume(after: configuration.debounceSeconds)
+            scheduleResume(after: nil)
         }
     }
 

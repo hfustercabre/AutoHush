@@ -5,6 +5,21 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **One setting for when the music comes back**: Settings → Advanced no
+  longer has **Resume music after**. It only added a fixed wait after
+  **Treat an app as stopped after**, which already decides when the music
+  resumes, and it was too short for any sound to call the resume off. The
+  music now resumes as soon as the last app counts as stopped: 2 s of
+  silence by default, 0.2 s sooner than before. A value you had set for
+  it is no longer used.
+- **Treat an app as stopped after** is now at least 1 second. Below that,
+  the music came back in every short pause between tracks or videos;
+  shorter values you had set become 1 second.
+
 ## [0.3.0] — 2026-10-04
 
 ### Added

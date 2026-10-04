@@ -50,8 +50,8 @@ struct AppConfigurationTests {
     @Test("the defaults come from the timing settings' defaults")
     func defaults() {
         let configuration = AppConfiguration()
-        #expect(configuration.debounceSeconds == 0.2)
         #expect(configuration.sourceStartConfirmation == 0.5)
+        #expect(configuration.sourceStopGrace == 2)
         #expect(TimingSettings.defaults.startConfirmation == 0.5)
     }
 }
