@@ -20,7 +20,9 @@ AutoHush was inspired by [Background Music](https://github.com/kyleneideck/Backg
 
 So why write another one? To get your Mac's sound, Background Music routes it through a virtual audio device and reads it back from there, and macOS counts that as using a microphone. So while it runs, there's a yellow dot in the top-right corner of the screen and a yellow microphone icon in the menu bar, permanently. Nothing is being recorded, and macOS is right to point it out. Still, a dot that never goes away tickles my 'tism in ways I couldn't ignore, so I built AutoHush with a different approach.
 
-AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your music. [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of that one too. Yes, this whole app exists because of a dot.
+AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your music, which to my eyes is easy to ignore. If it still bothers you, [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of it entirely, at the cost of slightly less precise detection.
+
+Yes, this whole app exists because of a dot.
 
 
 ## Contents
