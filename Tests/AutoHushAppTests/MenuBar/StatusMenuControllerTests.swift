@@ -181,17 +181,28 @@ struct StatusMenuControllerTests {
         ])
     }
 
-    @Test("an available update adds an item that opens it")
-    func updateAvailableItem() throws {
+    @Test("once an update is found, Check for Updates becomes an item that shows it, greyed out while it installs",
+          arguments: [UpdateOffer.State.available, .downloaded])
+    func updateItem(state: UpdateOffer.State) throws {
         let log = ActionLog()
         let sut = makeController(log)
         defer { sut.remove() }
-        #expect(!sut.menu.items.contains { $0.title.hasPrefix("Update Available") })
+        #expect(sut.menu.items.contains { $0.title == "Check for Updates…" })
 
+        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
         var status = readyStatus()
-        status.availableUpdate = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        status.updateOffer = UpdateOffer(release: release, state: state)
         sut.status = status
-        try perform(try item("Update Available: 0.3.0…", in: sut.menu))
+        #expect(!sut.menu.items.contains { $0.title == "Check for Updates…" })
+        let install = try item("Install AutoHush 0.3.0…", in: sut.menu)
+        #expect(install.image != nil)
+        try perform(install)
         #expect(log.calls == ["update"])
+
+        status.updateOffer = UpdateOffer(release: release, state: .installing)
+        sut.status = status
+        let installing = try item("Installing AutoHush 0.3.0…", in: sut.menu)
+        #expect(installing.action == nil)
+        #expect(!installing.isEnabled)
     }
 }

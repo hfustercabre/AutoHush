@@ -15,11 +15,11 @@ import AutoHushKit
 /// ─────────
 /// ⚠ Allow Audio Recording Access…    (only when something needs fixing)
 ///   Retry                         ⌘R (only after a failed start)
-///   Update Available: 0.3.0…         (only when a newer release exists)
 ///   Settings…                     ⌘,   (⌥: Diagnostics…)
 /// ─────────
 ///   About AutoHush
-///   Check for Updates…
+///   Check for Updates…               (Install AutoHush 0.3.8… once one is found;
+///                                     Installing AutoHush 0.3.8… while it installs)
 ///   Quit AutoHush             ⌘Q
 /// ```
 @MainActor
@@ -115,7 +115,7 @@ final class StatusMenuController: NSObject {
         if !status.ignoredApps.isEmpty { menu.addItem(ignoredAppsItem()) }
     }
 
-    /// Whatever needs attention (a permission, Retry, an update), then Settings.
+    /// Whatever needs attention (a permission, Retry), then Settings.
     private func addActionItems() {
         menu.addItem(.separator())
         if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
@@ -123,16 +123,15 @@ final class StatusMenuController: NSObject {
             let title = String(localized: "Retry", comment: "Menu item: start monitoring again after a problem")
             menu.addItem(item(title, #selector(retry), key: "r"))
         }
-        if let update = status.availableUpdate { menu.addItem(updateItem(for: update)) }
         menu.addItem(item(String(localized: "Settings…", comment: "Menu item"), #selector(openSettings), key: ","))
         menu.addItem(diagnosticsItem())
     }
 
-    /// About, Check for Updates and Quit.
+    /// About, the updates item and Quit.
     private func addAppItems() {
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "About AutoHush", comment: "Menu item"), #selector(showAbout)))
-        menu.addItem(item(String(localized: "Check for Updates…", comment: "Menu item"), #selector(checkForUpdates)))
+        menu.addItem(updatesItem())
         menu.addItem(item(String(localized: "Quit AutoHush", comment: "Menu item"), #selector(quit), key: "q"))
     }
 
@@ -173,9 +172,22 @@ final class StatusMenuController: NSObject {
         return item
     }
 
-    private func updateItem(for update: AppRelease) -> NSMenuItem {
-        let title = String(localized: "Update Available: \(update.version.description)…",
-                           comment: "Menu item; %@ is a version number")
+    /// "Check for Updates…"; once an update is found "Install AutoHush 0.3.8…",
+    /// which shows it; and while it installs, a greyed-out "Installing…".
+    private func updatesItem() -> NSMenuItem {
+        guard let offer = status.updateOffer else {
+            return item(String(localized: "Check for Updates…", comment: "Menu item"), #selector(checkForUpdates))
+        }
+        let version = offer.release.version.description
+        if offer.state == .installing {
+            let title = String(localized: "Installing AutoHush \(version)…",
+                               comment: "Menu item, greyed out while an update installs; %@ is its version")
+            let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            row.isEnabled = false
+            return row
+        }
+        let title = String(localized: "Install AutoHush \(version)…",
+                           comment: "Menu item: shows the update found; %@ is its version")
         let item = item(title, #selector(showAvailableUpdate))
         let description = String(localized: "Update", comment: "VoiceOver label of the update icon")
         item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: description)

@@ -20,8 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindowController: SettingsWindowController?
     /// The music player AutoHush pauses and resumes.
     let player: any MusicPlayer
-    /// Update checks (menu, Settings and the daily automatic one) and installs.
+    /// Update checks (menu, Settings and the daily automatic one), downloads,
+    /// installs and their notifications.
     private(set) var updates: UpdateController!
+    private let updateNotifier: any UpdateNotifying
     private var playerLaunchObserver: (any NSObjectProtocol)?
     private let logger = Logger(category: "AppDelegate")
     /// Replaces the real bootstrap in tests, so they never script the music player or
@@ -38,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
         updateChecker: UpdateChecker = UpdateChecker(),
         updateInstaller: any UpdateInstalling = UpdateInstaller(),
+        updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
+        updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         player: any MusicPlayer = SupportedPlayers.makeDefault(),
         currentVersion: AppVersion? = .current,
         bootstrapOverride: (@MainActor () -> Void)? = nil
@@ -45,17 +49,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.preferences = preferences
         self.player = player
         self.bootstrapOverride = bootstrapOverride
+        self.updateNotifier = updateNotifier
         pauseHandedOverAt = preferences.pauseHandedOverAt
         preferences.pauseHandedOverAt = nil
         super.init()
         updates = UpdateController(
             checker: updateChecker,
             installer: updateInstaller,
+            notifier: updateNotifier,
             preferences: preferences,
+            downloadsFolder: updateDownloadsFolder,
             currentVersion: currentVersion,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
             quit: { [weak self] in self?.quitToFinishUpdate() },
-            onAvailableUpdate: { [weak self] in self?.status.availableUpdate = $0 },
+            onOffer: { [weak self] in self?.status.updateOffer = $0 },
             onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 }
         )
         settingsModel = SettingsModel(
@@ -68,14 +75,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 setTimings: { [weak self] in self?.setTimings($0) },
                 setDetectionMethod: { [weak self] in self?.setDetectionMethod($0) },
                 setChecksForUpdates: { [weak self] in self?.setChecksForUpdatesAutomatically($0) },
-                setInstallsUpdates: { [weak self] in self?.setInstallsUpdatesAutomatically($0) },
-                checkForUpdates: { [weak self] in self?.updates.checkFromUser() }
+                setAutomaticUpdates: { [weak self] in self?.setAutomaticUpdates($0) },
+                checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
+                openNotificationSettings: { SystemSettingsPane.notifications.open() }
             )
         )
         settingsModel.timings = preferences.timings
         settingsModel.detectionMethod = preferences.detectionMethod
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
-        settingsModel.installsUpdatesAutomatically = preferences.installsUpdatesAutomatically
+        settingsModel.automaticUpdates = preferences.automaticUpdates
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         status.playerName = player.name
         status.ignoredApps = preferences.ignoredApps
@@ -104,6 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         registerPlayerLaunchObserver()
         requestBootstrap()
+        updates.noteLaunch()
         updates.scheduleAutomaticChecks()
     }
 
@@ -201,11 +210,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func setChecksForUpdatesAutomatically(_ enabled: Bool) {
         updates.checksAutomatically = enabled
         settingsModel.checksForUpdatesAutomatically = enabled
+        if enabled { Task { await updates.runAutomaticTasks() } }
     }
 
-    func setInstallsUpdatesAutomatically(_ enabled: Bool) {
-        updates.installsAutomatically = enabled
-        settingsModel.installsUpdatesAutomatically = enabled
+    /// Stores what automatic checks lead to, and acts on an update already
+    /// found the new way (e.g. downloads it).
+    func setAutomaticUpdates(_ mode: AutomaticUpdates) {
+        updates.mode = mode
+        settingsModel.automaticUpdates = mode
+        Task { await updates.runAutomaticTasks() }
     }
 
     func setDetectionMethod(_ method: DetectionMethod) {
@@ -368,6 +381,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
         settingsWindowController?.show()
+        Task { settingsModel.notificationsOff = await updateNotifier.notificationsAreOff() }
     }
 
     private func showDiagnostics() {

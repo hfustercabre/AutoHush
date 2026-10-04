@@ -25,6 +25,14 @@ struct UpdateInstallerTests {
         }
     }
 
+    /// The download requests made.
+    private final class RequestLog: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _all: [URLRequest] = []
+        var all: [URLRequest] { lock.withLock { _all } }
+        func record(_ request: URLRequest) { lock.withLock { _all.append(request) } }
+    }
+
     /// Counts relaunches and their cancellations.
     private final class RelaunchLog: @unchecked Sendable {
         private let lock = NSLock()
@@ -45,12 +53,14 @@ struct UpdateInstallerTests {
         status: Int = 200,
         serving file: URL = Fixture.shared.diskImage,
         relaunchLog: RelaunchLog = RelaunchLog(),
+        requests: RequestLog = RequestLog(),
         diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
     ) -> UpdateInstaller {
         UpdateInstaller(
             appURL: scratch.installedApp,
             requirement: requirement,
             download: { request in
+                requests.record(request)
                 // Like URLSession: a fresh temporary file the caller moves away.
                 let copy = FileManager.default.temporaryDirectory.appending(path: "download-\(UUID().uuidString)")
                 try FileManager.default.copyItem(at: file, to: copy)
@@ -101,7 +111,7 @@ struct UpdateInstallerTests {
     /// and checks the result.
     private func expectPrepared(openingWith tools: [DiskImageTool]) async throws {
         let scratch = try Scratch()
-        let update = try await installer(scratch, diskImageTools: tools).prepare(release())
+        let update = try await installer(scratch, diskImageTools: tools).prepare(release(), image: nil, allowsConstrainedNetwork: true)
 
         #expect(update.version == AppVersion(Fixture.version))
         let info = NSDictionary(contentsOf: update.app.appending(path: "Contents/Info.plist"))
@@ -122,7 +132,7 @@ struct UpdateInstallerTests {
         let scratch = try Scratch()
         let autoHush = #"identifier "com.autohush.AutoHush" and certificate leaf = H"085edf2752c4f31bcdff25dbe14636958d50cdf6""#
         await #expect(throws: UpdateInstallError.notGenuine) {
-            try await installer(scratch, requirement: autoHush).prepare(release())
+            try await installer(scratch, requirement: autoHush).prepare(release(), image: nil, allowsConstrainedNetwork: true)
         }
         #expect(Self.attachedImages().isEmpty)
     }
@@ -131,7 +141,7 @@ struct UpdateInstallerTests {
     func refusesWrongChecksum() async throws {
         let scratch = try Scratch()
         await #expect(throws: UpdateInstallError.damaged) {
-            try await installer(scratch).prepare(release(sha256: String(repeating: "0", count: 64)))
+            try await installer(scratch).prepare(release(sha256: String(repeating: "0", count: 64)), image: nil, allowsConstrainedNetwork: true)
         }
     }
 
@@ -141,7 +151,7 @@ struct UpdateInstallerTests {
         let page = scratch.folder.appending(path: "page.html")
         try Data("<html>Not Found</html>".utf8).write(to: page)
         await #expect(throws: UpdateInstallError.damaged) {
-            try await installer(scratch, serving: page).prepare(release(sha256: nil))
+            try await installer(scratch, serving: page).prepare(release(sha256: nil), image: nil, allowsConstrainedNetwork: true)
         }
     }
 
@@ -149,7 +159,7 @@ struct UpdateInstallerTests {
     func refusesOtherVersion() async throws {
         let scratch = try Scratch()
         await #expect(throws: UpdateInstallError.wrongVersion) {
-            try await installer(scratch).prepare(release("9.9.9"))
+            try await installer(scratch).prepare(release("9.9.9"), image: nil, allowsConstrainedNetwork: true)
         }
         #expect(Self.attachedImages().isEmpty)
     }
@@ -158,7 +168,7 @@ struct UpdateInstallerTests {
     func refusesHTTPError() async throws {
         let scratch = try Scratch()
         await #expect(throws: UpdateInstallError.badResponse(404)) {
-            try await installer(scratch, status: 404).prepare(release())
+            try await installer(scratch, status: 404).prepare(release(), image: nil, allowsConstrainedNetwork: true)
         }
     }
 
@@ -166,7 +176,67 @@ struct UpdateInstallerTests {
     func refusesReleaseWithoutImage() async throws {
         let scratch = try Scratch()
         await #expect(throws: UpdateInstallError.noDiskImage) {
-            try await installer(scratch).prepare(release(diskImage: false))
+            try await installer(scratch).prepare(release(diskImage: false), image: nil, allowsConstrainedNetwork: true)
+        }
+    }
+
+    // MARK: - Downloading to keep
+
+    @Test("a download is kept where asked, checked against GitHub's checksum")
+    func downloadsToFile() async throws {
+        let scratch = try Scratch()
+        let file = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
+        let digest = try await installer(scratch).download(release(), to: file, allowsConstrainedNetwork: true)
+        #expect(digest == Fixture.shared.sha256)
+        #expect(UpdateInstaller.sha256(of: file) == Fixture.shared.sha256)
+    }
+
+    @Test("a download that doesn't match GitHub's checksum is deleted")
+    func deletesWrongDownload() async throws {
+        let scratch = try Scratch()
+        let file = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
+        await #expect(throws: UpdateInstallError.damaged) {
+            try await installer(scratch).download(release(sha256: String(repeating: "0", count: 64)), to: file,
+                                                  allowsConstrainedNetwork: true)
+        }
+        #expect(!FileManager.default.fileExists(atPath: file.path))
+    }
+
+    @Test("automatic downloads wait out Low Data Mode; ones the user asks for don't", arguments: [false, true])
+    func lowDataMode(allowed: Bool) async throws {
+        let scratch = try Scratch()
+        let requests = RequestLog()
+        _ = try await installer(scratch, requests: requests)
+            .download(release(), to: scratch.folder.appending(path: "AutoHush.dmg"), allowsConstrainedNetwork: allowed)
+        #expect(requests.all.map(\.allowsConstrainedNetworkAccess) == [allowed])
+    }
+
+    @Test("an update is prepared from a kept image without downloading, and the image stays")
+    func preparesFromKeptImage() async throws {
+        let scratch = try Scratch()
+        let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
+        try FileManager.default.copyItem(at: Fixture.shared.diskImage, to: kept)
+        let requests = RequestLog()
+        let sut = installer(scratch, requests: requests)
+
+        let update = try await sut.prepare(release(), image: KeptImage(file: kept, sha256: Fixture.shared.sha256),
+                                         allowsConstrainedNetwork: true)
+
+        #expect(UpdateInstaller.isSigned(update.app, satisfying: Fixture.shared.requirement))
+        #expect(requests.all.isEmpty)
+        #expect(FileManager.default.fileExists(atPath: kept.path))
+        #expect(Self.attachedImages().isEmpty)
+        sut.discard(update)
+    }
+
+    @Test("a kept image that changed since it was downloaded is refused")
+    func refusesChangedKeptImage() async throws {
+        let scratch = try Scratch()
+        let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
+        try Data("not the download".utf8).write(to: kept)
+        await #expect(throws: UpdateInstallError.damaged) {
+            try await installer(scratch).prepare(release(), image: KeptImage(file: kept, sha256: Fixture.shared.sha256),
+                                         allowsConstrainedNetwork: true)
         }
     }
 

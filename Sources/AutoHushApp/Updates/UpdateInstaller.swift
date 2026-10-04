@@ -72,12 +72,25 @@ struct PreparedUpdate: Equatable, Sendable {
     let folder: URL
 }
 
+/// A release's disk image downloaded earlier and kept, with the SHA-256 it
+/// had then.
+struct KeptImage: Equatable, Sendable {
+    let file: URL
+    let sha256: String
+}
+
 /// Installs updates. `UpdateInstaller` is the real one; tests stand in for it.
 protocol UpdateInstalling: Sendable {
     /// Why this copy can't update itself, or nil when it can.
     var unavailability: UpdateInstallUnavailability? { get }
-    /// Downloads `release` and checks it.
-    func prepare(_ release: AppRelease) async throws -> PreparedUpdate
+    /// Downloads `release`'s disk image to `file`, checked against the
+    /// SHA-256 GitHub lists for it, and returns the file's SHA-256. Without
+    /// `allowsConstrainedNetwork`, it doesn't download while Low Data Mode is on.
+    func download(_ release: AppRelease, to file: URL, allowsConstrainedNetwork: Bool) async throws -> String
+    /// Gets `release` ready to install and checks it: from `image`, an
+    /// earlier download, when given, otherwise downloaded now (see `download`
+    /// for `allowsConstrainedNetwork`).
+    func prepare(_ release: AppRelease, image: KeptImage?, allowsConstrainedNetwork: Bool) async throws -> PreparedUpdate
     /// Puts `update` in the running app's place, to be opened once AutoHush quits.
     func install(_ update: PreparedUpdate) throws
     /// Deletes a prepared update that won't be installed.
@@ -87,7 +100,8 @@ protocol UpdateInstalling: Sendable {
 /// Replaces AutoHush with a newer release:
 ///
 /// 1. downloads the release's disk image from GitHub, and compares it with
-///    the SHA-256 GitHub lists for it;
+///    the SHA-256 GitHub lists for it (or takes an image downloaded earlier,
+///    after checking it's unchanged);
 /// 2. copies AutoHush.app out of it, onto the installed app's volume;
 /// 3. accepts that copy only when its signature is intact and satisfies the
 ///    running app's designated requirement, which names AutoHush's
@@ -110,7 +124,7 @@ struct UpdateInstaller: UpdateInstalling {
     /// The designated requirement updates must satisfy: the running app's
     /// own, or nil when it isn't signed with a certificate.
     let requirement: String?
-    private let download: Download
+    private let fetchFile: Download
     private let relaunch: Relaunch
     /// The tools tried, in order, to open the disk image.
     private let diskImageTools: [DiskImageTool]
@@ -124,7 +138,7 @@ struct UpdateInstaller: UpdateInstalling {
     ) {
         self.appURL = appURL
         self.requirement = requirement
-        self.download = download
+        self.fetchFile = download
         self.relaunch = relaunch
         self.diskImageTools = diskImageTools
     }
@@ -138,17 +152,44 @@ struct UpdateInstaller: UpdateInstalling {
         return nil
     }
 
-    func prepare(_ release: AppRelease) async throws -> PreparedUpdate {
-        if let unavailability { throw UpdateInstallError.unavailable(unavailability) }
+    func download(_ release: AppRelease, to file: URL, allowsConstrainedNetwork: Bool) async throws -> String {
         guard let image = release.diskImage else { throw UpdateInstallError.noDiskImage }
+        var request = URLRequest(url: image.url)
+        request.timeoutInterval = 60
+        request.allowsConstrainedNetworkAccess = allowsConstrainedNetwork
+        let (downloaded, response) = try await fetchFile(request)
+        try? FileManager.default.removeItem(at: file)
+        try FileManager.default.moveItem(at: downloaded, to: file)
+        do {
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            guard status == 200 else { throw UpdateInstallError.badResponse(status) }
+            guard let digest = Self.sha256(of: file), image.sha256 == nil || digest == image.sha256
+            else { throw UpdateInstallError.damaged }
+            return digest
+        } catch {
+            try? FileManager.default.removeItem(at: file)
+            throw error
+        }
+    }
+
+    func prepare(_ release: AppRelease, image kept: KeptImage?, allowsConstrainedNetwork: Bool) async throws -> PreparedUpdate {
+        if let unavailability { throw UpdateInstallError.unavailable(unavailability) }
+        guard release.diskImage != nil else { throw UpdateInstallError.noDiskImage }
         // On the installed app's volume, so that swapping them is one rename.
         let folder = try FileManager.default.url(
             for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: appURL, create: true
         )
         do {
-            let imageFile = try await downloadImage(image, into: folder)
+            let imageFile: URL
+            if let kept {
+                guard Self.sha256(of: kept.file) == kept.sha256 else { throw UpdateInstallError.damaged }
+                imageFile = kept.file
+            } else {
+                imageFile = folder.appending(path: "AutoHush.dmg")
+                _ = try await download(release, to: imageFile, allowsConstrainedNetwork: allowsConstrainedNetwork)
+            }
             let app = try await copyApp(outOf: imageFile, into: folder)
-            try FileManager.default.removeItem(at: imageFile)
+            if kept == nil { try FileManager.default.removeItem(at: imageFile) }
             try check(app, isVersion: release.version)
             Self.removeQuarantine(from: app)
             return PreparedUpdate(version: release.version, app: app, folder: folder)
@@ -174,21 +215,6 @@ struct UpdateInstaller: UpdateInstalling {
     }
 
     // MARK: - Steps
-
-    private func downloadImage(_ image: AppRelease.DiskImage, into folder: URL) async throws -> URL {
-        var request = URLRequest(url: image.url)
-        request.timeoutInterval = 60
-        let (file, response) = try await download(request)
-        let imageFile = folder.appending(path: "AutoHush.dmg")
-        try FileManager.default.moveItem(at: file, to: imageFile)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard status == 200 else { throw UpdateInstallError.badResponse(status) }
-        if let expected = image.sha256 {
-            let digest = SHA256.hash(data: try Data(contentsOf: imageFile, options: .mappedIfSafe))
-            guard digest.map({ String(format: "%02x", $0) }).joined() == expected else { throw UpdateInstallError.damaged }
-        }
-        return imageFile
-    }
 
     /// Opens the disk image read-only and out of sight in Finder, and copies
     /// AutoHush.app out of it.
@@ -236,6 +262,12 @@ struct UpdateInstaller: UpdateInstalling {
     }
 
     // MARK: - System
+
+    /// The hex SHA-256 of `file`, or nil when it can't be read.
+    static func sha256(of file: URL) -> String? {
+        guard let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { return nil }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
 
     static func isSigned(_ app: URL, satisfying requirementText: String) -> Bool {
         var code: SecStaticCode?

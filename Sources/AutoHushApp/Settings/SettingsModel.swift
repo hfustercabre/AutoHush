@@ -17,8 +17,9 @@ final class SettingsModel {
         var setTimings: @MainActor (TimingSettings) -> Void
         var setDetectionMethod: @MainActor (DetectionMethod) -> Void
         var setChecksForUpdates: @MainActor (Bool) -> Void
-        var setInstallsUpdates: @MainActor (Bool) -> Void
+        var setAutomaticUpdates: @MainActor (AutomaticUpdates) -> Void
         var checkForUpdates: @MainActor () -> Void
+        var openNotificationSettings: @MainActor () -> Void
     }
 
     /// One app in Settings → Apps, and whether it is ignored.
@@ -36,10 +37,13 @@ final class SettingsModel {
     var autoPauseNote: String?
     var detectionMethod = DetectionMethod.audioLevels
     var checksForUpdatesAutomatically = true
-    var installsUpdatesAutomatically = true
-    /// Why AutoHush can't install updates itself, shown under the switch;
-    /// nil when it can.
+    /// What automatic checks lead to: notify, download or install.
+    var automaticUpdates = AutomaticUpdates.install
+    /// Why AutoHush can't install updates itself, shown under the choice;
+    /// nil when it can. Then only "Notify me" is possible.
     var updateInstallNote: String?
+    /// The user turned AutoHush's notifications off in System Settings.
+    var notificationsOff = false
     var updateStatus: String?
 
     // Apps
@@ -89,8 +93,9 @@ final class SettingsModel {
     func forget(_ source: AudioSource) { actions.forgetApp(source) }
     func forgetAllApps() { actions.forgetAllApps() }
     func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
-    func setInstallsUpdates(_ on: Bool) { actions.setInstallsUpdates(on) }
+    func setAutomaticUpdates(_ mode: AutomaticUpdates) { actions.setAutomaticUpdates(mode) }
     func checkForUpdates() { actions.checkForUpdates() }
+    func openNotificationSettings() { actions.openNotificationSettings() }
 
     func setTimings(_ timings: TimingSettings) {
         self.timings = timings.clamped

@@ -63,6 +63,17 @@ struct UpdateCheckerTests {
         ))
     }
 
+    @Test("a newer release's notes are read, and blank notes are none", arguments: [
+        ("\"### Added\\n\\n- **Notifications**\\n\"", "### Added\n\n- **Notifications**"),
+        (#"" \n ""#, nil), ("null", nil),
+    ])
+    func notes(json: String, notes: String?) async throws {
+        let body = #"{"tag_name": "v0.3.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0", "body": \#(json)}"#
+        let result = try await checker(status: 200, body: body).check(currentVersion: AppVersion("0.2.0")!)
+        guard case .available(let release) = result else { Issue.record("no update: \(result)"); return }
+        #expect(release.notes == notes)
+    }
+
     @Test("a disk image from anywhere but this repository's release downloads is ignored", arguments: [
         "https://evil.example/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg",
         "http://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg",

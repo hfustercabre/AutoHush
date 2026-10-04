@@ -16,10 +16,17 @@ struct AppDelegateTests {
         var count = 0
     }
 
-    /// In-memory preferences, so tests never write preference files.
+    /// In-memory preferences and a downloads folder of its own, so tests
+    /// never write preference files or touch AutoHush's real Caches.
     @MainActor
     private final class Scratch {
         let preferences = Preferences(store: InMemoryPreferenceStore())
+        let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
+        let notifier = MockUpdateNotifier()
+
+        deinit {
+            try? FileManager.default.removeItem(at: downloads)
+        }
     }
 
     @MainActor
@@ -34,6 +41,8 @@ struct AppDelegateTests {
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
             updateChecker: updateChecker,
             updateInstaller: updateInstaller,
+            updateNotifier: scratch.notifier,
+            updateDownloadsFolder: scratch.downloads,
             currentVersion: AppVersion("0.2.0"),
             bootstrapOverride: { counter.count += 1 }
         )
@@ -215,7 +224,7 @@ struct AppDelegateTests {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch, updateChecker: .latestRelease("v0.3.0"))
         await sut.updates.check(userInitiated: false)
-        #expect(sut.status.availableUpdate?.version == AppVersion("0.3.0"))
+        #expect(sut.status.updateOffer == UpdateOffer(release: sut.updates.availableUpdate!, state: .available))
         #expect(sut.settingsModel.updateStatus == "Version 0.3.0 is available.")
     }
 
@@ -248,15 +257,16 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("turning automatic installs off is saved and shown in Settings")
-    func automaticInstallsSetting() {
+    @Test("the update choice is saved and shown in Settings; it starts at installing")
+    func automaticUpdatesSetting() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
-        #expect(sut.settingsModel.installsUpdatesAutomatically)
+        #expect(sut.settingsModel.automaticUpdates == .install)
         #expect(sut.settingsModel.updateInstallNote == nil)
-        sut.setInstallsUpdatesAutomatically(false)
-        #expect(!scratch.preferences.installsUpdatesAutomatically)
-        #expect(!sut.settingsModel.installsUpdatesAutomatically)
+        sut.setAutomaticUpdates(.download)
+        #expect(scratch.preferences.automaticUpdates == .download)
+        #expect(sut.settingsModel.automaticUpdates == .download)
+        #expect(sut.updates.mode == .download)
     }
 
     @MainActor
