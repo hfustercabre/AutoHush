@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Updates keep working on future macOS versions**: macOS 27 deprecates
+  the `hdiutil` commands AutoHush used to open a downloaded update. It now
+  opens it with `diskutil image`, which macOS recommends instead, and falls
+  back to `hdiutil` on macOS 15, which doesn't have it.
+
 ## [0.3.4] — 2026-10-04
 
 ### Changed
