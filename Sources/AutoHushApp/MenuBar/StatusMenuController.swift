@@ -20,6 +20,7 @@ import AutoHushKit
 /// ─────────
 ///   About AutoHush
 ///   Check for Updates…
+///   Buy Me a Coffee
 ///   Quit AutoHush             ⌘Q
 /// ```
 @MainActor
@@ -36,6 +37,7 @@ final class StatusMenuController: NSObject {
         var showAvailableUpdate: @MainActor () -> Void
         var checkForUpdates: @MainActor () -> Void
         var showAbout: @MainActor () -> Void
+        var openSupportPage: @MainActor () -> Void
         var quit: @MainActor () -> Void
     }
 
@@ -128,11 +130,13 @@ final class StatusMenuController: NSObject {
         menu.addItem(diagnosticsItem())
     }
 
-    /// About, Check for Updates and Quit.
+    /// About, Check for Updates, Buy Me a Coffee and Quit.
     private func addAppItems() {
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "About AutoHush", comment: "Menu item"), #selector(showAbout)))
         menu.addItem(item(String(localized: "Check for Updates…", comment: "Menu item"), #selector(checkForUpdates)))
+        let support = String(localized: "Buy Me a Coffee", comment: "Menu item: opens the developer's Buy Me a Coffee page")
+        menu.addItem(item(support, #selector(openSupportPage)))
         menu.addItem(item(String(localized: "Quit AutoHush", comment: "Menu item"), #selector(quit), key: "q"))
     }
 
@@ -244,6 +248,7 @@ final class StatusMenuController: NSObject {
     @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
     @objc private func checkForUpdates() { actions.checkForUpdates() }
     @objc private func showAbout() { actions.showAbout() }
+    @objc private func openSupportPage() { actions.openSupportPage() }
     @objc private func quit() { actions.quit() }
 
     @objc private func snooze(_ sender: NSMenuItem) {

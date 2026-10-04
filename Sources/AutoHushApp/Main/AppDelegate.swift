@@ -99,6 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showAvailableUpdate: { [weak self] in self?.updates.presentAvailableUpdate() },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
                 showAbout: { [weak self] in AboutPanel.show(playerName: self?.player.name ?? "") },
+                openSupportPage: { NSWorkspace.shared.open(ProjectInfo.supportPage) },
                 quit: { NSApp.terminate(nil) }
             )
         )

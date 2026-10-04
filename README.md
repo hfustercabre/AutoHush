@@ -1,6 +1,14 @@
-# AutoHush
+<p align="center">
+  <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
+</p>
+<p align="center">
+  <a href="https://github.com/hfustercabre/AutoHush/releases/latest"><img src="https://img.shields.io/github/v/release/hfustercabre/AutoHush?color=BD5FFF" alt="Latest release"></a>
+  <a href="https://github.com/hfustercabre/AutoHush/releases"><img src="https://img.shields.io/github/downloads/hfustercabre/AutoHush/total?color=BD5FFF" alt="Downloads"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/macOS-15%2B-BD5FFF" alt="macOS 15 or later"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/hfustercabre/AutoHush?color=BD5FFF" alt="MIT license"></a>
+</p>
 
-<a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
+# AutoHush
 
 **Your music steps aside when something else needs your ears.**
 
@@ -37,6 +45,7 @@ Yes, this whole app exists because of a yellow dot.
 - [Privacy](#privacy)
 - [Updates](#updates)
 - [Uninstall](#uninstall)
+- [Support AutoHush](#support-autohush)
 - [For developers](#for-developers)
 
 ## Install
@@ -111,6 +120,7 @@ Music paused — Google Chrome is playing
 ───────────────
   About AutoHush
   Check for Updates…
+  Buy Me a Coffee
   Quit AutoHush             ⌘Q
 ```
 
@@ -207,6 +217,14 @@ Versions up to 0.2.0 can't update themselves yet: update those once by hand.
 ```bash
 tccutil reset All com.autohush.AutoHush
 ```
+
+## Support AutoHush
+
+AutoHush is free. If it saves your ears a few times a day and you'd like to say thanks, you can buy me a coffee. It helps me keep improving it.
+
+<p align="center">
+  <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
+</p>
 
 ---
 
