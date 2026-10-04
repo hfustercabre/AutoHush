@@ -22,7 +22,7 @@ So why write another one? To get your Mac's sound, Background Music routes it th
 
 AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your music, which to my eyes is easy to ignore. If it still bothers you, [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of it entirely, at the cost of slightly less precise detection.
 
-Yes, this whole app exists because of a dot.
+Yes, this whole app exists because of a yellow dot.
 
 
 ## Contents
