@@ -9,8 +9,10 @@
 #   2. runs the test suite
 #   3. builds the app, signed with the AutoHush certificate (hardened runtime)
 #   4. packages dist/AutoHush-<version>.dmg
-#   5. writes the DMG's SHA-256 into Casks/autohush.rb and the release
-#      notes into dist/release-notes-<version>.md
+#   5. writes the release notes into dist/release-notes-<version>.md
+#
+# Once the GitHub release is published, Scripts/update-tap.sh points the
+# Homebrew tap at it.
 #
 # Releases must be signed with the same certificate every time, so users keep
 # their permissions when they update; ad-hoc releases are refused.
@@ -24,7 +26,6 @@ VERSION="${1:-}"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "usage: release.sh <major.minor.patch>"
 TAG="v$VERSION"
 CHANGELOG="$PROJECT_DIR/CHANGELOG.md"
-CASK="$PROJECT_DIR/Casks/autohush.rb"
 DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 NOTES_PATH="$DIST_DIR/release-notes-$VERSION.md"
 
@@ -51,13 +52,9 @@ swift test >/dev/null || fail "tests failed; release aborted (version files were
 # 3–4. App and disk image -----------------------------------------------------
 SIGNING_IDENTITY="$IDENTITY" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
 
-# 5. Cask and release notes ----------------------------------------------------
+# 5. Release notes -----------------------------------------------------------
 SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
-step "Updating Casks/autohush.rb"
-sed -i '' -E \
-    -e "s/^  version \".*\"$/  version \"$VERSION\"/" \
-    -e "s/^  sha256 .*$/  sha256 \"$SHA256\"/" \
-    "$CASK"
+step "Writing the release notes"
 awk -v heading="## [$VERSION]" '
     index($0, heading) == 1 { found = 1; next }
     found && (/^## \[/ || /^---$/) { exit }
@@ -72,7 +69,8 @@ echo "  signed with    $IDENTITY (not notarized: Gatekeeper asks users to confir
 echo "  release notes  $NOTES_PATH"
 echo ""
 echo "Next steps (not done by this script):"
-echo "  git add Resources/Info.plist CHANGELOG.md Casks/autohush.rb"
+echo "  git add Resources/Info.plist CHANGELOG.md"
 echo "  git commit -m \"release: $VERSION\" && git tag $TAG"
 echo "  git push origin main $TAG"
 echo "  Create the GitHub release $TAG, upload $(basename "$DMG_PATH") and paste the release notes."
+echo "  bash Scripts/update-tap.sh $VERSION   (points the Homebrew tap at the published release)"

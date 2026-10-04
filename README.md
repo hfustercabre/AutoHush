@@ -46,9 +46,10 @@ AutoHush is free and isn't sold through Apple. It's signed, but not *notarized* 
 ### With Homebrew (easiest)
 
 ```bash
-brew tap hfustercabre/autohush https://github.com/hfustercabre/AutoHush
-brew install --cask autohush
+brew install --cask hfustercabre/tap/autohush
 ```
+
+The cask lives in its own tap, [hfustercabre/homebrew-tap](https://github.com/hfustercabre/homebrew-tap); this command adds it for you.
 
 ### By hand
 
@@ -371,7 +372,8 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 | `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`, which opens as a drag-to-Applications window in AutoHush's colours, with a first-launch note, and mounts as a disk with the app's icon. The background is drawn by `Scripts/lib/dmg-background.swift` with the app's own menu bar mark. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
-| `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG, cask checksum and release notes. It refuses unsigned builds and never commits, tags or publishes |
+| `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG and release notes. It refuses unsigned builds and never commits, tags or publishes |
+| `Scripts/update-tap.sh <version>` | Points the Homebrew tap at a published release: checks that the DMG on GitHub is the one in `dist/`, then commits the new version and checksum to the tap's cask and pushes it |
 
 The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
 
@@ -381,7 +383,13 @@ The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise 
 bash Scripts/release.sh 0.2.0
 ```
 
-Then follow the printed steps: commit `Resources/Info.plist`, `CHANGELOG.md` and `Casks/autohush.rb`, tag `v0.2.0` and push, then create the GitHub release with the DMG and the generated notes. Installed copies find the release at their next daily check and install its DMG themselves. That is why the DMG must keep its name, `AutoHush-<version>.dmg`, and be signed with the same certificate. The cask in this repository points at it too, for new Homebrew installs.
+Then follow the printed steps: commit `Resources/Info.plist` and `CHANGELOG.md`, tag `v0.2.0` and push, then create the GitHub release with the DMG and the generated notes. Installed copies find the release at their next daily check and install its DMG themselves. That is why the DMG must keep its name, `AutoHush-<version>.dmg`, and be signed with the same certificate.
+
+Last, point the Homebrew tap at the new release, for new Homebrew installs:
+
+```bash
+bash Scripts/update-tap.sh 0.2.0
+```
 
 The Mac App Store and Homebrew's official cask repository aren't options: both require Apple notarization, and the App Store would also reject the private functions AutoHush relies on.
 

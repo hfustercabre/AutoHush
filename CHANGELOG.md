@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Installing with Homebrew takes one command**:
+  `brew install --cask hfustercabre/tap/autohush`. The cask moved from this
+  repository to its own tap,
+  [hfustercabre/homebrew-tap](https://github.com/hfustercabre/homebrew-tap),
+  which Homebrew adds by itself. Copies installed with the earlier two-line
+  command keep updating themselves as before.
+
 ## [0.3.3] — 2026-10-04
 
 ### Fixed
