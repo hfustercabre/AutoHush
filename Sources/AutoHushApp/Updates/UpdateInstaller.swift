@@ -1,0 +1,299 @@
+import CryptoKit
+import Foundation
+import Security
+
+/// Why this copy of AutoHush can't install updates by itself.
+enum UpdateInstallUnavailability: Equatable, Sendable {
+    /// It isn't signed with a certificate (a development build), so there is
+    /// no way to tell that an update comes from the same developer.
+    case notSignedWithCertificate
+    /// It can't replace itself: the app or its folder is read-only for this
+    /// user (on the disk image, or in another user's folder).
+    case readOnlyLocation
+
+    /// Shown in Settings under "Install updates automatically".
+    var explanation: String {
+        switch self {
+        case .notSignedWithCertificate:
+            return String(localized: "This copy of AutoHush can't update itself, because it isn't signed with AutoHush's certificate.",
+                          comment: "Settings, under Install updates automatically (development builds)")
+        case .readOnlyLocation:
+            return String(localized: "AutoHush can't update itself, because it can't write to the folder it's in.",
+                          comment: "Settings, under Install updates automatically")
+        }
+    }
+}
+
+/// Why an update could not be installed.
+enum UpdateInstallError: LocalizedError, Equatable {
+    case unavailable(UpdateInstallUnavailability)
+    /// The release has no disk image to install from.
+    case noDiskImage
+    case badResponse(Int)
+    /// The download doesn't match GitHub's checksum, can't be opened, or
+    /// holds no AutoHush.app.
+    case damaged
+    /// The app in the download isn't signed with the running app's certificate.
+    case notGenuine
+    /// The app in the download isn't the version the release announced.
+    case wrongVersion
+    /// Swapping in the new app failed, for the reason given.
+    case notReplaced(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unavailable(let reason):
+            return reason.explanation
+        case .noDiskImage:
+            return String(localized: "This release has no disk image to install from.", comment: "Update install error")
+        case .badResponse(let status):
+            return String(localized: "GitHub answered with HTTP status \(status).",
+                          comment: "Update check error; %lld is an HTTP status code")
+        case .damaged:
+            return String(localized: "The download is damaged.", comment: "Update install error")
+        case .notGenuine:
+            return String(localized: "The download isn't signed with the same certificate as AutoHush, so it wasn't installed.",
+                          comment: "Update install error")
+        case .wrongVersion:
+            return String(localized: "The download doesn't contain the version GitHub announced.", comment: "Update install error")
+        case .notReplaced(let reason):
+            return String(localized: "AutoHush couldn't replace itself: \(reason)",
+                          comment: "Update install error; %@ is the reason macOS gave")
+        }
+    }
+}
+
+/// An update downloaded, checked and ready to take the running app's place.
+struct PreparedUpdate: Equatable, Sendable {
+    let version: AppVersion
+    /// The checked AutoHush.app, on the same volume as the installed one.
+    let app: URL
+    /// The private folder holding it; removed once installed or discarded.
+    let folder: URL
+}
+
+/// Installs updates. `UpdateInstaller` is the real one; tests stand in for it.
+protocol UpdateInstalling: Sendable {
+    /// Why this copy can't update itself, or nil when it can.
+    var unavailability: UpdateInstallUnavailability? { get }
+    /// Downloads `release` and checks it.
+    func prepare(_ release: AppRelease) async throws -> PreparedUpdate
+    /// Puts `update` in the running app's place, to be opened once AutoHush quits.
+    func install(_ update: PreparedUpdate) throws
+    /// Deletes a prepared update that won't be installed.
+    func discard(_ update: PreparedUpdate)
+}
+
+/// Replaces AutoHush with a newer release:
+///
+/// 1. downloads the release's disk image from GitHub, and compares it with
+///    the SHA-256 GitHub lists for it;
+/// 2. copies AutoHush.app out of it, onto the installed app's volume;
+/// 3. accepts that copy only when its signature is intact and satisfies the
+///    running app's designated requirement, which names AutoHush's
+///    certificate, and when it is the release's version. This is the test
+///    macOS uses to keep AutoHush's permissions, and nothing but AutoHush
+///    signed with its certificate passes it;
+/// 4. swaps it in for the running app, and has it opened as soon as this one
+///    quits.
+///
+/// AutoHush isn't notarized, so Gatekeeper would refuse to open a copy marked
+/// as downloaded. The signature check takes Gatekeeper's place: once a copy
+/// passes it, its quarantine mark is removed, as the Homebrew cask does.
+struct UpdateInstaller: UpdateInstalling {
+    typealias Download = @Sendable (URLRequest) async throws -> (URL, URLResponse)
+    /// Opens the app at a URL once AutoHush has quit; returns a way to call that off.
+    typealias Relaunch = @Sendable (URL) throws -> @Sendable () -> Void
+
+    /// Where the running app is installed.
+    let appURL: URL
+    /// The designated requirement updates must satisfy: the running app's
+    /// own, or nil when it isn't signed with a certificate.
+    let requirement: String?
+    private let download: Download
+    private let relaunch: Relaunch
+
+    init(
+        appURL: URL = Bundle.main.bundleURL,
+        requirement: String? = UpdateInstaller.runningAppRequirement(),
+        download: @escaping Download = { try await URLSession.shared.download(for: $0) },
+        relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit
+    ) {
+        self.appURL = appURL
+        self.requirement = requirement
+        self.download = download
+        self.relaunch = relaunch
+    }
+
+    var unavailability: UpdateInstallUnavailability? {
+        guard requirement != nil else { return .notSignedWithCertificate }
+        let files = FileManager.default
+        guard files.isWritableFile(atPath: appURL.path),
+              files.isWritableFile(atPath: appURL.deletingLastPathComponent().path)
+        else { return .readOnlyLocation }
+        return nil
+    }
+
+    func prepare(_ release: AppRelease) async throws -> PreparedUpdate {
+        if let unavailability { throw UpdateInstallError.unavailable(unavailability) }
+        guard let image = release.diskImage else { throw UpdateInstallError.noDiskImage }
+        // On the installed app's volume, so that swapping them is one rename.
+        let folder = try FileManager.default.url(
+            for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: appURL, create: true
+        )
+        do {
+            let imageFile = try await downloadImage(image, into: folder)
+            let app = try await copyApp(outOf: imageFile, into: folder)
+            try FileManager.default.removeItem(at: imageFile)
+            try check(app, isVersion: release.version)
+            Self.removeQuarantine(from: app)
+            return PreparedUpdate(version: release.version, app: app, folder: folder)
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            throw error
+        }
+    }
+
+    func install(_ update: PreparedUpdate) throws {
+        let cancelRelaunch = try relaunch(appURL)
+        do {
+            _ = try FileManager.default.replaceItemAt(appURL, withItemAt: update.app)
+        } catch {
+            cancelRelaunch()
+            throw UpdateInstallError.notReplaced(error.localizedDescription)
+        }
+        discard(update)
+    }
+
+    func discard(_ update: PreparedUpdate) {
+        try? FileManager.default.removeItem(at: update.folder)
+    }
+
+    // MARK: - Steps
+
+    private func downloadImage(_ image: AppRelease.DiskImage, into folder: URL) async throws -> URL {
+        var request = URLRequest(url: image.url)
+        request.timeoutInterval = 60
+        let (file, response) = try await download(request)
+        let imageFile = folder.appending(path: "AutoHush.dmg")
+        try FileManager.default.moveItem(at: file, to: imageFile)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else { throw UpdateInstallError.badResponse(status) }
+        if let expected = image.sha256 {
+            let digest = SHA256.hash(data: try Data(contentsOf: imageFile, options: .mappedIfSafe))
+            guard digest.map({ String(format: "%02x", $0) }).joined() == expected else { throw UpdateInstallError.damaged }
+        }
+        return imageFile
+    }
+
+    /// Opens the disk image read-only and out of sight in Finder, and copies
+    /// AutoHush.app out of it.
+    private func copyApp(outOf imageFile: URL, into folder: URL) async throws -> URL {
+        let mountPoint = folder.appending(path: "Volume", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: false)
+        // hdiutil works on every macOS AutoHush supports. macOS 27 suggests
+        // `diskutil image` instead, which macOS 15 doesn't have. The image's
+        // own checksum isn't verified (seconds of work): the SHA-256 and the
+        // signature check already cover every byte that matters.
+        let attach = ["attach", imageFile.path, "-readonly", "-nobrowse", "-noautoopen", "-noverify", "-mountpoint", mountPoint.path]
+        guard try await Self.run("/usr/bin/hdiutil", attach) == 0 else { throw UpdateInstallError.damaged }
+
+        let copied = Result {
+            let source = mountPoint.appending(path: "AutoHush.app", directoryHint: .isDirectory)
+            let kind = try? source.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+            guard kind?.isDirectory == true, kind?.isSymbolicLink == false else { throw UpdateInstallError.damaged }
+            let app = folder.appending(path: "AutoHush.app", directoryHint: .isDirectory)
+            try FileManager.default.copyItem(at: source, to: app)
+            return app
+        }
+        _ = try? await Self.run("/usr/bin/hdiutil", ["detach", mountPoint.path, "-force"])
+        return try copied.get()
+    }
+
+    /// Accepts `app` only when it's signed like the running app, intact (every
+    /// file, every architecture and any nested code), and is `version`. The
+    /// version is read after the signature check, which covers Info.plist.
+    private func check(_ app: URL, isVersion version: AppVersion) throws {
+        guard let requirement, Self.isSigned(app, satisfying: requirement) else { throw UpdateInstallError.notGenuine }
+        let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))
+        guard let found = (info?["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init), found == version
+        else { throw UpdateInstallError.wrongVersion }
+    }
+
+    // MARK: - System
+
+    static func isSigned(_ app: URL, satisfying requirementText: String) -> Bool {
+        var code: SecStaticCode?
+        var requirement: SecRequirement?
+        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
+              SecRequirementCreateWithString(requirementText as CFString, [], &requirement) == errSecSuccess
+        else { return false }
+        let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSStrictValidate | kSecCSCheckNestedCode)
+        return SecStaticCodeCheckValidity(code, flags, requirement) == errSecSuccess
+    }
+
+    /// The running app's designated requirement, such as `identifier
+    /// "com.autohush.AutoHush" and certificate leaf = H"085e…"`, or nil when
+    /// it isn't signed with a certificate (ad hoc or not at all).
+    static func runningAppRequirement() -> String? {
+        var running: SecCode?
+        var code: SecStaticCode?
+        var information: CFDictionary?
+        var requirement: SecRequirement?
+        var text: CFString?
+        guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
+              SecCodeCopyStaticCode(running, [], &code) == errSecSuccess, let code,
+              SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
+              let certificates = (information as? [String: Any])?[kSecCodeInfoCertificates as String] as? [SecCertificate],
+              !certificates.isEmpty,
+              SecCodeCopyDesignatedRequirement(code, [], &requirement) == errSecSuccess, let requirement,
+              SecRequirementCopyString(requirement, [], &text) == errSecSuccess
+        else { return nil }
+        return text as String?
+    }
+
+    /// Removes the "downloaded from the internet" mark from `app` and
+    /// everything inside it.
+    static func removeQuarantine(from app: URL) {
+        let contents = FileManager.default.enumerator(at: app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
+        for url in [app] + contents {
+            url.withUnsafeFileSystemRepresentation { path in
+                guard let path else { return }
+                removexattr(path, "com.apple.quarantine", XATTR_NOFOLLOW)
+            }
+        }
+    }
+
+    /// Opens `app` from a small shell loop that waits for AutoHush to exit;
+    /// the loop outlives AutoHush. Calling the returned closure ends the loop
+    /// instead.
+    static func openAfterExit(_ app: URL) throws -> @Sendable () -> Void {
+        let waiter = Process()
+        waiter.executableURL = URL(filePath: "/bin/sh")
+        waiter.arguments = [
+            "-c", #"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.2; done; exec /usr/bin/open "$2""#,
+            "autohush-relaunch", String(getpid()), app.path,
+        ]
+        try waiter.run()
+        let pid = waiter.processIdentifier
+        return { kill(pid, SIGTERM) }
+    }
+
+    /// Runs a command-line tool and returns its exit status, without blocking
+    /// a thread while it runs.
+    private static func run(_ tool: String, _ arguments: [String]) async throws -> Int32 {
+        try await withCheckedThrowingContinuation { continuation in
+            let process = Process()
+            process.executableURL = URL(filePath: tool)
+            process.arguments = arguments
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            process.terminationHandler = { continuation.resume(returning: $0.terminationStatus) }
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+}

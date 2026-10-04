@@ -45,6 +45,51 @@ struct UpdateCheckerTests {
         )))
     }
 
+    @Test("a newer release's disk image is read with its checksum")
+    func diskImage() async throws {
+        let body = #"""
+            {"tag_name": "v0.3.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",
+             "assets": [
+               {"name": "notes.txt", "browser_download_url": "https://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/notes.txt"},
+               {"name": "AutoHush-0.3.0.dmg",
+                "browser_download_url": "https://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg",
+                "digest": "sha256:3734F1D82E143134AA8048BF634A23448438C0792889F75B97235409DF1B4D23"}]}
+            """#
+        let result = try await checker(status: 200, body: body).check(currentVersion: AppVersion("0.2.0")!)
+        guard case .available(let release) = result else { Issue.record("no update: \(result)"); return }
+        #expect(release.diskImage == AppRelease.DiskImage(
+            url: URL(string: "https://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg")!,
+            sha256: "3734f1d82e143134aa8048bf634a23448438c0792889f75b97235409df1b4d23"
+        ))
+    }
+
+    @Test("a disk image from anywhere but this repository's release downloads is ignored", arguments: [
+        "https://evil.example/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg",
+        "http://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.3.0.dmg",
+        "https://github.com/someone/else/releases/download/v0.3.0/AutoHush-0.3.0.dmg",
+        "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",
+        "https://github.com/hfustercabre/AutoHush/releases/download/../../../someone/else/AutoHush-0.3.0.dmg",
+        "file:///tmp/AutoHush-0.3.0.dmg",
+    ])
+    func ignoresOtherDownloads(url: String) async throws {
+        let body = #"""
+            {"tag_name": "v0.3.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",
+             "assets": [{"name": "AutoHush-0.3.0.dmg", "browser_download_url": "\#(url)"}]}
+            """#
+        let result = try await checker(status: 200, body: body).check(currentVersion: AppVersion("0.2.0")!)
+        guard case .available(let release) = result else { Issue.record("no update: \(result)"); return }
+        #expect(release.diskImage == nil)
+    }
+
+    @Test("only well-formed SHA-256 digests are kept")
+    func digests() {
+        #expect(UpdateChecker.sha256(fromDigest: "sha256:" + String(repeating: "Ab", count: 32)) == String(repeating: "ab", count: 32))
+        #expect(UpdateChecker.sha256(fromDigest: "sha512:" + String(repeating: "ab", count: 32)) == nil)
+        #expect(UpdateChecker.sha256(fromDigest: "sha256:" + String(repeating: "zz", count: 32)) == nil)
+        #expect(UpdateChecker.sha256(fromDigest: "sha256:abc") == nil)
+        #expect(UpdateChecker.sha256(fromDigest: nil) == nil)
+    }
+
     @Test("a release page anywhere but this repository's releases on github.com is refused", arguments: [
         "https://evil.example/hfustercabre/AutoHush/releases/tag/v0.3.0",
         "http://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",

@@ -1,0 +1,273 @@
+import CryptoKit
+import Foundation
+import Security
+import Testing
+@testable import AutoHushApp
+
+/// The real installer against a real disk image: a tiny AutoHush.app, signed
+/// ad hoc, standing in for a release. Its designated requirement plays the
+/// running app's.
+@Suite("UpdateInstaller", .serialized)
+struct UpdateInstallerTests {
+    /// A folder of its own for each test, deleted afterwards.
+    private final class Scratch {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerTests-\(UUID().uuidString)")
+        /// The installed app the update replaces.
+        var installedApp: URL { folder.appending(path: "Applications/AutoHush.app") }
+
+        init() throws {
+            try FileManager.default.createDirectory(at: installedApp, withIntermediateDirectories: true)
+            try Data("old".utf8).write(to: installedApp.appending(path: "version.txt"))
+        }
+
+        deinit {
+            try? FileManager.default.removeItem(at: folder)
+        }
+    }
+
+    /// Counts relaunches and their cancellations.
+    private final class RelaunchLog: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _opened: [URL] = []
+        private var _cancelled = 0
+        var opened: [URL] { lock.withLock { _opened } }
+        var cancelled: Int { lock.withLock { _cancelled } }
+
+        func relaunch(_ app: URL) -> @Sendable () -> Void {
+            lock.withLock { _opened.append(app) }
+            return { self.lock.withLock { self._cancelled += 1 } }
+        }
+    }
+
+    private func installer(
+        _ scratch: Scratch,
+        requirement: String? = Fixture.shared.requirement,
+        status: Int = 200,
+        serving file: URL = Fixture.shared.diskImage,
+        relaunchLog: RelaunchLog = RelaunchLog()
+    ) -> UpdateInstaller {
+        UpdateInstaller(
+            appURL: scratch.installedApp,
+            requirement: requirement,
+            download: { request in
+                // Like URLSession: a fresh temporary file the caller moves away.
+                let copy = FileManager.default.temporaryDirectory.appending(path: "download-\(UUID().uuidString)")
+                try FileManager.default.copyItem(at: file, to: copy)
+                return (copy, HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
+            },
+            relaunch: relaunchLog.relaunch
+        )
+    }
+
+    private func release(_ version: String = Fixture.version, sha256: String? = Fixture.shared.sha256, diskImage: Bool = true) -> AppRelease {
+        AppRelease(
+            version: AppVersion(version)!,
+            pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v\(version)")!,
+            diskImage: diskImage ? AppRelease.DiskImage(
+                url: URL(string: "https://github.com/hfustercabre/AutoHush/releases/download/v\(version)/AutoHush-\(version).dmg")!,
+                sha256: sha256
+            ) : nil
+        )
+    }
+
+    // MARK: - Preparing
+
+    @Test("a genuine update is copied out of its disk image, next to the installed app")
+    func preparesGenuineUpdate() async throws {
+        let scratch = try Scratch()
+        let update = try await installer(scratch).prepare(release())
+
+        #expect(update.version == AppVersion(Fixture.version))
+        let info = NSDictionary(contentsOf: update.app.appending(path: "Contents/Info.plist"))
+        #expect(info?["CFBundleShortVersionString"] as? String == Fixture.version)
+        #expect(UpdateInstaller.isSigned(update.app, satisfying: Fixture.shared.requirement))
+        // Only the app is left: the download is deleted and the image detached.
+        let contents = try FileManager.default.contentsOfDirectory(atPath: update.folder.path)
+        #expect(contents.sorted() == ["AutoHush.app", "Volume"])
+        #expect(try FileManager.default.contentsOfDirectory(atPath: update.folder.appending(path: "Volume").path).isEmpty)
+
+        installer(scratch).discard(update)
+        #expect(!FileManager.default.fileExists(atPath: update.folder.path))
+    }
+
+    @Test("an app signed by anyone else is refused")
+    func refusesOtherSigners() async throws {
+        let scratch = try Scratch()
+        let autoHush = #"identifier "com.autohush.AutoHush" and certificate leaf = H"085edf2752c4f31bcdff25dbe14636958d50cdf6""#
+        await #expect(throws: UpdateInstallError.notGenuine) {
+            try await installer(scratch, requirement: autoHush).prepare(release())
+        }
+    }
+
+    @Test("a download that doesn't match GitHub's checksum is refused")
+    func refusesWrongChecksum() async throws {
+        let scratch = try Scratch()
+        await #expect(throws: UpdateInstallError.damaged) {
+            try await installer(scratch).prepare(release(sha256: String(repeating: "0", count: 64)))
+        }
+    }
+
+    @Test("a download that isn't a disk image is refused")
+    func refusesNonImage() async throws {
+        let scratch = try Scratch()
+        let page = scratch.folder.appending(path: "page.html")
+        try Data("<html>Not Found</html>".utf8).write(to: page)
+        await #expect(throws: UpdateInstallError.damaged) {
+            try await installer(scratch, serving: page).prepare(release(sha256: nil))
+        }
+    }
+
+    @Test("a disk image holding another version than announced is refused")
+    func refusesOtherVersion() async throws {
+        let scratch = try Scratch()
+        await #expect(throws: UpdateInstallError.wrongVersion) {
+            try await installer(scratch).prepare(release("9.9.9"))
+        }
+    }
+
+    @Test("a failed download is reported with its HTTP status")
+    func refusesHTTPError() async throws {
+        let scratch = try Scratch()
+        await #expect(throws: UpdateInstallError.badResponse(404)) {
+            try await installer(scratch, status: 404).prepare(release())
+        }
+    }
+
+    @Test("a release without a disk image can't be installed")
+    func refusesReleaseWithoutImage() async throws {
+        let scratch = try Scratch()
+        await #expect(throws: UpdateInstallError.noDiskImage) {
+            try await installer(scratch).prepare(release(diskImage: false))
+        }
+    }
+
+    // MARK: - Where it can install
+
+    @Test("a copy not signed with a certificate, or that can't write to its folder, can't update itself")
+    func unavailability() throws {
+        let scratch = try Scratch()
+        #expect(installer(scratch).unavailability == nil)
+        #expect(installer(scratch, requirement: nil).unavailability == .notSignedWithCertificate)
+
+        let applications = scratch.installedApp.deletingLastPathComponent()
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: applications.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: applications.path) }
+        #expect(installer(scratch).unavailability == .readOnlyLocation)
+    }
+
+    // MARK: - Installing
+
+    @Test("installing swaps the update in and has it opened once AutoHush quits")
+    func installs() throws {
+        let scratch = try Scratch()
+        let update = try Self.preparedUpdate(next: scratch.installedApp)
+        let log = RelaunchLog()
+
+        try installer(scratch, relaunchLog: log).install(update)
+
+        #expect(try String(contentsOf: scratch.installedApp.appending(path: "version.txt"), encoding: .utf8) == "new")
+        #expect(!FileManager.default.fileExists(atPath: update.folder.path))
+        #expect(log.opened == [scratch.installedApp])
+        #expect(log.cancelled == 0)
+    }
+
+    @Test("a failed swap leaves the installed app alone and calls the relaunch off")
+    func failedSwap() throws {
+        let scratch = try Scratch()
+        let update = try Self.preparedUpdate(next: scratch.installedApp)
+        try FileManager.default.removeItem(at: update.app) // nothing to swap in
+        let log = RelaunchLog()
+
+        #expect {
+            try installer(scratch, relaunchLog: log).install(update)
+        } throws: { error in
+            guard case .notReplaced = error as? UpdateInstallError else { return false }
+            return true
+        }
+        #expect(try String(contentsOf: scratch.installedApp.appending(path: "version.txt"), encoding: .utf8) == "old")
+        #expect(log.cancelled == 1)
+        installer(scratch).discard(update)
+    }
+
+    @Test("the quarantine mark is removed from the app and everything in it")
+    func removesQuarantine() throws {
+        let scratch = try Scratch()
+        let app = scratch.installedApp
+        let file = app.appending(path: "version.txt")
+        let mark = "0083;00000000;Safari;"
+        for url in [app, file] {
+            #expect(setxattr(url.path, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) == 0)
+        }
+
+        UpdateInstaller.removeQuarantine(from: app)
+
+        for url in [app, file] {
+            #expect(getxattr(url.path, "com.apple.quarantine", nil, 0, 0, XATTR_NOFOLLOW) == -1)
+        }
+    }
+
+    /// A prepared "new" app, in a folder on the same volume as `installed`.
+    private static func preparedUpdate(next installed: URL) throws -> PreparedUpdate {
+        let folder = try FileManager.default.url(
+            for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: installed, create: true
+        )
+        let app = folder.appending(path: "AutoHush.app")
+        try FileManager.default.createDirectory(at: app, withIntermediateDirectories: false)
+        try Data("new".utf8).write(to: app.appending(path: "version.txt"))
+        return PreparedUpdate(version: AppVersion("1.2.0")!, app: app, folder: folder)
+    }
+}
+
+/// A release's disk image in miniature, made once per test run: AutoHush.app
+/// (`/usr/bin/true` with an Info.plist), signed ad hoc as
+/// com.autohush.AutoHush, on a compressed disk image.
+private struct Fixture: Sendable {
+    static let version = "1.2.0"
+    static let shared = try! Fixture()
+
+    let diskImage: URL
+    let sha256: String
+    /// The app's designated requirement (its code hash, as it's signed ad hoc).
+    let requirement: String
+
+    private init() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
+        let app = folder.appending(path: "Image/AutoHush.app")
+        let executable = app.appending(path: "Contents/MacOS/AutoHush")
+        try FileManager.default.createDirectory(at: executable.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: URL(filePath: "/usr/bin/true"), to: executable)
+        let info: [String: Any] = [
+            "CFBundleIdentifier": "com.autohush.AutoHush",
+            "CFBundleExecutable": "AutoHush",
+            "CFBundlePackageType": "APPL",
+            "CFBundleShortVersionString": Self.version,
+        ]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: app.appending(path: "Contents/Info.plist"))
+        try Self.run("/usr/bin/codesign", ["--force", "--sign", "-", "--identifier", "com.autohush.AutoHush", app.path])
+
+        diskImage = folder.appending(path: "AutoHush.dmg")
+        try Self.run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
+                                          "-volname", "AutoHush", "-srcfolder", folder.appending(path: "Image").path,
+                                          diskImage.path])
+        sha256 = SHA256.hash(data: try Data(contentsOf: diskImage)).map { String(format: "%02x", $0) }.joined()
+
+        var code: SecStaticCode?
+        var designated: SecRequirement?
+        var text: CFString?
+        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
+              SecCodeCopyDesignatedRequirement(code, [], &designated) == errSecSuccess, let designated,
+              SecRequirementCopyString(designated, [], &text) == errSecSuccess, let text
+        else { throw CocoaError(.featureUnsupported) }
+        requirement = text as String
+    }
+
+    private static func run(_ tool: String, _ arguments: [String]) throws {
+        let process = Process()
+        process.executableURL = URL(filePath: tool)
+        process.arguments = arguments
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw CocoaError(.executableLoad) }
+    }
+}

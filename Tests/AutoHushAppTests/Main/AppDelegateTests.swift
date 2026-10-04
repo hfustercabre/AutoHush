@@ -25,13 +25,15 @@ struct AppDelegateTests {
     @MainActor
     private func makeSUT(
         _ scratch: Scratch = Scratch(),
-        updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) }
+        updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
+        updateInstaller: MockUpdateInstaller = MockUpdateInstaller()
     ) -> (AppDelegate, BootstrapCounter) {
         let counter = BootstrapCounter()
         let sut = AppDelegate(
             preferences: scratch.preferences,
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
             updateChecker: updateChecker,
+            updateInstaller: updateInstaller,
             currentVersion: AppVersion("0.2.0"),
             bootstrapOverride: { counter.count += 1 }
         )
@@ -226,5 +228,24 @@ struct AppDelegateTests {
         #expect(!scratch.preferences.checksForUpdatesAutomatically)
         #expect(!sut.settingsModel.checksForUpdatesAutomatically)
         #expect(!sut.updates.isCheckDue())
+    }
+
+    @MainActor
+    @Test("turning automatic installs off is saved and shown in Settings")
+    func automaticInstallsSetting() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        #expect(sut.settingsModel.installsUpdatesAutomatically)
+        #expect(sut.settingsModel.updateInstallNote == nil)
+        sut.setInstallsUpdatesAutomatically(false)
+        #expect(!scratch.preferences.installsUpdatesAutomatically)
+        #expect(!sut.settingsModel.installsUpdatesAutomatically)
+    }
+
+    @MainActor
+    @Test("Settings says why AutoHush can't update itself")
+    func installUnavailableNote() {
+        let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))
+        #expect(sut.settingsModel.updateInstallNote == "AutoHush can't update itself, because it can't write to the folder it's in.")
     }
 }

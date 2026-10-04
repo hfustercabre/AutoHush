@@ -72,16 +72,19 @@ struct PreferencesTests {
         #expect(preferences.seenApps.count == Preferences.seenAppsLimit)
     }
 
-    @Test("update settings default to automatic checks and persist")
+    @Test("update settings default to automatic checks and installs, and persist")
     func updateSettings() {
         let scratch = Scratch()
         let preferences = Preferences(store: scratch.defaults)
         #expect(preferences.checksForUpdatesAutomatically)
+        #expect(preferences.installsUpdatesAutomatically)
         #expect(preferences.lastUpdateCheck == nil)
         let date = Date(timeIntervalSinceReferenceDate: 5_000)
         preferences.checksForUpdatesAutomatically = false
+        preferences.installsUpdatesAutomatically = false
         preferences.lastUpdateCheck = date
         #expect(!Preferences(store: scratch.defaults).checksForUpdatesAutomatically)
+        #expect(!Preferences(store: scratch.defaults).installsUpdatesAutomatically)
         #expect(Preferences(store: scratch.defaults).lastUpdateCheck == date)
     }
 

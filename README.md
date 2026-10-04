@@ -45,7 +45,7 @@ brew install --cask autohush
 1. Download `AutoHush-<version>.dmg` from the [releases page](https://github.com/hfustercabre/AutoHush/releases).
 2. Open it: a window shows AutoHush, an arrow and your Applications folder. Drag **AutoHush** onto **Applications**.
 3. Open AutoHush. macOS will refuse the first time, which is expected.
-4. Go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to the AutoHush message. You only do this once per version.
+4. Go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to the AutoHush message. You only do this once: AutoHush installs later versions itself.
 
 Prefer the Terminal? This does the same as step 4:
 
@@ -112,7 +112,7 @@ Music paused — Google Chrome is playing
 
 | Tab | What you'll find |
 |---|---|
-| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks |
+| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks and automatic installs |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped (2 s), an extra wait before resuming (0.2 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
@@ -163,15 +163,27 @@ AntiDot mode offers two ways to detect playing apps:
 - AutoHush **never records, saves or sends audio**, and never uses the microphone.
 - With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away.
 - In AntiDot mode it doesn't look at any sound at all.
-- The only thing it sends over the internet is an optional, once-a-day check for a new version on GitHub (see below).
+- It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below).
 - It controls Spotify through the standard macOS automation mechanism, and no other app.
 
 ## Updates
 
-AutoHush checks GitHub for a new version once a day (you can turn this off in Settings → General). If there's one, **Update Available** appears in the menu; there are no pop-ups. You can also check yourself with **Check for Updates…**.
+AutoHush checks GitHub for a new version once a day and installs it by itself. It waits for a moment when it isn't holding your music paused and none of its windows or menus are open. Then it swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over.
+
+Before installing, it makes sure that:
+
+- the download matches the checksum GitHub lists for it;
+- the app inside is signed with the same certificate as the copy you have, the check macOS itself uses to keep AutoHush's permissions, so nothing but a genuine AutoHush gets installed this way;
+- it's the version GitHub announced.
+
+In Settings → General you can turn off automatic installs, or checks altogether. With automatic installs off, **Update Available** appears in the menu instead; there are no pop-ups. Choose it, then **Install and Relaunch**. **Check for Updates…** checks right away.
+
+AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account. Settings tells you when it can't. To update by hand:
 
 - Installed with Homebrew: `brew upgrade --cask autohush`
 - Installed by hand: download the new version from the releases page and replace the old one.
+
+Versions up to 0.2.0 can't update themselves yet: update those once by hand.
 
 ## Uninstall
 
@@ -208,7 +220,7 @@ tccutil reset All com.autohush.AutoHush
 AppDelegate ── lifecycle, bootstrap (launch, Retry, player relaunch), wiring features to the engine
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
-  ├── UpdateController ── daily and manual checks against the latest GitHub release
+  ├── UpdateController ── daily and manual checks against the latest GitHub release, and installing it (UpdateInstaller)
   └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
         PlayerStateObserving ── the player's state (Spotify: distributed notification, quit) ┐
         AudioMonitor                                                                │
@@ -246,7 +258,7 @@ Sources/
     MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
                          Views/ (General, Apps, Advanced)
-    Updates/             UpdateController, UpdateChecker
+    Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap)
     Diagnostics/         DiagnosticsReport
     About/               AboutPanel
     General/             InfoAlert, ProjectInfo, AppIcon, SystemSettingsPane+Open
@@ -342,7 +354,7 @@ macOS remembers permissions per signing certificate. An unsigned ("ad hoc") buil
 bash Scripts/create-signing-certificate.sh
 ```
 
-This creates the certificate (valid 10 years) in your login keychain. The first build asks to let `codesign` use the key: choose **Always Allow**. Then **back it up**: in Keychain Access, open **login → My Certificates**, right-click "AutoHush Self-Signed", choose **Export…** and save a password-protected `.p12`. If you lose it, every user has to grant the permissions again after the next update.
+This creates the certificate (valid 10 years) in your login keychain. The first build asks to let `codesign` use the key: choose **Always Allow**. Then **back it up**: in Keychain Access, open **login → My Certificates**, right-click "AutoHush Self-Signed", choose **Export…** and save a password-protected `.p12`. If you lose it, installed copies refuse to update themselves to a version signed with another certificate. Everyone would have to update by hand once, and grant the permissions again.
 
 | Script | What it does |
 |---|---|
@@ -359,7 +371,7 @@ The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise 
 bash Scripts/release.sh 0.2.0
 ```
 
-Then follow the printed steps: commit `Resources/Info.plist`, `CHANGELOG.md` and `Casks/autohush.rb`, tag `v0.2.0` and push, then create the GitHub release with the DMG and the generated notes. The cask in this repository then points at it, so `brew upgrade` picks it up.
+Then follow the printed steps: commit `Resources/Info.plist`, `CHANGELOG.md` and `Casks/autohush.rb`, tag `v0.2.0` and push, then create the GitHub release with the DMG and the generated notes. Installed copies find the release at their next daily check and install its DMG themselves. That is why the DMG must keep its name, `AutoHush-<version>.dmg`, and be signed with the same certificate. The cask in this repository points at it too, for new Homebrew installs.
 
 The Mac App Store and Homebrew's official cask repository aren't options: both require Apple notarization, and the App Store would also reject the private functions AutoHush relies on.
 

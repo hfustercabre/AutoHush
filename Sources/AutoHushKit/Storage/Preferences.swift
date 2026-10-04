@@ -18,6 +18,7 @@ package final class Preferences {
         static let seenApps = "seenApps"
         static let timings = "timings"
         static let checksForUpdates = "checksForUpdatesAutomatically"
+        static let installsUpdates = "installsUpdatesAutomatically"
         static let lastUpdateCheck = "lastUpdateCheck"
         static let detectionMethod = "detectionMethod"
         static let announcingApps = "announcingApps"
@@ -96,6 +97,12 @@ package final class Preferences {
     package var checksForUpdatesAutomatically: Bool {
         get { defaults.object(forKey: Key.checksForUpdates) as? Bool ?? true }
         set { defaults.set(newValue, forKey: Key.checksForUpdates) }
+    }
+
+    /// Whether an update found by an automatic check is installed without asking.
+    package var installsUpdatesAutomatically: Bool {
+        get { defaults.object(forKey: Key.installsUpdates) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: Key.installsUpdates) }
     }
 
     package var lastUpdateCheck: Date? {

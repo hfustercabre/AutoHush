@@ -17,6 +17,7 @@ final class SettingsModel {
         var setTimings: @MainActor (TimingSettings) -> Void
         var setDetectionMethod: @MainActor (DetectionMethod) -> Void
         var setChecksForUpdates: @MainActor (Bool) -> Void
+        var setInstallsUpdates: @MainActor (Bool) -> Void
         var checkForUpdates: @MainActor () -> Void
     }
 
@@ -35,6 +36,10 @@ final class SettingsModel {
     var autoPauseNote: String?
     var detectionMethod = DetectionMethod.audioLevels
     var checksForUpdatesAutomatically = true
+    var installsUpdatesAutomatically = true
+    /// Why AutoHush can't install updates itself, shown under the switch;
+    /// nil when it can.
+    var updateInstallNote: String?
     var updateStatus: String?
 
     // Apps
@@ -84,6 +89,7 @@ final class SettingsModel {
     func forget(_ source: AudioSource) { actions.forgetApp(source) }
     func forgetAllApps() { actions.forgetAllApps() }
     func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
+    func setInstallsUpdates(_ on: Bool) { actions.setInstallsUpdates(on) }
     func checkForUpdates() { actions.checkForUpdates() }
 
     func setTimings(_ timings: TimingSettings) {
