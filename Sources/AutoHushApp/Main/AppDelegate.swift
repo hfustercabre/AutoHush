@@ -47,7 +47,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             preferences: preferences,
             currentVersion: currentVersion,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
-            quit: { NSApp.terminate(nil) },
+            // From the run loop, not from inside the install's task: quitting
+            // waits for main-actor work (restoring the volume), which can't
+            // run while a main-actor job is still under way.
+            quit: { RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } } },
             onAvailableUpdate: { [weak self] in self?.status.availableUpdate = $0 },
             onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 }
         )
@@ -106,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let pipeline else { return .terminateNow }
         self.pipeline = nil
         var replied = false
-        let reply = {
+        let reply: @MainActor () -> Void = {
             guard !replied else { return }
             replied = true
             sender.reply(toApplicationShouldTerminate: true)
@@ -115,7 +118,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await pipeline.stopAndRestoreVolume()
             reply()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { reply() } // never hang the quit
+        // Never hang the quit. A timer, not the main queue: it also fires when
+        // the quit was asked for from inside a main-actor job.
+        let fallback = Timer(timeInterval: 1, repeats: false) { _ in MainActor.assumeIsolated { reply() } }
+        RunLoop.main.add(fallback, forMode: .common)
         return .terminateLater
     }
 

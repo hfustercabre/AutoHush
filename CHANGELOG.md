@@ -5,6 +5,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Restarting after an update**: AutoHush installed the new version but
+  then failed to restart. The old version stayed running, unresponsive,
+  until it was force-quit, and only then did the new one open. The cause
+  was its quit: it had to wait for work that couldn't run until the quit
+  itself finished. AutoHush now quits from the main run loop, and the
+  one-second safety limit on quitting is a timer that always fires.
+  0.3.0 and 0.3.1 still have the problem when they install the next
+  version: force-quit AutoHush once afterwards (or log out), and the new
+  version opens.
+
 ## [0.3.1] — 2026-10-04
 
 ### Changed
