@@ -28,7 +28,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🚫 **Your rules:** choose apps that should never pause your music, or turn auto-pause off for a while.
 - 🟣 **AntiDot mode:** an option that never shows macOS's purple recording dot.
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
-- 🪶 **Featherweight:** built to sip, not gulp: about 0.2 % CPU and 16 MB of memory while it waits, and well under 1 % while it's working, so your battery won't notice it.
+- 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
 
 **Works with Spotify** today. Support for more players, such as Apple Music, YouTube Music and Tidal, is planned.
 
