@@ -59,4 +59,12 @@ struct ReleaseNotesTests {
         #expect(text.length == ReleaseNotes.maxLength + 1)
         #expect(text.string.hasSuffix("…"))
     }
+
+    @Test("an emoji at the cut is left out whole, never halved")
+    func cutBeforeEmoji() {
+        // "🎵" is two UTF-16 units; this puts it across the limit.
+        let text = ReleaseNotes.text(from: String(repeating: "a", count: ReleaseNotes.maxLength - 1) + "🎵 and more")
+        #expect(text.length == ReleaseNotes.maxLength)
+        #expect(text.string == String(repeating: "a", count: ReleaseNotes.maxLength - 1) + "…")
+    }
 }

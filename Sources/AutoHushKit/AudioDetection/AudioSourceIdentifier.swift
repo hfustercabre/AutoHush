@@ -4,7 +4,7 @@ import os
 
 /// The app behind one or more audio processes, e.g. "Google Chrome" for all
 /// of Chrome's helper processes.
-package struct AudioSource: Equatable, Hashable, Sendable {
+package struct AudioSource: Hashable, Sendable {
     /// Bundle identifier of the owning app (or of the process when no app is found).
     package let id: String
     package let name: String
@@ -43,7 +43,7 @@ package protocol AudioSourceIdentifying: Sendable {
 ///   2. otherwise the outermost bundle in the process's executable path (public `proc_pidpath`);
 ///   3. otherwise the process's own bundle ID, shown as is.
 /// Results are cached per process.
-package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, @unchecked Sendable {
+package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendable {
     package init() {}
 
     /// Owner of each audio process; its bundle ID guards against pid reuse.

@@ -48,6 +48,23 @@ struct StatusMenuControllerTests {
         menu.performActionForItem(at: menu.index(of: item))
     }
 
+    @Test("the menu is rebuilt only when the status changes")
+    func rebuildsOnlyOnChange() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        sut.status = readyStatus()
+        let first = try #require(sut.menu.items.first)
+
+        sut.status = readyStatus() // the same again
+        #expect(sut.menu.items.first === first)
+
+        var changed = readyStatus()
+        changed.playback = .musicPlaying
+        sut.status = changed
+        #expect(sut.menu.items.first !== first)
+        #expect(sut.menu.items.first?.title == "Music is playing")
+    }
+
     @Test("the initial menu shows the status, auto-pause controls, Settings and Quit")
     func initialMenu() throws {
         let sut = makeController()

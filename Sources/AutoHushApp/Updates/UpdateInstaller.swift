@@ -11,15 +11,15 @@ enum UpdateInstallUnavailability: Equatable, Sendable {
     /// user (on the disk image, or in another user's folder).
     case readOnlyLocation
 
-    /// Shown in Settings under "Install updates automatically".
+    /// Shown in Settings under the update choices, which it limits to "Notify me".
     var explanation: String {
         switch self {
         case .notSignedWithCertificate:
             return String(localized: "This copy of AutoHush can't update itself, because it isn't signed with AutoHush's certificate.",
-                          comment: "Settings, under Install updates automatically (development builds)")
+                          comment: "Settings, under the update choices (development builds)")
         case .readOnlyLocation:
             return String(localized: "AutoHush can't update itself, because it can't write to the folder it's in.",
-                          comment: "Settings, under Install updates automatically")
+                          comment: "Settings, under the update choices")
         }
     }
 }
@@ -132,7 +132,7 @@ struct UpdateInstaller: UpdateInstalling {
     init(
         appURL: URL = Bundle.main.bundleURL,
         requirement: String? = UpdateInstaller.runningAppRequirement(),
-        download: @escaping Download = { try await URLSession.shared.download(for: $0) },
+        download: @escaping Download = { try await URLSession.updates.download(for: $0) },
         relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit,
         diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
     ) {

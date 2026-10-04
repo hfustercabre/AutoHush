@@ -45,8 +45,10 @@ final class StatusMenuController: NSObject {
         init(_ value: Value) { self.value = value }
     }
 
+    /// Rendered when it changes. The engine reports its state often (on every
+    /// track change, for one), mostly without a change to show.
     var status: AppStatus {
-        didSet { render() }
+        didSet { if status != oldValue { render() } }
     }
 
     let statusItem: NSStatusItem

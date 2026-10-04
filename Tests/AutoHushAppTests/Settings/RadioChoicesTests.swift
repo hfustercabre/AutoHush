@@ -61,6 +61,19 @@ struct RadioChoicesTests {
         #expect(h.chosen.isEmpty)
     }
 
+    @Test("clicks between or beside the options belong to none of them")
+    func clicksOutsideOptions() {
+        let h = Harness()
+        let (first, second) = (h.stack.buttons[0].frame, h.stack.buttons[1].frame)
+        // Halfway across the space between the first two buttons, whichever way up.
+        let between = NSPoint(x: 4, y: (max(first.minY, second.minY) + min(first.maxY, second.maxY)) / 2)
+        // Right of "Notify me", the shortest title, within the stack.
+        let beside = NSPoint(x: h.stack.bounds.maxX - 2, y: first.midY)
+        for point in [between, beside] {
+            #expect(h.stack.hitTest(h.stack.convert(point, to: h.container)) == nil)
+        }
+    }
+
     @Test("when the whole group is disabled, clicks on dimmed options aren't taken")
     func groupDisabled() {
         let h = Harness(reportsUnavailableClicks: false)

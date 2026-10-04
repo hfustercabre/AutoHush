@@ -37,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// A restart for an update or by another copy takes seconds: an older
     /// handover is stale.
     static let pauseHandoverMaxAge: TimeInterval = 60
-    /// Other copies of AutoHush, which quit when this one opens.
+    /// Copies of AutoHush opened before this one, which quit when it opens.
     private let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
     private var terminationSignal: (any DispatchSourceSignal)?
@@ -120,9 +120,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
-        // Opened last, this copy is the one that runs: any other quits first,
-        // handing over a pause it held, so they never both pause and resume
-        // the music.
+        // Opened last, this copy is the one that runs: any opened before it
+        // quits first, handing over a pause it held, so they never both pause
+        // and resume the music.
         let otherInstances = otherInstances
         Task {
             let others = await otherInstances.quitAll()

@@ -67,8 +67,9 @@ package final class AudioMonitor: @unchecked Sendable {
     private let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
     private let events: AsyncStream<ArbiterEvent>.Continuation
     private let forwardingTask: Task<Void, Never>
-    /// The latest Diagnostics entries, read from any thread.
-    private let reportEntries = OSAllocatedUnfairLock<[ActiveAudioReport.Entry]>(initialState: [])
+    /// What the latest tick found, for Diagnostics; read from any thread.
+    /// Its entries are worked out only when Diagnostics asks.
+    private let latestReport = OSAllocatedUnfairLock<ActiveAudioReport?>(initialState: nil)
 
     // Queue-confined state.
     private var isStarted = false
@@ -246,7 +247,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
     /// How each app with its sound on is judged, for Diagnostics (thread-safe).
     package func activeAudioReport() -> [ActiveAudioReport.Entry] {
-        reportEntries.withLock { $0 }
+        latestReport.withLock { $0 }?.entries ?? []
     }
 
     // MARK: - Lifecycle
@@ -293,7 +294,7 @@ package final class AudioMonitor: @unchecked Sendable {
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
         publishActiveSources()
-        reportEntries.withLock { $0 = [] }
+        latestReport.withLock { $0 = nil }
     }
 
     // MARK: - Tick
@@ -497,9 +498,12 @@ package final class AudioMonitor: @unchecked Sendable {
     }
 
     private func rescheduleTimer(at now: Date) {
-        let interval = candidates.isEmpty && tracker.isIdle && !recentlyChanged(at: now)
-            ? configuration.idleSampleInterval
-            : configuration.activeSampleInterval
+        let interval = Self.tickInterval(
+            otherAppsRunning: !sourceOfProcess.isEmpty,
+            isTracking: !tracker.isIdle,
+            recentlyChanged: recentlyChanged(at: now),
+            configuration: configuration
+        )
         guard interval != timerInterval else { return }
         timerInterval = interval
         timer?.schedule(
@@ -507,6 +511,18 @@ package final class AudioMonitor: @unchecked Sendable {
             repeating: interval,
             leeway: .milliseconds(Int(interval * 100))
         )
+    }
+
+    /// The active rate while another app has its audio running, a source is
+    /// tracked, or the process list just changed; otherwise the idle rate.
+    /// The music player playing alone leaves nothing to judge, and a new app
+    /// starting is announced by a HAL change, which ticks at once.
+    static func tickInterval(
+        otherAppsRunning: Bool, isTracking: Bool, recentlyChanged: Bool, configuration: AppConfiguration
+    ) -> TimeInterval {
+        otherAppsRunning || isTracking || recentlyChanged
+            ? configuration.activeSampleInterval
+            : configuration.idleSampleInterval
     }
 
     // MARK: - Publication
@@ -531,6 +547,6 @@ package final class AudioMonitor: @unchecked Sendable {
             announcedBefore: detectionMethod == .playbackSignals ? signals.announcingSourceIDs : [],
             sources: knownSources
         )
-        reportEntries.withLock { $0 = report.entries }
+        latestReport.withLock { $0 = report }
     }
 }

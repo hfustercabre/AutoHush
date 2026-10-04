@@ -129,6 +129,13 @@ struct UpdateCheckerTests {
         #expect(result == .noReleases)
     }
 
+    @Test("update traffic keeps no cache or cookies on disk")
+    func privateSession() {
+        let configuration = URLSession.updates.configuration
+        #expect(configuration.urlCache?.diskCapacity ?? 0 == 0)
+        #expect(configuration.httpCookieStorage !== HTTPCookieStorage.shared)
+    }
+
     @Test("other HTTP statuses and malformed releases are errors")
     func errors() async {
         await #expect(throws: UpdateCheckError.badResponse(500)) {

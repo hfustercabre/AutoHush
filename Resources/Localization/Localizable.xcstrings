@@ -3354,7 +3354,7 @@
       }
     },
     "AutoHush can't update itself, because it can't write to the folder it's in." : {
-      "comment" : "Settings, under Install updates automatically",
+      "comment" : "Settings, under the update choices",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -11866,7 +11866,7 @@
       }
     },
     "This copy of AutoHush can't update itself, because it isn't signed with AutoHush's certificate." : {
-      "comment" : "Settings, under Install updates automatically (development builds)",
+      "comment" : "Settings, under the update choices (development builds)",
       "localizations" : {
         "ca" : {
           "stringUnit" : {

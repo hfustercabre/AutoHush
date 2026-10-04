@@ -65,7 +65,9 @@ enum ReleaseNotes {
             }
         }
         guard result.length > maxLength else { return result }
-        let cut = NSMutableAttributedString(attributedString: result.attributedSubstring(from: NSRange(location: 0, length: maxLength)))
+        // Before the character at the limit, so an emoji is never cut in half.
+        let end = (result.string as NSString).rangeOfComposedCharacterSequence(at: maxLength).location
+        let cut = NSMutableAttributedString(attributedString: result.attributedSubstring(from: NSRange(location: 0, length: end)))
         cut.append(NSAttributedString(string: "…", attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         return cut
     }

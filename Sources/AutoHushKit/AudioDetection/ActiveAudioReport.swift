@@ -2,7 +2,7 @@ import Foundation
 
 /// What Diagnostics shows about the apps with their sound on: how AutoHush
 /// judges each one, and what the judgement rests on. The app words it.
-package struct ActiveAudioReport {
+package struct ActiveAudioReport: Sendable {
     /// One app with its sound on.
     package struct Entry: Equatable, Sendable {
         /// How AutoHush judges the app.

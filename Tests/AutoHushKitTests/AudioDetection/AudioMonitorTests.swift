@@ -692,6 +692,23 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
+    // MARK: - Tick rate
+
+    @Test("ticks fast only while another app has audio running, a source is tracked, or the list just changed")
+    func tickRate() {
+        let configuration = AppConfiguration()
+        let rate = { (others: Bool, tracking: Bool, changed: Bool) in
+            AudioMonitor.tickInterval(otherAppsRunning: others, isTracking: tracking, recentlyChanged: changed,
+                                      configuration: configuration)
+        }
+        // Nothing running, or only the music player: once a second.
+        #expect(rate(false, false, false) == configuration.idleSampleInterval)
+        #expect(rate(true, false, false) == configuration.activeSampleInterval)
+        #expect(rate(false, true, false) == configuration.activeSampleInterval) // e.g. its stop grace
+        #expect(rate(false, false, true) == configuration.activeSampleInterval)
+        #expect(configuration.activeSampleInterval < configuration.idleSampleInterval)
+    }
+
     // MARK: - Publication and lifecycle
 
     @Test("active sources are published sorted")

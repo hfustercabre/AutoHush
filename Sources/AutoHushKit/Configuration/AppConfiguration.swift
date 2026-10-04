@@ -28,10 +28,11 @@ package struct AppConfiguration: Sendable {
     /// stopped. Bridges gaps between tracks, videos and ads.
     package var sourceStopGrace: TimeInterval
 
-    /// Monitor tick while any audio stream is open or a source is tracked.
+    /// Monitor tick while another app has its audio running or a source is tracked.
     package var activeSampleInterval: TimeInterval = 0.25
 
-    /// Monitor tick (and full process-list resync period) while idle.
+    /// Monitor tick (and full process-list resync period) otherwise, also
+    /// while the music player alone plays.
     package var idleSampleInterval: TimeInterval = 1.0
 
     /// The music players' own apps: their audio is the music being protected.

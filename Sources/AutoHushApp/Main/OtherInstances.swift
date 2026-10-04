@@ -2,26 +2,40 @@ import AppKit
 
 /// Other running copies of AutoHush: another version, another install, a
 /// development build. Two copies would both pause and resume the music, so
-/// the one opened last asks the others to quit (`quitAll`).
+/// the one opened last asks those opened before it to quit (`quitAll`).
 struct OtherInstances: Sendable {
-    /// The process IDs of the other copies running now.
+    /// The process IDs of the copies opened before this one and still running.
     let list: @Sendable () -> [pid_t]
     /// Sends a signal to a process.
     let send: @Sendable (_ pid: pid_t, _ signal: Int32) -> Void
     /// Whether a process is still running.
     let isRunning: @Sendable (pid_t) -> Bool
 
-    /// The running apps with `bundleIdentifier`, but not this process.
-    static func live(bundleIdentifier: String, ownPID: pid_t = getpid()) -> OtherInstances {
+    /// The running apps with `bundleIdentifier` opened before this process.
+    static func live(
+        bundleIdentifier: String,
+        ownPID: pid_t = getpid(),
+        ownLaunch: Date? = NSRunningApplication.current.launchDate
+    ) -> OtherInstances {
         OtherInstances(
             list: {
                 NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+                    .filter { isOlder(launch: $0.launchDate, pid: $0.processIdentifier, than: ownLaunch, ownPID: ownPID) }
                     .map(\.processIdentifier)
-                    .filter { $0 != ownPID }
             },
             send: { pid, signal in _ = kill(pid, signal) },
             isRunning: { pid in kill(pid, 0) == 0 || errno == EPERM }
         )
+    }
+
+    /// Whether a copy opened at `launch` (process `pid`) came before this one,
+    /// so it's the one to quit. Two copies opened together can't both quit
+    /// each other: at the same moment, the lower process ID quits. When
+    /// either start is unknown, the other copy quits, as it always did.
+    static func isOlder(launch: Date?, pid: pid_t, than ownLaunch: Date?, ownPID: pid_t) -> Bool {
+        guard pid != ownPID else { return false }
+        guard let launch, let ownLaunch else { return true }
+        return launch != ownLaunch ? launch < ownLaunch : pid < ownPID
     }
 
     /// Asks every other copy to quit (SIGTERM, which AutoHush answers by

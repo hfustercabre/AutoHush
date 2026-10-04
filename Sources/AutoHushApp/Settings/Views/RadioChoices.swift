@@ -75,9 +75,11 @@ final class RadioStack: NSStackView {
         onSelect?(index)
     }
 
-    /// A dimmed button ignores clicks; this view takes them instead.
+    /// A dimmed button ignores clicks; this view takes them instead. Clicks
+    /// between or beside the buttons belong to no option and pass through.
     override func hitTest(_ point: NSPoint) -> NSView? {
         let hit = super.hitTest(point)
+        if hit === self { return nil }
         guard onUnavailableClick != nil, let button = button(containing: hit), !button.isEnabled else { return hit }
         return self
     }

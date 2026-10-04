@@ -5,6 +5,24 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Lighter while your music plays**: with no other app playing, AutoHush
+  now checks for one once a second instead of four times (a new app is
+  still noticed at once), and it redraws its menu only when something
+  changed.
+- **Update checks leave nothing on disk**: no network cache or cookies are
+  kept for them.
+
+### Fixed
+
+- In Settings → General, clicking between or beside the update choices no
+  longer makes the "Notifications are off" note blink.
+- Two copies of AutoHush opened at the same moment no longer both quit:
+  only copies opened earlier are asked to quit.
+
 ## [0.3.10] — 2026-10-04
 
 ### Fixed

@@ -90,7 +90,7 @@ struct UpdateChecker: Sendable {
 
     private let fetch: Fetch
 
-    init(fetch: @escaping Fetch = { try await URLSession.shared.data(for: $0) }) {
+    init(fetch: @escaping Fetch = { try await URLSession.updates.data(for: $0) }) {
         self.fetch = fetch
     }
 
@@ -157,4 +157,10 @@ struct UpdateChecker: Sendable {
         ["/opt/homebrew/Caskroom/autohush", "/usr/local/Caskroom/autohush"]
             .contains { FileManager.default.fileExists(atPath: $0) }
     }
+}
+
+extension URLSession {
+    /// For update checks and downloads: keeps no cache, cookies or other
+    /// network data on disk, so AutoHush leaves no traces of going online.
+    static let updates = URLSession(configuration: .ephemeral)
 }

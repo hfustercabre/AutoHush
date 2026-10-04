@@ -194,7 +194,7 @@ AntiDot mode offers two ways to detect playing apps:
 - AutoHush **never records, saves or sends audio**, and never uses the microphone.
 - With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away.
 - In AntiDot mode it doesn't look at any sound at all.
-- It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below). A downloaded update is kept for at most 7 days.
+- It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below). Neither leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
 - Its only notifications are about updates.
 - It controls Spotify through the standard macOS automation mechanism, and no other app.
 
@@ -243,15 +243,23 @@ Versions up to 0.2.0 can't update themselves yet: update those once by hand.
 
 1. In Settings, turn off **Launch at login**, then quit AutoHush.
 2. Delete `/Applications/AutoHush.app`, or run `brew uninstall --cask autohush`.
-3. Optional: also delete a downloaded update that may be waiting, and forget the permissions you granted:
+3. Optional: also delete its settings and a downloaded update that may be waiting, and forget the permissions you granted:
 
 ```bash
-rm -rf ~/Library/Caches/com.autohush.AutoHush
+defaults delete com.autohush.AutoHush
+```
+
+```bash
+rm -rf ~/Library/Caches/com.autohush.AutoHush ~/Library/HTTPStorages/com.autohush.AutoHush
 ```
 
 ```bash
 tccutil reset All com.autohush.AutoHush
 ```
+
+   With Homebrew, `brew uninstall --zap --cask autohush` deletes the app, its settings and its caches in one go; the permissions still need the `tccutil` line.
+
+4. Optional: to remove AutoHush from System Settings → Notifications, right-click it there and choose **Reset Notifications…**.
 
 ## Support AutoHush
 

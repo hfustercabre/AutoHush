@@ -54,6 +54,19 @@ struct OtherInstancesTests {
         #expect(processes.signals == ["TERM 101", "TERM 102", "KILL 102"])
     }
 
+    @Test("only copies opened before this one quit; opened together, the lower process ID does")
+    func onlyOlderCopiesQuit() {
+        let now = Date()
+        #expect(OtherInstances.isOlder(launch: now - 60, pid: 500, than: now, ownPID: 400))
+        #expect(!OtherInstances.isOlder(launch: now + 1, pid: 300, than: now, ownPID: 400))
+        #expect(OtherInstances.isOlder(launch: now, pid: 300, than: now, ownPID: 400))
+        #expect(!OtherInstances.isOlder(launch: now, pid: 500, than: now, ownPID: 400))
+        #expect(!OtherInstances.isOlder(launch: now - 60, pid: 400, than: now, ownPID: 400)) // itself
+        // A copy whose start is unknown quits, as before.
+        #expect(OtherInstances.isOlder(launch: nil, pid: 500, than: now, ownPID: 400))
+        #expect(OtherInstances.isOlder(launch: now, pid: 500, than: nil, ownPID: 400))
+    }
+
     @Test("the live list leaves out this process")
     func liveListSkipsSelf() {
         // The test runner isn't an app, so only check this process is never listed.
