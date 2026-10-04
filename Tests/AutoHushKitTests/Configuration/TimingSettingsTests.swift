@@ -11,7 +11,6 @@ struct TimingSettingsTests {
         let builtIn = AppConfiguration()
         #expect(configuration.sourceStartConfirmation == builtIn.sourceStartConfirmation)
         #expect(configuration.sourceStopGrace == builtIn.sourceStopGrace)
-        #expect(configuration.debounceSeconds == builtIn.debounceSeconds)
         #expect(abs(configuration.audibleThreshold - builtIn.audibleThreshold) < 1e-7)
     }
 
@@ -22,8 +21,15 @@ struct TimingSettingsTests {
 
     @Test("values are clamped to their ranges")
     func clamping() {
-        let clamped = TimingSettings(startConfirmation: -1, stopGrace: 50, resumeDelay: 9, silenceThresholdDB: 0).clamped
-        #expect(clamped == TimingSettings(startConfirmation: 0, stopGrace: 10, resumeDelay: 5, silenceThresholdDB: -30))
+        let clamped = TimingSettings(startConfirmation: -1, stopGrace: 50, silenceThresholdDB: 0).clamped
+        #expect(clamped == TimingSettings(startConfirmation: 0, stopGrace: 10, silenceThresholdDB: -30))
+    }
+
+    @Test("an app counts as stopped after at least a second of silence")
+    func stopGraceMinimum() {
+        #expect(TimingSettings(stopGrace: 0).clamped.stopGrace == 1)
+        #expect(TimingSettings(stopGrace: 0.5).clamped.stopGrace == 1)
+        #expect(AppConfiguration(timings: TimingSettings(stopGrace: 0)).sourceStopGrace == 1)
     }
 
     @Test("the tracker adopts new timings without forgetting sources")

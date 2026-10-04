@@ -6,9 +6,6 @@ import Foundation
 /// `TimingSettings` (their defaults live there); the rest are fixed.
 package struct AppConfiguration: Sendable {
 
-    /// Seconds to wait after all foreign audio stops before resuming the music.
-    package var debounceSeconds: TimeInterval
-
     /// Seconds the music takes to fade out before pausing; 0 pauses at once.
     package var fadeOutDuration: TimeInterval
     /// Seconds the music takes to fade back in after resuming; 0 resumes at
@@ -68,7 +65,6 @@ package struct AppConfiguration: Sendable {
         let timings = timings.clamped
         sourceStartConfirmation = timings.startConfirmation
         sourceStopGrace = timings.stopGrace
-        debounceSeconds = timings.resumeDelay
         audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
         fadeOutDuration = timings.fadeOutDuration
         fadeInDuration = timings.fadeInDuration

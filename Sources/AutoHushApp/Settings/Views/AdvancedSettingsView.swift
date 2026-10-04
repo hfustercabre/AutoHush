@@ -18,13 +18,7 @@ struct AdvancedSettingsView: View {
                     "Treat an app as stopped after",
                     value: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
                     format: seconds,
-                    help: "How long another app must be silent. Bridges gaps between tracks and videos."
-                )
-                slider(
-                    "Resume music after",
-                    value: \.resumeDelay, range: TimingSettings.resumeDelayRange, step: 0.25,
-                    format: seconds,
-                    help: "An extra delay once every other app has stopped."
+                    help: "How long another app must be silent before your music resumes. Bridges gaps between tracks and videos."
                 )
                 slider(
                     "Fade out before pausing",

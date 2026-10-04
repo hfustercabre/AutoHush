@@ -4,10 +4,9 @@ import Foundation
 package struct TimingSettings: Equatable, Sendable {
     /// Seconds another app must be audible before the music pauses.
     package var startConfirmation: TimeInterval
-    /// Seconds another app must be silent before it counts as stopped.
+    /// Seconds another app must be silent before it counts as stopped. The
+    /// music resumes as soon as no other app plays.
     package var stopGrace: TimeInterval
-    /// Seconds to wait after all other apps stopped before resuming the music.
-    package var resumeDelay: TimeInterval
     /// Peak level (dBFS) below which an app counts as silent.
     package var silenceThresholdDB: Double
     /// Seconds the music fades out before pausing.
@@ -18,14 +17,12 @@ package struct TimingSettings: Equatable, Sendable {
     package init(
         startConfirmation: TimeInterval = 0.5,
         stopGrace: TimeInterval = 2.0,
-        resumeDelay: TimeInterval = 0.2,
         silenceThresholdDB: Double = -60,
         fadeOutDuration: TimeInterval = 1,
         fadeInDuration: TimeInterval = 2
     ) {
         self.startConfirmation = startConfirmation
         self.stopGrace = stopGrace
-        self.resumeDelay = resumeDelay
         self.silenceThresholdDB = silenceThresholdDB
         self.fadeOutDuration = fadeOutDuration
         self.fadeInDuration = fadeInDuration
@@ -34,8 +31,9 @@ package struct TimingSettings: Equatable, Sendable {
     package static let defaults = TimingSettings()
 
     package static let startConfirmationRange: ClosedRange<TimeInterval> = 0...5
-    package static let stopGraceRange: ClosedRange<TimeInterval> = 0...10
-    package static let resumeDelayRange: ClosedRange<TimeInterval> = 0...5
+    /// At least a second: shorter would resume the music in every pause
+    /// between tracks or videos.
+    package static let stopGraceRange: ClosedRange<TimeInterval> = 1...10
     package static let silenceThresholdRange: ClosedRange<Double> = -90 ... -30
     package static let fadeDurationRange: ClosedRange<TimeInterval> = 0...5
 
@@ -44,7 +42,6 @@ package struct TimingSettings: Equatable, Sendable {
         TimingSettings(
             startConfirmation: startConfirmation.clamped(to: Self.startConfirmationRange),
             stopGrace: stopGrace.clamped(to: Self.stopGraceRange),
-            resumeDelay: resumeDelay.clamped(to: Self.resumeDelayRange),
             silenceThresholdDB: silenceThresholdDB.clamped(to: Self.silenceThresholdRange),
             fadeOutDuration: fadeOutDuration.clamped(to: Self.fadeDurationRange),
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange)
