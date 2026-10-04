@@ -65,10 +65,13 @@ struct AudioMonitorTests {
             )
         }
 
-        /// Starts the monitor and waits until it is observing the provider.
+        /// Starts the monitor and waits until its start-up evaluation has run.
+        /// Observing begins before that evaluation, so without the flush a test
+        /// could set processes that the start-up evaluation already sees.
         func start() {
             monitor.start()
             provider.waitUntilObserving()
+            provider.flush()
         }
 
         /// Sets the processes, advances the clock and runs one evaluation.
@@ -244,8 +247,7 @@ struct AudioMonitorTests {
         h.monitor.setAudioLevelsNeeded(false)
         h.provider.flush()
         #expect(h.meter.lastMetered == [1]) // released only after a short delay
-        try? await Task.sleep(for: .milliseconds(150))
-        h.provider.flush()
+        await h.meter.waitUntilMetered([])
         #expect(h.meter.lastMetered.isEmpty)
         h.monitor.stop()
     }
@@ -885,6 +887,14 @@ private final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
 
     var lastMetered: Set<AudioObjectID> { lock.withLock { _metered } }
     var stopAllCount: Int { lock.withLock { _stopAllCount } }
+
+    /// Waits until exactly these processes are metered, e.g. after a delayed release.
+    func waitUntilMetered(_ objectIDs: Set<AudioObjectID>) async {
+        let deadline = Date().addingTimeInterval(2)
+        while lastMetered != objectIDs, Date() < deadline {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+    }
 
     func setMeteredProcesses(_ objectIDs: Set<AudioObjectID>) {
         lock.withLock { _metered = objectIDs }
