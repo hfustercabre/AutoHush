@@ -14,6 +14,14 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 
 **Works with Spotify** today. Support for more players, such as Apple Music, YouTube Music and Tidal, is planned.
 
+## Thanks to Background Music
+
+AutoHush was inspired by [Background Music](https://github.com/kyleneideck/BackgroundMusic), the free, open-source audio utility by [Kyle Neideck](https://github.com/kyleneideck) and its contributors. Among many other things, it pauses your music while other apps play, and it did so long before AutoHush existed. My sincere thanks to Kyle for building it and sharing it with everyone: it showed me this could be done, and it's still well worth a look if you also want to set each app's volume.
+
+So why write another one? To get your Mac's sound, Background Music routes it through a virtual audio device and reads it back from there, and macOS counts that as using a microphone. So while it runs, there's a yellow dot in the top-right corner of the screen and a yellow microphone icon in the menu bar, permanently. Nothing is being recorded, and macOS is right to point it out. Still, a dot that never goes away tickles my 'tism in ways I couldn't ignore, so I built AutoHush with a different approach.
+
+AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your music. [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of that one too. Yes, this whole app exists because of a dot.
+
 
 ## Contents
 
