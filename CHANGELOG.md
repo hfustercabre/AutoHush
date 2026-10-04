@@ -5,6 +5,27 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Updates itself**: when the daily check finds a new version, AutoHush
+  downloads it from GitHub, installs it and restarts. It waits for a moment
+  when it isn't holding your music paused and none of its windows or menus
+  are open.
+  - **Checks first:** the download must match GitHub's SHA-256 checksum, and
+    the app inside must be the announced version, signed with the same
+    certificate as the copy you have. That is the check macOS uses to keep
+    AutoHush's permissions, so nothing else can be installed this way.
+  - **To turn it off:** Settings → General → **Install updates
+    automatically**. The menu's **Update Available** then offers **Install
+    and Relaunch**.
+  - **When it can't:** AutoHush can't update itself from a folder it can't
+    write to, and Settings says so.
+  - **Earlier copies:** versions up to 0.2.0 still need one update by hand.
+- The Homebrew cask now declares that AutoHush updates itself
+  (`auto_updates`), so `brew upgrade` leaves it to AutoHush.
+
 ## [0.2.0] — 2026-10-04
 
 ### Changed

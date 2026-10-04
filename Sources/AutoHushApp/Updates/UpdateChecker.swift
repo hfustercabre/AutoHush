@@ -31,10 +31,25 @@ struct AppVersion: Comparable, CustomStringConvertible, Sendable {
     }
 }
 
-/// A published release: its version and its GitHub page.
+/// A published release: its version, its GitHub page and, when it has one,
+/// the disk image AutoHush installs it from.
 struct AppRelease: Equatable, Sendable {
+    /// The release's `AutoHush-<version>.dmg`, as GitHub lists it.
+    struct DiskImage: Equatable, Sendable {
+        let url: URL
+        /// Hex SHA-256 of the file, when GitHub reports one.
+        let sha256: String?
+    }
+
     let version: AppVersion
     let pageURL: URL
+    let diskImage: DiskImage?
+
+    init(version: AppVersion, pageURL: URL, diskImage: DiskImage? = nil) {
+        self.version = version
+        self.pageURL = pageURL
+        self.diskImage = diskImage
+    }
 }
 
 /// What an update check found.
@@ -62,9 +77,10 @@ enum UpdateCheckError: LocalizedError, Equatable {
 }
 
 /// Asks GitHub for the latest published release. Only `api.github.com` is
-/// contacted, and only the release's tag and page URL are read. The page URL
-/// is the only thing AutoHush ever opens from an answer, so it must be one of
-/// this repository's release pages on github.com.
+/// contacted, and only the release's tag, page URL and disk image are read.
+/// The page URL is the only thing AutoHush ever opens from an answer, so it
+/// must be one of this repository's release pages on github.com; the disk
+/// image must be one of its release downloads, or the release has none.
 struct UpdateChecker: Sendable {
     typealias Fetch = @Sendable (URLRequest) async throws -> (Data, URLResponse)
 
@@ -84,19 +100,28 @@ struct UpdateChecker: Sendable {
         if status == 404 { return .noReleases }
         guard status == 200 else { throw UpdateCheckError.badResponse(status) }
 
-        /// The two fields read from GitHub's answer.
+        /// The fields read from GitHub's answer.
         struct Release: Decodable {
+            struct Asset: Decodable {
+                let name: String
+                let browser_download_url: URL
+                /// E.g. "sha256:3734f1d8…"; missing from older answers.
+                let digest: String?
+            }
             let tag_name: String
             let html_url: URL
+            let assets: [Asset]?
         }
         guard let release = try? JSONDecoder().decode(Release.self, from: data),
               let latest = AppVersion(release.tag_name),
               Self.isReleasePage(release.html_url)
         else { throw UpdateCheckError.unreadableRelease }
 
-        return latest > currentVersion
-            ? .available(AppRelease(version: latest, pageURL: release.html_url))
-            : .upToDate(latest: latest)
+        guard latest > currentVersion else { return .upToDate(latest: latest) }
+        let diskImage = release.assets?
+            .first { $0.name == "AutoHush-\(latest).dmg" && Self.isReleaseDownload($0.browser_download_url) }
+            .map { AppRelease.DiskImage(url: $0.browser_download_url, sha256: Self.sha256(fromDigest: $0.digest)) }
+        return .available(AppRelease(version: latest, pageURL: release.html_url, diskImage: diskImage))
     }
 
     /// True for a release page of this repository on github.com, over HTTPS:
@@ -104,6 +129,19 @@ struct UpdateChecker: Sendable {
     static func isReleasePage(_ url: URL) -> Bool {
         url.scheme == "https" && url.host() == "github.com"
             && url.standardized.path().hasPrefix("/\(ProjectInfo.repository)/releases/")
+    }
+
+    /// True for a file published with one of this repository's releases.
+    static func isReleaseDownload(_ url: URL) -> Bool {
+        isReleasePage(url) && url.standardized.path().hasPrefix("/\(ProjectInfo.repository)/releases/download/")
+    }
+
+    /// The hex SHA-256 in a digest such as "sha256:3734f1d8…", or nil for
+    /// another algorithm or a malformed digest.
+    static func sha256(fromDigest digest: String?) -> String? {
+        guard let digest, digest.hasPrefix("sha256:") else { return nil }
+        let hex = digest.dropFirst("sha256:".count).lowercased()
+        return hex.count == 64 && hex.allSatisfy(\.isHexDigit) ? hex : nil
     }
 
     /// True when AutoHush was installed with the Homebrew cask.

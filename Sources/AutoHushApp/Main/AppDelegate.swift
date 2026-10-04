@@ -20,7 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindowController: SettingsWindowController?
     /// The music player AutoHush pauses and resumes.
     let player: any MusicPlayer
-    /// Update checks (menu, Settings and the daily automatic one).
+    /// Update checks (menu, Settings and the daily automatic one) and installs.
     private(set) var updates: UpdateController!
     private var playerLaunchObserver: (any NSObjectProtocol)?
     private let logger = Logger(category: "AppDelegate")
@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences: Preferences = Preferences(),
         launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
         updateChecker: UpdateChecker = UpdateChecker(),
+        updateInstaller: any UpdateInstalling = UpdateInstaller(),
         player: any MusicPlayer = SupportedPlayers.makeDefault(),
         currentVersion: AppVersion? = .current,
         bootstrapOverride: (@MainActor () -> Void)? = nil
@@ -42,8 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         super.init()
         updates = UpdateController(
             checker: updateChecker,
+            installer: updateInstaller,
             preferences: preferences,
             currentVersion: currentVersion,
+            isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
+            quit: { NSApp.terminate(nil) },
             onAvailableUpdate: { [weak self] in self?.status.availableUpdate = $0 },
             onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 }
         )
@@ -57,12 +61,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 setTimings: { [weak self] in self?.setTimings($0) },
                 setDetectionMethod: { [weak self] in self?.setDetectionMethod($0) },
                 setChecksForUpdates: { [weak self] in self?.setChecksForUpdatesAutomatically($0) },
+                setInstallsUpdates: { [weak self] in self?.setInstallsUpdatesAutomatically($0) },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() }
             )
         )
         settingsModel.timings = preferences.timings
         settingsModel.detectionMethod = preferences.detectionMethod
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
+        settingsModel.installsUpdatesAutomatically = preferences.installsUpdatesAutomatically
+        settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         status.playerName = player.name
         status.ignoredApps = preferences.ignoredApps
         syncSettingsApps()
@@ -184,6 +191,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func setChecksForUpdatesAutomatically(_ enabled: Bool) {
         updates.checksAutomatically = enabled
         settingsModel.checksForUpdatesAutomatically = enabled
+    }
+
+    func setInstallsUpdatesAutomatically(_ enabled: Bool) {
+        updates.installsAutomatically = enabled
+        settingsModel.installsUpdatesAutomatically = enabled
     }
 
     func setDetectionMethod(_ method: DetectionMethod) {
@@ -354,6 +366,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         logger.debug("[diag] \(report, privacy: .public)")
         InfoAlert.show(String(localized: "AutoHush Diagnostics", comment: "Title of the Diagnostics alert"), report)
+    }
+
+    /// A moment when AutoHush can restart for an update unnoticed: it isn't
+    /// holding the music paused (the new instance wouldn't know to resume
+    /// it), and none of its menus, windows or alerts is open.
+    private var isQuietMoment: Bool {
+        status.playback != .pausedByMonitor
+            && statusMenu?.isMenuOpen != true
+            && !NSApplication.shared.windows.contains { $0.isVisible && $0.canBecomeKey }
     }
 
     private func retry() {

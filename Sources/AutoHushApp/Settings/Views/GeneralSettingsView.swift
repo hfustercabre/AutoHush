@@ -69,6 +69,16 @@ struct GeneralSettingsView: View {
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
+                Toggle("Install updates automatically", isOn: Binding(
+                    get: { model.installsUpdatesAutomatically && model.updateInstallNote == nil },
+                    set: { model.setInstallsUpdates($0) }
+                ))
+                .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
+                if let note = model.updateInstallNote {
+                    Text(note)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
                 HStack {
                     Button("Check Now") { model.checkForUpdates() }
                     if let status = model.updateStatus {

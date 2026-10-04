@@ -22,6 +22,7 @@ struct SettingsModelTests {
             setTimings: { log.calls.append("timings \($0.startConfirmation)") },
             setDetectionMethod: { log.calls.append("method \($0.rawValue)") },
             setChecksForUpdates: { log.calls.append("autoUpdate \($0)") },
+            setInstallsUpdates: { log.calls.append("autoInstall \($0)") },
             checkForUpdates: { log.calls.append("checkNow") }
         ))
     }
@@ -89,11 +90,12 @@ struct SettingsModelTests {
         model.setTimings(TimingSettings(startConfirmation: 99))
         model.setDetectionMethod(.openStreams)
         model.setChecksForUpdates(false)
+        model.setInstallsUpdates(false)
         model.checkForUpdates()
 
         #expect(log.calls == [
             "autoPause false", "ignore org.videolan.vlc true", "forget org.videolan.vlc", "forgetAll",
-            "timings 5.0", "method openStreams", "autoUpdate false", "checkNow",
+            "timings 5.0", "method openStreams", "autoUpdate false", "autoInstall false", "checkNow",
         ])
         #expect(model.timings.startConfirmation == 5)
         #expect(model.detectionMethod == .openStreams)
@@ -133,7 +135,7 @@ struct SettingsWindowControllerTests {
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
             actions: .init(setAutoPause: { _ in }, setIgnored: { _, _ in }, forgetApp: { _ in }, forgetAllApps: {},
                            setTimings: { _ in }, setDetectionMethod: { _ in },
-                           setChecksForUpdates: { _ in }, checkForUpdates: {})
+                           setChecksForUpdates: { _ in }, setInstallsUpdates: { _ in }, checkForUpdates: {})
         )
         let sut = SettingsWindowController(model: model)
         let tabController = try #require(sut.window?.contentViewController as? NSTabViewController)
