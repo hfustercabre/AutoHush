@@ -440,6 +440,18 @@ struct UpdateControllerTests {
         #expect(h.opened == [URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v0.2.0")!])
     }
 
+    @Test("at launch, AutoHush asks for permission to notify, unless automatic checks are off")
+    func asksForPermission() {
+        let h = Harness(checker: .offline)
+        h.controller.noteLaunch()
+        #expect(h.notifier.permissionRequests == 1)
+
+        let off = Harness(checker: .offline)
+        off.controller.checksAutomatically = false
+        off.controller.noteLaunch()
+        #expect(off.notifier.permissionRequests == 0)
+    }
+
     @Test("a first launch, or one with the same version, says nothing")
     func quietLaunch() {
         let h = Harness(checker: .offline)

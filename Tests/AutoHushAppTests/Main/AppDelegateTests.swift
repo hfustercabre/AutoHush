@@ -244,11 +244,13 @@ struct AppDelegateTests {
     func pauseHandover() {
         let now = Date()
         let scratch = Scratch()
-        scratch.preferences.pauseHandedOverAt = now.addingTimeInterval(-5)
         let (sut, _) = makeSUT(scratch)
-        #expect(scratch.preferences.pauseHandedOverAt == nil) // read once, at launch
+        // Handed over after launch, as a copy that quits for this one does.
+        scratch.preferences.pauseHandedOverAt = now.addingTimeInterval(-5)
         #expect(sut.takesOverPause(now: now))
-        #expect(!sut.takesOverPause(now: now))
+        #expect(scratch.preferences.pauseHandedOverAt == nil) // read once
+        scratch.preferences.pauseHandedOverAt = now
+        #expect(!sut.takesOverPause(now: now)) // only the first monitoring takes one over
 
         let stale = Scratch()
         stale.preferences.pauseHandedOverAt = now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1))

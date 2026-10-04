@@ -5,6 +5,23 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **AutoHush asks for permission to send notifications when it first
+  starts**, along with its other permissions, instead of with its first
+  news about an update.
+
+### Fixed
+
+- **Only one AutoHush runs at a time**: opening another copy (another
+  version, a second install) quits the one already running, instead of both
+  pausing and resuming your music. A pause the old one was holding is taken
+  over, as after an update.
+- Quitting AutoHush with `kill` or from the system now restores the volume
+  and hands over a pause, like quitting from its menu.
+
 ## [0.3.8] — 2026-10-04
 
 ### Added

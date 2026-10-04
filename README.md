@@ -87,12 +87,13 @@ open /Applications/AutoHush.app
 
 ## First launch
 
-AutoHush appears as an icon in the menu bar; it has no Dock icon or window. macOS will ask for two permissions:
+AutoHush appears as an icon in the menu bar; it has no Dock icon or window. macOS will ask for three permissions:
 
 | Permission | What it's for | Needed? |
 |---|---|---|
 | **Control Spotify** (Automation) | Pausing and resuming Spotify | Yes |
 | **Record system audio** (Screen & System Audio Recording) | Telling apart an app that's *playing* from one that just has its sound switched on but is silent | Recommended; not used in AntiDot mode |
+| **Notifications** | Telling you about updates (see [Updates](#updates)) | Optional |
 
 The audio permission sounds scarier than it is: AutoHush only checks *how loud* other apps are, in memory, and never records or saves anything. See [Privacy](#privacy). Without it, AutoHush still works, but a paused video may keep Spotify paused until you close it.
 
@@ -174,6 +175,7 @@ AntiDot mode offers two ways to detect playing apps:
 
 - **Spotify doesn't come back after VLC.** VLC has its own setting that pauses Spotify. Because AutoHush didn't pause it, it won't resume it. Turn it off in **VLC → Settings → Interface → Control external music players → Do nothing**, and let AutoHush do the job.
 - **I paused Spotify myself and it stayed paused.** That's on purpose: AutoHush only resumes music that *it* paused.
+- **Only one AutoHush runs at a time.** Opening another copy (a newer version you downloaded, a second install) quits the one that's running. If that one had your music paused for another app, the new one takes the pause over. Other copies stay where they are; delete the ones you don't use.
 - **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps), and that auto-pause isn't turned off.
 - **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Grant the audio permission, or in AntiDot mode close the app or tab.
 - **Something looks off?** Hold **⌥ (Option)** while the menu is open and choose **Diagnostics…**. It lists every app with sound, what AutoHush thinks it's doing, and the current settings.
@@ -202,7 +204,7 @@ Until it's installed, the menu shows **Install AutoHush 0.3.8…** in place of *
 
 Installing swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
 
-AutoHush asks for permission to send notifications the first time it has news. Without it, the menu still offers the update, and Settings has a button to turn notifications on.
+AutoHush asks for permission to send notifications when it first starts (while automatic checks are on). Without it, the menu still offers the update, and Settings has a button to turn notifications on.
 
 **Downloaded updates** are kept in `~/Library/Caches/com.autohush.AutoHush/Updates`, one at a time, and never for long. A download is deleted when:
 
@@ -310,7 +312,8 @@ Sources/
   AutoHushApp/
     Main/                AutoHushApplication, AppDelegate (wiring), MonitoringPipeline (builds the
                          engine for each start), AppStatus (what the app shows), StatusPresentation
-                         (icons and text for the engine's states and choices), AppHealthState
+                         (icons and text for the engine's states and choices), AppHealthState,
+                         OtherInstances (quits other running copies at launch)
     MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
                          Views/ (General, Apps, Advanced)

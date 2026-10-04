@@ -7,12 +7,14 @@ import Foundation
 final class MockUpdateNotifier: UpdateNotifying {
     var onClick: (@MainActor (UpdateNotice.Kind, AppVersion) -> Void)?
     private(set) var isActive = false
+    private(set) var permissionRequests = 0
     private(set) var announced: [UpdateNotice] = []
     private(set) var withdrawals = 0
     /// Whether the user turned notifications off.
     var areOff = false
 
     func activate() { isActive = true }
+    func requestPermission() { permissionRequests += 1 }
     func announce(_ notice: UpdateNotice) { announced.append(notice) }
     func withdraw() { withdrawals += 1 }
     func notificationsAreOff() async -> Bool { areOff }

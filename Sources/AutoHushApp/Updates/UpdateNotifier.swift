@@ -80,8 +80,11 @@ protocol UpdateNotifying: AnyObject {
     /// Starts receiving clicks. Called at launch, so a click that opened
     /// AutoHush reaches it too.
     func activate()
-    /// Shows `notice` in place of any earlier one, asking for permission the
-    /// first time.
+    /// Asks the user for permission to notify, unless they've already
+    /// answered.
+    func requestPermission()
+    /// Shows `notice` in place of any earlier one, asking for permission when
+    /// it hasn't been asked yet.
     func announce(_ notice: UpdateNotice)
     /// Removes the notification shown, which no longer applies.
     func withdraw()
@@ -103,6 +106,14 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
 
     func activate() {
         center.delegate = self
+    }
+
+    func requestPermission() {
+        let center = center
+        Task {
+            guard await center.notificationSettings().authorizationStatus == .notDetermined else { return }
+            _ = try? await center.requestAuthorization(options: [.alert])
+        }
     }
 
     func announce(_ notice: UpdateNotice) {
