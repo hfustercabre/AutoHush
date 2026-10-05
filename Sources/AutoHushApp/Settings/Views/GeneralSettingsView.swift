@@ -1,7 +1,7 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, then Music (the player, auto-pause),
+/// Settings → General: launch at login, then Music (auto-pause, the player),
 /// Privacy (AntiDot mode) and Updates (checks, what they lead to, Check Now),
 /// and a way to support AutoHush.
 struct GeneralSettingsView: View {
@@ -23,17 +23,6 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                LabeledContent {
-                    PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
-                        model.chooseMusicPlayer($0)
-                    }
-                } label: {
-                    Text("Music player")
-                    Text("AutoHush pauses and resumes this app.")
-                }
-                if model.playerOptions.noneInstalled {
-                    NoteLabel(PlayerOption.noneInstalledWarning)
-                }
                 Toggle(isOn: Binding(
                     get: { model.isAutoPauseOn },
                     set: { model.setAutoPause($0) }
@@ -45,6 +34,17 @@ struct GeneralSettingsView: View {
                     Text(note)
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                }
+                LabeledContent {
+                    PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
+                        model.chooseMusicPlayer($0)
+                    }
+                } label: {
+                    Text("Music player")
+                    Text("AutoHush pauses and resumes this app.")
+                }
+                if model.playerOptions.noneInstalled {
+                    NoteLabel(PlayerOption.noneInstalledWarning)
                 }
             } header: {
                 Text("Music")
@@ -82,24 +82,21 @@ struct GeneralSettingsView: View {
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("When an update is found")
-                    RadioChoices(
-                        options: [AutomaticUpdates.notify, .download, .install].map {
-                            .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
-                        },
-                        // A copy that can't install itself can only notify.
-                        selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                        onSelect: { model.setAutomaticUpdates($0) },
-                        onUnavailableClick: { model.flashNotificationsNote() }
-                    )
-                    .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
-                    if let note = model.updateInstallNote {
-                        Text(note)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    } else if model.checksForUpdatesAutomatically {
-                        Text(model.automaticUpdates.explanation)
+                // What checks lead to only matters while they run.
+                if model.checksForUpdatesAutomatically {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("When an update is found")
+                        RadioChoices(
+                            options: [AutomaticUpdates.notify, .download, .install].map {
+                                .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
+                            },
+                            // A copy that can't install itself can only notify.
+                            selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
+                            onSelect: { model.setAutomaticUpdates($0) },
+                            onUnavailableClick: { model.flashNotificationsNote() }
+                        )
+                        .disabled(model.updateInstallNote != nil)
+                        Text(model.updateInstallNote ?? model.automaticUpdates.explanation)
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }

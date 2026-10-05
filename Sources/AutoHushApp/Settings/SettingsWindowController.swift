@@ -27,7 +27,7 @@ final class SettingsWindowController: NSWindowController {
     }
 
     let model: SettingsModel
-    private let tabController = NSTabViewController()
+    private let tabController = SettingsTabViewController()
 
     init(model: SettingsModel) {
         self.model = model
@@ -39,7 +39,11 @@ final class SettingsWindowController: NSWindowController {
             case .apps:     content = AnyView(AppsSettingsView(model: model))
             case .advanced: content = AnyView(AdvancedSettingsView(model: model))
             }
-            let hosting = NSHostingController(rootView: content)
+            // Tells the window to fit as soon as the tab's content changes height.
+            let tabs = tabController
+            let hosting = NSHostingController(rootView: AnyView(
+                content.onGeometryChange(for: CGFloat.self, of: \.size.height) { _ in tabs.contentHeightDidChange() }
+            ))
             hosting.sizingOptions = .preferredContentSize
             hosting.title = tab.title // the window shows the selected tab's title
             let item = NSTabViewItem(viewController: hosting)
@@ -62,5 +66,41 @@ final class SettingsWindowController: NSWindowController {
         if window?.isVisible != true { window?.center() }
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate()
+    }
+}
+
+/// Resizes the window as soon as the shown tab's content changes height, e.g.
+/// when a switch shows or hides rows, keeping its top edge where it is.
+/// NSTabViewController alone only hears of the change at the next event when
+/// it comes from a click: the window kept its old size until then, and then
+/// jumped.
+final class SettingsTabViewController: NSTabViewController {
+    /// The shown tab's content changed height (SwiftUI reports it at once).
+    func contentHeightDidChange() {
+        // After the layout pass that changed it, when the tab's
+        // preferredContentSize has caught up.
+        DispatchQueue.main.async { MainActor.assumeIsolated { self.fitWindowToShownTab() } }
+    }
+
+    override func preferredContentSizeDidChange(for viewController: NSViewController) {
+        guard viewController !== shownTab else { return fitWindowToShownTab() }
+        super.preferredContentSizeDidChange(for: viewController)
+    }
+
+    private var shownTab: NSViewController? {
+        tabViewItems.indices.contains(selectedTabViewItemIndex) ? tabViewItems[selectedTabViewItemIndex].viewController : nil
+    }
+
+    private func fitWindowToShownTab() {
+        guard let tab = shownTab, let window = view.window, let content = window.contentView else { return }
+        let change = tab.preferredContentSize.height - content.frame.height
+        guard tab.preferredContentSize.height > 0, change != 0 else { return }
+        var frame = window.frame
+        frame.size.height += change
+        frame.origin.y -= change // the top stays put
+        if let visible = window.screen?.visibleFrame, frame.minY < visible.minY {
+            frame.origin.y = visible.minY // grow upwards rather than off the bottom of the screen
+        }
+        window.setFrame(frame, display: true)
     }
 }

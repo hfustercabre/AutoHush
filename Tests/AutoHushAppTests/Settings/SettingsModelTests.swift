@@ -204,4 +204,31 @@ struct SettingsWindowControllerTests {
         #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced"])
         #expect(tabController.tabViewItems.allSatisfy { $0.image != nil })
     }
+
+    @Test("when the shown tab's content changes height, the window follows at once and keeps its top")
+    func fitsShownTab() async throws {
+        let tabs = SettingsTabViewController()
+        tabs.tabStyle = .toolbar
+        let content = NSViewController()
+        content.view = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 300))
+        content.preferredContentSize = NSSize(width: 480, height: 300)
+        tabs.addTabViewItem(NSTabViewItem(viewController: content))
+        let window = NSWindow(contentViewController: tabs)
+        window.setFrameOrigin(NSPoint(x: 100, y: 300))
+        let top = window.frame.maxY
+        let chrome = window.frame.height - (window.contentView?.frame.height ?? 0)
+
+        content.preferredContentSize = NSSize(width: 480, height: 200)
+        tabs.contentHeightDidChange()
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(window.frame.height == 200 + chrome)
+        #expect(window.frame.maxY == top)
+
+        content.preferredContentSize = NSSize(width: 480, height: 360)
+        tabs.contentHeightDidChange()
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(window.frame.height == 360 + chrome)
+        #expect(window.frame.maxY == top)
+        window.close()
+    }
 }
