@@ -23,7 +23,7 @@ struct AppDelegateTests {
         let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         let notifier = MockUpdateNotifier()
         let first = MockMusicPlayer(bundleID: Players.first, name: "First", failVerifyWith: Denied.automation)
-        let second = MockMusicPlayer(bundleID: Players.second, name: "Second", failVerifyWith: Denied.automation)
+        let second = MockMusicPlayer(bundleID: Players.second, name: "Second", canFade: false, failVerifyWith: Denied.automation)
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
@@ -160,6 +160,8 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(Players.second)
         #expect(scratch.preferences.musicPlayer == Players.second)
         #expect(sut.status.playerName == "Second")
+        #expect(!sut.settingsModel.playerCanFade) // its fade settings are dimmed
+        #expect(sut.settingsModel.chosenPlayerName == "Second")
         #expect(sut.status.chosenPlayerID == Players.second)
         #expect(sut.settingsModel.chosenPlayerID == Players.second)
         #expect(sut.status.health == .starting)
@@ -171,6 +173,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.status.playerName == "First")
+        #expect(sut.settingsModel.playerCanFade)
         #expect(sut.currentConfiguration.musicPlayerBundleID == Players.first)
         #expect(bootstraps.count == 2)
     }

@@ -92,6 +92,7 @@ struct TidalTests {
         #expect(tidal.name == "TIDAL")
         #expect(tidal.bundleID == "com.tidal.desktop")
         #expect(tidal.volumeCurve == .linear)
+        #expect(!tidal.canFade)
         #expect(await tidal.volume() == nil)
     }
 

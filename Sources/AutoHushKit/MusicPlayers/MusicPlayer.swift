@@ -27,6 +27,9 @@ package protocol MusicPlayer: Sendable {
     func setVolume(_ volume: Int) async throws
     /// How the volume number maps to loudness, so fades sound even.
     var volumeCurve: VolumeCurve { get }
+    /// Whether AutoHush can change the player's volume to fade it. One that
+    /// can't pauses and plays at once, and Settings says so.
+    var canFade: Bool { get }
 
     /// Reports the player's state changes (and its quitting) once started.
     @MainActor
@@ -36,6 +39,7 @@ package protocol MusicPlayer: Sendable {
 extension MusicPlayer {
     /// Until a player's curve is measured, its volume is taken as linear.
     package var volumeCurve: VolumeCurve { .linear }
+    package var canFade: Bool { true }
 }
 
 /// Watches a player's state; created by `MusicPlayer.makeStateObserver`.

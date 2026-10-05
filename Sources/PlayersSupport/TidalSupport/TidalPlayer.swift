@@ -15,6 +15,8 @@ package actor TidalPlayer: MusicPlayer {
 
     package nonisolated var bundleID: String { Self.appBundleID }
     package nonisolated var name: String { "TIDAL" }
+    /// Its volume can't be read or set.
+    package nonisolated var canFade: Bool { false }
 
     private let menu: any TidalMenu
     private let processIdentifier: @Sendable () -> pid_t?

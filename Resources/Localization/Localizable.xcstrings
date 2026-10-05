@@ -778,6 +778,89 @@
         }
       }
     },
+    "%@ pauses and resumes without fading: AutoHush can't change its volume." : {
+      "comment" : "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ es posa en pausa i es reprèn sense esvaïment: l'AutoHush no en pot canviar el volum."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wird ohne Ein- und Ausblenden pausiert und fortgesetzt: AutoHush kann seine Lautstärke nicht ändern."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se pausa y se reanuda sin fundido: AutoHush no puede cambiar su volumen."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se pausa y se reanuda sin fundido: AutoHush no puede cambiar su volumen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est mis en pause et repris sans fondu : AutoHush ne peut pas changer son volume."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est mis en pause et repris sans fondu : AutoHush ne peut pas changer son volume."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ viene messo in pausa e ripreso senza dissolvenza: AutoHush non può cambiarne il volume."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はフェードせずに一時停止・再開します。AutoHushはその音量を変更できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 페이드 없이 일시 정지되고 재개됩니다. AutoHush가 음량을 변경할 수 없습니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é pausado e retomado sem fade: o AutoHush não consegue alterar o volume dele."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é colocado em pausa e retomado sem fade: o AutoHush não consegue alterar o volume."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 会直接暂停和继续播放，不会淡入淡出：AutoHush 无法更改它的音量。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 會直接暫停和繼續播放，不會淡入淡出：AutoHush 無法更改它的音量。"
+          }
+        }
+      }
+    },
     "%@ s" : {
       "comment" : "A duration in seconds",
       "localizations" : {

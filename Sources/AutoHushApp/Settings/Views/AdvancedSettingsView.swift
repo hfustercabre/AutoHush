@@ -1,7 +1,8 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Advanced: detection timings, fades and the silence threshold.
+/// Settings → Advanced: detection timings, fades (dimmed for a player
+/// AutoHush can't fade) and the silence threshold.
 struct AdvancedSettingsView: View {
     let model: SettingsModel
 
@@ -20,18 +21,27 @@ struct AdvancedSettingsView: View {
                     format: seconds,
                     help: "How long another app must be silent before your music resumes. Bridges gaps between tracks and videos."
                 )
-                slider(
-                    "Fade out before pausing",
-                    value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                    format: seconds,
-                    help: "How long the music fades out before it pauses. 0 pauses it at once."
-                )
-                slider(
-                    "Fade in when resuming",
-                    value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                    format: seconds,
-                    help: "How long the music takes to fade back in once it resumes. 0 resumes at full volume."
-                )
+                Group {
+                    slider(
+                        "Fade out before pausing",
+                        value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                        format: seconds,
+                        help: "How long the music fades out before it pauses. 0 pauses it at once."
+                    )
+                    slider(
+                        "Fade in when resuming",
+                        value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+                        format: seconds,
+                        help: "How long the music takes to fade back in once it resumes. 0 resumes at full volume."
+                    )
+                }
+                .disabled(!model.playerCanFade)
+                .opacity(model.playerCanFade ? 1 : 0.45) // a disabled slider alone barely shows it
+                if !model.playerCanFade, let player = model.chosenPlayerName {
+                    NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can't change its volume.",
+                                     comment: "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL"),
+                              kind: .info)
+                }
                 slider(
                     "Silence threshold",
                     value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,

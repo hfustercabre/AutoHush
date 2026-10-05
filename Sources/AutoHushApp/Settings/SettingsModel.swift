@@ -37,6 +37,14 @@ final class SettingsModel {
     var playerOptions: [PlayerOption] = []
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String?
+    /// Whether AutoHush can fade the chosen player; the fade settings are
+    /// dimmed when it can't.
+    var playerCanFade = true
+
+    /// The chosen player's name, e.g. "Spotify".
+    var chosenPlayerName: String? {
+        playerOptions.first { $0.bundleID == chosenPlayerID }?.name
+    }
     var isAutoPauseOn = true
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String?

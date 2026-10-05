@@ -394,6 +394,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
         settingsModel.chosenPlayerID = player?.bundleID
+        settingsModel.playerCanFade = player?.canFade ?? true
     }
 
     /// Checks again which players are installed, for the menu, Settings and
