@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Spanish and Catalan** reviewed by a native speaker, including all the
+  text added since 0.4.0. The permissions now read "acceso a Accesibilidad"
+  and "acceso a Automatización" ("accés a Accessibilitat", "accés a
+  Automatització"), plus two smaller Catalan fixes.
+
 ## [0.6.1] — 2026-10-05
 
 ### Changed

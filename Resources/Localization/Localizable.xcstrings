@@ -1958,7 +1958,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permet l'accés d'Automatització a %@…"
+            "value" : "Permet l'accés a Automatització a %@…"
           }
         },
         "de" : {
@@ -1970,13 +1970,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permitir el acceso de Automatización a %@…"
+            "value" : "Permitir el acceso a Automatización a %@…"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permitir el acceso de Automatización a %@…"
+            "value" : "Permitir el acceso a Automatización a %@…"
           }
         },
         "fr" : {
@@ -2041,7 +2041,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permet l'accés d'Accessibilitat…"
+            "value" : "Permet l'accés a Accessibilitat…"
           }
         },
         "de" : {
@@ -2053,13 +2053,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permitir el acceso de Accesibilidad…"
+            "value" : "Permitir el acceso a Accesibilidad…"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permitir el acceso de Accesibilidad…"
+            "value" : "Permitir el acceso a Accesibilidad…"
           }
         },
         "fr" : {
@@ -5932,7 +5932,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tria…"
+            "value" : "Triar…"
           }
         },
         "de" : {
@@ -8578,7 +8578,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concedeix l'accés d'Accessibilitat per controlar %@"
+            "value" : "Concedeix l'accés a Accessibilitat per controlar %@"
           }
         },
         "de" : {
@@ -8590,13 +8590,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concede el acceso de Accesibilidad para controlar %@"
+            "value" : "Concede el acceso a Accesibilidad para controlar %@"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concede el acceso de Accesibilidad para controlar %@"
+            "value" : "Concede el acceso a Accesibilidad para controlar %@"
           }
         },
         "fr" : {
@@ -8744,7 +8744,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concedeix l'accés d'Automatització per controlar %@"
+            "value" : "Concedeix l'accés a Automatització per controlar %@"
           }
         },
         "de" : {
@@ -8756,13 +8756,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concede el acceso de Automatización para controlar %@"
+            "value" : "Concede el acceso a Automatización para controlar %@"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Concede el acceso de Automatización para controlar %@"
+            "value" : "Concede el acceso a Automatización para controlar %@"
           }
         },
         "fr" : {
@@ -11639,7 +11639,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les notificacions de l'AutoHush estan desactivades, així que no et pot avisar de les actualitzacions."
+            "value" : "Les notificacions de l'AutoHush estan desactivades, així doncs no et pot avisar de les actualitzacions."
           }
         },
         "de" : {
