@@ -38,9 +38,9 @@ final class PlayerChooserWindowController: NSWindowController, PlayerChooserPres
     }
 }
 
-/// One tile per music player; the user picks one and continues. Players that
-/// aren't installed are dimmed and can't be picked. When only one is
-/// installed, it starts picked.
+/// The music players as rows in a card, like Settings → Apps; the user picks
+/// one and continues. Players that aren't installed are dimmed and can't be
+/// picked. When only one is installed, it starts picked.
 struct PlayerChooserView: View {
     let model: SettingsModel
     /// The player the user clicked.
@@ -57,32 +57,37 @@ struct PlayerChooserView: View {
                 .resizable()
                 .frame(width: 64, height: 64)
             Text("Choose Your Music Player")
-                .font(.title2.bold())
+                .font(.appTitle)
             Text("AutoHush pauses it while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(model.playerOptions) { tile(for: $0) }
+            Card {
+                ForEach(Array(model.playerOptions.enumerated()), id: \.element.id) { index, option in
+                    if index > 0 { CardDivider() }
+                    row(for: option)
+                }
             }
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
             } else if let note = PlayerOption.onlyInstalledNote(among: model.playerOptions) {
                 NoteLabel(note, kind: .info)
             }
-            Button("Continue") {
+            Button {
                 if let picked { model.chooseMusicPlayer(picked) }
+            } label: {
+                Text("Continue")
+                    .font(.appBody.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 7)
             }
-            .buttonStyle(.borderedProminent) // blue, without Return: AutoHush has no keyboard shortcuts
+            // Blue, without Return: AutoHush has no keyboard shortcuts.
+            .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
             .disabled(!canContinue)
         }
         .padding(24)
         .frame(width: 420)
-    }
-
-    /// Up to three tiles a row, centered, so a lone player isn't off to one side.
-    private var columns: [GridItem] {
-        Array(repeating: GridItem(.fixed(112), spacing: 12), count: min(max(model.playerOptions.count, 1), 3))
+        .font(.appBody)
     }
 
     /// A player is picked, and is still installed.
@@ -90,34 +95,33 @@ struct PlayerChooserView: View {
         model.playerOptions.contains { $0.bundleID == picked && $0.isInstalled }
     }
 
-    private func tile(for option: PlayerOption) -> some View {
+    /// The player's icon and name, "Not installed" under one that isn't, and
+    /// a check on the picked one.
+    private func row(for option: PlayerOption) -> some View {
         let isPicked = option.bundleID == picked
         return Button {
             clicked = option.bundleID
         } label: {
-            VStack(spacing: 6) {
-                Image(nsImage: option.icon(size: 64))
-                Text(option.name)
-                    .lineLimit(1)
-                // On every tile, so they're all the same height.
-                Text(PlayerOption.notInstalledLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .opacity(option.isInstalled ? 0 : 1)
-                    .accessibilityHidden(option.isInstalled)
+            HStack(spacing: 10) {
+                Image(nsImage: option.icon(size: 32))
+                    .resizable()
+                    .frame(width: 32, height: 32)
+                    .accessibilityHidden(true)
+                RowTitle(Text(verbatim: option.name),
+                         subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel))
+                Spacer(minLength: 8)
+                Image(systemName: isPicked ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isPicked ? AnyShapeStyle(.white) : AnyShapeStyle(.tertiary),
+                                     isPicked ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
+                    .accessibilityHidden(true)
             }
-            .padding(10)
-            .frame(width: 112)
-            .background(RoundedRectangle(cornerRadius: 10).fill(isPicked ? Color.accentColor.opacity(0.15) : .clear))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(isPicked ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: isPicked ? 2 : 1)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ChipButtonStyle()) // which dims it while disabled
+        .padding(.horizontal, -6)
         .disabled(!option.isInstalled)
-        .opacity(option.isInstalled ? 1 : 0.5)
         .accessibilityAddTraits(isPicked ? .isSelected : [])
     }
 }

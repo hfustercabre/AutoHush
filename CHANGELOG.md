@@ -33,10 +33,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Settings looks like the menu**: each group of settings sits in a card,
   with the same switches and buttons, and each app in the Apps tab has its
   icon and a switch. The choice of what happens when an update is found,
-  and AntiDot mode's choice of detection, are rows of buttons.
-- **Bigger text** in the menu and Settings: one step above the system's
-  sizes, so descriptions and labels read easily. The menu is a little wider
-  to match.
+  and AntiDot mode's choice of detection, are rows of buttons. The welcome
+  window lists the music players as rows in a card, the chosen one checked.
+- **Bigger text** in the menu, Settings and the welcome window: one step
+  above the system's sizes, so descriptions and labels read easily. The
+  menu is a little wider to match.
 - **No keyboard shortcuts**: ⌘, ⌘Q, ⌘R and ⌥⌘, are gone from the menu, and
   Return no longer presses a button in AutoHush's windows and alerts.
 

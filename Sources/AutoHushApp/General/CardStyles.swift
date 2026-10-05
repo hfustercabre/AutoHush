@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// The text sizes of the menu and Settings: one step above the system's, so
-/// descriptions and labels read easily.
+/// The text sizes of the menu, Settings and the welcome window: one step
+/// above the system's, so descriptions and labels read easily.
 extension Font {
+    /// A window's title in its content, e.g. "Choose Your Music Player".
+    static let appTitle = Font.system(size: 18, weight: .bold)
     /// Plain text and rows' titles.
     static let appBody = Font.system(size: 14)
     /// A card's title, e.g. the music player's name.
