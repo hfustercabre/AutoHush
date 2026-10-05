@@ -14,10 +14,10 @@ struct StatusCardView: View {
                 playerIcon(size: 36)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: status.cardTitle)
-                        .font(.headline)
+                        .font(.appHeadline)
                         .lineLimit(1)
                     Text(verbatim: status.statusLine)
-                        .font(.subheadline)
+                        .font(.appSubheadline)
                         .foregroundStyle(status.needsAttention ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                         .fixedSize(horizontal: false, vertical: true)
                     if status.canRetry { retryButton }
@@ -29,7 +29,7 @@ struct StatusCardView: View {
                     }
                     .toggleStyle(PillToggleStyle())
                     Text("Auto-Pause", comment: "Under the switch at the top of the menu that turns auto-pause on and off")
-                        .font(.caption2)
+                        .font(.appCaption)
                         .foregroundStyle(.secondary)
                         .accessibilityHidden(true)
                 }
@@ -57,7 +57,7 @@ struct StatusCardView: View {
             } icon: {
                 Image(systemName: "arrow.clockwise")
             }
-            .font(.callout)
+            .font(.appCallout)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
         }
@@ -71,7 +71,7 @@ struct StatusCardView: View {
             HStack(spacing: 6) {
                 if status.chosenPlayer != nil { playerIcon(size: 16) }
                 Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…"))
-                    .font(.callout)
+                    .font(.appCallout)
                 Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.secondary)

@@ -16,7 +16,7 @@ struct GeneralSettingsView: View {
                 ))
                 if let error = model.launchAtLoginError {
                     Text(error)
-                        .font(.callout)
+                        .font(.appCallout)
                         .foregroundStyle(.red)
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Open Login Items Settings…") { model.openLoginItemsSettings() }
@@ -33,7 +33,7 @@ struct GeneralSettingsView: View {
                 )
                 if let note = model.autoPauseNote {
                     Text(note)
-                        .font(.caption)
+                        .font(.appCaption)
                         .foregroundStyle(.secondary)
                 }
                 CardDivider()
@@ -95,7 +95,7 @@ struct GeneralSettingsView: View {
                 if model.notificationsOff {
                     // Blinks in white after a click on a choice that needs notifications.
                     Text("Notifications are off for AutoHush, so it can't tell you about updates.")
-                        .font(.caption)
+                        .font(.appCaption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(Color.white) : AnyShapeStyle(.secondary))
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
@@ -125,7 +125,7 @@ struct GeneralSettingsView: View {
 
     private func explanation(_ text: String) -> some View {
         Text(text)
-            .font(.caption)
+            .font(.appCaption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -146,7 +146,7 @@ struct GeneralSettingsView: View {
                      comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
             }
         }
-        .font(.callout)
+        .font(.appCallout)
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
     }

@@ -13,7 +13,7 @@ struct SnoozeBarView: View {
                 ForEach(AutoPauseSnooze.allCases, id: \.self) { snooze in
                     Button { model.perform(.snooze(snooze)) } label: {
                         Text(verbatim: snooze.shortTitle)
-                            .font(.callout)
+                            .font(.appCallout)
                             .lineLimit(1)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 5)

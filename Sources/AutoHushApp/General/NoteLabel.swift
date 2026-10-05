@@ -29,7 +29,7 @@ struct NoteLabel: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .font(.callout)
+        .font(.appCallout)
         .foregroundStyle(kind == .info ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
         .fixedSize(horizontal: false, vertical: true)
     }

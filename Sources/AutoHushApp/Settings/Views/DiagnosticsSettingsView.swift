@@ -38,7 +38,7 @@ struct DiagnosticsSettingsView: View {
                     } icon: {
                         Image(systemName: "checkmark")
                     }
-                    .font(.callout)
+                    .font(.appCallout)
                     .foregroundStyle(.secondary)
                 }
                 Spacer()

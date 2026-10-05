@@ -1,5 +1,20 @@
 import SwiftUI
 
+/// The text sizes of the menu and Settings: one step above the system's, so
+/// descriptions and labels read easily.
+extension Font {
+    /// Plain text and rows' titles.
+    static let appBody = Font.system(size: 14)
+    /// A card's title, e.g. the music player's name.
+    static let appHeadline = Font.system(size: 14, weight: .bold)
+    /// Buttons, values and notes.
+    static let appCallout = Font.system(size: 13)
+    /// The line under the card's title: what's happening.
+    static let appSubheadline = Font.system(size: 12)
+    /// Descriptions under rows, section labels and captions.
+    static let appCaption = Font.system(size: 11)
+}
+
 /// A switch drawn in the accent color. Menus draw the system's switches as
 /// inactive, in grey, since AutoHush never becomes the active app.
 struct PillToggleStyle: ToggleStyle {
@@ -83,7 +98,7 @@ struct SectionLabel: View {
     init(_ title: Text) { self.title = title }
 
     var body: some View {
-        title.font(.caption).foregroundStyle(.secondary)
+        title.font(.appCaption).foregroundStyle(.secondary)
     }
 }
 
@@ -144,7 +159,7 @@ struct RowTitle: View {
             title
             if let subtitle {
                 subtitle
-                    .font(.caption)
+                    .font(.appCaption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -175,7 +190,7 @@ struct ChoiceChips<Value: Hashable>: View {
                     option.isAvailable ? onSelect(option.value) : onUnavailableClick()
                 } label: {
                     Text(verbatim: option.title)
-                        .font(.callout)
+                        .font(.appCallout)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .padding(.horizontal, 4)

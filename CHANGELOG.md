@@ -34,6 +34,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   with the same switches and buttons, and each app in the Apps tab has its
   icon and a switch. The choice of what happens when an update is found,
   and AntiDot mode's choice of detection, are rows of buttons.
+- **Bigger text** in the menu and Settings: one step above the system's
+  sizes, so descriptions and labels read easily. The menu is a little wider
+  to match.
 - **No keyboard shortcuts**: ⌘, ⌘Q, ⌘R and ⌥⌘, are gone from the menu, and
   Return no longer presses a button in AutoHush's windows and alerts.
 

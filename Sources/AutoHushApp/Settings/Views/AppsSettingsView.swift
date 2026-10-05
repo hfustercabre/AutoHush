@@ -26,7 +26,7 @@ struct AppsSettingsView: View {
                         }
                     }
                     Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
-                        .font(.caption)
+                        .font(.appCaption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)

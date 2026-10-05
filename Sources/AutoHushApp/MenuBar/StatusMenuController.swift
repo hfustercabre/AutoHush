@@ -82,6 +82,7 @@ final class StatusMenuController: NSObject {
         super.init()
         model.perform = { [weak self] in self?.perform($0) }
         menu.autoenablesItems = false
+        menu.font = Self.rowFont
         menu.delegate = self
         statusItem.menu = menu
         renderIcon()
@@ -141,7 +142,7 @@ final class StatusMenuController: NSObject {
     private func hostedItem<Content: View>(_ identifier: String, _ view: Content) -> NSMenuItem {
         let item = NSMenuItem()
         item.identifier = NSUserInterfaceItemIdentifier(identifier)
-        let hosting = NSHostingView(rootView: view)
+        let hosting = NSHostingView(rootView: view.font(.appBody))
         hosting.autoresizingMask = [.width]
         item.view = hosting
         fit(item)
@@ -189,6 +190,7 @@ final class StatusMenuController: NSObject {
         row.image = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
         let submenu = NSMenu()
         submenu.autoenablesItems = false
+        submenu.font = Self.rowFont
         let hintTitle = String(localized: "Click an app to stop ignoring it", comment: "Hint atop the Ignored Apps submenu")
         let hint = NSMenuItem(title: hintTitle, action: nil, keyEquivalent: "")
         hint.isEnabled = false
@@ -201,6 +203,10 @@ final class StatusMenuController: NSObject {
         row.submenu = submenu
         return row
     }
+
+    /// The rows the menu draws itself, a step above the system's menu font,
+    /// like the custom views' text (`Font.appBody`).
+    static let rowFont = NSFont.menuFont(ofSize: NSFont.menuFont(ofSize: 0).pointSize + 1)
 
     // MARK: - The music players
 

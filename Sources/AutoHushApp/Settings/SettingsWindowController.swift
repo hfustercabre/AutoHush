@@ -46,7 +46,9 @@ final class SettingsWindowController: NSWindowController {
             // Tells the window to fit as soon as the tab's content changes height.
             let tabs = tabController
             let hosting = NSHostingController(rootView: AnyView(
-                content.onGeometryChange(for: CGFloat.self, of: \.size.height) { _ in tabs.contentHeightDidChange() }
+                content
+                    .font(.appBody)
+                    .onGeometryChange(for: CGFloat.self, of: \.size.height) { _ in tabs.contentHeightDidChange() }
             ))
             hosting.sizingOptions = .preferredContentSize
             hosting.title = tab.title // the window shows the selected tab's title

@@ -112,7 +112,7 @@ struct AdvancedSettingsView: View {
                 step: step
             )
             Text(help)
-                .font(.caption)
+                .font(.appCaption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

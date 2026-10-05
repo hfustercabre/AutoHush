@@ -33,7 +33,7 @@ struct PlayingAppsView: View {
                         Text("Ignored — music keeps playing")
                     }
                 }
-                .font(.caption)
+                .font(.appCaption)
                 .foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
