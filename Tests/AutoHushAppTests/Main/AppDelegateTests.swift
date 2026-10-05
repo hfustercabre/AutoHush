@@ -3,8 +3,6 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("AppDelegate")
@@ -24,13 +22,9 @@ struct AppDelegateTests {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         let notifier = MockUpdateNotifier()
-        let players = MusicPlayerCatalog(
-            players: [
-                MockMusicPlayer(bundleID: Players.first, name: "First"),
-                MockMusicPlayer(bundleID: Players.second, name: "Second"),
-            ],
-            formerDefault: Players.first
-        )
+        let first = MockMusicPlayer(bundleID: Players.first, name: "First", failVerifyWith: Denied.automation)
+        let second = MockMusicPlayer(bundleID: Players.second, name: "Second", failVerifyWith: Denied.automation)
+        lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
 
         func locate(_ bundleID: String) -> URL? {
@@ -40,6 +34,12 @@ struct AppDelegateTests {
         deinit {
             try? FileManager.default.removeItem(at: downloads)
         }
+    }
+
+    /// Every stand-in player refuses control, so a real bootstrap stops at
+    /// the permission check, before it would monitor anything.
+    private enum Denied {
+        static let automation = MusicPlayerError.automationPermissionDenied
     }
 
     private enum Players {
@@ -258,6 +258,25 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(chosenPlayer: "com.example.gone")
         #expect(sut.player == nil)
         #expect(sut.status.health == .needsPlayer("Choose a music player"))
+    }
+
+    @MainActor
+    @Test("only the chosen player is ever asked for permission to control it, and only once chosen")
+    func onlyChosenPlayerIsAsked() async {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
+
+        // Nothing is asked before a player is chosen, not even when one opens.
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        await Task.yield()
+        #expect(await scratch.first.verifyCallCount == 0)
+        #expect(await scratch.second.verifyCallCount == 0)
+
+        sut.chooseMusicPlayer(Players.second) // also closes the welcome window
+        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        #expect(sut.status.health == .needsPermission("Grant Automation access to control Second"))
+        #expect(await scratch.second.verifyCallCount == 1)
+        #expect(await scratch.first.verifyCallCount == 0)
     }
 
     @MainActor

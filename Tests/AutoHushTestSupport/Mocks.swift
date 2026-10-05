@@ -17,16 +17,16 @@ package actor MockMusicPlayer: MusicPlayer {
     package var failPauseWith: Error?
     package var failPlayWith: Error?
     package var failVerifyWith: Error?
-    /// The next this many state queries answer `.unknown`, as when Spotify is
-    /// busy and the Apple event times out.
+    /// The next this many state queries answer `.unknown`, as when the player
+    /// is busy and doesn't answer in time.
     package var unansweredStateQueries = 0
     /// Runs inside every state query before it answers, so a test can hold a
     /// query while it changes something.
     package var beforeStateAnswer: (@Sendable () async -> Void)?
 
     package init(
-        bundleID: String = "com.example.player",
-        name: String = "Spotify",
+        bundleID: String = "com.example.jukebox",
+        name: String = "Jukebox",
         state: PlayerState = .playing,
         volumeCurve: VolumeCurve = .linear,
         failPauseWith: Error? = nil,
@@ -173,7 +173,7 @@ package final class MockStateObserver: PlayerStateObserving {
 /// The music player in engine tests. The engine knows no player by name, so
 /// tests tell it which app's audio is the music, like the app does.
 package enum TestPlayer {
-    package static let bundleID = "com.spotify.client"
+    package static let bundleID = "com.example.jukebox"
 }
 
 extension AppConfiguration {

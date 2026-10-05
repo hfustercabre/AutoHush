@@ -2,8 +2,6 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("UpdateController")

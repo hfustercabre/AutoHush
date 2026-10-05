@@ -1,8 +1,6 @@
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("DiagnosticsReport")
@@ -10,7 +8,7 @@ struct DiagnosticsReportTests {
     @Test("lists the apps with sound, the detection, the music player, auto-pause and ignored apps")
     func fullReport() {
         var status = AppStatus()
-        status.playerName = "Spotify"
+        status.playerName = "Jukebox"
         status.detection = .audioLevel
         status.autoPause = .snoozed("until 15:30")
         status.ignoredApps = [AudioSource(id: "org.videolan.vlc", name: "VLC")]
@@ -25,7 +23,7 @@ struct DiagnosticsReportTests {
 
             Detection: audio levels
 
-            Music player: Spotify
+            Music player: Jukebox
 
             Auto-pause: off until 15:30
 

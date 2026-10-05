@@ -2,8 +2,6 @@ import AppKit
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("SettingsModel")
@@ -145,23 +143,25 @@ struct SettingsModelTests {
     @Test("the notifications note blinks for a while, longer when asked again")
     func noteBlinks() async throws {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        model.noteFlashDuration = .milliseconds(300)
+        model.noteFlashDuration = .milliseconds(600)
         model.noteFlashInterval = .milliseconds(20)
 
         model.flashNotificationsNote()
         #expect(model.notificationsNoteIsLit) // lit at once
-        try await Task.sleep(for: .milliseconds(200))
-        model.flashNotificationsNote() // from now, another 300 ms
+        try await Task.sleep(for: .milliseconds(300))
+        model.flashNotificationsNote() // from now, another 600 ms
 
-        // Past the first 300 ms, it still blinks.
-        var litAgain = false
-        for _ in 0..<10 {
-            try await Task.sleep(for: .milliseconds(20))
-            litAgain = litAgain || model.notificationsNoteIsLit
-        }
-        #expect(litAgain)
-
+        // Past the first 600 ms (with room for a busy test run), it still blinks.
         try await Task.sleep(for: .milliseconds(400))
+        let before = model.notificationsNoteIsLit
+        var toggled = false
+        for _ in 0..<20 where !toggled {
+            try await Task.sleep(for: .milliseconds(10))
+            toggled = model.notificationsNoteIsLit != before
+        }
+        #expect(toggled)
+
+        try await Task.sleep(for: .milliseconds(800))
         #expect(!model.notificationsNoteIsLit)
     }
 

@@ -202,8 +202,8 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("when the permission cannot be read, Spotify is tapped only until levels are verified")
-    func spotifyTappedOnlyForVerification() async {
+    @Test("when the permission cannot be read, the player is tapped only until levels are verified")
+    func playerTappedOnlyForVerification() async {
         let h = Harness()
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.Safari")])
@@ -215,8 +215,8 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("with the permission granted, Spotify itself is never tapped")
-    func spotifyNotTappedWithPermission() async {
+    @Test("with the permission granted, the player itself is never tapped")
+    func playerNotTappedWithPermission() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.Safari")])
@@ -398,8 +398,8 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("Spotify playing with a silent tap marks level detection unavailable")
-    func silentSpotifyTapMeansUnavailable() async {
+    @Test("the player playing with a silent tap marks level detection unavailable")
+    func silentPlayerTapMeansUnavailable() async {
         let h = Harness()
         h.monitor.setPlayerPlaying(true)
         h.start()
@@ -502,7 +502,7 @@ struct AudioMonitorTests {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.monitor.setPlayerPlaying(true)
         h.start()
-        // Spotify's tap silent for long: inference would say "unavailable".
+        // The player's tap silent for long: inference would say "unavailable".
         h.step([Self.process(1, TestPlayer.bundleID)], peaks: [1: 0])
         h.step(after: 20.0)
         #expect(h.modes.values == [.audioLevel])
@@ -525,49 +525,49 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    // MARK: - Spotify playing on this Mac vs. another device
+    // MARK: - The player playing on this Mac vs. another device
 
-    @Test("Spotify without running output is reported as not playing on this Mac")
-    func spotifyWithoutOutputIsNotLocal() async {
+    @Test("the player without running output is reported as not playing on this Mac")
+    func playerWithoutOutputIsNotLocal() async {
         let h = Harness()
         h.start()
         h.step([])
-        await h.recorder.waitForSpotifyLocal(count: 1)
-        #expect(await h.recorder.spotifyLocal == [false])
+        await h.recorder.waitForPlayerLocal(count: 1)
+        #expect(await h.recorder.playerLocal == [false])
         h.monitor.stop()
     }
 
-    @Test("Spotify output counts as local when levels are unavailable")
-    func spotifyOutputIsLocalWithoutLevels() async {
+    @Test("the player's output counts as local when levels are unavailable")
+    func playerOutputIsLocalWithoutLevels() async {
         let h = Harness(meter: false)
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID)])
-        await h.recorder.waitForSpotifyLocal(count: 2)
+        await h.recorder.waitForPlayerLocal(count: 2)
         // The start-up evaluation runs before any process exists.
-        #expect(await h.recorder.spotifyLocal == [false, true])
+        #expect(await h.recorder.playerLocal == [false, true])
         h.monitor.stop()
     }
 
-    @Test("Spotify counts as playing here exactly while its output runs")
-    func spotifyLocalFollowsOutput() async {
+    @Test("the player counts as playing here exactly while its output runs")
+    func playerLocalFollowsOutput() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID)])
-        await h.recorder.waitForSpotifyLocal(count: 2)
+        await h.recorder.waitForPlayerLocal(count: 2)
         h.step(after: 0.25, [])
-        await h.recorder.waitForSpotifyLocal(count: 3)
-        #expect(await h.recorder.spotifyLocal == [false, true, false])
+        await h.recorder.waitForPlayerLocal(count: 3)
+        #expect(await h.recorder.playerLocal == [false, true, false])
         #expect(h.meter.lastMetered.isEmpty)
         h.monitor.stop()
     }
 
-    @Test("Spotify's local status reaches the arbiter before source events of the same tick")
-    func spotifyLocalStatusPrecedesSourceEvents() async {
+    @Test("the player's local status reaches the arbiter before source events of the same tick")
+    func playerLocalStatusPrecedesSourceEvents() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "org.videolan.vlc")])
         await h.recorder.waitForEvents(count: 1)
-        #expect(await h.recorder.log == ["spotifyLocal false", "spotifyLocal true", "+org.videolan.vlc"])
+        #expect(await h.recorder.log == ["playerLocal false", "playerLocal true", "+org.videolan.vlc"])
         h.monitor.stop()
     }
 
@@ -593,14 +593,14 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("a process owned by an excluded app (a Spotify helper) is never a source")
+    @Test("a process owned by an excluded app (the player's helper) is never a source")
     func excludedOwnerIsIgnored() async {
         let identifier = StubSourceIdentifier([
-            "com.spotify.client.helper": AudioSource(id: TestPlayer.bundleID, name: "Spotify"),
+            "\(TestPlayer.bundleID).helper": AudioSource(id: TestPlayer.bundleID, name: "Jukebox"),
         ])
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
         h.start()
-        h.step([Self.process(1, "com.spotify.client.helper")])
+        h.step([Self.process(1, "\(TestPlayer.bundleID).helper")])
         h.step(after: 1.0)
         try? await Task.sleep(for: .milliseconds(30))
         #expect(await h.recorder.events.isEmpty)
@@ -816,7 +816,7 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
     }
 
     private(set) var events: [Event] = []
-    private(set) var spotifyLocal: [Bool] = []
+    private(set) var playerLocal: [Bool] = []
     /// Every call in arrival order.
     private(set) var log: [String] = []
 
@@ -826,13 +826,13 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
     }
 
     func handleLocalPlaybackChange(_ isLocal: Bool) async {
-        spotifyLocal.append(isLocal)
-        log.append("spotifyLocal \(isLocal)")
+        playerLocal.append(isLocal)
+        log.append("playerLocal \(isLocal)")
     }
 
-    func waitForSpotifyLocal(count: Int) async {
+    func waitForPlayerLocal(count: Int) async {
         let deadline = Date().addingTimeInterval(2)
-        while spotifyLocal.count < count, Date() < deadline {
+        while playerLocal.count < count, Date() < deadline {
             try? await Task.sleep(for: .milliseconds(5))
         }
     }

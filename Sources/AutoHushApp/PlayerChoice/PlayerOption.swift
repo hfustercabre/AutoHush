@@ -39,9 +39,27 @@ struct PlayerOption: Equatable, Identifiable {
         String(localized: "No supported music player is installed. Install one of these, and choose it here.",
                comment: "Settings and the welcome window, while none of the music players is installed")
     }
+
+    /// In the welcome window when one player is installed and others could
+    /// be, e.g. "Spotify is the only supported music player on this Mac.
+    /// AutoHush also works with Apple Music and Deezer."; `nil` otherwise.
+    static func onlyInstalledNote(among options: [PlayerOption]) -> String? {
+        guard let only = options.onlyInstalled else { return nil }
+        let others = options.filter { !$0.isInstalled }.map(\.name)
+        guard !others.isEmpty else { return nil }
+        let list = others.formatted(.list(type: .and))
+        return String(localized: "\(only.name) is the only supported music player on this Mac. AutoHush also works with \(list).",
+                      comment: "Welcome window; the installed music player, then the other supported ones, e.g. “Apple Music and Deezer”")
+    }
 }
 
 extension [PlayerOption] {
     /// No supported player is installed: none can be chosen.
     var noneInstalled: Bool { !contains(where: \.isInstalled) }
+
+    /// The one installed player, when exactly one is.
+    var onlyInstalled: PlayerOption? {
+        let installed = filter(\.isInstalled)
+        return installed.count == 1 ? installed[0] : nil
+    }
 }

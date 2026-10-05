@@ -689,6 +689,95 @@
         }
       }
     },
+    "%@ is the only supported music player on this Mac. AutoHush also works with %@." : {
+      "comment" : "Welcome window; the installed music player, then the other supported ones, e.g. “Apple Music and Deezer”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ és l'únic reproductor de música compatible d'aquest Mac. L'AutoHush també funciona amb %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist der einzige unterstützte Musikplayer auf diesem Mac. AutoHush funktioniert auch mit %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is the only supported music player on this Mac. AutoHush also works with %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ es el único reproductor de música compatible en este Mac. AutoHush también funciona con %2$@."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ es el único reproductor de música compatible en esta Mac. AutoHush también funciona con %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est le seul lecteur de musique compatible sur ce Mac. AutoHush fonctionne aussi avec %2$@."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est le seul lecteur de musique compatible sur ce Mac. AutoHush fonctionne aussi avec %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ è l'unico lettore musicale supportato su questo Mac. AutoHush funziona anche con %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このMacで対応している音楽プレーヤーは%1$@だけです。AutoHushは%2$@にも対応しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 Mac에서 지원되는 음악 플레이어는 %1$@뿐입니다. AutoHush는 %2$@도 지원합니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ é o único player de música compatível neste Mac. O AutoHush também funciona com %2$@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ é o único leitor de música compatível neste Mac. O AutoHush também funciona com %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 是这台 Mac 上唯一受支持的音乐播放器。AutoHush 还支持 %2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 是這台 Mac 上唯一支援的音樂播放器。AutoHush 也支援 %2$@。"
+          }
+        }
+      }
+    },
     "%@ s" : {
       "comment" : "A duration in seconds",
       "localizations" : {

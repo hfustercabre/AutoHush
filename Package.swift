@@ -52,8 +52,9 @@ let package = Package(
         ),
         .testTarget(
             name: "AutoHushAppTests",
-            dependencies: ["AutoHushApp", "AutoHushPlayers", "SpotifySupport", "AutoHushKit", "AutoHushTestSupport"]
+            dependencies: ["AutoHushApp", "AutoHushKit", "AutoHushTestSupport"]
         ),
+        .testTarget(name: "AutoHushPlayersTests", dependencies: ["AutoHushPlayers", "SpotifySupport", "AutoHushKit"]),
     ],
     swiftLanguageModes: [.v6]
 )

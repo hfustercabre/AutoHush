@@ -331,14 +331,16 @@ Sources/
                          (icons and text for the engine's states and choices), AppHealthState,
                          OtherInstances (quits other running copies at launch)
     MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
+    PlayerChoice/        PlayerOption (each player and whether it's installed), PlayerChooserWindowController
+                         (the welcome window that asks for the music player)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
-                         Views/ (General, Apps, Advanced)
+                         Views/ (General, Apps, Advanced, PlayerPopUp, RadioChoices)
     Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
                          UpdateDownloads (the kept download), UpdateNotifier, UpdatePrompt and ReleaseNotes
                          (the update window), UpdateOffer (what the menu offers)
     Diagnostics/         DiagnosticsReport
     About/               AboutPanel
-    General/             InfoAlert, ProjectInfo, AppIcon, SystemSettingsPane+Open
+    General/             InfoAlert, ProjectInfo, AppIcon, NoteLabel, SystemSettingsPane+Open
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
                          PowerAssertionReader, PlaybackSignals (AntiDot mode's judge),
@@ -346,7 +348,8 @@ Sources/
                          DetectionMode (in effect), CoreAudio/ (process list, process taps and levels,
                          HAL helpers)
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (setting and snooze)
-    MusicPlayers/        MusicPlayer (the interface), PlayerState, VolumeCurve, MusicPlayerError
+    MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog (the players to choose from),
+                         PlayerState, VolumeCurve, MusicPlayerError
     Permissions/         Permission (what's needed and where to grant it), AudioCapturePermission,
                          SystemSettingsPane
     PrivateAPI/          TCC, ProcessResponsibility: undocumented macOS functions, resolved at
@@ -354,11 +357,12 @@ Sources/
     Configuration/       AppConfiguration, TimingSettings, AutomaticUpdates (the update choice)
     Storage/             Preferences
     General/             Logging, Comparable+Clamped
-  AutoHushPlayers/       SupportedPlayers (the list of players, and the default one)
+  AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
   PlayersSupport/        one module per music player:
     SpotifySupport/      SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
 Tests/
-  AutoHushAppTests/  AutoHushKitTests/  PlayersSupport/SpotifySupportTests/   (each mirrors its module)
+  AutoHushAppTests/  AutoHushKitTests/  AutoHushPlayersTests/  PlayersSupport/SpotifySupportTests/
+                         (each mirrors its module; only the last two name a player)
   AutoHushTestSupport/   fakes and fixed dates shared by the test modules
 Tools/
   MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)

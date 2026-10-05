@@ -5,7 +5,7 @@ import AutoHushTestSupport
 @Suite("Permission")
 struct PermissionTests {
     @Test("each permission is granted in its own System Settings pane", arguments: [
-        (Permission.automation(player: "Spotify"), SystemSettingsPane.automation),
+        (Permission.automation(player: "Jukebox"), SystemSettingsPane.automation),
         (Permission.systemAudioRecording, SystemSettingsPane.audioCapture),
     ])
     func pane(permission: Permission, pane: SystemSettingsPane) {

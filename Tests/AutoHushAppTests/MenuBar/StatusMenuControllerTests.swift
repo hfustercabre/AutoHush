@@ -2,8 +2,6 @@ import AppKit
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("StatusMenuController")
@@ -190,13 +188,13 @@ struct StatusMenuControllerTests {
         let sut = makeController(log)
         defer { sut.remove() }
         var status = AppStatus()
-        status.playerName = "Spotify"
+        status.playerName = "Jukebox"
         status.setHealth(.needsPermission("Grant Automation access"))
         sut.status = status
 
-        try perform(try item("Allow Spotify Automation Access…", in: sut.menu))
+        try perform(try item("Allow Jukebox Automation Access…", in: sut.menu))
         try perform(try item("Retry", in: sut.menu))
-        #expect(log.calls == ["warning Allow Spotify Automation Access…", "retry"])
+        #expect(log.calls == ["warning Allow Jukebox Automation Access…", "retry"])
     }
 
     @Test("Diagnostics is the Option alternate of Settings")

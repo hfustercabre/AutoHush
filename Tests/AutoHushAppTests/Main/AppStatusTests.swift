@@ -2,8 +2,6 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("AppStatus")
@@ -90,8 +88,8 @@ struct AppStatusTests {
     func healthBeatsAutoPause() {
         var status = AppStatus()
         status.autoPause = .off
-        status.setHealth(.degraded("Spotify is not running"))
-        #expect(status.statusLine == "Spotify is not running")
+        status.setHealth(.degraded("Jukebox is not running"))
+        #expect(status.statusLine == "Jukebox is not running")
         #expect(!status.dimsIcon)
     }
 
@@ -119,10 +117,10 @@ struct AppStatusTests {
     @Test("missing Automation access is the one warning, with Retry")
     func automationWarning() {
         var status = AppStatus()
-        status.playerName = "Spotify"
+        status.playerName = "Jukebox"
         status.setHealth(.needsPermission("Grant Automation access"))
-        #expect(status.warning == .automation(player: "Spotify"))
-        #expect(status.warning?.grantTitle == "Allow Spotify Automation Access…")
+        #expect(status.warning == .automation(player: "Jukebox"))
+        #expect(status.warning?.grantTitle == "Allow Jukebox Automation Access…")
         #expect(status.showsRetry)
     }
 
@@ -135,7 +133,7 @@ struct AppStatusTests {
         #expect(status.warning == nil)
         status.detection = .unavailable
         #expect(status.warning == .systemAudioRecording)
-        status.setHealth(.degraded("Spotify is not running"))
+        status.setHealth(.degraded("Jukebox is not running"))
         #expect(status.warning == nil)
     }
 

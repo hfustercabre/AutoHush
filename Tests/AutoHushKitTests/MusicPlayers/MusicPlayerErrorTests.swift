@@ -13,20 +13,20 @@ struct MusicPlayerErrorTests {
     }
 
     @Test("playerNotRunning has a human-readable description")
-    func spotifyUnavailableDescription() {
+    func playerUnavailableDescription() {
         let error = MusicPlayerError.playerNotRunning
         #expect(error.errorDescription?.isEmpty == false)
         #expect(error.localizedDescription.lowercased().contains("player"))
     }
 
     @Test("playerCommandFailed surfaces the provided message")
-    func spotifyCommandFailedDescription() {
+    func playerCommandFailedDescription() {
         let error = MusicPlayerError.playerCommandFailed("OSStatus -1712")
         #expect(error.errorDescription?.contains("OSStatus -1712") == true)
     }
 
     @Test("playerCommandFailed with empty message still produces a description")
-    func spotifyCommandFailedEmptyMessage() {
+    func playerCommandFailedEmptyMessage() {
         let error = MusicPlayerError.playerCommandFailed("")
         #expect(error.errorDescription?.isEmpty == false)
     }

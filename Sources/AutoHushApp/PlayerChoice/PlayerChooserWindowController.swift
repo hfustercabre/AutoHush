@@ -28,10 +28,17 @@ final class PlayerChooserWindowController: NSWindowController {
 }
 
 /// One tile per music player; the user picks one and continues. Players that
-/// aren't installed are dimmed and can't be picked.
+/// aren't installed are dimmed and can't be picked. When only one is
+/// installed, it starts picked.
 struct PlayerChooserView: View {
     let model: SettingsModel
-    @State private var picked: String?
+    /// The player the user clicked.
+    @State private var clicked: String?
+
+    /// The clicked player or, until one is, the only installed one.
+    private var picked: String? {
+        clicked ?? model.playerOptions.onlyInstalled?.bundleID
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -44,18 +51,13 @@ struct PlayerChooserView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 112, maximum: 112))], spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(model.playerOptions) { tile(for: $0) }
             }
             if model.playerOptions.noneInstalled {
-                Label {
-                    Text(PlayerOption.noneInstalledWarning)
-                } icon: {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                }
-                .font(.callout)
-                .fixedSize(horizontal: false, vertical: true)
+                NoteLabel(PlayerOption.noneInstalledWarning)
+            } else if let note = PlayerOption.onlyInstalledNote(among: model.playerOptions) {
+                NoteLabel(note, kind: .info)
             }
             Button("Continue") {
                 if let picked { model.chooseMusicPlayer(picked) }
@@ -67,6 +69,11 @@ struct PlayerChooserView: View {
         .frame(width: 420)
     }
 
+    /// Up to three tiles a row, centered, so a lone player isn't off to one side.
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.fixed(112), spacing: 12), count: min(max(model.playerOptions.count, 1), 3))
+    }
+
     /// A player is picked, and is still installed.
     private var canContinue: Bool {
         model.playerOptions.contains { $0.bundleID == picked && $0.isInstalled }
@@ -75,7 +82,7 @@ struct PlayerChooserView: View {
     private func tile(for option: PlayerOption) -> some View {
         let isPicked = option.bundleID == picked
         return Button {
-            picked = option.bundleID
+            clicked = option.bundleID
         } label: {
             VStack(spacing: 6) {
                 Image(nsImage: option.icon(size: 64))

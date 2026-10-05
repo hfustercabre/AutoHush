@@ -29,13 +29,7 @@ struct GeneralSettingsView: View {
                     }
                 }
                 if model.playerOptions.noneInstalled {
-                    Label {
-                        Text(PlayerOption.noneInstalledWarning)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                    }
-                    .font(.callout)
+                    NoteLabel(PlayerOption.noneInstalledWarning)
                 }
             } footer: {
                 Text("AutoHush pauses and resumes this app.")
@@ -64,13 +58,7 @@ struct GeneralSettingsView: View {
                     get: { model.isAntiDotMode },
                     set: { model.setAntiDotMode($0) }
                 ))
-                Label {
-                    Text("Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused.")
-                } icon: {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                }
-                .font(.callout)
+                NoteLabel(String(localized: "Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused."))
                 if model.isAntiDotMode {
                     Picker("Detect playing apps by", selection: Binding(
                         get: { model.detectionMethod },

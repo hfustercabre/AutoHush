@@ -2,36 +2,34 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 @Suite("AppHealthState")
 struct AppHealthStateTests {
     private func health(_ error: any Error) -> AppHealthState {
-        AppHealthState(startupError: error, playerName: "Spotify")
+        AppHealthState(startupError: error, playerName: "Jukebox")
     }
 
     @Test("denied Automation needs permission")
     func automationDenied() {
         #expect(health(MusicPlayerError.automationPermissionDenied)
-            == .needsPermission("Grant Automation access to control Spotify"))
+            == .needsPermission("Grant Automation access to control Jukebox"))
     }
 
     @Test("a player that isn't running is degraded")
     func playerNotRunning() {
-        #expect(health(MusicPlayerError.playerNotRunning) == .degraded("Spotify is not running"))
+        #expect(health(MusicPlayerError.playerNotRunning) == .degraded("Jukebox is not running"))
     }
 
     @Test("an unresponsive player is degraded")
     func playerNotResponding() {
-        #expect(health(MusicPlayerError.playerNotResponding) == .degraded("Spotify is not responding"))
+        #expect(health(MusicPlayerError.playerNotResponding) == .degraded("Jukebox is not responding"))
     }
 
     @Test("a failed player command is degraded with its message")
     func commandFailed() {
         #expect(health(MusicPlayerError.playerCommandFailed("OSStatus -50"))
-            == .degraded("Spotify control error: OSStatus -50"))
+            == .degraded("Jukebox control error: OSStatus -50"))
     }
 
     @Test("messages name the player")
@@ -51,7 +49,7 @@ struct AppHealthStateTests {
 
     @Test("a chosen player that isn't installed is degraded")
     func playerNotInstalled() {
-        #expect(AppHealthState.playerNotInstalled("Spotify") == .degraded("Spotify is not installed"))
+        #expect(AppHealthState.playerNotInstalled("Jukebox") == .degraded("Jukebox is not installed"))
     }
 
     @Test("any other error fails with its description")

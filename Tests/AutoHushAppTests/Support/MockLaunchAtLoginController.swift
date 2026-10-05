@@ -1,7 +1,5 @@
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushPlayers
-import SpotifySupport
 import AutoHushTestSupport
 
 // MARK: - MockLaunchAtLoginController

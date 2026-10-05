@@ -31,10 +31,15 @@ enum MeasureVolumeCurve {
         let requested = arguments.dropFirst().compactMap(Int.init)
         let volumes = requested.isEmpty ? defaultVolumes : requested
 
-        let bundleID = arguments.first
-        guard let player = bundleID.map({ catalog.player(bundleID: $0) }) ?? catalog.players.first else {
+        let player: (any MusicPlayer)?
+        if let bundleID = arguments.first {
+            player = catalog.player(bundleID: bundleID)
+        } else {
+            player = catalog.players.first
+        }
+        guard let player else {
             let supported = catalog.players.map(\.bundleID).joined(separator: ", ")
-            fail("\(bundleID ?? "") is not a supported player (supported: \(supported))")
+            fail("\(arguments.first ?? "") is not a supported player (supported: \(supported))")
         }
         do {
             try await measure(player, volumes: volumes)

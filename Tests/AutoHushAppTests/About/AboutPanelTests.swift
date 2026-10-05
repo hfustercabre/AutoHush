@@ -7,10 +7,10 @@ import Testing
 struct AboutPanelTests {
     @Test("the credits say what AutoHush does, and link to the project and to buy me a coffee")
     func credits() {
-        let credits = AboutPanel.credits(playerNames: ["Spotify"])
+        let credits = AboutPanel.credits(playerNames: ["Jukebox"])
 
         #expect(credits.string == """
-            Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify.
+            Pauses your music while other apps play audio, and resumes it afterwards. Works with Jukebox.
             github.com/hfustercabre/AutoHush
 
             Would you like to support me?
@@ -24,9 +24,9 @@ struct AboutPanelTests {
 
     @Test("the credits name every music player AutoHush works with")
     func everyPlayer() {
-        let credits = AboutPanel.credits(playerNames: ["Spotify", "Apple Music"])
+        let credits = AboutPanel.credits(playerNames: ["Jukebox", "Radio"])
         #expect(credits.string.hasPrefix(
-            "Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify and Apple Music."
+            "Pauses your music while other apps play audio, and resumes it afterwards. Works with Jukebox and Radio."
         ))
     }
 
