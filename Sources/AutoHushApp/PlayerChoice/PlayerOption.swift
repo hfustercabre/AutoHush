@@ -16,13 +16,29 @@ struct PlayerOption: Equatable, Identifiable {
     typealias Locate = @MainActor (String) -> URL?
 
     static let locateInstalledApp: Locate = {
-        firstOutsideTrash(NSWorkspace.shared.urlsForApplications(withBundleIdentifier: $0))
+        firstInstalled(NSWorkspace.shared.urlsForApplications(withBundleIdentifier: $0))
     }
 
-    /// The first app that isn't in a Trash: macOS can still list one that was
-    /// dragged there, but it's no longer installed.
-    static func firstOutsideTrash(_ urls: [URL]) -> URL? {
-        urls.first { url in !url.pathComponents.contains { $0 == ".Trash" || $0 == ".Trashes" } }
+    /// Where apps are installed: /Applications, the current user's
+    /// Applications folder and /System/Applications. macOS also lists copies
+    /// elsewhere, such as one in the Trash or on the disk image it came from.
+    static let applicationFolders: [URL] = [
+        URL(filePath: "/Applications", directoryHint: .isDirectory),
+        FileManager.default.homeDirectoryForCurrentUser.appending(path: "Applications", directoryHint: .isDirectory),
+        URL(filePath: "/System/Applications", directoryHint: .isDirectory),
+    ]
+
+    /// The first app in one of `folders`, or a folder inside one, that is
+    /// still on disk: macOS can list an app deleted moments ago until Launch
+    /// Services catches up.
+    static func firstInstalled(
+        _ urls: [URL],
+        in folders: [URL] = applicationFolders,
+        exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }
+    ) -> URL? {
+        urls.first { url in
+            folders.contains { url.path.hasPrefix($0.path + "/") } && exists(url)
+        }
     }
 
     /// Every player in the catalog, in its order, and whether it is installed.

@@ -95,7 +95,7 @@ open /Applications/AutoHush.app
 
 ## First launch
 
-AutoHush appears as an icon in the menu bar; it has no Dock icon. The first time it opens, a small window asks which music player it should control. If only one is installed, it's already picked: just click **Continue**. You can change it any time in the menu (**Music Player**) or in Settings. If you're updating from an earlier version, AutoHush keeps controlling Spotify and doesn't ask.
+AutoHush appears as an icon in the menu bar; it has no Dock icon. The first time it opens, a small window asks which music player it should control. If only one is installed, it's already picked: just click **Continue**. AutoHush finds the players installed in /Applications, your own Applications folder (~/Applications) or /System/Applications; a copy elsewhere, such as on the disk image it came from, doesn't count. You can change it any time in the menu (**Music Player**) or in Settings. If you're updating from an earlier version, AutoHush keeps controlling Spotify and doesn't ask.
 
 macOS will then ask for these permissions:
 

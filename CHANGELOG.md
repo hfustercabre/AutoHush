@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **AutoHush notices when your music player is uninstalled while it runs**,
+  and says so at once instead of after a restart. It starts again by itself
+  when the player is put back.
+- **Only players in an Applications folder count as installed**:
+  /Applications, your own ~/Applications or /System/Applications. A copy on
+  the disk image it came from, or anywhere else, no longer does.
+
 ## [0.5.0] — 2026-10-05
 
 ### Added

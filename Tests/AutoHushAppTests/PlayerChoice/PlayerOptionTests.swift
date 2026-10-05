@@ -54,13 +54,43 @@ struct PlayerOptionTests {
         #expect(PlayerOption.onlyInstalledNote(among: options) == nil)
     }
 
-    @Test("a copy of an app in the Trash doesn't count as installed")
-    func trashIsNotInstalled() {
+    @Test("apps count as installed only in /Applications, the user's Applications folder and /System/Applications")
+    func applicationFolders() {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        #expect(PlayerOption.applicationFolders.map(\.path) == ["/Applications", "\(home)/Applications", "/System/Applications"])
+
+        let anywhere: (URL) -> Bool = { _ in true }
+        func installed(_ path: String) -> Bool {
+            PlayerOption.firstInstalled([URL(fileURLWithPath: path)], exists: anywhere) != nil
+        }
+        #expect(installed("/Applications/Player.app"))
+        #expect(installed("/Applications/Music Apps/Player.app"))
+        #expect(installed("\(home)/Applications/Player.app"))
+        #expect(installed("/System/Applications/Player.app"))
+
+        #expect(!installed("\(home)/.Trash/Player.app"))
+        #expect(!installed("/Volumes/Player/Player.app")) // the disk image it came from
+        #expect(!installed("/Users/someone-else/Applications/Player.app"))
+        #expect(!installed("\(home)/Downloads/Player.app"))
+        #expect(!installed("/Applications Old/Player.app"))
+    }
+
+    @Test("the first copy in an Applications folder is the one found")
+    func firstInApplicationFolders() {
         let trashed = URL(fileURLWithPath: "/Users/someone/.Trash/Player.app")
-        let otherVolume = URL(fileURLWithPath: "/Volumes/Disk/.Trashes/501/Player.app")
         let installed = URL(fileURLWithPath: "/Applications/Player.app")
-        #expect(PlayerOption.firstOutsideTrash([trashed, otherVolume, installed]) == installed)
-        #expect(PlayerOption.firstOutsideTrash([trashed, otherVolume]) == nil)
-        #expect(PlayerOption.firstOutsideTrash([]) == nil)
+        #expect(PlayerOption.firstInstalled([trashed, installed], exists: { _ in true }) == installed)
+        #expect(PlayerOption.firstInstalled([trashed], exists: { _ in true }) == nil)
+        #expect(PlayerOption.firstInstalled([], exists: { _ in true }) == nil)
+    }
+
+    @Test("an app macOS still lists but that's gone from disk doesn't count as installed")
+    func deletedIsNotInstalled() {
+        let deleted = URL(fileURLWithPath: "/Applications/Player.app")
+        let installed = URL(fileURLWithPath: "/System/Applications/Player.app")
+        #expect(PlayerOption.firstInstalled([deleted, installed]) { $0 == installed } == installed)
+        #expect(PlayerOption.firstInstalled([deleted]) { _ in false } == nil)
+        // The real check, against an app that is on every Mac.
+        #expect(PlayerOption.firstInstalled([URL(fileURLWithPath: "/System/Applications/Music.app")]) != nil)
     }
 }

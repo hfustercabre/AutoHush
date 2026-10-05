@@ -52,6 +52,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// often: macOS doesn't announce when one is granted.
     private let permissionRetryInterval: TimeInterval
     private var permissionRetry: Timer?
+    /// Watches the Applications folders, and the one holding the chosen
+    /// player's app, so AutoHush notices at once when it's uninstalled or
+    /// installed again.
+    private let watchFolder: FolderWatch.Start
+    private var folderWatches: [String: AnyObject] = [:]
+    /// The paths of the folders watched.
+    var watchedFolders: Set<String> { Set(folderWatches.keys) }
+    /// How long after a change in one of them the players are checked again.
+    private let installCheckDelay: Duration
+    private var installCheck: Task<Void, Never>?
 
     init(
         preferences: Preferences = Preferences(),
@@ -68,6 +78,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         permissionRetryInterval: TimeInterval = 3,
+        watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
+        installCheckDelay: Duration = .seconds(1),
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
@@ -81,6 +93,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
         self.permissionRetryInterval = permissionRetryInterval
+        self.watchFolder = watchFolder
+        self.installCheckDelay = installCheckDelay
         super.init()
         updates = UpdateController(
             checker: updateChecker,
@@ -378,11 +392,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshPlayerOptions()
         guard bundleID != player?.bundleID,
               let chosen = players.player(bundleID: bundleID),
-              status.playerOptions.contains(where: { $0.bundleID == bundleID && $0.isInstalled })
+              let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
         else { return }
         logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
         preferences.musicPlayer = bundleID
         player = chosen
+        watchFolders(holding: appURL)
         showChosenPlayer()
         showApps()
         playerChooser?.close()
@@ -398,8 +413,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Checks again which players are installed, for the menu, Settings and
-    /// the welcome window. While none is chosen, the status line follows; a
-    /// chosen player found installed again is controlled afresh.
+    /// the welcome window. While none is chosen, the status line follows. The
+    /// chosen player is reported as soon as it's uninstalled, as a launch
+    /// would, and controlled afresh once it's installed again.
     func refreshPlayerOptions() {
         let options = PlayerOption.list(players, locate: locateApp)
         if status.playerOptions != options { status.playerOptions = options }
@@ -408,9 +424,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             setHealth(.waitingForPlayer(among: options))
             return
         }
-        if status.health == .playerNotInstalled(player.name),
-           options.contains(where: { $0.bundleID == player.bundleID && $0.isInstalled }) {
-            retry()
+        let appURL = options.first { $0.bundleID == player.bundleID }?.appURL
+        watchFolders(holding: appURL)
+        let notInstalled = AppHealthState.playerNotInstalled(player.name)
+        if appURL != nil {
+            if status.health == notInstalled { retry() }
+        } else if status.health != notInstalled {
+            logger.notice("\(player.name, privacy: .public) is not installed")
+            bootstrapGeneration += 1 // a start under way gives up
+            tearDownPipeline()
+            setHealth(notInstalled)
+        }
+    }
+
+    /// Watches the Applications folders, and the folder the chosen player's
+    /// app is in when it's one inside them. A folder that can't be watched
+    /// yet (no ~/Applications) is tried again at the next check.
+    private func watchFolders(holding appURL: URL?) {
+        var paths = Set(PlayerOption.applicationFolders.map(\.path))
+        if let appURL { paths.insert(appURL.deletingLastPathComponent().path) }
+        for path in folderWatches.keys where !paths.contains(path) {
+            folderWatches[path] = nil
+        }
+        for path in paths where folderWatches[path] == nil {
+            let folder = URL(filePath: path, directoryHint: .isDirectory)
+            guard let watch = watchFolder(folder, { [weak self] in self?.checkInstalledPlayersSoon() }) else { continue }
+            folderWatches[path] = watch
+            logger.debug("Watching \(path, privacy: .public) for installed music players")
+        }
+    }
+
+    /// Checks the players again once a change in a watched folder settles
+    /// (a move, an update swapping the app) and Launch Services catches up;
+    /// a later change starts the wait over.
+    private func checkInstalledPlayersSoon() {
+        installCheck?.cancel()
+        installCheck = Task { [weak self, installCheckDelay] in
+            try? await Task.sleep(for: installCheckDelay)
+            guard !Task.isCancelled else { return }
+            self?.refreshPlayerOptions()
         }
     }
 

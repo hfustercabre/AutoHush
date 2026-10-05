@@ -16,7 +16,9 @@ struct AppDelegateTests {
 
     /// In-memory preferences and a downloads folder of its own, so tests
     /// never write preference files or touch AutoHush's real Caches. Two
-    /// stand-in music players to choose from, and which of them are installed.
+    /// stand-in music players to choose from, which of them are installed
+    /// (the second in a folder inside /Applications), and folder watches the
+    /// test fires.
     @MainActor
     private final class Scratch {
         let preferences = Preferences(store: InMemoryPreferenceStore())
@@ -28,8 +30,21 @@ struct AppDelegateTests {
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
 
+        private var onFolderChange: (@MainActor () -> Void)?
+
         func locate(_ bundleID: String) -> URL? {
-            installed.contains(bundleID) ? URL(fileURLWithPath: "/Applications/\(bundleID).app") : nil
+            guard installed.contains(bundleID) else { return nil }
+            let folder = bundleID == Players.second ? "/Applications/Players" : "/Applications"
+            return URL(fileURLWithPath: "\(folder)/\(bundleID).app")
+        }
+
+        func watch(_ folder: URL, onChange: @escaping @MainActor () -> Void) -> AnyObject? {
+            onFolderChange = onChange
+            return NSObject()
+        }
+
+        func changeFolder() {
+            onFolderChange?()
         }
 
         deinit {
@@ -74,6 +89,8 @@ struct AppDelegateTests {
             makePlayerChooser: { _ in scratch.chooser },
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
+            watchFolder: { scratch.watch($0, onChange: $1) },
+            installCheckDelay: .zero,
             bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
         return (sut, counter)
@@ -318,6 +335,73 @@ struct AppDelegateTests {
         }
         #expect(sut.status.health == .needsPermission(.automation(player: "First")))
         #expect(await scratch.first.verifyCallCount == 1)
+    }
+
+    @MainActor
+    @Test("the chosen player uninstalled while AutoHush runs is noticed without a restart, and put back starts it again")
+    func playerUninstalledWhileRunning() async {
+        let scratch = Scratch()
+        let (sut, bootstraps) = makeSUT(scratch)
+        sut.setHealth(.ready)
+        sut.apply(.playback(.musicPlaying))
+
+        // Moved to the Trash: its folder changes, and nothing else happens.
+        scratch.installed = []
+        scratch.changeFolder()
+        for _ in 0..<1000 where sut.status.health == .ready { await Task.yield() }
+        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.playback == .unknown)
+        #expect(bootstraps.count == 0)
+
+        // Put back: controlled afresh.
+        scratch.installed = [Players.first]
+        scratch.changeFolder()
+        for _ in 0..<1000 where bootstraps.count == 0 { await Task.yield() }
+        #expect(sut.status.health == .starting)
+        #expect(bootstraps.count == 1)
+    }
+
+    @MainActor
+    @Test("opening the menu notices a player that was uninstalled while it wasn't running")
+    func menuNoticesUninstalledPlayer() {
+        let scratch = Scratch()
+        let (sut, bootstraps) = makeSUT(scratch)
+        sut.setHealth(.degraded("First is not running"))
+
+        scratch.installed = []
+        sut.refreshPlayerOptions() // what opening the menu or Settings does
+        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == false)
+
+        // Asked again, it stays as it is.
+        sut.refreshPlayerOptions()
+        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(bootstraps.count == 0)
+    }
+
+    @MainActor
+    @Test("the Applications folders are watched, and the one holding the chosen player's app")
+    func watchesApplicationFolders() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        let applicationFolders = Set(PlayerOption.applicationFolders.map(\.path))
+        #expect(sut.watchedFolders == applicationFolders)
+
+        sut.chooseMusicPlayer(Players.second) // in a folder inside /Applications
+        #expect(sut.watchedFolders == applicationFolders.union(["/Applications/Players"]))
+
+        // Gone: the Applications folders are enough to notice it coming back.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        #expect(sut.watchedFolders == applicationFolders)
+    }
+
+    @MainActor
+    @Test("with no player chosen, no folder is watched")
+    func noWatchWithoutPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: nil)
+        sut.refreshPlayerOptions()
+        #expect(sut.watchedFolders.isEmpty)
     }
 
     @MainActor
