@@ -117,7 +117,7 @@ struct AppStatusTests {
     @Test("missing Automation access is the one warning, with Retry")
     func automationWarning() {
         var status = AppStatus()
-        status.playerName = "Jukebox"
+        status.choosePlayer(named: "Jukebox")
         status.setHealth(.needsPermission("Grant Automation access"))
         #expect(status.warning == .automation(player: "Jukebox"))
         #expect(status.warning?.grantTitle == "Allow Jukebox Automation Access…")

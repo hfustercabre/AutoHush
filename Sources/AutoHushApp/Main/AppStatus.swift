@@ -38,13 +38,15 @@ struct AppStatus: Equatable {
         }
     }
 
-    /// The music player AutoHush controls, e.g. "Spotify"; empty while none
-    /// is chosen.
-    var playerName = ""
     /// The players to choose from, for the menu's Music Player submenu.
     var playerOptions: [PlayerOption] = []
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String?
+    /// The music player AutoHush controls, e.g. "Spotify"; empty while none
+    /// is chosen.
+    var playerName: String {
+        playerOptions.first { $0.bundleID == chosenPlayerID }?.name ?? ""
+    }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending

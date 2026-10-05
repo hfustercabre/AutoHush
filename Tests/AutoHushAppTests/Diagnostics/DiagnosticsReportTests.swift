@@ -8,7 +8,7 @@ struct DiagnosticsReportTests {
     @Test("lists the apps with sound, the detection, the music player, auto-pause and ignored apps")
     func fullReport() {
         var status = AppStatus()
-        status.playerName = "Jukebox"
+        status.choosePlayer(named: "Jukebox")
         status.detection = .audioLevel
         status.autoPause = .snoozed("until 15:30")
         status.ignoredApps = [AudioSource(id: "org.videolan.vlc", name: "VLC")]

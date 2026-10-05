@@ -188,7 +188,7 @@ struct StatusMenuControllerTests {
         let sut = makeController(log)
         defer { sut.remove() }
         var status = AppStatus()
-        status.playerName = "Jukebox"
+        status.choosePlayer(named: "Jukebox")
         status.setHealth(.needsPermission("Grant Automation access"))
         sut.status = status
 

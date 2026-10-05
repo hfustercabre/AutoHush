@@ -15,7 +15,15 @@ struct PlayerOption: Equatable, Identifiable {
     /// Finds an installed app by bundle ID.
     typealias Locate = @MainActor (String) -> URL?
 
-    static let locateInstalledApp: Locate = { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+    static let locateInstalledApp: Locate = {
+        firstOutsideTrash(NSWorkspace.shared.urlsForApplications(withBundleIdentifier: $0))
+    }
+
+    /// The first app that isn't in a Trash: macOS can still list one that was
+    /// dragged there, but it's no longer installed.
+    static func firstOutsideTrash(_ urls: [URL]) -> URL? {
+        urls.first { url in !url.pathComponents.contains { $0 == ".Trash" || $0 == ".Trashes" } }
+    }
 
     /// Every player in the catalog, in its order, and whether it is installed.
     @MainActor

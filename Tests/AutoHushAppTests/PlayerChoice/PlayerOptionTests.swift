@@ -53,4 +53,14 @@ struct PlayerOptionTests {
         #expect(options.onlyInstalled == nil)
         #expect(PlayerOption.onlyInstalledNote(among: options) == nil)
     }
+
+    @Test("a copy of an app in the Trash doesn't count as installed")
+    func trashIsNotInstalled() {
+        let trashed = URL(fileURLWithPath: "/Users/someone/.Trash/Player.app")
+        let otherVolume = URL(fileURLWithPath: "/Volumes/Disk/.Trashes/501/Player.app")
+        let installed = URL(fileURLWithPath: "/Applications/Player.app")
+        #expect(PlayerOption.firstOutsideTrash([trashed, otherVolume, installed]) == installed)
+        #expect(PlayerOption.firstOutsideTrash([trashed, otherVolume]) == nil)
+        #expect(PlayerOption.firstOutsideTrash([]) == nil)
+    }
 }

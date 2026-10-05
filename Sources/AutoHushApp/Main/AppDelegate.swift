@@ -26,8 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let locateApp: PlayerOption.Locate
     /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
     private(set) var player: (any MusicPlayer)?
-    /// Asks for the music player while none is chosen.
-    private var playerChooser: PlayerChooserWindowController?
+    /// Asks for the music player while none is chosen; made when first needed.
+    private var playerChooser: (any PlayerChooserPresenting)?
+    private let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -57,6 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
+        makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
+            PlayerChooserWindowController(model: $0)
+        },
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         bootstrapOverride: (@MainActor () -> Void)? = nil
@@ -64,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.preferences = preferences
         self.players = players
         self.locateApp = locateApp
+        self.makePlayerChooser = makePlayerChooser
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
         self.player = players.player(bundleID: preferences.musicPlayer)
@@ -107,8 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         showChosenPlayer()
         refreshPlayerOptions()
-        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
-        syncSettingsApps()
+        showApps()
         applyAutoPause()
     }
 
@@ -189,13 +193,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.setHealth(health)
     }
 
-    private func apply(_ update: MonitoringPipeline.StatusUpdate) {
+    func apply(_ update: MonitoringPipeline.StatusUpdate) {
         switch update {
         case .playback(let state):       status.playback = state
         case .activeSources(let sources):
             status.setActiveSources(sources)
             preferences.recordSeen(sources)
-            syncSettingsApps()
+            showApps()
         case .detection(let mode):       status.detection = mode
         case .announcingApp(let id):     preferences.announcingApps.insert(id)
         }
@@ -278,9 +282,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Stores the ignored apps and passes them to the menu, the monitor and Settings.
     private func applyIgnoredApps(_ apps: [AudioSource]) {
         preferences.ignoredApps = apps
-        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
         pipeline?.setIgnoredSources(Set(apps.map(\.id)))
-        syncSettingsApps()
+        showApps()
     }
 
     /// The engine's configuration: the user's timings, and the chosen player,
@@ -291,14 +294,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return configuration
     }
 
-    private func syncSettingsApps() {
+    /// Shows the ignored apps in the menu, and the apps seen and ignored in
+    /// Settings → Apps; never the chosen player, which doesn't pause itself,
+    /// so an entry for it would do nothing.
+    private func showApps() {
+        let chosen = player?.bundleID
+        let withoutPlayer = { (apps: [AudioSource]) in apps.filter { $0.id != chosen } }
+        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
         settingsModel.setApps(seen: withoutPlayer(preferences.seenApps), ignored: withoutPlayer(preferences.ignoredApps))
-    }
-
-    /// Apps other than the chosen player: it never pauses itself, so an entry
-    /// for it in Settings → Apps or Ignored Apps would do nothing.
-    private func withoutPlayer(_ apps: [AudioSource]) -> [AudioSource] {
-        apps.filter { $0.id != player?.bundleID }
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,
@@ -344,8 +347,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences.musicPlayer = bundleID
         player = chosen
         showChosenPlayer()
-        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
-        syncSettingsApps()
+        showApps()
         playerChooser?.close()
         setHealth(.starting)
         requestBootstrap()
@@ -353,24 +355,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Shows the chosen player in the menu and Settings.
     private func showChosenPlayer() {
-        status.playerName = player?.name ?? ""
         status.chosenPlayerID = player?.bundleID
         settingsModel.chosenPlayerID = player?.bundleID
     }
 
     /// Checks again which players are installed, for the menu, Settings and
-    /// the welcome window. While none is chosen, the status line follows.
+    /// the welcome window. While none is chosen, the status line follows; a
+    /// chosen player found installed again is controlled afresh.
     func refreshPlayerOptions() {
         let options = PlayerOption.list(players, locate: locateApp)
         if status.playerOptions != options { status.playerOptions = options }
         if settingsModel.playerOptions != options { settingsModel.playerOptions = options }
-        if player == nil { setHealth(.waitingForPlayer(among: options)) }
+        guard let player else {
+            setHealth(.waitingForPlayer(among: options))
+            return
+        }
+        if status.health == .playerNotInstalled(player.name),
+           options.contains(where: { $0.bundleID == player.bundleID && $0.isInstalled }) {
+            retry()
+        }
     }
 
     /// The welcome window, which asks for the music player.
     private func showPlayerChooser() {
         if playerChooser == nil {
-            playerChooser = PlayerChooserWindowController(model: settingsModel)
+            playerChooser = makePlayerChooser(settingsModel)
         }
         refreshPlayerOptions()
         playerChooser?.show()
@@ -378,7 +387,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Whether the welcome window is on screen.
-    var isShowingPlayerChooser: Bool { playerChooser?.window?.isVisible == true }
+    var isShowingPlayerChooser: Bool { playerChooser?.isVisible == true }
 
     // MARK: - Player relaunch
 
@@ -485,15 +494,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.apply(update)
         }
         self.pipeline = pipeline
-        status.detection = .pending
         await pipeline.start(takingOverPause: takesOverPause())
         guard generation == bootstrapGeneration else { return }
         setHealth(.ready)
     }
 
+    /// Without a pipeline nothing is known about the music: a state it left
+    /// behind would otherwise hand over a pause that no longer exists, or
+    /// keep automatic updates from ever finding a quiet moment.
     private func tearDownPipeline() {
         pipeline?.stop()
         pipeline = nil
+        status.playback = .unknown
+        status.detection = .pending
     }
 
     // MARK: - Menu actions

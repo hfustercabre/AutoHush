@@ -26,6 +26,7 @@ struct AppDelegateTests {
         let second = MockMusicPlayer(bundleID: Players.second, name: "Second", failVerifyWith: Denied.automation)
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
+        let chooser = FakePlayerChooser()
 
         func locate(_ bundleID: String) -> URL? {
             installed.contains(bundleID) ? URL(fileURLWithPath: "/Applications/\(bundleID).app") : nil
@@ -70,6 +71,7 @@ struct AppDelegateTests {
             updateDownloadsFolder: scratch.downloads,
             players: scratch.players,
             locateApp: { scratch.locate($0) },
+            makePlayerChooser: { _ in scratch.chooser },
             currentVersion: AppVersion("0.2.0"),
             bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
@@ -289,6 +291,31 @@ struct AppDelegateTests {
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
         #expect(sut.status.health == .degraded("First is not installed"))
+
+        // Installed again: it's controlled afresh as soon as AutoHush notices.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        for _ in 0..<1000 where sut.status.health != .needsPermission("Grant Automation access to control First") {
+            await Task.yield()
+        }
+        #expect(sut.status.health == .needsPermission("Grant Automation access to control First"))
+        #expect(await scratch.first.verifyCallCount == 1)
+    }
+
+    @MainActor
+    @Test("a pipeline torn down leaves no playback state behind, so no stale pause is handed over")
+    func playbackStateEndsWithPipeline() async {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, realBootstrap: true)
+        sut.apply(.playback(.pausedByMonitor))
+
+        // The other player's start stops at the permission check.
+        sut.chooseMusicPlayer(Players.second)
+        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        #expect(sut.status.playback == .unknown)
+        #expect(sut.status.detection == .pending)
+        #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+        #expect(scratch.preferences.pauseHandedOverAt == nil)
     }
 
     // MARK: - Auto-pause and ignored apps

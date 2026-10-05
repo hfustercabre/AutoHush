@@ -46,4 +46,25 @@ struct PlayerPopUpTests {
         button.sendAction(button.action, to: button.target)
         #expect(picked == ["com.example.second"])
     }
+
+    @Test("updating with the same players and choice keeps the menu as it is")
+    func noNeedlessRebuild() {
+        let button = PlayerPopUpButton()
+        button.update(options: options, selection: "com.example.first")
+        let items = button.itemArray
+        button.update(options: options, selection: "com.example.first")
+        #expect(zip(items, button.itemArray).allSatisfy { $0 === $1 })
+
+        button.update(options: options, selection: "com.example.second")
+        #expect(button.titleOfSelectedItem == "Second")
+    }
+
+    @Test("a pick that isn't taken goes back to the chosen player")
+    func pickNotTaken() {
+        let button = PlayerPopUpButton()
+        button.update(options: options, selection: "com.example.first")
+        button.selectItem(at: 1) // the user picks Second, but the choice stays First
+        button.update(options: options, selection: "com.example.first")
+        #expect(button.titleOfSelectedItem == "First")
+    }
 }

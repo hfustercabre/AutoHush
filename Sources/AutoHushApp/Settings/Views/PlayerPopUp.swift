@@ -30,6 +30,8 @@ struct PlayerPopUp: NSViewRepresentable {
 final class PlayerPopUpButton: NSPopUpButton {
     /// The bundle ID of the player the user picked.
     var onSelect: ((String) -> Void)?
+    /// What the items show, so they're only rebuilt when it changes.
+    private var shown: (options: [PlayerOption], selection: String?)?
 
     init() {
         super.init(frame: .zero, pullsDown: false)
@@ -41,7 +43,16 @@ final class PlayerPopUpButton: NSPopUpButton {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    /// SwiftUI calls this whenever Settings is drawn again (twice a second
+    /// while a note blinks): the menu is rebuilt only for a change. The
+    /// chosen item is always shown, also after a pick that wasn't taken.
     func update(options: [PlayerOption], selection: String?) {
+        defer {
+            let chosen = itemArray.first { $0.representedObject as? String == selection } ?? itemArray.first
+            if selectedItem !== chosen { select(chosen) }
+        }
+        if let shown, shown.options == options, shown.selection == selection { return }
+        shown = (options, selection)
         removeAllItems()
         if selection == nil {
             let placeholder = NSMenuItem(
@@ -61,7 +72,6 @@ final class PlayerPopUpButton: NSPopUpButton {
             }
             menu?.addItem(item)
         }
-        select(itemArray.first { $0.representedObject as? String == selection } ?? itemArray.first)
     }
 
     @objc private func choose() {

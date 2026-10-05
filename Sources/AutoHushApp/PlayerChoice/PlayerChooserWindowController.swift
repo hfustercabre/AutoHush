@@ -1,12 +1,21 @@
 import AppKit
 import SwiftUI
 
+/// What `AppDelegate` needs of the welcome window; tests stand in for it, so
+/// they never put a window on screen.
+@MainActor
+protocol PlayerChooserPresenting: AnyObject {
+    var isVisible: Bool { get }
+    func show()
+    func close()
+}
+
 /// The welcome window: asks which music player AutoHush controls. It opens
 /// at launch while none is chosen, and again when a supported player opens
 /// then. Closing it leaves AutoHush waiting; the menu and Settings can
 /// choose too.
 @MainActor
-final class PlayerChooserWindowController: NSWindowController {
+final class PlayerChooserWindowController: NSWindowController, PlayerChooserPresenting {
     init(model: SettingsModel) {
         let hosting = NSHostingController(rootView: PlayerChooserView(model: model))
         hosting.sizingOptions = .preferredContentSize
@@ -20,8 +29,10 @@ final class PlayerChooserWindowController: NSWindowController {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    var isVisible: Bool { window?.isVisible == true }
+
     func show() {
-        if window?.isVisible != true { window?.center() }
+        if !isVisible { window?.center() }
         window?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate()
     }
