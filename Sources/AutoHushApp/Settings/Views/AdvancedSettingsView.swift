@@ -1,38 +1,40 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Advanced: Detection (when another app counts as playing or
-/// stopped, and the silence threshold), Fades (dimmed for a player AutoHush
-/// can't fade) and Restore Defaults.
+/// Settings → Advanced, in cards like the menu's: Detection (when another
+/// app counts as playing or stopped, and the silence threshold), Fades
+/// (dimmed for a player AutoHush can't fade) and Restore Defaults.
 struct AdvancedSettingsView: View {
     let model: SettingsModel
 
     var body: some View {
-        Form {
-            Section {
+        VStack(alignment: .leading, spacing: 8) {
+            heading(Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"))
+            Card {
                 slider(
                     "Pause music after",
                     value: \.startConfirmation, range: TimingSettings.startConfirmationRange, step: 0.25,
                     format: seconds,
                     help: "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored."
                 )
+                CardDivider()
                 slider(
                     "Resume music after",
                     value: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
                     format: seconds,
                     help: "How long another app must be silent. Bridges gaps between tracks and videos."
                 )
+                CardDivider()
                 slider(
                     "Silence threshold",
                     value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
                     format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
                     help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
                 )
-            } header: {
-                Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped")
             }
 
-            Section {
+            heading(Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings"))
+            Card {
                 Group {
                     slider(
                         "Fade out before pausing",
@@ -40,6 +42,7 @@ struct AdvancedSettingsView: View {
                         format: seconds,
                         help: "How long the music fades out before it pauses. 0 pauses it at once."
                     )
+                    CardDivider()
                     slider(
                         "Fade in when resuming",
                         value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
@@ -54,18 +57,25 @@ struct AdvancedSettingsView: View {
                                      comment: "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL"),
                               kind: .info)
                 }
-            } header: {
-                Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings")
             }
 
-            Section {
+            HStack {
+                Spacer()
                 Button("Restore Defaults") { model.restoreDefaultTimings() }
+                    .buttonStyle(.chip)
                     .disabled(model.timings == .defaults)
             }
+            .padding(.top, 6)
         }
-        .formStyle(.grouped)
+        .padding(16)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func heading(_ title: Text) -> some View {
+        SectionLabel(title)
+            .padding(.leading, 4)
+            .padding(.top, 6)
     }
 
     private func seconds(_ value: Double) -> String {
@@ -82,9 +92,12 @@ struct AdvancedSettingsView: View {
         help: LocalizedStringKey
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            LabeledContent(title) {
+            HStack {
+                Text(title)
+                Spacer()
                 Text(format(model.timings[keyPath: keyPath]))
                     .monospacedDigit()
+                    .foregroundStyle(.secondary)
             }
             Slider(
                 value: Binding(
@@ -99,8 +112,9 @@ struct AdvancedSettingsView: View {
                 step: step
             )
             Text(help)
-                .font(.callout)
+                .font(.caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

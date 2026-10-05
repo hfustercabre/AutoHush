@@ -36,7 +36,7 @@ struct StatusCardView: View {
             }
             Divider().opacity(0.5)
             HStack(spacing: 6) {
-                MenuSectionLabel(Text("Music player"))
+                SectionLabel(Text("Music player"))
                 Spacer(minLength: 4)
                 playerButton
             }
@@ -61,7 +61,7 @@ struct StatusCardView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
         }
-        .buttonStyle(MenuButtonStyle(filled: true, cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
         .padding(.top, 4)
     }
 
@@ -79,7 +79,7 @@ struct StatusCardView: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
         }
-        .buttonStyle(MenuButtonStyle(cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(cornerRadius: 6))
         .padding(.trailing, -6)
     }
 

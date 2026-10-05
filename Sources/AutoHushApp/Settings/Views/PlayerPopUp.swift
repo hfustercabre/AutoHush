@@ -35,6 +35,7 @@ final class PlayerPopUpButton: NSPopUpButton {
 
     init() {
         super.init(frame: .zero, pullsDown: false)
+        isBordered = false // plain, like the menu's player choice
         autoenablesItems = false
         target = self
         action = #selector(choose)

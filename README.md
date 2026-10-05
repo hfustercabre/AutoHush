@@ -348,13 +348,14 @@ Sources/
     PlayerChoice/        PlayerOption (each player and whether it's installed), PlayerChooserWindowController
                          (the welcome window that asks for the music player)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
-                         Views/ (General, Apps, Advanced, Diagnostics, PlayerPopUp, RadioChoices)
+                         Views/ (General, Apps, Advanced, Diagnostics, PlayerPopUp)
     Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
                          UpdateDownloads (the kept download), UpdateNotifier, UpdatePrompt and ReleaseNotes
                          (the update window), UpdateOffer (what the menu offers)
     Diagnostics/         DiagnosticsReport (what Settings → Diagnostics shows, and Copy Report's text)
     About/               AboutPanel
-    General/             InfoAlert, ProjectInfo, AppIcon, NoteLabel, SystemSettingsPane+Open
+    General/             CardStyles (the cards, switches and chips the menu and Settings share), InfoAlert,
+                         ProjectInfo, AppIcon, NoteLabel, SystemSettingsPane+Open
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, AudioSourceIdentifier,
                          PowerAssertionReader, PlaybackSignals (AntiDot mode's judge),

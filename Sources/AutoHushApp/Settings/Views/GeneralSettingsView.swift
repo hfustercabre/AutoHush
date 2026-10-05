@@ -1,16 +1,16 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, then Music (auto-pause, the player),
-/// Privacy (AntiDot mode) and Updates (checks, what they lead to, Check Now),
-/// and a way to support AutoHush.
+/// Settings → General, in cards like the menu's: launch at login, then Music
+/// (auto-pause, the player), Privacy (AntiDot mode) and Updates (checks,
+/// what they lead to, Check Now), and a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
     var body: some View {
-        Form {
-            Section {
-                Toggle("Launch at login", isOn: Binding(
+        VStack(alignment: .leading, spacing: 8) {
+            Card {
+                SwitchRow(Text("Launch at login"), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
                     set: { model.setLaunchAtLogin($0) }
                 ))
@@ -18,114 +18,116 @@ struct GeneralSettingsView: View {
                     Text(error)
                         .font(.callout)
                         .foregroundStyle(.red)
+                        .fixedSize(horizontal: false, vertical: true)
                     Button("Open Login Items Settings…") { model.openLoginItemsSettings() }
+                        .buttonStyle(.chip)
                 }
             }
 
-            Section {
-                Toggle(isOn: Binding(
-                    get: { model.isAutoPauseOn },
-                    set: { model.setAutoPause($0) }
-                )) {
-                    Text("Auto-Pause Music")
-                    Text("Choose which apps pause your music in the Apps tab.")
-                }
+            heading(Text("Music"))
+            Card {
+                SwitchRow(
+                    Text("Auto-Pause Music"),
+                    subtitle: Text("Choose which apps pause your music in the Apps tab."),
+                    isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
+                )
                 if let note = model.autoPauseNote {
                     Text(note)
-                        .font(.callout)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                LabeledContent {
+                CardDivider()
+                HStack {
+                    RowTitle(Text("Music player"), subtitle: Text("AutoHush pauses and resumes this app."))
+                    Spacer(minLength: 8)
                     PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
                         model.chooseMusicPlayer($0)
                     }
-                } label: {
-                    Text("Music player")
-                    Text("AutoHush pauses and resumes this app.")
                 }
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)
                 }
-            } header: {
-                Text("Music")
             }
 
-            Section {
-                Toggle(isOn: Binding(
-                    get: { model.isAntiDotMode },
-                    set: { model.setAntiDotMode($0) }
-                )) {
-                    Text("AntiDot mode")
-                    Text("Hides the purple recording indicator. Detection is less precise.",
-                         comment: "Settings, under AntiDot mode")
-                }
+            heading(Text("Privacy"))
+            Card {
+                SwitchRow(
+                    Text("AntiDot mode"),
+                    subtitle: Text("Hides the purple recording indicator. Detection is less precise.",
+                                   comment: "Settings, under AntiDot mode"),
+                    isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
+                )
                 if model.isAntiDotMode {
-                    Picker("Detect playing apps by", selection: Binding(
-                        get: { model.detectionMethod },
-                        set: { model.setDetectionMethod($0) }
-                    )) {
-                        ForEach([DetectionMethod.playbackSignals, .openStreams], id: \.self) { method in
-                            Text(method.title).tag(method)
-                        }
-                    }
-                    .pickerStyle(.radioGroup)
-                    Text(model.detectionMethod.summary)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    CardDivider()
+                    SectionLabel(Text("Detect playing apps by"))
+                    ChoiceChips(
+                        options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
+                        selection: model.detectionMethod,
+                        onSelect: { model.setDetectionMethod($0) }
+                    )
+                    explanation(model.detectionMethod.summary)
                 }
-            } header: {
-                Text("Privacy")
             }
 
-            Section {
-                Toggle("Check for updates automatically", isOn: Binding(
+            heading(Text("Updates"))
+            Card {
+                SwitchRow(Text("Check for updates automatically"), isOn: Binding(
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
                 // What checks lead to only matters while they run.
                 if model.checksForUpdatesAutomatically {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("When an update is found")
-                        RadioChoices(
-                            options: [AutomaticUpdates.notify, .download, .install].map {
-                                .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
-                            },
-                            // A copy that can't install itself can only notify.
-                            selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                            onSelect: { model.setAutomaticUpdates($0) },
-                            onUnavailableClick: { model.flashNotificationsNote() }
-                        )
-                        .disabled(model.updateInstallNote != nil)
-                        Text(model.updateInstallNote ?? model.automaticUpdates.explanation)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
+                    CardDivider()
+                    SectionLabel(Text("When an update is found"))
+                    ChoiceChips(
+                        options: [AutomaticUpdates.notify, .download, .install].map {
+                            .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
+                        },
+                        // A copy that can't install itself can only notify.
+                        selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
+                        onSelect: { model.setAutomaticUpdates($0) },
+                        onUnavailableClick: { model.flashNotificationsNote() }
+                    )
+                    .disabled(model.updateInstallNote != nil)
+                    explanation(model.updateInstallNote ?? model.automaticUpdates.explanation)
                 }
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
                     // Blinks in white after a click on a choice that needs notifications.
                     Text("Notifications are off for AutoHush, so it can't tell you about updates.")
-                        .font(.callout)
+                        .font(.caption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(Color.white) : AnyShapeStyle(.secondary))
+                        .fixedSize(horizontal: false, vertical: true)
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
+                        .buttonStyle(.chip)
                 }
-                LabeledContent {
+                CardDivider()
+                HStack {
+                    RowTitle(Text(model.updateTitle), subtitle: model.lastCheckedNote().map { Text($0) })
+                    Spacer(minLength: 8)
                     Button("Check Now") { model.checkForUpdates() }
-                } label: {
-                    Text(model.updateTitle)
-                    if let note = model.lastCheckedNote() {
-                        Text(note)
-                    }
+                        .buttonStyle(.chip)
                 }
-            } header: {
-                Text("Updates")
-            } footer: {
-                supportLine
             }
+
+            supportLine
         }
-        .formStyle(.grouped)
+        .padding(16)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func heading(_ title: Text) -> some View {
+        SectionLabel(title)
+            .padding(.leading, 4)
+            .padding(.top, 6)
+    }
+
+    private func explanation(_ text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// At the very end: "Would you like to support me?" with the Buy me a
@@ -146,7 +148,7 @@ struct GeneralSettingsView: View {
         }
         .font(.callout)
         .frame(maxWidth: .infinity)
-        .padding(.top, 12)
+        .padding(.top, 8)
     }
 }
 

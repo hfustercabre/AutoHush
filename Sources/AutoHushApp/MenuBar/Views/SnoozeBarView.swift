@@ -8,7 +8,7 @@ struct SnoozeBarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            MenuSectionLabel(Text("Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while"))
+            SectionLabel(Text("Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while"))
             HStack(spacing: 6) {
                 ForEach(AutoPauseSnooze.allCases, id: \.self) { snooze in
                     Button { model.perform(.snooze(snooze)) } label: {
@@ -18,7 +18,7 @@ struct SnoozeBarView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 5)
                     }
-                    .buttonStyle(MenuButtonStyle(filled: true))
+                    .buttonStyle(ChipButtonStyle(filled: true))
                     .accessibilityLabel(snooze.title)
                 }
             }

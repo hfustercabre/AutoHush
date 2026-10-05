@@ -38,6 +38,6 @@ struct MenuToolbarView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 5)
         }
-        .buttonStyle(MenuButtonStyle())
+        .buttonStyle(ChipButtonStyle())
     }
 }

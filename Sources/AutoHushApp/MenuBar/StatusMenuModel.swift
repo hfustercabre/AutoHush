@@ -1,5 +1,9 @@
+import Foundation
 import Observation
 import AutoHushKit
+
+/// The width of the menu's custom views; rows the menu draws itself follow.
+let menuContentWidth: CGFloat = 320
 
 /// What the menu's own controls do.
 enum StatusMenuCommand: Equatable, Sendable {

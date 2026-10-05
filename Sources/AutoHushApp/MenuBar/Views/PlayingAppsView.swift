@@ -8,7 +8,7 @@ struct PlayingAppsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MenuSectionLabel(Text("Playing now", comment: "Menu: heading of the apps playing sound right now"))
+            SectionLabel(Text("Playing now", comment: "Menu: heading of the apps playing sound right now"))
             ForEach(model.listedSources, id: \.self) { source in
                 row(source, pausesMusic: !model.status.isIgnored(source.id))
             }

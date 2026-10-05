@@ -3,57 +3,80 @@ import SwiftUI
 import UniformTypeIdentifiers
 import AutoHushKit
 
-/// Settings → Apps: which apps pause the music.
+/// Settings → Apps: which apps pause the music, in a card like the menu's
+/// "Playing now", each with its switch.
 struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
 
     var body: some View {
-        Form {
-            Section {
-                if model.apps.isEmpty {
-                    Text("Apps appear here once they have played audio.")
-                        .foregroundStyle(.secondary)
-                }
-                ForEach(model.apps) { row in
-                    Toggle(isOn: Binding(
-                        get: { !row.isIgnored },
-                        set: { model.setPausesMusic($0, for: row.source) }
-                    )) {
-                        Label {
-                            Text(row.source.name)
-                        } icon: {
-                            Image(nsImage: AppIcon.image(for: row.source))
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionLabel(Text("Pauses Music"))
+                        .padding(.leading, 4)
+                    Card {
+                        if model.apps.isEmpty {
+                            Text("Apps appear here once they have played audio.")
+                                .foregroundStyle(.secondary)
+                        }
+                        ForEach(Array(model.apps.enumerated()), id: \.element.id) { index, row in
+                            if index > 0 { CardDivider() }
+                            appRow(row)
                         }
                     }
-                    .contextMenu {
-                        Button("Remove from List") { model.forget(row.source) }
-                    }
+                    Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 4)
                 }
-            } header: {
-                Text("Pauses Music")
-            } footer: {
-                Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                .padding(16)
             }
-
-            Section {
-                HStack {
-                    Button("Ignore Another App…") { chooseAppToIgnore() }
-                    Spacer()
-                    Button("Reset List…", role: .destructive) { confirmingReset = true }
-                        .disabled(model.apps.isEmpty)
-                }
+            HStack {
+                Button("Ignore Another App…") { chooseAppToIgnore() }
+                    .buttonStyle(.chip)
+                Spacer()
+                Button("Reset List…", role: .destructive) { confirmingReset = true }
+                    .buttonStyle(.chip)
+                    .disabled(model.apps.isEmpty)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+            .padding(.bottom, 16)
         }
-        .formStyle(.grouped)
         .confirmationDialog("Reset the list of apps?", isPresented: $confirmingReset) {
             Button("Reset List", role: .destructive) { model.forgetAllApps() }
         } message: {
             Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.")
         }
-        .frame(width: 480, height: 420)
+        .frame(width: 480, height: 440)
+    }
+
+    /// The app's icon and name, whether it pauses the music, and its switch.
+    private func appRow(_ row: SettingsModel.AppRow) -> some View {
+        HStack(spacing: 8) {
+            Image(nsImage: AppIcon.image(for: row.source, size: 24))
+                .resizable()
+                .frame(width: 24, height: 24)
+                .accessibilityHidden(true)
+            RowTitle(
+                Text(verbatim: row.source.name),
+                subtitle: row.isIgnored ? Text("Ignored — music keeps playing") : Text("Pauses your music")
+            )
+            Spacer(minLength: 8)
+            Toggle(isOn: Binding(
+                get: { !row.isIgnored },
+                set: { model.setPausesMusic($0, for: row.source) }
+            )) {
+                Text(verbatim: row.source.name)
+            }
+            .toggleStyle(PillToggleStyle(width: 30, height: 18))
+        }
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button("Remove from List") { model.forget(row.source) }
+        }
     }
 
     private func chooseAppToIgnore() {
