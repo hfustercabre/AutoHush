@@ -175,7 +175,6 @@ struct AppStatusTests {
         var status = ready()
         status.detection = .disabled
         #expect(status.warning == nil)
-        #expect(status.detection.statusLine == "Detection: open audio streams only")
         status.detection = .playbackSignals
         #expect(status.warning == nil)
     }

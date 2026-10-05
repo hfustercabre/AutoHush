@@ -72,6 +72,13 @@ final class SettingsModel {
     var updateStatus: String?
     /// This copy's version, e.g. "0.3.11"; `nil` when unknown.
     var currentVersion: String?
+    /// The version with its build number, e.g. "0.6.1 (19)", for About and
+    /// Diagnostics.
+    var fullVersion: String? {
+        guard let currentVersion else { return nil }
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return build.map { "\(currentVersion) (\($0))" } ?? currentVersion
+    }
     /// When updates were last checked for, by hand or automatically.
     var lastUpdateCheck: Date?
 
@@ -81,6 +88,9 @@ final class SettingsModel {
     // Diagnostics
     /// What AutoHush sees, kept up to date while the Diagnostics tab shows.
     var diagnostics: DiagnosticsSnapshot?
+    /// The parts of Diagnostics the user folded away; all open again each
+    /// time Settings opens.
+    var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
     // Advanced
     var timings = TimingSettings.defaults

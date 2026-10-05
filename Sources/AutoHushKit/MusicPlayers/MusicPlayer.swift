@@ -15,6 +15,8 @@ package protocol MusicPlayer: Sendable {
     /// Drawn in place of the app's icon while it isn't installed; `nil` for
     /// the generic app icon.
     var iconPlaceholder: PlayerIconPlaceholder? { get }
+    /// The permission AutoHush needs to control it, for Diagnostics.
+    var controlPermission: Permission { get }
 
     /// Asks for (if needed) and checks permission to control the player.
     /// Throws a `MusicPlayerError` when the player can't be controlled.
@@ -44,6 +46,8 @@ extension MusicPlayer {
     package var volumeCurve: VolumeCurve { .linear }
     package var canFade: Bool { true }
     package var iconPlaceholder: PlayerIconPlaceholder? { nil }
+    /// Most players are scripted with Apple events.
+    package var controlPermission: Permission { .automation(player: name) }
 }
 
 /// Watches a player's state; created by `MusicPlayer.makeStateObserver`.

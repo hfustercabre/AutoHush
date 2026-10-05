@@ -16,6 +16,8 @@ package actor TidalPlayer: MusicPlayer {
     package nonisolated var bundleID: String { Self.appBundleID }
     package nonisolated var name: String { "TIDAL" }
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { .tidal }
+    /// It's controlled through its menu, which needs Accessibility.
+    package nonisolated var controlPermission: Permission { .accessibility(player: name) }
     /// Its volume can't be read or set.
     package nonisolated var canFade: Bool { false }
 

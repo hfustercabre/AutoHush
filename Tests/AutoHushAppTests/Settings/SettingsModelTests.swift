@@ -27,6 +27,15 @@ struct SettingsModelTests {
         ))
     }
 
+    @Test("the version shows with its build number for About and Diagnostics, and not at all while unknown")
+    func fullVersion() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        #expect(model.fullVersion == nil)
+        model.currentVersion = "1.2.3"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        #expect(model.fullVersion == (build.map { "1.2.3 (\($0))" } ?? "1.2.3"))
+    }
+
     @Test("reflects the login item's state")
     func reflectsLaunchAtLogin() {
         #expect(makeModel(MockLaunchAtLoginController(isEnabled: true)).launchAtLoginEnabled)
@@ -188,7 +197,7 @@ struct SettingsModelTests {
 @Suite("SettingsWindowController")
 @MainActor
 struct SettingsWindowControllerTests {
-    @Test("has General, Apps, Advanced and Diagnostics tabs in a toolbar, and opens on the one asked for")
+    @Test("has General, Apps, Advanced, Diagnostics and About tabs in a toolbar, and opens on the one asked for")
     func tabs() throws {
         let model = SettingsModel(
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
@@ -201,7 +210,7 @@ struct SettingsWindowControllerTests {
         let sut = SettingsWindowController(model: model)
         let tabController = try #require(sut.window?.contentViewController as? NSTabViewController)
         #expect(tabController.tabStyle == .toolbar)
-        #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced", "Diagnostics"])
+        #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced", "Diagnostics", "About"])
         #expect(tabController.tabViewItems.allSatisfy { $0.image != nil })
         #expect(sut.shownTab == nil) // not on screen
 
@@ -209,6 +218,31 @@ struct SettingsWindowControllerTests {
         defer { sut.close() }
         #expect(sut.shownTab == .diagnostics)
         #expect(tabController.selectedTabViewItemIndex == 3)
+        sut.show(tab: .about) // the menu's About button
+        #expect(tabController.selectedTabViewItemIndex == 4)
+    }
+
+    @Test("closed and opened again, Settings is back on General; while open, it keeps its tab")
+    func reopensOnGeneral() throws {
+        let model = SettingsModel(
+            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
+            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
+                           forgetApp: { _ in }, forgetAllApps: {},
+                           setTimings: { _ in }, setDetectionMethod: { _ in },
+                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
+                           openNotificationSettings: {})
+        )
+        let sut = SettingsWindowController(model: model)
+        defer { sut.close() }
+        sut.show()
+        #expect(sut.shownTab == .general)
+        sut.show(tab: .advanced)
+        sut.show() // Settings in the menu while the window is open
+        #expect(sut.shownTab == .advanced)
+
+        sut.close()
+        sut.show()
+        #expect(sut.shownTab == .general)
     }
 
     @Test("when the shown tab's content changes height, the window follows at once and keeps its top")

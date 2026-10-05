@@ -136,7 +136,7 @@ Click the menu bar icon to see what's going on:
 - **Turn off for** pauses AutoHush itself, from 5 minutes to 24 hours, in one click.
 - **Playing now** lists the apps playing sound, each with a switch: turn it off for an app that shouldn't interrupt your music, such as a game whose soundtrack you don't mind.
 - **Ignored Apps** lists the apps you've switched off. Click one to undo.
-- **The buttons at the bottom** open Settings, check for updates, show About AutoHush and quit. When an update is available, **Updates** turns blue and a row above the buttons offers to install it.
+- **The buttons at the bottom** open Settings, check for updates, open Settings → About, and quit. When an update is available, **Updates** turns blue and a row above the buttons offers to install it.
 - **The menu bar icon** shows what's happening: sound bars while your music plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
 
 ### Settings
@@ -153,7 +153,8 @@ Click the menu bar icon to see what's going on:
 | **General** | Launch at login · **Music:** Auto-Pause Music and your music player · **Privacy:** [AntiDot mode](#the-purple-dot-and-antidot-mode) · **Updates:** automatic checks, what happens when an update is found (see [Updates](#updates)), and Check Now · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds one before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | **Detection:** how long an app must play before your music pauses (0.5 s), how long it must be quiet before your music resumes (2 s, at least 1 s), and what counts as silence (−60 dB) · **Fades:** how long the music fades out before pausing (1 s) and back in when it resumes (2 s); 0 turns a fade off, and both are dimmed with TIDAL, which can't fade · **Restore Defaults** |
-| **Diagnostics** | What AutoHush sees right now: every app with its sound on, how AutoHush judges it (playing, ignored, silent) and why, then the detection in effect, your music player, auto-pause and ignored apps. **Copy Report** copies it all, to send with a bug report |
+| **Diagnostics** | What AutoHush sees right now: how it's doing, every app with its sound on and how it judges it (playing, ignored, silent) and why, then your music player, the detection and its timings, each permission and whether it's allowed, AutoHush's own settings, and your Mac. Each part folds away under its heading. **Copy Report** copies it all, to send with a bug report |
+| **About** | AutoHush's version, what it does and the players it works with, links to GitHub, the release notes and a new issue, and a link to support AutoHush |
 
 ### Language
 
@@ -245,7 +246,7 @@ AutoHush can only update itself from a folder it can write to, such as Applicati
 
 ## Support AutoHush
 
-AutoHush is free. If it saves your ears a few times a day and you'd like to say thanks, you can buy me a coffee. It helps me keep improving it. The link is also in **About AutoHush** and at the bottom of **Settings → General**.
+AutoHush is free. If it saves your ears a few times a day and you'd like to say thanks, you can buy me a coffee. It helps me keep improving it. The link is also in **Settings → About** and at the bottom of **Settings → General**.
 
 <p align="center">
   <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
@@ -297,7 +298,7 @@ AutoHush is a Swift package of several modules, so the compiler keeps the layers
 
 ```text
 AutoHush (executable: the entry point only)
-  └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, About, wiring
+  └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, wiring
        ├─ AutoHushPlayers   the supported music players
        │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport   one <App>Support module per player
        │    └─ ScriptablePlayers   shared by the players scripted with Apple events
@@ -314,11 +315,11 @@ Sources/
                          OtherInstances (quits the copies opened before it)
     MenuBar/             StatusMenuController, StatusMenuModel and Views/ (the menu), MenuBarIcon (drawn in code)
     PlayerChoice/        PlayerOption (each player and whether it's installed), the welcome window
-    Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController, Views/ (one per tab)
+    Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController, Views/ (one per tab:
+                         General, Apps, Advanced, Diagnostics, About)
     Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
                          UpdateDownloads (the kept download), UpdateNotifier, the update window
     Diagnostics/         DiagnosticsReport (Settings → Diagnostics, and Copy Report's text)
-    About/               AboutPanel
     General/             CardStyles (the look the menu and Settings share), AppIcon, InfoAlert, …
   AutoHushKit/
     AudioDetection/      AudioMonitor, SourceActivityTracker, PlaybackSignals (AntiDot mode's judge),

@@ -115,19 +115,6 @@ extension AppHealthState {
     }
 }
 
-extension DetectionMode {
-    /// The detection in effect, as Diagnostics names it.
-    var statusLine: String {
-        switch self {
-        case .pending:         return String(localized: "Detection: open audio streams (verifying levels)")
-        case .audioLevel:      return String(localized: "Detection: audio levels")
-        case .unavailable:     return String(localized: "Detection: open audio streams (no audio level access)")
-        case .playbackSignals: return String(localized: "Detection: what apps tell macOS")
-        case .disabled:        return String(localized: "Detection: open audio streams only")
-        }
-    }
-}
-
 extension Permission {
     /// The menu item that leads the user to grant it.
     var grantTitle: String {

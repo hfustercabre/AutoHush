@@ -1,13 +1,13 @@
 import AppKit
 import SwiftUI
 
-/// The Settings window: General, Apps, Advanced and Diagnostics tabs in a
-/// toolbar, the standard layout of macOS settings windows.
+/// The Settings window: General, Apps, Advanced, Diagnostics and About tabs
+/// in a toolbar, the standard layout of macOS settings windows.
 @MainActor
 final class SettingsWindowController: NSWindowController {
     /// The window's tabs, in toolbar order.
     enum Tab: CaseIterable {
-        case general, apps, advanced, diagnostics
+        case general, apps, advanced, diagnostics, about
 
         var title: String {
             switch self {
@@ -16,6 +16,7 @@ final class SettingsWindowController: NSWindowController {
             case .advanced: return String(localized: "Advanced", comment: "Settings tab")
             case .diagnostics:
                 return String(localized: "Diagnostics", comment: "Settings tab: what AutoHush sees right now")
+            case .about:    return String(localized: "About", comment: "Menu: button at the bottom; shows About AutoHush")
             }
         }
 
@@ -25,6 +26,7 @@ final class SettingsWindowController: NSWindowController {
             case .apps:     return "square.grid.2x2"
             case .advanced: return "slider.horizontal.3"
             case .diagnostics: return "stethoscope"
+            case .about:    return "info.circle"
             }
         }
     }
@@ -42,6 +44,7 @@ final class SettingsWindowController: NSWindowController {
             case .apps:     content = AnyView(AppsSettingsView(model: model))
             case .advanced: content = AnyView(AdvancedSettingsView(model: model))
             case .diagnostics: content = AnyView(DiagnosticsSettingsView(model: model))
+            case .about:    content = AnyView(AboutSettingsView(model: model))
             }
             // Tells the window to fit as soon as the tab's content changes height.
             let tabs = tabController
@@ -73,9 +76,14 @@ final class SettingsWindowController: NSWindowController {
         return Tab.allCases[tabController.selectedTabViewItemIndex]
     }
 
-    /// Shows the window, on `tab` when given.
+    /// Shows the window on `tab` when given. Otherwise a window that was
+    /// closed opens on General again, and one still open keeps its tab.
+    /// Reopened, Diagnostics has every part open again.
     func show(tab: Tab? = nil) {
-        if let tab, let index = Tab.allCases.firstIndex(of: tab) { tabController.selectedTabViewItemIndex = index }
+        let reopening = window?.isVisible != true
+        if reopening { model.foldedDiagnostics = [] }
+        let target = tab ?? (reopening ? .general : nil)
+        if let target, let index = Tab.allCases.firstIndex(of: target) { tabController.selectedTabViewItemIndex = index }
         model.refreshLaunchAtLogin()
         if window?.isVisible != true { window?.center() }
         window?.makeKeyAndOrderFront(nil)

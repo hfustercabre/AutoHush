@@ -9,6 +9,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Diagnostics shows more**: how AutoHush is doing at the top, then the
+  apps with sound, the music player (its version, its state and whether it
+  can fade), the detection and its timings, each permission with whether
+  it's allowed, AutoHush's own settings, and the Mac. Headings stand out
+  from the content, each part folds away to a one-line summary, the tab
+  scrolls, and Copy Report includes all of it.
+- **Settings opens on General** every time, instead of on the tab it was
+  left on.
+- **About is a tab in Settings**, instead of a separate panel: AutoHush's
+  version, what it does and the players it works with, links to GitHub,
+  the release notes and a new issue, and a link to support AutoHush. The
+  menu's **About** button opens it.
 - **Spanish and Catalan** reviewed by a native speaker, including all the
   text added since 0.4.0. The permissions now read "acceso a Accesibilidad"
   and "acceso a Automatización" ("accés a Accessibilitat", "accés a

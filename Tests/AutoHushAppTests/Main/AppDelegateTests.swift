@@ -333,8 +333,9 @@ struct AppDelegateTests {
         sut.refreshDiagnostics()
         let diagnostics = sut.settingsModel.diagnostics
         #expect(diagnostics?.apps.isEmpty == true) // nothing is monitored in tests
-        #expect(diagnostics?.settings.contains("Music player: First") == true)
-        #expect(diagnostics?.text.hasPrefix("No foreign audio output currently detected.") == true)
+        #expect(diagnostics?.text.contains("Apps with Sound\nNo foreign audio output currently detected.") == true)
+        #expect(diagnostics?.sections.first?.rows.first?.value.hasPrefix("First") == true)
+        #expect(diagnostics?.text.contains("Automation for First") == true)
     }
 
     @Test("the waits between automatic starts double up to a ceiling")

@@ -136,14 +136,14 @@ struct GeneralSettingsView: View {
         VStack(spacing: 4) {
             Label {
                 Text("Would you like to support me?",
-                     comment: "About panel and Settings → General, before the Buy me a coffee link")
+                     comment: "Settings → About and → General, before the Buy me a coffee link")
             } icon: {
                 Image(systemName: "cup.and.saucer")
             }
             .foregroundStyle(.appSecondary)
             Link(destination: ProjectInfo.supportPage) {
                 Text("Buy me a coffee",
-                     comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
+                     comment: "Link to the developer's Buy Me a Coffee page (Settings → About and → General)")
             }
         }
         .font(.appCallout)
@@ -152,8 +152,8 @@ struct GeneralSettingsView: View {
     }
 }
 
-/// The detection choices as Settings describes them.
-private extension DetectionMethod {
+/// The detection choices as Settings and Diagnostics describe them.
+extension DetectionMethod {
     var title: String {
         switch self {
         case .audioLevels:
@@ -178,8 +178,8 @@ private extension DetectionMethod {
     }
 }
 
-/// Each update choice as Settings shows it.
-private extension AutomaticUpdates {
+/// Each update choice as Settings and Diagnostics show it.
+extension AutomaticUpdates {
     var title: String {
         switch self {
         case .notify:
