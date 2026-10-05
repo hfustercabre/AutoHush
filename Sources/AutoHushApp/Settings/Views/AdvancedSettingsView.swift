@@ -1,8 +1,9 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Advanced: detection timings, fades (dimmed for a player
-/// AutoHush can't fade) and the silence threshold.
+/// Settings → Advanced: Detection (when another app counts as playing or
+/// stopped, and the silence threshold), Fades (dimmed for a player AutoHush
+/// can't fade) and Restore Defaults.
 struct AdvancedSettingsView: View {
     let model: SettingsModel
 
@@ -16,11 +17,22 @@ struct AdvancedSettingsView: View {
                     help: "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored."
                 )
                 slider(
-                    "Treat an app as stopped after",
+                    "Resume music after",
                     value: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
                     format: seconds,
-                    help: "How long another app must be silent before your music resumes. Bridges gaps between tracks and videos."
+                    help: "How long another app must be silent. Bridges gaps between tracks and videos."
                 )
+                slider(
+                    "Silence threshold",
+                    value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
+                    format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
+                    help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
+                )
+            } header: {
+                Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped")
+            }
+
+            Section {
                 Group {
                     slider(
                         "Fade out before pausing",
@@ -42,13 +54,10 @@ struct AdvancedSettingsView: View {
                                      comment: "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL"),
                               kind: .info)
                 }
-                slider(
-                    "Silence threshold",
-                    value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
-                    format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
-                    help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
-                )
+            } header: {
+                Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings")
             }
+
             Section {
                 Button("Restore Defaults") { model.restoreDefaultTimings() }
                     .disabled(model.timings == .defaults)

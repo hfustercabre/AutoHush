@@ -149,7 +149,7 @@ Music paused — Google Chrome is playing
 |---|---|
 | **General** | Launch at login · **Music:** Auto-Pause Music and your music player · **Privacy:** AntiDot mode (see [below](#the-purple-dot-and-antidot-mode)) · **Updates:** automatic checks, what happens when one finds an update (see [Updates](#updates)), and Check Now · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
-| **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped and your music resumes (2 s, at least 1 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off; dimmed with TIDAL, which can't fade), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
+| **Advanced** | Fine-tuning, with sensible defaults · **Detection:** how long an app must play before your music pauses (0.5 s), how long it must be quiet before your music resumes (2 s, at least 1 s), and what counts as silence (-60 dB) · **Fades:** how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off; dimmed with TIDAL, which can't fade) · **Restore Defaults** undoes your changes |
 
 ### Language
 

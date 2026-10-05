@@ -7003,6 +7003,89 @@
         }
       }
     },
+    "Detection" : {
+      "comment" : "Settings → Advanced: heading of when other apps count as playing or stopped",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecció"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erkennung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detección"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détection"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rilevamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検出"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "감지"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detecção"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deteção"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測"
+          }
+        }
+      }
+    },
     "Detection: audio levels" : {
       "localizations" : {
         "ca" : {
@@ -7991,6 +8074,89 @@
         }
       }
     },
+    "Fades" : {
+      "comment" : "Settings → Advanced: heading of the fade out and fade in settings",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fosos"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein- und Ausblenden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundidos"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundidos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondus"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fondus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dissolvenze"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フェード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이드"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade-in e fade-out"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fade-in e fade-out"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淡入淡出"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淡入淡出"
+          }
+        }
+      }
+    },
     "General" : {
       "comment" : "Settings tab",
       "localizations" : {
@@ -8654,84 +8820,84 @@
         }
       }
     },
-    "How long another app must be silent before your music resumes. Bridges gaps between tracks and videos." : {
+    "How long another app must be silent. Bridges gaps between tracks and videos." : {
       "localizations" : {
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quant de temps ha d'estar en silenci una altra app abans que la música es reprengui. Salva les pauses entre cançons i vídeos."
+            "value" : "Quant de temps ha d'estar en silenci una altra app. Salva les pauses entre cançons i vídeos."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie lange eine andere App still sein muss, bevor deine Musik weiterspielt. Überbrückt Pausen zwischen Titeln und Videos."
+            "value" : "Wie lange eine andere App still sein muss. Überbrückt Pausen zwischen Titeln und Videos."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cuánto tiempo debe estar en silencio otra app antes de que se reanude la música. Salva las pausas entre canciones y vídeos."
+            "value" : "Cuánto tiempo debe estar en silencio otra app. Salva las pausas entre canciones y vídeos."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cuánto tiempo debe estar en silencio otra app antes de que se reanude la música. Salva las pausas entre canciones y videos."
+            "value" : "Cuánto tiempo debe estar en silencio otra app. Salva las pausas entre canciones y videos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durée pendant laquelle une autre app doit rester silencieuse avant que votre musique reprenne. Comble les pauses entre les morceaux et les vidéos."
+            "value" : "Durée pendant laquelle une autre app doit rester silencieuse. Comble les pauses entre les morceaux et les vidéos."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durée pendant laquelle une autre app doit rester silencieuse avant que votre musique reprenne. Comble les pauses entre les morceaux et les vidéos."
+            "value" : "Durée pendant laquelle une autre app doit rester silencieuse. Comble les pauses entre les morceaux et les vidéos."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Per quanto tempo un'altra app deve restare in silenzio prima che la musica riprenda. Copre le pause tra brani e video."
+            "value" : "Per quanto tempo un'altra app deve restare in silenzio. Copre le pause tra brani e video."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音楽の再生が再開されるまでに、ほかのAppが無音である必要がある時間です。曲やビデオの合間の無音をつなぎます。"
+            "value" : "ほかのAppが無音である必要がある時間です。曲やビデオの合間の無音をつなぎます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "음악이 다시 재생되기 전에 다른 앱이 조용해야 하는 시간입니다. 트랙과 비디오 사이의 공백을 메웁니다."
+            "value" : "다른 앱이 조용해야 하는 시간입니다. 트랙과 비디오 사이의 공백을 메웁니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Por quanto tempo outro app precisa ficar em silêncio antes de a música voltar a tocar. Cobre as pausas entre faixas e vídeos."
+            "value" : "Por quanto tempo outro app precisa ficar em silêncio. Cobre as pausas entre faixas e vídeos."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durante quanto tempo outra app tem de estar em silêncio antes de a música ser retomada. Cobre as pausas entre faixas e vídeos."
+            "value" : "Durante quanto tempo outra app tem de estar em silêncio. Cobre as pausas entre faixas e vídeos."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "其他 App 需保持无声多久，音乐才会继续播放。可衔接曲目与视频之间的空档。"
+            "value" : "其他 App 需保持无声的时间。可衔接曲目与视频之间的空档。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "其他 App 需保持無聲多久，音樂才會繼續播放。可銜接曲目與影片之間的空檔。"
+            "value" : "其他 App 需保持無聲的時間。可銜接曲目與影片之間的空檔。"
           }
         }
       }
@@ -13195,6 +13361,88 @@
         }
       }
     },
+    "Resume music after" : {
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprèn la música després de"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik fortsetzen nach"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar la música tras"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar la música tras"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre après"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre après"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprendi la musica dopo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再開までの時間"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악 재개까지"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar a música após"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar a música após"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续播放音乐前等待"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續播放音樂前等待"
+          }
+        }
+      }
+    },
     "Retry" : {
       "comment" : "Menu item: start monitoring again after a problem",
       "localizations" : {
@@ -14019,88 +14267,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此版本沒有可供安裝的磁碟映像檔。"
-          }
-        }
-      }
-    },
-    "Treat an app as stopped after" : {
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considera aturada una app després de"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App als gestoppt behandeln nach"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considerar detenida una app tras"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considerar detenida una app tras"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considérer une app arrêtée après"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considérer une app arrêtée après"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considera un'app ferma dopo"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停止と見なすまでの時間"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱을 정지된 것으로 간주하기까지"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considerar um app parado após"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Considerar uma app parada após"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "视为 App 已停止前等待"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "視為 App 已停止前等待"
           }
         }
       }

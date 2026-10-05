@@ -19,6 +19,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **AutoHush starts by itself once you grant a permission** it needs to
   control your music player, instead of waiting for you to choose Retry.
+- **Settings → Advanced is grouped** like General: Detection (when another
+  app counts as playing or stopped, and the silence threshold) and Fades.
+  **Treat an app as stopped after** is now **Resume music after**, worded
+  like **Pause music after**.
 
 ## [0.4.0] — 2026-10-05
 
