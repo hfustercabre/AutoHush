@@ -5,7 +5,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [0.6.2] — 2026-10-05
 
 ### Changed
 
@@ -21,8 +21,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   version, what it does and the players it works with, links to GitHub,
   the release notes and a new issue, and a link to support AutoHush. The
   menu's **About** button opens it.
-- **Spanish and Catalan** reviewed by a native speaker, including all the
-  text added since 0.4.0. The permissions now read "acceso a Accesibilidad"
+- **Spanish and Catalan** reviewed by a native speaker, including the text
+  added in 0.4.0 to 0.6.1. The permissions now read "acceso a Accesibilidad"
   and "acceso a Automatización" ("accés a Accessibilitat", "accés a
   Automatització"), plus two smaller Catalan fixes.
 
