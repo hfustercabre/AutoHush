@@ -8,9 +8,16 @@ struct PlayerOption: Equatable, Identifiable {
     /// Where the app is installed; `nil` when it isn't, and then it can't be
     /// chosen.
     let appURL: URL?
+    /// Shown in place of its icon while it isn't installed.
+    var iconPlaceholder: PlayerIconPlaceholder?
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
+
+    /// A player's placeholder is its own, so it doesn't tell options apart.
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL
+    }
 
     /// Finds an installed app by bundle ID.
     typealias Locate = @MainActor (String) -> URL?
@@ -44,12 +51,18 @@ struct PlayerOption: Equatable, Identifiable {
     /// Every player in the catalog, in its order, and whether it is installed.
     @MainActor
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
-        catalog.players.map { PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID)) }
+        catalog.players.map {
+            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID), iconPlaceholder: $0.iconPlaceholder)
+        }
     }
 
+    /// The app's icon; its placeholder while it isn't installed.
     @MainActor
     func icon(size: CGFloat) -> NSImage {
-        AppIcon.image(bundlePath: appURL?.path, size: size)
+        if appURL == nil, let iconPlaceholder {
+            return AppIcon.image(placeholder: iconPlaceholder, id: bundleID, size: size)
+        }
+        return AppIcon.image(bundlePath: appURL?.path, size: size)
     }
 
     /// Under a player that isn't installed, wherever players are offered.

@@ -81,8 +81,8 @@ struct StatusCardView: View {
         .padding(.trailing, -6)
     }
 
-    /// The chosen player's icon; AutoHush's own while none is chosen, and a
-    /// faded generic one while the chosen player isn't installed.
+    /// The chosen player's icon; AutoHush's own while none is chosen, and
+    /// faded while the chosen player isn't installed.
     private func playerIcon(size: CGFloat) -> some View {
         let image: NSImage
         let installed = status.chosenPlayer?.isInstalled ?? true

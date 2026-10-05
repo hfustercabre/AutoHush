@@ -23,6 +23,8 @@ package struct ScriptablePlayerProfile: Sendable {
     /// reports a different number would otherwise lose a step on every fade
     /// that restores the volume it read.
     package let readVolume: @Sendable (Int) -> Int
+    /// Drawn in place of the app's icon while it isn't installed.
+    package let iconPlaceholder: PlayerIconPlaceholder?
 
     package init(
         bundleID: String,
@@ -30,7 +32,8 @@ package struct ScriptablePlayerProfile: Sendable {
         suite: OSType,
         stateNotification: Notification.Name,
         volumeCurve: VolumeCurve = .linear,
-        readVolume: @escaping @Sendable (Int) -> Int = { $0 }
+        readVolume: @escaping @Sendable (Int) -> Int = { $0 },
+        iconPlaceholder: PlayerIconPlaceholder? = nil
     ) {
         self.bundleID = bundleID
         self.name = name
@@ -38,6 +41,7 @@ package struct ScriptablePlayerProfile: Sendable {
         self.stateNotification = stateNotification
         self.volumeCurve = volumeCurve
         self.readVolume = readVolume
+        self.iconPlaceholder = iconPlaceholder
     }
 }
 
@@ -55,6 +59,7 @@ package actor ScriptablePlayer: MusicPlayer {
     package nonisolated var bundleID: String { profile.bundleID }
     package nonisolated var name: String { profile.name }
     package nonisolated var volumeCurve: VolumeCurve { profile.volumeCurve }
+    package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { profile.iconPlaceholder }
 
     private let logger = Logger(category: "ScriptablePlayer")
 

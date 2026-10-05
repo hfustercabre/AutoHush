@@ -364,7 +364,8 @@ Sources/
                          HAL helpers)
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (setting and snooze)
     MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog (the players to choose from),
-                         PlayerState, VolumeCurve, MusicPlayerError
+                         PlayerState, VolumeCurve, MusicPlayerError, PlayerIconPlaceholder (how to draw a
+                         player's icon while it isn't installed)
     Permissions/         Permission (what's needed and where to grant it), AudioCapturePermission,
                          SystemSettingsPane
     PrivateAPI/          TCC, ProcessResponsibility: undocumented macOS functions, resolved at
@@ -376,10 +377,10 @@ Sources/
   PlayersSupport/        one module per music player, plus what they share:
     ScriptablePlayers/   ScriptablePlayer (+AppleEvents): controls an app scripted with Apple events,
                          as its profile describes; PlayerStateObserver (its state notification)
-    SpotifySupport/      Spotify's profile: codes, notification, volume quirk and curve
-    AppleMusicSupport/   Apple Music's profile
+    SpotifySupport/      Spotify's profile: codes, notification, volume quirk and curve; SpotifyIcon
+    AppleMusicSupport/   Apple Music's profile; AppleMusicIcon
     TidalSupport/        TidalPlayer: TIDAL through its Playback menu (Accessibility), TidalMenu,
-                         TidalLabels (its own words for Play and Pause), TidalStateObserver
+                         TidalLabels (its own words for Play and Pause), TidalStateObserver; TidalIcon
 Tests/
   AutoHushAppTests/  AutoHushKitTests/  AutoHushPlayersTests/
   PlayersSupport/ScriptablePlayersTests/  SpotifySupportTests/  AppleMusicSupportTests/  TidalSupportTests/
@@ -408,7 +409,8 @@ Resources/               Info.plist, entitlements and AutoHush.icon (the app ico
 
 1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. Otherwise it's a type implementing `MusicPlayer`, as `TidalPlayer` does;
 2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;
-3. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
+3. its placeholder icon, a `PlayerIconPlaceholder` in its module (as `SpotifyIcon.swift`): its tile's colors and its mark drawn as a path on a 1000-point tile. It's shown while the app isn't installed, when macOS has no icon for it; the catalog's tests check that every player has one;
+4. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
 
 Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Configuration/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 

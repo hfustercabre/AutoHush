@@ -35,6 +35,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   icon and a switch. The choice of what happens when an update is found,
   and AntiDot mode's choice of detection, are rows of buttons. The welcome
   window lists the music players as rows in a card, the chosen one checked.
+- **Players that aren't installed** show a likeness of their icon, drawn
+  in your Mac's icon style (default or dark), instead of a blank app icon.
 - **Bigger text** in the menu, Settings and the welcome window: one step
   above the system's sizes, so descriptions and labels read easily. The
   menu is a little wider to match.

@@ -15,6 +15,7 @@ package actor TidalPlayer: MusicPlayer {
 
     package nonisolated var bundleID: String { Self.appBundleID }
     package nonisolated var name: String { "TIDAL" }
+    package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { .tidal }
     /// Its volume can't be read or set.
     package nonisolated var canFade: Bool { false }
 

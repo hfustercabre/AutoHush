@@ -15,6 +15,7 @@ extension ScriptablePlayerProfile {
         // Measured on Music 1.7 (`swift run measure-volume-curve com.apple.Music`):
         // linear within 0.8 dB from 5 to 90 (50 → −6 dB); 1 is silent. The
         // volume reads back as it was set.
-        volumeCurve: .linear
+        volumeCurve: .linear,
+        iconPlaceholder: .appleMusic
     )
 }

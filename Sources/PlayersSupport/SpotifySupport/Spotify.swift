@@ -15,6 +15,7 @@ extension ScriptablePlayerProfile {
         volumeCurve: .cubic,
         // Spotify reports one less than the volume it was set to (set 50,
         // read 49; measured for 1–99).
-        readVolume: { (1...99).contains($0) ? $0 + 1 : $0 }
+        readVolume: { (1...99).contains($0) ? $0 + 1 : $0 },
+        iconPlaceholder: .spotify
     )
 }

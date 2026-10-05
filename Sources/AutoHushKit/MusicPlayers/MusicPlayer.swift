@@ -12,6 +12,9 @@ package protocol MusicPlayer: Sendable {
     var bundleID: String { get }
     /// Name shown to the user, e.g. "Spotify".
     var name: String { get }
+    /// Drawn in place of the app's icon while it isn't installed; `nil` for
+    /// the generic app icon.
+    var iconPlaceholder: PlayerIconPlaceholder? { get }
 
     /// Asks for (if needed) and checks permission to control the player.
     /// Throws a `MusicPlayerError` when the player can't be controlled.
@@ -40,6 +43,7 @@ extension MusicPlayer {
     /// Until a player's curve is measured, its volume is taken as linear.
     package var volumeCurve: VolumeCurve { .linear }
     package var canFade: Bool { true }
+    package var iconPlaceholder: PlayerIconPlaceholder? { nil }
 }
 
 /// Watches a player's state; created by `MusicPlayer.makeStateObserver`.

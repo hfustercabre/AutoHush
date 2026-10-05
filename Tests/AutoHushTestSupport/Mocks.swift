@@ -10,6 +10,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package nonisolated let name: String
     package nonisolated let volumeCurve: VolumeCurve
     package nonisolated let canFade: Bool
+    package nonisolated let iconPlaceholder: PlayerIconPlaceholder?
     package var state: PlayerState
     package var pauseCallCount = 0
     package var playCallCount = 0
@@ -31,6 +32,7 @@ package actor MockMusicPlayer: MusicPlayer {
         state: PlayerState = .playing,
         volumeCurve: VolumeCurve = .linear,
         canFade: Bool = true,
+        iconPlaceholder: PlayerIconPlaceholder? = nil,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
@@ -40,6 +42,7 @@ package actor MockMusicPlayer: MusicPlayer {
         self.state = state
         self.volumeCurve = volumeCurve
         self.canFade = canFade
+        self.iconPlaceholder = iconPlaceholder
         self.failPauseWith = failPauseWith
         self.failPlayWith = failPlayWith
         self.failVerifyWith = failVerifyWith

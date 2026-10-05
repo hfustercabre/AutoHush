@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import Testing
 @testable import AutoHushApp
@@ -7,10 +8,11 @@ import AutoHushTestSupport
 @Suite("PlayerOption")
 @MainActor
 struct PlayerOptionTests {
-    @Test("every player in the catalog is offered, in its order, with where it's installed")
+    @Test("every player in the catalog is offered, in its order, with where it's installed and its placeholder")
     func list() {
+        let placeholder = PlayerIconPlaceholder(tile: [.init(0x000000)], mark: .init(0x1ED760)) { CGMutablePath() }
         let catalog = MusicPlayerCatalog(players: [
-            MockMusicPlayer(bundleID: "com.example.first", name: "First"),
+            MockMusicPlayer(bundleID: "com.example.first", name: "First", iconPlaceholder: placeholder),
             MockMusicPlayer(bundleID: "com.example.second", name: "Second"),
         ])
         let url = URL(fileURLWithPath: "/Applications/Second.app")
@@ -21,6 +23,8 @@ struct PlayerOptionTests {
             PlayerOption(bundleID: "com.example.second", name: "Second", appURL: url),
         ])
         #expect(options.map(\.isInstalled) == [false, true])
+        #expect(options[0].iconPlaceholder?.mark == placeholder.mark)
+        #expect(options[1].iconPlaceholder == nil)
         #expect(!options.noneInstalled)
         #expect([options[0]].noneInstalled)
     }
