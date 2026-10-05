@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// Settings → General: launch at login, then Music (the player, auto-pause),
 /// Privacy (AntiDot mode) and Updates (checks, what they lead to, Check Now),
-/// each with a small icon in its heading, and a way to support AutoHush.
+/// and a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -47,7 +47,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                SectionHeading("Music", symbol: "music.note", color: .purple)
+                Text("Music")
             }
 
             Section {
@@ -74,7 +74,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                SectionHeading("Privacy", symbol: "eye.slash", color: .green)
+                Text("Privacy")
             }
 
             Section {
@@ -121,7 +121,7 @@ struct GeneralSettingsView: View {
                     }
                 }
             } header: {
-                SectionHeading("Updates", symbol: "arrow.down.circle", color: .blue)
+                Text("Updates")
             } footer: {
                 supportLine
             }
@@ -131,14 +131,17 @@ struct GeneralSettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// A quiet line at the very end: "Would you like to support me? Buy me a coffee".
+    /// At the very end: "Would you like to support me?" with the Buy me a
+    /// coffee link below it.
     private var supportLine: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "cup.and.saucer")
-                .foregroundStyle(.secondary)
-            Text("Would you like to support me?",
-                 comment: "About panel and Settings → General, before the Buy me a coffee link")
-                .foregroundStyle(.secondary)
+        VStack(spacing: 4) {
+            Label {
+                Text("Would you like to support me?",
+                     comment: "About panel and Settings → General, before the Buy me a coffee link")
+            } icon: {
+                Image(systemName: "cup.and.saucer")
+            }
+            .foregroundStyle(.secondary)
             Link(destination: ProjectInfo.supportPage) {
                 Text("Buy me a coffee",
                      comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
@@ -146,32 +149,7 @@ struct GeneralSettingsView: View {
         }
         .font(.callout)
         .frame(maxWidth: .infinity)
-        .padding(.top, 8)
-    }
-}
-
-/// A section's title with a small coloured icon, as in System Settings.
-private struct SectionHeading: View {
-    let title: LocalizedStringKey
-    let symbol: String
-    let color: Color
-
-    init(_ title: LocalizedStringKey, symbol: String, color: Color) {
-        self.title = title
-        self.symbol = symbol
-        self.color = color
-    }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: symbol)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 18, height: 18)
-                .background(color.gradient, in: RoundedRectangle(cornerRadius: 5))
-                .accessibilityHidden(true)
-            Text(title)
-        }
+        .padding(.top, 12)
     }
 }
 
