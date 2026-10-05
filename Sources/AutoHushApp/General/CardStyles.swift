@@ -17,6 +17,59 @@ extension Font {
     static let appCaption = Font.system(size: 11)
 }
 
+/// A style with one value in light mode and another in dark mode. The
+/// system's secondary text, orange and fills are too faint in light mode,
+/// on the menu's white and on Settings' grey, so light mode gets darker ones;
+/// dark mode keeps the system's.
+struct AppearanceStyle: ShapeStyle {
+    let light: AnyShapeStyle
+    let dark: AnyShapeStyle
+
+    init(light: some ShapeStyle, dark: some ShapeStyle) {
+        self.light = AnyShapeStyle(light)
+        self.dark = AnyShapeStyle(dark)
+    }
+
+    func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
+        environment.colorScheme == .dark ? dark : light
+    }
+}
+
+/// The colors the menu, Settings and the welcome window share. In light
+/// mode, text keeps a contrast of at least 4.5:1 against its background.
+extension ShapeStyle where Self == AppearanceStyle {
+    /// Descriptions under rows, section labels and captions.
+    static var appSecondary: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.68), dark: .secondary)
+    }
+    /// Text and icons that need the user's attention: a deep orange in light
+    /// mode, where the system's is hard to read.
+    static var appWarning: AppearanceStyle {
+        AppearanceStyle(light: Color(red: 0xB0 / 255, green: 0x30 / 255, blue: 0), dark: .orange)
+    }
+    /// A card's background.
+    static var cardFill: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.05), dark: .quaternary.opacity(0.6))
+    }
+    /// A card's outline: in light mode only, where the fill alone barely
+    /// shows against the menu's white.
+    static var cardBorder: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.1), dark: Color.clear)
+    }
+    /// A filled chip's background, at rest.
+    static var chipFill: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.08), dark: .quaternary.opacity(0.6))
+    }
+    /// A chip's background under the pointer: a step above `chipFill`.
+    static var chipHoverFill: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.13), dark: .quaternary)
+    }
+    /// A switch's track while it's off.
+    static var switchOffFill: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.26), dark: .quaternary)
+    }
+}
+
 /// A switch drawn in the accent color, the same in the menu and in Settings.
 /// The system's switch would be grey in the menu: menus draw it inactive,
 /// since AutoHush doesn't become the active app when its menu opens.
@@ -27,7 +80,7 @@ struct PillToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         Button { configuration.isOn.toggle() } label: {
             Capsule()
-                .fill(configuration.isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.quaternary))
+                .fill(configuration.isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.switchOffFill))
                 .frame(width: width, height: height)
                 .overlay(alignment: configuration.isOn ? .trailing : .leading) {
                     Circle().fill(.white).shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5).padding(2)
@@ -81,10 +134,10 @@ struct ChipButtonStyle: ButtonStyle {
 
         private var fill: AnyShapeStyle {
             if isSelected { return AnyShapeStyle(Color.accentColor.opacity(isPressed ? 0.8 : 1)) }
-            guard isEnabled else { return filled ? AnyShapeStyle(.quaternary.opacity(0.6)) : AnyShapeStyle(.clear) }
+            guard isEnabled else { return filled ? AnyShapeStyle(.chipFill) : AnyShapeStyle(.clear) }
             if isPressed { return AnyShapeStyle(.tertiary) }
-            if isHovered { return AnyShapeStyle(.quaternary) }
-            return filled ? AnyShapeStyle(.quaternary.opacity(0.6)) : AnyShapeStyle(.clear)
+            if isHovered { return AnyShapeStyle(.chipHoverFill) }
+            return filled ? AnyShapeStyle(.chipFill) : AnyShapeStyle(.clear)
         }
     }
 }
@@ -101,7 +154,7 @@ struct SectionLabel: View {
     init(_ title: Text) { self.title = title }
 
     var body: some View {
-        title.font(.appCaption).foregroundStyle(.secondary)
+        title.font(.appCaption).foregroundStyle(.appSecondary)
     }
 }
 
@@ -115,7 +168,8 @@ struct Card<Content: View>: View {
         VStack(alignment: .leading, spacing: 10) { content }
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
+            .background(RoundedRectangle(cornerRadius: 12).fill(.cardFill))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.cardBorder, lineWidth: 1))
     }
 }
 
@@ -164,7 +218,7 @@ struct RowTitle: View {
             if let subtitle {
                 subtitle
                     .font(.appCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

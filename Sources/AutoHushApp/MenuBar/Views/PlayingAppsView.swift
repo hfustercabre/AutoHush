@@ -34,7 +34,7 @@ struct PlayingAppsView: View {
                     }
                 }
                 .font(.appCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.appSecondary)
             }
             Spacer(minLength: 8)
             Toggle(isOn: Binding(get: { pausesMusic }, set: { model.perform(.setIgnored(source, !$0)) })) {

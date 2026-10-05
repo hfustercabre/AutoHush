@@ -34,7 +34,7 @@ struct GeneralSettingsView: View {
                 if let note = model.autoPauseNote {
                     Text(note)
                         .font(.appCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.appSecondary)
                 }
                 CardDivider()
                 HStack {
@@ -96,7 +96,7 @@ struct GeneralSettingsView: View {
                     // Blinks bright after a click on a choice that needs notifications.
                     Text("Notifications are off for AutoHush, so it can't tell you about updates.")
                         .font(.appCaption)
-                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
                         .buttonStyle(.chip)
@@ -126,7 +126,7 @@ struct GeneralSettingsView: View {
     private func explanation(_ text: String) -> some View {
         Text(text)
             .font(.appCaption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.appSecondary)
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -140,7 +140,7 @@ struct GeneralSettingsView: View {
             } icon: {
                 Image(systemName: "cup.and.saucer")
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.appSecondary)
             Link(destination: ProjectInfo.supportPage) {
                 Text("Buy me a coffee",
                      comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")

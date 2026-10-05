@@ -31,7 +31,7 @@ struct MenuToolbarView: View {
                     .foregroundStyle(tint.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary))
                 title
                     .font(.appCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }

@@ -19,7 +19,7 @@ struct DiagnosticsSettingsView: View {
                     }
                 } else {
                     Text(verbatim: DiagnosticsReport.noAudio)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.appSecondary)
                 }
             }
 
@@ -39,7 +39,7 @@ struct DiagnosticsSettingsView: View {
                         Image(systemName: "checkmark")
                     }
                     .font(.appCallout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
                 }
                 Spacer()
                 Button {
@@ -75,7 +75,7 @@ struct DiagnosticsSettingsView: View {
             if let evidence = app.evidence {
                 Text(verbatim: evidence)
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
             }
         }
     }

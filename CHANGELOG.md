@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Easier to read in light mode**: descriptions, labels and warnings are
+  darker, cards have an outline, and switches that are off show their
+  track. Dark mode is unchanged.
+
 ## [0.6.0] — 2026-10-05
 
 ### Added

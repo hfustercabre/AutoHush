@@ -18,7 +18,7 @@ struct AppsSettingsView: View {
                     Card {
                         if model.apps.isEmpty {
                             Text("Apps appear here once they have played audio.")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.appSecondary)
                         }
                         ForEach(Array(model.apps.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { CardDivider() }
@@ -27,7 +27,7 @@ struct AppsSettingsView: View {
                     }
                     Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
                         .font(.appCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.appSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)
                 }

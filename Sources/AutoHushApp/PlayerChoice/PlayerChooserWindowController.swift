@@ -60,7 +60,7 @@ struct PlayerChooserView: View {
                 .font(.appTitle)
             Text("AutoHush pauses it while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.")
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.appSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             Card {
                 ForEach(Array(model.playerOptions.enumerated()), id: \.element.id) { index, option in

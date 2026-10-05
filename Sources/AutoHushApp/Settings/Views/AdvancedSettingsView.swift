@@ -97,7 +97,7 @@ struct AdvancedSettingsView: View {
                 Spacer()
                 Text(format(model.timings[keyPath: keyPath]))
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
             }
             Slider(
                 value: Binding(
@@ -113,7 +113,7 @@ struct AdvancedSettingsView: View {
             )
             Text(help)
                 .font(.appCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.appSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

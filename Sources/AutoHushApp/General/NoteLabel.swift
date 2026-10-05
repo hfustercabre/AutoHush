@@ -23,14 +23,14 @@ struct NoteLabel: View {
             switch kind {
             case .warning:
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.appWarning)
             case .info:
                 Image(systemName: "info.circle")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
             }
         }
         .font(.appCallout)
-        .foregroundStyle(kind == .info ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
+        .foregroundStyle(kind == .info ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
         .fixedSize(horizontal: false, vertical: true)
     }
 }

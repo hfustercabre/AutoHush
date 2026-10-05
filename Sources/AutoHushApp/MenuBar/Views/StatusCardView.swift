@@ -18,7 +18,7 @@ struct StatusCardView: View {
                         .lineLimit(1)
                     Text(verbatim: status.statusLine)
                         .font(.appSubheadline)
-                        .foregroundStyle(status.needsAttention ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+                        .foregroundStyle(status.needsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
                     if status.canRetry { retryButton }
                 }
@@ -30,7 +30,7 @@ struct StatusCardView: View {
                     .toggleStyle(PillToggleStyle())
                     Text("Auto-Pause", comment: "Under the switch at the top of the menu that turns auto-pause on and off")
                         .font(.appCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.appSecondary)
                         .accessibilityHidden(true)
                 }
             }
@@ -72,7 +72,7 @@ struct StatusCardView: View {
                     .font(.appCallout)
                 Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
