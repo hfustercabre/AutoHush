@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -37,6 +38,20 @@ struct AppHealthStateTests {
     func namesThePlayer() {
         #expect(AppHealthState(startupError: MusicPlayerError.playerNotRunning, playerName: "Music")
             == .degraded("Music is not running"))
+    }
+
+    @Test("while no player is chosen, the status asks for one, or says none is installed")
+    func waitingForPlayer() {
+        let installed = PlayerOption(bundleID: "com.example.a", name: "A", appURL: URL(fileURLWithPath: "/Applications/A.app"))
+        let missing = PlayerOption(bundleID: "com.example.b", name: "B", appURL: nil)
+        #expect(AppHealthState.waitingForPlayer(among: [missing, installed]) == .needsPlayer("Choose a music player"))
+        #expect(AppHealthState.waitingForPlayer(among: [missing])
+            == .needsPlayer("No supported music player is installed"))
+    }
+
+    @Test("a chosen player that isn't installed is degraded")
+    func playerNotInstalled() {
+        #expect(AppHealthState.playerNotInstalled("Spotify") == .degraded("Spotify is not installed"))
     }
 
     @Test("any other error fails with its description")

@@ -66,6 +66,12 @@ extension AppHealthState {
             return .starting
         case .ready:
             return nil
+        case .needsPlayer(let message):
+            return StatePresentation(
+                icon: .attention,
+                label: String(localized: "AutoHush: no music player chosen", comment: "VoiceOver label of the menu bar icon"),
+                line: message
+            )
         case .degraded(let message):
             return StatePresentation(
                 icon: .attention,

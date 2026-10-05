@@ -2,11 +2,13 @@ import Foundation
 
 /// A music app AutoHush pauses while other apps play, and resumes afterwards.
 ///
-/// Each supported app (Spotify today) implements this once; the rest of
-/// AutoHush only talks to players through it.
+/// Each supported app implements this once, in its own `<App>Support`
+/// target; the rest of AutoHush only talks to players through it, and
+/// controls the one the user chose.
 package protocol MusicPlayer: Sendable {
-    /// The app's bundle identifier. Its own audio is the music being
-    /// protected, so it never counts as another app playing.
+    /// The app's bundle identifier. While the player is the chosen one, its
+    /// own audio is the music being protected, so it never counts as another
+    /// app playing.
     var bundleID: String { get }
     /// Name shown to the user, e.g. "Spotify".
     var name: String { get }

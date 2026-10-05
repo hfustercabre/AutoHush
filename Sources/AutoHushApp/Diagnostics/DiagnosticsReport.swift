@@ -2,8 +2,8 @@ import Foundation
 import AutoHushKit
 
 /// The text of the Diagnostics alert (menu → hold ⌥ → Diagnostics…): every app
-/// with its sound on and how AutoHush judges it, the detection in effect, and
-/// the auto-pause and ignore settings.
+/// with its sound on and how AutoHush judges it, the detection in effect, the
+/// music player, and the auto-pause and ignore settings.
 enum DiagnosticsReport {
     static func text(activeAudio: [ActiveAudioReport.Entry], status: AppStatus, detectionMethod: DetectionMethod) -> String {
         [
@@ -14,6 +14,7 @@ enum DiagnosticsReport {
                 ? status.detection.statusLine
                 : String(localized: "\(status.detection.statusLine) — AntiDot mode",
                          comment: "Diagnostics: the detection in effect, then that AntiDot mode is on"),
+            describe(player: status.playerName),
             describe(status.autoPause),
             describe(ignoredApps: status.ignoredApps.map(\.name)),
         ].joined(separator: "\n\n")
@@ -65,6 +66,11 @@ enum DiagnosticsReport {
         case .level:
             return String(localized: "silence", comment: "Diagnostics: the level of an app that makes no sound")
         }
+    }
+
+    private static func describe(player name: String) -> String {
+        guard !name.isEmpty else { return String(localized: "Music player: none chosen", comment: "Diagnostics") }
+        return String(localized: "Music player: \(name)", comment: "Diagnostics; %@ is the music player, e.g. Spotify")
     }
 
     private static func describe(_ autoPause: AppStatus.AutoPause) -> String {

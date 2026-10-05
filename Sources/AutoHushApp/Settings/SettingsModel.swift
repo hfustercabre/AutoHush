@@ -10,6 +10,7 @@ import AutoHushKit
 final class SettingsModel {
     /// What changing a setting does; `AppDelegate` provides them.
     struct Actions {
+        var chooseMusicPlayer: @MainActor (String) -> Void
         var setAutoPause: @MainActor (Bool) -> Void
         var setIgnored: @MainActor (AudioSource, Bool) -> Void
         var forgetApp: @MainActor (AudioSource) -> Void
@@ -32,6 +33,10 @@ final class SettingsModel {
     // General
     private(set) var launchAtLoginEnabled = false
     private(set) var launchAtLoginError: String?
+    /// The music players to choose from (also in the welcome window).
+    var playerOptions: [PlayerOption] = []
+    /// The bundle ID of the chosen player; `nil` while none is chosen.
+    var chosenPlayerID: String?
     var isAutoPauseOn = true
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String?
@@ -97,6 +102,7 @@ final class SettingsModel {
 
     // MARK: - Forwarded actions
 
+    func chooseMusicPlayer(_ bundleID: String) { actions.chooseMusicPlayer(bundleID) }
     func setAutoPause(_ on: Bool) { actions.setAutoPause(on) }
     func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
     func forget(_ source: AudioSource) { actions.forgetApp(source) }

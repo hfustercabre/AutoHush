@@ -9,33 +9,58 @@ import AutoHushTestSupport
 
 @Suite("AppDelegate")
 struct AppDelegateTests {
-    /// Counts bootstrap requests; the real bootstrap would script Spotify and
-    /// tap real audio processes from inside the test process.
+    /// Counts bootstrap requests; the real bootstrap would script the music
+    /// player and tap real audio processes from inside the test process.
     @MainActor
     private final class BootstrapCounter {
         var count = 0
     }
 
     /// In-memory preferences and a downloads folder of its own, so tests
-    /// never write preference files or touch AutoHush's real Caches.
+    /// never write preference files or touch AutoHush's real Caches. Two
+    /// stand-in music players to choose from, and which of them are installed.
     @MainActor
     private final class Scratch {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         let notifier = MockUpdateNotifier()
+        let players = MusicPlayerCatalog(
+            players: [
+                MockMusicPlayer(bundleID: Players.first, name: "First"),
+                MockMusicPlayer(bundleID: Players.second, name: "Second"),
+            ],
+            formerDefault: Players.first
+        )
+        var installed: Set<String> = [Players.first, Players.second]
+
+        func locate(_ bundleID: String) -> URL? {
+            installed.contains(bundleID) ? URL(fileURLWithPath: "/Applications/\(bundleID).app") : nil
+        }
 
         deinit {
             try? FileManager.default.removeItem(at: downloads)
         }
     }
 
+    private enum Players {
+        static let first = "com.example.first"
+        static let second = "com.example.second"
+    }
+
+    /// `chosenPlayer`: the player already chosen before this launch, if any.
+    /// `realBootstrap`: only for a bootstrap that stops before the player is
+    /// scripted.
     @MainActor
     private func makeSUT(
         _ scratch: Scratch = Scratch(),
+        chosenPlayer: String? = Players.first,
+        realBootstrap: Bool = false,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller()
     ) -> (AppDelegate, BootstrapCounter) {
+        if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let counter = BootstrapCounter()
+        let countBootstrap: @MainActor () -> Void = { counter.count += 1 }
         let sut = AppDelegate(
             preferences: scratch.preferences,
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
@@ -43,15 +68,17 @@ struct AppDelegateTests {
             updateInstaller: updateInstaller,
             updateNotifier: scratch.notifier,
             updateDownloadsFolder: scratch.downloads,
+            players: scratch.players,
+            locateApp: { scratch.locate($0) },
             currentVersion: AppVersion("0.2.0"),
-            bootstrapOverride: { counter.count += 1 }
+            bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
         return (sut, counter)
     }
 
     @MainActor
-    @Test("non-Spotify launch does not change health state or re-bootstrap")
-    func nonSpotifyLaunchDoesNothing() {
+    @Test("another app's launch does not change health state or re-bootstrap")
+    func otherAppLaunchDoesNothing() {
         let (sut, bootstraps) = makeSUT()
 
         #expect(sut.status.health == .starting)
@@ -61,12 +88,12 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("Spotify launch sets app back to starting and re-bootstraps")
-    func spotifyLaunchSetsStartingState() {
+    @Test("the chosen player's launch sets app back to starting and re-bootstraps")
+    func playerLaunchSetsStartingState() {
         let (sut, bootstraps) = makeSUT()
-        sut.setHealth(.degraded("Spotify is not running"))
+        sut.setHealth(.degraded("First is not running"))
 
-        sut.handleApplicationDidLaunch(bundleIdentifier: "com.spotify.client")
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
 
         #expect(sut.status.health == .starting)
         #expect(bootstraps.count == 1)
@@ -82,6 +109,167 @@ struct AppDelegateTests {
 
         #expect(sut.status.health == .ready)
         #expect(bootstraps.count == 0)
+    }
+
+    // MARK: - Music player
+
+    @MainActor
+    @Test("with no player chosen, AutoHush waits for one and offers them all")
+    func waitsForPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: nil)
+        #expect(sut.player == nil)
+        #expect(sut.status.health == .needsPlayer("Choose a music player"))
+        #expect(sut.status.statusLine == "Choose a music player")
+        #expect(sut.status.playerOptions.map(\.name) == ["First", "Second"])
+        #expect(sut.settingsModel.playerOptions == sut.status.playerOptions)
+        #expect(sut.settingsModel.chosenPlayerID == nil)
+        #expect(sut.currentConfiguration.musicPlayerBundleID == nil)
+    }
+
+    @MainActor
+    @Test("with no supported player installed, AutoHush says so, and none can be chosen")
+    func noPlayerInstalled() {
+        let scratch = Scratch()
+        scratch.installed = []
+        let (sut, bootstraps) = makeSUT(scratch, chosenPlayer: nil)
+        #expect(sut.status.health == .needsPlayer("No supported music player is installed"))
+        #expect(sut.status.playerOptions.allSatisfy { !$0.isInstalled })
+
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.player == nil)
+        #expect(scratch.preferences.musicPlayer == nil)
+        #expect(bootstraps.count == 0)
+
+        // Installed later: it can be chosen.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        #expect(sut.status.health == .needsPlayer("Choose a music player"))
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.player?.bundleID == Players.first)
+    }
+
+    @MainActor
+    @Test("choosing a player stores it, shows it and starts over with it; choosing it again does nothing")
+    func choosePlayer() {
+        let scratch = Scratch()
+        let (sut, bootstraps) = makeSUT(scratch, chosenPlayer: nil)
+
+        sut.chooseMusicPlayer(Players.second)
+        #expect(scratch.preferences.musicPlayer == Players.second)
+        #expect(sut.status.playerName == "Second")
+        #expect(sut.status.chosenPlayerID == Players.second)
+        #expect(sut.settingsModel.chosenPlayerID == Players.second)
+        #expect(sut.status.health == .starting)
+        #expect(sut.currentConfiguration.musicPlayerBundleID == Players.second)
+        #expect(bootstraps.count == 1)
+
+        sut.chooseMusicPlayer(Players.second)
+        #expect(bootstraps.count == 1)
+
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.status.playerName == "First")
+        #expect(sut.currentConfiguration.musicPlayerBundleID == Players.first)
+        #expect(bootstraps.count == 2)
+    }
+
+    @MainActor
+    @Test("a player that isn't installed, or isn't supported, can't be chosen")
+    func chooseUnavailablePlayer() {
+        let scratch = Scratch()
+        scratch.installed = [Players.first]
+        let (sut, bootstraps) = makeSUT(scratch)
+
+        sut.chooseMusicPlayer(Players.second)
+        sut.chooseMusicPlayer("com.example.unknown")
+        #expect(sut.player?.bundleID == Players.first)
+        #expect(scratch.preferences.musicPlayer == Players.first)
+        #expect(bootstraps.count == 0)
+    }
+
+    @MainActor
+    @Test("another supported player opening shows it as installed, without starting over")
+    func otherPlayerLaunch() {
+        let scratch = Scratch()
+        scratch.installed = [Players.first]
+        let (sut, bootstraps) = makeSUT(scratch)
+        sut.setHealth(.ready)
+
+        scratch.installed.insert(Players.second)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
+        #expect(sut.status.playerOptions.map(\.isInstalled) == [true, true])
+        #expect(sut.status.health == .ready)
+        #expect(bootstraps.count == 0)
+    }
+
+    @MainActor
+    @Test("while no player is chosen, a supported player opening brings the welcome window back")
+    func playerLaunchWhileWaiting() {
+        let (sut, bootstraps) = makeSUT(chosenPlayer: nil)
+        #expect(!sut.isShowingPlayerChooser)
+
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
+        #expect(sut.isShowingPlayerChooser)
+        #expect(bootstraps.count == 0)
+
+        sut.chooseMusicPlayer(Players.second)
+        #expect(!sut.isShowingPlayerChooser)
+    }
+
+    @MainActor
+    @Test("the chosen player is left out of Settings → Apps and the ignored apps")
+    func chosenPlayerNotListedAsApp() {
+        let scratch = Scratch()
+        let first = AudioSource(id: Players.first, name: "First")
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        scratch.preferences.recordSeen([first, vlc])
+        scratch.preferences.ignoredApps = [first]
+        let (sut, _) = makeSUT(scratch)
+        #expect(sut.settingsModel.apps.map(\.id) == ["org.videolan.vlc"])
+        #expect(sut.status.ignoredApps.isEmpty)
+
+        // Once another player is chosen, it's an app like any other.
+        sut.chooseMusicPlayer(Players.second)
+        #expect(sut.settingsModel.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
+        #expect(sut.status.ignoredApps == [first])
+    }
+
+    @MainActor
+    @Test("only the chosen player's audio is the music; other players count like any app")
+    func onlyChosenPlayerIsProtected() {
+        let (sut, _) = makeSUT()
+        let configuration = sut.currentConfiguration
+        #expect(!configuration.isMediaSource(Players.first))
+        #expect(configuration.isMediaSource(Players.second))
+    }
+
+    @MainActor
+    @Test("someone updating from before the choice keeps the former player, unasked")
+    func updatingKeepsFormerPlayer() {
+        let scratch = Scratch()
+        scratch.preferences.lastLaunchedVersion = "0.3.11"
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        #expect(sut.player?.bundleID == Players.first)
+        #expect(sut.status.health == .starting)
+    }
+
+    @MainActor
+    @Test("a stored player that is no longer supported is asked for again")
+    func unknownStoredPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: "com.example.gone")
+        #expect(sut.player == nil)
+        #expect(sut.status.health == .needsPlayer("Choose a music player"))
+    }
+
+    @MainActor
+    @Test("a chosen player that was uninstalled is reported as not installed")
+    func chosenPlayerUninstalled() async {
+        let scratch = Scratch()
+        scratch.installed = []
+        // The real bootstrap stops at the install check, before scripting the player.
+        let (sut, _) = makeSUT(scratch, realBootstrap: true)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        #expect(sut.status.health == .degraded("First is not installed"))
     }
 
     // MARK: - Auto-pause and ignored apps
@@ -209,7 +397,7 @@ struct AppDelegateTests {
         #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
     }
 
-    @Test("startup retries only while Spotify is not ready yet")
+    @Test("startup retries only while the player is not ready yet")
     func transientStartupErrors() {
         #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotResponding))
         #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotRunning))

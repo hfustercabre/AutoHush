@@ -7,7 +7,7 @@ import Testing
 struct AboutPanelTests {
     @Test("the credits say what AutoHush does, and link to the project and to buy me a coffee")
     func credits() {
-        let credits = AboutPanel.credits(playerName: "Spotify")
+        let credits = AboutPanel.credits(playerNames: ["Spotify"])
 
         #expect(credits.string == """
             Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify.
@@ -20,6 +20,14 @@ struct AboutPanelTests {
             "github.com/hfustercabre/AutoHush": ProjectInfo.homepage,
             "Buy me a coffee": ProjectInfo.supportPage,
         ])
+    }
+
+    @Test("the credits name every music player AutoHush works with")
+    func everyPlayer() {
+        let credits = AboutPanel.credits(playerNames: ["Spotify", "Apple Music"])
+        #expect(credits.string.hasPrefix(
+            "Pauses your music while other apps play audio, and resumes it afterwards. Works with Spotify and Apple Music."
+        ))
     }
 
     /// Each linked piece of text and where it leads.

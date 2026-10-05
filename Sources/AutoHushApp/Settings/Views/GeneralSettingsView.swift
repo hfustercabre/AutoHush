@@ -1,8 +1,9 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, auto-pause, AntiDot mode, updates
-/// (and what automatic checks lead to), and a way to support AutoHush.
+/// Settings → General: launch at login, the music player, auto-pause, AntiDot
+/// mode, updates (and what automatic checks lead to), and a way to support
+/// AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -19,6 +20,27 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.red)
                     Button("Open Login Items Settings…") { model.openLoginItemsSettings() }
                 }
+            }
+
+            Section {
+                LabeledContent("Music player") {
+                    PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
+                        model.chooseMusicPlayer($0)
+                    }
+                }
+                if model.playerOptions.noneInstalled {
+                    Label {
+                        Text(PlayerOption.noneInstalledWarning)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                    .font(.callout)
+                }
+            } footer: {
+                Text("AutoHush pauses and resumes this app.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

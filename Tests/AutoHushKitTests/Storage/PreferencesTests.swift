@@ -150,4 +150,42 @@ struct PreferencesTests {
         Preferences(store: scratch.defaults).detectionMethod = .audioLevels
         #expect(scratch.defaults.object(forKey: "measuresAudioLevels") == nil)
     }
+
+    @Test("the chosen music player persists; none is chosen at first")
+    func musicPlayer() {
+        let scratch = Scratch()
+        #expect(Preferences(store: scratch.defaults).musicPlayer == nil)
+        Preferences(store: scratch.defaults).musicPlayer = "com.example.player"
+        #expect(Preferences(store: scratch.defaults).musicPlayer == "com.example.player")
+    }
+
+    @Test("someone updating from before the choice keeps the former player")
+    func updatingKeepsFormerPlayer() {
+        let scratch = Scratch()
+        scratch.defaults.set("0.3.11", forKey: "lastLaunchedVersion")
+        Preferences(store: scratch.defaults).keepFormerPlayer("com.example.former")
+        #expect(Preferences(store: scratch.defaults).musicPlayer == "com.example.former")
+    }
+
+    @Test("on a Mac where AutoHush never ran, no player is chosen, even on later launches")
+    func newUserIsAsked() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        preferences.keepFormerPlayer("com.example.former")
+        #expect(preferences.musicPlayer == nil)
+        // The first launch stores settings of its own; the user still hasn't chosen.
+        preferences.lastLaunchedVersion = "0.4.0"
+        preferences.keepFormerPlayer("com.example.former")
+        #expect(preferences.musicPlayer == nil)
+    }
+
+    @Test("a chosen player is never replaced by the former one")
+    func choiceIsKept() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        preferences.lastLaunchedVersion = "0.3.11"
+        preferences.musicPlayer = "com.example.chosen"
+        preferences.keepFormerPlayer("com.example.former")
+        #expect(preferences.musicPlayer == "com.example.chosen")
+    }
 }

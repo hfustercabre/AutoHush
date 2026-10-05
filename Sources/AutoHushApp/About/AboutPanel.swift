@@ -4,14 +4,15 @@ import AppKit
 /// a way to support it.
 @MainActor
 enum AboutPanel {
-    static func show(playerName: String) {
+    /// `playerNames`: the music players AutoHush works with.
+    static func show(playerNames: [String]) {
         NSApp.activate()
-        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits(playerName: playerName)])
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits(playerNames: playerNames)])
     }
 
     /// The text under the app's name: what AutoHush does, the project link,
     /// and "Would you like to support me?" with a link to buy me a coffee below.
-    static func credits(playerName: String) -> NSAttributedString {
+    static func credits(playerNames: [String]) -> NSAttributedString {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         let body: [NSAttributedString.Key: Any] = [
@@ -24,9 +25,10 @@ enum AboutPanel {
             attributes[.link] = url
             return NSAttributedString(string: text, attributes: attributes)
         }
+        let players = playerNames.formatted(.list(type: .and))
         let summary = String(
-            localized: "Pauses your music while other apps play audio, and resumes it afterwards. Works with \(playerName).",
-            comment: "About panel; %@ is the music player, e.g. Spotify"
+            localized: "Pauses your music while other apps play audio, and resumes it afterwards. Works with \(players).",
+            comment: "About panel; %@ lists the music players it works with, e.g. “Spotify and Apple Music”"
         )
         let question = String(localized: "Would you like to support me?",
                               comment: "About panel and Settings → General, before the Buy me a coffee link")

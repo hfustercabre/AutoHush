@@ -6,8 +6,8 @@ import AutoHushKit
 // MARK: - MockMusicPlayer
 
 package actor MockMusicPlayer: MusicPlayer {
-    package nonisolated var bundleID: String { "com.example.player" }
-    package nonisolated var name: String { "Spotify" }
+    package nonisolated let bundleID: String
+    package nonisolated let name: String
     package nonisolated let volumeCurve: VolumeCurve
     package var state: PlayerState
     package var pauseCallCount = 0
@@ -25,12 +25,16 @@ package actor MockMusicPlayer: MusicPlayer {
     package var beforeStateAnswer: (@Sendable () async -> Void)?
 
     package init(
+        bundleID: String = "com.example.player",
+        name: String = "Spotify",
         state: PlayerState = .playing,
         volumeCurve: VolumeCurve = .linear,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
     ) {
+        self.bundleID = bundleID
+        self.name = name
         self.state = state
         self.volumeCurve = volumeCurve
         self.failPauseWith = failPauseWith
@@ -173,10 +177,10 @@ package enum TestPlayer {
 }
 
 extension AppConfiguration {
-    /// The default configuration, with `TestPlayer` as the supported player.
+    /// The default configuration, with `TestPlayer` as the chosen player.
     package static var testing: AppConfiguration {
         var configuration = AppConfiguration(timings: .defaults)
-        configuration.musicPlayerBundleIDs = [TestPlayer.bundleID]
+        configuration.musicPlayerBundleID = TestPlayer.bundleID
         return configuration
     }
 }

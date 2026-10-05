@@ -18,10 +18,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
-    /// Follows the notification setting while Settings is open.
-    private var notificationsWatch: Task<Void, Never>?
-    /// The music player AutoHush pauses and resumes.
-    let player: any MusicPlayer
+    /// Follows the notification setting and the installed players while
+    /// Settings or the welcome window is open.
+    private var windowsWatch: Task<Void, Never>?
+    /// The music players to choose from.
+    private let players: MusicPlayerCatalog
+    private let locateApp: PlayerOption.Locate
+    /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
+    private(set) var player: (any MusicPlayer)?
+    /// Asks for the music player while none is chosen.
+    private var playerChooser: PlayerChooserWindowController?
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -49,13 +55,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateInstaller: any UpdateInstalling = UpdateInstaller(),
         updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
-        player: any MusicPlayer = SupportedPlayers.makeDefault(),
+        players: MusicPlayerCatalog = SupportedPlayers.catalog,
+        locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
-        self.player = player
+        self.players = players
+        self.locateApp = locateApp
+        // Before anything else is stored: people updating keep their player.
+        preferences.keepFormerPlayer(players.formerDefault)
+        self.player = players.player(bundleID: preferences.musicPlayer)
         self.bootstrapOverride = bootstrapOverride
         self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
@@ -76,6 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel = SettingsModel(
             launchAtLoginController: launchAtLoginController,
             actions: .init(
+                chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 setAutoPause: { [weak self] in self?.setAutoPause($0) },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 forgetApp: { [weak self] in self?.forget($0) },
@@ -93,8 +105,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
         settingsModel.automaticUpdates = preferences.automaticUpdates
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
-        status.playerName = player.name
-        status.ignoredApps = preferences.ignoredApps
+        showChosenPlayer()
+        refreshPlayerOptions()
+        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
         syncSettingsApps()
         applyAutoPause()
     }
@@ -107,6 +120,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             actions: .init(
                 toggleAutoPause: { [weak self] in self?.toggleAutoPause() },
                 snooze: { [weak self] in self?.snooze($0) },
+                chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
+                menuWillOpen: { [weak self] in self?.refreshPlayerOptions() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { $0.settingsPane.open() },
                 retry: { [weak self] in self?.retry() },
@@ -114,7 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showDiagnostics: { [weak self] in self?.showDiagnostics() },
                 showAvailableUpdate: { [weak self] in self?.updates.presentAvailableUpdate() },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
-                showAbout: { [weak self] in AboutPanel.show(playerName: self?.player.name ?? "") },
+                showAbout: { [weak self] in AboutPanel.show(playerNames: self?.players.players.map(\.name) ?? []) },
                 quit: { NSApp.terminate(nil) }
             )
         )
@@ -127,7 +142,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             let others = await otherInstances.quitAll()
             if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
-            requestBootstrap()
+            if player == nil {
+                showPlayerChooser()
+            } else {
+                requestBootstrap()
+            }
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
@@ -259,21 +278,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Stores the ignored apps and passes them to the menu, the monitor and Settings.
     private func applyIgnoredApps(_ apps: [AudioSource]) {
         preferences.ignoredApps = apps
-        status.ignoredApps = preferences.ignoredApps
+        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
         pipeline?.setIgnoredSources(Set(apps.map(\.id)))
         syncSettingsApps()
     }
 
-    /// The engine's configuration: the user's timings, and the supported
-    /// players, whose own audio never counts as another app playing.
-    private var currentConfiguration: AppConfiguration {
+    /// The engine's configuration: the user's timings, and the chosen player,
+    /// whose own audio never counts as another app playing.
+    var currentConfiguration: AppConfiguration {
         var configuration = AppConfiguration(timings: preferences.timings)
-        configuration.musicPlayerBundleIDs = SupportedPlayers.bundleIDs
+        configuration.musicPlayerBundleID = player?.bundleID
         return configuration
     }
 
     private func syncSettingsApps() {
-        settingsModel.setApps(seen: preferences.seenApps, ignored: preferences.ignoredApps)
+        settingsModel.setApps(seen: withoutPlayer(preferences.seenApps), ignored: withoutPlayer(preferences.ignoredApps))
+    }
+
+    /// Apps other than the chosen player: it never pauses itself, so an entry
+    /// for it in Settings → Apps or Ignored Apps would do nothing.
+    private func withoutPlayer(_ apps: [AudioSource]) -> [AudioSource] {
+        apps.filter { $0.id != player?.bundleID }
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,
@@ -303,6 +328,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         snoozeTimer = timer
     }
 
+    // MARK: - Music player
+
+    /// Makes `bundleID` the player AutoHush controls and starts over with it.
+    /// A player that isn't installed, or is chosen already, is ignored. Music
+    /// that AutoHush holds paused in the previous player stays paused: the
+    /// user is moving to another one.
+    func chooseMusicPlayer(_ bundleID: String) {
+        refreshPlayerOptions()
+        guard bundleID != player?.bundleID,
+              let chosen = players.player(bundleID: bundleID),
+              status.playerOptions.contains(where: { $0.bundleID == bundleID && $0.isInstalled })
+        else { return }
+        logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
+        preferences.musicPlayer = bundleID
+        player = chosen
+        showChosenPlayer()
+        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
+        syncSettingsApps()
+        playerChooser?.close()
+        setHealth(.starting)
+        requestBootstrap()
+    }
+
+    /// Shows the chosen player in the menu and Settings.
+    private func showChosenPlayer() {
+        status.playerName = player?.name ?? ""
+        status.chosenPlayerID = player?.bundleID
+        settingsModel.chosenPlayerID = player?.bundleID
+    }
+
+    /// Checks again which players are installed, for the menu, Settings and
+    /// the welcome window. While none is chosen, the status line follows.
+    func refreshPlayerOptions() {
+        let options = PlayerOption.list(players, locate: locateApp)
+        if status.playerOptions != options { status.playerOptions = options }
+        if settingsModel.playerOptions != options { settingsModel.playerOptions = options }
+        if player == nil { setHealth(.waitingForPlayer(among: options)) }
+    }
+
+    /// The welcome window, which asks for the music player.
+    private func showPlayerChooser() {
+        if playerChooser == nil {
+            playerChooser = PlayerChooserWindowController(model: settingsModel)
+        }
+        refreshPlayerOptions()
+        playerChooser?.show()
+        watchWindows()
+    }
+
+    /// Whether the welcome window is on screen.
+    var isShowingPlayerChooser: Bool { playerChooser?.window?.isVisible == true }
+
     // MARK: - Player relaunch
 
     private func registerPlayerLaunchObserver() {
@@ -321,9 +398,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// A supported player opened: it is installed now. While none is chosen,
+    /// the welcome window asks again; the chosen one is controlled afresh.
     func handleApplicationDidLaunch(bundleIdentifier: String?) {
+        guard let bundleIdentifier, players.player(bundleID: bundleIdentifier) != nil else { return }
+        refreshPlayerOptions()
+        guard let player else {
+            showPlayerChooser()
+            return
+        }
         guard bundleIdentifier == player.bundleID else { return }
-        logger.debug("\(self.player.name, privacy: .public) launch detected — re-running bootstrap")
+        logger.debug("\(player.name, privacy: .public) launch detected — re-running bootstrap")
         setHealth(.starting)
         // The player may not answer yet while it finishes starting up.
         requestBootstrap(retries: Self.startupRetries)
@@ -362,13 +447,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bootstrapGeneration += 1
         let generation = bootstrapGeneration
         tearDownPipeline()
+        guard let player else {
+            setHealth(.waitingForPlayer(among: status.playerOptions)) // nothing to control yet
+            return
+        }
+        guard locateApp(player.bundleID) != nil else {
+            setHealth(.playerNotInstalled(player.name))
+            return
+        }
 
         do {
             try await player.verifyControlAccess()
         } catch {
             guard generation == bootstrapGeneration else { return }
             if retriesLeft > 0, Self.isTransientStartupError(error) {
-                logger.debug("\(self.player.name, privacy: .public) is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
+                logger.debug("\(player.name, privacy: .public) is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
                 try? await Task.sleep(for: .seconds(Self.startupRetryDelay))
                 guard generation == bootstrapGeneration else { return } // Retry or another launch took over
                 await bootstrap(retriesLeft: retriesLeft - 1)
@@ -410,17 +503,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
         settingsWindowController?.show()
-        watchNotificationSettings()
+        refreshPlayerOptions()
+        watchWindows()
     }
 
-    /// While Settings is open, checks every second whether the user turned
-    /// AutoHush's notifications on or off, or reset them, in System Settings,
-    /// so the note and the choices that need them follow at once, and a reset
-    /// is asked about again. macOS doesn't announce these changes.
-    private func watchNotificationSettings() {
-        notificationsWatch?.cancel()
-        notificationsWatch = Task { [weak self] in
-            while !Task.isCancelled, let self, self.settingsWindowController?.window?.isVisible == true {
+    /// While Settings or the welcome window is open, checks every second
+    /// whether the user turned AutoHush's notifications on or off, or reset
+    /// them, in System Settings, and which music players are installed, so
+    /// the windows follow at once and a reset is asked about again. macOS
+    /// doesn't announce these changes.
+    private func watchWindows() {
+        windowsWatch?.cancel()
+        windowsWatch = Task { [weak self] in
+            while !Task.isCancelled, let self,
+                  self.settingsWindowController?.window?.isVisible == true || self.isShowingPlayerChooser {
+                self.refreshPlayerOptions()
                 let off = await self.updates.followNotificationPermission() == .off
                 if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
                 try? await Task.sleep(for: .seconds(1))

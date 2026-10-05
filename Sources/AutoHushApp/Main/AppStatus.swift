@@ -38,8 +38,13 @@ struct AppStatus: Equatable {
         }
     }
 
-    /// The music player AutoHush controls, e.g. "Spotify".
+    /// The music player AutoHush controls, e.g. "Spotify"; empty while none
+    /// is chosen.
     var playerName = ""
+    /// The players to choose from, for the menu's Music Player submenu.
+    var playerOptions: [PlayerOption] = []
+    /// The bundle ID of the chosen player; `nil` while none is chosen.
+    var chosenPlayerID: String?
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
@@ -108,7 +113,7 @@ struct AppStatus: Equatable {
 
     var showsRetry: Bool {
         switch health {
-        case .starting, .ready:                     return false
+        case .starting, .ready, .needsPlayer:       return false
         case .degraded, .needsPermission, .failed:  return true
         }
     }

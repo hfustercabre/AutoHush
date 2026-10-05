@@ -1,6 +1,5 @@
 import Foundation
 import AutoHushKit
-import AutoHushPlayers
 
 /// Everything one bootstrap creates — arbiter, audio monitor and player
 /// observer — wired together, started and torn down as a unit.

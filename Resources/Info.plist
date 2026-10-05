@@ -35,7 +35,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>AutoHush pauses and resumes Spotify.</string>
+	<string>AutoHush pauses and resumes your music player.</string>
 	<key>NSAudioCaptureUsageDescription</key>
 	<string>AutoHush measures how loud other apps are, so it only pauses your music for audible sound. Audio is never recorded, stored or sent anywhere.</string>
 	<key>NSHumanReadableCopyright</key>

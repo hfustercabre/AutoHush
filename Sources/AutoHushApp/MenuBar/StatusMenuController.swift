@@ -11,6 +11,7 @@ import AutoHushKit
 /// ─────────
 /// ✓ Auto-Pause Music
 ///   Turn Off For                  ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
+///   Music Player                  ▸ ✓ Spotify · (one not installed, dimmed)
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
 /// ⚠ Allow Audio Recording Access…    (only when something needs fixing)
@@ -28,6 +29,10 @@ final class StatusMenuController: NSObject {
     struct Actions {
         var toggleAutoPause: @MainActor () -> Void
         var snooze: @MainActor (AutoPauseSnooze) -> Void
+        var chooseMusicPlayer: @MainActor (String) -> Void
+        /// The menu is about to open: a last chance to bring `status` up to
+        /// date (e.g. which players are installed) before it is built.
+        var menuWillOpen: @MainActor () -> Void
         var setIgnored: @MainActor (AudioSource, Bool) -> Void
         var resolveWarning: @MainActor (Permission) -> Void
         var retry: @MainActor () -> Void
@@ -109,11 +114,13 @@ final class StatusMenuController: NSObject {
         status.activeSources.forEach { menu.addItem(sourceItem(for: $0)) }
     }
 
-    /// Auto-Pause Music, Turn Off For and, when there are any, Ignored Apps.
+    /// Auto-Pause Music, Turn Off For, Music Player and, when there are any,
+    /// Ignored Apps.
     private func addAutoPauseItems() {
         menu.addItem(.separator())
         menu.addItem(autoPauseItem())
         menu.addItem(snoozeItem())
+        menu.addItem(musicPlayerItem())
         if !status.ignoredApps.isEmpty { menu.addItem(ignoredAppsItem()) }
     }
 
@@ -225,6 +232,27 @@ final class StatusMenuController: NSObject {
         return row
     }
 
+    /// The players to choose from, the chosen one checked. One that isn't
+    /// installed can't be chosen.
+    private func musicPlayerItem() -> NSMenuItem {
+        let title = String(localized: "Music Player", comment: "Menu item; its submenu lists the music players to choose from")
+        let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        for option in status.playerOptions {
+            let entry = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
+            entry.image = option.icon(size: 16)
+            entry.state = option.bundleID == status.chosenPlayerID ? .on : .off
+            if !option.isInstalled {
+                entry.isEnabled = false
+                entry.subtitle = PlayerOption.notInstalledLabel
+            }
+            submenu.addItem(entry)
+        }
+        row.submenu = submenu
+        return row
+    }
+
     private func ignoredAppsItem() -> NSMenuItem {
         let row = NSMenuItem(title: String(localized: "Ignored Apps", comment: "Menu item"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
@@ -265,6 +293,11 @@ final class StatusMenuController: NSObject {
         actions.snooze(payload.value)
     }
 
+    @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
+        guard let payload = sender.representedObject as? Payload<String> else { return }
+        actions.chooseMusicPlayer(payload.value)
+    }
+
     @objc private func toggleIgnored(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<(AudioSource, Bool)> else { return }
         actions.setIgnored(payload.value.0, payload.value.1)
@@ -279,6 +312,11 @@ final class StatusMenuController: NSObject {
 // MARK: - NSMenuDelegate
 
 extension StatusMenuController: NSMenuDelegate {
+    /// Called before the menu opens, while it can still be rebuilt.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        actions.menuWillOpen()
+    }
+
     func menuWillOpen(_ menu: NSMenu) {
         isMenuOpen = true
     }

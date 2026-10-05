@@ -106,6 +106,16 @@ struct AppStatusTests {
         #expect(status.warning == nil)
     }
 
+    @Test("waiting for a music player to be chosen needs attention, but no Retry or warning")
+    func waitingForPlayer() {
+        var status = AppStatus()
+        status.setHealth(.needsPlayer("Choose a music player"))
+        #expect(status.icon == .attention)
+        #expect(status.statusLine == "Choose a music player")
+        #expect(!status.showsRetry)
+        #expect(status.warning == nil)
+    }
+
     @Test("missing Automation access is the one warning, with Retry")
     func automationWarning() {
         var status = AppStatus()

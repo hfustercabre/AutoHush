@@ -35,9 +35,9 @@ package struct AppConfiguration: Sendable {
     /// while the music player alone plays.
     package var idleSampleInterval: TimeInterval = 1.0
 
-    /// The music players' own apps: their audio is the music being protected.
-    /// Set by the app from its supported players.
-    package var musicPlayerBundleIDs: Set<String> = []
+    /// The chosen music player's app: its audio is the music being protected.
+    /// Set by the app; `nil` while no player is chosen.
+    package var musicPlayerBundleID: String?
 
     /// System processes that must NEVER trigger a pause.
     package static let excludedBundleIDs: Set<String> = [
@@ -71,9 +71,10 @@ package struct AppConfiguration: Sendable {
         fadeInDuration = timings.fadeInDuration
     }
 
-    /// True for a supported music player's own app.
+    /// True for the chosen music player's own app. Other music players count
+    /// like any other app.
     package func isMusicPlayer(_ bundleID: String) -> Bool {
-        musicPlayerBundleIDs.contains(bundleID)
+        bundleID == musicPlayerBundleID
     }
 
     /// Returns true if the bundle ID should trigger pause/resume logic.

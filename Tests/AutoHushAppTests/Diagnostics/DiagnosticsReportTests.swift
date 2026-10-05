@@ -7,9 +7,10 @@ import AutoHushTestSupport
 
 @Suite("DiagnosticsReport")
 struct DiagnosticsReportTests {
-    @Test("lists the apps with sound, the detection, auto-pause and ignored apps")
+    @Test("lists the apps with sound, the detection, the music player, auto-pause and ignored apps")
     func fullReport() {
         var status = AppStatus()
+        status.playerName = "Spotify"
         status.detection = .audioLevel
         status.autoPause = .snoozed("until 15:30")
         status.ignoredApps = [AudioSource(id: "org.videolan.vlc", name: "VLC")]
@@ -23,6 +24,8 @@ struct DiagnosticsReportTests {
             Google Chrome (com.google.Chrome) — playing (-20 dBFS)
 
             Detection: audio levels
+
+            Music player: Spotify
 
             Auto-pause: off until 15:30
 
@@ -45,13 +48,14 @@ struct DiagnosticsReportTests {
         #expect(DiagnosticsReport.line(for: entry) == line)
     }
 
-    @Test("says when nothing plays, nothing is ignored, and AntiDot mode is on")
+    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on")
     func quietReport() {
         var status = AppStatus()
         status.detection = .playbackSignals
         let text = DiagnosticsReport.text(activeAudio: [], status: status, detectionMethod: .playbackSignals)
         #expect(text.hasPrefix("No foreign audio output currently detected."))
         #expect(text.contains("Detection: what apps tell macOS — AntiDot mode"))
+        #expect(text.contains("Music player: none chosen"))
         #expect(text.contains("Auto-pause: on"))
         #expect(text.hasSuffix("Ignored apps: none"))
     }

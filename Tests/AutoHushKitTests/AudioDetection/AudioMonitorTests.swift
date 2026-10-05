@@ -18,7 +18,7 @@ struct AudioMonitorTests {
         configuration.audibleGapTolerance = 0.5
         configuration.activeSampleInterval = 3600
         configuration.idleSampleInterval = 3600
-        configuration.musicPlayerBundleIDs = [TestPlayer.bundleID]
+        configuration.musicPlayerBundleID = TestPlayer.bundleID
         return configuration
     }
 

@@ -31,6 +31,14 @@ package final class Preferences {
         static let announcingApps = "announcingApps"
         /// Earlier on/off switch; `false` maps to `.openStreams`.
         static let legacyMeasuresAudioLevels = "measuresAudioLevels"
+        static let musicPlayer = "musicPlayer"
+        /// Set once the music player could be chosen (see `keepFormerPlayer`).
+        static let playerChoiceIntroduced = "playerChoiceIntroduced"
+        /// Kept by any earlier AutoHush that ran on this Mac.
+        static let earlierVersionKeys = [
+            lastLaunchedVersion, lastUpdateCheck, seenApps, ignoredApps, autoPauseEnabled, timings,
+            detectionMethod, legacyMeasuresAudioLevels, checksForUpdates, automaticUpdates, legacyInstallsUpdates,
+        ]
     }
 
     /// How many apps that played audio are remembered for Settings → Apps.
@@ -78,6 +86,27 @@ package final class Preferences {
             let stored = Dictionary(uniqueKeysWithValues: Self.timingKeys.map { ($0.key, value[keyPath: $0.value]) })
             defaults.set(stored, forKey: Key.timings)
         }
+    }
+
+    /// The bundle ID of the music player AutoHush controls; `nil` until the
+    /// user chooses one.
+    package var musicPlayer: String? {
+        get { defaults.object(forKey: Key.musicPlayer) as? String }
+        set { defaults.set(newValue, forKey: Key.musicPlayer) }
+    }
+
+    /// AutoHush controlled one player before it could be chosen. On the first
+    /// launch of a version with the choice, someone updating (an earlier
+    /// AutoHush left its settings) keeps that player instead of being asked.
+    /// Call it before anything else is stored at launch. Later launches leave
+    /// the choice alone, so a new user who hasn't chosen yet is still asked.
+    package func keepFormerPlayer(_ bundleID: String?) {
+        guard defaults.object(forKey: Key.playerChoiceIntroduced) == nil else { return }
+        defaults.set(true, forKey: Key.playerChoiceIntroduced)
+        guard musicPlayer == nil, let bundleID,
+              Key.earlierVersionKeys.contains(where: { defaults.object(forKey: $0) != nil })
+        else { return }
+        musicPlayer = bundleID
     }
 
     /// Settings → General → AntiDot mode and its detection choice.

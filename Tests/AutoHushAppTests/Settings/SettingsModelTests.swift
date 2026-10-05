@@ -15,6 +15,7 @@ struct SettingsModelTests {
 
     private func makeModel(_ controller: MockLaunchAtLoginController, _ log: ActionLog = ActionLog()) -> SettingsModel {
         SettingsModel(launchAtLoginController: controller, actions: .init(
+            chooseMusicPlayer: { log.calls.append("player \($0)") },
             setAutoPause: { log.calls.append("autoPause \($0)") },
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             forgetApp: { log.calls.append("forget \($0.id)") },
@@ -84,6 +85,7 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
 
+        model.chooseMusicPlayer("com.example.player")
         model.setAutoPause(false)
         model.setPausesMusic(false, for: vlc)
         model.forget(vlc)
@@ -96,7 +98,7 @@ struct SettingsModelTests {
         model.openNotificationSettings()
 
         #expect(log.calls == [
-            "autoPause false", "ignore org.videolan.vlc true", "forget org.videolan.vlc", "forgetAll",
+            "player com.example.player", "autoPause false", "ignore org.videolan.vlc true", "forget org.videolan.vlc", "forgetAll",
             "timings 5.0", "method openStreams", "autoUpdate false", "updates download", "checkNow",
             "notificationSettings",
         ])
@@ -172,7 +174,8 @@ struct SettingsWindowControllerTests {
     func tabs() throws {
         let model = SettingsModel(
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-            actions: .init(setAutoPause: { _ in }, setIgnored: { _, _ in }, forgetApp: { _ in }, forgetAllApps: {},
+            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
+                           forgetApp: { _ in }, forgetAllApps: {},
                            setTimings: { _ in }, setDetectionMethod: { _ in },
                            setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
                            openNotificationSettings: {})

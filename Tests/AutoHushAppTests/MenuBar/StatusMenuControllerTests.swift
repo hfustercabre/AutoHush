@@ -20,6 +20,8 @@ struct StatusMenuControllerTests {
         StatusMenuController(actions: .init(
             toggleAutoPause: { log.calls.append("toggleAutoPause") },
             snooze: { log.calls.append("snooze \($0.title)") },
+            chooseMusicPlayer: { log.calls.append("player \($0)") },
+            menuWillOpen: { log.calls.append("menuWillOpen") },
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             resolveWarning: { log.calls.append("warning \($0.grantTitle)") },
             retry: { log.calls.append("retry") },
@@ -76,6 +78,7 @@ struct StatusMenuControllerTests {
         #expect(try item("Auto-Pause Music", in: sut.menu).state == .on)
         #expect(try item("Turn Off For", in: sut.menu).submenu?.items.map(\.title)
             == ["5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "24 Hours"])
+        #expect(sut.menu.items.contains { $0.title == "Music Player" })
         #expect(sut.menu.items.contains { $0.title == "Settings…" })
         #expect(sut.menu.items.contains { $0.title == "Quit AutoHush" })
         #expect(!sut.menu.items.contains { $0.title == "Retry" || $0.title == "Ignored Apps" })
@@ -133,6 +136,39 @@ struct StatusMenuControllerTests {
         #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
         try perform(submenu.items[1])
         #expect(log.calls == ["ignore org.videolan.vlc false"])
+    }
+
+    @Test("the music player is chosen from its own submenu; one that isn't installed can't be")
+    func musicPlayerSubmenu() throws {
+        let log = ActionLog()
+        let sut = makeController(log)
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            PlayerOption(bundleID: "com.example.second", name: "Second", appURL: URL(fileURLWithPath: "/Applications/Second.app")),
+            PlayerOption(bundleID: "com.example.third", name: "Third", appURL: nil),
+        ]
+        status.chosenPlayerID = "com.example.first"
+        sut.status = status
+
+        let submenu = try #require(try item("Music Player", in: sut.menu).submenu)
+        #expect(submenu.items.map(\.title) == ["First", "Second", "Third"])
+        #expect(submenu.items.map(\.state) == [.on, .off, .off])
+        #expect(submenu.items.map(\.isEnabled) == [true, true, false])
+        #expect(submenu.items.map(\.subtitle) == [nil, nil, "Not installed"])
+        #expect(submenu.items.allSatisfy { $0.image != nil })
+        try perform(submenu.items[1])
+        #expect(log.calls == ["player com.example.second"])
+    }
+
+    @Test("the app can bring the status up to date before the menu opens")
+    func updateBeforeOpening() {
+        let log = ActionLog()
+        let sut = makeController(log)
+        defer { sut.remove() }
+        sut.menuNeedsUpdate(sut.menu)
+        #expect(log.calls == ["menuWillOpen"])
     }
 
     @Test("auto-pause off is unchecked and dims the icon")

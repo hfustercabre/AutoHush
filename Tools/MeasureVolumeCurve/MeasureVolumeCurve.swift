@@ -8,7 +8,7 @@ import Foundation
 ///
 ///     swift run measure-volume-curve [bundle-id] [volume …]
 ///
-/// Works with any supported player (default: the one AutoHush controls). The
+/// Works with any supported player (default: the first one offered). The
 /// player must be running; it plays the music for about 50 seconds at changing
 /// volumes, then gets its volume and play state back. Its output is read
 /// through AutoHush's own process-tap meter, for loudness only: nothing is
@@ -27,12 +27,14 @@ enum MeasureVolumeCurve {
 
     static func main() async {
         let arguments = CommandLine.arguments.dropFirst()
-        let bundleID = arguments.first ?? SupportedPlayers.makeDefault().bundleID
+        let catalog = SupportedPlayers.catalog
         let requested = arguments.dropFirst().compactMap(Int.init)
         let volumes = requested.isEmpty ? defaultVolumes : requested
 
-        guard let player = SupportedPlayers.player(bundleID: bundleID) else {
-            fail("\(bundleID) is not a supported player (supported: \(SupportedPlayers.bundleIDs.sorted().joined(separator: ", ")))")
+        let bundleID = arguments.first
+        guard let player = bundleID.map({ catalog.player(bundleID: $0) }) ?? catalog.players.first else {
+            let supported = catalog.players.map(\.bundleID).joined(separator: ", ")
+            fail("\(bundleID ?? "") is not a supported player (supported: \(supported))")
         }
         do {
             try await measure(player, volumes: volumes)
