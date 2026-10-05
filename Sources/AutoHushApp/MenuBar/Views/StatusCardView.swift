@@ -9,7 +9,7 @@ struct StatusCardView: View {
     private var status: AppStatus { model.status }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        Card(padding: 10) {
             HStack(spacing: 10) {
                 playerIcon(size: 36)
                 VStack(alignment: .leading, spacing: 1) {
@@ -34,15 +34,13 @@ struct StatusCardView: View {
                         .accessibilityHidden(true)
                 }
             }
-            Divider().opacity(0.5)
+            CardDivider()
             HStack(spacing: 6) {
                 SectionLabel(Text("Music player"))
                 Spacer(minLength: 4)
                 playerButton
             }
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
         .padding(.horizontal, 8)
         .padding(.top, 4)
         .padding(.bottom, 2)

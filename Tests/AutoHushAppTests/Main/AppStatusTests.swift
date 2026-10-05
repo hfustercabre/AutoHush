@@ -170,13 +170,6 @@ struct AppStatusTests {
         #expect(status.warning == nil)
     }
 
-    @Test("describes playing apps in natural language")
-    func describePlaying() {
-        #expect(AppStatus.describePlaying(["VLC"]) == "VLC is playing")
-        #expect(AppStatus.describePlaying(["A", "B"]) == "A and B are playing")
-        #expect(AppStatus.describePlaying(["A", "B", "C", "D"]) == "A and 3 other apps are playing")
-    }
-
     @Test("measuring turned off is not a problem to fix")
     func disabledDetectionIsNoWarning() {
         var status = ready()

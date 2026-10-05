@@ -40,6 +40,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **No keyboard shortcuts**: ⌘, ⌘Q, ⌘R and ⌥⌘, are gone from the menu, and
   Return no longer presses a button in AutoHush's windows and alerts.
 
+### Fixed
+
+- In light mode, the "Notifications are off" note in Settings no longer
+  disappears when it blinks.
+- TIDAL's words for Play and Pause are read from the TIDAL that's running,
+  not from another copy on the Mac, such as the disk image it came from.
+
 ## [0.5.1] — 2026-10-05
 
 ### Fixed

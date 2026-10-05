@@ -19,6 +19,13 @@ struct StatusPresentationTests {
         #expect(state.presentation() == StatePresentation(icon: icon, label: label, line: line))
     }
 
+    @Test("describes playing apps in natural language")
+    func describePlaying() {
+        #expect(PlaybackState.describePlaying(["VLC"]) == "VLC is playing")
+        #expect(PlaybackState.describePlaying(["A", "B"]) == "A and B are playing")
+        #expect(PlaybackState.describePlaying(["A", "B", "C", "D"]) == "A and 3 other apps are playing")
+    }
+
     @Test("a pause names the apps that caused it")
     func pauseNamesApps() {
         #expect(PlaybackState.pausedByMonitor.presentation(playing: ["VLC"]).line == "Paused — VLC is playing")

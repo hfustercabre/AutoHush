@@ -37,7 +37,8 @@ package final class TidalStateObserver: PlayerStateObserving {
         polling = Task { [weak self] in
             while !Task.isCancelled {
                 let state = await player.playerState()
-                guard !Task.isCancelled else { return }
+                // Gone without stop(): nothing more to read for.
+                guard !Task.isCancelled, self != nil else { return }
                 self?.deliver(state)
                 try? await Task.sleep(for: interval)
             }

@@ -294,6 +294,8 @@ struct AppDelegateTests {
         for _ in 0..<200 where await scratch.first.verifyCallCount < 3 { try? await Task.sleep(for: .milliseconds(10)) }
         #expect(await scratch.first.verifyCallCount >= 3)
         #expect(sut.status.health == .needsPermission(.automation(player: "First")))
+        // Logged as an error once; the repeats are the same problem.
+        #expect(sut.loggedStartupProblem == "First: \(MusicPlayerError.automationPermissionDenied.localizedDescription)")
     }
 
     @MainActor

@@ -28,10 +28,3 @@ struct SnoozeBarView: View {
         .frame(width: menuContentWidth)
     }
 }
-
-extension AutoPauseSnooze {
-    /// The duration on its button, e.g. "15 min" or "1 hr", in the user's language.
-    var shortTitle: String {
-        Duration.seconds(duration).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
-    }
-}

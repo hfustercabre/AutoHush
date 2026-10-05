@@ -15,8 +15,9 @@ extension Font {
     static let appCaption = Font.system(size: 11)
 }
 
-/// A switch drawn in the accent color. Menus draw the system's switches as
-/// inactive, in grey, since AutoHush never becomes the active app.
+/// A switch drawn in the accent color, the same in the menu and in Settings.
+/// The system's switch would be grey in the menu: menus draw it inactive,
+/// since AutoHush doesn't become the active app when its menu opens.
 struct PillToggleStyle: ToggleStyle {
     var width: CGFloat = 36
     var height: CGFloat = 21
@@ -105,11 +106,12 @@ struct SectionLabel: View {
 /// A group of controls on a rounded, tinted background: the menu's card,
 /// and each group in Settings.
 struct Card<Content: View>: View {
+    var padding: CGFloat = 12
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) { content }
-            .padding(12)
+            .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
     }
@@ -182,6 +184,7 @@ struct ChoiceChips<Value: Hashable>: View {
     let onSelect: (Value) -> Void
     /// A click on an unavailable option.
     var onUnavailableClick: () -> Void = {}
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         HStack(spacing: 6) {
@@ -198,7 +201,8 @@ struct ChoiceChips<Value: Hashable>: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .buttonStyle(ChipButtonStyle(filled: true, isSelected: option.value == selection))
-                .opacity(option.isAvailable ? 1 : 0.45)
+                // A disabled group is dimmed already: once is enough.
+                .opacity(option.isAvailable || !isEnabled ? 1 : 0.45)
                 .accessibilityAddTraits(option.value == selection ? .isSelected : [])
             }
         }

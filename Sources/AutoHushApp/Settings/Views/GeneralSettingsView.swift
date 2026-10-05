@@ -93,10 +93,10 @@ struct GeneralSettingsView: View {
                 }
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
-                    // Blinks in white after a click on a choice that needs notifications.
+                    // Blinks bright after a click on a choice that needs notifications.
                     Text("Notifications are off for AutoHush, so it can't tell you about updates.")
                         .font(.appCaption)
-                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(Color.white) : AnyShapeStyle(.secondary))
+                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
                         .buttonStyle(.chip)

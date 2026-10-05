@@ -40,7 +40,7 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .pausedForApp,
                 label: String(localized: "AutoHush: music paused", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Paused — \(AppStatus.describePlaying(playing))",
+                line: String(localized: "Paused — \(Self.describePlaying(playing))",
                              comment: "At the top of the menu, under the music player; %@ says which apps play, e.g. “Safari is playing”")
             )
         case .musicIdle:
@@ -57,6 +57,22 @@ extension PlaybackState {
                 line: String(localized: "Playing on another device",
                              comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
             )
+        }
+    }
+
+    /// "VLC is playing", "VLC and Safari are playing", "VLC and 2 other apps are playing".
+    static func describePlaying(_ names: [String]) -> String {
+        switch names.count {
+        case 0:
+            return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
+        case 1:
+            return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
+        case 2:
+            return String(localized: "\(names[0]) and \(names[1]) are playing",
+                          comment: "Completes “Paused — %@”; two apps")
+        default:
+            return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
+                          comment: "Completes “Paused — %@”; an app, then how many others (2 or more)")
         }
     }
 }
@@ -143,6 +159,12 @@ extension Permission {
 }
 
 extension AutoPauseSnooze {
+    /// The duration on its button in the menu, e.g. "15 min" or "1 hr", in
+    /// the user's language.
+    var shortTitle: String {
+        Duration.seconds(duration).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
+    }
+
     /// The choice in full, e.g. "15 Minutes", as VoiceOver reads it.
     var title: String {
         switch self {

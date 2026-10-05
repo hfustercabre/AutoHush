@@ -136,20 +136,4 @@ struct AppStatus: Equatable {
         case .starting, .ready, .needsPlayer, .degraded, .needsPermission: return false
         }
     }
-
-    /// "VLC is playing", "VLC and Safari are playing", "VLC and 2 other apps are playing".
-    static func describePlaying(_ names: [String]) -> String {
-        switch names.count {
-        case 0:
-            return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
-        case 1:
-            return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
-        case 2:
-            return String(localized: "\(names[0]) and \(names[1]) are playing",
-                          comment: "Completes “Paused — %@”; two apps")
-        default:
-            return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
-                          comment: "Completes “Paused — %@”; an app, then how many others (2 or more)")
-        }
-    }
 }

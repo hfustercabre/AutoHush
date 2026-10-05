@@ -32,6 +32,8 @@ private final class FakeMenu: TidalMenu, @unchecked Sendable {
         get { lock.withLock { _found } }
         set { lock.withLock { _found = newValue } }
     }
+    /// How often the menu was read: each read checks Accessibility first.
+    var reads: Int { lock.withLock { prompts.count } }
 
     func isTrusted(prompt: Bool) -> Bool {
         lock.withLock {
@@ -165,5 +167,42 @@ struct TidalTests {
         menu.title = "Pause"
         try await Task.sleep(for: .milliseconds(100))
         #expect(states == [.playing, .paused])
+    }
+
+    @MainActor
+    @Test("an observer let go of without stop() stops reading the menu")
+    func observerReleased() async throws {
+        let menu = FakeMenu()
+        var observer: TidalStateObserver? = TidalStateObserver(player: player(menu), interval: .milliseconds(10)) { _ in }
+        observer?.start()
+        for _ in 0..<100 where menu.reads == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        observer = nil
+        try await Task.sleep(for: .milliseconds(50)) // a read under way finishes
+        let reads = menu.reads
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(menu.reads == reads)
+    }
+
+    // MARK: - Labels of an app
+
+    @Test("the words are read from the copy asked for, and again for another copy or version")
+    func labelsOfApp() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "TidalLabels-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        func app(_ name: String, version: String, play: String) throws -> URL {
+            let url = folder.appending(path: "\(name).app")
+            let resources = url.appending(path: "Contents/Resources")
+            try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
+            try Data(#"{"t-play": "\#(play)", "t-pause": "Pause"}"#.utf8).write(to: resources.appending(path: "app.asar"))
+            let info: [String: Any] = ["CFBundleShortVersionString": version, "CFBundleIdentifier": "com.example.\(name)"]
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+                .write(to: url.appending(path: "Contents/Info.plist"))
+            return url
+        }
+        let running = try app("Running", version: "2.0", play: "Play")
+        let other = try app("Other", version: "1.0", play: "Reproducir")
+        #expect(TidalLabels.labels(ofAppAt: running)?.play == ["Play"])
+        #expect(TidalLabels.labels(ofAppAt: other)?.play == ["Reproducir"])
+        #expect(TidalLabels.labels(ofAppAt: running)?.play == ["Play"])
     }
 }

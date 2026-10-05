@@ -29,19 +29,28 @@ package struct TidalLabels: Equatable, Sendable {
         return labels.play.isEmpty || labels.pause.isEmpty ? nil : labels
     }
 
-    /// The installed TIDAL's labels, read once per TIDAL version.
+    /// The labels of the TIDAL that's running, so they match its version;
+    /// while none runs, of the one Launch Services knows.
     package static func installed() -> TidalLabels? {
-        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: TidalPlayer.appBundleID) else {
-            return nil
-        }
+        let running = NSRunningApplication.runningApplications(withBundleIdentifier: TidalPlayer.appBundleID)
+            .first { !$0.isTerminated }?
+            .bundleURL
+        guard let appURL = running ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: TidalPlayer.appBundleID)
+        else { return nil }
+        return labels(ofAppAt: appURL)
+    }
+
+    /// The labels of the TIDAL at `appURL`, read once per copy and version.
+    package static func labels(ofAppAt appURL: URL) -> TidalLabels? {
         let version = Bundle(url: appURL)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        if let cached = cache.withLock({ $0 }), cached.version == version { return cached.labels }
+        let key = "\(appURL.path)#\(version)"
+        if let cached = cache.withLock({ $0 }), cached.key == key { return cached.labels }
         guard let labels = read(fromAppAt: appURL) else { return nil }
-        cache.withLock { $0 = (version, labels) }
+        cache.withLock { $0 = (key, labels) }
         return labels
     }
 
-    private static let cache = OSAllocatedUnfairLock<(version: String, labels: TidalLabels)?>(initialState: nil)
+    private static let cache = OSAllocatedUnfairLock<(key: String, labels: TidalLabels)?>(initialState: nil)
 
     /// The values of `"<key>": "…"` in `data`, JSON escapes decoded.
     private static func texts(of key: String, in data: Data) -> Set<String> {

@@ -96,12 +96,15 @@ final class StatusMenuController: NSObject {
 
     // MARK: - Rendering
 
-    /// The icon and the custom views follow at once; the rows are rebuilt
-    /// when the menu next opens, so none moves under the pointer.
+    /// The icon follows at once, and the custom views while the menu is open;
+    /// the rows are rebuilt when it next opens, so none moves under the
+    /// pointer. A closed menu's views aren't updated: `rebuild()` catches
+    /// them up when it opens.
     private func render() {
         renderIcon()
+        guard isMenuOpen else { return }
         model.status = status
-        if isMenuOpen, let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
+        if let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
     }
 
     private func renderIcon() {
@@ -275,7 +278,7 @@ final class StatusMenuController: NSObject {
         case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
         case .showAbout:          actions.showAbout()
         case .quit:               actions.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .retry: perform(command)
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .retry: break // they act in perform(_:)
         }
     }
 

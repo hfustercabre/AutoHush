@@ -59,6 +59,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var retryTimer: Timer?
     /// Failed starts in a row, for the delay before the next one.
     private var failedStarts = 0
+    /// The problem of the last failed start, logged as an error once; its
+    /// repeats (every few seconds while a permission is missing) go to the
+    /// debug log.
+    private(set) var loggedStartupProblem: String?
     /// Watches the Applications folders, and the one holding the chosen
     /// player's app, so AutoHush notices at once when it's uninstalled or
     /// installed again.
@@ -593,7 +597,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await bootstrap(retriesLeft: retriesLeft - 1)
                 return
             }
-            logger.error("Can't control \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            let problem = "\(player.name): \(error.localizedDescription)"
+            if problem == loggedStartupProblem {
+                logger.debug("Still can't control \(problem, privacy: .public)")
+            } else {
+                logger.error("Can't control \(problem, privacy: .public)")
+                loggedStartupProblem = problem
+            }
             setHealth(AppHealthState(startupError: error, playerName: player.name))
             retryLater(after: error)
             return
@@ -615,6 +625,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         await pipeline.start(takingOverPause: takesOverPause())
         guard generation == bootstrapGeneration else { return }
         failedStarts = 0
+        loggedStartupProblem = nil
         setHealth(.ready)
     }
 
@@ -666,7 +677,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Brings Settings → Diagnostics up to date with what AutoHush sees.
     func refreshDiagnostics() {
-        let known = Dictionary(settingsModel.apps.map { ($0.id, $0.source.bundlePath) }, uniquingKeysWith: { first, _ in first })
+        // Only apps with a known path: the others are looked up.
+        let known = Dictionary(
+            settingsModel.apps.compactMap { app in app.source.bundlePath.map { (app.id, $0) } },
+            uniquingKeysWith: { first, _ in first }
+        )
         let snapshot = DiagnosticsReport.snapshot(
             activeAudio: pipeline?.activeAudioReport() ?? [], status: status, detectionMethod: preferences.detectionMethod,
             bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path }
