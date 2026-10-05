@@ -95,7 +95,7 @@ open /Applications/AutoHush.app
 
 ## First launch
 
-AutoHush appears as an icon in the menu bar; it has no Dock icon. The first time it opens, a small window asks which music player it should control. If only one is installed, it's already picked: just click **Continue**. AutoHush finds the players installed in /Applications, your own Applications folder (~/Applications) or /System/Applications; a copy elsewhere, such as on the disk image it came from, doesn't count. You can change it any time in the menu (**Music Player**) or in Settings. If you're updating from an earlier version, AutoHush keeps controlling Spotify and doesn't ask.
+AutoHush appears as an icon in the menu bar; it has no Dock icon. The first time it opens, a small window asks which music player it should control. If only one is installed, it's already picked: just click **Continue**. AutoHush finds the players installed in /Applications, your own Applications folder (~/Applications) or /System/Applications; a copy elsewhere, such as on the disk image it came from, doesn't count. You can change it any time in the menu (**Music player**, on the card at the top) or in Settings. If you're updating from an earlier version, AutoHush keeps controlling Spotify and doesn't ask.
 
 macOS will then ask for these permissions:
 
@@ -117,30 +117,33 @@ If you said no by mistake, the menu shows a button that takes you to the right p
 Click the menu bar icon to see what's going on:
 
 ```text
-[icon] Spotify paused — Google Chrome is playing
+╭──────────────────────────────────────────────────────╮
+│ [icon] Spotify                                  (●)  │
+│        Paused — Google Chrome is playing  Auto-Pause │
+│ ──────────────────────────────────────────────────── │
+│ Music player                     [icon] Spotify ⌄    │
+╰──────────────────────────────────────────────────────╯
+⚠ Allow Audio Recording Access…            (only when something needs fixing)
+  Turn off for
+  [5 min] [15 min] [30 min] [1 hr] [24 hr]
 ───────────────
-[icon] Google Chrome                ▸ Never Pause Music for Google Chrome
-[icon] VLC   Ignored — music keeps playing
+  Playing now
+  [icon] Google Chrome   Pauses your music               (●)
+  [icon] VLC             Ignored — music keeps playing   ( )
 ───────────────
-✓ Auto-Pause Music
-  Turn Off For                      ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
-  Music Player                      ▸ ✓ Spotify · Apple Music · TIDAL
-  Ignored Apps                      ▸ click an app to stop ignoring it
+  Ignored Apps                         ▸ click an app to stop ignoring it
 ───────────────
-⚠ Allow Audio Recording Access…        (only when something needs fixing)
-  Settings…                     ⌘,     (hold ⌥ for Diagnostics…)
-───────────────
-  About AutoHush
-  Check for Updates…                   (Install AutoHush 0.3.8… once a newer version is found)
-  Quit AutoHush             ⌘Q
+  Install AutoHush 0.3.8…                  (once a newer version is found)
+  [Settings]  [Updates]  [About]  [Quit]
 ```
 
-- **The first line**, after your music player's icon, tells you what's happening, for example "Spotify is playing", "Spotify paused — Google Chrome is playing" or "Spotify is playing on another device".
-- **Playing apps** are listed with their icons. Open an app's submenu and choose **Never Pause Music for …** if that app shouldn't interrupt your music, for example a game whose soundtrack you don't mind.
-- **Auto-Pause Music** switches everything on or off. Turning it off brings back music that AutoHush paused.
-- **Turn Off For** pauses AutoHush itself for 5, 15 or 30 minutes, an hour, or 24 hours.
-- **Music Player** chooses the player AutoHush controls. A player that isn't on your Mac is shown dimmed. The one you don't choose counts like any other app: if it plays, it pauses your music, unless you ignore it.
+- **The card** at the top shows your music player and what's happening, for example "Playing", "Paused — Google Chrome is playing" or "Playing on another device". Something that needs your attention is shown in orange, with a row under the card to fix it, or a **Retry** button when the player didn't answer.
+- **Auto-Pause**, the switch on the card, turns everything on or off. Turning it off brings back music that AutoHush paused.
+- **Music player** chooses the player AutoHush controls: click it to unfold the players under the card. A player that isn't on your Mac is shown dimmed. The one you don't choose counts like any other app: if it plays, it pauses your music, unless you ignore it.
+- **Turn off for** pauses AutoHush itself for 5, 15 or 30 minutes, an hour, or 24 hours, in one click.
+- **Playing now** lists the apps playing sound, each with a switch: turn it off if that app shouldn't interrupt your music, for example a game whose soundtrack you don't mind.
 - **Ignored Apps** lists every app you've told to leave your music alone. Click one to undo.
+- **The buttons at the bottom** open Settings, check for updates, show About AutoHush, and quit. AutoHush has no keyboard shortcuts.
 - The **icon**, sound bars cut out of a rounded square, shows what's happening: bars while your music plays, a dot and a pause sign when AutoHush paused it for another app, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
 
 ### Settings
@@ -150,6 +153,7 @@ Click the menu bar icon to see what's going on:
 | **General** | Launch at login · **Music:** Auto-Pause Music and your music player · **Privacy:** AntiDot mode (see [below](#the-purple-dot-and-antidot-mode)) · **Updates:** automatic checks, what happens when one finds an update (see [Updates](#updates)), and Check Now · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults · **Detection:** how long an app must play before your music pauses (0.5 s), how long it must be quiet before your music resumes (2 s, at least 1 s), and what counts as silence (-60 dB) · **Fades:** how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off; dimmed with TIDAL, which can't fade) · **Restore Defaults** undoes your changes |
+| **Diagnostics** | What AutoHush sees right now, kept up to date while the tab shows: every app with its sound on, how AutoHush judges it (playing, ignored, silent) and why (its sound level, or in AntiDot mode what it tells macOS), then the detection in effect, your music player, auto-pause and ignored apps. **Copy Report** puts it all on the clipboard, to send along with a bug report |
 
 ### Language
 
@@ -193,8 +197,8 @@ AntiDot mode offers two ways to detect playing apps:
 - **Only one AutoHush runs at a time.** Opening another copy (a newer version you downloaded, a second install) quits the one that's running. If that one had your music paused for another app, the new one takes the pause over. Other copies stay where they are; delete the ones you don't use.
 - **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps), and that auto-pause isn't turned off.
 - **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Grant the audio permission, or in AntiDot mode close the app or tab.
-- **Something looks off?** Hold **⌥ (Option)** while the menu is open and choose **Diagnostics…**. It lists every app with sound, what AutoHush thinks it's doing, and the current settings.
-- **"Spotify is not running"** (or Apple Music), or a permission warning: fix it and choose **Retry**. AutoHush also restarts by itself when your player is opened.
+- **Something looks off?** Open **Settings → Diagnostics**, or hold **⌥ (Option)** and click **Settings** at the bottom of the menu to go straight there. It lists every app with sound, what AutoHush thinks it's doing, and the current settings, and **Copy Report** copies it.
+- **"Spotify is not running"** (or another player), a permission warning, or "not responding": fix it, and AutoHush starts by itself: when the player opens, within seconds of granting the permission, or once the player answers again (it keeps asking, less and less often, up to once a minute). When the player didn't answer, **Retry** on the menu's card tries again at once, and the menu stays open to show how it went.
 
 ## Privacy
 
@@ -215,7 +219,7 @@ AutoHush checks GitHub for a new version once a day. What happens when it finds 
 | **Download it and notify me** | AutoHush downloads it, then a notification tells you it's ready. Installing it takes a second |
 | **Install it automatically** (the default) | AutoHush installs it at a moment when it isn't holding your music paused and none of its windows or menus are open, then a notification says it was updated |
 
-Until it's installed, the menu shows **Install AutoHush 0.3.8…** in place of **Check for Updates…**. It opens a window that says which version you're running and which one is available or downloaded, and what's new in it. Its button says what it will do: **Download and Install**, or **Install and Relaunch** when the update is already downloaded. Clicking a notification opens that same window.
+Until it's installed, the menu shows **Install AutoHush 0.3.8…** above its buttons, and its **Updates** button turns blue. It opens a window that says which version you're running and which one is available or downloaded, and what's new in it. Its button says what it will do: **Download and Install**, or **Install and Relaunch** when the update is already downloaded. Clicking a notification opens that same window.
 
 Installing swaps in the new version and restarts, which takes about a second. Your settings and permissions carry over. If AutoHush has your music paused for another app when you install, the new version takes that pause over: your music comes back when the other app stops.
 
@@ -237,7 +241,7 @@ Before installing, AutoHush makes sure that:
 - it's the version GitHub announced;
 - a kept download hasn't changed since it was downloaded (otherwise it's downloaded again).
 
-**Check for Updates…** in the menu, or **Check Now** in Settings, checks right away. Turn off automatic checks in Settings to only check when you ask.
+**Updates** at the bottom of the menu, or **Check Now** in Settings, checks right away. Turn off automatic checks in Settings to only check when you ask.
 
 AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account. Settings tells you when it can't. To update by hand:
 
@@ -298,7 +302,7 @@ AutoHush is free. If it saves your ears a few times a day and you'd like to say 
 ### Architecture
 
 ```text
-AppDelegate ── lifecycle, bootstrap (launch, Retry, player relaunch), wiring features to the engine
+AppDelegate ── lifecycle, bootstrap (launch, automatic retries, player relaunch), wiring features to the engine
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
@@ -338,15 +342,17 @@ Sources/
                          engine for each start), AppStatus (what the app shows), StatusPresentation
                          (icons and text for the engine's states and choices), AppHealthState,
                          OtherInstances (quits other running copies at launch)
-    MenuBar/             StatusMenuController, MenuBarIcon (the icon for each state, drawn in code)
+    MenuBar/             StatusMenuController (the menu), StatusMenuModel (what its views show),
+                         Views/ (the card, the duration buttons, the playing apps, the buttons at
+                         the bottom), MenuBarIcon (the icon for each state, drawn in code)
     PlayerChoice/        PlayerOption (each player and whether it's installed), PlayerChooserWindowController
                          (the welcome window that asks for the music player)
     Settings/            SettingsWindowController, SettingsModel, LaunchAtLoginController,
-                         Views/ (General, Apps, Advanced, PlayerPopUp, RadioChoices)
+                         Views/ (General, Apps, Advanced, Diagnostics, PlayerPopUp, RadioChoices)
     Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
                          UpdateDownloads (the kept download), UpdateNotifier, UpdatePrompt and ReleaseNotes
                          (the update window), UpdateOffer (what the menu offers)
-    Diagnostics/         DiagnosticsReport
+    Diagnostics/         DiagnosticsReport (what Settings → Diagnostics shows, and Copy Report's text)
     About/               AboutPanel
     General/             InfoAlert, ProjectInfo, AppIcon, NoteLabel, SystemSettingsPane+Open
   AutoHushKit/

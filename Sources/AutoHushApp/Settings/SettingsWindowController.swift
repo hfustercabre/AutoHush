@@ -1,19 +1,21 @@
 import AppKit
 import SwiftUI
 
-/// The Settings window: General, Apps and Advanced tabs in a toolbar, the
-/// standard layout of macOS settings windows.
+/// The Settings window: General, Apps, Advanced and Diagnostics tabs in a
+/// toolbar, the standard layout of macOS settings windows.
 @MainActor
 final class SettingsWindowController: NSWindowController {
     /// The window's tabs, in toolbar order.
     enum Tab: CaseIterable {
-        case general, apps, advanced
+        case general, apps, advanced, diagnostics
 
         var title: String {
             switch self {
             case .general:  return String(localized: "General", comment: "Settings tab")
             case .apps:     return String(localized: "Apps", comment: "Settings tab: which apps pause the music")
             case .advanced: return String(localized: "Advanced", comment: "Settings tab")
+            case .diagnostics:
+                return String(localized: "Diagnostics", comment: "Settings tab: what AutoHush sees right now")
             }
         }
 
@@ -22,6 +24,7 @@ final class SettingsWindowController: NSWindowController {
             case .general:  return "gearshape"
             case .apps:     return "square.grid.2x2"
             case .advanced: return "slider.horizontal.3"
+            case .diagnostics: return "stethoscope"
             }
         }
     }
@@ -38,6 +41,7 @@ final class SettingsWindowController: NSWindowController {
             case .general:  content = AnyView(GeneralSettingsView(model: model))
             case .apps:     content = AnyView(AppsSettingsView(model: model))
             case .advanced: content = AnyView(AdvancedSettingsView(model: model))
+            case .diagnostics: content = AnyView(DiagnosticsSettingsView(model: model))
             }
             // Tells the window to fit as soon as the tab's content changes height.
             let tabs = tabController
@@ -61,7 +65,15 @@ final class SettingsWindowController: NSWindowController {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func show() {
+    /// The tab shown, when the window is on screen.
+    var shownTab: Tab? {
+        guard window?.isVisible == true, Tab.allCases.indices.contains(tabController.selectedTabViewItemIndex) else { return nil }
+        return Tab.allCases[tabController.selectedTabViewItemIndex]
+    }
+
+    /// Shows the window, on `tab` when given.
+    func show(tab: Tab? = nil) {
+        if let tab, let index = Tab.allCases.firstIndex(of: tab) { tabController.selectedTabViewItemIndex = index }
         model.refreshLaunchAtLogin()
         if window?.isVisible != true { window?.center() }
         window?.makeKeyAndOrderFront(nil)

@@ -89,6 +89,7 @@ struct AppDelegateTests {
             makePlayerChooser: { _ in scratch.chooser },
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
+            retryDelays: 0.02...0.08,
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
             bootstrapOverride: realBootstrap ? nil : countBootstrap
@@ -284,17 +285,59 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("while the player needs a permission, starting is tried again until it's granted")
+    @Test("while the player needs a permission, starting is tried again every few seconds")
     func retriesWhilePermissionMissing() async {
-        let (sut, bootstraps) = makeSUT()
-        sut.setHealth(.needsPermission(.accessibility(player: "First")))
-        for _ in 0..<200 where bootstraps.count == 0 { try? await Task.sleep(for: .milliseconds(10)) }
-        #expect(bootstraps.count == 1)
+        let scratch = Scratch()
+        // The real bootstrap stops at the permission check, before monitoring anything.
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
+        sut.chooseMusicPlayer(Players.first)
+        for _ in 0..<200 where await scratch.first.verifyCallCount < 3 { try? await Task.sleep(for: .milliseconds(10)) }
+        #expect(await scratch.first.verifyCallCount >= 3)
+        #expect(sut.status.health == .needsPermission(.automation(player: "First")))
+    }
 
-        // Granted and started: no more tries.
-        sut.setHealth(.ready)
-        try? await Task.sleep(for: .milliseconds(150))
-        #expect(bootstraps.count == 1)
+    @MainActor
+    @Test("a busy or hung player is asked again by itself, less and less often")
+    func retriesWhilePlayerNotResponding() async {
+        let scratch = Scratch()
+        await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
+        sut.chooseMusicPlayer(Players.second)
+        for _ in 0..<200 where await scratch.second.verifyCallCount < 3 { try? await Task.sleep(for: .milliseconds(10)) }
+        #expect(await scratch.second.verifyCallCount >= 3)
+        #expect(sut.status.health == .retrying("Second is not responding"))
+        #expect(sut.status.canRetry) // the menu offers Retry too
+    }
+
+    @MainActor
+    @Test("a player that isn't running isn't asked again until it opens")
+    func noRetryWhilePlayerNotRunning() async {
+        let scratch = Scratch()
+        await scratch.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
+        sut.chooseMusicPlayer(Players.second)
+        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        try? await Task.sleep(for: .milliseconds(200))
+        #expect(await scratch.second.verifyCallCount == 1)
+        #expect(sut.status.health == .degraded("Second is not running"))
+        #expect(!sut.status.canRetry)
+    }
+
+    @MainActor
+    @Test("Diagnostics in Settings follows what AutoHush sees")
+    func diagnostics() {
+        let (sut, _) = makeSUT()
+        #expect(sut.settingsModel.diagnostics == nil)
+        sut.refreshDiagnostics()
+        let diagnostics = sut.settingsModel.diagnostics
+        #expect(diagnostics?.apps.isEmpty == true) // nothing is monitored in tests
+        #expect(diagnostics?.settings.contains("Music player: First") == true)
+        #expect(diagnostics?.text.hasPrefix("No foreign audio output currently detected.") == true)
+    }
+
+    @Test("the waits between automatic starts double up to a ceiling")
+    func retryDelays() {
+        #expect((1...6).map { AppDelegate.retryDelay(afterFailedStarts: $0, delays: 5...60) } == [5, 10, 20, 40, 60, 60])
     }
 
     @MainActor

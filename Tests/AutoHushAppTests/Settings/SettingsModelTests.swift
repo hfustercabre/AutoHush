@@ -188,7 +188,7 @@ struct SettingsModelTests {
 @Suite("SettingsWindowController")
 @MainActor
 struct SettingsWindowControllerTests {
-    @Test("has General, Apps and Advanced tabs in a toolbar")
+    @Test("has General, Apps, Advanced and Diagnostics tabs in a toolbar, and opens on the one asked for")
     func tabs() throws {
         let model = SettingsModel(
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
@@ -201,8 +201,14 @@ struct SettingsWindowControllerTests {
         let sut = SettingsWindowController(model: model)
         let tabController = try #require(sut.window?.contentViewController as? NSTabViewController)
         #expect(tabController.tabStyle == .toolbar)
-        #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced"])
+        #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced", "Diagnostics"])
         #expect(tabController.tabViewItems.allSatisfy { $0.image != nil })
+        #expect(sut.shownTab == nil) // not on screen
+
+        sut.show(tab: .diagnostics)
+        defer { sut.close() }
+        #expect(sut.shownTab == .diagnostics)
+        #expect(tabController.selectedTabViewItemIndex == 3)
     }
 
     @Test("when the shown tab's content changes height, the window follows at once and keeps its top")

@@ -10,6 +10,6 @@ enum InfoAlert {
         alert.informativeText = message
         alert.alertStyle = .informational
         NSApp.activate()
-        alert.runModal()
+        alert.runModalWithoutShortcuts()
     }
 }

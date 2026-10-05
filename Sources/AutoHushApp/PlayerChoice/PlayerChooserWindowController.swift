@@ -73,7 +73,7 @@ struct PlayerChooserView: View {
             Button("Continue") {
                 if let picked { model.chooseMusicPlayer(picked) }
             }
-            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent) // blue, without Return: AutoHush has no keyboard shortcuts
             .disabled(!canContinue)
         }
         .padding(24)

@@ -21,6 +21,8 @@ final class SettingsModel {
         var setAutomaticUpdates: @MainActor (AutomaticUpdates) -> Void
         var checkForUpdates: @MainActor () -> Void
         var openNotificationSettings: @MainActor () -> Void
+        /// Brings `diagnostics` up to date.
+        var refreshDiagnostics: @MainActor () -> Void = {}
     }
 
     /// One app in Settings → Apps, and whether it is ignored.
@@ -75,6 +77,10 @@ final class SettingsModel {
 
     // Apps
     private(set) var apps: [AppRow] = []
+
+    // Diagnostics
+    /// What AutoHush sees, kept up to date while the Diagnostics tab shows.
+    var diagnostics: DiagnosticsSnapshot?
 
     // Advanced
     var timings = TimingSettings.defaults
@@ -165,6 +171,7 @@ final class SettingsModel {
     }
     func checkForUpdates() { actions.checkForUpdates() }
     func openNotificationSettings() { actions.openNotificationSettings() }
+    func refreshDiagnostics() { actions.refreshDiagnostics() }
 
     func setTimings(_ timings: TimingSettings) {
         self.timings = timings.clamped

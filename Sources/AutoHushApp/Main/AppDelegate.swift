@@ -48,10 +48,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
     private var terminationSignal: (any DispatchSourceSignal)?
-    /// While the player needs a permission, starting is tried again this
-    /// often: macOS doesn't announce when one is granted.
+    /// After a failed start, starting is tried again by itself: while a
+    /// permission is missing every `permissionRetryInterval`, since it may be
+    /// granted any moment; otherwise after `retryDelays.lowerBound`, doubling
+    /// up to `retryDelays.upperBound`, so a busy or hung player isn't flooded
+    /// with requests. macOS announces neither. A player that isn't running is
+    /// started on when it opens, and one that isn't installed when it's back.
     private let permissionRetryInterval: TimeInterval
-    private var permissionRetry: Timer?
+    private let retryDelays: ClosedRange<TimeInterval>
+    private var retryTimer: Timer?
+    /// Failed starts in a row, for the delay before the next one.
+    private var failedStarts = 0
     /// Watches the Applications folders, and the one holding the chosen
     /// player's app, so AutoHush notices at once when it's uninstalled or
     /// installed again.
@@ -78,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         permissionRetryInterval: TimeInterval = 3,
+        retryDelays: ClosedRange<TimeInterval> = 5...60,
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
         installCheckDelay: Duration = .seconds(1),
         bootstrapOverride: (@MainActor () -> Void)? = nil
@@ -93,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
         self.permissionRetryInterval = permissionRetryInterval
+        self.retryDelays = retryDelays
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
         super.init()
@@ -122,7 +131,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 setChecksForUpdates: { [weak self] in self?.setChecksForUpdatesAutomatically($0) },
                 setAutomaticUpdates: { [weak self] in self?.setAutomaticUpdates($0) },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
-                openNotificationSettings: { SystemSettingsPane.notifications.open() }
+                openNotificationSettings: { SystemSettingsPane.notifications.open() },
+                refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() }
             )
         )
         settingsModel.timings = preferences.timings
@@ -213,28 +223,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setHealth(_ health: AppHealthState) {
         status.setHealth(health)
-        followPermission()
     }
 
-    /// While the player needs a permission, tries starting again every
-    /// `permissionRetryInterval`, so AutoHush starts as soon as it's granted.
-    private func followPermission() {
-        guard case .needsPermission = status.health else {
-            permissionRetry?.invalidate()
-            permissionRetry = nil
-            return
+    /// Tries starting again after `error`, unless an event will: see
+    /// `retryDelays`.
+    private func retryLater(after error: any Error) {
+        let delay: TimeInterval
+        switch error as? MusicPlayerError {
+        case .playerNotRunning:
+            return // started on when the player opens
+        case .automationPermissionDenied, .accessibilityPermissionDenied:
+            delay = permissionRetryInterval
+        default:
+            failedStarts += 1
+            delay = Self.retryDelay(afterFailedStarts: failedStarts, delays: retryDelays)
         }
-        guard permissionRetry == nil else { return }
-        let timer = Timer(timeInterval: permissionRetryInterval, repeats: false) { [weak self] _ in
+        cancelRetry()
+        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self else { return }
-                self.permissionRetry = nil
-                guard case .needsPermission = self.status.health else { return }
-                self.requestBootstrap()
+                self?.retryTimer = nil
+                self?.requestBootstrap()
             }
         }
         RunLoop.main.add(timer, forMode: .common)
-        permissionRetry = timer
+        retryTimer = timer
+    }
+
+    private func cancelRetry() {
+        retryTimer?.invalidate()
+        retryTimer = nil
+    }
+
+    /// The wait before starting again after `failedStarts` failed starts in a
+    /// row: the range's lower bound, doubling up to its upper bound.
+    nonisolated static func retryDelay(afterFailedStarts failedStarts: Int, delays: ClosedRange<TimeInterval>) -> TimeInterval {
+        min(delays.lowerBound * pow(2, Double(max(failedStarts - 1, 0))), delays.upperBound)
     }
 
     func apply(_ update: MonitoringPipeline.StatusUpdate) {
@@ -397,6 +420,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
         preferences.musicPlayer = bundleID
         player = chosen
+        failedStarts = 0
         watchFolders(holding: appURL)
         showChosenPlayer()
         showApps()
@@ -432,6 +456,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if status.health != notInstalled {
             logger.notice("\(player.name, privacy: .public) is not installed")
             bootstrapGeneration += 1 // a start under way gives up
+            cancelRetry()            // and none is tried until it's back
             tearDownPipeline()
             setHealth(notInstalled)
         }
@@ -508,6 +533,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         guard bundleIdentifier == player.bundleID else { return }
         logger.debug("\(player.name, privacy: .public) launch detected — re-running bootstrap")
+        failedStarts = 0
         setHealth(.starting)
         // The player may not answer yet while it finishes starting up.
         requestBootstrap(retries: Self.startupRetries)
@@ -545,6 +571,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func bootstrap(retriesLeft: Int = 0) async {
         bootstrapGeneration += 1
         let generation = bootstrapGeneration
+        cancelRetry() // this start takes its place
         tearDownPipeline()
         guard let player else {
             setHealth(.waitingForPlayer(among: status.playerOptions)) // nothing to control yet
@@ -568,6 +595,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             logger.error("Can't control \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
             setHealth(AppHealthState(startupError: error, playerName: player.name))
+            retryLater(after: error)
             return
         }
         // A newer bootstrap (Retry, player relaunch) started while we awaited.
@@ -586,6 +614,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.pipeline = pipeline
         await pipeline.start(takingOverPause: takesOverPause())
         guard generation == bootstrapGeneration else { return }
+        failedStarts = 0
         setHealth(.ready)
     }
 
@@ -601,11 +630,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu actions
 
-    private func openSettings() {
+    private func openSettings(tab: SettingsWindowController.Tab? = nil) {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
-        settingsWindowController?.show()
+        settingsWindowController?.show(tab: tab)
         refreshPlayerOptions()
         watchWindows()
     }
@@ -614,13 +643,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// whether the user turned AutoHush's notifications on or off, or reset
     /// them, in System Settings, and which music players are installed, so
     /// the windows follow at once and a reset is asked about again. macOS
-    /// doesn't announce these changes.
+    /// doesn't announce these changes. While the Diagnostics tab shows, it
+    /// follows what AutoHush sees, too.
     private func watchWindows() {
         windowsWatch?.cancel()
         windowsWatch = Task { [weak self] in
             while !Task.isCancelled, let self,
                   self.settingsWindowController?.window?.isVisible == true || self.isShowingPlayerChooser {
                 self.refreshPlayerOptions()
+                if self.settingsWindowController?.shownTab == .diagnostics { self.refreshDiagnostics() }
                 let off = await self.updates.followNotificationPermission() == .off
                 if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
                 try? await Task.sleep(for: .seconds(1))
@@ -628,15 +659,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// ⌥-click on Settings in the menu: Settings, on the Diagnostics tab.
     private func showDiagnostics() {
-        let report = DiagnosticsReport.text(
-            activeAudio: pipeline?.activeAudioReport() ?? [], status: status, detectionMethod: preferences.detectionMethod
-        )
-        logger.debug("[diag] \(report, privacy: .public)")
-        InfoAlert.show(String(localized: "AutoHush Diagnostics", comment: "Title of the Diagnostics alert"), report)
+        openSettings(tab: .diagnostics)
     }
 
+    /// Brings Settings → Diagnostics up to date with what AutoHush sees.
+    func refreshDiagnostics() {
+        let known = Dictionary(settingsModel.apps.map { ($0.id, $0.source.bundlePath) }, uniquingKeysWith: { first, _ in first })
+        let snapshot = DiagnosticsReport.snapshot(
+            activeAudio: pipeline?.activeAudioReport() ?? [], status: status, detectionMethod: preferences.detectionMethod,
+            bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path }
+        )
+        if settingsModel.diagnostics != snapshot { settingsModel.diagnostics = snapshot }
+    }
+
+    /// Retry, on the menu's card after a failed start: starts over at once,
+    /// with the waits between automatic tries back to the shortest.
     private func retry() {
+        failedStarts = 0
         setHealth(.starting)
         requestBootstrap()
     }

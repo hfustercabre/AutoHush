@@ -7,7 +7,13 @@ enum AppHealthState: Equatable, Sendable {
     case ready
     /// No music player is chosen yet: AutoHush waits for the user.
     case needsPlayer(String)
+    /// The player isn't running or isn't installed: AutoHush starts on when
+    /// it opens or is back.
     case degraded(String)
+    /// The player didn't answer, or answered with an error, and nothing
+    /// announces when it's fixed: AutoHush tries again by itself, and the
+    /// menu offers Retry.
+    case retrying(String)
     /// AutoHush may not control the player: the user has to grant it.
     case needsPermission(Permission)
     case failed(String)
@@ -41,10 +47,10 @@ extension AppHealthState {
             self = .degraded(String(localized: "\(playerName) is not running",
                                     comment: "Status line; %@ is the music player, e.g. Spotify"))
         case .playerNotResponding:
-            self = .degraded(String(localized: "\(playerName) is not responding",
+            self = .retrying(String(localized: "\(playerName) is not responding",
                                     comment: "Status line; %@ is the music player, e.g. Spotify"))
         case .playerCommandFailed(let message):
-            self = .degraded(String(localized: "\(playerName) control error: \(message)",
+            self = .retrying(String(localized: "\(playerName) control error: \(message)",
                                     comment: "Status line; the music player, then the error it reported"))
         case nil:
             self = .failed(error.localizedDescription)

@@ -84,7 +84,20 @@ struct AppStatus: Equatable {
 
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
-        health.presentation ?? playback.presentation(player: playerName, playing: pausingSources.map(\.name))
+        health.presentation ?? playback.presentation(playing: pausingSources.map(\.name))
+    }
+
+    /// The card's title at the top of the menu: the chosen player, or
+    /// AutoHush while none is chosen.
+    var cardTitle: String { chosenPlayer?.name ?? "AutoHush" }
+
+    /// Whether something keeps AutoHush from working: the status line says
+    /// what, and the card shows it.
+    var needsAttention: Bool {
+        switch health {
+        case .starting, .ready:                                  return false
+        case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
+        }
     }
 
     var icon: MenuBarIcon { presentation.icon }
@@ -93,6 +106,7 @@ struct AppStatus: Equatable {
     /// The menu bar icon is dimmed while auto-pause is off.
     var dimsIcon: Bool { isReady && autoPause != .on }
 
+    /// The line under the card's title: what's happening.
     var statusLine: String {
         guard isReady else { return presentation.line }
         switch autoPause {
@@ -113,10 +127,13 @@ struct AppStatus: Equatable {
         return nil
     }
 
-    var showsRetry: Bool {
+    /// Whether the menu offers Retry: only after a failed start that nothing
+    /// announces the end of. AutoHush tries again by itself then too, but
+    /// waits up to a minute between tries.
+    var canRetry: Bool {
         switch health {
-        case .starting, .ready, .needsPlayer:       return false
-        case .degraded, .needsPermission, .failed:  return true
+        case .retrying, .failed:                                  return true
+        case .starting, .ready, .needsPlayer, .degraded, .needsPermission: return false
         }
     }
 
@@ -124,15 +141,15 @@ struct AppStatus: Equatable {
     static func describePlaying(_ names: [String]) -> String {
         switch names.count {
         case 0:
-            return String(localized: "another app is playing", comment: "Completes “Spotify paused — %@”")
+            return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
         case 1:
-            return String(localized: "\(names[0]) is playing", comment: "Completes “Spotify paused — %@”; %@ is an app")
+            return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
         case 2:
             return String(localized: "\(names[0]) and \(names[1]) are playing",
-                          comment: "Completes “Spotify paused — %@”; two apps")
+                          comment: "Completes “Paused — %@”; two apps")
         default:
             return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
-                          comment: "Completes “Spotify paused — %@”; an app, then how many others (2 or more)")
+                          comment: "Completes “Paused — %@”; an app, then how many others (2 or more)")
         }
     }
 }

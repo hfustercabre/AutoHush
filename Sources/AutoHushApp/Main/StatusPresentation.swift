@@ -24,9 +24,9 @@ extension StatePresentation {
 }
 
 extension PlaybackState {
-    /// `player`: the music player, e.g. "Spotify"; `playing`: the apps that
-    /// paused it.
-    func presentation(player: String, playing: [String] = []) -> StatePresentation {
+    /// `playing`: the apps that paused the music. The line goes under the
+    /// music player's name, so it doesn't repeat it.
+    func presentation(playing: [String] = []) -> StatePresentation {
         switch self {
         case .unknown: // the player's state is not known yet: as when starting up
             return .starting
@@ -34,31 +34,28 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .playing,
                 label: String(localized: "AutoHush: music is playing", comment: "VoiceOver label of the menu bar icon"),
-                // A key of its own: "%@ is playing" also completes "Spotify paused — %@".
-                line: String(localized: "status.playerIsPlaying", defaultValue: "\(player) is playing",
-                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
+                line: String(localized: "Playing", comment: "At the top of the menu, under the music player: it's playing")
             )
         case .pausedByMonitor:
             return StatePresentation(
                 icon: .pausedForApp,
                 label: String(localized: "AutoHush: music paused", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "\(player) paused — \(AppStatus.describePlaying(playing))",
-                             comment: "Status line at the top of the menu; the music player, e.g. Spotify, then which apps play, e.g. “VLC is playing”")
+                line: String(localized: "Paused — \(AppStatus.describePlaying(playing))",
+                             comment: "At the top of the menu, under the music player; %@ says which apps play, e.g. “Safari is playing”")
             )
         case .musicIdle:
             return StatePresentation(
                 icon: .noMusic,
                 label: String(localized: "AutoHush: no music playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "\(player) isn't playing",
-                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
+                line: String(localized: "Not playing", comment: "At the top of the menu, under the music player: nothing plays")
             )
         case .playingElsewhere:
             return StatePresentation(
                 icon: .elsewhere,
                 label: String(localized: "AutoHush: music is playing on another device",
                               comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "\(player) is playing on another device",
-                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
+                line: String(localized: "Playing on another device",
+                             comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
             )
         }
     }
@@ -79,7 +76,7 @@ extension AppHealthState {
                 label: String(localized: "AutoHush: no music player chosen", comment: "VoiceOver label of the menu bar icon"),
                 line: message
             )
-        case .degraded(let message):
+        case .degraded(let message), .retrying(let message):
             return StatePresentation(
                 icon: .attention,
                 label: String(localized: "AutoHush: degraded",
@@ -146,7 +143,7 @@ extension Permission {
 }
 
 extension AutoPauseSnooze {
-    /// The choice in the menu's "Turn Off For" submenu.
+    /// The choice in full, e.g. "15 Minutes", as VoiceOver reads it.
     var title: String {
         switch self {
         case .fiveMinutes:

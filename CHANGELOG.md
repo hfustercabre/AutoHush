@@ -7,11 +7,31 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Settings → Diagnostics**: what AutoHush sees right now, kept up to date
+  while the tab shows: every app with its sound on, with its icon, how
+  AutoHush judges it and why, then its own settings. **Copy Report** puts
+  it on the clipboard. It replaces the Diagnostics alert; ⌥-clicking
+  Settings in the menu opens it.
+
 ### Changed
 
-- **The menu's first line names your music player**, with its icon before
-  it: "Spotify is playing", "Spotify paused — Safari is playing",
-  "Spotify isn't playing" instead of "Music is playing" and so on.
+- **A redesigned menu**, laid out like Control Center:
+  - **A card at the top** with your music player's icon and name, what's
+    happening ("Paused — Safari is playing"), and the **Auto-Pause** switch.
+  - **Music player** is on the card: click it to unfold the players.
+  - **Turn off for** offers each duration as a button, so pausing AutoHush
+    takes one click.
+  - **Playing now** gives each app a switch for whether it pauses your
+    music, instead of a submenu.
+  - **Settings, Updates, About and Quit** are buttons at the bottom.
+  - **Retry** is on the card, only when the player didn't answer or
+    reported an error, and the menu stays open to show how it went.
+    AutoHush also tries again by itself then, less and less often (up to
+    once a minute).
+- **No keyboard shortcuts**: ⌘, ⌘Q, ⌘R and ⌥⌘, are gone from the menu, and
+  Return no longer presses a button in AutoHush's windows and alerts.
 
 ## [0.5.1] — 2026-10-05
 

@@ -1,15 +1,48 @@
 import Foundation
 import AutoHushKit
 
-/// The text of the Diagnostics alert (menu → hold ⌥ → Diagnostics…): every app
-/// with its sound on and how AutoHush judges it, the detection in effect, the
-/// music player, and the auto-pause and ignore settings.
+/// What Settings → Diagnostics shows: every app with its sound on and how
+/// AutoHush judges it, the detection in effect, the music player, and the
+/// auto-pause and ignore settings; and the same as text, for Copy Report.
 enum DiagnosticsReport {
     static func text(activeAudio: [ActiveAudioReport.Entry], status: AppStatus, detectionMethod: DetectionMethod) -> String {
+        (
+            [activeAudio.isEmpty ? noAudio : activeAudio.map(line(for:)).joined(separator: "\n")]
+                + settings(status: status, detectionMethod: detectionMethod)
+        ).joined(separator: "\n\n")
+    }
+
+    /// The report's parts, as the Diagnostics tab shows them. `bundlePath`
+    /// finds an app's bundle, for its icon.
+    static func snapshot(
+        activeAudio: [ActiveAudioReport.Entry],
+        status: AppStatus,
+        detectionMethod: DetectionMethod,
+        bundlePath: (String) -> String? = { _ in nil }
+    ) -> DiagnosticsSnapshot {
+        DiagnosticsSnapshot(
+            apps: activeAudio.map { entry in
+                DiagnosticsSnapshot.App(
+                    id: entry.id,
+                    name: entry.name ?? entry.id,
+                    bundlePath: bundlePath(entry.id),
+                    judgement: sentenceCase(describe(entry.state, isIgnored: entry.isIgnored)),
+                    evidence: entry.evidence.map(describe)
+                )
+            },
+            settings: settings(status: status, detectionMethod: detectionMethod),
+            text: text(activeAudio: activeAudio, status: status, detectionMethod: detectionMethod)
+        )
+    }
+
+    /// Said when no app has its sound on.
+    static var noAudio: String {
+        String(localized: "No foreign audio output currently detected.", comment: "Diagnostics")
+    }
+
+    /// The detection in effect, the music player, auto-pause and ignored apps.
+    private static func settings(status: AppStatus, detectionMethod: DetectionMethod) -> [String] {
         [
-            activeAudio.isEmpty
-                ? String(localized: "No foreign audio output currently detected.", comment: "Diagnostics")
-                : activeAudio.map(line(for:)).joined(separator: "\n"),
             detectionMethod == .audioLevels
                 ? status.detection.statusLine
                 : String(localized: "\(status.detection.statusLine) — AntiDot mode",
@@ -17,7 +50,12 @@ enum DiagnosticsReport {
             describe(player: status.playerName),
             describe(status.autoPause),
             describe(ignoredApps: status.ignoredApps.map(\.name)),
-        ].joined(separator: "\n\n")
+        ]
+    }
+
+    /// "playing, ignored" as a row's subtitle: "Playing, ignored".
+    private static func sentenceCase(_ text: String) -> String {
+        text.prefix(1).localizedUppercase + text.dropFirst()
     }
 
     /// One app's line, e.g. "Google Chrome (com.google.Chrome) — playing (-23 dBFS)".
@@ -90,4 +128,24 @@ enum DiagnosticsReport {
         return String(localized: "Ignored apps: \(names.formatted(.list(type: .and, width: .narrow)))",
                       comment: "Diagnostics; %@ lists app names")
     }
+}
+
+/// Settings → Diagnostics, as it is now.
+struct DiagnosticsSnapshot: Equatable {
+    /// An app with its sound on.
+    struct App: Equatable, Identifiable {
+        let id: String
+        let name: String
+        let bundlePath: String?
+        /// How AutoHush judges it, e.g. "Playing, ignored".
+        let judgement: String
+        /// What the judgement rests on, e.g. "-20 dBFS".
+        let evidence: String?
+    }
+
+    let apps: [App]
+    /// The detection in effect, the music player, auto-pause and ignored apps.
+    let settings: [String]
+    /// The whole report, for Copy Report.
+    let text: String
 }

@@ -1,28 +1,35 @@
 import AppKit
+import SwiftUI
 import AutoHushKit
 
 /// Owns the menu bar item and its menu, and renders an `AppStatus` into them.
 ///
 /// ```text
-/// [icon] Spotify paused — Google Chrome is playing
+/// ╭────────────────────────────────────────────╮
+/// │ [icon] Spotify                         (●) │  the card: the player, what's
+/// │        Paused — Safari is playing Auto-Pause │  happening, the Auto-Pause switch
+/// │ ────────────────────────────────────────── │
+/// │ Music player              [icon] Spotify ⌄ │  unfolds the players under it
+/// ╰────────────────────────────────────────────╯
+/// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
+/// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
+///   Turn off for
+///   [5 min] [15 min] [30 min] [1 hr] [24 hr]
 /// ─────────
-/// [icon] Google Chrome            ▸ Never Pause Music for Google Chrome
-/// [icon] VLC  (Ignored)           ▸ ✓ Never Pause Music for VLC
+///   Playing now
+///   [icon] Safari   Pauses your music                  (●)
+///   [icon] VLC      Ignored — music keeps playing      ( )
 /// ─────────
-/// ✓ Auto-Pause Music
-///   Turn Off For                  ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
-///   Music Player                  ▸ ✓ Spotify · (one not installed, dimmed)
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
-/// ⚠ Allow Audio Recording Access…    (only when something needs fixing)
-///   Retry                         ⌘R (only after a failed start)
-///   Settings…                     ⌘,   (⌥: Diagnostics…)
-/// ─────────
-///   About AutoHush
-///   Check for Updates…               (Install AutoHush 0.3.8… once one is found;
-///                                     Installing AutoHush 0.3.8… while it installs)
-///   Quit AutoHush             ⌘Q
+///   Install AutoHush 0.3.8…              (once one is found; Installing… while it installs)
+///   [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
 /// ```
+///
+/// The card, the duration buttons, the playing apps and the toolbar are
+/// SwiftUI views; they follow `status` even while the menu is open. The
+/// rows around them are rebuilt each time it opens. AutoHush has no keyboard
+/// shortcuts, standard ones included, unless the user asks for one.
 @MainActor
 final class StatusMenuController: NSObject {
     /// What the menu's items do; `AppDelegate` provides them.
@@ -50,30 +57,35 @@ final class StatusMenuController: NSObject {
         init(_ value: Value) { self.value = value }
     }
 
-    /// Rendered when it changes. The engine reports its state often (on every
-    /// track change, for one), mostly without a change to show.
+    /// The engine reports its state often (on every track change, for one),
+    /// mostly without a change to show.
     var status: AppStatus {
         didSet { if status != oldValue { render() } }
     }
 
     let statusItem: NSStatusItem
     let menu = NSMenu()
+    /// What the menu's custom views show.
+    let model: StatusMenuModel
 
     private let actions: Actions
-    /// While the menu is open only the icon and status line follow `status`;
-    /// the rest is rebuilt when it closes, so an open submenu never collapses.
     private(set) var isMenuOpen = false
-    private var needsRebuild = false
+    /// The card at the top, and the players unfolded under it.
+    private var cardItem: NSMenuItem?
+    private var playerRows: [NSMenuItem] = []
 
     init(status: AppStatus = AppStatus(), actions: Actions) {
         self.status = status
         self.actions = actions
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        model = StatusMenuModel(status: status)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
+        model.perform = { [weak self] in self?.perform($0) }
         menu.autoenablesItems = false
         menu.delegate = self
         statusItem.menu = menu
-        render()
+        renderIcon()
+        rebuild()
     }
 
     /// Removes the item from the menu bar (tests clean up with it).
@@ -83,73 +95,12 @@ final class StatusMenuController: NSObject {
 
     // MARK: - Rendering
 
+    /// The icon and the custom views follow at once; the rows are rebuilt
+    /// when the menu next opens, so none moves under the pointer.
     private func render() {
         renderIcon()
-        if isMenuOpen {
-            menu.items.first?.title = status.statusLine
-            menu.items.first?.image = statusLineIcon
-            needsRebuild = true
-            return
-        }
-        needsRebuild = false
-        menu.removeAllItems()
-        addStatusLine()
-        addPlayingApps()
-        addAutoPauseItems()
-        addActionItems()
-        addAppItems()
-    }
-
-    /// The status line, always the first item: it alone follows `status`
-    /// while the menu is open.
-    private func addStatusLine() {
-        let statusLine = NSMenuItem(title: status.statusLine, action: nil, keyEquivalent: "")
-        statusLine.image = statusLineIcon
-        statusLine.isEnabled = false
-        menu.addItem(statusLine)
-    }
-
-    /// The chosen player's icon, while it's installed.
-    private var statusLineIcon: NSImage? {
-        guard let player = status.chosenPlayer, player.isInstalled else { return nil }
-        return player.icon(size: 16)
-    }
-
-    /// One row per app playing right now.
-    private func addPlayingApps() {
-        guard !status.activeSources.isEmpty else { return }
-        menu.addItem(.separator())
-        status.activeSources.forEach { menu.addItem(sourceItem(for: $0)) }
-    }
-
-    /// Auto-Pause Music, Turn Off For, Music Player and, when there are any,
-    /// Ignored Apps.
-    private func addAutoPauseItems() {
-        menu.addItem(.separator())
-        menu.addItem(autoPauseItem())
-        menu.addItem(snoozeItem())
-        menu.addItem(musicPlayerItem())
-        if !status.ignoredApps.isEmpty { menu.addItem(ignoredAppsItem()) }
-    }
-
-    /// Whatever needs attention (a permission, Retry), then Settings.
-    private func addActionItems() {
-        menu.addItem(.separator())
-        if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
-        if status.showsRetry {
-            let title = String(localized: "Retry", comment: "Menu item: start monitoring again after a problem")
-            menu.addItem(item(title, #selector(retry), key: "r"))
-        }
-        menu.addItem(item(String(localized: "Settings…", comment: "Menu item"), #selector(openSettings), key: ","))
-        menu.addItem(diagnosticsItem())
-    }
-
-    /// About, the updates item and Quit.
-    private func addAppItems() {
-        menu.addItem(.separator())
-        menu.addItem(item(String(localized: "About AutoHush", comment: "Menu item"), #selector(showAbout)))
-        menu.addItem(updatesItem())
-        menu.addItem(item(String(localized: "Quit AutoHush", comment: "Menu item"), #selector(quit), key: "q"))
+        model.status = status
+        if isMenuOpen, let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
     }
 
     private func renderIcon() {
@@ -160,26 +111,51 @@ final class StatusMenuController: NSObject {
         button.appearsDisabled = status.dimsIcon
     }
 
-    private func sourceItem(for source: AudioSource) -> NSMenuItem {
-        let isIgnored = status.isIgnored(source.id)
-        let row = NSMenuItem(title: source.name, action: nil, keyEquivalent: "")
-        row.image = AppIcon.image(for: source)
-        if isIgnored {
-            row.subtitle = String(localized: "Ignored — music keeps playing",
-                                  comment: "Under an app in the menu that never pauses the music")
-        }
+    /// Puts the menu together for `status`.
+    private func rebuild() {
+        model.status = status
+        model.listedSources = status.activeSources
+        model.isChoosingPlayer = false
+        playerRows = []
+        menu.removeAllItems()
 
-        let submenu = NSMenu()
-        submenu.autoenablesItems = false
-        let toggle = item(
-            String(localized: "Never Pause Music for \(source.name)", comment: "Menu item; %@ is an app"),
-            #selector(toggleIgnored(_:)),
-            payload: Payload((source, !isIgnored))
-        )
-        toggle.state = isIgnored ? .on : .off
-        submenu.addItem(toggle)
-        row.submenu = submenu
-        return row
+        let card = hostedItem("card", StatusCardView(model: model))
+        cardItem = card
+        menu.addItem(card)
+        if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
+        menu.addItem(hostedItem("snooze", SnoozeBarView(model: model)))
+        if !status.activeSources.isEmpty {
+            menu.addItem(.separator())
+            menu.addItem(hostedItem("playingApps", PlayingAppsView(model: model)))
+        }
+        if !status.ignoredApps.isEmpty {
+            menu.addItem(.separator())
+            menu.addItem(ignoredAppsItem())
+        }
+        menu.addItem(.separator())
+        if let offer = status.updateOffer { menu.addItem(updateItem(for: offer)) }
+        menu.addItem(hostedItem("toolbar", MenuToolbarView(model: model)))
+    }
+
+    /// A row showing `view`, as wide as the menu.
+    private func hostedItem<Content: View>(_ identifier: String, _ view: Content) -> NSMenuItem {
+        let item = NSMenuItem()
+        item.identifier = NSUserInterfaceItemIdentifier(identifier)
+        let hosting = NSHostingView(rootView: view)
+        hosting.autoresizingMask = [.width]
+        item.view = hosting
+        fit(item)
+        return item
+    }
+
+    /// Sizes a custom view's row to what it shows now.
+    private func fit(_ item: NSMenuItem, changed: Bool = false) {
+        guard let view = item.view else { return }
+        view.layoutSubtreeIfNeeded() // applies what the model changed, or the size is the old one
+        let size = NSSize(width: max(menuContentWidth, view.frame.width), height: view.fittingSize.height)
+        guard view.frame.size != size else { return }
+        view.frame.size = size
+        if changed { menu.itemChanged(item) }
     }
 
     private func warningItem(for warning: Permission) -> NSMenuItem {
@@ -189,12 +165,9 @@ final class StatusMenuController: NSObject {
         return item
     }
 
-    /// "Check for Updates…"; once an update is found "Install AutoHush 0.3.8…",
-    /// which shows it; and while it installs, a greyed-out "Installing…".
-    private func updatesItem() -> NSMenuItem {
-        guard let offer = status.updateOffer else {
-            return item(String(localized: "Check for Updates…", comment: "Menu item"), #selector(checkForUpdates))
-        }
+    /// "Install AutoHush 0.3.8…", which shows the update found; while it
+    /// installs, a greyed-out "Installing…".
+    private func updateItem(for offer: UpdateOffer) -> NSMenuItem {
         let version = offer.release.version.description
         if offer.state == .installing {
             let title = String(localized: "Installing AutoHush \(version)…",
@@ -211,58 +184,9 @@ final class StatusMenuController: NSObject {
         return item
     }
 
-    /// Takes the place of Settings… while ⌥ is held.
-    private func diagnosticsItem() -> NSMenuItem {
-        let title = String(localized: "Diagnostics…", comment: "Menu item, shown while ⌥ is held")
-        let item = item(title, #selector(showDiagnostics), key: ",")
-        item.keyEquivalentModifierMask = [.command, .option]
-        item.isAlternate = true
-        return item
-    }
-
-    private func autoPauseItem() -> NSMenuItem {
-        let title = String(localized: "Auto-Pause Music", comment: "Menu item and Settings switch")
-        let item = item(title, #selector(toggleAutoPause))
-        item.state = status.autoPause == .on ? .on : .off
-        return item
-    }
-
-    private func snoozeItem() -> NSMenuItem {
-        let title = String(localized: "Turn Off For",
-                           comment: "Menu item; its submenu offers 5, 15 and 30 Minutes, 1 Hour and 24 Hours")
-        let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        let submenu = NSMenu()
-        submenu.autoenablesItems = false
-        for snooze in AutoPauseSnooze.allCases {
-            submenu.addItem(item(snooze.title, #selector(snooze(_:)), payload: Payload(snooze)))
-        }
-        row.submenu = submenu
-        return row
-    }
-
-    /// The players to choose from, the chosen one checked. One that isn't
-    /// installed can't be chosen.
-    private func musicPlayerItem() -> NSMenuItem {
-        let title = String(localized: "Music Player", comment: "Menu item; its submenu lists the music players to choose from")
-        let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        let submenu = NSMenu()
-        submenu.autoenablesItems = false
-        for option in status.playerOptions {
-            let entry = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
-            entry.image = option.icon(size: 16)
-            entry.state = option.bundleID == status.chosenPlayerID ? .on : .off
-            if !option.isInstalled {
-                entry.isEnabled = false
-                entry.subtitle = PlayerOption.notInstalledLabel
-            }
-            submenu.addItem(entry)
-        }
-        row.submenu = submenu
-        return row
-    }
-
     private func ignoredAppsItem() -> NSMenuItem {
         let row = NSMenuItem(title: String(localized: "Ignored Apps", comment: "Menu item"), action: nil, keyEquivalent: "")
+        row.image = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         let hintTitle = String(localized: "Click an app to stop ignoring it", comment: "Hint atop the Ignored Apps submenu")
@@ -278,8 +202,37 @@ final class StatusMenuController: NSObject {
         return row
     }
 
-    private func item(_ title: String, _ action: Selector, key: String = "", payload: NSObject? = nil) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+    // MARK: - The music players
+
+    /// Unfolds the players under the card, or folds them back. They're the
+    /// menu's own rows: a second menu can't open from inside an open one.
+    private func togglePlayerList() {
+        if model.isChoosingPlayer {
+            playerRows.forEach(menu.removeItem)
+            playerRows = []
+        } else if let cardItem {
+            playerRows = status.playerOptions.map(playerRow)
+            let first = menu.index(of: cardItem) + 1
+            for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: first + offset) }
+        }
+        model.isChoosingPlayer.toggle()
+    }
+
+    /// A player to choose, checked when chosen. One that isn't installed
+    /// can't be.
+    private func playerRow(for option: PlayerOption) -> NSMenuItem {
+        let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
+        row.image = option.icon(size: 16)
+        row.state = option.bundleID == status.chosenPlayerID ? .on : .off
+        if !option.isInstalled {
+            row.isEnabled = false
+            row.subtitle = PlayerOption.notInstalledLabel
+        }
+        return row
+    }
+
+    private func item(_ title: String, _ action: Selector, payload: NSObject? = nil) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
         item.target = self
         item.representedObject = payload
         return item
@@ -287,19 +240,40 @@ final class StatusMenuController: NSObject {
 
     // MARK: - Actions
 
-    @objc private func toggleAutoPause() { actions.toggleAutoPause() }
-    @objc private func retry() { actions.retry() }
-    @objc private func openSettings() { actions.openSettings() }
-    @objc private func showDiagnostics() { actions.showDiagnostics() }
-    @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
-    @objc private func checkForUpdates() { actions.checkForUpdates() }
-    @objc private func showAbout() { actions.showAbout() }
-    @objc private func quit() { actions.quit() }
-
-    @objc private func snooze(_ sender: NSMenuItem) {
-        guard let payload = sender.representedObject as? Payload<AutoPauseSnooze> else { return }
-        actions.snooze(payload.value)
+    /// What the custom views ask for. Switches and the player list act at
+    /// once and keep the menu open; the rest close it first, as its rows do.
+    func perform(_ command: StatusMenuCommand) {
+        switch command {
+        case .toggleAutoPause:
+            actions.toggleAutoPause()
+        case .setIgnored(let source, let ignored):
+            actions.setIgnored(source, ignored)
+        case .togglePlayerList:
+            togglePlayerList()
+        case .retry:
+            actions.retry() // the card shows how it goes
+        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .quit:
+            menu.cancelTracking()
+            // Once the menu has closed, as for its own rows.
+            RunLoop.main.perform(inModes: [.default]) { [weak self] in
+                MainActor.assumeIsolated { self?.run(command) }
+            }
+        }
     }
+
+    private func run(_ command: StatusMenuCommand) {
+        switch command {
+        case .snooze(let snooze): actions.snooze(snooze)
+        case .openSettings:       actions.openSettings()
+        case .showDiagnostics:    actions.showDiagnostics()
+        case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
+        case .showAbout:          actions.showAbout()
+        case .quit:               actions.quit()
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .retry: perform(command)
+        }
+    }
+
+    @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
 
     @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }
@@ -323,6 +297,7 @@ extension StatusMenuController: NSMenuDelegate {
     /// Called before the menu opens, while it can still be rebuilt.
     func menuNeedsUpdate(_ menu: NSMenu) {
         actions.menuWillOpen()
+        rebuild()
     }
 
     func menuWillOpen(_ menu: NSMenu) {
@@ -331,6 +306,5 @@ extension StatusMenuController: NSMenuDelegate {
 
     func menuDidClose(_ menu: NSMenu) {
         isMenuOpen = false
-        if needsRebuild { render() }
     }
 }

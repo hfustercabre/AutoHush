@@ -21,15 +21,15 @@ struct AppHealthStateTests {
         #expect(health(MusicPlayerError.playerNotRunning) == .degraded("Jukebox is not running"))
     }
 
-    @Test("an unresponsive player is degraded")
+    @Test("an unresponsive player is retried")
     func playerNotResponding() {
-        #expect(health(MusicPlayerError.playerNotResponding) == .degraded("Jukebox is not responding"))
+        #expect(health(MusicPlayerError.playerNotResponding) == .retrying("Jukebox is not responding"))
     }
 
-    @Test("a failed player command is degraded with its message")
+    @Test("a failed player command is retried, with its message")
     func commandFailed() {
         #expect(health(MusicPlayerError.playerCommandFailed("OSStatus -50"))
-            == .degraded("Jukebox control error: OSStatus -50"))
+            == .retrying("Jukebox control error: OSStatus -50"))
     }
 
     @Test("messages name the player")

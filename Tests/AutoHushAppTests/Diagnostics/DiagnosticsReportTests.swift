@@ -31,6 +31,29 @@ struct DiagnosticsReportTests {
             """)
     }
 
+    @Test("the Diagnostics tab gets each app with its icon, how it's judged and why, then the settings, and the text to copy")
+    func snapshot() {
+        var status = AppStatus()
+        status.choosePlayer(named: "Jukebox")
+        status.detection = .audioLevel
+        let activeAudio: [ActiveAudioReport.Entry] = [
+            .init(id: "com.google.Chrome", name: "Google Chrome", state: .playing, evidence: .level(0.1)),
+            .init(id: "org.videolan.vlc", state: .silent, isIgnored: true),
+        ]
+        let snapshot = DiagnosticsReport.snapshot(
+            activeAudio: activeAudio, status: status, detectionMethod: .audioLevels,
+            bundlePath: { $0 == "com.google.Chrome" ? "/Applications/Google Chrome.app" : nil }
+        )
+        #expect(snapshot.apps == [
+            .init(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app",
+                  judgement: "Playing", evidence: "-20 dBFS"),
+            .init(id: "org.videolan.vlc", name: "org.videolan.vlc", bundlePath: nil,
+                  judgement: "Output open, silent, ignored", evidence: nil),
+        ])
+        #expect(snapshot.settings == ["Detection: audio levels", "Music player: Jukebox", "Auto-pause: on", "Ignored apps: none"])
+        #expect(snapshot.text == DiagnosticsReport.text(activeAudio: activeAudio, status: status, detectionMethod: .audioLevels))
+    }
+
     @Test("each app's line says how AutoHush judges it, and why", arguments: [
         (ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .starting), "org.videolan.vlc — starting"),
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),

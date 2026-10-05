@@ -27,13 +27,13 @@ struct AppStatusTests {
         #expect(status.health == .starting)
         #expect(status.statusLine == "Starting services")
         #expect(status.icon == .starting)
-        #expect(status.warning == nil && !status.showsRetry && !status.dimsIcon)
+        #expect(status.warning == nil && !status.canRetry && !status.dimsIcon)
     }
 
-    @Test("when ready, icon and status line follow playback, naming the player", arguments: [
-        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Jukebox is playing"),
-        (.musicIdle, .noMusic, "Jukebox isn't playing"),
-        (.playingElsewhere, .elsewhere, "Jukebox is playing on another device"),
+    @Test("when ready, icon and status line follow playback", arguments: [
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Playing"),
+        (.musicIdle, .noMusic, "Not playing"),
+        (.playingElsewhere, .elsewhere, "Playing on another device"),
     ])
     func readyFollowsPlayback(playback: PlaybackState, icon: MenuBarIcon, line: String) {
         let status = ready(playback)
@@ -41,17 +41,34 @@ struct AppStatusTests {
         #expect(status.statusLine == line)
     }
 
+    @Test("the card is titled with the chosen player, or AutoHush while none is chosen")
+    func cardTitle() {
+        #expect(ready().cardTitle == "Jukebox")
+        #expect(AppStatus().cardTitle == "AutoHush")
+    }
+
+    @Test("only a problem needs attention", arguments: [
+        (AppHealthState.starting, false), (.ready, false), (.needsPlayer("Choose a music player"), true),
+        (.degraded("Jukebox is not running"), true), (.needsPermission(.automation(player: "Jukebox")), true),
+        (.failed("Monitor failed hard"), true),
+    ])
+    func needsAttention(health: AppHealthState, attention: Bool) {
+        var status = AppStatus()
+        status.setHealth(health)
+        #expect(status.needsAttention == attention)
+    }
+
     @Test("a pause names the apps that caused it")
     func pauseNamesApps() {
         var status = ready(.pausedByMonitor)
         status.setActiveSources([vlc])
-        #expect(status.statusLine == "Jukebox paused — VLC is playing")
+        #expect(status.statusLine == "Paused — VLC is playing")
         status.setActiveSources([vlc, chrome])
-        #expect(status.statusLine == "Jukebox paused — Google Chrome and VLC are playing")
+        #expect(status.statusLine == "Paused — Google Chrome and VLC are playing")
         status.setActiveSources([vlc, chrome, safari])
-        #expect(status.statusLine == "Jukebox paused — Google Chrome and 2 other apps are playing")
+        #expect(status.statusLine == "Paused — Google Chrome and 2 other apps are playing")
         status.setActiveSources([])
-        #expect(status.statusLine == "Jukebox paused — another app is playing")
+        #expect(status.statusLine == "Paused — another app is playing")
     }
 
     @Test("ignored apps are listed but never named as the cause of a pause")
@@ -62,7 +79,7 @@ struct AppStatusTests {
         #expect(status.activeSources == [chrome, vlc])
         #expect(status.pausingSources == [chrome])
         #expect(status.isIgnored(vlc.id))
-        #expect(status.statusLine == "Jukebox paused — Google Chrome is playing")
+        #expect(status.statusLine == "Paused — Google Chrome is playing")
     }
 
     @Test("auto-pause off replaces the status line and dims the icon")
@@ -97,15 +114,27 @@ struct AppStatusTests {
         #expect(!status.dimsIcon)
     }
 
-    @Test("degraded health clears sources and offers Retry")
+    @Test("degraded health clears sources; it ends by itself when the player opens, so no Retry")
     func degradedClearsSources() {
         var status = ready(.musicPlaying)
         status.setActiveSources([chrome])
-        status.setHealth(.degraded("Audio monitor restarting"))
+        status.setHealth(.degraded("Jukebox is not running"))
         #expect(status.activeSources.isEmpty)
         #expect(status.icon == .attention)
-        #expect(status.showsRetry)
+        #expect(!status.canRetry)
         #expect(status.warning == nil)
+    }
+
+    @Test("Retry is offered only after a failed start nothing announces the end of", arguments: [
+        (AppHealthState.retrying("Jukebox is not responding"), true), (.failed("Monitor failed hard"), true),
+        (.degraded("Jukebox is not installed"), false), (.needsPermission(.automation(player: "Jukebox")), false),
+        (.starting, false), (.ready, false),
+    ])
+    func retryOffered(health: AppHealthState, offered: Bool) {
+        var status = AppStatus()
+        status.setHealth(health)
+        #expect(status.canRetry == offered)
+        #expect(status.needsAttention == (health != .starting && health != .ready))
     }
 
     @Test("waiting for a music player to be chosen needs attention, but no Retry or warning")
@@ -114,18 +143,18 @@ struct AppStatusTests {
         status.setHealth(.needsPlayer("Choose a music player"))
         #expect(status.icon == .attention)
         #expect(status.statusLine == "Choose a music player")
-        #expect(!status.showsRetry)
+        #expect(!status.canRetry)
         #expect(status.warning == nil)
     }
 
-    @Test("missing Automation access is the one warning, with Retry")
+    @Test("missing Automation access is the one warning; granting it is noticed by itself, so no Retry")
     func automationWarning() {
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
         status.setHealth(.needsPermission(.automation(player: "Jukebox")))
         #expect(status.warning == .automation(player: "Jukebox"))
         #expect(status.warning?.grantTitle == "Allow Jukebox Automation Access…")
-        #expect(status.showsRetry)
+        #expect(!status.canRetry)
     }
 
     @Test("missing audio access warns only when ready")

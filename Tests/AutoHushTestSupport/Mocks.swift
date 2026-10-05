@@ -61,6 +61,7 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
+    package func setFailVerify(_ error: Error?) { failVerifyWith = error }
 
     package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
 

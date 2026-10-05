@@ -440,7 +440,7 @@ final class UpdateController {
         for button in prompt.buttons { alert.addButton(withTitle: button.title) }
         if let notes = release.notes { alert.accessoryView = Self.notesView(notes) }
         NSApp.activate()
-        let index = alert.runModal().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        let index = alert.runModalWithoutShortcuts().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
         guard prompt.buttons.indices.contains(index) else { return }
         switch prompt.buttons[index].choice {
         case .install: Task { await install(release, userInitiated: true) }
@@ -488,7 +488,7 @@ final class UpdateController {
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
         alert.addButton(withTitle: String(localized: "Later", comment: "Update alert button: close it without updating"))
         NSApp.activate()
-        if alert.runModal() == .alertFirstButtonReturn {
+        if alert.runModalWithoutShortcuts() == .alertFirstButtonReturn {
             openURL(release.pageURL)
         }
     }
