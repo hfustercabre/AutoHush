@@ -1,12 +1,11 @@
 import AppKit
 import Foundation
 import Testing
-@testable import SpotifySupport
+@testable import ScriptablePlayers
 import AutoHushKit
-import AutoHushTestSupport
 
-@Suite("SpotifyPlayer")
-struct SpotifyPlayerTests {
+@Suite("ScriptablePlayer")
+struct ScriptablePlayerTests {
 
     // Never sent: building descriptors does not contact the target process.
     private let pid: pid_t = 4242
@@ -44,7 +43,7 @@ struct SpotifyPlayerTests {
 
     @Test("player state event is core/getd on property pPlS of application")
     func getPlayerStateEvent() throws {
-        let event = SpotifyPlayer.makeGetPlayerStateEvent(processIdentifier: pid)
+        let event = ScriptablePlayer.makeGetPlayerStateEvent(processIdentifier: pid)
 
         #expect(event.eventClass == fourCharCode("core"))
         #expect(event.eventID == fourCharCode("getd"))
@@ -59,34 +58,34 @@ struct SpotifyPlayerTests {
 
     @Test("volume is read with core/getd and set with core/setd on property pVol")
     func volumeEvents() throws {
-        let get = SpotifyPlayer.makeGetVolumeEvent(processIdentifier: pid)
+        let get = ScriptablePlayer.makeGetVolumeEvent(processIdentifier: pid)
         #expect(get.eventClass == fourCharCode("core") && get.eventID == fourCharCode("getd"))
         #expect(get.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("pVol"))
 
-        let set = SpotifyPlayer.makeSetVolumeEvent(42, processIdentifier: pid)
+        let set = ScriptablePlayer.makeSetVolumeEvent(42, processIdentifier: pid)
         #expect(set.eventClass == fourCharCode("core") && set.eventID == fourCharCode("setd"))
         #expect(set.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("pVol"))
         #expect(set.paramDescriptor(forKeyword: fourCharCode("data"))?.int32Value == 42)
     }
 
-    @Test("Spotify's volume reading is corrected for its off-by-one", arguments: [
-        (Int32(49), 50), (Int32(0), 0), (Int32(1), 2), (Int32(99), 100), (Int32(100), 100),
+    @Test("the volume read is corrected as the profile says, and kept within 0–100", arguments: [
+        (Int32(49), 50), (Int32(0), 1), (Int32(100), 100), (Int32(-3), 0), (Int32(150), 100),
     ])
     func volumeReading(reported: Int32, volume: Int) {
-        let answer = SpotifyReply(reply(directObject: NSAppleEventDescriptor(int32: reported)))
-        #expect(SpotifyPlayer.volume(fromReply: answer) == volume)
+        let answer = PlayerReply(reply(directObject: NSAppleEventDescriptor(int32: reported)))
+        #expect(ScriptablePlayer.volume(fromReply: answer, reading: { $0 + 1 }) == volume)
     }
 
     @Test("a reply without a number has no volume")
     func volumeMissing() {
-        #expect(SpotifyPlayer.volume(fromReply: SpotifyReply(reply())) == nil)
+        #expect(ScriptablePlayer.volume(fromReply: PlayerReply(reply()), reading: { $0 }) == nil)
     }
 
-    @Test("events target the given process, never a bundle ID that could launch Spotify")
+    @Test("events target the given process, never a bundle ID that could launch the app")
     func eventsTargetProcessIdentifier() throws {
         let events = [
-            SpotifyPlayer.makeGetPlayerStateEvent(processIdentifier: pid),
-            SpotifyPlayer.makeCommandEvent(SpotifyPlayer.Code.pause, processIdentifier: pid),
+            ScriptablePlayer.makeGetPlayerStateEvent(processIdentifier: pid),
+            ScriptablePlayer.makeCommandEvent(suite: fourCharCode("jbox"), ScriptablePlayer.Code.pause, processIdentifier: pid),
         ]
         for event in events {
             let target = try #require(event.attributeDescriptor(forKeyword: fourCharCode("addr")))
@@ -95,72 +94,74 @@ struct SpotifyPlayerTests {
         }
     }
 
-    @Test("pause and play are spfy/Paus and spfy/Play without parameters")
+    @Test("pause and play are Paus and Play of the app's own suite, without parameters")
     func commandEvents() {
-        let pause = SpotifyPlayer.makeCommandEvent(SpotifyPlayer.Code.pause, processIdentifier: pid)
-        let play = SpotifyPlayer.makeCommandEvent(SpotifyPlayer.Code.play, processIdentifier: pid)
+        let pause = ScriptablePlayer.makeCommandEvent(suite: fourCharCode("jbox"), ScriptablePlayer.Code.pause, processIdentifier: pid)
+        let play = ScriptablePlayer.makeCommandEvent(suite: fourCharCode("jbox"), ScriptablePlayer.Code.play, processIdentifier: pid)
 
-        #expect(pause.eventClass == fourCharCode("spfy"))
+        #expect(pause.eventClass == fourCharCode("jbox"))
         #expect(pause.eventID == fourCharCode("Paus"))
-        #expect(play.eventClass == fourCharCode("spfy"))
+        #expect(play.eventClass == fourCharCode("jbox"))
         #expect(play.eventID == fourCharCode("Play"))
         #expect(pause.paramDescriptor(forKeyword: fourCharCode("----")) == nil)
     }
 
     // MARK: - Player state decoding
 
-    @Test("ePlS enumerators map to PlayerState", arguments: [
+    @Test("ePlS enumerators map to PlayerState; seeking counts as playing", arguments: [
         ("kPSP", PlayerState.playing),
         ("kPSp", PlayerState.paused),
         ("kPSS", PlayerState.stopped),
+        ("kPSF", PlayerState.playing),
+        ("kPSR", PlayerState.playing),
     ])
     func enumCodeMapping(code: String, expected: PlayerState) {
         let osType = code.utf8.reduce(OSType(0)) { ($0 << 8) | OSType($1) }
-        #expect(SpotifyPlayer.playerState(fromEnumCode: osType) == expected)
+        #expect(ScriptablePlayer.playerState(fromEnumCode: osType) == expected)
     }
 
     @Test("unknown enum code maps to unknown")
     func unknownEnumCode() {
-        #expect(SpotifyPlayer.playerState(fromEnumCode: fourCharCode("kPSx")) == .unknown)
+        #expect(ScriptablePlayer.playerState(fromEnumCode: fourCharCode("kPSx")) == .unknown)
     }
 
     @Test("enumerated reply decodes to player state")
     func enumeratedReply() {
         let raw = reply(directObject: NSAppleEventDescriptor(enumCode: fourCharCode("kPSP")))
 
-        let decoded = SpotifyReply(raw)
+        let decoded = PlayerReply(raw)
 
         #expect(decoded.directObjectCode == fourCharCode("kPSP"))
-        #expect(SpotifyPlayer.playerState(fromReply: decoded) == .playing)
+        #expect(ScriptablePlayer.playerState(fromReply: decoded) == .playing)
     }
 
     @Test("reply without direct object decodes to unknown")
     func missingDirectObject() {
-        let decoded = SpotifyReply(reply())
+        let decoded = PlayerReply(reply())
 
         #expect(decoded.directObjectCode == nil)
-        #expect(SpotifyPlayer.playerState(fromReply: decoded) == .unknown)
+        #expect(ScriptablePlayer.playerState(fromReply: decoded) == .unknown)
     }
 
     @Test("reply with a non-enum direct object decodes to unknown")
     func textDirectObject() {
-        let decoded = SpotifyReply(reply(directObject: NSAppleEventDescriptor(string: "playing")))
+        let decoded = PlayerReply(reply(directObject: NSAppleEventDescriptor(string: "playing")))
 
-        #expect(SpotifyPlayer.playerState(fromReply: decoded) == .unknown)
+        #expect(ScriptablePlayer.playerState(fromReply: decoded) == .unknown)
     }
 
     // MARK: - Reply errors
 
     @Test("successful reply carries no error")
     func replyWithoutError() {
-        #expect(SpotifyPlayer.replyError(reply()) == nil)
-        #expect(SpotifyPlayer.replyError(reply(errorNumber: 0)) == nil)
+        #expect(ScriptablePlayer.replyError(reply()) == nil)
+        #expect(ScriptablePlayer.replyError(reply(errorNumber: 0)) == nil)
     }
 
     @Test("errn in reply maps through the error table, with errs as message")
     func replyWithError() {
-        #expect(SpotifyPlayer.replyError(reply(errorNumber: -1743)) == .automationPermissionDenied)
-        #expect(SpotifyPlayer.replyError(reply(errorNumber: -1708, errorString: "Not understood"))
+        #expect(ScriptablePlayer.replyError(reply(errorNumber: -1743)) == .automationPermissionDenied)
+        #expect(ScriptablePlayer.replyError(reply(errorNumber: -1708, errorString: "Not understood"))
                 == .playerCommandFailed("Not understood (OSStatus -1708)"))
     }
 
@@ -168,39 +169,64 @@ struct SpotifyPlayerTests {
 
     @Test("-1743 error number maps to automationPermissionDenied")
     func automationDeniedErrorCode() {
-        #expect(SpotifyPlayer.mapError(number: -1743, message: "Not authorized") == .automationPermissionDenied)
+        #expect(ScriptablePlayer.mapError(number: -1743, message: "Not authorized") == .automationPermissionDenied)
     }
 
     @Test("sendEvent NSError -1743 maps to automationPermissionDenied")
     func automationDeniedNSError() {
         let error = NSError(domain: NSOSStatusErrorDomain, code: -1743)
 
-        #expect(SpotifyPlayer.mapError(error) == .automationPermissionDenied)
+        #expect(ScriptablePlayer.mapError(error) == .automationPermissionDenied)
     }
 
     @Test("procNotFound maps to playerNotRunning")
     func processNotFound() {
         let error = NSError(domain: NSOSStatusErrorDomain, code: -600)
 
-        #expect(SpotifyPlayer.mapError(error) == .playerNotRunning)
+        #expect(ScriptablePlayer.mapError(error) == .playerNotRunning)
     }
 
-    @Test("timeouts mean Spotify is not responding; other error numbers keep their OSStatus")
+    @Test("timeouts mean the app is not responding; other error numbers keep their OSStatus")
     func genericErrorCode() {
         let timeout = NSError(domain: NSOSStatusErrorDomain, code: -1712)
 
-        #expect(SpotifyPlayer.mapError(timeout) == .playerNotResponding)
-        #expect(SpotifyPlayer.mapError(number: -1708, message: "Spotify got an error")
-                == .playerCommandFailed("Spotify got an error (OSStatus -1708)"))
+        #expect(ScriptablePlayer.mapError(timeout) == .playerNotResponding)
+        #expect(ScriptablePlayer.mapError(number: -1708, message: "The app got an error")
+                == .playerCommandFailed("The app got an error (OSStatus -1708)"))
     }
 
     @Test("empty message falls back to the bare OSStatus")
     func emptyMessage() {
-        #expect(SpotifyPlayer.mapError(number: -50, message: "") == .playerCommandFailed("OSStatus -50"))
+        #expect(ScriptablePlayer.mapError(number: -50, message: "") == .playerCommandFailed("OSStatus -50"))
     }
 
     @Test("MusicPlayerError passes through unchanged")
     func passthrough() {
-        #expect(SpotifyPlayer.mapError(MusicPlayerError.playerNotRunning) == .playerNotRunning)
+        #expect(ScriptablePlayer.mapError(MusicPlayerError.playerNotRunning) == .playerNotRunning)
+    }
+
+    // MARK: - The player
+
+    @Test("a player is named, identified and fades as its profile says")
+    func identity() {
+        let profile = ScriptablePlayerProfile(
+            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+            stateNotification: Notification.Name("com.example.jukebox.state"), volumeCurve: .cubic
+        )
+        let player = ScriptablePlayer(profile: profile)
+        #expect(player.name == "Jukebox")
+        #expect(player.bundleID == "com.example.jukebox")
+        #expect(player.volumeCurve == .cubic)
+        #expect(profile.readVolume(42) == 42) // read as reported unless the profile says otherwise
+    }
+
+    @MainActor
+    @Test("a player watches its state through its notification")
+    func observer() {
+        let profile = ScriptablePlayerProfile(
+            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+            stateNotification: Notification.Name("com.example.jukebox.state")
+        )
+        #expect(ScriptablePlayer(profile: profile).makeStateObserver { _ in } is PlayerStateObserver)
     }
 }

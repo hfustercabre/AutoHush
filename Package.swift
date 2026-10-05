@@ -6,8 +6,11 @@ import PackageDescription
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
 //          ├─ AutoHushPlayers   the supported music players
-//          │    └─ SpotifySupport   one <App>Support target per player,
-//          │                        all in Sources/PlayersSupport/
+//          │    ├─ SpotifySupport, AppleMusicSupport
+//          │    │                   one <App>Support target per player, all in
+//          │    │                   Sources/PlayersSupport/: what's special about it
+//          │    └─ ScriptablePlayers  controls any app scripted with Apple events
+//          │                        (state, pause, play, volume, its notification)
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
@@ -30,8 +33,21 @@ let package = Package(
     targets: [
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
         .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
-        .target(name: "AutoHushPlayers", dependencies: ["AutoHushKit", "SpotifySupport"]),
-        .target(name: "SpotifySupport", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/SpotifySupport"),
+        .target(
+            name: "AutoHushPlayers",
+            dependencies: ["AutoHushKit", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport"]
+        ),
+        .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
+        .target(
+            name: "SpotifySupport",
+            dependencies: ["AutoHushKit", "ScriptablePlayers"],
+            path: "Sources/PlayersSupport/SpotifySupport"
+        ),
+        .target(
+            name: "AppleMusicSupport",
+            dependencies: ["AutoHushKit", "ScriptablePlayers"],
+            path: "Sources/PlayersSupport/AppleMusicSupport"
+        ),
         .target(name: "AutoHushKit"),
 
         // Measures a player's volume curve with the engine's own meter. A
@@ -46,15 +62,28 @@ let package = Package(
         .target(name: "AutoHushTestSupport", dependencies: ["AutoHushKit"], path: "Tests/AutoHushTestSupport"),
         .testTarget(name: "AutoHushKitTests", dependencies: ["AutoHushKit", "AutoHushTestSupport"]),
         .testTarget(
+            name: "ScriptablePlayersTests",
+            dependencies: ["ScriptablePlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/ScriptablePlayersTests"
+        ),
+        .testTarget(
             name: "SpotifySupportTests",
-            dependencies: ["SpotifySupport", "AutoHushKit", "AutoHushTestSupport"],
+            dependencies: ["SpotifySupport", "ScriptablePlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/SpotifySupportTests"
+        ),
+        .testTarget(
+            name: "AppleMusicSupportTests",
+            dependencies: ["AppleMusicSupport", "ScriptablePlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/AppleMusicSupportTests"
         ),
         .testTarget(
             name: "AutoHushAppTests",
             dependencies: ["AutoHushApp", "AutoHushKit", "AutoHushTestSupport"]
         ),
-        .testTarget(name: "AutoHushPlayersTests", dependencies: ["AutoHushPlayers", "SpotifySupport", "AutoHushKit"]),
+        .testTarget(
+            name: "AutoHushPlayersTests",
+            dependencies: ["AutoHushPlayers", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "AutoHushKit"]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )

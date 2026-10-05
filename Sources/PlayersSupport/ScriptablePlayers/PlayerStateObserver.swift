@@ -3,29 +3,34 @@ import Foundation
 import OSLog
 import AutoHushKit
 
-/// Reports Spotify's state changes without asking Spotify.
+/// Reports a music app's state changes without asking the app.
 ///
-/// Spotify posts `com.spotify.client.PlaybackStateChanged` as a distributed
-/// notification on every play/pause/stop/track change, with the new state in
+/// The scriptable players post a distributed notification on every play,
+/// pause, stop and track change (Spotify `com.spotify.client.PlaybackStateChanged`,
+/// Music `com.apple.Music.playerInfo`), with the new state in
 /// userInfo["Player State"] ("Playing", "Paused" or "Stopped"). Observing it
-/// replaces polling Spotify with Apple events. Spotify posts nothing when it
-/// quits, so app termination is observed through NSWorkspace instead.
+/// replaces polling the app with Apple events. Nothing is posted when the
+/// app quits, so that is observed through NSWorkspace instead.
 @MainActor
-package final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
-    package static let playbackStateChanged = Notification.Name("com.spotify.client.PlaybackStateChanged")
-
+package final class PlayerStateObserver: NSObject, PlayerStateObserving {
+    private let notification: Notification.Name
+    private let bundleID: String
     private let onChange: @MainActor (PlayerState) -> Void
     private let distributedCenter: DistributedNotificationCenter
     private let workspaceCenter: NotificationCenter
     private var terminationObserver: (any NSObjectProtocol)?
     private var isObserving = false
-    private let logger = Logger(category: "SpotifyPlaybackObserver")
+    private let logger = Logger(category: "PlayerStateObserver")
 
     package init(
+        notification: Notification.Name,
+        bundleID: String,
         distributedCenter: DistributedNotificationCenter = .default(),
         workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
         onChange: @escaping @MainActor (PlayerState) -> Void
     ) {
+        self.notification = notification
+        self.bundleID = bundleID
         self.distributedCenter = distributedCenter
         self.workspaceCenter = workspaceCenter
         self.onChange = onChange
@@ -40,18 +45,19 @@ package final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
         distributedCenter.addObserver(
             self,
             selector: #selector(playbackStateDidChange(_:)),
-            name: Self.playbackStateChanged,
+            name: notification,
             object: nil,
             suspensionBehavior: .deliverImmediately
         )
+        let bundleID = bundleID
         terminationObserver = workspaceCenter.addObserver(
             forName: NSWorkspace.didTerminateApplicationNotification,
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            let bundleID = (notification.userInfo?[NSWorkspace.applicationUserInfoKey]
+            let terminated = (notification.userInfo?[NSWorkspace.applicationUserInfoKey]
                 as? NSRunningApplication)?.bundleIdentifier
-            guard bundleID == SpotifyPlayer.appBundleID else { return }
+            guard terminated == bundleID else { return }
             MainActor.assumeIsolated { self?.deliver(.notRunning) }
         }
     }
@@ -59,7 +65,7 @@ package final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
     package func stop() {
         guard isObserving else { return }
         isObserving = false
-        distributedCenter.removeObserver(self, name: Self.playbackStateChanged, object: nil)
+        distributedCenter.removeObserver(self, name: notification, object: nil)
         if let terminationObserver {
             workspaceCenter.removeObserver(terminationObserver)
         }
@@ -82,7 +88,7 @@ package final class SpotifyPlaybackObserver: NSObject, PlayerStateObserving {
 
     private func deliver(_ state: PlayerState) {
         guard isObserving else { return }
-        logger.debug("Spotify reported \(state.rawValue, privacy: .public)")
+        logger.debug("\(self.bundleID, privacy: .public) reported \(state.rawValue, privacy: .public)")
         onChange(state)
     }
 }

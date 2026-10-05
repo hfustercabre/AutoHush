@@ -1,14 +1,15 @@
 import AppKit
 import Foundation
 import Testing
-@testable import SpotifySupport
+@testable import ScriptablePlayers
 import AutoHushKit
-import AutoHushTestSupport
 
-@Suite("SpotifyPlaybackObserver")
-struct SpotifyPlaybackObserverTests {
+@Suite("PlayerStateObserver")
+struct PlayerStateObserverTests {
+    private static let bundleID = "com.example.jukebox"
 
-    @Test("maps Spotify's Player State values", arguments: [
+
+    @Test("maps the Player State values", arguments: [
         ("Playing", PlayerState.playing),
         ("Paused", .paused),
         ("Stopped", .stopped),
@@ -16,25 +17,28 @@ struct SpotifyPlaybackObserverTests {
         ("Buffering", .unknown),
     ])
     func mapsPlayerState(value: String, expected: PlayerState) {
-        #expect(SpotifyPlaybackObserver.playerState(from: ["Player State": value]) == expected)
+        #expect(PlayerStateObserver.playerState(from: ["Player State": value]) == expected)
     }
 
     @Test("missing Player State maps to unknown")
     func missingPlayerStateIsUnknown() {
-        #expect(SpotifyPlaybackObserver.playerState(from: nil) == .unknown)
-        #expect(SpotifyPlaybackObserver.playerState(from: ["Track ID": "x"]) == .unknown)
+        #expect(PlayerStateObserver.playerState(from: nil) == .unknown)
+        #expect(PlayerStateObserver.playerState(from: ["Track ID": "x"]) == .unknown)
     }
 
     @MainActor
-    @Test("Spotify terminating is reported as notRunning; other apps are ignored")
+    @Test("the player quitting is reported as notRunning; other apps are ignored")
     func terminationReportsNotRunning() async {
         let workspaceCenter = NotificationCenter()
         var received: [PlayerState] = []
-        let observer = SpotifyPlaybackObserver(workspaceCenter: workspaceCenter) { received.append($0) }
+        let observer = PlayerStateObserver(
+            notification: Notification.Name("com.example.jukebox.state"), bundleID: Self.bundleID,
+            workspaceCenter: workspaceCenter
+        ) { received.append($0) }
         observer.start()
 
         postTermination(of: "com.apple.Safari", on: workspaceCenter)
-        postTermination(of: SpotifyPlayer.appBundleID, on: workspaceCenter)
+        postTermination(of: Self.bundleID, on: workspaceCenter)
         // The workspace observer delivers on the main queue.
         for _ in 0..<50 where received.isEmpty { try? await Task.sleep(for: .milliseconds(10)) }
 
@@ -47,11 +51,14 @@ struct SpotifyPlaybackObserverTests {
     func nothingAfterStop() async {
         let workspaceCenter = NotificationCenter()
         var received: [PlayerState] = []
-        let observer = SpotifyPlaybackObserver(workspaceCenter: workspaceCenter) { received.append($0) }
+        let observer = PlayerStateObserver(
+            notification: Notification.Name("com.example.jukebox.state"), bundleID: Self.bundleID,
+            workspaceCenter: workspaceCenter
+        ) { received.append($0) }
         observer.start()
         observer.stop()
 
-        postTermination(of: SpotifyPlayer.appBundleID, on: workspaceCenter)
+        postTermination(of: Self.bundleID, on: workspaceCenter)
         try? await Task.sleep(for: .milliseconds(50))
 
         #expect(received.isEmpty)

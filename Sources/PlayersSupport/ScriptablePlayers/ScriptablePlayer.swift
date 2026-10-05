@@ -3,32 +3,71 @@ import Foundation
 import OSLog
 import AutoHushKit
 
-/// Talks to Spotify with raw Apple events instead of NSAppleScript.
+/// What AutoHush needs to know about a music app it controls with Apple
+/// events: its codes (from the scripting dictionary in its bundle), the
+/// notification it posts when its state changes, and its quirks. Each
+/// `<App>Support` module describes its app with one.
+package struct ScriptablePlayerProfile: Sendable {
+    package let bundleID: String
+    /// Shown to the user, e.g. "Spotify".
+    package let name: String
+    /// The four-char code of the app's own suite, which holds pause and play.
+    package let suite: OSType
+    /// Posted as a distributed notification on every play, pause, stop and
+    /// track change, with the new state in userInfo["Player State"].
+    package let stateNotification: Notification.Name
+    /// How the app's volume number maps to loudness; measure it with
+    /// `swift run measure-volume-curve <bundle-id>`.
+    package let volumeCurve: VolumeCurve
+    /// The volume the app was set to, from the one it reports: an app that
+    /// reports a different number would otherwise lose a step on every fade
+    /// that restores the volume it read.
+    package let readVolume: @Sendable (Int) -> Int
+
+    package init(
+        bundleID: String,
+        name: String,
+        suite: OSType,
+        stateNotification: Notification.Name,
+        volumeCurve: VolumeCurve = .linear,
+        readVolume: @escaping @Sendable (Int) -> Int = { $0 }
+    ) {
+        self.bundleID = bundleID
+        self.name = name
+        self.suite = suite
+        self.stateNotification = stateNotification
+        self.volumeCurve = volumeCurve
+        self.readVolume = readVolume
+    }
+}
+
+/// Controls a music app with raw Apple events instead of NSAppleScript: its
+/// state, pause, play and volume, as described by its profile.
 ///
 /// NSAppleScript is main-thread only: run on a background queue it pumps an
 /// event loop while waiting for the reply, which can trap inside BoardServices.
 /// `NSAppleEventDescriptor.sendEvent(options:timeout:)` is built on
 /// `AESendMessage`, which blocks without running an event loop and is safe on
 /// any thread.
-package actor SpotifyPlayer: MusicPlayer {
-    package static let appBundleID = "com.spotify.client"
+package actor ScriptablePlayer: MusicPlayer {
+    package nonisolated let profile: ScriptablePlayerProfile
 
-    package nonisolated var bundleID: String { Self.appBundleID }
-    package nonisolated var name: String { "Spotify" }
-    /// Measured on Spotify 1.3.3 for macOS (`swift run measure-volume-curve`):
-    /// within 2 dB of a cube law from 15 to 90 (50 → −18 dB, 20 → −40 dB);
-    /// 11 is about −54 dB and 10 or less is silent.
-    package nonisolated var volumeCurve: VolumeCurve { .cubic }
+    package nonisolated var bundleID: String { profile.bundleID }
+    package nonisolated var name: String { profile.name }
+    package nonisolated var volumeCurve: VolumeCurve { profile.volumeCurve }
 
-    private let logger = Logger(category: "SpotifyPlayer")
+    private let logger = Logger(category: "ScriptablePlayer")
 
     /// Serial queue for the blocking sends, so they neither occupy the
     /// cooperative thread pool nor overtake one another.
-    private let eventQueue = DispatchQueue(label: "AutoHush.SpotifyPlayer", qos: .userInitiated)
+    private let eventQueue: DispatchQueue
 
-    package init() {}
+    package init(profile: ScriptablePlayerProfile) {
+        self.profile = profile
+        eventQueue = DispatchQueue(label: "AutoHush.\(profile.name)", qos: .userInitiated)
+    }
 
-    /// How long to wait for Spotify to answer an event.
+    /// How long to wait for the app to answer an event.
     package static let replyTimeout: TimeInterval = 5
 
     package func verifyControlAccess() async throws {
@@ -48,12 +87,12 @@ package actor SpotifyPlayer: MusicPlayer {
     }
 
     package func playerState() async -> PlayerState {
-        guard let pid = spotifyProcessIdentifier() else { return .notRunning }
+        guard let pid = processIdentifier() else { return .notRunning }
         do {
             let reply = try await send(Self.makeGetPlayerStateEvent(processIdentifier:), to: pid)
             return Self.playerState(fromReply: reply)
         } catch {
-            logger.error("playerState failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("\(self.profile.name, privacy: .public) playerState failed: \(error.localizedDescription, privacy: .public)")
             return .unknown
         }
     }
@@ -67,10 +106,10 @@ package actor SpotifyPlayer: MusicPlayer {
     }
 
     package func volume() async -> Int? {
-        guard let pid = spotifyProcessIdentifier(),
+        guard let pid = processIdentifier(),
               let reply = try? await send(Self.makeGetVolumeEvent(processIdentifier:), to: pid)
         else { return nil }
-        return Self.volume(fromReply: reply)
+        return Self.volume(fromReply: reply, reading: profile.readVolume)
     }
 
     package func setVolume(_ volume: Int) async throws {
@@ -81,29 +120,30 @@ package actor SpotifyPlayer: MusicPlayer {
 
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        SpotifyPlaybackObserver(onChange: onChange)
+        PlayerStateObserver(notification: profile.stateNotification, bundleID: profile.bundleID, onChange: onChange)
     }
 
     // MARK: - Private helpers
 
     /// Targeting the running process (rather than the bundle ID) guarantees
-    /// that an event can never launch Spotify.
-    private func spotifyProcessIdentifier() -> pid_t? {
-        NSRunningApplication.runningApplications(withBundleIdentifier: Self.appBundleID)
+    /// that an event can never launch the app.
+    private func processIdentifier() -> pid_t? {
+        NSRunningApplication.runningApplications(withBundleIdentifier: profile.bundleID)
             .first { !$0.isTerminated }?
             .processIdentifier
     }
 
-    /// The running Spotify's pid, for commands that can't do without it.
+    /// The running app's pid, for commands that can't do without it.
     private func runningProcessIdentifier() throws -> pid_t {
-        guard let pid = spotifyProcessIdentifier() else { throw MusicPlayerError.playerNotRunning }
+        guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         return pid
     }
 
-    /// Sends a parameterless Spotify command such as `pause` or `play`.
+    /// Sends a parameterless command of the app's suite, such as pause or play.
     private func sendCommand(_ eventID: AEEventID) async throws {
         let pid = try runningProcessIdentifier()
-        _ = try await send({ Self.makeCommandEvent(eventID, processIdentifier: $0) }, to: pid)
+        let suite = profile.suite
+        _ = try await send({ Self.makeCommandEvent(suite: suite, eventID, processIdentifier: $0) }, to: pid)
     }
 
     /// Builds the event on `eventQueue` (descriptors are not Sendable), sends
@@ -111,7 +151,7 @@ package actor SpotifyPlayer: MusicPlayer {
     private func send(
         _ makeEvent: @escaping @Sendable (pid_t) -> NSAppleEventDescriptor,
         to pid: pid_t
-    ) async throws -> SpotifyReply {
+    ) async throws -> PlayerReply {
         try await onEventQueue {
             let event = makeEvent(pid)
             let reply: NSAppleEventDescriptor
@@ -121,7 +161,7 @@ package actor SpotifyPlayer: MusicPlayer {
                 throw Self.mapError(error)
             }
             if let error = Self.replyError(reply) { throw error }
-            return SpotifyReply(reply)
+            return PlayerReply(reply)
         }
     }
 

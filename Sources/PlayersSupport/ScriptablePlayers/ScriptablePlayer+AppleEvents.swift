@@ -3,17 +3,18 @@ import Foundation
 import AutoHushKit
 
 // Pure Apple event construction, reply decoding and error mapping for
-// SpotifyPlayer. Nothing here sends events, so it is fully unit-tested.
+// ScriptablePlayer. Nothing here sends events, so it is fully unit-tested.
 
-extension SpotifyPlayer {
-    /// Four-char codes from `Spotify.app/Contents/Resources/Spotify.sdef`
-    /// and the standard Apple event suites.
+extension ScriptablePlayer {
+    /// Four-char codes the scriptable music apps share (Spotify's
+    /// `Spotify.sdef`, Music's `com.apple.Music.sdef`), and those of the
+    /// standard Apple event suites. Only the suite of pause and play differs
+    /// from app to app; it's in the profile.
     package enum Code {
         package static let coreSuite = fourCharCode("core")
         package static let getData = fourCharCode("getd")
         package static let setData = fourCharCode("setd")
         package static let setDataValue = fourCharCode("data")
-        package static let spotifySuite = fourCharCode("spfy")
         package static let pause = fourCharCode("Paus")
         package static let play = fourCharCode("Play")
         package static let playerStateProperty = fourCharCode("pPlS")
@@ -21,6 +22,9 @@ extension SpotifyPlayer {
         package static let stateStopped = fourCharCode("kPSS")
         package static let statePlaying = fourCharCode("kPSP")
         package static let statePaused = fourCharCode("kPSp")
+        /// Music only: seeking still counts as playing.
+        package static let stateFastForwarding = fourCharCode("kPSF")
+        package static let stateRewinding = fourCharCode("kPSR")
 
         package static let directObject = fourCharCode("----")
         package static let errorNumber = fourCharCode("errn")
@@ -64,9 +68,11 @@ extension SpotifyPlayer {
         appleEvent(Code.coreSuite, eventID, processIdentifier: pid)
     }
 
-    /// A parameterless Spotify suite command such as `pause` or `play`.
-    package static func makeCommandEvent(_ eventID: AEEventID, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        appleEvent(Code.spotifySuite, eventID, processIdentifier: pid)
+    /// A parameterless command of the app's own suite, such as `pause` or `play`.
+    package static func makeCommandEvent(
+        suite: AEEventClass, _ eventID: AEEventID, processIdentifier pid: pid_t
+    ) -> NSAppleEventDescriptor {
+        appleEvent(suite, eventID, processIdentifier: pid)
     }
 
     private static func appleEvent(
@@ -93,29 +99,28 @@ extension SpotifyPlayer {
 
     // MARK: - Reply decoding and error mapping (pure, unit-tested)
 
-    package static func playerState(fromReply reply: SpotifyReply) -> PlayerState {
+    package static func playerState(fromReply reply: PlayerReply) -> PlayerState {
         guard let code = reply.directObjectCode else { return .unknown }
         return playerState(fromEnumCode: code)
     }
 
-    /// Spotify reports one less than the volume it was set to (set 50, read
-    /// 49; measured for 1–99), so readings are corrected. Otherwise every
-    /// fade that restores the volume it read would lower it by one.
-    package static func volume(fromReply reply: SpotifyReply) -> Int? {
+    /// The volume in the reply, 0–100, as `reading` corrects it (see
+    /// `ScriptablePlayerProfile.readVolume`).
+    package static func volume(fromReply reply: PlayerReply, reading: (Int) -> Int) -> Int? {
         guard let reported = reply.directObjectInteger else { return nil }
-        return (1...99).contains(reported) ? reported + 1 : min(max(reported, 0), 100)
+        return min(max(reading(reported), 0), 100)
     }
 
     package static func playerState(fromEnumCode code: OSType) -> PlayerState {
         switch code {
-        case Code.statePlaying: return .playing
+        case Code.statePlaying, Code.stateFastForwarding, Code.stateRewinding: return .playing
         case Code.statePaused: return .paused
         case Code.stateStopped: return .stopped
         default: return .unknown
         }
     }
 
-    /// An error Spotify reported inside an otherwise delivered reply.
+    /// An error the app reported inside an otherwise delivered reply.
     package static func replyError(_ reply: NSAppleEventDescriptor) -> MusicPlayerError? {
         guard let number = reply.paramDescriptor(forKeyword: Code.errorNumber) else { return nil }
         let code = Int(number.int32Value)
@@ -136,9 +141,9 @@ extension SpotifyPlayer {
         switch number {
         case -1743: // errAEEventNotPermitted
             return .automationPermissionDenied
-        case -600:  // procNotFound: Spotify quit between the check and the send
+        case -600:  // procNotFound: the app quit between the check and the send
             return .playerNotRunning
-        case -1712: // errAETimeout: Spotify is busy or still starting up
+        case -1712: // errAETimeout: the app is busy or still starting up
             return .playerNotResponding
         default:
             let detail = message.flatMap { $0.isEmpty ? nil : $0 }
@@ -147,9 +152,9 @@ extension SpotifyPlayer {
     }
 }
 
-/// The parts of an Apple event reply SpotifyPlayer reads, extracted on
+/// The parts of an Apple event reply ScriptablePlayer reads, extracted on
 /// the event queue so they can cross into the actor.
-package struct SpotifyReply: Sendable, Equatable {
+package struct PlayerReply: Sendable, Equatable {
     /// Enum or type code of the reply's direct object (`----`), if any.
     package let directObjectCode: OSType?
     /// The direct object as a number, if it is one (e.g. the volume).
@@ -161,7 +166,7 @@ package struct SpotifyReply: Sendable, Equatable {
     }
 
     package init(_ reply: NSAppleEventDescriptor) {
-        guard let direct = reply.paramDescriptor(forKeyword: SpotifyPlayer.Code.directObject) else {
+        guard let direct = reply.paramDescriptor(forKeyword: ScriptablePlayer.Code.directObject) else {
             directObjectCode = nil
             directObjectInteger = nil
             return

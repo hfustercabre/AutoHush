@@ -1,21 +1,23 @@
 import Testing
 import AutoHushKit
 import AutoHushPlayers
+import ScriptablePlayers
 import SpotifySupport
+import AppleMusicSupport
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
-    @Test("Spotify is offered, and people updating from before the choice keep it")
-    func spotifyIsSupported() {
+    @Test("Spotify and Apple Music are offered, in that order")
+    func players() {
         let catalog = SupportedPlayers.catalog
-        #expect(catalog.player(bundleID: "com.spotify.client") is SpotifyPlayer)
-        #expect(catalog.formerDefault == SpotifyPlayer.appBundleID)
+        #expect(catalog.players.map(\.bundleID) == ["com.spotify.client", "com.apple.Music"])
+        #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music"])
+        #expect(catalog.player(bundleID: "com.apple.Music") is ScriptablePlayer)
         #expect(catalog.player(bundleID: "com.example.unknown") == nil)
     }
 
-    @Test("every supported player is offered once")
-    func playersAreUnique() {
-        let bundleIDs = SupportedPlayers.catalog.players.map(\.bundleID)
-        #expect(Set(bundleIDs).count == bundleIDs.count)
+    @Test("people updating from before the choice keep Spotify")
+    func formerDefault() {
+        #expect(SupportedPlayers.catalog.formerDefault == "com.spotify.client")
     }
 }

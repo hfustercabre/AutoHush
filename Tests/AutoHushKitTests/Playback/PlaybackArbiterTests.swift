@@ -487,6 +487,38 @@ struct PlaybackArbiterTests {
         #expect(await player.playCallCount == 1)
     }
 
+    @Test("a stale report that the player plays doesn't end our pause while it's still paused")
+    func staleReportKeepsPausedByUs() async {
+        let player = MockMusicPlayer(state: .playing)
+        let arbiter = makeArbiter(player: player)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        #expect(await player.state == .paused)
+        // Right after our pause, the player reports its previous state, then the new one.
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.handlePlayerStateChange(.paused)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+
+        #expect(await player.playCallCount == 1)
+    }
+
+    @Test("when the player doesn't answer, a report that it plays ends our pause")
+    func unansweredReportEndsPausedByUs() async {
+        let player = MockMusicPlayer(state: .playing)
+        let arbiter = makeArbiter(player: player)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        await player.setUnansweredStateQueries(1)
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.playCallCount == 0)
+    }
+
     @Test("an unknown player state is ignored and the resume still happens")
     func unknownStateIsIgnored() async {
         let player = MockMusicPlayer(state: .playing)

@@ -195,13 +195,29 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// stopped or quit it while we held it paused, we are no longer
     /// responsible for it and must not resume it later.
     ///
+    /// A report can be stale, though: some players post the state they had
+    /// just before the new one (Music, right after our pause: "Playing", then
+    /// "Paused"). So a report that would end our pause is checked with the
+    /// player first, and ignored while it's still paused.
+    ///
     /// `.unknown` carries no information and is ignored.
-    package func handlePlayerStateChange(_ state: PlayerState) {
+    package func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
-        playerState = state
-        if pausedByUs, state != .paused {
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — clearing pausedByUs")
-            pausedByUs = false
+        guard pausedByUs, state != .paused else {
+            playerState = state
+            publishPlaybackState()
+            return
+        }
+        let live = await livePlayerState()
+        guard !isShutDown else { return }
+        if live == .paused {
+            logger.debug("[arbiter] \(self.player.name, privacy: .public) reported \(state.rawValue, privacy: .public) but is paused — keeping pausedByUs")
+        } else {
+            if live == .unknown { playerState = state } // no answer: the report stands
+            if pausedByUs {
+                logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public) — clearing pausedByUs")
+                pausedByUs = false
+            }
         }
         publishPlaybackState()
     }

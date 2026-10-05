@@ -358,11 +358,15 @@ Sources/
     Storage/             Preferences
     General/             Logging, Comparable+Clamped
   AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
-  PlayersSupport/        one module per music player:
-    SpotifySupport/      SpotifyPlayer (+AppleEvents), SpotifyPlaybackObserver
+  PlayersSupport/        one module per music player, plus what they share:
+    ScriptablePlayers/   ScriptablePlayer (+AppleEvents): controls an app scripted with Apple events,
+                         as its profile describes; PlayerStateObserver (its state notification)
+    SpotifySupport/      Spotify's profile: codes, notification, volume quirk and curve
+    AppleMusicSupport/   Apple Music's profile
 Tests/
-  AutoHushAppTests/  AutoHushKitTests/  AutoHushPlayersTests/  PlayersSupport/SpotifySupportTests/
-                         (each mirrors its module; only the last two name a player)
+  AutoHushAppTests/  AutoHushKitTests/  AutoHushPlayersTests/
+  PlayersSupport/ScriptablePlayersTests/  SpotifySupportTests/  AppleMusicSupportTests/
+                         (each mirrors its module; only the player modules' tests name a player)
   AutoHushTestSupport/   fakes and fixed dates shared by the test modules
 Tools/
   MeasureVolumeCurve/    the volume-curve measuring tool (never part of the app)
