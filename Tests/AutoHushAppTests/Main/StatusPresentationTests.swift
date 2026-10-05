@@ -34,8 +34,10 @@ struct StatusPresentationTests {
         (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
         (.needsPlayer("Choose a music player"), .attention, "AutoHush: no music player chosen", "Choose a music player"),
         (.degraded("Jukebox is not running"), .attention, "AutoHush: degraded", "Jukebox is not running"),
-        (.needsPermission("Grant Automation access to control Jukebox"), .attention,
+        (.needsPermission(.automation(player: "Jukebox")), .attention,
          "AutoHush: needs permission", "Grant Automation access to control Jukebox"),
+        (.needsPermission(.accessibility(player: "Jukebox")), .attention,
+         "AutoHush: needs permission", "Grant Accessibility access to control Jukebox"),
         (.failed("Monitor failed hard"), .attention, "AutoHush: failed", "Monitor failed hard"),
     ])
     func healthState(state: AppHealthState, icon: MenuBarIcon, label: String, line: String) {
@@ -46,6 +48,7 @@ struct StatusPresentationTests {
 
     @Test("each permission names what to grant", arguments: [
         (Permission.automation(player: "Jukebox"), "Allow Jukebox Automation Access…"),
+        (Permission.accessibility(player: "Jukebox"), "Allow Accessibility Access…"),
         (.systemAudioRecording, "Allow Audio Recording Access…"),
     ])
     func grantTitle(permission: Permission, title: String) {

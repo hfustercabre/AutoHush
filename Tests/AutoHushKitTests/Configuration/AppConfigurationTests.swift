@@ -47,6 +47,18 @@ struct AppConfigurationTests {
 
     // MARK: - Defaults
 
+    @Test("the chosen player's helpers count as the player, look-alikes don't")
+    func playerHelpers() {
+        var configuration = AppConfiguration()
+        configuration.musicPlayerBundleID = "com.example.jukebox"
+        #expect(configuration.isMusicPlayer("com.example.jukebox"))
+        #expect(configuration.isMusicPlayer("com.example.jukebox.helper"))
+        #expect(!configuration.isMusicPlayer("com.example.jukeboxes"))
+        #expect(!configuration.isMediaSource("com.example.jukebox.helper"))
+        configuration.musicPlayerBundleID = nil
+        #expect(!configuration.isMusicPlayer("com.example.jukebox"))
+    }
+
     @Test("the defaults come from the timing settings' defaults")
     func defaults() {
         let configuration = AppConfiguration()

@@ -71,10 +71,12 @@ package struct AppConfiguration: Sendable {
         fadeInDuration = timings.fadeInDuration
     }
 
-    /// True for the chosen music player's own app. Other music players count
-    /// like any other app.
+    /// True for the chosen music player's own app, or one of its helpers
+    /// (e.g. `com.tidal.desktop.helper`, which plays TIDAL's sound). Other
+    /// music players count like any other app.
     package func isMusicPlayer(_ bundleID: String) -> Bool {
-        bundleID == musicPlayerBundleID
+        guard let musicPlayerBundleID else { return false }
+        return bundleID == musicPlayerBundleID || bundleID.hasPrefix(musicPlayerBundleID + ".")
     }
 
     /// Returns true if the bundle ID should trigger pause/resume logic.

@@ -189,7 +189,7 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
-        status.setHealth(.needsPermission("Grant Automation access"))
+        status.setHealth(.needsPermission(.automation(player: "Jukebox")))
         sut.status = status
 
         try perform(try item("Allow Jukebox Automation Access…", in: sut.menu))

@@ -118,7 +118,7 @@ struct AppStatusTests {
     func automationWarning() {
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
-        status.setHealth(.needsPermission("Grant Automation access"))
+        status.setHealth(.needsPermission(.automation(player: "Jukebox")))
         #expect(status.warning == .automation(player: "Jukebox"))
         #expect(status.warning?.grantTitle == "Allow Jukebox Automation Access…")
         #expect(status.showsRetry)

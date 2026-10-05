@@ -108,7 +108,7 @@ struct AppStatus: Equatable {
 
     /// A missing permission the user can grant; shown as a single menu item.
     var warning: Permission? {
-        if case .needsPermission = health { return .automation(player: playerName) }
+        if case .needsPermission(let permission) = health { return permission }
         if isReady, detection == .unavailable { return .systemAudioRecording }
         return nil
     }

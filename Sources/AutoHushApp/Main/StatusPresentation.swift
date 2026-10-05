@@ -79,11 +79,11 @@ extension AppHealthState {
                               comment: "VoiceOver label of the menu bar icon: something keeps AutoHush from working"),
                 line: message
             )
-        case .needsPermission(let message):
+        case .needsPermission(let permission):
             return StatePresentation(
                 icon: .attention,
                 label: String(localized: "AutoHush: needs permission", comment: "VoiceOver label of the menu bar icon"),
-                line: message
+                line: permission.statusLine
             )
         case .failed(let message):
             return StatePresentation(
@@ -115,8 +115,25 @@ extension Permission {
         case .automation(let player):
             return String(localized: "Allow \(player) Automation Access…",
                           comment: "Menu item; %@ is the music player, e.g. Spotify")
+        case .accessibility:
+            return String(localized: "Allow Accessibility Access…",
+                          comment: "Menu item: lets AutoHush control a music player through its menu, e.g. TIDAL")
         case .systemAudioRecording:
             return String(localized: "Allow Audio Recording Access…", comment: "Menu item")
+        }
+    }
+
+    /// The status line while it's missing.
+    var statusLine: String {
+        switch self {
+        case .automation(let player):
+            return String(localized: "Grant Automation access to control \(player)",
+                          comment: "Status line; %@ is the music player, e.g. Spotify")
+        case .accessibility(let player):
+            return String(localized: "Grant Accessibility access to control \(player)",
+                          comment: "Status line; %@ is the music player, e.g. TIDAL")
+        case .systemAudioRecording:
+            return String(localized: "Grant Audio Recording access", comment: "Status line")
         }
     }
 }

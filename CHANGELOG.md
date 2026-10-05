@@ -5,6 +5,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **TIDAL support**: choose TIDAL under Music Player. TIDAL can't be
+  scripted, so AutoHush pauses and resumes it by pressing Play/Pause in its
+  Playback menu, which needs the Accessibility permission. TIDAL's volume
+  can't be read, so it pauses and resumes without fading.
+
+### Changed
+
+- **AutoHush starts by itself once you grant a permission** it needs to
+  control your music player, instead of waiting for you to choose Retry.
+
 ## [0.4.0] — 2026-10-05
 
 ### Added

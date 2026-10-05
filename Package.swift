@@ -6,7 +6,7 @@ import PackageDescription
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
 //          ├─ AutoHushPlayers   the supported music players
-//          │    ├─ SpotifySupport, AppleMusicSupport
+//          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport
 //          │    │                   one <App>Support target per player, all in
 //          │    │                   Sources/PlayersSupport/: what's special about it
 //          │    └─ ScriptablePlayers  controls any app scripted with Apple events
@@ -35,7 +35,7 @@ let package = Package(
         .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
         .target(
             name: "AutoHushPlayers",
-            dependencies: ["AutoHushKit", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport"]
+            dependencies: ["AutoHushKit", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "TidalSupport"]
         ),
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
         .target(
@@ -48,6 +48,7 @@ let package = Package(
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
             path: "Sources/PlayersSupport/AppleMusicSupport"
         ),
+        .target(name: "TidalSupport", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/TidalSupport"),
         .target(name: "AutoHushKit"),
 
         // Measures a player's volume curve with the engine's own meter. A
@@ -77,12 +78,17 @@ let package = Package(
             path: "Tests/PlayersSupport/AppleMusicSupportTests"
         ),
         .testTarget(
+            name: "TidalSupportTests",
+            dependencies: ["TidalSupport", "AutoHushKit"],
+            path: "Tests/PlayersSupport/TidalSupportTests"
+        ),
+        .testTarget(
             name: "AutoHushAppTests",
             dependencies: ["AutoHushApp", "AutoHushKit", "AutoHushTestSupport"]
         ),
         .testTarget(
             name: "AutoHushPlayersTests",
-            dependencies: ["AutoHushPlayers", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "AutoHushKit"]
+            dependencies: ["AutoHushPlayers", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "TidalSupport", "AutoHushKit"]
         ),
     ],
     swiftLanguageModes: [.v6]

@@ -1,15 +1,16 @@
 import Foundation
 
-/// Panes of System Settings the app links to: two privacy panes, and
+/// Panes of System Settings the app links to: three privacy panes, and
 /// Notifications.
 package enum SystemSettingsPane: String {
     case automation = "Privacy_Automation"
+    case accessibility = "Privacy_Accessibility"
     case audioCapture = "Privacy_AudioCapture"
     case notifications = "Notifications"
 
     package var url: URL {
         switch self {
-        case .automation, .audioCapture:
+        case .automation, .accessibility, .audioCapture:
             URL(string: "x-apple.systempreferences:com.apple.preference.security?\(rawValue)")!
         case .notifications:
             URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!

@@ -3,6 +3,8 @@ import Foundation
 /// Why the music player could not be controlled.
 package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
     case automationPermissionDenied
+    /// For a player controlled through its own menu.
+    case accessibilityPermissionDenied
     case playerNotRunning
     /// The player did not answer in time, e.g. while still starting up.
     case playerNotResponding
@@ -13,6 +15,8 @@ package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
         switch self {
         case .automationPermissionDenied:
             return "Automation permission to control the music player is not granted."
+        case .accessibilityPermissionDenied:
+            return "Accessibility permission to control the music player is not granted."
         case .playerNotRunning:
             return "The music player is not running or is unavailable."
         case .playerNotResponding:

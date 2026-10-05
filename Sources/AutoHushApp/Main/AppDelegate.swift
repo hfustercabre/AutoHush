@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
     private var terminationSignal: (any DispatchSourceSignal)?
+    /// While the player needs a permission, starting is tried again this
+    /// often: macOS doesn't announce when one is granted.
+    private let permissionRetryInterval: TimeInterval
+    private var permissionRetry: Timer?
 
     init(
         preferences: Preferences = Preferences(),
@@ -63,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         },
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
+        permissionRetryInterval: TimeInterval = 3,
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
@@ -75,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.bootstrapOverride = bootstrapOverride
         self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
+        self.permissionRetryInterval = permissionRetryInterval
         super.init()
         updates = UpdateController(
             checker: updateChecker,
@@ -193,6 +199,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setHealth(_ health: AppHealthState) {
         status.setHealth(health)
+        followPermission()
+    }
+
+    /// While the player needs a permission, tries starting again every
+    /// `permissionRetryInterval`, so AutoHush starts as soon as it's granted.
+    private func followPermission() {
+        guard case .needsPermission = status.health else {
+            permissionRetry?.invalidate()
+            permissionRetry = nil
+            return
+        }
+        guard permissionRetry == nil else { return }
+        let timer = Timer(timeInterval: permissionRetryInterval, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.permissionRetry = nil
+                guard case .needsPermission = self.status.health else { return }
+                self.requestBootstrap()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        permissionRetry = timer
     }
 
     func apply(_ update: MonitoringPipeline.StatusUpdate) {
@@ -485,7 +513,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await bootstrap(retriesLeft: retriesLeft - 1)
                 return
             }
-            logger.error("Automation preflight failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("Can't control \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
             setHealth(AppHealthState(startupError: error, playerName: player.name))
             return
         }

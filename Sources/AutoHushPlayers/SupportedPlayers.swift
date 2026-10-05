@@ -2,6 +2,7 @@ import AutoHushKit
 import ScriptablePlayers
 import SpotifySupport
 import AppleMusicSupport
+import TidalSupport
 
 /// The music players AutoHush ships with. Each lives in its own
 /// `<App>Support` target; adding one means adding it to `catalog`.
@@ -12,6 +13,7 @@ package enum SupportedPlayers {
         players: [
             ScriptablePlayer(profile: .spotify),
             ScriptablePlayer(profile: .appleMusic),
+            TidalPlayer(),
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID
     )

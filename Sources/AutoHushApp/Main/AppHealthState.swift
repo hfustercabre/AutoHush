@@ -8,7 +8,8 @@ enum AppHealthState: Equatable, Sendable {
     /// No music player is chosen yet: AutoHush waits for the user.
     case needsPlayer(String)
     case degraded(String)
-    case needsPermission(String)
+    /// AutoHush may not control the player: the user has to grant it.
+    case needsPermission(Permission)
     case failed(String)
 }
 
@@ -33,8 +34,9 @@ extension AppHealthState {
     init(startupError error: any Error, playerName: String) {
         switch error as? MusicPlayerError {
         case .automationPermissionDenied:
-            self = .needsPermission(String(localized: "Grant Automation access to control \(playerName)",
-                                           comment: "Status line; %@ is the music player, e.g. Spotify"))
+            self = .needsPermission(.automation(player: playerName))
+        case .accessibilityPermissionDenied:
+            self = .needsPermission(.accessibility(player: playerName))
         case .playerNotRunning:
             self = .degraded(String(localized: "\(playerName) is not running",
                                     comment: "Status line; %@ is the music player, e.g. Spotify"))

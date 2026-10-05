@@ -12,8 +12,8 @@ struct AppHealthStateTests {
 
     @Test("denied Automation needs permission")
     func automationDenied() {
-        #expect(health(MusicPlayerError.automationPermissionDenied)
-            == .needsPermission("Grant Automation access to control Jukebox"))
+        #expect(health(MusicPlayerError.automationPermissionDenied) == .needsPermission(.automation(player: "Jukebox")))
+        #expect(health(MusicPlayerError.accessibilityPermissionDenied) == .needsPermission(.accessibility(player: "Jukebox")))
     }
 
     @Test("a player that isn't running is degraded")

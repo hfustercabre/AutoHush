@@ -73,6 +73,7 @@ struct AppDelegateTests {
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
             currentVersion: AppVersion("0.2.0"),
+            permissionRetryInterval: 0.05,
             bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
         return (sut, counter)
@@ -263,6 +264,20 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("while the player needs a permission, starting is tried again until it's granted")
+    func retriesWhilePermissionMissing() async {
+        let (sut, bootstraps) = makeSUT()
+        sut.setHealth(.needsPermission(.accessibility(player: "First")))
+        for _ in 0..<200 where bootstraps.count == 0 { try? await Task.sleep(for: .milliseconds(10)) }
+        #expect(bootstraps.count == 1)
+
+        // Granted and started: no more tries.
+        sut.setHealth(.ready)
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(bootstraps.count == 1)
+    }
+
+    @MainActor
     @Test("only the chosen player is ever asked for permission to control it, and only once chosen")
     func onlyChosenPlayerIsAsked() async {
         let scratch = Scratch()
@@ -276,7 +291,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(Players.second) // also closes the welcome window
         for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
-        #expect(sut.status.health == .needsPermission("Grant Automation access to control Second"))
+        #expect(sut.status.health == .needsPermission(.automation(player: "Second")))
         #expect(await scratch.second.verifyCallCount == 1)
         #expect(await scratch.first.verifyCallCount == 0)
     }
@@ -295,10 +310,10 @@ struct AppDelegateTests {
         // Installed again: it's controlled afresh as soon as AutoHush notices.
         scratch.installed = [Players.first]
         sut.refreshPlayerOptions()
-        for _ in 0..<1000 where sut.status.health != .needsPermission("Grant Automation access to control First") {
+        for _ in 0..<1000 where sut.status.health != .needsPermission(.automation(player: "First")) {
             await Task.yield()
         }
-        #expect(sut.status.health == .needsPermission("Grant Automation access to control First"))
+        #expect(sut.status.health == .needsPermission(.automation(player: "First")))
         #expect(await scratch.first.verifyCallCount == 1)
     }
 
