@@ -24,7 +24,9 @@ extension StatePresentation {
 }
 
 extension PlaybackState {
-    var presentation: StatePresentation {
+    /// `player`: the music player, e.g. "Spotify"; `playing`: the apps that
+    /// paused it.
+    func presentation(player: String, playing: [String] = []) -> StatePresentation {
         switch self {
         case .unknown: // the player's state is not known yet: as when starting up
             return .starting
@@ -32,26 +34,31 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .playing,
                 label: String(localized: "AutoHush: music is playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Music is playing")
+                // A key of its own: "%@ is playing" also completes "Spotify paused — %@".
+                line: String(localized: "status.playerIsPlaying", defaultValue: "\(player) is playing",
+                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
             )
         case .pausedByMonitor:
             return StatePresentation(
                 icon: .pausedForApp,
                 label: String(localized: "AutoHush: music paused", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Music paused — another app is playing")
+                line: String(localized: "\(player) paused — \(AppStatus.describePlaying(playing))",
+                             comment: "Status line at the top of the menu; the music player, e.g. Spotify, then which apps play, e.g. “VLC is playing”")
             )
         case .musicIdle:
             return StatePresentation(
                 icon: .noMusic,
                 label: String(localized: "AutoHush: no music playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "No music playing")
+                line: String(localized: "\(player) isn't playing",
+                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
             )
         case .playingElsewhere:
             return StatePresentation(
                 icon: .elsewhere,
                 label: String(localized: "AutoHush: music is playing on another device",
                               comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Music is playing on another device")
+                line: String(localized: "\(player) is playing on another device",
+                             comment: "Status line at the top of the menu; %@ is the music player, e.g. Spotify")
             )
         }
     }

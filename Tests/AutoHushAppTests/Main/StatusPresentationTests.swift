@@ -9,15 +9,21 @@ struct StatusPresentationTests {
 
     // MARK: - States
 
-    @Test("each playback state has its icon, label and status line", arguments: [
-        (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: music is playing", "Music is playing"),
-        (.pausedByMonitor, .pausedForApp, "AutoHush: music paused", "Music paused — another app is playing"),
-        (.musicIdle, .noMusic, "AutoHush: no music playing", "No music playing"),
+    @Test("each playback state has its icon, label and a status line naming the player", arguments: [
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: music is playing", "Jukebox is playing"),
+        (.pausedByMonitor, .pausedForApp, "AutoHush: music paused", "Jukebox paused — another app is playing"),
+        (.musicIdle, .noMusic, "AutoHush: no music playing", "Jukebox isn't playing"),
         (.playingElsewhere, .elsewhere, "AutoHush: music is playing on another device",
-         "Music is playing on another device"),
+         "Jukebox is playing on another device"),
     ])
     func playbackState(state: PlaybackState, icon: MenuBarIcon, label: String, line: String) {
-        #expect(state.presentation == StatePresentation(icon: icon, label: label, line: line))
+        #expect(state.presentation(player: "Jukebox") == StatePresentation(icon: icon, label: label, line: line))
+    }
+
+    @Test("a pause names the apps that caused it after the player")
+    func pauseNamesApps() {
+        #expect(PlaybackState.pausedByMonitor.presentation(player: "Jukebox", playing: ["VLC"]).line
+            == "Jukebox paused — VLC is playing")
     }
 
     @Test("once ready, the menu follows the playback state rather than the health")
@@ -27,7 +33,7 @@ struct StatusPresentationTests {
 
     @Test("an unknown playback state looks like starting up")
     func unknownPlaybackState() {
-        #expect(PlaybackState.unknown.presentation == AppHealthState.starting.presentation)
+        #expect(PlaybackState.unknown.presentation(player: "Jukebox") == AppHealthState.starting.presentation)
     }
 
     @Test("each health state has its icon, label and status line; problems show their message", arguments: [

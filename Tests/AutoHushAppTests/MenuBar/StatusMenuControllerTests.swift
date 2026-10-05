@@ -32,8 +32,12 @@ struct StatusMenuControllerTests {
         ))
     }
 
-    private func readyStatus() -> AppStatus {
+    /// Ready to control the Jukebox player, installed unless `installed` is false.
+    private func readyStatus(installed: Bool = true) -> AppStatus {
         var status = AppStatus()
+        status.playerOptions = [PlayerOption(bundleID: TestPlayer.bundleID, name: "Jukebox",
+                                             appURL: installed ? URL(fileURLWithPath: "/Applications/Jukebox.app") : nil)]
+        status.chosenPlayerID = TestPlayer.bundleID
         status.setHealth(.ready)
         status.playback = .pausedByMonitor
         return status
@@ -62,7 +66,23 @@ struct StatusMenuControllerTests {
         changed.playback = .musicPlaying
         sut.status = changed
         #expect(sut.menu.items.first !== first)
-        #expect(sut.menu.items.first?.title == "Music is playing")
+        #expect(sut.menu.items.first?.title == "Jukebox is playing")
+    }
+
+    @Test("the status line names the chosen player, with its icon before it while it's installed")
+    func statusLinePlayerIcon() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        #expect(sut.menu.items.first?.image == nil) // no player chosen yet
+
+        sut.status = readyStatus()
+        let statusLine = try #require(sut.menu.items.first)
+        #expect(statusLine.title == "Jukebox paused — another app is playing")
+        #expect(statusLine.image != nil)
+        #expect(statusLine.isEnabled == false)
+
+        sut.status = readyStatus(installed: false)
+        #expect(sut.menu.items.first?.image == nil)
     }
 
     @Test("the initial menu shows the status, auto-pause controls, Settings and Quit")

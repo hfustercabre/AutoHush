@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **The menu's first line names your music player**, with its icon before
+  it: "Spotify is playing", "Spotify paused — Safari is playing",
+  "Spotify isn't playing" instead of "Music is playing" and so on.
+
 ## [0.5.1] — 2026-10-05
 
 ### Fixed

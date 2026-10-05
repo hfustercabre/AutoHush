@@ -4,7 +4,7 @@ import AutoHushKit
 /// Owns the menu bar item and its menu, and renders an `AppStatus` into them.
 ///
 /// ```text
-/// Music paused — Google Chrome is playing
+/// [icon] Spotify paused — Google Chrome is playing
 /// ─────────
 /// [icon] Google Chrome            ▸ Never Pause Music for Google Chrome
 /// [icon] VLC  (Ignored)           ▸ ✓ Never Pause Music for VLC
@@ -87,6 +87,7 @@ final class StatusMenuController: NSObject {
         renderIcon()
         if isMenuOpen {
             menu.items.first?.title = status.statusLine
+            menu.items.first?.image = statusLineIcon
             needsRebuild = true
             return
         }
@@ -103,8 +104,15 @@ final class StatusMenuController: NSObject {
     /// while the menu is open.
     private func addStatusLine() {
         let statusLine = NSMenuItem(title: status.statusLine, action: nil, keyEquivalent: "")
+        statusLine.image = statusLineIcon
         statusLine.isEnabled = false
         menu.addItem(statusLine)
+    }
+
+    /// The chosen player's icon, while it's installed.
+    private var statusLineIcon: NSImage? {
+        guard let player = status.chosenPlayer, player.isInstalled else { return nil }
+        return player.icon(size: 16)
     }
 
     /// One row per app playing right now.

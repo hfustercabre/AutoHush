@@ -42,11 +42,13 @@ struct AppStatus: Equatable {
     var playerOptions: [PlayerOption] = []
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String?
+    /// The chosen player as the menu offers it; `nil` while none is chosen.
+    var chosenPlayer: PlayerOption? {
+        playerOptions.first { $0.bundleID == chosenPlayerID }
+    }
     /// The music player AutoHush controls, e.g. "Spotify"; empty while none
     /// is chosen.
-    var playerName: String {
-        playerOptions.first { $0.bundleID == chosenPlayerID }?.name ?? ""
-    }
+    var playerName: String { chosenPlayer?.name ?? "" }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
@@ -82,7 +84,7 @@ struct AppStatus: Equatable {
 
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
-        health.presentation ?? playback.presentation
+        health.presentation ?? playback.presentation(player: playerName, playing: pausingSources.map(\.name))
     }
 
     var icon: MenuBarIcon { presentation.icon }
@@ -100,9 +102,7 @@ struct AppStatus: Equatable {
             return String(localized: "Auto-pause is off \(until)",
                           comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
         case .on:
-            guard playback == .pausedByMonitor, !pausingSources.isEmpty else { return presentation.line }
-            return String(localized: "Music paused — \(Self.describePlaying(pausingSources.map(\.name)))",
-                          comment: "Status line at the top of the menu; %@ says which apps play, e.g. “VLC is playing”")
+            return presentation.line
         }
     }
 
@@ -124,15 +124,15 @@ struct AppStatus: Equatable {
     static func describePlaying(_ names: [String]) -> String {
         switch names.count {
         case 0:
-            return String(localized: "another app is playing", comment: "Completes “Music paused — %@”")
+            return String(localized: "another app is playing", comment: "Completes “Spotify paused — %@”")
         case 1:
-            return String(localized: "\(names[0]) is playing", comment: "Completes “Music paused — %@”; %@ is an app")
+            return String(localized: "\(names[0]) is playing", comment: "Completes “Spotify paused — %@”; %@ is an app")
         case 2:
             return String(localized: "\(names[0]) and \(names[1]) are playing",
-                          comment: "Completes “Music paused — %@”; two apps")
+                          comment: "Completes “Spotify paused — %@”; two apps")
         default:
             return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
-                          comment: "Completes “Music paused — %@”; an app, then how many others (2 or more)")
+                          comment: "Completes “Spotify paused — %@”; an app, then how many others (2 or more)")
         }
     }
 }

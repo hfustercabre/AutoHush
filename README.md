@@ -117,7 +117,7 @@ If you said no by mistake, the menu shows a button that takes you to the right p
 Click the menu bar icon to see what's going on:
 
 ```text
-Music paused — Google Chrome is playing
+[icon] Spotify paused — Google Chrome is playing
 ───────────────
 [icon] Google Chrome                ▸ Never Pause Music for Google Chrome
 [icon] VLC   Ignored — music keeps playing
@@ -135,7 +135,7 @@ Music paused — Google Chrome is playing
   Quit AutoHush             ⌘Q
 ```
 
-- **The first line** tells you what's happening, for example "Music is playing", "Music paused — Google Chrome is playing" or "Music is playing on another device".
+- **The first line**, after your music player's icon, tells you what's happening, for example "Spotify is playing", "Spotify paused — Google Chrome is playing" or "Spotify is playing on another device".
 - **Playing apps** are listed with their icons. Open an app's submenu and choose **Never Pause Music for …** if that app shouldn't interrupt your music, for example a game whose soundtrack you don't mind.
 - **Auto-Pause Music** switches everything on or off. Turning it off brings back music that AutoHush paused.
 - **Turn Off For** pauses AutoHush itself for 5, 15 or 30 minutes, an hour, or 24 hours.

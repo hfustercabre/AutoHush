@@ -10,8 +10,12 @@ struct AppStatusTests {
     private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
     private let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
 
+    /// Ready to control the Jukebox player.
     private func ready(_ playback: PlaybackState = .musicIdle) -> AppStatus {
         var status = AppStatus()
+        status.playerOptions = [PlayerOption(bundleID: TestPlayer.bundleID, name: "Jukebox",
+                                             appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"))]
+        status.chosenPlayerID = TestPlayer.bundleID
         status.setHealth(.ready)
         status.playback = playback
         return status
@@ -26,10 +30,10 @@ struct AppStatusTests {
         #expect(status.warning == nil && !status.showsRetry && !status.dimsIcon)
     }
 
-    @Test("when ready, icon and status line follow playback", arguments: [
-        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Music is playing"),
-        (.musicIdle, .noMusic, "No music playing"),
-        (.playingElsewhere, .elsewhere, "Music is playing on another device"),
+    @Test("when ready, icon and status line follow playback, naming the player", arguments: [
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Jukebox is playing"),
+        (.musicIdle, .noMusic, "Jukebox isn't playing"),
+        (.playingElsewhere, .elsewhere, "Jukebox is playing on another device"),
     ])
     func readyFollowsPlayback(playback: PlaybackState, icon: MenuBarIcon, line: String) {
         let status = ready(playback)
@@ -41,13 +45,13 @@ struct AppStatusTests {
     func pauseNamesApps() {
         var status = ready(.pausedByMonitor)
         status.setActiveSources([vlc])
-        #expect(status.statusLine == "Music paused — VLC is playing")
+        #expect(status.statusLine == "Jukebox paused — VLC is playing")
         status.setActiveSources([vlc, chrome])
-        #expect(status.statusLine == "Music paused — Google Chrome and VLC are playing")
+        #expect(status.statusLine == "Jukebox paused — Google Chrome and VLC are playing")
         status.setActiveSources([vlc, chrome, safari])
-        #expect(status.statusLine == "Music paused — Google Chrome and 2 other apps are playing")
+        #expect(status.statusLine == "Jukebox paused — Google Chrome and 2 other apps are playing")
         status.setActiveSources([])
-        #expect(status.statusLine == "Music paused — another app is playing")
+        #expect(status.statusLine == "Jukebox paused — another app is playing")
     }
 
     @Test("ignored apps are listed but never named as the cause of a pause")
@@ -58,7 +62,7 @@ struct AppStatusTests {
         #expect(status.activeSources == [chrome, vlc])
         #expect(status.pausingSources == [chrome])
         #expect(status.isIgnored(vlc.id))
-        #expect(status.statusLine == "Music paused — Google Chrome is playing")
+        #expect(status.statusLine == "Jukebox paused — Google Chrome is playing")
     }
 
     @Test("auto-pause off replaces the status line and dims the icon")
