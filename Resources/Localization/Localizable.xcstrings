@@ -2944,6 +2944,89 @@
         }
       }
     },
+    "AutoHush %@" : {
+      "comment" : "Settings, beside Check Now before any check; %@ is the version",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush %@"
+          }
+        }
+      }
+    },
     "AutoHush %@ Is Available" : {
       "comment" : "Alert title; %@ is the new version number",
       "localizations" : {
@@ -8074,84 +8157,85 @@
         }
       }
     },
-    "Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused." : {
+    "Hides the purple recording indicator. Detection is less precise." : {
+      "comment" : "Settings, under AntiDot mode",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Amaga l'indicador lila de gravació perquè no mesura mai el so. La detecció és menys precisa: algunes apps en pausa poden mantenir la música en pausa."
+            "value" : "Amaga l'indicador lila de gravació. La detecció és menys precisa."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blendet die violette Aufnahmeanzeige aus, da nie Ton gemessen wird. Die Erkennung ist ungenauer: Manche pausierte Apps können deine Musik pausiert halten."
+            "value" : "Blendet die violette Aufnahmeanzeige aus. Die Erkennung ist ungenauer."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta el indicador morado de grabación porque nunca mide el sonido. La detección es menos precisa: algunas apps en pausa pueden mantener tu música en pausa."
+            "value" : "Oculta el indicador morado de grabación. La detección es menos precisa."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta el indicador morado de grabación porque nunca mide el sonido. La detección es menos precisa: algunas apps en pausa pueden mantener tu música en pausa."
+            "value" : "Oculta el indicador morado de grabación. La detección es menos precisa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Masque l'indicateur d'enregistrement violet en ne mesurant jamais le son. La détection est moins précise : certaines apps en pause peuvent maintenir votre musique en pause."
+            "value" : "Masque l'indicateur d'enregistrement violet. La détection est moins précise."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Masque l'indicateur d'enregistrement violet en ne mesurant jamais le son. La détection est moins précise : certaines apps en pause peuvent maintenir votre musique en pause."
+            "value" : "Masque l'indicateur d'enregistrement violet. La détection est moins précise."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nasconde l'indicatore viola di registrazione perché non misura mai il suono. Il rilevamento è meno preciso: alcune app in pausa possono mantenere in pausa la musica."
+            "value" : "Nasconde l'indicatore viola di registrazione. Il rilevamento è meno preciso."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音を測定しないため、紫色の録音インジケータが表示されません。検出の精度は下がり、一時停止中のAppによって音楽が一時停止したままになることがあります。"
+            "value" : "紫色の録音インジケータを表示しません。検出の精度は下がります。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "소리를 측정하지 않으므로 보라색 녹음 표시기가 나타나지 않습니다. 감지 정확도가 낮아져 일시 정지된 일부 앱 때문에 음악이 계속 일시 정지될 수 있습니다."
+            "value" : "보라색 녹음 표시기를 숨깁니다. 감지 정확도가 낮아집니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta o indicador roxo de gravação ao nunca medir o som. A detecção é menos precisa: alguns apps pausados podem manter sua música pausada."
+            "value" : "Oculta o indicador roxo de gravação. A detecção é menos precisa."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta o indicador de gravação roxo porque nunca mede o som. A deteção é menos precisa: algumas apps em pausa podem manter a música em pausa."
+            "value" : "Oculta o indicador de gravação roxo. A deteção é menos precisa."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "从不测量声音，因此不会出现紫色录音指示器。检测不太精确：部分已暂停的 App 可能会让音乐一直暂停。"
+            "value" : "隐藏紫色录音指示器。检测不太精确。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "從不測量聲音，因此不會出現紫色錄音指示器。偵測較不精確：部分已暫停的 App 可能會讓音樂持續暫停。"
+            "value" : "隱藏紫色錄音指示器。偵測較不精確。"
           }
         }
       }
@@ -9479,6 +9563,89 @@
         }
       }
     },
+    "Last checked %@" : {
+      "comment" : "Settings, beside Check Now; %@ is e.g. “2 hours ago”",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última comprovació: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt geprüft: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última comprobación: %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última comprobación: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière vérification : %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière vérification : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ultimo controllo: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最終確認: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마지막 확인: %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última verificação: %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última verificação: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次检查：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次檢查：%@"
+          }
+        }
+      }
+    },
     "Later" : {
       "comment" : "Update alert button: close it without updating",
       "localizations" : {
@@ -9805,6 +9972,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色錄音指示器。"
+          }
+        }
+      }
+    },
+    "Music" : {
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音楽"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "음악"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Música"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音乐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音樂"
           }
         }
       }
@@ -11953,6 +12202,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在其他 App 播放音訊時暫停你的音樂，並在之後繼續播放。支援 %@。"
+          }
+        }
+      }
+    },
+    "Privacy" : {
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privadesa"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenschutz"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidad"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidentialité"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidentialité"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プライバシー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개인정보 보호"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidade"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidade"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱私"
           }
         }
       }

@@ -1,9 +1,9 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General: launch at login, the music player, auto-pause, AntiDot
-/// mode, updates (and what automatic checks lead to), and a way to support
-/// AutoHush.
+/// Settings → General: launch at login, then Music (the player, auto-pause),
+/// Privacy (AntiDot mode) and Updates (checks, what they lead to, Check Now),
+/// each with a small icon in its heading, and a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -23,42 +23,42 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                LabeledContent("Music player") {
+                LabeledContent {
                     PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
                         model.chooseMusicPlayer($0)
                     }
+                } label: {
+                    Text("Music player")
+                    Text("AutoHush pauses and resumes this app.")
                 }
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)
                 }
-            } footer: {
-                Text("AutoHush pauses and resumes this app.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Toggle("Auto-Pause Music", isOn: Binding(
+                Toggle(isOn: Binding(
                     get: { model.isAutoPauseOn },
                     set: { model.setAutoPause($0) }
-                ))
+                )) {
+                    Text("Auto-Pause Music")
+                    Text("Choose which apps pause your music in the Apps tab.")
+                }
                 if let note = model.autoPauseNote {
                     Text(note)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-            } footer: {
-                Text("Choose which apps pause your music in the Apps tab.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            } header: {
+                SectionHeading("Music", symbol: "music.note", color: .purple)
             }
 
             Section {
-                Toggle("AntiDot mode", isOn: Binding(
+                Toggle(isOn: Binding(
                     get: { model.isAntiDotMode },
                     set: { model.setAntiDotMode($0) }
-                ))
-                NoteLabel(String(localized: "Hides the purple recording indicator by never measuring sound. Detection is less precise: some paused apps may keep your music paused."))
+                )) {
+                    Text("AntiDot mode")
+                    Text("Hides the purple recording indicator. Detection is less precise.",
+                         comment: "Settings, under AntiDot mode")
+                }
                 if model.isAntiDotMode {
                     Picker("Detect playing apps by", selection: Binding(
                         get: { model.detectionMethod },
@@ -73,9 +73,11 @@ struct GeneralSettingsView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
+            } header: {
+                SectionHeading("Privacy", symbol: "eye.slash", color: .green)
             }
 
-            Section("Updates") {
+            Section {
                 Toggle("Check for updates automatically", isOn: Binding(
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
@@ -92,15 +94,15 @@ struct GeneralSettingsView: View {
                         onUnavailableClick: { model.flashNotificationsNote() }
                     )
                     .disabled(!model.checksForUpdatesAutomatically || model.updateInstallNote != nil)
-                }
-                if let note = model.updateInstallNote {
-                    Text(note)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                } else if model.checksForUpdatesAutomatically {
-                    Text(model.automaticUpdates.explanation)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    if let note = model.updateInstallNote {
+                        Text(note)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    } else if model.checksForUpdatesAutomatically {
+                        Text(model.automaticUpdates.explanation)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
@@ -110,31 +112,66 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(Color.white) : AnyShapeStyle(.secondary))
                     Button("Open Notifications Settings…") { model.openNotificationSettings() }
                 }
-                HStack {
-                    Button("Check Now") { model.checkForUpdates() }
-                    if let status = model.updateStatus {
-                        Text(status)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            Section {
                 LabeledContent {
-                    Link(destination: ProjectInfo.supportPage) {
-                        Text("Buy me a coffee",
-                             comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
-                    }
+                    Button("Check Now") { model.checkForUpdates() }
                 } label: {
-                    Text("Would you like to support me?",
-                         comment: "About panel and Settings → General, before the Buy me a coffee link")
+                    Text(model.updateTitle)
+                    if let note = model.lastCheckedNote() {
+                        Text(note)
+                    }
                 }
+            } header: {
+                SectionHeading("Updates", symbol: "arrow.down.circle", color: .blue)
+            } footer: {
+                supportLine
             }
         }
         .formStyle(.grouped)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// A quiet line at the very end: "Would you like to support me? Buy me a coffee".
+    private var supportLine: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "cup.and.saucer")
+                .foregroundStyle(.secondary)
+            Text("Would you like to support me?",
+                 comment: "About panel and Settings → General, before the Buy me a coffee link")
+                .foregroundStyle(.secondary)
+            Link(destination: ProjectInfo.supportPage) {
+                Text("Buy me a coffee",
+                     comment: "Link to the developer's Buy Me a Coffee page (About panel, Settings → General)")
+            }
+        }
+        .font(.callout)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
+    }
+}
+
+/// A section's title with a small coloured icon, as in System Settings.
+private struct SectionHeading: View {
+    let title: LocalizedStringKey
+    let symbol: String
+    let color: Color
+
+    init(_ title: LocalizedStringKey, symbol: String, color: Color) {
+        self.title = title
+        self.symbol = symbol
+        self.color = color
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: symbol)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(color.gradient, in: RoundedRectangle(cornerRadius: 5))
+                .accessibilityHidden(true)
+            Text(title)
+        }
     }
 }
 

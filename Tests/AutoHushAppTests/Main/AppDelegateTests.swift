@@ -457,9 +457,14 @@ struct AppDelegateTests {
     func updateAvailable() async {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch, updateChecker: .latestRelease("v0.3.0"))
+        #expect(sut.settingsModel.currentVersion == "0.2.0")
+        #expect(sut.settingsModel.lastUpdateCheck == nil)
         await sut.updates.check(userInitiated: false)
         #expect(sut.status.updateOffer == UpdateOffer(release: sut.updates.availableUpdate!, state: .available))
         #expect(sut.settingsModel.updateStatus == "Version 0.3.0 is available.")
+        #expect(sut.settingsModel.updateTitle == "Version 0.3.0 is available.")
+        #expect(sut.settingsModel.lastUpdateCheck == scratch.preferences.lastUpdateCheck)
+        #expect(sut.settingsModel.lastUpdateCheck != nil)
     }
 
     @MainActor

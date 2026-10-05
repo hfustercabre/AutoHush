@@ -58,13 +58,35 @@ final class SettingsModel {
     @ObservationIgnored var noteFlashInterval: Duration = .milliseconds(500)
     @ObservationIgnored private var noteFlashEnd: ContinuousClock.Instant?
     @ObservationIgnored private var noteFlash: Task<Void, Never>?
+    /// What the last check from Settings found, e.g. "Checking…".
     var updateStatus: String?
+    /// This copy's version, e.g. "0.3.11"; `nil` when unknown.
+    var currentVersion: String?
+    /// When updates were last checked for, by hand or automatically.
+    var lastUpdateCheck: Date?
 
     // Apps
     private(set) var apps: [AppRow] = []
 
     // Advanced
     var timings = TimingSettings.defaults
+
+    /// The row with Check Now: what the last check found ("AutoHush 0.3.11
+    /// is up to date.", "Checking…"), or this version before any check.
+    var updateTitle: String {
+        updateStatus ?? currentVersion.map {
+            String(localized: "AutoHush \($0)", comment: "Settings, beside Check Now before any check; %@ is the version")
+        } ?? "AutoHush"
+    }
+
+    /// Under it: "Last checked 2 hours ago"; `nil` before the first check.
+    func lastCheckedNote(now: Date = Date()) -> String? {
+        guard let lastUpdateCheck else { return nil }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.dateTimeStyle = .named
+        let when = formatter.localizedString(for: lastUpdateCheck, relativeTo: now)
+        return String(localized: "Last checked \(when)", comment: "Settings, beside Check Now; %@ is e.g. “2 hours ago”")
+    }
 
     /// AntiDot mode: no visual signs of AutoHush working — it never
     /// captures audio, so macOS never shows the purple recording indicator.

@@ -140,6 +140,24 @@ struct SettingsModelTests {
         #expect(model.isAvailable(.install))
     }
 
+    @Test("beside Check Now: the version until a check, then what it found; under it, when the last one was")
+    func updateRow() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        #expect(model.updateTitle == "AutoHush")
+        model.currentVersion = "0.3.11"
+        #expect(model.updateTitle == "AutoHush 0.3.11")
+        #expect(model.lastCheckedNote() == nil)
+
+        let now = Date()
+        model.lastUpdateCheck = now.addingTimeInterval(-2 * 3600)
+        model.updateStatus = "AutoHush 0.3.11 is up to date."
+        #expect(model.updateTitle == "AutoHush 0.3.11 is up to date.")
+        let formatter = RelativeDateTimeFormatter()
+        formatter.dateTimeStyle = .named
+        let when = formatter.localizedString(for: now.addingTimeInterval(-2 * 3600), relativeTo: now)
+        #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
+    }
+
     @Test("the notifications note blinks for a while, longer when asked again")
     func noteBlinks() async throws {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

@@ -86,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
             quit: { [weak self] in self?.quitToFinishUpdate() },
             onOffer: { [weak self] in self?.status.updateOffer = $0 },
-            onStatus: { [weak self] in self?.settingsModel.updateStatus = $0 },
+            onStatus: { [weak self] in self?.showUpdateStatus($0) },
             onSettingsChange: { [weak self] in self?.showUpdateSettings() }
         )
         settingsModel = SettingsModel(
@@ -110,6 +110,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
         settingsModel.automaticUpdates = preferences.automaticUpdates
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
+        settingsModel.currentVersion = currentVersion?.description
+        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
         showChosenPlayer()
         refreshPlayerOptions()
         showApps()
@@ -255,6 +257,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updates.checksAutomatically = enabled
         settingsModel.checksForUpdatesAutomatically = enabled
         if enabled { Task { await updates.runAutomaticTasks() } }
+    }
+
+    /// Shows how a check from Settings is going, and when updates were last
+    /// checked for (every check reports here).
+    private func showUpdateStatus(_ status: String) {
+        settingsModel.updateStatus = status
+        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
     }
 
     /// Shows the update settings as they are, after AutoHush changed them.
