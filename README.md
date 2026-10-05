@@ -30,7 +30,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
 - 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
 
-**Works with Spotify** today. Support for more players, such as Apple Music, YouTube Music and Tidal, is planned.
+**Works with Spotify and Apple Music**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music and Tidal, is planned.
 
 ## Thanks to Background Music
 
@@ -58,7 +58,7 @@ Yes, this whole app exists because of a yellow dot.
 
 ## Install
 
-You need **macOS 15 or later** and the **Spotify desktop app**.
+You need **macOS 15 or later** and **Spotify** (the desktop app) or **Apple Music** (the Music app that comes with macOS).
 
 AutoHush is free and isn't sold through Apple. It's signed, but not *notarized* by Apple, because notarization needs a paid developer account. All that means for you is one extra confirmation the first time you open it. Homebrew handles that step for you.
 
@@ -95,15 +95,17 @@ open /Applications/AutoHush.app
 
 ## First launch
 
-AutoHush appears as an icon in the menu bar; it has no Dock icon or window. macOS will ask for three permissions:
+AutoHush appears as an icon in the menu bar; it has no Dock icon. The first time it opens, a small window asks which music player it should control. If only one is installed, it's already picked: just click **Continue**. You can change it any time in the menu (**Music Player**) or in Settings. If you're updating from an earlier version, AutoHush keeps controlling Spotify and doesn't ask.
+
+macOS will then ask for three permissions:
 
 | Permission | What it's for | Needed? |
 |---|---|---|
-| **Control Spotify** (Automation) | Pausing and resuming Spotify | Yes |
+| **Control your music player** (Automation) | Pausing and resuming the player you chose. macOS asks for each player the first time you choose it | Yes |
 | **Record system audio** (Screen & System Audio Recording) | Telling apart an app that's *playing* from one that just has its sound switched on but is silent | Recommended; not used in AntiDot mode |
 | **Notifications** | Telling you about updates (see [Updates](#updates)) | Optional |
 
-The audio permission sounds scarier than it is: AutoHush only checks *how loud* other apps are, in memory, and never records or saves anything. See [Privacy](#privacy). Without it, AutoHush still works, but a paused video may keep Spotify paused until you close it.
+The audio permission sounds scarier than it is: AutoHush only checks *how loud* other apps are, in memory, and never records or saves anything. See [Privacy](#privacy). Without it, AutoHush still works, but a paused video may keep your music paused until you close it.
 
 If you said no by mistake, the menu shows a button that takes you to the right place in System Settings.
 
@@ -121,6 +123,7 @@ Music paused — Google Chrome is playing
 ───────────────
 ✓ Auto-Pause Music
   Turn Off For                      ▸ 5 · 15 · 30 Minutes · 1 Hour · 24 Hours
+  Music Player                      ▸ ✓ Spotify · Apple Music
   Ignored Apps                      ▸ click an app to stop ignoring it
 ───────────────
 ⚠ Allow Audio Recording Access…        (only when something needs fixing)
@@ -135,6 +138,7 @@ Music paused — Google Chrome is playing
 - **Playing apps** are listed with their icons. Open an app's submenu and choose **Never Pause Music for …** if that app shouldn't interrupt your music, for example a game whose soundtrack you don't mind.
 - **Auto-Pause Music** switches everything on or off. Turning it off brings back music that AutoHush paused.
 - **Turn Off For** pauses AutoHush itself for 5, 15 or 30 minutes, an hour, or 24 hours.
+- **Music Player** chooses the player AutoHush controls. A player that isn't on your Mac is shown dimmed. The one you don't choose counts like any other app: if it plays, it pauses your music, unless you ignore it.
 - **Ignored Apps** lists every app you've told to leave your music alone. Click one to undo.
 - The **icon**, sound bars cut out of a rounded square, shows what's happening: bars while your music plays, a dot and a pause sign when AutoHush paused it for another app, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
 
@@ -142,7 +146,7 @@ Music paused — Google Chrome is playing
 
 | Tab | What you'll find |
 |---|---|
-| **General** | Launch at login · **Auto-Pause Music** · **AntiDot mode** (see [below](#the-purple-dot-and-antidot-mode)) · update checks, and what happens when one finds an update (see [Updates](#updates)) · a link to support AutoHush |
+| **General** | Launch at login · **Music:** Auto-Pause Music and your music player · **Privacy:** AntiDot mode (see [below](#the-purple-dot-and-antidot-mode)) · **Updates:** automatic checks, what happens when one finds an update (see [Updates](#updates)), and Check Now · a link to support AutoHush |
 | **Apps** | Every app that has played sound, each with a **Pauses Music** switch. **Ignore Another App…** adds an app before it ever plays. Right-click an app to remove it, or use **Reset List…** to start over |
 | **Advanced** | Fine-tuning, with sensible defaults: how long an app must play before your music pauses (0.5 s), how long it must be quiet before it counts as stopped and your music resumes (2 s, at least 1 s), how long the music fades out before pausing (1 s) and back in when it resumes (2 s; 0 turns either off), and what counts as silence (-60 dB). **Restore Defaults** undoes your changes |
 
@@ -157,9 +161,9 @@ AutoHush speaks English, Spanish (Spain and Latin America), Catalan, German, Fre
 
 To hear whether another app is *really* playing, AutoHush has to listen to its sound level. Whenever an app does that, macOS shows a **purple dot** in the menu bar. It's a privacy feature that no app can hide, and that's a good thing.
 
-AutoHush keeps the dot to a minimum: it only listens while the answer matters, that is while Spotify is playing on this Mac (or was paused by AutoHush) and another app has its sound on. Spotify itself is never listened to. So:
+AutoHush keeps the dot to a minimum: it only listens while the answer matters, that is while your music is playing on this Mac (or was paused by AutoHush) and another app has its sound on. Your music player itself is never listened to. So:
 
-- Spotify playing on its own, paused, or on another device: **no dot**.
+- Your music playing on its own, paused, or on another device: **no dot**.
 - Another app playing over your music: the dot shows while that app has its sound on, plus 2 seconds.
 
 **If the dot bothers you, turn on AntiDot mode** (Settings → General). AutoHush then never listens to any sound, so the dot never appears. Instead, it goes by what apps tell macOS: most players and browsers say "I'm playing, don't go to sleep" while they play, and stop saying it when you pause. AutoHush needs no extra permission for this, and treats every app the same way.
@@ -181,13 +185,14 @@ AntiDot mode offers two ways to detect playing apps:
 
 ## Tips and troubleshooting
 
-- **Spotify doesn't come back after VLC.** VLC has its own setting that pauses Spotify. Because AutoHush didn't pause it, it won't resume it. Turn it off in **VLC → Settings → Interface → Control external music players → Do nothing**, and let AutoHush do the job.
-- **I paused Spotify myself and it stayed paused.** That's on purpose: AutoHush only resumes music that *it* paused.
+- **Your music doesn't come back after VLC.** VLC has its own setting that pauses Spotify and Apple Music. Because AutoHush didn't pause it, it won't resume it. Turn it off in **VLC → Settings → Interface → Control external music players → Do nothing**, and let AutoHush do the job.
+- **I paused my music myself and it stayed paused.** That's on purpose: AutoHush only resumes music that *it* paused.
+- **Switched players?** Music that AutoHush was holding paused in the previous player stays paused. From then on, that player counts like any other app.
 - **Only one AutoHush runs at a time.** Opening another copy (a newer version you downloaded, a second install) quits the one that's running. If that one had your music paused for another app, the new one takes the pause over. Other copies stay where they are; delete the ones you don't use.
 - **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps), and that auto-pause isn't turned off.
 - **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Grant the audio permission, or in AntiDot mode close the app or tab.
 - **Something looks off?** Hold **⌥ (Option)** while the menu is open and choose **Diagnostics…**. It lists every app with sound, what AutoHush thinks it's doing, and the current settings.
-- **"Spotify is not running"** or a permission warning: fix it and choose **Retry**. AutoHush also restarts by itself when Spotify is opened.
+- **"Spotify is not running"** (or Apple Music), or a permission warning: fix it and choose **Retry**. AutoHush also restarts by itself when your player is opened.
 
 ## Privacy
 
@@ -196,7 +201,7 @@ AntiDot mode offers two ways to detect playing apps:
 - In AntiDot mode it doesn't look at any sound at all.
 - It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see below). Neither leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
 - Its only notifications are about updates.
-- It controls Spotify through the standard macOS automation mechanism, and no other app.
+- It controls only the music player you chose, through the standard macOS automation mechanism.
 
 ## Updates
 
@@ -280,11 +285,11 @@ AutoHush is free. If it saves your ears a few times a day and you'd like to say 
    - *Normal mode:* each app is metered through a private, unmuted CoreAudio **process tap** that computes only its peak level.
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open; these apps are remembered across launches. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) and display-only assertions are ignored.
 3. **Filtering.** System sounds are played by `systemsoundserverd`, which is excluded outright. An app must be audible for 0.5 s to count as playing (this filters out chat tones) and silent for 2 s to count as stopped (this bridges gaps between tracks).
-4. **Deciding.** `PlaybackArbiter` pauses Spotify when the first app starts, and resumes it as soon as the last one stops, but only if it paused Spotify itself and Spotify is still paused. Pauses and resumes run on their own, so new events are handled even while the music fades.
-5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: the level drops at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (Spotify's is a cube law, measured with `swift run measure-volume-curve`). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower. If the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself during the fade-out, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. It works with any player that reports its volume; others pause and play directly.
-6. **Spotify.** Its state arrives as a push notification (`com.spotify.client.PlaybackStateChanged`) and is confirmed with an Apple event right before each pause or resume. Spotify plays "on this Mac" only when its own process has output running; otherwise it's on a Spotify Connect device and is left alone.
+4. **Deciding.** `PlaybackArbiter` pauses the chosen player when the first app starts, and resumes it as soon as the last one stops, but only if it paused the player itself and the player is still paused. Pauses and resumes run on their own, so new events are handled even while the music fades.
+5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: the level drops at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (Spotify's is a cube law, Apple Music's is linear, both measured with `swift run measure-volume-curve`). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower. If the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself during the fade-out, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. It works with any player that reports its volume; others pause and play directly.
+6. **The players.** Spotify and Apple Music are both scripted with Apple events (`ScriptablePlayers`). Their state arrives as a distributed notification (`com.spotify.client.PlaybackStateChanged`, `com.apple.Music.playerInfo`) and is confirmed with an Apple event right before each pause or resume. Music posts each change twice, the old state first, so a notification that would end AutoHush's pause is checked with the player first. A player plays "on this Mac" only when its own process has output running; otherwise it's on another device (Spotify Connect) and is left alone.
 
-**The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and Spotify playing here or paused by us), with a 2 s release delay. Spotify itself is never tapped, except to prove the permission works when TCC can't be read.
+**The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and the player playing here or paused by us), with a 2 s release delay. The player itself is never tapped, except to prove the permission works when TCC can't be read.
 
 **The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
 
@@ -296,19 +301,19 @@ AppDelegate ── lifecycle, bootstrap (launch, Retry, player relaunch), wiring
   ├── SettingsWindowController ── SwiftUI tabs backed by SettingsModel
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
   └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
-        PlayerStateObserving ── the player's state (Spotify: distributed notification, quit) ┐
-        AudioMonitor                                                                │
-          ├── HALAudioProcessSnapshotProvider: process list + is-running listeners  │
+        PlayerStateObserving ── the player's state (distributed notification, quit) ─┐
+        AudioMonitor                                                                 │
+          ├── HALAudioProcessSnapshotProvider: process list + is-running listeners   │
           ├── ProcessTapLevelMeter: per-app peak level (normal mode)                 │
           ├── IOKitPowerAssertionReader: who says "I'm playing" (AntiDot mode)       │
           ├── SourceActivityTracker: start confirmation + stop grace                 │
-          └── ordered source events + "Spotify plays on this Mac" ──┐                │
+          └── ordered source events + "music plays on this Mac" ────┐                │
                                                                     ▼                ▼
                                                               PlaybackArbiter
-                                                                ├── pauses Spotify on the first app
+                                                                ├── pauses the player on the first app
                                                                 ├── resumes after all apps stop
                                                                 ├── VolumeFader: logarithmic fades around both
-                                                                └── MusicPlayer (Spotify: SpotifyPlayer, Apple events)
+                                                                └── MusicPlayer (ScriptablePlayer: Apple events)
 ```
 
 AutoHush is a Swift package of several modules, so the compiler keeps the layers apart:
@@ -317,7 +322,8 @@ AutoHush is a Swift package of several modules, so the compiler keeps the layers
 AutoHush (executable: the entry point only)
   └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, About, wiring
        ├─ AutoHushPlayers   the supported music players
-       │    └─ SpotifySupport   one <App>Support module per player, all in PlayersSupport/
+       │    ├─ SpotifySupport, AppleMusicSupport   one <App>Support module per player, in PlayersSupport/
+       │    └─ ScriptablePlayers   shared by the players scripted with Apple events
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 ```
@@ -378,9 +384,9 @@ Resources/               Info.plist, entitlements and AutoHush.icon (the app ico
 
 **Where things go:**
 
-- **`AutoHushKit`** is the engine. It has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which players it supports. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushKit`** is the engine. It has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
-- **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app.
+- **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
 - **Text people read** lives in the app, never in the engine: the text for the engine's states and choices is mostly in `Main/StatusPresentation.swift`, and Diagnostics gets plain facts from the engine (`ActiveAudioReport`) that the app words. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
 - **`General/`** folders stay small: only helpers several parts of a module need.
@@ -389,8 +395,8 @@ Resources/               Info.plist, entitlements and AutoHush.icon (the app ico
 
 **Adding a music player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
-1. a new module, `Sources/PlayersSupport/<App>Support/`, with a type implementing `MusicPlayer`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`);
-2. an entry in `SupportedPlayers` (and a dependency of `AutoHushPlayers` in `Package.swift`), so AutoHush knows it and its own audio never counts as another app playing;
+1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. Otherwise it's a type implementing `MusicPlayer`;
+2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;
 3. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
 
 Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Configuration/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
@@ -401,7 +407,7 @@ Defaults that aren't in Settings, such as tick rates, the gap tolerance and the 
 swift build      # build every module and the measuring tool
 swift test       # run the tests of every module
 bash Scripts/build-app.sh release   # build and sign AutoHush.app
-swift run measure-volume-curve      # measure the default player's volume curve
+swift run measure-volume-curve      # measure the first player's volume curve (or pass a bundle ID)
 ```
 
 The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts.

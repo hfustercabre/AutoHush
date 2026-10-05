@@ -5,6 +5,34 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Apple Music support**: AutoHush can now pause and resume Apple Music
+  (the Music app) instead of Spotify, with the same fades.
+- **Choose your music player**: in the menu's new **Music Player** submenu,
+  or in Settings → General. A player that isn't on your Mac is shown
+  dimmed. The first time AutoHush opens, a small window asks which one to
+  use; if you're updating, AutoHush keeps controlling Spotify. The player
+  you don't choose counts like any other app: its sound pauses your music,
+  unless you ignore it.
+
+### Changed
+
+- **Settings → General is tidier**: it's grouped into Music, Privacy and
+  Updates, with each setting's description under it. **Check Now** shows
+  what the last check found and when it ran, and the choice of what
+  happens when an update is found is hidden while automatic checks are
+  off.
+- macOS's permission prompt now says AutoHush controls "your music
+  player".
+
+### Fixed
+
+- The Settings window now resizes as soon as a switch shows or hides
+  options. Before, it kept its old size until the next click.
+
 ## [0.3.11] — 2026-10-04
 
 ### Changed
