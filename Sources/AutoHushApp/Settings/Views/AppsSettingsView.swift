@@ -111,6 +111,7 @@ struct AppsSettingsView: View {
             Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
                 .font(.appCaption)
                 .foregroundStyle(.appSecondary)
+                .fixedSize() // on one line, in every language
             Picker(selection: Binding(
                 get: { order.criterion },
                 set: { model.setAppListOrder(AppListOrder(criterion: $0)) }

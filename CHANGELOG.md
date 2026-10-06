@@ -9,6 +9,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Seven more languages**: Russian, Turkish, Arabic (right to left), Hindi,
+  Indonesian, Vietnamese, and Traditional Chinese for Hong Kong (also used
+  in Macau and for Cantonese). AutoHush now speaks 21 languages, using
+  macOS's own words for its settings in each. Like most of the others, they
+  were translated automatically.
 - **Apple Podcasts and VLC** can be your music player, besides Spotify,
   Apple Music and TIDAL.
   - **Apple Podcasts** is controlled like TIDAL: AutoHush presses Play/Pause

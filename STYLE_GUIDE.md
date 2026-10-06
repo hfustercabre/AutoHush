@@ -15,6 +15,7 @@ macOS's own conventions ([Apple's Human Interface Guidelines](https://developer.
 - [Lists and searches](#lists-and-searches)
 - [Writing](#writing)
 - [Translations](#translations)
+- [Right to left](#right-to-left)
 - [Accessibility](#accessibility)
 - [Keyboard](#keyboard)
 - [Checking a change](#checking-a-change)
@@ -186,11 +187,11 @@ where they appear:
 
 ## Translations
 
-AutoHush is translated into 13 languages besides English. The README's
+AutoHush is translated into 20 languages besides English. The README's
 [Translations](README.md#translations) section explains how; for style:
 
 - **Every change translates every language.** A new or changed English
-  string is translated into all 13 before the change is done.
+  string is translated into all 20 before the change is done.
 - **The comment says where.** Every string has a comment that says where it
   appears and what each placeholder holds.
 - **A changed English string is a new key.** Carry its translations over,
@@ -198,8 +199,13 @@ AutoHush is translated into 13 languages besides English. The README's
 - **Use macOS's own words** for its concepts in each language (Ajustes,
   Einstellungen, Réglages…), and the capitalization rules above as each
   language applies them.
-  - Brazilian Portuguese uses title case on buttons and menu items.
+  - Brazilian Portuguese, Turkish and Indonesian use title case on buttons
+    and menu items.
+  - Russian and Vietnamese use sentence case everywhere.
   - German capitalizes its nouns everywhere.
+- **Plurals:** a string with a count has plural forms in the catalog where
+  the language needs them: Russian (one, few, many) and Arabic (two, few,
+  many, other).
 - **Typography:**
   - French puts a no-break space before `: ; ? !` and inside « »; Canadian
     French doesn't before `; ? !`.
@@ -208,6 +214,22 @@ AutoHush is translated into 13 languages besides English. The README's
     punctuation, with "⋯" in Traditional Chinese.
   - Catalan puts the article before AutoHush ("l'AutoHush"), but not before
     a placeholder.
+  - Russian uses « » quotes.
+  - Arabic uses its own comma, question mark and semicolon (، ؟ ؛) and « ».
+  - Turkish never attaches a suffix to a placeholder, since the suffix's
+    vowels depend on the name it follows.
+
+## Right to left
+
+In Arabic, AutoHush reads right to left, and every screen mirrors.
+
+- **Leading and trailing,** never left and right, in layouts and alignments.
+- **Directional symbols** use their "forward" and "backward" forms
+  (`chevron.forward`), which mirror. A rotated symbol keeps the same angle:
+  SwiftUI mirrors the rotation too.
+- **Check it** by starting the app with `-AppleLanguages "(ar)"
+  -AppleTextDirection YES`, which runs it in Arabic, right to left, as
+  Xcode's right-to-left option does.
 
 ## Accessibility
 
@@ -242,7 +264,8 @@ Before a visible change is final:
 1. **Propose it with pictures** of the real screens, before and after.
 2. **Look at it:**
    - in **light and dark mode**;
-   - in **English and German** (German is the longest);
+   - in **English and German** (German is the longest), and in **Arabic**
+     when the layout changes;
    - with **short and long lists** where lists are involved.
 3. **Check the text** against the rules above, and translate it.
 4. **Update this guide** when the change adds or changes a pattern.

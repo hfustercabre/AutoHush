@@ -84,7 +84,10 @@ struct DiagnosticsSettingsView: View {
                             .foregroundStyle(.appSecondary)
                             .lineLimit(1)
                     }
-                    Image(systemName: "chevron.right")
+                    // Points forward while folded and down while open, whichever
+                    // way the language reads: right to left, SwiftUI mirrors
+                    // both the symbol and the turn.
+                    Image(systemName: "chevron.forward")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.appSecondary)
                         .rotationEffect(.degrees(isOpen ? 90 : 0))
