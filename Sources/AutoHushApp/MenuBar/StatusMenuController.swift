@@ -11,6 +11,7 @@ import AutoHushKit
 /// │ ────────────────────────────────────────── │
 /// │ Music player              [icon] Spotify ⌄ │  unfolds the players under it
 /// ╰────────────────────────────────────────────╯
+/// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
 /// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///   Turn off for
@@ -70,8 +71,10 @@ final class StatusMenuController: NSObject {
 
     private let actions: Actions
     private(set) var isMenuOpen = false
-    /// The card at the top, and the players unfolded under it.
+    /// The card at the top, and the players unfolded under it, with their
+    /// search when there are enough of them.
     private var cardItem: NSMenuItem?
+    private var playerSearchItem: NSMenuItem?
     private var playerRows: [NSMenuItem] = []
 
     init(status: AppStatus = AppStatus(), actions: Actions) {
@@ -120,6 +123,8 @@ final class StatusMenuController: NSObject {
         model.status = status
         model.listedSources = status.activeSources
         model.isChoosingPlayer = false
+        model.playerSearch = ""
+        playerSearchItem = nil
         playerRows = []
         menu.removeAllItems()
 
@@ -141,11 +146,13 @@ final class StatusMenuController: NSObject {
         menu.addItem(hostedItem("toolbar", MenuToolbarView(model: model)))
     }
 
-    /// A row showing `view`, as wide as the menu.
-    private func hostedItem<Content: View>(_ identifier: String, _ view: Content) -> NSMenuItem {
+    /// A row showing `view`, as wide as the menu; one that `takesKeyboard`
+    /// gets what's typed while it shows.
+    private func hostedItem<Content: View>(_ identifier: String, _ view: Content, takesKeyboard: Bool = false) -> NSMenuItem {
         let item = NSMenuItem()
         item.identifier = NSUserInterfaceItemIdentifier(identifier)
-        let hosting = NSHostingView(rootView: view.font(.appBody))
+        let root = view.font(.appBody)
+        let hosting = takesKeyboard ? KeyboardTakingHostingView(rootView: root) : NSHostingView(rootView: root)
         hosting.autoresizingMask = [.width]
         item.view = hosting
         fit(item)
@@ -215,20 +222,49 @@ final class StatusMenuController: NSObject {
 
     /// Unfolds the players under the card, or folds them back. They're the
     /// menu's own rows: a second menu can't open from inside an open one.
+    /// From `PlayerOption.searchThreshold` players on, a search comes first.
     private func togglePlayerList() {
         if model.isChoosingPlayer {
-            playerRows.forEach(menu.removeItem)
+            ([playerSearchItem].compactMap { $0 } + playerRows).forEach(menu.removeItem)
+            playerSearchItem = nil
             playerRows = []
+            model.playerSearch = ""
         } else if let cardItem {
-            playerRows = status.playerOptions.map(playerRow)
-            let first = menu.index(of: cardItem) + 1
-            for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: first + offset) }
+            let options = status.playerOptions.installedFirst
+            var first = menu.index(of: cardItem) + 1
+            if options.isSearchable {
+                let search = hostedItem("playerSearch", PlayerSearchRow(model: model), takesKeyboard: true)
+                menu.insertItem(search, at: first)
+                playerSearchItem = search
+                first += 1
+            }
+            showPlayerRows(options, at: first)
         }
         model.isChoosingPlayer.toggle()
     }
 
+    /// Shows the unfolded players whose names match `search`.
+    private func searchPlayers(_ search: String) {
+        guard let playerSearchItem else { return } // folded meanwhile
+        model.playerSearch = search
+        playerRows.forEach(menu.removeItem)
+        showPlayerRows(status.playerOptions.installedFirst.matching(search), at: menu.index(of: playerSearchItem) + 1)
+    }
+
+    /// Inserts a row for each of `options` at `index`; a note when there's
+    /// none, because the search matched none.
+    private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
+        playerRows = options.map(playerRow)
+        if playerRows.isEmpty {
+            let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
+            note.isEnabled = false
+            playerRows = [note]
+        }
+        for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
+    }
+
     /// A player to choose, checked when chosen. One that isn't installed
-    /// can't be.
+    /// can't be, and comes after those that are.
     private func playerRow(for option: PlayerOption) -> NSMenuItem {
         let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
         row.image = option.icon(size: 16)
@@ -249,8 +285,9 @@ final class StatusMenuController: NSObject {
 
     // MARK: - Actions
 
-    /// What the custom views ask for. Switches and the player list act at
-    /// once and keep the menu open; the rest close it first, as its rows do.
+    /// What the custom views ask for. Switches, the player list and its
+    /// search act at once and keep the menu open; the rest close it first,
+    /// as its rows do.
     func perform(_ command: StatusMenuCommand) {
         switch command {
         case .toggleAutoPause:
@@ -259,6 +296,8 @@ final class StatusMenuController: NSObject {
             actions.setIgnored(source, ignored)
         case .togglePlayerList:
             togglePlayerList()
+        case .searchPlayers(let search):
+            searchPlayers(search)
         case .retry:
             actions.retry() // the card shows how it goes
         case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .quit:
@@ -278,7 +317,7 @@ final class StatusMenuController: NSObject {
         case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
         case .showAbout:          actions.showAbout()
         case .quit:               actions.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .retry: break // they act in perform(_:)
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
         }
     }
 
@@ -316,4 +355,30 @@ extension StatusMenuController: NSMenuDelegate {
     func menuDidClose(_ menu: NSMenu) {
         isMenuOpen = false
     }
+}
+
+/// A menu row whose text field takes what's typed as soon as the row is in
+/// the menu's window: SwiftUI's focus doesn't reach into an open menu, so
+/// the field becomes AppKit's first responder instead.
+private final class KeyboardTakingHostingView<Content: View>: NSHostingView<Content> {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard let window else { return }
+        // Once SwiftUI has put its field in. The menu is tracking, so in the
+        // run loop's common modes: the main queue waits until it closes.
+        RunLoop.main.perform(inModes: [.common]) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, let field = editableTextField(in: self), window.makeFirstResponder(field) else { return }
+                // The text it edits shows on the field's own background.
+                (field.currentEditor() as? NSTextView)?.drawsBackground = false
+            }
+        }
+    }
+}
+
+/// The first text field one can type into, in `view` or under it.
+@MainActor
+private func editableTextField(in view: NSView) -> NSTextField? {
+    if let field = view as? NSTextField, field.isEditable { return field }
+    return view.subviews.lazy.compactMap(editableTextField).first
 }

@@ -21,12 +21,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Settings → Apps can be sorted** by Last Played (the default, the most
   recent first), Name or On/Off, and the arrow beside **Sort by** reverses
   the order. AutoHush remembers the choice.
+- **A search over the music players**, in the menu's player list, beside
+  Settings' pop-up and in the welcome window. It only appears once there
+  are eight players or more, so not yet.
 - **Settings → Apps has a search**: the magnifier beside **Sort by** opens
   a field that finds apps by name, ignoring case and accents. The ✕ closes
   it, and it's closed again each time Settings opens.
 
 ### Changed
 
+- **The music players are offered the most used first**: Spotify, Apple
+  Music, VLC, Apple Podcasts, then TIDAL. Those that aren't on your Mac come
+  last, in the menu, Settings and the welcome window.
 - **Settings → Apps grows with its list**, up to the height of Advanced,
   so more apps show before it scrolls. The heading and the buttons stay in
   place while the list scrolls.

@@ -39,12 +39,18 @@ final class PlayerChooserWindowController: NSWindowController, PlayerChooserPres
 }
 
 /// The music players as rows in a card, like Settings → Apps; the user picks
-/// one and continues. Players that aren't installed are dimmed and can't be
-/// picked. When only one is installed, it starts picked.
+/// one and continues. Players that aren't installed come last, dimmed, and
+/// can't be picked. When only one is installed, it starts picked. From
+/// `PlayerOption.searchThreshold` players on, a search narrows them down and
+/// the list scrolls at a fixed height.
 struct PlayerChooserView: View {
     let model: SettingsModel
     /// The player the user clicked.
     @State private var clicked: String?
+    @State private var search = ""
+
+    /// The players' list's height while it scrolls: about six rows.
+    static let scrollingListHeight: CGFloat = 340
 
     /// The clicked player or, until one is, the only installed one.
     private var picked: String? {
@@ -62,11 +68,14 @@ struct PlayerChooserView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.appSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Card {
-                ForEach(Array(model.playerOptions.enumerated()), id: \.element.id) { index, option in
-                    if index > 0 { CardDivider() }
-                    row(for: option)
+            if model.playerOptions.isSearchable {
+                SearchField(text: $search)
+                ScrollView {
+                    Card { players(model.playerOptions.installedFirst.matching(search)) }
                 }
+                .frame(height: Self.scrollingListHeight)
+            } else {
+                Card { players(model.playerOptions.installedFirst) }
             }
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
@@ -88,6 +97,18 @@ struct PlayerChooserView: View {
         .padding(24)
         .frame(width: 420)
         .font(.appBody)
+    }
+
+    /// The players' rows, for a card; a note when the search matched none.
+    @ViewBuilder private func players(_ options: [PlayerOption]) -> some View {
+        if options.isEmpty {
+            Text(verbatim: PlayerOption.noMatchNote(search))
+                .foregroundStyle(.appSecondary)
+        }
+        ForEach(Array(options.enumerated()), id: \.element.id) { index, option in
+            if index > 0 { CardDivider() }
+            row(for: option)
+        }
     }
 
     /// A player is picked, and is still installed.

@@ -6,6 +6,8 @@ import AutoHushKit
 /// what they lead to, Check Now), and a way to support AutoHush.
 struct GeneralSettingsView: View {
     let model: SettingsModel
+    /// The players' search is open, beside their pop-up.
+    @State private var searchingPlayers = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,9 +42,10 @@ struct GeneralSettingsView: View {
                 HStack {
                     RowTitle(Text("Music player"), subtitle: Text("AutoHush pauses and resumes this app."))
                     Spacer(minLength: 8)
-                    PlayerPopUp(options: model.playerOptions, selection: model.chosenPlayerID) {
+                    PlayerPopUp(options: model.playerOptions.installedFirst, selection: model.chosenPlayerID) {
                         model.chooseMusicPlayer($0)
                     }
+                    if model.playerOptions.isSearchable { playerSearchButton }
                 }
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)
@@ -115,6 +118,25 @@ struct GeneralSettingsView: View {
         .padding(16)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// From `PlayerOption.searchThreshold` players on: a magnifier that opens
+    /// a search over them, where a click on one chooses it.
+    private var playerSearchButton: some View {
+        Button { searchingPlayers = true } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.appCaption.weight(.semibold))
+                .frame(width: 22, height: 20)
+        }
+        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .help(Text("Search by name", comment: "The magnifier that opens a search"))
+        .accessibilityLabel(Text("Search by name", comment: "The magnifier that opens a search"))
+        .popover(isPresented: $searchingPlayers, arrowEdge: .bottom) {
+            PlayerSearchPopover(options: model.playerOptions.installedFirst, chosen: model.chosenPlayerID) {
+                model.chooseMusicPlayer($0)
+                searchingPlayers = false
+            }
+        }
     }
 
     private func heading(_ title: Text) -> some View {

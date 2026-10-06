@@ -30,7 +30,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
 - 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
 
-**Works with Spotify, Apple Music, TIDAL, Apple Podcasts and VLC**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music, is planned.
+**Works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music, is planned.
 
 ## Thanks to Background Music
 
@@ -100,7 +100,7 @@ AutoHush lives in the menu bar; it has no Dock icon. The first time it opens, it
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/welcome-dark.png">
-    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, Apple Music, TIDAL dimmed as not installed, Apple Podcasts and VLC, above a Continue button" width="420">
+    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, Apple Music, VLC and Apple Podcasts, then TIDAL dimmed as not installed, above a Continue button" width="420">
   </picture>
 </p>
 
@@ -132,7 +132,7 @@ Click the menu bar icon to see what's going on:
 
 - **The card** shows your music player and what's happening, such as "Playing", "Paused — Safari is playing" or "Playing on another device". Anything that needs your attention shows in orange, with a row under the card to fix it, or a **Retry** button when the player didn't answer.
 - **Auto-Pause**, on the card, turns everything on or off. Turning it off brings back music that AutoHush paused.
-- **Music player** unfolds the players to choose from; those not on your Mac are dimmed. The players you didn't choose count like any other app: if one plays, it pauses your music, unless you ignore it.
+- **Music player** unfolds the players to choose from, the most used first; those not on your Mac are dimmed and listed last. Once AutoHush supports eight players or more, a search comes first (and in Settings and the welcome window too). The players you didn't choose count like any other app: if one plays, it pauses your music, unless you ignore it.
 - **Turn off for** pauses AutoHush itself, from 5 minutes to 24 hours, in one click.
 - **Playing now** lists the apps playing sound, each with a switch: turn it off for an app that shouldn't interrupt your music, such as a game whose soundtrack you don't mind.
 - **Ignored Apps** lists the apps you've switched off. Click one to undo.

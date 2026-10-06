@@ -65,6 +65,15 @@ struct PlayerOption: Equatable, Identifiable {
         return AppIcon.image(bundlePath: appURL?.path, size: size)
     }
 
+    /// From this many players on, every place that offers them has a search.
+    static let searchThreshold = 8
+
+    /// Instead of the players when none matches the search.
+    static func noMatchNote(_ search: String) -> String {
+        String(localized: "No players match “\(search)”.",
+               comment: "Where music players are offered, when the search finds none; %@ is what was typed")
+    }
+
     /// Under a player that isn't installed, wherever players are offered.
     static var notInstalledLabel: String {
         String(localized: "Not installed", comment: "Under a music player that isn't on this Mac")
@@ -91,6 +100,23 @@ struct PlayerOption: Equatable, Identifiable {
 }
 
 extension [PlayerOption] {
+    /// How players are offered: the installed ones first, then the others,
+    /// each in the catalog's order.
+    var installedFirst: [PlayerOption] {
+        filter(\.isInstalled) + filter { !$0.isInstalled }
+    }
+
+    /// Long enough to need a search: `PlayerOption.searchThreshold` or more.
+    var isSearchable: Bool { count >= PlayerOption.searchThreshold }
+
+    /// The players whose names contain `search`, ignoring case and accents;
+    /// all of them while it's empty.
+    func matching(_ search: String) -> [PlayerOption] {
+        let search = search.trimmingCharacters(in: .whitespaces)
+        guard !search.isEmpty else { return self }
+        return filter { $0.name.localizedStandardContains(search) }
+    }
+
     /// No supported player is installed: none can be chosen.
     var noneInstalled: Bool { !contains(where: \.isInstalled) }
 

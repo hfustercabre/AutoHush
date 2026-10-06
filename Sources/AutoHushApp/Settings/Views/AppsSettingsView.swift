@@ -96,10 +96,10 @@ struct AppsSettingsView: View {
             if model.appSearch != nil {
                 // A closing field hands back its text as it loses focus:
                 // only an open search takes it.
-                AppSearchField(text: Binding(
+                SearchField(text: Binding(
                     get: { model.appSearch ?? "" },
                     set: { text in if model.appSearch != nil { model.appSearch = text } }
-                )) {
+                ), focusesOnAppear: true) {
                     model.appSearch = nil
                 }
                 .padding(.trailing, 10)
@@ -143,8 +143,8 @@ struct AppsSettingsView: View {
                 }
                 .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
                 .disabled(model.apps.isEmpty)
-                .help(Text("Search by name", comment: "Settings → Apps: the magnifier that opens the search"))
-                .accessibilityLabel(Text("Search by name", comment: "Settings → Apps: the magnifier that opens the search"))
+                .help(Text("Search by name", comment: "The magnifier that opens a search"))
+                .accessibilityLabel(Text("Search by name", comment: "The magnifier that opens a search"))
             }
         }
     }
@@ -186,40 +186,6 @@ struct AppsSettingsView: View {
               let source = ProcessAudioSourceIdentifier.source(forBundleAt: url)
         else { return }
         model.setPausesMusic(false, for: source)
-    }
-}
-
-/// The search in Settings → Apps, in the style of its chips: a magnifier, the
-/// text, and a button that closes it. It takes the keyboard focus as it
-/// opens.
-private struct AppSearchField: View {
-    @Binding var text: String
-    let close: () -> Void
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.appSecondary)
-                .accessibilityHidden(true)
-            TextField(text: $text) {
-                Text("Search", comment: "Settings → Apps: the search field's placeholder")
-            }
-            .textFieldStyle(.plain)
-            .focused($isFocused)
-            Button(action: close) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.appSecondary)
-            }
-            .buttonStyle(.plain)
-            .help(Text("Close Search", comment: "Settings → Apps: the button that closes the search"))
-            .accessibilityLabel(Text("Close Search", comment: "Settings → Apps: the button that closes the search"))
-        }
-        .font(.appCallout)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 7).fill(.chipFill))
-        .onAppear { isFocused = true }
     }
 }
 

@@ -134,7 +134,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - The music player
 
-    @Test("the player button unfolds the players under the card; one that isn't installed can't be chosen")
+    @Test("the player button unfolds the players under the card; one that isn't installed comes last and can't be chosen")
     func playerList() throws {
         let log = ActionLog()
         let sut = makeController(log)
@@ -142,8 +142,8 @@ struct StatusMenuControllerTests {
         var status = readyStatus()
         status.playerOptions = [
             PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
-            PlayerOption(bundleID: "com.example.second", name: "Second", appURL: URL(fileURLWithPath: "/Applications/Second.app")),
-            PlayerOption(bundleID: "com.example.third", name: "Third", appURL: nil),
+            PlayerOption(bundleID: "com.example.second", name: "Second", appURL: nil),
+            PlayerOption(bundleID: "com.example.third", name: "Third", appURL: URL(fileURLWithPath: "/Applications/Third.app")),
         ]
         status.chosenPlayerID = "com.example.first"
         sut.status = status
@@ -151,18 +151,55 @@ struct StatusMenuControllerTests {
 
         sut.perform(.togglePlayerList)
         #expect(sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(5) == ["card", "First", "Second", "Third", "snooze"])
+        #expect(rows(sut.menu).prefix(5) == ["card", "First", "Third", "Second", "snooze"])
         let players = Array(sut.menu.items[1...3])
         #expect(players.map(\.state) == [.on, .off, .off])
         #expect(players.map(\.isEnabled) == [true, true, false])
         #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
         #expect(players.allSatisfy { $0.image != nil })
         try perform(players[1])
-        #expect(log.calls == ["menuWillOpen", "player com.example.second"])
+        #expect(log.calls == ["menuWillOpen", "player com.example.third"])
 
         sut.perform(.togglePlayerList)
         #expect(!sut.model.isChoosingPlayer)
         #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+    }
+
+    @Test("from eight players on, a search comes first and narrows them down; fewer have none")
+    func playerSearch() {
+        let sut = makeController()
+        defer { sut.remove() }
+        let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Deezer", "Música"]
+        var status = readyStatus()
+        status.playerOptions = names.map {
+            PlayerOption(bundleID: "com.example.\($0)", name: $0, appURL: $0 == "Deezer" ? nil : URL(fileURLWithPath: "/Applications/\($0).app"))
+        }
+        sut.status = status
+        prepareToOpen(sut)
+
+        sut.perform(.togglePlayerList)
+        #expect(rows(sut.menu).prefix(10) == ["card", "playerSearch", "Spotify", "Apple Music", "VLC", "Apple Podcasts",
+                                              "TIDAL", "Qobuz", "Música", "Deezer"])
+        sut.perform(.searchPlayers("MUSI"))
+        #expect(sut.model.playerSearch == "MUSI")
+        #expect(rows(sut.menu).prefix(5) == ["card", "playerSearch", "Apple Music", "Música", "snooze"])
+        sut.perform(.searchPlayers("zz"))
+        #expect(rows(sut.menu).prefix(4) == ["card", "playerSearch", "No players match “zz”.", "snooze"])
+        #expect(sut.menu.items[2].isEnabled == false)
+        sut.perform(.searchPlayers(""))
+        #expect(rows(sut.menu).count(where: { names.contains($0) }) == 8)
+
+        sut.perform(.togglePlayerList) // folded: the search goes, and what was typed with it
+        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+        #expect(sut.model.playerSearch.isEmpty)
+        sut.perform(.searchPlayers("a")) // a closing field handing its text back changes nothing
+        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+
+        status.playerOptions.removeLast()
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        #expect(rows(sut.menu).prefix(2) == ["card", "Spotify"]) // seven: no search
     }
 
     @Test("the players are folded again each time the menu opens")

@@ -29,6 +29,30 @@ struct PlayerOptionTests {
         #expect([options[0]].noneInstalled)
     }
 
+    @Test("players are offered installed first, then the others, each in the catalog's order")
+    func installedFirst() {
+        let options = [option("A", installed: false), option("B", installed: true), option("C", installed: false),
+                       option("D", installed: true)]
+        #expect(options.installedFirst.map(\.name) == ["B", "D", "A", "C"])
+        #expect(options.filter(\.isInstalled).installedFirst.map(\.name) == ["B", "D"])
+    }
+
+    @Test("from eight players on, they can be searched by name, ignoring case and accents")
+    func search() {
+        let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Música"]
+        let seven = names.map { option($0, installed: true) }
+        #expect(!seven.isSearchable)
+        #expect((seven + [option("Deezer", installed: false)]).isSearchable)
+        #expect(PlayerOption.searchThreshold == 8)
+
+        #expect(seven.matching("").map(\.name) == names)
+        #expect(seven.matching("  ").map(\.name) == names)
+        #expect(seven.matching(" musi ").map(\.name) == ["Apple Music", "Música"])
+        #expect(seven.matching("APPLE P").map(\.name) == ["Apple Podcasts"])
+        #expect(seven.matching("zz").isEmpty)
+        #expect(PlayerOption.noMatchNote("zz") == "No players match “zz”.")
+    }
+
     private func option(_ name: String, installed: Bool) -> PlayerOption {
         PlayerOption(bundleID: "com.example.\(name.lowercased())", name: name,
                      appURL: installed ? URL(fileURLWithPath: "/Applications/\(name).app") : nil)

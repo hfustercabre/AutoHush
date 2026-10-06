@@ -13,6 +13,8 @@ enum StatusMenuCommand: Equatable, Sendable {
     case setIgnored(AudioSource, Bool)
     /// Unfolds or folds the music players under the card.
     case togglePlayerList
+    /// Shows only the unfolded players whose names match.
+    case searchPlayers(String)
     /// Tries starting again after a failed start.
     case retry
     case openSettings
@@ -34,6 +36,8 @@ final class StatusMenuModel {
     var listedSources: [AudioSource] = []
     /// Whether the music players are unfolded under the card.
     var isChoosingPlayer = false
+    /// What was typed in the search over the unfolded players.
+    var playerSearch = ""
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
 
     init(status: AppStatus) {
