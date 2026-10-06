@@ -50,17 +50,25 @@ extension ScriptablePlayer {
         makeGetPropertyEvent(Code.soundVolumeProperty, processIdentifier: pid)
     }
 
-    /// `set sound volume to <volume>` — a `core/setd` event.
+    /// `set sound volume to <volume>`.
     package static func makeSetVolumeEvent(_ volume: Int, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = coreEvent(Code.setData, processIdentifier: pid)
-        event.setParam(propertySpecifier(Code.soundVolumeProperty), forKeyword: Code.directObject)
-        event.setParam(NSAppleEventDescriptor(int32: Int32(volume)), forKeyword: Code.setDataValue)
+        makeSetPropertyEvent(Code.soundVolumeProperty, to: volume, processIdentifier: pid)
+    }
+
+    /// `get <property>` of the application — a `core/getd` event.
+    package static func makeGetPropertyEvent(_ property: DescType, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        let event = coreEvent(Code.getData, processIdentifier: pid)
+        event.setParam(propertySpecifier(property), forKeyword: Code.directObject)
         return event
     }
 
-    private static func makeGetPropertyEvent(_ property: DescType, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = coreEvent(Code.getData, processIdentifier: pid)
+    /// `set <property> to <value>` of the application — a `core/setd` event.
+    package static func makeSetPropertyEvent(
+        _ property: DescType, to value: Int, processIdentifier pid: pid_t
+    ) -> NSAppleEventDescriptor {
+        let event = coreEvent(Code.setData, processIdentifier: pid)
         event.setParam(propertySpecifier(property), forKeyword: Code.directObject)
+        event.setParam(NSAppleEventDescriptor(int32: Int32(value)), forKeyword: Code.setDataValue)
         return event
     }
 
@@ -152,23 +160,27 @@ extension ScriptablePlayer {
     }
 }
 
-/// The parts of an Apple event reply ScriptablePlayer reads, extracted on
-/// the event queue so they can cross into the actor.
+/// The parts of an Apple event reply the players read, extracted on the
+/// event queue so they can cross into the actors.
 package struct PlayerReply: Sendable, Equatable {
     /// Enum or type code of the reply's direct object (`----`), if any.
     package let directObjectCode: OSType?
     /// The direct object as a number, if it is one (e.g. the volume).
     package let directObjectInteger: Int?
+    /// The direct object as a truth value, if it is one (e.g. VLC's `playing`).
+    package let directObjectBoolean: Bool?
 
-    package init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil) {
+    package init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil, directObjectBoolean: Bool? = nil) {
         self.directObjectCode = directObjectCode
         self.directObjectInteger = directObjectInteger
+        self.directObjectBoolean = directObjectBoolean
     }
 
     package init(_ reply: NSAppleEventDescriptor) {
         guard let direct = reply.paramDescriptor(forKeyword: ScriptablePlayer.Code.directObject) else {
             directObjectCode = nil
             directObjectInteger = nil
+            directObjectBoolean = nil
             return
         }
         switch direct.descriptorType {
@@ -176,7 +188,11 @@ package struct PlayerReply: Sendable, Equatable {
         case typeType: directObjectCode = direct.typeCodeValue
         default: directObjectCode = nil
         }
-        directObjectInteger = direct.coerce(toDescriptorType: typeSInt32).map { Int($0.int32Value) }
+        switch direct.descriptorType {
+        case typeTrue, typeFalse, typeBoolean: directObjectBoolean = direct.booleanValue
+        default: directObjectBoolean = nil
+        }
+        directObjectInteger = directObjectBoolean == nil ? direct.coerce(toDescriptorType: typeSInt32).map { Int($0.int32Value) } : nil
     }
 }
 

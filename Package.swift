@@ -35,9 +35,13 @@ let package = Package(
         .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
         .target(
             name: "AutoHushPlayers",
-            dependencies: ["AutoHushKit", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "TidalSupport"]
+            dependencies: [
+                "AutoHushKit", "ScriptablePlayers", "MenuPlayers",
+                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport",
+            ]
         ),
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
+        .target(name: "MenuPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/MenuPlayers"),
         .target(
             name: "SpotifySupport",
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
@@ -48,7 +52,17 @@ let package = Package(
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
             path: "Sources/PlayersSupport/AppleMusicSupport"
         ),
-        .target(name: "TidalSupport", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/TidalSupport"),
+        .target(name: "TidalSupport", dependencies: ["AutoHushKit", "MenuPlayers"], path: "Sources/PlayersSupport/TidalSupport"),
+        .target(
+            name: "PodcastsSupport",
+            dependencies: ["AutoHushKit", "MenuPlayers"],
+            path: "Sources/PlayersSupport/PodcastsSupport"
+        ),
+        .target(
+            name: "VLCSupport",
+            dependencies: ["AutoHushKit", "ScriptablePlayers"],
+            path: "Sources/PlayersSupport/VLCSupport"
+        ),
         .target(name: "AutoHushKit"),
 
         // Measures a player's volume curve with the engine's own meter. A
@@ -78,9 +92,24 @@ let package = Package(
             path: "Tests/PlayersSupport/AppleMusicSupportTests"
         ),
         .testTarget(
+            name: "MenuPlayersTests",
+            dependencies: ["MenuPlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/MenuPlayersTests"
+        ),
+        .testTarget(
             name: "TidalSupportTests",
-            dependencies: ["TidalSupport", "AutoHushKit"],
+            dependencies: ["TidalSupport", "MenuPlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/TidalSupportTests"
+        ),
+        .testTarget(
+            name: "PodcastsSupportTests",
+            dependencies: ["PodcastsSupport", "MenuPlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/PodcastsSupportTests"
+        ),
+        .testTarget(
+            name: "VLCSupportTests",
+            dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/VLCSupportTests"
         ),
         .testTarget(
             name: "AutoHushAppTests",
@@ -88,7 +117,10 @@ let package = Package(
         ),
         .testTarget(
             name: "AutoHushPlayersTests",
-            dependencies: ["AutoHushPlayers", "ScriptablePlayers", "SpotifySupport", "AppleMusicSupport", "TidalSupport", "AutoHushKit"]
+            dependencies: [
+                "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers",
+                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "AutoHushKit",
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]

@@ -5,6 +5,26 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Apple Podcasts and VLC** can be your music player, besides Spotify,
+  Apple Music and TIDAL.
+  - **Apple Podcasts** is controlled like TIDAL: AutoHush presses Play/Pause
+    in its Controls menu, which needs the Accessibility permission, and it
+    pauses and resumes without fading.
+  - **VLC** is scripted like Spotify and Apple Music (macOS asks once for
+    permission to control it), and fades.
+  - Both are watched about once a second, since neither announces when you
+    play or pause it.
+
+### Changed
+
+- The code shared by TIDAL and Apple Podcasts lives in `MenuPlayers`, and
+  players that announce nothing share one observer. TIDAL works as before;
+  it notices being quit at its next check, within a second.
+
 ## [0.6.3] — 2026-10-06
 
 ### Fixed

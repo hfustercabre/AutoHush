@@ -30,7 +30,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
 - 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
 
-**Works with Spotify, Apple Music and TIDAL**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music, is planned.
+**Works with Spotify, Apple Music, TIDAL, Apple Podcasts and VLC**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music, is planned.
 
 ## Thanks to Background Music
 
@@ -58,7 +58,7 @@ Yes, this whole app exists because of a yellow dot.
 
 ## Install
 
-You need **macOS 15 or later** and one of the supported players: **Spotify** or **TIDAL** (their desktop apps), or **Apple Music** (the Music app that comes with macOS).
+You need **macOS 15 or later** and one of the supported players: **Spotify**, **TIDAL** or **VLC** (their desktop apps), or **Apple Music** or **Apple Podcasts** (the Music and Podcasts apps that come with macOS).
 
 AutoHush is free and isn't sold through Apple. It's signed, but not *notarized* by Apple, because notarization needs a paid developer account. All that means for you is one extra confirmation the first time you open it, and Homebrew handles even that.
 
@@ -100,7 +100,7 @@ AutoHush lives in the menu bar; it has no Dock icon. The first time it opens, it
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/welcome-dark.png">
-    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, Apple Music, and TIDAL dimmed as not installed, above a Continue button" width="420">
+    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, Apple Music, TIDAL dimmed as not installed, Apple Podcasts and VLC, above a Continue button" width="420">
   </picture>
 </p>
 
@@ -108,8 +108,8 @@ macOS then asks for these permissions:
 
 | Permission | What it's for | Needed? |
 |---|---|---|
-| **Control your music player** (Automation) | Pausing and resuming Spotify or Apple Music. macOS asks for each player the first time you choose it | Yes, for Spotify and Apple Music |
-| **Accessibility** | Pausing and resuming TIDAL, which can't be scripted: AutoHush presses Play/Pause in its Playback menu, and nothing else | Only with TIDAL |
+| **Control your music player** (Automation) | Pausing and resuming Spotify, Apple Music or VLC. macOS asks for each player the first time you choose it | Yes, for Spotify, Apple Music and VLC |
+| **Accessibility** | Pausing and resuming TIDAL and Apple Podcasts, which can't be scripted: AutoHush presses Play/Pause in their Playback or Controls menu, and nothing else | Only with TIDAL and Apple Podcasts |
 | **Record system audio** (Screen & System Audio Recording) | Telling an app that's *playing* from one that just has its sound switched on but is silent | Recommended; not used in AntiDot mode |
 | **Notifications** | Telling you about updates | Optional |
 
@@ -196,7 +196,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - **Your music doesn't come back after VLC.** VLC has its own setting that pauses Spotify and Apple Music, and AutoHush only resumes music that it paused. Set **VLC → Settings → Interface → Control external music players** to **Do nothing**, and let AutoHush do the job.
 - **I paused my music myself and it stayed paused.** That's on purpose: AutoHush only resumes music that *it* paused.
 - **Switched players?** Music that AutoHush was holding paused in the previous player stays paused. From then on, that player counts like any other app.
-- **TIDAL pauses without fading.** AutoHush can't read or set TIDAL's volume, so it pauses and resumes it straight away. It notices when you pause or play TIDAL yourself within about a second. If a TIDAL update changes its Playback menu, AutoHush may not be able to control it until AutoHush is updated too.
+- **TIDAL and Apple Podcasts pause without fading.** AutoHush can't read or set their volume, so it pauses and resumes them straight away. It notices when you pause or play them yourself (and VLC) within about a second. If an update changes their Playback or Controls menu, AutoHush may not be able to control them until AutoHush is updated too.
 - **Only one AutoHush runs at a time.** Opening another copy (a newer version, a second install) quits the one that's running, and takes over any pause it was holding. Delete the copies you don't use.
 - **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps) and that auto-pause is on.
 - **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Grant the audio permission, or in AntiDot mode close the app or tab.
@@ -209,7 +209,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away. In AntiDot mode it doesn't look at any sound at all.
 - It only goes online to check GitHub for a new version once a day, and to download that version from GitHub. You can turn off both (see [Updates](#updates)). Neither leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
 - Its only notifications are about updates.
-- It controls only the music player you chose: Spotify and Apple Music through the standard macOS automation mechanism, TIDAL by pressing Play/Pause in its Playback menu.
+- It controls only the music player you chose: Spotify, Apple Music and VLC through the standard macOS automation mechanism, TIDAL and Apple Podcasts by pressing Play/Pause in their Playback or Controls menu.
 
 ## Updates
 
@@ -269,8 +269,8 @@ AutoHush is free. If it saves your ears a few times a day and you'd like to say 
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) are ignored. The names of each app's assertions are remembered across launches. An app that uses one name for both a display-sleep and a system-sleep assertion announces only video: WebKit (Safari) keeps the display awake while a video with sound is visible, and the system while it's hidden, but announces nothing for sound without video. Its display assertion then counts too, and it counts as paused only after dropping its assertion while its output stayed open, for at most 10 s (WebKit closes its output 7.5 s after a pause), so its sound without video is still judged by its open output. An app with no display-sleep assertion, so showing no video, must play for 3 s instead of 0.5 s, because Chromium keeps its "Playing audio" assertion for about 2.5 s after even a short sound.
 3. **Filtering.** System sounds are played by `systemsoundserverd`, which is excluded outright. An app must be audible for 0.5 s to count as playing (this filters out chat tones) and silent for 2 s to count as stopped (this bridges gaps between tracks).
 4. **Deciding.** `PlaybackArbiter` pauses the chosen player when the first app starts, and resumes it as soon as the last one stops, but only if it paused the player itself and the player is still paused. Pauses and resumes run on their own, so new events are handled even while the music fades.
-5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: it falls at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (a cube law for Spotify, linear for Apple Music, both measured). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower: if the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. Players without a readable volume pause and play directly.
-6. **The players.** Spotify and Apple Music are both scripted with Apple events (`ScriptablePlayers`). Their state arrives as a distributed notification (`com.spotify.client.PlaybackStateChanged`, `com.apple.Music.playerInfo`) and is confirmed with an Apple event right before each pause or resume. Music posts each change twice, the old state first, so a notification that would end AutoHush's pause is checked with the player first. A player plays "on this Mac" only when its own process, or one of its helpers, has output running; otherwise it's on another device (Spotify Connect) and is left alone. TIDAL can't be scripted (`TidalSupport`): AutoHush presses the first item of its Playback menu through Accessibility, found by its ⌘← and ⌘→ items since its title is translated, and only from the opposite state. It reads TIDAL's state from that item's title, comparing it with the running TIDAL's own translations of Play and Pause, about once a second, since TIDAL announces nothing.
+5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: it falls at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (a cube law for Spotify, linear for Apple Music, both measured; a cube law for VLC, from its source). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower: if the other app stops during the fade-out, the music comes back up without pausing; if you pause the player yourself, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. Players without a readable volume pause and play directly.
+6. **The players.** Spotify and Apple Music are both scripted with Apple events (`ScriptablePlayers`). Their state arrives as a distributed notification (`com.spotify.client.PlaybackStateChanged`, `com.apple.Music.playerInfo`) and is confirmed with an Apple event right before each pause or resume. Music posts each change twice, the old state first, so a notification that would end AutoHush's pause is checked with the player first. A player plays "on this Mac" only when its own process, or one of its helpers, has output running; otherwise it's on another device (Spotify Connect) and is left alone. VLC is scripted too (`VLCSupport`), with its own vocabulary: `play` toggles, so it's only sent from the opposite state; `playing` and `current time` (−1 without an item) tell playing, paused and stopped apart; and its `audio volume` goes from 0 to 512. TIDAL and Apple Podcasts can't be scripted (`MenuPlayers`): AutoHush presses the first item of their playback menu (TIDAL's Playback, Podcasts' Controls) through Accessibility, found by its ⌘← and ⌘→ items since its title is translated, and only from the opposite state. It reads the state from that item's title, comparing it with the running app's own translations of Play and Pause (TIDAL's `app.asar`, Podcasts' `Localizable.loctable`). VLC, TIDAL and Podcasts announce nothing, so their state is read about once a second (`PolledStateObserver`).
 
 **The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and the player playing here or paused by us), with a 2 s release delay. The player itself is never tapped, except to prove the permission works when TCC can't be read.
 
@@ -305,8 +305,10 @@ AutoHush is a Swift package of several modules, so the compiler keeps the layers
 AutoHush (executable: the entry point only)
   └─ AutoHushApp            the app: menu bar, Settings, updates, diagnostics, wiring
        ├─ AutoHushPlayers   the supported music players
-       │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport   one <App>Support module per player
-       │    └─ ScriptablePlayers   shared by the players scripted with Apple events
+       │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport, PodcastsSupport, VLCSupport
+       │    │                   one <App>Support module per player
+       │    ├─ ScriptablePlayers   shared by the players scripted with Apple events
+       │    └─ MenuPlayers         shared by the players controlled through their playback menu
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 ```
@@ -331,6 +333,7 @@ Sources/
                          ActiveAudioReport (what Diagnostics shows), CoreAudio/ (process list, taps, levels)
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (the setting and snoozes)
     MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
+                         PolledStateObserver (for players that announce nothing),
                          PlayerIconPlaceholder (a player's icon while it isn't installed)
     Permissions/         what's needed and where to grant it
     PrivateAPI/          TCC, ProcessResponsibility: undocumented macOS functions, resolved at runtime
@@ -338,8 +341,9 @@ Sources/
     Configuration/       AppConfiguration, TimingSettings, AutomaticUpdates
     Storage/, General/   Preferences; logging and small helpers
   AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
-  PlayersSupport/        ScriptablePlayers (shared), SpotifySupport, AppleMusicSupport and TidalSupport:
-                         each player's profile or controller, and its placeholder icon
+  PlayersSupport/        ScriptablePlayers and MenuPlayers (shared), SpotifySupport, AppleMusicSupport,
+                         TidalSupport, PodcastsSupport and VLCSupport: each player's profile or controller,
+                         and its placeholder icon
 Tests/                   a test module per module, mirroring its folders (only the player modules' tests
                          name a player), plus AutoHushTestSupport (shared fakes)
 Tools/MeasureVolumeCurve/   the volume-curve measuring tool (never part of the app)
@@ -351,7 +355,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 
 - **`AutoHushKit`** has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
 - **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide `AppStatus`. Features may use the engine and `General/`, not each other.
-- **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`.
+- **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one music app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
 - **Text people read** lives in the app, never in the engine: mostly in `Main/StatusPresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
 - **`General/`** folders stay small: only helpers several parts of a module need.
@@ -359,7 +363,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 
 **Adding a music player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
-1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. Otherwise it's a type implementing `MusicPlayer`, as `TidalPlayer` does;
+1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. If it can't be scripted but has a playback menu with Play/Pause first and ⌘← and ⌘→ items, as TIDAL and Podcasts do, it's a `MenuPlayerProfile`: its bundle ID, name, menu name and how to read its own words for Play and Pause from its bundle. Otherwise it's a type implementing `MusicPlayer`, as `VLCPlayer` does;
 2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;
 3. its placeholder icon, a `PlayerIconPlaceholder` in its module (as `SpotifyIcon.swift`): its tile's colors and its mark drawn as a path on a 1000-point tile, shown while the app isn't installed. The catalog's tests check that every player has one;
 4. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.

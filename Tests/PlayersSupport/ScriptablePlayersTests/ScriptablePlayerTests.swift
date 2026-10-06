@@ -76,6 +76,22 @@ struct ScriptablePlayerTests {
         #expect(ScriptablePlayer.volume(fromReply: answer, reading: { $0 + 1 }) == volume)
     }
 
+    @Test("a truth value in the reply is read as one, not as a number")
+    func booleanReply() {
+        #expect(PlayerReply(reply(directObject: NSAppleEventDescriptor(boolean: true))).directObjectBoolean == true)
+        let no = PlayerReply(reply(directObject: NSAppleEventDescriptor(boolean: false)))
+        #expect(no.directObjectBoolean == false && no.directObjectInteger == nil)
+        #expect(PlayerReply(reply(directObject: NSAppleEventDescriptor(int32: 1))).directObjectBoolean == nil)
+    }
+
+    @Test("any property of the application can be set to a number")
+    func setPropertyEvent() {
+        let set = ScriptablePlayer.makeSetPropertyEvent(fourCharCode("AAAV"), to: 300, processIdentifier: pid)
+        #expect(set.eventClass == fourCharCode("core") && set.eventID == fourCharCode("setd"))
+        #expect(set.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("AAAV"))
+        #expect(set.paramDescriptor(forKeyword: fourCharCode("data"))?.int32Value == 300)
+    }
+
     @Test("a reply without a number has no volume")
     func volumeMissing() {
         #expect(ScriptablePlayer.volume(fromReply: PlayerReply(reply()), reading: { $0 }) == nil)

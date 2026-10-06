@@ -1,10 +1,10 @@
 import AppKit
 import ApplicationServices
 
-/// The Play/Pause item of TIDAL's Playback menu: "Pause" while it plays,
-/// "Play" while it's paused, in TIDAL's language. Disabled while nobody is
-/// logged in.
-package struct TidalToggle: Equatable, Sendable {
+/// The Play/Pause item of an app's playback menu: "Pause" while it plays,
+/// "Play" while it's paused, in the app's language. Disabled while there's
+/// nothing to play (TIDAL: nobody logged in).
+package struct MenuToggle: Equatable, Sendable {
     package let title: String
     package let isEnabled: Bool
 
@@ -14,23 +14,28 @@ package struct TidalToggle: Equatable, Sendable {
     }
 }
 
-/// TIDAL's Playback menu, read and pressed through Accessibility. TIDAL can't
-/// be scripted, and this is the only way to control it, not whichever app
-/// macOS considers "now playing". Calls block: `TidalPlayer` makes them on a
-/// queue of its own. A protocol, so tests can stand in for it.
-package protocol TidalMenu: Sendable {
+/// An app's playback menu, read and pressed through Accessibility: for apps
+/// that can't be scripted, this is the only way to control that app, not
+/// whichever app macOS considers "now playing". Calls block: `MenuPlayer`
+/// makes them on a queue of its own. A protocol, so tests can stand in for it.
+package protocol PlaybackMenu: Sendable {
     /// Whether AutoHush may use Accessibility; `prompt` shows macOS's request.
     func isTrusted(prompt: Bool) -> Bool
-    /// The Play/Pause item of TIDAL running as `pid`; `nil` when the menu
+    /// The Play/Pause item of the app running as `pid`; `nil` when the menu
     /// can't be found.
-    func toggle(pid: pid_t) -> TidalToggle?
+    func toggle(pid: pid_t) -> MenuToggle?
     /// Presses it; `false` when that wasn't possible.
     func pressToggle(pid: pid_t) -> Bool
 }
 
 /// The real menu, through the Accessibility API.
-package struct AccessibilityTidalMenu: TidalMenu {
-    /// How long to wait for TIDAL to answer, so a stuck TIDAL can't hold
+///
+/// The menu's title is translated, so it's found by its shortcuts instead:
+/// it's the menu whose items include ⌘← and ⌘→ (Previous and Next), and its
+/// first item is Play or Pause. Measured: TIDAL's Playback menu and Apple
+/// Podcasts' Controls menu.
+package struct AccessibilityPlaybackMenu: PlaybackMenu {
+    /// How long to wait for the app to answer, so a stuck app can't hold
     /// AutoHush up.
     package static let timeout: Float = 0.5
 
@@ -40,9 +45,9 @@ package struct AccessibilityTidalMenu: TidalMenu {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": prompt] as CFDictionary)
     }
 
-    package func toggle(pid: pid_t) -> TidalToggle? {
+    package func toggle(pid: pid_t) -> MenuToggle? {
         guard let item = toggleItem(pid: pid) else { return nil }
-        return TidalToggle(
+        return MenuToggle(
             title: Self.value(of: kAXTitleAttribute, in: item) as? String ?? "",
             isEnabled: Self.value(of: kAXEnabledAttribute, in: item) as? Bool ?? false
         )
@@ -53,10 +58,8 @@ package struct AccessibilityTidalMenu: TidalMenu {
         return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
     }
 
-    /// TIDAL rebuilds its whole menu bar whenever the state changes, so it's
-    /// looked up afresh every time. The Playback menu's title is translated:
-    /// it's the menu whose Previous and Next items are ⌘← and ⌘→. Its first
-    /// item is Play or Pause.
+    /// Looked up afresh every time: TIDAL rebuilds its whole menu bar
+    /// whenever its state changes.
     private func toggleItem(pid: pid_t) -> AXUIElement? {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, Self.timeout)

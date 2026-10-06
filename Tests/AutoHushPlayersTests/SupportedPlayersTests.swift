@@ -5,17 +5,21 @@ import AutoHushPlayers
 import ScriptablePlayers
 import SpotifySupport
 import AppleMusicSupport
-import TidalSupport
+import MenuPlayers
+import VLCSupport
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
-    @Test("Spotify, Apple Music and TIDAL are offered, in that order")
+    @Test("Spotify, Apple Music, TIDAL, Apple Podcasts and VLC are offered, in that order")
     func players() {
         let catalog = SupportedPlayers.catalog
-        #expect(catalog.players.map(\.bundleID) == ["com.spotify.client", "com.apple.Music", "com.tidal.desktop"])
-        #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "TIDAL"])
+        #expect(catalog.players.map(\.bundleID)
+            == ["com.spotify.client", "com.apple.Music", "com.tidal.desktop", "com.apple.podcasts", "org.videolan.vlc"])
+        #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "TIDAL", "Apple Podcasts", "VLC"])
         #expect(catalog.player(bundleID: "com.apple.Music") is ScriptablePlayer)
-        #expect(catalog.player(bundleID: "com.tidal.desktop") is TidalPlayer)
+        #expect(catalog.player(bundleID: "com.tidal.desktop") is MenuPlayer)
+        #expect(catalog.player(bundleID: "com.apple.podcasts") is MenuPlayer)
+        #expect(catalog.player(bundleID: "org.videolan.vlc") is VLCPlayer)
         #expect(catalog.player(bundleID: "com.example.unknown") == nil)
     }
 
