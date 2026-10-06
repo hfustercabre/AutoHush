@@ -187,25 +187,33 @@ where they appear:
 
 ## Translations
 
-AutoHush is translated into 20 languages besides English. The README's
+AutoHush is translated into 34 languages besides English. The README's
 [Translations](README.md#translations) section explains how; for style:
 
 - **Every change translates every language.** A new or changed English
-  string is translated into all 20 before the change is done.
+  string is translated into all 34 before the change is done.
 - **The comment says where.** Every string has a comment that says where it
   appears and what each placeholder holds.
 - **A changed English string is a new key.** Carry its translations over,
   update them, and delete the old key.
+- **Keep the menu card short.** The label under its switch shows whole and
+  takes room from the status line beside it. So the feature's name stays
+  short ("Autopauza", "Autopause"), and a status line fits in three lines
+  ("Allow Automation access for Spotify" rather than a full sentence).
 - **Use macOS's own words** for its concepts in each language (Ajustes,
   Einstellungen, Réglages…), and the capitalization rules above as each
   language applies them.
   - Brazilian Portuguese, Turkish and Indonesian use title case on buttons
-    and menu items.
-  - Russian and Vietnamese use sentence case everywhere.
+    and menu items; the other languages use sentence case everywhere.
   - German capitalizes its nouns everywhere.
+  - Buttons follow each language's Apple style: imperatives in most
+    languages ("Sta toe", "Tillåt"), infinitives in Czech, Slovak and
+    Ukrainian ("Povolit"), nouns in Hungarian and Greek ("Kilépés",
+    "Αναζήτηση"), the formal imperative in Romanian ("Permiteți").
 - **Plurals:** a string with a count has plural forms in the catalog where
-  the language needs them: Russian (one, few, many) and Arabic (two, few,
-  many, other).
+  the language needs them: Russian, Ukrainian, Polish, Czech, Slovak,
+  Croatian and Romanian (one, few, many or other), Slovenian (also two) and
+  Arabic (two, few, many, other).
 - **Typography:**
   - French puts a no-break space before `: ; ? !` and inside « »; Canadian
     French doesn't before `; ? !`.
@@ -216,8 +224,11 @@ AutoHush is translated into 20 languages besides English. The README's
     a placeholder.
   - Russian uses « » quotes.
   - Arabic uses its own comma, question mark and semicolon (، ؟ ؛) and « ».
-  - Turkish never attaches a suffix to a placeholder, since the suffix's
-    vowels depend on the name it follows.
+  - Slovenian puts a space before "…".
+  - Languages that inflect names never attach an ending to a placeholder:
+    a noun in the right case goes before it ("aplikace %@", "appia %@"), or
+    an ending that never changes ("%@-ig" in Hungarian). Hungarian writes
+    "a(z)" before a name.
 
 ## Right to left
 

@@ -17,10 +17,28 @@
             "value" : "L'AutoHush posa en pausa i reprèn el teu reproductor de música."
           }
         },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastavuje a obnovuje váš hudební přehrávač."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush sætter din musikafspiller på pause og genoptager den."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush pausiert deinen Musikplayer und setzt die Wiedergabe fort."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush θέτει σε παύση και συνεχίζει την εφαρμογή μουσικής σας."
           }
         },
         "en" : {
@@ -41,6 +59,12 @@
             "value" : "AutoHush pausa y reanuda tu reproductor de música."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush keskeyttää musiikkisoittimesi ja jatkaa sen toistoa."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57,6 +81,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush आपके म्यूज़िक प्लेयर को पॉज़ करता है और फिर से शुरू करता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzira i nastavlja vaš glazbeni reproduktor."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush szünetelteti és folytatja a zenelejátszóját."
           }
         },
         "id" : {
@@ -83,6 +119,24 @@
             "value" : "AutoHush가 음악 플레이어를 일시 정지하고 다시 재생합니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush setter musikkspilleren din på pause og gjenopptar den."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzeert en hervat je muziekspeler."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush wstrzymuje i wznawia Twój odtwarzacz muzyki."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95,16 +149,46 @@
             "value" : "O AutoHush pausa e retoma o seu leitor de música."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pune pe pauză și reia playerul dvs. de muzică."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush ставит ваш музыкальный плеер на паузу и возобновляет воспроизведение."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastavuje a obnovuje váš hudobný prehrávač."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush zaustavi in nadaljuje vaš glasbeni predvajalnik."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausar och återupptar din musikspelare."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush müzik oynatıcınızı duraklatır ve sürdürür."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush призупиняє й відновлює ваш музичний програвач."
           }
         },
         "vi" : {
@@ -149,10 +233,28 @@
             "value" : "L'AutoHush mesura el volum de les altres apps per posar la música en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
           }
         },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush měří, jak hlasitě hrají jiné aplikace, aby vaši hudbu pozastavil jen při slyšitelném zvuku. Zvuk se nikdy nenahrává, neukládá ani nikam neposílá."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush måler, hvor høje andre apps er, så den kun sætter din musik på pause ved hørbar lyd. Lyd bliver aldrig optaget, gemt eller sendt nogen steder hen."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush misst, wie laut andere Apps sind, damit deine Musik nur bei hörbarem Ton pausiert. Audio wird nie aufgenommen, gespeichert oder irgendwohin gesendet."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush μετρά πόσο δυνατά ακούγονται άλλες εφαρμογές, ώστε να θέτει τη μουσική σας σε παύση μόνο όταν ακούγεται ήχος. Ο ήχος δεν εγγράφεται, δεν αποθηκεύεται και δεν αποστέλλεται ποτέ πουθενά."
           }
         },
         "en" : {
@@ -173,6 +275,12 @@
             "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ninguna parte."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mittaa, kuinka kovaa muut apit soivat, jotta se keskeyttää musiikkisi vain kuuluvan äänen ajaksi. Ääntä ei koskaan tallenneta, säilytetä eikä lähetetä minnekään."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -189,6 +297,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush मापता है कि दूसरे ऐप्स कितनी तेज़ आवाज़ में हैं, ताकि वह आपका संगीत सिर्फ़ सुनाई देने वाली आवाज़ पर ही पॉज़ करे। ऑडियो कभी रिकॉर्ड, संग्रहीत या कहीं भेजा नहीं जाता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mjeri koliko su glasne druge aplikacije, kako bi vašu glazbu pauzirao samo kad se zvuk čuje. Zvuk se nikad ne snima, ne pohranjuje i nikamo ne šalje."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush méri, milyen hangosak más appok, hogy csak hallható hang esetén szüneteltesse a zenéjét. A hang soha nem kerül rögzítésre, tárolásra vagy továbbításra."
           }
         },
         "id" : {
@@ -215,6 +335,24 @@
             "value" : "AutoHush는 다른 앱의 소리 크기를 측정하여 실제로 소리가 들릴 때만 음악을 일시 정지합니다. 오디오는 녹음되거나 저장되거나 어디로도 전송되지 않습니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush måler hvor høye andre apper er, slik at den bare setter musikken din på pause ved hørbar lyd. Lyd blir aldri tatt opp, lagret eller sendt noe sted."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush meet hoe luid andere apps zijn, zodat het je muziek alleen pauzeert bij hoorbaar geluid. Audio wordt nooit opgenomen, bewaard of ergens naartoe gestuurd."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mierzy głośność innych aplikacji, aby wstrzymywać muzykę tylko przy słyszalnym dźwięku. Dźwięk nigdy nie jest nagrywany, przechowywany ani nigdzie wysyłany."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
@@ -227,16 +365,46 @@
             "value" : "O AutoHush mede o volume das outras apps para só pausar a sua música quando há som audível. O áudio nunca é gravado, guardado nem enviado para lado nenhum."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush măsoară cât de tare sunt alte aplicații, ca să vă pună muzica pe pauză doar la un sunet audibil. Sunetul nu este niciodată înregistrat, stocat sau trimis nicăieri."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush измеряет громкость других приложений, чтобы ставить музыку на паузу только при слышимом звуке. Звук никогда не записывается, не сохраняется и никуда не отправляется."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush meria, ako nahlas hrajú iné apky, aby vašu hudbu pozastavil len pri počuteľnom zvuku. Zvuk sa nikdy nenahráva, neukladá ani nikam neposiela."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush meri, kako glasne so druge aplikacije, da vašo glasbo zaustavi samo ob slišnem zvoku. Zvok se nikoli ne snema, shranjuje ali kam pošilja."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mäter hur höga andra appar är, så att den bara pausar din musik vid hörbart ljud. Ljud spelas aldrig in, sparas eller skickas någonstans."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush, müziğinizi yalnızca duyulabilir bir ses olduğunda duraklatmak için diğer uygulamaların ses yüksekliğini ölçer. Ses hiçbir zaman kaydedilmez, saklanmaz veya bir yere gönderilmez."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush вимірює, наскільки гучні інші програми, щоб призупиняти вашу музику лише за чутного звуку. Звук ніколи не записується, не зберігається й нікуди не надсилається."
           }
         },
         "vi" : {
@@ -281,10 +449,28 @@
             "value" : "Copyright © 2026 hfc. Llicència MIT."
           }
         },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licence MIT."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-licens."
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. MIT-Lizenz."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Άδεια MIT."
           }
         },
         "en" : {
@@ -305,6 +491,12 @@
             "value" : "Copyright © 2026 hfc. Licencia MIT."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-lisenssi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +513,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "कॉपीराइट © 2026 hfc. MIT लाइसेंस।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT licenca."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-licenc."
           }
         },
         "id" : {
@@ -347,6 +551,24 @@
             "value" : "Copyright © 2026 hfc. MIT 라이선스."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-lisens."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-licentie."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licencja MIT."
+          }
+        },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
@@ -359,16 +581,46 @@
             "value" : "Copyright © 2026 hfc. Licença MIT."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licență MIT."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 hfc. Лицензия MIT."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licencia MIT."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Licenca MIT."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. MIT-licens."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Telif Hakkı © 2026 hfc. MIT Lisansı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 hfc. Ліцензія MIT."
           }
         },
         "vi" : {

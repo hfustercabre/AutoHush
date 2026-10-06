@@ -31,6 +31,7 @@ struct StatusCardView: View {
                     Text("Auto-Pause", comment: "Under the switch at the top of the menu that turns auto-pause on and off")
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
+                        .fixedSize() // whole, in every language: the status line wraps instead
                         .accessibilityHidden(true)
                 }
             }
