@@ -46,9 +46,9 @@ struct StatusPresentationTests {
         (.needsPlayer("Choose a music player"), .attention, "AutoHush: no music player chosen", "Choose a music player"),
         (.degraded("Jukebox is not running"), .attention, "AutoHush: degraded", "Jukebox is not running"),
         (.needsPermission(.automation(player: "Jukebox")), .attention,
-         "AutoHush: needs permission", "Grant Automation access to control Jukebox"),
+         "AutoHush: needs permission", "Allow Automation access to control Jukebox"),
         (.needsPermission(.accessibility(player: "Jukebox")), .attention,
-         "AutoHush: needs permission", "Grant Accessibility access to control Jukebox"),
+         "AutoHush: needs permission", "Allow Accessibility access to control Jukebox"),
         (.failed("Monitor failed hard"), .attention, "AutoHush: failed", "Monitor failed hard"),
     ])
     func healthState(state: AppHealthState, icon: MenuBarIcon, label: String, line: String) {

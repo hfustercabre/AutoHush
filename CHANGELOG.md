@@ -30,6 +30,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **A more consistent look and wording.** The "Sort by" pop-up looks like
+  the music player's. Settings → Apps and Diagnostics share one bar at the
+  bottom, with a line above it only while the list scrolls under it. A
+  failure to change the login item shows as a warning, like the other
+  warnings, not in red. Auto-Pause is spelled the same everywhere, the card
+  asks to "Allow" access as the menu item under it does, "Playing Now" is a
+  heading like the others, and tooltips read in sentence case.
 - **The music players are offered the most used first**: Spotify, Apple
   Music, VLC, Apple Podcasts, then TIDAL. Those that aren't on your Mac come
   last, in the menu, Settings and the welcome window.

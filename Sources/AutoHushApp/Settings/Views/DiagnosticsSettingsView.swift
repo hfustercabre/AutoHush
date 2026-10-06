@@ -30,7 +30,6 @@ struct DiagnosticsSettingsView: View {
                 .padding(16)
             }
             .frame(height: 560)
-            Divider()
             footer
         }
         .frame(width: 480)
@@ -45,7 +44,7 @@ struct DiagnosticsSettingsView: View {
             HStack(spacing: 12) {
                 Group {
                     switch overview.kind {
-                    case .working:  Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    case .working:  Image(systemName: "checkmark.seal.fill").foregroundStyle(.appSuccess)
                     case .attention: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.appWarning)
                     case .off:      Image(systemName: "pause.circle.fill").foregroundStyle(.appSecondary)
                     case .starting: Image(systemName: "hourglass").foregroundStyle(.appSecondary)
@@ -136,7 +135,7 @@ struct DiagnosticsSettingsView: View {
                     if let mark = row.mark {
                         Group {
                             switch mark {
-                            case .ok:      Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            case .ok:      Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
                             case .problem: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.appWarning)
                             case .neutral: Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
                             }
@@ -164,7 +163,7 @@ struct DiagnosticsSettingsView: View {
     // MARK: - Copy Report
 
     private var footer: some View {
-        HStack {
+        BottomBar {
             if copied {
                 Label {
                     Text("Copied", comment: "Settings → Diagnostics: after Copy Report")
@@ -187,8 +186,6 @@ struct DiagnosticsSettingsView: View {
             .buttonStyle(.chip)
             .disabled(model.diagnostics == nil)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     private func copyReport() {

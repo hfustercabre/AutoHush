@@ -31,7 +31,7 @@ enum StatusMenuCommand: Equatable, Sendable {
 @Observable
 final class StatusMenuModel {
     var status: AppStatus
-    /// The apps listed under "Playing now", fixed while the menu is open so
+    /// The apps listed under "Playing Now", fixed while the menu is open so
     /// that no row moves under the pointer.
     var listedSources: [AudioSource] = []
     /// Whether the music players are unfolded under the card.

@@ -9,7 +9,7 @@ struct AdvancedSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            heading(Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"))
+            SectionHeading(Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"))
             Card {
                 slider(
                     "Pause music after",
@@ -33,7 +33,7 @@ struct AdvancedSettingsView: View {
                 )
             }
 
-            heading(Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings"))
+            SectionHeading(Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings"))
             Card {
                 Group {
                     slider(
@@ -72,12 +72,6 @@ struct AdvancedSettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func heading(_ title: Text) -> some View {
-        SectionLabel(title)
-            .padding(.leading, 4)
-            .padding(.top, 6)
-    }
-
     private func seconds(_ value: Double) -> String {
         let number = value.formatted(.number.precision(.fractionLength(0...2)))
         return String(localized: "\(number) s", comment: "A duration in seconds")
@@ -111,10 +105,7 @@ struct AdvancedSettingsView: View {
                 in: range,
                 step: step
             )
-            Text(help)
-                .font(.appCaption)
-                .foregroundStyle(.appSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(help).captionStyle()
         }
     }
 }

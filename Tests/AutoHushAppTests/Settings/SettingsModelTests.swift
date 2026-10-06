@@ -60,7 +60,7 @@ struct SettingsModelTests {
         let model = makeModel(controller)
         model.setLaunchAtLogin(true)
         #expect(!model.launchAtLoginEnabled)
-        #expect(model.launchAtLoginError == "Could not change the login item: stub failed")
+        #expect(model.launchAtLoginError == "Couldn't change the login item: stub failed")
 
         controller.setEnabledResult = .success(())
         model.setLaunchAtLogin(true)

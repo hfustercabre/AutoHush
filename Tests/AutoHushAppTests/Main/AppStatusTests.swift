@@ -86,10 +86,10 @@ struct AppStatusTests {
     func autoPauseOff() {
         var status = ready(.musicPlaying)
         status.autoPause = .off
-        #expect(status.statusLine == "Auto-pause is off")
+        #expect(status.statusLine == "Auto-Pause is off")
         #expect(status.dimsIcon)
         status.autoPause = .snoozed("until 15:30")
-        #expect(status.statusLine == "Auto-pause is off until 15:30")
+        #expect(status.statusLine == "Auto-Pause is off until 15:30")
         #expect(status.dimsIcon)
         status.autoPause = .on
         #expect(!status.dimsIcon)

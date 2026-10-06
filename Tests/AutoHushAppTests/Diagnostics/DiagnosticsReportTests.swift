@@ -63,7 +63,7 @@ struct DiagnosticsReportTests {
 
             AutoHush
             Version: 0.6.1 (19)
-            Auto-pause: On
+            Auto-Pause: On
             Ignored apps: VLC
             Launch at login: On
             Updates: Install it automatically
@@ -107,8 +107,8 @@ struct DiagnosticsReportTests {
             DiagnosticsReport.snapshot(activeAudio: [], status: $0, facts: facts()).overview
         }
         #expect(kinds.map(\.kind) == [.working, .attention, .off, .starting])
-        #expect(kinds[1].detail == "Grant Automation access to control Jukebox")
-        #expect(kinds[2].title == "Auto-pause is off until 15:30")
+        #expect(kinds[1].detail == "Allow Automation access to control Jukebox")
+        #expect(kinds[2].title == "Auto-Pause is off until 15:30")
     }
 
     @Test("permissions: allowed, refused, not needed in AntiDot mode, and not checked yet, each with its mark")
@@ -179,9 +179,9 @@ struct DiagnosticsReportTests {
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),
          "Safari (com.apple.Safari) — output open, silent, ignored (silence)"),
         (.init(id: "com.example.a", state: .playing, evidence: .announcing),
-         "com.example.a — playing (tells macOS it is playing)"),
+         "com.example.a — playing (tells macOS it's playing)"),
         (.init(id: "com.example.b", state: .silent, evidence: .notAnnouncing),
-         "com.example.b — output open, silent (not telling macOS it is playing)"),
+         "com.example.b — output open, silent (not telling macOS it's playing)"),
         (.init(id: "com.example.c", state: .playing, isIgnored: true, evidence: .level(0.1)),
          "com.example.c — playing, ignored (-20 dBFS)"),
     ])

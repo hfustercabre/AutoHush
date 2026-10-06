@@ -1,14 +1,14 @@
 import SwiftUI
 import AutoHushKit
 
-/// "Playing now": each app playing sound, with a switch for whether it
+/// "Playing Now": each app playing sound, with a switch for whether it
 /// pauses the music.
 struct PlayingAppsView: View {
     let model: StatusMenuModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(Text("Playing now", comment: "Menu: heading of the apps playing sound right now"))
+            SectionLabel(Text("Playing Now", comment: "Menu: heading of the apps playing sound right now"))
             ForEach(model.listedSources, id: \.self) { source in
                 row(source, pausesMusic: !model.status.isIgnored(source.id))
             }

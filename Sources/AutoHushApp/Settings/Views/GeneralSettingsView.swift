@@ -17,16 +17,13 @@ struct GeneralSettingsView: View {
                     set: { model.setLaunchAtLogin($0) }
                 ))
                 if let error = model.launchAtLoginError {
-                    Text(error)
-                        .font(.appCallout)
-                        .foregroundStyle(.red)
-                        .fixedSize(horizontal: false, vertical: true)
+                    NoteLabel(error)
                     Button("Open Login Items Settings…") { model.openLoginItemsSettings() }
                         .buttonStyle(.chip)
                 }
             }
 
-            heading(Text("Music"))
+            SectionHeading(Text("Music"))
             Card {
                 SwitchRow(
                     Text("Auto-Pause Music"),
@@ -34,9 +31,7 @@ struct GeneralSettingsView: View {
                     isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
                 )
                 if let note = model.autoPauseNote {
-                    Text(note)
-                        .font(.appCaption)
-                        .foregroundStyle(.appSecondary)
+                    Text(note).captionStyle()
                 }
                 CardDivider()
                 HStack {
@@ -52,7 +47,7 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            heading(Text("Privacy"))
+            SectionHeading(Text("Privacy"))
             Card {
                 SwitchRow(
                     Text("AntiDot mode"),
@@ -68,11 +63,11 @@ struct GeneralSettingsView: View {
                         selection: model.detectionMethod,
                         onSelect: { model.setDetectionMethod($0) }
                     )
-                    explanation(model.detectionMethod.summary)
+                    Text(model.detectionMethod.summary).captionStyle()
                 }
             }
 
-            heading(Text("Updates"))
+            SectionHeading(Text("Updates"))
             Card {
                 SwitchRow(Text("Check for updates automatically"), isOn: Binding(
                     get: { model.checksForUpdatesAutomatically },
@@ -92,7 +87,7 @@ struct GeneralSettingsView: View {
                         onUnavailableClick: { model.flashNotificationsNote() }
                     )
                     .disabled(model.updateInstallNote != nil)
-                    explanation(model.updateInstallNote ?? model.automaticUpdates.explanation)
+                    Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
                 }
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
@@ -113,7 +108,9 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            supportLine
+            SupportLine()
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
         }
         .padding(16)
         .frame(width: 480)
@@ -123,54 +120,16 @@ struct GeneralSettingsView: View {
     /// From `PlayerOption.searchThreshold` players on: a magnifier that opens
     /// a search over them, where a click on one chooses it.
     private var playerSearchButton: some View {
-        Button { searchingPlayers = true } label: {
-            Image(systemName: "magnifyingglass")
-                .font(.appCaption.weight(.semibold))
-                .frame(width: 22, height: 20)
+        IconChipButton(symbol: "magnifyingglass",
+                       label: Text("Search by name", comment: "The magnifier that opens a search")) {
+            searchingPlayers = true
         }
-        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
-        .help(Text("Search by name", comment: "The magnifier that opens a search"))
-        .accessibilityLabel(Text("Search by name", comment: "The magnifier that opens a search"))
         .popover(isPresented: $searchingPlayers, arrowEdge: .bottom) {
             PlayerSearchPopover(options: model.playerOptions.installedFirst, chosen: model.chosenPlayerID) {
                 model.chooseMusicPlayer($0)
                 searchingPlayers = false
             }
         }
-    }
-
-    private func heading(_ title: Text) -> some View {
-        SectionLabel(title)
-            .padding(.leading, 4)
-            .padding(.top, 6)
-    }
-
-    private func explanation(_ text: String) -> some View {
-        Text(text)
-            .font(.appCaption)
-            .foregroundStyle(.appSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    /// At the very end: "Would you like to support me?" with the Buy me a
-    /// coffee link below it.
-    private var supportLine: some View {
-        VStack(spacing: 4) {
-            Label {
-                Text("Would you like to support me?",
-                     comment: "Settings → About and → General, before the Buy me a coffee link")
-            } icon: {
-                Image(systemName: "cup.and.saucer")
-            }
-            .foregroundStyle(.appSecondary)
-            Link(destination: ProjectInfo.supportPage) {
-                Text("Buy me a coffee",
-                     comment: "Link to the developer's Buy Me a Coffee page (Settings → About and → General)")
-            }
-        }
-        .font(.appCallout)
-        .frame(maxWidth: .infinity)
-        .padding(.top, 8)
     }
 }
 
@@ -193,7 +152,7 @@ extension DetectionMethod {
         case .audioLevels:
             return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.")
         case .playbackSignals:
-            return String(localized: "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.")
+            return String(localized: "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.")
         case .openStreams:
             return String(localized: "Any app with its audio open counts as playing, even when paused.")
         }

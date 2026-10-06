@@ -218,7 +218,7 @@ enum DiagnosticsReport {
                      summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About and Diagnostics; %@ is AutoHush's version"),
                      rows: [
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
-                        Row(label: String(localized: "Auto-pause", comment: "Diagnostics: whether auto-pause is on"), value: autoPause),
+                        Row(label: String(localized: "Auto-Pause", comment: "Diagnostics: whether Auto-Pause is on"), value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause the music"), value: ignored),
                         Row(label: String(localized: "Launch at login"), value: facts.launchAtLogin ? on : off),
                         Row(label: String(localized: "Updates"), value: updates),
@@ -326,10 +326,10 @@ enum DiagnosticsReport {
     private static func describe(_ evidence: ActiveAudioReport.Entry.Evidence) -> String {
         switch evidence {
         case .announcing:
-            return String(localized: "tells macOS it is playing",
+            return String(localized: "tells macOS it's playing",
                           comment: "Diagnostics, AntiDot mode: why an app counts as playing")
         case .notAnnouncing:
-            return String(localized: "not telling macOS it is playing",
+            return String(localized: "not telling macOS it's playing",
                           comment: "Diagnostics, AntiDot mode: why an app counts as paused")
         case .level(let peak) where peak > 0:
             return String(localized: "\(Int((20 * log10(peak)).rounded())) dBFS",

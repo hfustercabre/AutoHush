@@ -31,11 +31,17 @@ struct PlayerSearchPopover: View {
         .frame(width: 280)
     }
 
-    /// The player's icon and name, "Not installed" under one that isn't, and
-    /// a check on the chosen one.
+    /// A check on the chosen player, then its icon and name, and "Not
+    /// installed" under one that isn't.
     private func row(for option: PlayerOption) -> some View {
         Button { choose(option.bundleID) } label: {
             HStack(spacing: 8) {
+                // Where menus put it: the pop-up beside offers the same players.
+                Image(systemName: "checkmark")
+                    .font(.appCaption.weight(.bold))
+                    .frame(width: 12)
+                    .opacity(option.bundleID == chosen ? 1 : 0)
+                    .accessibilityHidden(true)
                 Image(nsImage: option.icon(size: 20))
                     .resizable()
                     .frame(width: 20, height: 20)
@@ -43,11 +49,6 @@ struct PlayerSearchPopover: View {
                 RowTitle(Text(verbatim: option.name),
                          subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel))
                 Spacer(minLength: 8)
-                if option.bundleID == chosen {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityHidden(true)
-                }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 4)

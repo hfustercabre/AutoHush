@@ -134,13 +134,13 @@ extension Permission {
     var statusLine: String {
         switch self {
         case .automation(let player):
-            return String(localized: "Grant Automation access to control \(player)",
+            return String(localized: "Allow Automation access to control \(player)",
                           comment: "Status line; %@ is the music player, e.g. Spotify")
         case .accessibility(let player):
-            return String(localized: "Grant Accessibility access to control \(player)",
+            return String(localized: "Allow Accessibility access to control \(player)",
                           comment: "Status line; %@ is the music player, e.g. TIDAL")
         case .systemAudioRecording:
-            return String(localized: "Grant Audio Recording access", comment: "Status line")
+            return String(localized: "Allow Audio Recording access", comment: "Status line")
         }
     }
 }

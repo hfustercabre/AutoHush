@@ -129,7 +129,7 @@ struct StatusMenuControllerTests {
         sut.status = status
         #expect(sut.statusItem.button?.appearsDisabled == true) // at once
         prepareToOpen(sut)
-        #expect(sut.model.status.statusLine == "Auto-pause is off until 15:30")
+        #expect(sut.model.status.statusLine == "Auto-Pause is off until 15:30")
     }
 
     // MARK: - The music player

@@ -22,15 +22,15 @@ struct SearchField: View {
             .textFieldStyle(.plain)
             .focused($isFocused)
             if let onClose {
-                clearButton(Text("Close Search", comment: "The button that closes a search"), action: onClose)
+                clearButton(Text("Close search", comment: "The button that closes a search"), action: onClose)
             } else if !text.isEmpty {
-                clearButton(Text("Clear Search", comment: "The button that empties a search field")) { text = "" }
+                clearButton(Text("Clear search", comment: "The button that empties a search field")) { text = "" }
             }
         }
         .font(.appCallout)
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 7).fill(.chipFill))
+        .background(RoundedRectangle(cornerRadius: 8).fill(.chipFill))
         .onAppear {
             // Once it's shown: a popover's field doesn't take it any sooner.
             if focusesOnAppear { DispatchQueue.main.async { isFocused = true } }

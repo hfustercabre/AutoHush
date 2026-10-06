@@ -111,9 +111,9 @@ struct AppStatus: Equatable {
         guard isReady else { return presentation.line }
         switch autoPause {
         case .off:
-            return String(localized: "Auto-pause is off", comment: "Status line at the top of the menu")
+            return String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")
         case .snoozed(let until):
-            return String(localized: "Auto-pause is off \(until)",
+            return String(localized: "Auto-Pause is off \(until)",
                           comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
         case .on:
             return presentation.line

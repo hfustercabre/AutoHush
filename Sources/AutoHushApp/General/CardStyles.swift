@@ -66,6 +66,10 @@ extension ShapeStyle where Self == AppearanceStyle {
     static var chipHoverFill: AppearanceStyle {
         AppearanceStyle(light: Color.black.opacity(0.13), dark: .quaternary)
     }
+    /// Icons for what works: Diagnostics' checks.
+    static var appSuccess: AppearanceStyle {
+        AppearanceStyle(light: Color.green, dark: Color.green)
+    }
     /// A switch's track while it's off.
     static var switchOffFill: AppearanceStyle {
         AppearanceStyle(light: Color.black.opacity(0.26), dark: .quaternary)
@@ -157,6 +161,56 @@ struct SectionLabel: View {
 
     var body: some View {
         title.font(.appCaption).foregroundStyle(.appSecondary)
+    }
+}
+
+/// The heading over a card in Settings, e.g. "Music": a section label in
+/// line with the card's text, with room above it unless it's the first
+/// thing on its tab.
+struct SectionHeading: View {
+    let title: Text
+    var isFirst = false
+
+    init(_ title: Text, isFirst: Bool = false) {
+        self.title = title
+        self.isFirst = isFirst
+    }
+
+    var body: some View {
+        SectionLabel(title)
+            .padding(.leading, 4)
+            .padding(.top, isFirst ? 0 : 6)
+    }
+}
+
+extension View {
+    /// Descriptions and notes under a card or a control: small, grey, and
+    /// on as many lines as they need.
+    func captionStyle() -> some View {
+        font(.appCaption)
+            .foregroundStyle(.appSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// A small chip showing a symbol, beside a heading or a pop-up: the Apps
+/// tab's order and search, and the music players' search. Its label is what
+/// VoiceOver says and, without a `help` of its own, its tooltip.
+struct IconChipButton: View {
+    let symbol: String
+    let label: Text
+    var help: Text?
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.appCaption.weight(.semibold))
+                .frame(width: 22, height: 20)
+        }
+        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .help(help ?? label)
+        .accessibilityLabel(label)
     }
 }
 
@@ -265,5 +319,22 @@ struct ChoiceChips<Value: Hashable>: View {
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// A tab's buttons at its foot, under content that scrolls (Settings → Apps
+/// and Diagnostics): a line above them while the content runs under them.
+struct BottomBar<Content: View>: View {
+    var showsDivider = true
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if showsDivider { Divider() }
+            HStack { content }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
+        }
     }
 }

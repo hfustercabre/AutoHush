@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import AutoHushKit
 
 /// Settings → Apps: which apps pause the music, in a card like the menu's
-/// "Playing now", each with its switch, in the order the user chose; a
+/// "Playing Now", each with its switch, in the order the user chose; a
 /// magnifier opens a search by name in place of the heading. The tab grows
 /// with the list up to Advanced's height; a longer list scrolls under the
 /// heading.
@@ -48,16 +48,14 @@ struct AppsSettingsView: View {
                     }
                     .animation(.default, value: model.apps)
                     Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
-                        .font(.appCaption)
-                        .foregroundStyle(.appSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .captionStyle()
                         .padding(.horizontal, 4)
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 12)
+                .padding(.bottom, 8)
                 .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 }
             }
-            HStack {
+            BottomBar(showsDivider: listScrolls) {
                 Button("Ignore Another App…") { chooseAppToIgnore() }
                     .buttonStyle(.chip)
                 Spacer()
@@ -65,9 +63,6 @@ struct AppsSettingsView: View {
                     .buttonStyle(.chip)
                     .disabled(model.apps.isEmpty)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 16)
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { barHeight = $0 }
         }
         .confirmationDialog("Reset the list of apps?", isPresented: $confirmingReset) {
@@ -79,6 +74,12 @@ struct AppsSettingsView: View {
         .onChange(of: model.appSearch != nil) { _, searching in
             heightWhileSearching = searching ? height : nil
         }
+    }
+
+    /// The list is longer than the room it has, so it scrolls under the
+    /// buttons.
+    private var listScrolls: Bool {
+        headerHeight + listHeight + barHeight > (heightWhileSearching ?? height) + 1
     }
 
     /// As tall as the whole list, at least `minimumHeight` and at most
@@ -104,8 +105,7 @@ struct AppsSettingsView: View {
                 }
                 .padding(.trailing, 10)
             } else {
-                SectionLabel(Text("Pauses Music"))
-                    .padding(.leading, 4)
+                SectionHeading(Text("Pauses Music"), isFirst: true)
                 Spacer()
             }
             Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
@@ -121,30 +121,23 @@ struct AppsSettingsView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .controlSize(.small)
+            .buttonStyle(.borderless)
             .fixedSize()
-            Button {
+            IconChipButton(
+                symbol: order.isReversed ? "arrow.up" : "arrow.down",
+                label: Text("Reverse order", comment: "Settings → Apps: the arrow that reverses the apps' order"),
+                help: Text(verbatim: String(localized: "\(order.directionTitle). Click to reverse the order.",
+                                            comment: "Settings → Apps, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”"))
+            ) {
                 model.setAppListOrder(AppListOrder(criterion: order.criterion, isReversed: !order.isReversed))
-            } label: {
-                Image(systemName: order.isReversed ? "arrow.up" : "arrow.down")
-                    .font(.appCaption.weight(.semibold))
-                    .frame(width: 22, height: 20)
             }
-            .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
-            .help(String(localized: "\(order.directionTitle). Click to reverse the order.",
-                         comment: "Settings → Apps, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”"))
-            .accessibilityLabel(Text("Reverse Order", comment: "Settings → Apps: the arrow that reverses the apps' order"))
             .accessibilityValue(Text(verbatim: order.directionTitle))
             if model.appSearch == nil {
-                Button { model.appSearch = "" } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.appCaption.weight(.semibold))
-                        .frame(width: 22, height: 20)
+                IconChipButton(symbol: "magnifyingglass",
+                               label: Text("Search by name", comment: "The magnifier that opens a search")) {
+                    model.appSearch = ""
                 }
-                .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
                 .disabled(model.apps.isEmpty)
-                .help(Text("Search by name", comment: "The magnifier that opens a search"))
-                .accessibilityLabel(Text("Search by name", comment: "The magnifier that opens a search"))
             }
         }
     }

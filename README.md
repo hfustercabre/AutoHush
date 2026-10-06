@@ -25,7 +25,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🙋 **Respects you:** if you pause, play or quit your music player yourself, AutoHush takes that as your decision and won't override it.
 - 🔕 **Ignores the noise:** notification sounds, alert beeps and short chat tones don't interrupt your music.
 - 📱 **Knows where you're listening:** if Spotify plays on your phone, speaker or TV (Spotify Connect), it's left alone.
-- 🚫 **Your rules:** choose apps that should never pause your music, or turn auto-pause off for a while.
+- 🚫 **Your rules:** choose apps that should never pause your music, or turn Auto-Pause off for a while.
 - 🟣 **AntiDot mode:** an option that never shows macOS's purple recording dot.
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
 - 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
@@ -134,10 +134,10 @@ Click the menu bar icon to see what's going on:
 - **Auto-Pause**, on the card, turns everything on or off. Turning it off brings back music that AutoHush paused.
 - **Music player** unfolds the players to choose from, the most used first; those not on your Mac are dimmed and listed last. Once AutoHush supports eight players or more, a search comes first (and in Settings and the welcome window too). The players you didn't choose count like any other app: if one plays, it pauses your music, unless you ignore it.
 - **Turn off for** pauses AutoHush itself, from 5 minutes to 24 hours, in one click.
-- **Playing now** lists the apps playing sound, each with a switch: turn it off for an app that shouldn't interrupt your music, such as a game whose soundtrack you don't mind.
+- **Playing Now** lists the apps playing sound, each with a switch: turn it off for an app that shouldn't interrupt your music, such as a game whose soundtrack you don't mind.
 - **Ignored Apps** lists the apps you've switched off. Click one to undo.
 - **The buttons at the bottom** open Settings, check for updates, open Settings → About, and quit. When an update is available, **Updates** turns blue and a row above the buttons offers to install it.
-- **The menu bar icon** shows what's happening: sound bars while your music plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while auto-pause is off.
+- **The menu bar icon** shows what's happening: sound bars while your music plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while Auto-Pause is off.
 
 ### Settings
 
@@ -198,10 +198,10 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - **Switched players?** Music that AutoHush was holding paused in the previous player stays paused. From then on, that player counts like any other app.
 - **TIDAL and Apple Podcasts pause without fading.** AutoHush can't read or set their volume, so it pauses and resumes them straight away. It notices when you pause or play them yourself (and VLC) within about a second. If an update changes their Playback or Controls menu, AutoHush may not be able to control them until AutoHush is updated too.
 - **Only one AutoHush runs at a time.** Opening another copy (a newer version, a second install) quits the one that's running, and takes over any pause it was holding. Delete the copies you don't use.
-- **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps) and that auto-pause is on.
-- **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Grant the audio permission, or in AntiDot mode close the app or tab.
+- **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps) and that Auto-Pause is on.
+- **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Allow audio recording, or in AntiDot mode close the app or tab.
 - **Something looks off?** **Settings → Diagnostics** shows what AutoHush sees (hold **⌥ Option** and click **Settings** in the menu to go straight there), and **Copy Report** copies it for a bug report.
-- **"Spotify is not running", a permission warning, or "not responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you grant the permission, or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
+- **"Spotify is not running", a permission warning, or "not responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access, or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
 
 ## Privacy
 
@@ -237,7 +237,7 @@ AutoHush can only update itself from a folder it can write to, such as Applicati
 
 1. In Settings, turn off **Launch at login**, then quit AutoHush.
 2. Delete `/Applications/AutoHush.app`, or run `brew uninstall --cask autohush`.
-3. Optional: delete its settings and caches (including a downloaded update that may be waiting), and forget the permissions you granted:
+3. Optional: delete its settings and caches (including a downloaded update that may be waiting), and forget the permissions you allowed:
 
    ```bash
    defaults delete com.autohush.AutoHush

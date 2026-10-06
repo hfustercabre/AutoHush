@@ -2367,6 +2367,89 @@
         }
       }
     },
+    "Allow Accessibility access to control %@" : {
+      "comment" : "Status line; %@ is the music player, e.g. TIDAL",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet l'accés a Accessibilitat per controlar %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube den Zugriff auf „Bedienungshilfen“, um %@ zu steuern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a Accesibilidad para controlar %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a Accesibilidad para controlar %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès « Accessibilité » pour contrôler %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès « Accessibilité » pour contrôler %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti l'accesso ad Accessibilità per controllare %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を制御するには、アクセシビリティへのアクセスを許可してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 제어하려면 손쉬운 사용 접근을 허용하십시오"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso de Acessibilidade para controlar %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso de Acessibilidade para controlar %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请允许“辅助功能”权限以控制 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請允許「輔助使用」權限以控制 %@"
+          }
+        }
+      }
+    },
     "Allow Audio Recording Access…" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -2446,6 +2529,172 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允許錄音權限⋯"
+          }
+        }
+      }
+    },
+    "Allow Audio Recording access" : {
+      "comment" : "Status line",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet l'accés a la gravació d'àudio"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube den Zugriff auf Audioaufnahme"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a la grabación de audio"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a la grabación de audio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès à l'enregistrement audio"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès à l'enregistrement audio"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti l'accesso alla registrazione audio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーディオ録音へのアクセスを許可してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오 녹음 접근을 허용하십시오"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso à gravação de áudio"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso à gravação de áudio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请允许录音权限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請允許錄音權限"
+          }
+        }
+      }
+    },
+    "Allow Automation access to control %@" : {
+      "comment" : "Status line; %@ is the music player, e.g. Spotify",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permet l'accés a Automatització per controlar %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube den Zugriff auf „Automation“, um %@ zu steuern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a Automatización para controlar %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite el acceso a Automatización para controlar %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consenti l'accesso ad Automazione per controllare %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を制御するには、オートメーションへのアクセスを許可してください"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 제어하려면 자동화 접근을 허용하십시오"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso de Automação para controlar %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permita acesso de Automação para controlar %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请允许“自动化”权限以控制 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請允許「自動化」權限以控制 %@"
           }
         }
       }
@@ -2533,7 +2782,7 @@
         }
       }
     },
-    "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it." : {
+    "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it." : {
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -3360,7 +3609,7 @@
       }
     },
     "Auto-Pause" : {
-      "comment" : "Under the switch at the top of the menu that turns auto-pause on and off",
+      "comment" : "Diagnostics: whether Auto-Pause is on\nUnder the switch at the top of the menu that turns auto-pause on and off",
       "localizations" : {
         "ca" : {
           "stringUnit" : {
@@ -3525,90 +3774,7 @@
         }
       }
     },
-    "Auto-pause" : {
-      "comment" : "Diagnostics: whether auto-pause is on",
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa automàtica"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auto-Pause"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa automática"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa automática"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause auto"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause auto"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa auto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動一時停止"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "자동 일시 정지"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa automática"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa automática"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动暂停"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動暫停"
-          }
-        }
-      }
-    },
-    "Auto-pause is off" : {
+    "Auto-Pause is off" : {
       "comment" : "Status line at the top of the menu",
       "localizations" : {
         "ca" : {
@@ -3620,7 +3786,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatische Pause ist aus"
+            "value" : "Auto-Pause ist aus"
           }
         },
         "es" : {
@@ -3691,7 +3857,7 @@
         }
       }
     },
-    "Auto-pause is off %@" : {
+    "Auto-Pause is off %@" : {
       "comment" : "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”",
       "localizations" : {
         "ca" : {
@@ -3703,7 +3869,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatische Pause ist %@ aus"
+            "value" : "Auto-Pause ist %@ aus"
           }
         },
         "es" : {
@@ -6673,7 +6839,7 @@
         }
       }
     },
-    "Clear Search" : {
+    "Clear search" : {
       "comment" : "The button that empties a search field",
       "localizations" : {
         "ca" : {
@@ -6733,7 +6899,7 @@
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Limpar Busca"
+            "value" : "Limpar busca"
           }
         },
         "pt-PT" : {
@@ -7005,7 +7171,7 @@
         }
       }
     },
-    "Close Search" : {
+    "Close search" : {
       "comment" : "The button that closes a search",
       "localizations" : {
         "ca" : {
@@ -7065,7 +7231,7 @@
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fechar Busca"
+            "value" : "Fechar busca"
           }
         },
         "pt-PT" : {
@@ -7336,89 +7502,6 @@
         }
       }
     },
-    "Could not change the login item: %@" : {
-      "comment" : "Settings, under Launch at login; %@ is the error macOS reported",
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No s'ha pogut canviar l'ítem d'inici: %@"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Anmeldeobjekt konnte nicht geändert werden: %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se ha podido cambiar el ítem de inicio: %@"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo cambiar el ítem de inicio: %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de modifier l'élément d'ouverture : %@"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de modifier l'élément d'ouverture : %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossibile modificare l'elemento di login: %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ログイン項目を変更できませんでした: %@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "로그인 항목을 변경할 수 없습니다: %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível alterar o item de início: %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível alterar o elemento de início de sessão: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法更改登录项：%@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無法更改登入項目：%@"
-          }
-        }
-      }
-    },
     "Couldn't Check for Updates" : {
       "comment" : "Alert title",
       "localizations" : {
@@ -7581,6 +7664,89 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法安裝更新項目"
+          }
+        }
+      }
+    },
+    "Couldn't change the login item: %@" : {
+      "comment" : "Settings, under Launch at login; %@ is the error macOS reported",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut canviar l'ítem d'inici: %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Anmeldeobjekt konnte nicht geändert werden: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido cambiar el ítem de inicio: %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cambiar el ítem de inicio: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier l'élément d'ouverture : %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier l'élément d'ouverture : %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile modificare l'elemento di login: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン項目を変更できませんでした: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인 항목을 변경할 수 없습니다: %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível alterar o item de início: %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível alterar o elemento de início de sessão: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更改登录项：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法更改登入項目：%@"
           }
         }
       }
@@ -9071,255 +9237,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法讀取 GitHub 的發佈資訊。"
-          }
-        }
-      }
-    },
-    "Grant Accessibility access to control %@" : {
-      "comment" : "Status line; %@ is the music player, e.g. TIDAL",
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedeix l'accés a Accessibilitat per controlar %@"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaube den Zugriff auf „Bedienungshilfen“, um %@ zu steuern"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a Accesibilidad para controlar %@"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a Accesibilidad para controlar %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès « Accessibilité » pour contrôler %@"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès « Accessibilité » pour contrôler %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedi l'accesso ad Accessibilità per controllare %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@を制御するには、アクセシビリティへのアクセスを許可してください"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@을(를) 제어하려면 손쉬운 사용 접근을 허용하십시오"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso de Acessibilidade para controlar %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso de Acessibilidade para controlar %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请允许“辅助功能”权限以控制 %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許「輔助使用」權限以控制 %@"
-          }
-        }
-      }
-    },
-    "Grant Audio Recording access" : {
-      "comment" : "Status line",
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedeix l'accés a la gravació d'àudio"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaube den Zugriff auf Audioaufnahme"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a la grabación de audio"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a la grabación de audio"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès à l'enregistrement audio"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès à l'enregistrement audio"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedi l'accesso alla registrazione audio"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーディオ録音へのアクセスを許可してください"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오디오 녹음 접근을 허용하십시오"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso à gravação de áudio"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso à gravação de áudio"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请允许录音权限"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許錄音權限"
-          }
-        }
-      }
-    },
-    "Grant Automation access to control %@" : {
-      "comment" : "Status line; %@ is the music player, e.g. Spotify",
-      "localizations" : {
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedeix l'accés a Automatització per controlar %@"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaube den Zugriff auf „Automation“, um %@ zu steuern"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a Automatización para controlar %@"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concede el acceso a Automatización para controlar %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l'accès « Automatisation » pour contrôler %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Concedi l'accesso ad Automazione per controllare %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@を制御するには、オートメーションへのアクセスを許可してください"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@을(를) 제어하려면 자동화 접근을 허용하십시오"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso de Automação para controlar %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conceda acesso de Automação para controlar %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请允许“自动化”权限以控制 %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許「自動化」權限以控制 %@"
           }
         }
       }
@@ -15203,7 +15120,7 @@
         }
       }
     },
-    "Playing now" : {
+    "Playing Now" : {
       "comment" : "Menu: heading of the apps playing sound right now",
       "localizations" : {
         "ca" : {
@@ -16357,7 +16274,7 @@
         }
       }
     },
-    "Reverse Order" : {
+    "Reverse order" : {
       "comment" : "Settings → Apps: the arrow that reverses the apps' order",
       "localizations" : {
         "ca" : {
@@ -16417,7 +16334,7 @@
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inverter Ordem"
+            "value" : "Inverter ordem"
           }
         },
         "pt-PT" : {
@@ -20170,7 +20087,7 @@
         }
       }
     },
-    "not telling macOS it is playing" : {
+    "not telling macOS it's playing" : {
       "comment" : "Diagnostics, AntiDot mode: why an app counts as paused",
       "localizations" : {
         "ca" : {
@@ -20834,7 +20751,7 @@
         }
       }
     },
-    "tells macOS it is playing" : {
+    "tells macOS it's playing" : {
       "comment" : "Diagnostics, AntiDot mode: why an app counts as playing",
       "localizations" : {
         "ca" : {

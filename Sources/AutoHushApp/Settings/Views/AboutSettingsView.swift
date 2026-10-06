@@ -49,21 +49,8 @@ struct AboutSettingsView: View {
                      symbol: "ladybug", to: ProjectInfo.newIssuePage)
             }
             .padding(.top, Self.gap)
-            VStack(spacing: 4) {
-                Label {
-                    Text("Would you like to support me?",
-                         comment: "Settings → About and → General, before the Buy me a coffee link")
-                } icon: {
-                    Image(systemName: "cup.and.saucer")
-                }
-                .foregroundStyle(.appSecondary)
-                Link(destination: ProjectInfo.supportPage) {
-                    Text("Buy me a coffee",
-                         comment: "Link to the developer's Buy Me a Coffee page (Settings → About and → General)")
-                }
-            }
-            .font(.appCallout)
-            .padding(.top, Self.gap - 2)
+            SupportLine()
+                .padding(.top, Self.gap - 2)
             if let copyright = Self.copyright {
                 Text(verbatim: copyright)
                     .font(.appCaption)
