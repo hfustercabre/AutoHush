@@ -21,7 +21,7 @@ struct UpdatePrompt: Equatable {
     init(release: AppRelease, running: AppVersion, isDownloaded: Bool, canInstall: Bool, isHomebrewInstall: Bool) {
         let new = release.version.description
         let current = running.description
-        let later = Button(title: String(localized: "Later", comment: "Update alert button: close it without updating"),
+        let later = Button(title: String(localized: "Later", comment: "Button that closes it for now: an update alert, or the window that learns a web app's controls"),
                            choice: .later)
         let openPage = Button(title: String(localized: "Open Release Page", comment: "Update alert button"),
                               choice: .openReleasePage)

@@ -35,8 +35,11 @@ final class MonitoringPipeline {
     private var shutdown: Task<Void, Never>?
     private var isStopped: Bool { shutdown != nil }
 
+    /// `hostedApp` names a process's app when its program doesn't (see
+    /// `ProcessAudioSourceIdentifier`).
     init(
         player: any MusicPlayer,
+        hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil },
         configuration: AppConfiguration,
         autoPauseEnabled: Bool,
         ignoredSourceIDs: Set<String>,
@@ -61,7 +64,7 @@ final class MonitoringPipeline {
             configuration: configuration,
             arbiter: arbiter,
             audioCapturePermission: TCCAudioCapturePermission(),
-            sourceIdentifier: ProcessAudioSourceIdentifier(),
+            sourceIdentifier: ProcessAudioSourceIdentifier(hostedApp: hostedApp),
             ignoredSourceIDs: ignoredSourceIDs,
             powerAssertions: IOKitPowerAssertionReader(),
             learnedAssertions: learnedAssertions,

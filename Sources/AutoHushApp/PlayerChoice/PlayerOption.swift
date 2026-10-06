@@ -10,13 +10,15 @@ struct PlayerOption: Equatable, Identifiable {
     let appURL: URL?
     /// Shown in place of its icon while it isn't installed.
     var iconPlaceholder: PlayerIconPlaceholder?
+    /// An app, or a Safari web app: they're offered apart.
+    var kind: MusicPlayerKind = .app
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
 
     /// A player's placeholder is its own, so it doesn't tell options apart.
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL
+        lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
     }
 
     /// Finds an installed app by bundle ID.
@@ -48,11 +50,13 @@ struct PlayerOption: Equatable, Identifiable {
         }
     }
 
-    /// Every player in the catalog, in its order, and whether it is installed.
+    /// Every player in the catalog, the Safari web apps found included, in
+    /// its order, and whether it is installed.
     @MainActor
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
-        catalog.players.map {
-            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID), iconPlaceholder: $0.iconPlaceholder)
+        catalog.all.map {
+            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID),
+                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind)
         }
     }
 
@@ -67,6 +71,12 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// From this many players on, every place that offers them has a search.
     static let searchThreshold = 8
+
+    /// Over the Safari web apps, after the apps, wherever players are offered.
+    static var webAppsHeading: String {
+        String(localized: "Safari Web Apps",
+               comment: "Where music players are offered: heading over the websites added to the Dock from Safari")
+    }
 
     /// Instead of the players when none matches the search.
     static func noMatchNote(_ search: String) -> String {
@@ -88,22 +98,29 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// In the welcome window when one player is installed and others could
     /// be, e.g. "Spotify is the only supported music player on this Mac.
-    /// AutoHush also works with Apple Music and Deezer."; `nil` otherwise.
+    /// AutoHush also works with Apple Music and VLC."; `nil` otherwise.
     static func onlyInstalledNote(among options: [PlayerOption]) -> String? {
         guard let only = options.onlyInstalled else { return nil }
         let others = options.filter { !$0.isInstalled }.map(\.name)
         guard !others.isEmpty else { return nil }
         let list = others.formatted(.list(type: .and))
         return String(localized: "\(only.name) is the only supported music player on this Mac. AutoHush also works with \(list).",
-                      comment: "Welcome window; the installed music player, then the other supported ones, e.g. “Apple Music and Deezer”")
+                      comment: "Welcome window; the installed music player, then the other supported ones, e.g. “Apple Music and VLC”")
     }
 }
 
 extension [PlayerOption] {
-    /// How players are offered: the installed ones first, then the others,
-    /// each in the catalog's order.
-    var installedFirst: [PlayerOption] {
-        filter(\.isInstalled) + filter { !$0.isInstalled }
+    /// How players are offered: the apps, installed ones first, then the
+    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them), each
+    /// group in the catalog's order.
+    var offered: [PlayerOption] {
+        let apps = filter { $0.kind == .app }
+        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled } + filter { $0.kind == .safariWebApp }
+    }
+
+    /// Where the Safari web apps start, for their heading; `nil` without any.
+    var webAppsStart: Int? {
+        firstIndex { $0.kind == .safariWebApp }
     }
 
     /// Long enough to need a search: `PlayerOption.searchThreshold` or more.

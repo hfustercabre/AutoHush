@@ -5,6 +5,43 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Safari web apps can be your music player.** Any website you add to the
+  Dock from Safari (File → Add to Dock), such as YouTube Music, Amazon Music
+  or Spotify's web player, is offered under **Safari Web Apps** in the menu,
+  Settings and the welcome window.
+  - AutoHush presses the site's own Play/Pause button, so the site stays in
+    step. It learns which button that is: when you choose a web app, a
+    window asks you to play something in it, then pause it, and closes once
+    it has seen both. The same steps show in the menu and in Settings until
+    then. It presses nothing before it has learned.
+  - It works with the window visible, minimized or on another Space. It
+    needs the Accessibility permission, and pauses without fading.
+  - When a site refuses to pause, as during an ad that can't be paused,
+    AutoHush mutes the web app instead and unmutes it afterwards. A web app
+    that pauses is never muted.
+  - If a site changes so that its button can't be found for a minute,
+    AutoHush asks to learn it again, and keeps both layouts.
+  - Settings → Diagnostics shows whether the button has been learned and
+    whether windows on other Spaces can be reached.
+
+### Fixed
+
+- **A paused app no longer counts as playing just because its sound is
+  still open,** while your music isn't playing. AutoHush only measures how
+  loud apps are while it matters, and otherwise counted any open sound as
+  playing: VLC, for one, keeps its sound open about a minute after you pause
+  it. Now an app that tells macOS when it plays (VLC does) counts as paused
+  once it stops telling, as in AntiDot mode.
+- **Each Safari web app is told apart.** Their sound was all put down to
+  one "Web App", so Settings → Apps showed a single entry for them; each
+  now shows under its own name.
+
+---
+
 ## [0.7.0] — 2026-10-06
 
 ### Added

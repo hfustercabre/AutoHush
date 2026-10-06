@@ -9,9 +9,9 @@ import os
 /// Every tick it:
 ///   1. (on a HAL change, or once per idle interval) re-reads which processes
 ///      have output running and taps those that are media sources;
-///   2. judges each app: by its tapped peak level when level detection works,
-///      by what it tells macOS in AntiDot mode (`PlaybackSignals`), otherwise
-///      by its open output stream;
+///   2. judges each app: by its tapped peak level while levels are measured,
+///      otherwise by what it tells macOS (`PlaybackSignals`, AntiDot mode's
+///      judge) when it's known to tell, otherwise by its open output stream;
 ///   3. feeds that into `SourceActivityTracker` and forwards the resulting
 ///      started/stopped transitions to the arbiter. In AntiDot mode, an app
 ///      showing no video must play longer before it counts
@@ -28,12 +28,17 @@ import os
 /// while levels can change a decision (`setAudioLevelsNeeded`, driven by the
 /// arbiter: the music playing here or paused by us, with auto-pause on) and the
 /// detection method is `.audioLevels`. AntiDot mode's methods capture nothing.
+/// Meanwhile an app is judged as in AntiDot mode: one seen telling macOS it
+/// plays counts as paused once it stops telling, though its stream stays open
+/// (VLC keeps it open about a minute after a pause, measured). Only "Open audio
+/// streams only" ignores what apps tell macOS.
 ///
 /// The music player's output also tells whether it plays on THIS Mac. Through
 /// Spotify Connect, for example, Spotify reports "playing" while the music
 /// comes out of another device; then its process has no running output
 /// (measured). The monitor reports this to the arbiter, which only pauses the
-/// player when it plays here.
+/// player when it plays here. The player's output is any process it owns: a
+/// Safari web app plays from WebKit's process, which has no name of its own.
 ///
 /// Processes are grouped by the app that owns them (`AudioSourceIdentifying`),
 /// so all of Chrome's helpers form one "Google Chrome" source. Sources the user
@@ -78,6 +83,9 @@ package final class AudioMonitor: @unchecked Sendable {
     private var timer: DispatchSourceTimer?
     private var timerInterval: TimeInterval?
     private var candidates: [AudioProcessInfo] = []
+    /// The candidates that play the music player's audio: its own processes
+    /// and the ones it owns.
+    private var playerProcesses: Set<AudioObjectID> = []
     /// Owning app of each candidate process.
     private var sourceOfProcess: [AudioObjectID: AudioSource] = [:]
     /// IDs of the apps in `sourceOfProcess`.
@@ -287,6 +295,7 @@ package final class AudioMonitor: @unchecked Sendable {
         levelMeter?.stopAll()
 
         candidates = []
+        playerProcesses = []
         sourceOfProcess = [:]
         presentSourceIDs = []
         knownSources = [:]
@@ -324,10 +333,12 @@ package final class AudioMonitor: @unchecked Sendable {
         lastRefresh = now
         let ownPID = getpid()
         candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID && !$0.bundleID.isEmpty }
+        playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
         sourceOfProcess = [:]
         for process in candidates where configuration.isMediaSource(process.bundleID) {
             let source = sourceIdentifier?.source(for: process)
                 ?? AudioSource(id: process.bundleID, name: process.bundleID)
+            if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }
             // An excluded owner (e.g. the music player's helper) excludes its processes too.
             guard configuration.isMediaSource(source.id) else { continue }
             sourceOfProcess[process.objectID] = source
@@ -394,10 +405,9 @@ package final class AudioMonitor: @unchecked Sendable {
         // The player is tapped only to prove the permission when TCC cannot be read.
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
         let metered = shouldMeterLevels ? candidates.filter {
-            sourceOfProcess[$0.objectID] != nil
-                || (verifiesWithPlayer && configuration.isMusicPlayer($0.bundleID))
+            sourceOfProcess[$0.objectID] != nil || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
         } : []
-        let tapsPlayer = metered.contains { configuration.isMusicPlayer($0.bundleID) }
+        let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
         // May block while macOS shows the System Audio Recording prompt.
         levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
@@ -410,11 +420,15 @@ package final class AudioMonitor: @unchecked Sendable {
         var audible: Set<String> = []
         var levels: [String: Float] = [:]
         let judgement = judgePlaybackSignals(at: now)
+        /// The verdicts that decided: only for what wasn't measured.
+        var verdicts: [String: Bool] = [:]
         for process in candidates {
             guard let source = sourceOfProcess[process.objectID] else { continue }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
             if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
-            if isAudible(peak: peak, verdict: judgement?.verdicts[source.id]) {
+            let verdict = peak == nil ? judgement?.verdicts[source.id] : nil
+            if let verdict { verdicts[source.id] = verdict }
+            if isAudible(peak: peak, verdict: verdict) {
                 audible.insert(source.id)
             }
         }
@@ -423,7 +437,7 @@ package final class AudioMonitor: @unchecked Sendable {
         updateLocalPlayback()
 
         // AntiDot mode: sound without video must last longer (see the type comment).
-        let slowStarts = judgement.map { judgement in
+        let slowStarts = detectionMethod != .playbackSignals ? [:] : judgement.map { judgement in
             Dictionary(uniqueKeysWithValues: audible.subtracting(judgement.showingVideo).map {
                 ($0, configuration.startConfirmationWithoutVideo)
             })
@@ -443,22 +457,22 @@ package final class AudioMonitor: @unchecked Sendable {
         knownSources = knownSources.filter { tracker.isTracking($0.key) || presentSourceIDs.contains($0.key) }
 
         publishActiveSources()
-        publishReport(audible: audible, levels: levels, verdicts: judgement?.verdicts ?? [:])
+        publishReport(audible: audible, levels: levels, verdicts: verdicts)
     }
 
-    /// Whether one process of a source counts as audible in this tick: by
-    /// AntiDot mode's verdict on its app, else by its level when measured,
-    /// else by its open output stream.
+    /// Whether one process of a source counts as audible in this tick: by its
+    /// level when measured, else by what its app tells macOS, else by its open
+    /// output stream.
     private func isAudible(peak: Float?, verdict: Bool?) -> Bool {
-        if let verdict { return verdict }
         if let peak { return peak >= configuration.audibleThreshold }
+        if let verdict { return verdict }
         return true
     }
 
-    /// AntiDot mode's verdicts on the apps with their sound on, with the
-    /// `.playbackSignals` method only. Saves what it learned.
+    /// What the apps with their sound on tell macOS, as AntiDot mode judges
+    /// it; not with "Open audio streams only". Saves what it learned.
     private func judgePlaybackSignals(at now: Date) -> PlaybackSignals.Judgement? {
-        guard detectionMethod == .playbackSignals else { return nil }
+        guard detectionMethod != .openStreams else { return nil }
         var appOfProcess: [pid_t: String] = [:]
         for process in candidates {
             if let source = sourceOfProcess[process.objectID] { appOfProcess[process.pid] = source.id }
@@ -489,11 +503,11 @@ package final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// The player plays on this Mac when its process has output running. Its
-    /// output is not tapped: that would keep the recording indicator on for
-    /// as long as the music plays.
+    /// The player plays on this Mac when a process of its own has output
+    /// running. Its output is not tapped: that would keep the recording
+    /// indicator on for as long as the music plays.
     private func updateLocalPlayback() {
-        let isLocal = candidates.contains { configuration.isMusicPlayer($0.bundleID) }
+        let isLocal = !playerProcesses.isEmpty
         guard isLocal != publishedLocalPlayback else { return }
         publishedLocalPlayback = isLocal
         logger.debug("[monitor] music player output on this Mac: \(isLocal, privacy: .public)")

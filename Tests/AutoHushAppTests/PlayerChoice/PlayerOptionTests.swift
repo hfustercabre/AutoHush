@@ -33,8 +33,21 @@ struct PlayerOptionTests {
     func installedFirst() {
         let options = [option("A", installed: false), option("B", installed: true), option("C", installed: false),
                        option("D", installed: true)]
-        #expect(options.installedFirst.map(\.name) == ["B", "D", "A", "C"])
-        #expect(options.filter(\.isInstalled).installedFirst.map(\.name) == ["B", "D"])
+        #expect(options.offered.map(\.name) == ["B", "D", "A", "C"])
+        #expect(options.filter(\.isInstalled).offered.map(\.name) == ["B", "D"])
+        #expect(options.offered.webAppsStart == nil)
+    }
+
+    @Test("Safari web apps come after every app, under their heading")
+    func webAppsLast() {
+        var webApp = option("YT Music", installed: true)
+        webApp.kind = .safariWebApp
+        let options = [webApp, option("A", installed: false), option("B", installed: true)]
+        #expect(options.offered.map(\.name) == ["B", "A", "YT Music"])
+        #expect(options.offered.webAppsStart == 2)
+        #expect(options.offered.matching("yt").webAppsStart == 0)
+        #expect(options.offered.matching("b").webAppsStart == nil)
+        #expect(!PlayerOption.webAppsHeading.isEmpty)
     }
 
     @Test("from eight players on, they can be searched by name, ignoring case and accents")

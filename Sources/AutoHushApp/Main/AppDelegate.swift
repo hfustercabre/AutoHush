@@ -23,12 +23,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowsWatch: Task<Void, Never>?
     /// The music players to choose from.
     private let players: MusicPlayerCatalog
+    /// The app a process runs as when its program doesn't say (a Safari web
+    /// app), so its sound is told apart.
+    private let hostedApp: @Sendable (pid_t) -> AudioSource?
     private let locateApp: PlayerOption.Locate
     /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
     private(set) var player: (any MusicPlayer)?
     /// Asks for the music player while none is chosen; made when first needed.
     private var playerChooser: (any PlayerChooserPresenting)?
     private let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
+    /// Asks to play and pause a player AutoHush must learn, once it's chosen.
+    private var learningWindow: (any LearningWindowPresenting)?
+    private let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
+    /// Follows how learning the chosen player goes.
+    private var learningWatch: Task<Void, Never>?
+    /// The learning window shows both steps ticked this long before closing.
+    private let learnedWindowDelay: Duration
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -82,10 +92,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
+        hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = SupportedPlayers.hostedApp(pid:),
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
         makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
             PlayerChooserWindowController(model: $0)
         },
+        makeLearningWindow: @escaping @MainActor (SettingsModel) -> any LearningWindowPresenting = {
+            LearningWindowController(model: $0)
+        },
+        learnedWindowDelay: Duration = .seconds(1.5),
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         permissionRetryInterval: TimeInterval = 3,
@@ -96,8 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ) {
         self.preferences = preferences
         self.players = players
+        self.hostedApp = hostedApp
         self.locateApp = locateApp
         self.makePlayerChooser = makePlayerChooser
+        self.makeLearningWindow = makeLearningWindow
+        self.learnedWindowDelay = learnedWindowDelay
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
         self.player = players.player(bundleID: preferences.musicPlayer)
@@ -151,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshPlayerOptions()
         showApps()
         applyAutoPause()
+        watchLearning()
     }
 
     // MARK: - NSApplicationDelegate
@@ -432,9 +451,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showChosenPlayer()
         showApps()
         playerChooser?.close()
+        watchLearning()
+        if case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus { showLearningWindow() }
         setHealth(.starting)
         requestBootstrap()
     }
+
+    // MARK: - Learning a player
+
+    /// Shows how learning the chosen player goes, as it goes; nothing for a
+    /// player that needs no learning.
+    private func watchLearning() {
+        learningWatch?.cancel()
+        learningWatch = nil
+        guard let learner = player as? any LearningMusicPlayer else {
+            showLearning(nil)
+            return
+        }
+        showLearning(learner.learningStatus)
+        learningWatch = Task { [weak self] in
+            for await learning in learner.learningUpdates() {
+                guard !Task.isCancelled else { return }
+                self?.showLearning(learning)
+            }
+        }
+    }
+
+    private func showLearning(_ learning: LearningStatus?) {
+        if status.learning != learning { status.learning = learning }
+        if settingsModel.learning != learning { settingsModel.learning = learning }
+        if learning != nil, learning != .learned { return }
+        // Learned (both steps ticked), or nothing to learn: the window goes.
+        guard let window = learningWindow, window.isVisible else { return }
+        let delay = learning == .learned ? learnedWindowDelay : .zero
+        Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard let self, self.status.learning == learning else { return }
+            window.close()
+        }
+    }
+
+    /// The window that asks to play and pause the chosen player once.
+    private func showLearningWindow() {
+        if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
+        learningWindow?.show()
+    }
+
+    /// Whether the learning window is on screen.
+    var isShowingLearningWindow: Bool { learningWindow?.isVisible == true }
 
     /// Shows the chosen player in the menu and Settings.
     private func showChosenPlayer() {
@@ -616,6 +680,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let pipeline = MonitoringPipeline(
             player: player,
+            hostedApp: hostedApp,
             configuration: currentConfiguration,
             autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
             ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
@@ -708,6 +773,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             playerCanFade: settingsModel.playerCanFade,
             playerPermission: permission,
             playerPermissionGranted: granted,
+            playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus == .learned },
+            reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
             audioRecording: TCCAudioCapturePermission().status(),
             notificationsOff: settingsModel.notificationsOff,
             detectionMethod: preferences.detectionMethod,

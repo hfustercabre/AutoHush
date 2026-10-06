@@ -37,13 +37,18 @@ struct GeneralSettingsView: View {
                 HStack {
                     RowTitle(Text("Music player"), subtitle: Text("AutoHush pauses and resumes this app."))
                     Spacer(minLength: 8)
-                    PlayerPopUp(options: model.playerOptions.installedFirst, selection: model.chosenPlayerID) {
+                    PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID) {
                         model.chooseMusicPlayer($0)
                     }
                     if model.playerOptions.isSearchable { playerSearchButton }
                 }
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)
+                }
+                // Until AutoHush has learned the chosen web app's controls.
+                if let name = model.chosenPlayerName, let hasPlayed = model.learningHasPlayed {
+                    CardDivider()
+                    LearningSummary(name: name, hasPlayed: hasPlayed)
                 }
             }
 
@@ -125,7 +130,7 @@ struct GeneralSettingsView: View {
             searchingPlayers = true
         }
         .popover(isPresented: $searchingPlayers, arrowEdge: .bottom) {
-            PlayerSearchPopover(options: model.playerOptions.installedFirst, chosen: model.chosenPlayerID) {
+            PlayerSearchPopover(options: model.playerOptions.offered, chosen: model.chosenPlayerID) {
                 model.chooseMusicPlayer($0)
                 searchingPlayers = false
             }

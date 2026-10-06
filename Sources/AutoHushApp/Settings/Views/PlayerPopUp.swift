@@ -1,10 +1,10 @@
 import AppKit
 import SwiftUI
 
-/// A native pop-up of the music players, with their icons. A player that
-/// isn't installed is dimmed, marked "Not installed", and can't be chosen;
-/// while none is chosen, a placeholder asks for one. SwiftUI's menu picker
-/// can't dim a single option.
+/// A native pop-up of the music players, with their icons, and a heading
+/// over the Safari web apps. A player that isn't installed is dimmed, marked
+/// "Not installed", and can't be chosen; while none is chosen, a placeholder
+/// asks for one. SwiftUI's menu picker can't dim a single option.
 struct PlayerPopUp: NSViewRepresentable {
     let options: [PlayerOption]
     /// The chosen player's bundle ID; `nil` while none is chosen.
@@ -63,7 +63,8 @@ final class PlayerPopUpButton: NSPopUpButton {
             placeholder.isEnabled = false
             menu?.addItem(placeholder)
         }
-        for option in options {
+        for (index, option) in options.enumerated() {
+            if index == options.webAppsStart { menu?.addItem(.sectionHeader(title: PlayerOption.webAppsHeading)) }
             let item = NSMenuItem(title: option.name, action: nil, keyEquivalent: "")
             item.representedObject = option.bundleID
             item.image = option.icon(size: 16)

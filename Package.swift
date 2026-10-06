@@ -6,11 +6,14 @@ import PackageDescription
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
 //          ├─ AutoHushPlayers   the supported music players
-//          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport
+//          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport…
 //          │    │                   one <App>Support target per player, all in
 //          │    │                   Sources/PlayersSupport/: what's special about it
-//          │    └─ ScriptablePlayers  controls any app scripted with Apple events
-//          │                        (state, pause, play, volume, its notification)
+//          │    ├─ ScriptablePlayers  controls any app scripted with Apple events
+//          │    │                   (state, pause, play, volume, its notification)
+//          │    ├─ MenuPlayers      controls an app through its playback menu
+//          │    └─ WebAppPlayers    controls Safari web apps through the site's
+//          │                        own Play/Pause button, learned once
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
@@ -36,12 +39,13 @@ let package = Package(
         .target(
             name: "AutoHushPlayers",
             dependencies: [
-                "AutoHushKit", "ScriptablePlayers", "MenuPlayers",
+                "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers",
                 "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport",
             ]
         ),
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
         .target(name: "MenuPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/MenuPlayers"),
+        .target(name: "WebAppPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/WebAppPlayers"),
         .target(
             name: "SpotifySupport",
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
@@ -97,6 +101,11 @@ let package = Package(
             path: "Tests/PlayersSupport/MenuPlayersTests"
         ),
         .testTarget(
+            name: "WebAppPlayersTests",
+            dependencies: ["WebAppPlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/WebAppPlayersTests"
+        ),
+        .testTarget(
             name: "TidalSupportTests",
             dependencies: ["TidalSupport", "MenuPlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/TidalSupportTests"
@@ -118,7 +127,7 @@ let package = Package(
         .testTarget(
             name: "AutoHushPlayersTests",
             dependencies: [
-                "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers",
+                "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers",
                 "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "AutoHushKit",
             ]
         ),

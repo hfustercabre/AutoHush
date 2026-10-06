@@ -112,6 +112,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.captionStyle()` | A description or note under a card or a control: small, grey, wrapping. |
 | `BottomBar` | Buttons fixed at the foot of a scrolling tab, with a line above them only while content scrolls under them. |
 | `SupportLine` | "Would you like to support me?" with its link, at the foot of General and About. |
+| `LearningSteps` / `LearningSummary` | What the user does so AutoHush can learn a player (play it, then pause it), each step ticked in `.appSuccess` once seen. `LearningSummary` adds a headline and a caption: a card of its own under the menu's card, and a section under the player in Settings → General. |
 
 **App icons** come from `AppIcon` (or `PlayerOption.icon`), at the size for
 where they appear:
@@ -134,8 +135,12 @@ where they appear:
 
 - **Order:** a list has an obvious order and keeps it. Settings → Apps lets
   you choose the order, and remembers it. Music players are listed by how
-  many people use them, with those that aren't installed last, dimmed, and
-  marked "Not installed".
+  many people use them, with those that aren't installed after them,
+  dimmed, and marked "Not installed". Safari web apps come last, by name,
+  under a "Safari Web Apps" heading: a section header in menus and pop-ups,
+  a `SectionLabel` in the player search, and a `SectionHeading` over a card
+  of their own in the welcome window. A search keeps the heading only while
+  a web app matches.
 - **Searches** appear where a list can grow long: always in Settings → Apps,
   and wherever music players are offered once there are eight or more.
   - A search matches anywhere in a name, ignoring case and accents

@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Settings → General's search over the music players, opened by the
-/// magnifier beside their pop-up: the players whose names match, installed
-/// first; a click on an installed one chooses it.
+/// magnifier beside their pop-up: the players whose names match, as the
+/// pop-up offers them; a click on an installed one chooses it.
 struct PlayerSearchPopover: View {
     let options: [PlayerOption]
     /// The chosen player's bundle ID, checked in the list.
@@ -21,7 +21,14 @@ struct PlayerSearchPopover: View {
                             .foregroundStyle(.appSecondary)
                             .padding(6)
                     }
-                    ForEach(shown) { row(for: $0) }
+                    ForEach(Array(shown.enumerated()), id: \.element.id) { index, option in
+                        if index == shown.webAppsStart {
+                            SectionLabel(Text(verbatim: PlayerOption.webAppsHeading))
+                                .padding(.horizontal, 6)
+                                .padding(.top, index == 0 ? 0 : 6)
+                        }
+                        row(for: option)
+                    }
                 }
             }
             .frame(height: 300) // the same whatever matches, so it doesn't jump as you type

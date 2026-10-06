@@ -366,17 +366,54 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("power assertions are ignored outside AntiDot mode's playback signals", arguments: [DetectionMethod.audioLevels, .openStreams])
-    func assertionsOnlyWithPlaybackSignals(method: DetectionMethod) async {
+    @Test("“Open audio streams only” ignores what apps tell macOS")
+    func assertionsIgnoredWithOpenStreams() async {
         let assertions = MockPowerAssertions()
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, assertions: assertions,
                         learnedAssertions: ["com.example.player": AnnouncedAssertions(system: ["Playing"])])
-        h.monitor.setDetectionMethod(method)
+        h.monitor.setDetectionMethod(.openStreams)
         h.start()
         h.step([Self.process(1, "com.example.player")])
         await h.recorder.waitForEvents(count: 1)
-        // Remembered as announcing, no assertion now — but only playback signals use that.
+        // Remembered as announcing, no assertion now: still playing by its open stream.
         #expect(await h.recorder.events == [.init(bundleID: "com.example.player", isPlaying: true)])
+        h.monitor.stop()
+    }
+
+    @Test("while levels aren't measured, an app known to tell macOS counts as paused once it stops, though its stream stays open (VLC)")
+    func assertionsWhileNotMeasuring() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0),
+                        permission: MockAudioCapturePermission(.granted), levelsNeeded: false, assertions: assertions)
+        h.start()
+        assertions.held = [1001: [PowerAssertion(.system, "VLC media playback")]]
+        h.step([Self.process(1, "org.videolan.vlc")]) // pid 1001
+        await h.recorder.waitForEvents(count: 1)
+        #expect(h.meter.lastMetered.isEmpty)
+        #expect(h.learned.values == ["org.videolan.vlc"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .announcing)])
+
+        // Paused: its stream stays open, without the assertion.
+        assertions.held = [:]
+        h.step(after: 0.25)
+        await h.recorder.waitForEvents(count: 2)
+        #expect(await h.recorder.events.last == .init(bundleID: "org.videolan.vlc", isPlaying: false))
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .silent, evidence: .notAnnouncing)])
+        h.monitor.stop()
+    }
+
+    @Test("measured levels win over what apps tell macOS")
+    func levelsWinOverAssertions() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: Self.config(startConfirmation: 0), permission: MockAudioCapturePermission(.granted),
+                        assertions: assertions)
+        h.start()
+        assertions.held = [1001: MockPowerAssertions.playing]
+        h.step([Self.process(1, "com.example.player")], peaks: [1: 0]) // says it plays, but silent
+        h.step(after: 1.0, peaks: [1: 0])
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(await h.recorder.events.isEmpty)
+        #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .silent, evidence: .level(0))])
         h.monitor.stop()
     }
 
@@ -654,6 +691,22 @@ struct AudioMonitorTests {
         await h.recorder.waitForPlayerLocal(count: 3)
         #expect(await h.recorder.playerLocal == [false, true, false])
         #expect(h.meter.lastMetered.isEmpty)
+        h.monitor.stop()
+    }
+
+    @Test("a process the player owns (a web app's WebKit process) is its output, never a source")
+    func playerOwnedProcessIsLocal() async {
+        let identifier = StubSourceIdentifier([
+            "com.apple.WebKit.GPU": AudioSource(id: TestPlayer.bundleID, name: "Jukebox"),
+        ])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
+        h.start()
+        h.step([Self.process(1, "com.apple.WebKit.GPU")])
+        await h.recorder.waitForPlayerLocal(count: 2)
+        #expect(await h.recorder.playerLocal == [false, true])
+        h.step(after: 1.0)
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
 

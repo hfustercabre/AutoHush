@@ -40,11 +40,20 @@ package protocol AudioSourceIdentifying: Sendable {
 ///   1. the process macOS holds responsible for it (`ProcessResponsibility`,
 ///      a private function; it also covers XPC services such as WebKit's that
 ///      live outside any app);
-///   2. otherwise the outermost bundle in the process's executable path (public `proc_pidpath`);
+///   2. for that process, then for the process itself: the app it runs as,
+///      when `hostedApp` knows it, else the outermost bundle in its executable
+///      path (public `proc_pidpath`);
 ///   3. otherwise the process's own bundle ID, shown as is.
 /// Results are cached per process.
 package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendable {
-    package init() {}
+    /// The app a process runs as when its executable belongs to another
+    /// program: every Safari web app runs Safari's one "Web App" program, so
+    /// its path alone would name them all alike. `nil` for other processes.
+    private let hostedApp: @Sendable (pid_t) -> AudioSource?
+
+    package init(hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil }) {
+        self.hostedApp = hostedApp
+    }
 
     /// Owner of each audio process; its bundle ID guards against pid reuse.
     private let sources = ProcessCache<AudioSource>()
@@ -70,6 +79,7 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendab
             pids.insert(owner, at: 0)
         }
         for candidate in pids {
+            if let source = hostedApp(candidate) { return source }
             if let path = Self.executablePath(of: candidate),
                let bundleURL = Self.outermostBundle(containing: path),
                let source = Self.source(forBundleAt: bundleURL) {

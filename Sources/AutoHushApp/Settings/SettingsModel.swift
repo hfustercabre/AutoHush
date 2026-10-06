@@ -47,9 +47,23 @@ final class SettingsModel {
     /// dimmed when it can't.
     var playerCanFade = true
 
+    /// How far AutoHush has come learning to control the chosen player;
+    /// `nil` for a player it controls without learning.
+    var learning: LearningStatus?
+
+    /// The chosen player as it's offered.
+    var chosenPlayer: PlayerOption? {
+        playerOptions.first { $0.bundleID == chosenPlayerID }
+    }
+
     /// The chosen player's name, e.g. "Spotify".
-    var chosenPlayerName: String? {
-        playerOptions.first { $0.bundleID == chosenPlayerID }?.name
+    var chosenPlayerName: String? { chosenPlayer?.name }
+
+    /// Whether the user has still to play the chosen player (`false`) or to
+    /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
+    /// to learn.
+    var learningHasPlayed: Bool? {
+        if case .learning(let hasPlayed) = learning { hasPlayed } else { nil }
     }
     var isAutoPauseOn = true
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.

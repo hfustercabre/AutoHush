@@ -38,8 +38,9 @@ final class PlayerChooserWindowController: NSWindowController, PlayerChooserPres
     }
 }
 
-/// The music players as rows in a card, like Settings → Apps; the user picks
-/// one and continues. Players that aren't installed come last, dimmed, and
+/// The music players as rows in a card, like Settings → Apps, then the
+/// Safari web apps in a card of their own; the user picks one and continues.
+/// Players that aren't installed come after the installed apps, dimmed, and
 /// can't be picked. When only one is installed, it starts picked. From
 /// `PlayerOption.searchThreshold` players on, a search narrows them down and
 /// the list scrolls at a fixed height.
@@ -71,11 +72,11 @@ struct PlayerChooserView: View {
             if model.playerOptions.isSearchable {
                 SearchField(text: $search)
                 ScrollView {
-                    Card { players(model.playerOptions.installedFirst.matching(search)) }
+                    groups(model.playerOptions.offered.matching(search))
                 }
                 .frame(height: Self.scrollingListHeight)
             } else {
-                Card { players(model.playerOptions.installedFirst) }
+                groups(model.playerOptions.offered)
             }
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
@@ -97,6 +98,23 @@ struct PlayerChooserView: View {
         .padding(24)
         .frame(width: 420)
         .font(.appBody)
+    }
+
+    /// The apps' card, then the web apps' under their heading. A card shows
+    /// only when it has a player, or when neither has (with the search's note).
+    @ViewBuilder private func groups(_ options: [PlayerOption]) -> some View {
+        let start = options.webAppsStart ?? options.count
+        let apps = Array(options[..<start])
+        let webApps = Array(options[start...])
+        VStack(alignment: .leading, spacing: 8) {
+            if !apps.isEmpty || webApps.isEmpty {
+                Card { players(apps) }
+            }
+            if !webApps.isEmpty {
+                SectionHeading(Text(verbatim: PlayerOption.webAppsHeading), isFirst: apps.isEmpty)
+                Card { players(webApps) }
+            }
+        }
     }
 
     /// The players' rows, for a card; a note when the search matched none.

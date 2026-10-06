@@ -49,6 +49,15 @@ struct AppStatus: Equatable {
     /// The music player AutoHush controls, e.g. "Spotify"; empty while none
     /// is chosen.
     var playerName: String { chosenPlayer?.name ?? "" }
+    /// How far AutoHush has come learning to control the chosen player;
+    /// `nil` for a player it controls without learning.
+    var learning: LearningStatus?
+    /// Whether the user has still to play the chosen player (`false`) or to
+    /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
+    /// to learn.
+    var learningHasPlayed: Bool? {
+        if case .learning(let hasPlayed) = learning { hasPlayed } else { nil }
+    }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending

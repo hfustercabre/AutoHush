@@ -16,4 +16,15 @@ struct MusicPlayerCatalogTests {
         #expect(catalog.player(bundleID: nil) == nil)
         #expect(catalog.formerDefault == "com.example.first")
     }
+
+    @Test("players found on this Mac come after the built-in ones, looked up each time")
+    func found() {
+        let first = MockMusicPlayer(bundleID: "com.example.first", name: "First")
+        let webApp = MockMusicPlayer(bundleID: "com.example.web", name: "Web")
+        let catalog = MusicPlayerCatalog(players: [first], found: { [webApp] })
+        #expect(catalog.players.map(\.name) == ["First"])
+        #expect(catalog.all.map(\.name) == ["First", "Web"])
+        #expect(catalog.player(bundleID: "com.example.web")?.name == "Web")
+        #expect(first.kind == .app)
+    }
 }

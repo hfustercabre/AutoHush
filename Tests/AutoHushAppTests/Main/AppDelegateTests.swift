@@ -29,6 +29,7 @@ struct AppDelegateTests {
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
+        let learningWindow = FakeLearningWindow()
 
         private var onFolderChange: (@MainActor () -> Void)?
 
@@ -87,6 +88,8 @@ struct AppDelegateTests {
             players: scratch.players,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
+            makeLearningWindow: { _ in scratch.learningWindow },
+            learnedWindowDelay: .zero,
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
             retryDelays: 0.02...0.08,
@@ -95,6 +98,59 @@ struct AppDelegateTests {
             bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
         return (sut, counter)
+    }
+
+    // MARK: - Players that learn
+
+    @MainActor
+    private func waitFor(_ condition: @MainActor () -> Bool) async {
+        for _ in 0..<200 where !condition() { try? await Task.sleep(for: .milliseconds(10)) }
+    }
+
+    @MainActor
+    @Test("choosing a web app AutoHush must learn asks for it in a window, shows the steps, and closes it once learned")
+    func learningWindow() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        #expect(sut.status.learning == nil)
+        #expect(sut.status.playerOptions.map(\.kind) == [.app, .safariWebApp])
+
+        sut.chooseMusicPlayer(webApp.bundleID)
+        #expect(scratch.learningWindow.isVisible)
+        #expect(sut.status.learningHasPlayed == false)
+        #expect(sut.settingsModel.learningHasPlayed == false)
+
+        webApp.set(.learning(hasPlayed: true))
+        await waitFor { sut.status.learningHasPlayed == true }
+        #expect(sut.settingsModel.learningHasPlayed == true)
+
+        webApp.set(.learned)
+        await waitFor { !scratch.learningWindow.isVisible }
+        #expect(!scratch.learningWindow.isVisible)
+        #expect(sut.status.learning == .learned)
+        #expect(sut.status.learningHasPlayed == nil)
+
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.status.learning == nil)
+        sut.chooseMusicPlayer(webApp.bundleID) // learned already: no window
+        #expect(scratch.learningWindow.shownCount == 1)
+    }
+
+    @MainActor
+    @Test("a web app chosen earlier shows its steps at launch, without the window")
+    func learningAtLaunch() {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
+        #expect(sut.status.learningHasPlayed == false)
+        #expect(!scratch.learningWindow.isVisible)
     }
 
     @MainActor

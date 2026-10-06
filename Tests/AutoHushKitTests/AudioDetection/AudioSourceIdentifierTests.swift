@@ -45,4 +45,15 @@ struct AudioSourceIdentifierTests {
         let own = identifier.sourceID(forPID: getpid())
         #expect(identifier.sourceID(forPID: getpid()) == own)
     }
+
+    @Test("an app hosted by another program (a Safari web app) is named by what it runs as")
+    func hostedApp() {
+        let webApp = AudioSource(id: "com.apple.Safari.WebApp.TEST", name: "YT Music", bundlePath: "/Users/test/Applications/YT Music.app")
+        let own = getpid()
+        // Whichever process answers first (this one's responsible app, or this one).
+        let identifier = ProcessAudioSourceIdentifier { _ in webApp }
+        #expect(identifier.sourceID(forPID: own) == webApp.id)
+        #expect(identifier.source(for: AudioProcessInfo(objectID: 1, bundleID: "com.apple.WebKit.GPU", pid: own)) == webApp)
+        #expect(ProcessAudioSourceIdentifier().sourceID(forPID: own) != webApp.id)
+    }
 }

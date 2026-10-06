@@ -174,6 +174,23 @@ struct DiagnosticsReportTests {
         #expect(rows.last?.value == "No")
     }
 
+    @Test("a web app's section says whether its button is learned and its windows on other Spaces reachable")
+    func webAppRows() throws {
+        func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {
+            let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(change))
+            return try #require(snapshot.sections.first { $0.kind == .player }).rows
+        }
+        #expect(try rows { _ in }.count == 3)
+        #expect(try rows {
+            $0.playerLearned = false
+            $0.reachesOtherSpaces = true
+        }.suffix(2) == [
+            .init(label: "Play/Pause button learned", value: "No", mark: .problem),
+            .init(label: "Reaches windows on other Spaces", value: "Yes", mark: .ok),
+        ])
+        #expect(try rows { $0.playerLearned = true }.last == .init(label: "Play/Pause button learned", value: "Yes", mark: .ok))
+    }
+
     @Test("each app's line says how AutoHush judges it, and why", arguments: [
         (ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .starting), "org.videolan.vlc — starting"),
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),

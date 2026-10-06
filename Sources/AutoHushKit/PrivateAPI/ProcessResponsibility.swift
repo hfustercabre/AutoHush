@@ -8,9 +8,9 @@ import Darwin
 /// returns `nil` and callers fall back to the executable's path.
 ///
 /// Check after every major macOS release.
-enum ProcessResponsibility {
+package enum ProcessResponsibility {
     /// The responsible process, or `nil` when unknown or the function is unavailable.
-    static func responsiblePID(for pid: pid_t) -> pid_t? {
+    package static func responsiblePID(for pid: pid_t) -> pid_t? {
         guard let function, case let owner = function(pid), owner > 0 else { return nil }
         return owner
     }

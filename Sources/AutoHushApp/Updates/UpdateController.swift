@@ -486,7 +486,7 @@ final class UpdateController {
         alert.messageText = String(localized: "Couldn't Install the Update", comment: "Alert title")
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
-        alert.addButton(withTitle: String(localized: "Later", comment: "Update alert button: close it without updating"))
+        alert.addButton(withTitle: String(localized: "Later", comment: "Button that closes it for now: an update alert, or the window that learns a web app's controls"))
         NSApp.activate()
         if alert.runModalWithoutShortcuts() == .alertFirstButtonReturn {
             openURL(release.pageURL)

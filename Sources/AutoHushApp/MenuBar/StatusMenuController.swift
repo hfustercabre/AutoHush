@@ -13,6 +13,11 @@ import AutoHushKit
 /// ╰────────────────────────────────────────────╯
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
 /// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
+///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
+/// ╭────────────────────────────────────────────╮
+/// │ Learning YT Music's Controls                │  (until AutoHush has learned
+/// │ ✓ Play something in YT Music  ○ Pause it    │  the chosen web app's button)
+/// ╰────────────────────────────────────────────╯
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///   Turn off for
 ///   [5 min] [15 min] [30 min] [1 hr] [24 hr]
@@ -74,6 +79,8 @@ final class StatusMenuController: NSObject {
     /// The card at the top, and the players unfolded under it, with their
     /// search when there are enough of them.
     private var cardItem: NSMenuItem?
+    /// Under the card while AutoHush learns the chosen player's controls.
+    private var learningItem: NSMenuItem?
     private var playerSearchItem: NSMenuItem?
     private var playerRows: [NSMenuItem] = []
 
@@ -108,6 +115,7 @@ final class StatusMenuController: NSObject {
         guard isMenuOpen else { return }
         model.status = status
         if let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
+        if let learningItem { fit(learningItem, changed: true) } // a step ticked, or learning done
     }
 
     private func renderIcon() {
@@ -131,6 +139,8 @@ final class StatusMenuController: NSObject {
         let card = hostedItem("card", StatusCardView(model: model))
         cardItem = card
         menu.addItem(card)
+        learningItem = status.learningHasPlayed == nil ? nil : hostedItem("learning", LearningCardView(model: model))
+        if let learningItem { menu.addItem(learningItem) }
         if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
         menu.addItem(hostedItem("snooze", SnoozeBarView(model: model)))
         if !status.activeSources.isEmpty {
@@ -230,7 +240,7 @@ final class StatusMenuController: NSObject {
             playerRows = []
             model.playerSearch = ""
         } else if let cardItem {
-            let options = status.playerOptions.installedFirst
+            let options = status.playerOptions.offered
             var first = menu.index(of: cardItem) + 1
             if options.isSearchable {
                 let search = hostedItem("playerSearch", PlayerSearchRow(model: model), takesKeyboard: true)
@@ -248,13 +258,17 @@ final class StatusMenuController: NSObject {
         guard let playerSearchItem else { return } // folded meanwhile
         model.playerSearch = search
         playerRows.forEach(menu.removeItem)
-        showPlayerRows(status.playerOptions.installedFirst.matching(search), at: menu.index(of: playerSearchItem) + 1)
+        showPlayerRows(status.playerOptions.offered.matching(search), at: menu.index(of: playerSearchItem) + 1)
     }
 
-    /// Inserts a row for each of `options` at `index`; a note when there's
-    /// none, because the search matched none.
+    /// Inserts a row for each of `options` at `index`, with a heading over
+    /// the Safari web apps; a note when there's none, because the search
+    /// matched none.
     private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
         playerRows = options.map(playerRow)
+        if let start = options.webAppsStart {
+            playerRows.insert(.sectionHeader(title: PlayerOption.webAppsHeading), at: start)
+        }
         if playerRows.isEmpty {
             let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
             note.isEnabled = false

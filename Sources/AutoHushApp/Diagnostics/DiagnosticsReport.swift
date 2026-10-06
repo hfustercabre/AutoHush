@@ -12,6 +12,12 @@ struct DiagnosticsFacts: Equatable {
     /// (`nil`: not known until AutoHush has tried).
     var playerPermission: Permission?
     var playerPermissionGranted: Bool?
+    /// Whether AutoHush has learned the chosen player's Play/Pause button;
+    /// `nil` for a player it doesn't have to learn.
+    var playerLearned: Bool?
+    /// Whether the chosen player's windows on other Spaces can be reached
+    /// (a private function); `nil` for a player that has no need to.
+    var reachesOtherSpaces: Bool?
     /// `nil` when macOS can't be asked.
     var audioRecording: AudioCapturePermission?
     var notificationsOff = false
@@ -117,12 +123,23 @@ enum DiagnosticsReport {
             ? [player.name, facts.playerVersion].compactMap { $0 }.joined(separator: " ")
             : "\(player.name) · \(PlayerOption.notInstalledLabel)"
         let state = describe(status.playback)
-        return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: [
+        var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
             Row(label: String(localized: "State", comment: "Diagnostics: the music player's state"), value: state),
             Row(label: String(localized: "Fades", comment: "Diagnostics: whether AutoHush can fade the music player"),
                 value: facts.playerCanFade ? yes : no),
-        ])
+        ]
+        if let learned = facts.playerLearned {
+            rows.append(Row(label: String(localized: "Play/Pause button learned",
+                                          comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
+                            value: learned ? yes : no, mark: learned ? .ok : .problem))
+        }
+        if let reaches = facts.reachesOtherSpaces {
+            rows.append(Row(label: String(localized: "Reaches windows on other Spaces",
+                                          comment: "Diagnostics: whether AutoHush can control the web app while its window is on another desktop"),
+                            value: reaches ? yes : no, mark: reaches ? .ok : .problem))
+        }
+        return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: rows)
     }
 
     private static var playerLabel: String {
@@ -327,10 +344,10 @@ enum DiagnosticsReport {
         switch evidence {
         case .announcing:
             return String(localized: "tells macOS it's playing",
-                          comment: "Diagnostics, AntiDot mode: why an app counts as playing")
+                          comment: "Diagnostics: why an app counts as playing, in AntiDot mode or while levels aren't measured")
         case .notAnnouncing:
             return String(localized: "not telling macOS it's playing",
-                          comment: "Diagnostics, AntiDot mode: why an app counts as paused")
+                          comment: "Diagnostics: why an app counts as paused, in AntiDot mode or while levels aren't measured")
         case .level(let peak) where peak > 0:
             return String(localized: "\(Int((20 * log10(peak)).rounded())) dBFS",
                           comment: "Diagnostics: an app's loudest level, in decibels")

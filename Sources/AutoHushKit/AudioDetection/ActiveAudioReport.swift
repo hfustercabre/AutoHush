@@ -17,9 +17,10 @@ package struct ActiveAudioReport: Sendable {
 
         /// What the judgement rests on.
         package enum Evidence: Equatable, Sendable {
-            /// AntiDot mode: the app tells macOS it's playing.
+            /// The app tells macOS it's playing (AntiDot mode, or while levels
+            /// aren't measured).
             case announcing
-            /// AntiDot mode: the app stopped telling macOS it's playing.
+            /// The app stopped telling macOS it's playing.
             case notAnnouncing
             /// The app's loudest tapped peak (0…1), while audio levels are measured.
             case level(Float)
@@ -50,8 +51,9 @@ package struct ActiveAudioReport: Sendable {
     /// Loudest tapped peak (0…1) per app, when audio levels are measured.
     var levels: [String: Float]
     var ignored: Set<String>
-    /// AntiDot mode: apps counted as playing because they tell macOS they
-    /// play, and apps counted as paused because they stopped telling it.
+    /// Apps counted as playing because they tell macOS they play, and apps
+    /// counted as paused because they stopped telling it (AntiDot mode, or
+    /// while levels aren't measured).
     var announcing: Set<String>
     var notAnnouncing: Set<String>
     /// The apps' names; an app without one is shown by its ID.
