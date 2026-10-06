@@ -4,34 +4,58 @@ import UniformTypeIdentifiers
 import AutoHushKit
 
 /// Settings → Apps: which apps pause the music, in a card like the menu's
-/// "Playing now", each with its switch.
+/// "Playing now", each with its switch, in the order the user chose; a
+/// magnifier opens a search by name in place of the heading. The tab grows
+/// with the list up to Advanced's height; a longer list scrolls under the
+/// heading.
 struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
+    /// The heights of the list (with its note) and of the parts above and
+    /// below it, which don't scroll.
+    @State private var listHeight: CGFloat = 0
+    @State private var headerHeight: CGFloat = 0
+    @State private var barHeight: CGFloat = 0
+    /// The height when the search opened, kept while it's open so the window
+    /// doesn't shrink as the list narrows down.
+    @State private var heightWhileSearching: CGFloat?
+
+    /// The tab's height with a short list.
+    static let minimumHeight: CGFloat = 440
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            header
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { headerHeight = $0 }
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    SectionLabel(Text("Pauses Music"))
-                        .padding(.leading, 4)
                     Card {
                         if model.apps.isEmpty {
                             Text("Apps appear here once they have played audio.")
                                 .foregroundStyle(.appSecondary)
+                        } else if model.shownApps.isEmpty, let search = model.appSearch {
+                            Text(verbatim: String(localized: "No apps match “\(search)”.",
+                                                  comment: "Settings → Apps, when the search finds nothing; %@ is what was typed"))
+                                .foregroundStyle(.appSecondary)
                         }
-                        ForEach(Array(model.apps.enumerated()), id: \.element.id) { index, row in
+                        ForEach(Array(model.shownApps.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { CardDivider() }
                             appRow(row)
                         }
                     }
+                    .animation(.default, value: model.apps)
                     Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)
                 }
-                .padding(16)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 }
             }
             HStack {
                 Button("Ignore Another App…") { chooseAppToIgnore() }
@@ -42,15 +66,87 @@ struct AppsSettingsView: View {
                     .disabled(model.apps.isEmpty)
             }
             .padding(.horizontal, 16)
-            .padding(.top, 4)
+            .padding(.top, 8)
             .padding(.bottom, 16)
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { barHeight = $0 }
         }
         .confirmationDialog("Reset the list of apps?", isPresented: $confirmingReset) {
             Button("Reset List", role: .destructive) { model.forgetAllApps() }
         } message: {
             Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.")
         }
-        .frame(width: 480, height: 440)
+        .frame(width: 480, height: heightWhileSearching ?? height)
+        .onChange(of: model.appSearch != nil) { _, searching in
+            heightWhileSearching = searching ? height : nil
+        }
+    }
+
+    /// As tall as the whole list, at least `minimumHeight` and at most
+    /// Advanced's height.
+    private var height: CGFloat {
+        let whole = headerHeight + listHeight + barHeight
+        return min(max(whole, Self.minimumHeight), max(model.appsMaximumHeight, Self.minimumHeight))
+    }
+
+    /// The heading, or the search while it's open, then "Sort by" with the
+    /// order's pop-up, an arrow that reverses it, and the magnifier.
+    private var header: some View {
+        let order = model.appListOrder
+        return HStack(spacing: 6) {
+            if model.appSearch != nil {
+                // A closing field hands back its text as it loses focus:
+                // only an open search takes it.
+                AppSearchField(text: Binding(
+                    get: { model.appSearch ?? "" },
+                    set: { text in if model.appSearch != nil { model.appSearch = text } }
+                )) {
+                    model.appSearch = nil
+                }
+                .padding(.trailing, 10)
+            } else {
+                SectionLabel(Text("Pauses Music"))
+                    .padding(.leading, 4)
+                Spacer()
+            }
+            Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
+                .font(.appCaption)
+                .foregroundStyle(.appSecondary)
+            Picker(selection: Binding(
+                get: { order.criterion },
+                set: { model.setAppListOrder(AppListOrder(criterion: $0)) }
+            )) {
+                ForEach(AppListOrder.Criterion.allCases, id: \.self) { Text($0.title).tag($0) }
+            } label: {
+                Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .fixedSize()
+            Button {
+                model.setAppListOrder(AppListOrder(criterion: order.criterion, isReversed: !order.isReversed))
+            } label: {
+                Image(systemName: order.isReversed ? "arrow.up" : "arrow.down")
+                    .font(.appCaption.weight(.semibold))
+                    .frame(width: 22, height: 20)
+            }
+            .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+            .help(String(localized: "\(order.directionTitle). Click to reverse the order.",
+                         comment: "Settings → Apps, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”"))
+            .accessibilityLabel(Text("Reverse Order", comment: "Settings → Apps: the arrow that reverses the apps' order"))
+            .accessibilityValue(Text(verbatim: order.directionTitle))
+            if model.appSearch == nil {
+                Button { model.appSearch = "" } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.appCaption.weight(.semibold))
+                        .frame(width: 22, height: 20)
+                }
+                .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+                .disabled(model.apps.isEmpty)
+                .help(Text("Search by name", comment: "Settings → Apps: the magnifier that opens the search"))
+                .accessibilityLabel(Text("Search by name", comment: "Settings → Apps: the magnifier that opens the search"))
+            }
+        }
     }
 
     /// The app's icon and name, whether it pauses the music, and its switch.
@@ -90,5 +186,64 @@ struct AppsSettingsView: View {
               let source = ProcessAudioSourceIdentifier.source(forBundleAt: url)
         else { return }
         model.setPausesMusic(false, for: source)
+    }
+}
+
+/// The search in Settings → Apps, in the style of its chips: a magnifier, the
+/// text, and a button that closes it. It takes the keyboard focus as it
+/// opens.
+private struct AppSearchField: View {
+    @Binding var text: String
+    let close: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.appSecondary)
+                .accessibilityHidden(true)
+            TextField(text: $text) {
+                Text("Search", comment: "Settings → Apps: the search field's placeholder")
+            }
+            .textFieldStyle(.plain)
+            .focused($isFocused)
+            Button(action: close) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.appSecondary)
+            }
+            .buttonStyle(.plain)
+            .help(Text("Close Search", comment: "Settings → Apps: the button that closes the search"))
+            .accessibilityLabel(Text("Close Search", comment: "Settings → Apps: the button that closes the search"))
+        }
+        .font(.appCallout)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 7).fill(.chipFill))
+        .onAppear { isFocused = true }
+    }
+}
+
+extension AppListOrder.Criterion {
+    /// Its name in Settings → Apps' Sort by pop-up.
+    var title: String {
+        switch self {
+        case .lastPlayed: String(localized: "Last Played", comment: "Settings → Apps, Sort by: the app that played most recently first")
+        case .name:       String(localized: "Name", comment: "Settings → Apps, Sort by: alphabetically")
+        case .state:      String(localized: "On/Off", comment: "Settings → Apps, Sort by: apps that pause the music first, then the ignored ones")
+        }
+    }
+}
+
+extension AppListOrder {
+    /// Which way round it goes, in its criterion's words, e.g. "Newest first".
+    var directionTitle: String {
+        switch (criterion, isReversed) {
+        case (.lastPlayed, false): String(localized: "Newest first", comment: "Settings → Apps: the order, the app that played last first")
+        case (.lastPlayed, true):  String(localized: "Oldest first", comment: "Settings → Apps: the order, the app that played longest ago first")
+        case (.name, false):       String(localized: "A to Z", comment: "Settings → Apps: the order, alphabetical")
+        case (.name, true):        String(localized: "Z to A", comment: "Settings → Apps: the order, reverse alphabetical")
+        case (.state, false):      String(localized: "Apps that pause the music first", comment: "Settings → Apps: the order, switched-on apps first")
+        case (.state, true):       String(localized: "Ignored apps first", comment: "Settings → Apps: the order, switched-off apps first")
+        }
     }
 }

@@ -528,6 +528,28 @@ struct AppDelegateTests {
         #expect(scratch.preferences.ignoredApps.isEmpty)
     }
 
+    @MainActor
+    @Test("switching an app keeps its place in the order apps played; the order chosen is kept")
+    func ignoringKeepsPlayedOrder() {
+        let scratch = Scratch()
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app")
+        scratch.preferences.recordSeen([vlc])
+        scratch.preferences.recordSeen([chrome])
+        scratch.preferences.appListOrder = AppListOrder(criterion: .lastPlayed, isReversed: true)
+        let (sut, _) = makeSUT(scratch)
+        #expect(sut.settingsModel.appListOrder.isReversed)
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id, chrome.id])
+
+        sut.setIgnored(vlc, true)
+        #expect(scratch.preferences.seenApps == [chrome, vlc])
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id, chrome.id])
+
+        sut.settingsModel.setAppListOrder(AppListOrder(criterion: .state))
+        #expect(scratch.preferences.appListOrder == AppListOrder(criterion: .state))
+        #expect(sut.settingsModel.apps.map(\.id) == [chrome.id, vlc.id])
+    }
+
     // MARK: - Settings and updates
 
     @MainActor

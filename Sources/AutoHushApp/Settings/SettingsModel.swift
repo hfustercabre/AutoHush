@@ -15,6 +15,7 @@ final class SettingsModel {
         var setIgnored: @MainActor (AudioSource, Bool) -> Void
         var forgetApp: @MainActor (AudioSource) -> Void
         var forgetAllApps: @MainActor () -> Void
+        var setAppListOrder: @MainActor (AppListOrder) -> Void = { _ in }
         var setTimings: @MainActor (TimingSettings) -> Void
         var setDetectionMethod: @MainActor (DetectionMethod) -> Void
         var setChecksForUpdates: @MainActor (Bool) -> Void
@@ -29,6 +30,9 @@ final class SettingsModel {
     struct AppRow: Identifiable, Equatable {
         let source: AudioSource
         let isIgnored: Bool
+        /// When it played, as a place in line: 0 played most recently. `nil`
+        /// for an app ignored before it ever played.
+        var playedRank: Int?
         var id: String { source.id }
     }
 
@@ -83,7 +87,24 @@ final class SettingsModel {
     var lastUpdateCheck: Date?
 
     // Apps
+    /// The apps, in `appListOrder`.
     private(set) var apps: [AppRow] = []
+    /// How the apps are ordered; the most recent first unless the user
+    /// chose otherwise.
+    private(set) var appListOrder = AppListOrder.standard
+    /// The search in Settings → Apps: `nil` while it's closed. It's closed
+    /// again each time Settings opens.
+    var appSearch: String?
+    /// The apps whose names match the search, ignoring case and accents, in
+    /// `appListOrder`; all of them while there's nothing to search for.
+    var shownApps: [AppRow] {
+        let query = appSearch?.trimmingCharacters(in: .whitespaces) ?? ""
+        guard !query.isEmpty else { return apps }
+        return apps.filter { $0.source.name.localizedStandardContains(query) }
+    }
+    /// The tallest Settings → Apps may grow while its list is long: the
+    /// height of Advanced, so switching between them keeps the window still.
+    var appsMaximumHeight: CGFloat = 585
 
     // Diagnostics
     /// What AutoHush sees, kept up to date while the Diagnostics tab shows.
@@ -153,6 +174,13 @@ final class SettingsModel {
     func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
     func forget(_ source: AudioSource) { actions.forgetApp(source) }
     func forgetAllApps() { actions.forgetAllApps() }
+
+    func setAppListOrder(_ order: AppListOrder) {
+        guard order != appListOrder else { return }
+        appListOrder = order
+        apps = Self.ordered(apps, by: order)
+        actions.setAppListOrder(order)
+    }
     func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
     func setAutomaticUpdates(_ mode: AutomaticUpdates) { actions.setAutomaticUpdates(mode) }
 
@@ -206,15 +234,35 @@ final class SettingsModel {
 
     // MARK: - Updates from the app
 
-    /// Apps that have played audio plus ignored apps, sorted by name.
-    func setApps(seen: [AudioSource], ignored: [AudioSource]) {
+    /// Apps that have played audio, the most recent first, plus ignored
+    /// apps, shown in `order` (the one already chosen when `nil`).
+    func setApps(seen: [AudioSource], ignored: [AudioSource], order: AppListOrder? = nil) {
+        if let order { appListOrder = order }
         let ignoredIDs = Set(ignored.map(\.id))
-        var sources = seen
-        for app in ignored where !sources.contains(where: { $0.id == app.id }) {
-            sources.append(app)
+        var rows = seen.enumerated().map {
+            AppRow(source: $0.element, isIgnored: ignoredIDs.contains($0.element.id), playedRank: $0.offset)
         }
-        apps = sources
-            .sortedByName()
-            .map { AppRow(source: $0, isIgnored: ignoredIDs.contains($0.id)) }
+        for app in ignored where !rows.contains(where: { $0.id == app.id }) {
+            rows.append(AppRow(source: app, isIgnored: true))
+        }
+        apps = Self.ordered(rows, by: appListOrder)
+    }
+
+    /// The rows in `order`. Ties, and the apps that never played, go by name;
+    /// for a reversed On/Off order, only the groups swap.
+    static func ordered(_ rows: [AppRow], by order: AppListOrder) -> [AppRow] {
+        let name = { (row: AppRow) in row.source.name.localizedLowercase }
+        switch order.criterion {
+        case .lastPlayed:
+            let rank = { (row: AppRow) in row.playedRank ?? .max }
+            let list = rows.sorted { (rank($0), name($0), $0.id) < (rank($1), name($1), $1.id) }
+            return order.isReversed ? list.reversed() : list
+        case .name:
+            let list = rows.sorted { (name($0), $0.id) < (name($1), $1.id) }
+            return order.isReversed ? list.reversed() : list
+        case .state:
+            let group = { (row: AppRow) in row.isIgnored != order.isReversed ? 1 : 0 }
+            return rows.sorted { (group($0), name($0), $0.id) < (group($1), name($1), $1.id) }
+        }
     }
 }

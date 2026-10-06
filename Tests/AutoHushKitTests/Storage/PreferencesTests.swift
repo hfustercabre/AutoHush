@@ -72,6 +72,36 @@ struct PreferencesTests {
         #expect(preferences.seenApps.count == Preferences.seenAppsLimit)
     }
 
+    @Test("keeping an app seen adds it at the front once, and leaves a known app where it is")
+    func keepSeen() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        preferences.recordSeen([vlc])
+        preferences.recordSeen([chrome])
+
+        preferences.keepSeen(vlc)
+        #expect(preferences.seenApps == [chrome, vlc])
+        let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us", bundlePath: "/Applications/zoom.us.app")
+        preferences.keepSeen(zoom)
+        #expect(preferences.seenApps == [zoom, chrome, vlc])
+    }
+
+    @Test("the apps' order defaults to the most recent first, and persists")
+    func appListOrder() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        #expect(preferences.appListOrder == .standard)
+        #expect(preferences.appListOrder == AppListOrder(criterion: .lastPlayed, isReversed: false))
+
+        preferences.appListOrder = AppListOrder(criterion: .state, isReversed: true)
+        #expect(Preferences(store: scratch.defaults).appListOrder == AppListOrder(criterion: .state, isReversed: true))
+
+        scratch.defaults.set("someday", forKey: "appListOrder") // from a later version
+        #expect(Preferences(store: scratch.defaults).appListOrder == AppListOrder(criterion: .lastPlayed, isReversed: true))
+    }
+
     @Test("update settings default to automatic checks and installs, and persist")
     func updateSettings() {
         let scratch = Scratch()

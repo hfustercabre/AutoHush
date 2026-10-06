@@ -16,6 +16,8 @@ package final class Preferences {
         static let autoPauseSnoozedUntil = "autoPauseSnoozedUntil"
         static let ignoredApps = "ignoredApps"
         static let seenApps = "seenApps"
+        static let appListOrder = "appListOrder"
+        static let appListOrderReversed = "appListOrderReversed"
         static let timings = "timings"
         static let checksForUpdates = "checksForUpdatesAutomatically"
         static let automaticUpdates = "automaticUpdates"
@@ -233,6 +235,28 @@ package final class Preferences {
         let current = seenApps
         let updated = apps + current.filter { !ids.contains($0.id) }
         if updated != current { seenApps = updated }
+    }
+
+    /// Adds the app to `seenApps`, at the front, unless it's there already:
+    /// unlike `recordSeen`, it doesn't count as having just played.
+    package func keepSeen(_ app: AudioSource) {
+        guard !seenApps.contains(where: { $0.id == app.id }) else { return }
+        seenApps = [app] + seenApps
+    }
+
+    /// How Settings → Apps orders its apps.
+    package var appListOrder: AppListOrder {
+        get {
+            let criterion = (defaults.object(forKey: Key.appListOrder) as? String).flatMap(AppListOrder.Criterion.init)
+            return AppListOrder(
+                criterion: criterion ?? AppListOrder.standard.criterion,
+                isReversed: defaults.object(forKey: Key.appListOrderReversed) as? Bool ?? false
+            )
+        }
+        set {
+            defaults.set(newValue.criterion.rawValue, forKey: Key.appListOrder)
+            defaults.set(newValue.isReversed, forKey: Key.appListOrderReversed)
+        }
     }
 
     /// Apps that never pause the music, sorted by name.

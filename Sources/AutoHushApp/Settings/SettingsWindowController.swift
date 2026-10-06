@@ -33,6 +33,8 @@ final class SettingsWindowController: NSWindowController {
 
     let model: SettingsModel
     private let tabController = SettingsTabViewController()
+    /// Advanced's content: Apps grows up to its height.
+    private var advancedTab: NSViewController?
 
     init(model: SettingsModel) {
         self.model = model
@@ -59,12 +61,16 @@ final class SettingsWindowController: NSWindowController {
             item.label = tab.title
             item.image = NSImage(systemSymbolName: tab.symbolName, accessibilityDescription: tab.title)
             tabController.addTabViewItem(item)
+            if tab == .advanced { advancedTab = hosting }
         }
 
         let window = NSWindow(contentViewController: tabController)
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         super.init(window: window)
+        tabController.willShowTab = { [weak self] index in
+            if Tab.allCases.firstIndex(of: .apps) == index { self?.measureAppsMaximumHeight() }
+        }
     }
 
     @available(*, unavailable)
@@ -78,16 +84,28 @@ final class SettingsWindowController: NSWindowController {
 
     /// Shows the window on `tab` when given. Otherwise a window that was
     /// closed opens on General again, and one still open keeps its tab.
-    /// Reopened, Diagnostics has every part open again.
+    /// Reopened, Diagnostics has every part open again and Apps' search is
+    /// closed.
     func show(tab: Tab? = nil) {
         let reopening = window?.isVisible != true
-        if reopening { model.foldedDiagnostics = [] }
+        if reopening {
+            model.foldedDiagnostics = []
+            model.appSearch = nil
+        }
         let target = tab ?? (reopening ? .general : nil)
         if let target, let index = Tab.allCases.firstIndex(of: target) { tabController.selectedTabViewItemIndex = index }
         model.refreshLaunchAtLogin()
+        measureAppsMaximumHeight()
         if window?.isVisible != true { window?.center() }
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate()
+    }
+
+    /// Apps may grow as tall as Advanced is now, in this language and with
+    /// or without its fades note.
+    private func measureAppsMaximumHeight() {
+        guard let height = advancedTab?.view.fittingSize.height, height > 0 else { return }
+        model.appsMaximumHeight = height
     }
 }
 
@@ -97,6 +115,14 @@ final class SettingsWindowController: NSWindowController {
 /// it comes from a click: the window kept its old size until then, and then
 /// jumped.
 final class SettingsTabViewController: NSTabViewController {
+    /// Called with a tab's index just before it shows.
+    var willShowTab: ((Int) -> Void)?
+
+    override func tabView(_ tabView: NSTabView, willSelect tabViewItem: NSTabViewItem?) {
+        if let tabViewItem { willShowTab?(tabView.indexOfTabViewItem(tabViewItem)) }
+        super.tabView(tabView, willSelect: tabViewItem)
+    }
+
     /// The shown tab's content changed height (SwiftUI reports it at once).
     func contentHeightDidChange() {
         // After the layout pass that changed it, when the tab's

@@ -130,6 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 forgetApp: { [weak self] in self?.forget($0) },
                 forgetAllApps: { [weak self] in self?.forgetAllApps() },
+                setAppListOrder: { [weak self] in self?.preferences.appListOrder = $0 },
                 setTimings: { [weak self] in self?.setTimings($0) },
                 setDetectionMethod: { [weak self] in self?.setDetectionMethod($0) },
                 setChecksForUpdates: { [weak self] in self?.setChecksForUpdatesAutomatically($0) },
@@ -296,8 +297,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func setIgnored(_ source: AudioSource, _ ignored: Bool) {
-        // Keep the app (with its icon) listed in Settings → Apps.
-        if source.bundlePath != nil { preferences.recordSeen([source]) }
+        // Keep the app (with its icon) listed in Settings → Apps, where it
+        // was: switching it isn't playing.
+        if source.bundlePath != nil { preferences.keepSeen(source) }
         var apps = preferences.ignoredApps.filter { $0.id != source.id }
         if ignored { apps.append(AudioSource(id: source.id, name: source.name)) }
         applyIgnoredApps(apps)
@@ -379,7 +381,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let chosen = player?.bundleID
         let withoutPlayer = { (apps: [AudioSource]) in apps.filter { $0.id != chosen } }
         status.ignoredApps = withoutPlayer(preferences.ignoredApps)
-        settingsModel.setApps(seen: withoutPlayer(preferences.seenApps), ignored: withoutPlayer(preferences.ignoredApps))
+        settingsModel.setApps(seen: withoutPlayer(preferences.seenApps), ignored: withoutPlayer(preferences.ignoredApps),
+                              order: preferences.appListOrder)
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,

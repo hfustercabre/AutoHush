@@ -18,9 +18,18 @@ This project follows [Semantic Versioning](https://semver.org/).
     permission to control it), and fades.
   - Both are watched about once a second, since neither announces when you
     play or pause it.
+- **Settings → Apps can be sorted** by Last Played (the default, the most
+  recent first), Name or On/Off, and the arrow beside **Sort by** reverses
+  the order. AutoHush remembers the choice.
+- **Settings → Apps has a search**: the magnifier beside **Sort by** opens
+  a field that finds apps by name, ignoring case and accents. The ✕ closes
+  it, and it's closed again each time Settings opens.
 
 ### Changed
 
+- **Settings → Apps grows with its list**, up to the height of Advanced,
+  so more apps show before it scrolls. The heading and the buttons stay in
+  place while the list scrolls.
 - The code shared by TIDAL and Apple Podcasts lives in `MenuPlayers`, and
   players that announce nothing share one observer. TIDAL works as before;
   it notices being quit at its next check, within a second.

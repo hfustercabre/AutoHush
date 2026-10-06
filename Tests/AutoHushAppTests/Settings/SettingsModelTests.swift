@@ -18,6 +18,7 @@ struct SettingsModelTests {
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             forgetApp: { log.calls.append("forget \($0.id)") },
             forgetAllApps: { log.calls.append("forgetAll") },
+            setAppListOrder: { log.calls.append("order \($0.criterion.rawValue) \($0.isReversed)") },
             setTimings: { log.calls.append("timings \($0.startConfirmation)") },
             setDetectionMethod: { log.calls.append("method \($0.rawValue)") },
             setChecksForUpdates: { log.calls.append("autoUpdate \($0)") },
@@ -73,7 +74,7 @@ struct SettingsModelTests {
         #expect(controller.openSystemSettingsCallCount == 1)
     }
 
-    @Test("the apps list merges seen and ignored apps, sorted by name")
+    @Test("the apps list merges seen and ignored apps, the most recent first, then those that never played")
     func appsList() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
@@ -81,9 +82,78 @@ struct SettingsModelTests {
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
         model.setApps(seen: [vlc, chrome], ignored: [AudioSource(id: vlc.id, name: "VLC"), zoom])
 
-        #expect(model.apps.map(\.source.name) == ["Google Chrome", "VLC", "zoom.us"])
-        #expect(model.apps.map(\.isIgnored) == [false, true, true])
-        #expect(model.apps[1].source.bundlePath == "/Applications/VLC.app") // the seen entry keeps its icon
+        #expect(model.apps.map(\.source.name) == ["VLC", "Google Chrome", "zoom.us"])
+        #expect(model.apps.map(\.isIgnored) == [true, false, true])
+        #expect(model.apps.map(\.playedRank) == [0, 1, nil])
+        #expect(model.apps[0].source.bundlePath == "/Applications/VLC.app") // the seen entry keeps its icon
+    }
+
+    @Test("the apps can be ordered by last played, name or on/off, each either way round")
+    func appsOrder() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
+        let arc = AudioSource(id: "company.thebrowser.Browser", name: "Arc")
+        // Played most recently: Safari, VLC, Chrome, Arc; zoom was ignored without playing.
+        model.setApps(seen: [safari, vlc, chrome, arc], ignored: [vlc, zoom])
+        func names(_ criterion: AppListOrder.Criterion, reversed: Bool = false) -> [String] {
+            model.setAppListOrder(AppListOrder(criterion: criterion, isReversed: reversed))
+            return model.apps.map(\.source.name)
+        }
+
+        #expect(names(.lastPlayed) == ["Safari", "VLC", "Google Chrome", "Arc", "zoom.us"])
+        #expect(names(.lastPlayed, reversed: true) == ["zoom.us", "Arc", "Google Chrome", "VLC", "Safari"])
+        #expect(names(.name) == ["Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
+        #expect(names(.name, reversed: true) == ["zoom.us", "VLC", "Safari", "Google Chrome", "Arc"])
+        // Each group stays A to Z; reversed, only the groups swap.
+        #expect(names(.state) == ["Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
+        #expect(names(.state, reversed: true) == ["VLC", "zoom.us", "Arc", "Google Chrome", "Safari"])
+
+        // New apps arrive in the chosen order.
+        model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
+        model.setApps(seen: [chrome, safari], ignored: [])
+        #expect(model.apps.map(\.source.name) == ["Safari", "Google Chrome"])
+    }
+
+    @Test("the search narrows the apps to the names that match, ignoring case and accents, in the chosen order")
+    func appSearch() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        let facetime = AudioSource(id: "com.apple.FaceTime", name: "FaceTime")
+        let musica = AudioSource(id: "com.example.musica", name: "Música")
+        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
+        model.setApps(seen: [facetime, safari, chrome, musica], ignored: [])
+        #expect(model.shownApps == model.apps) // closed
+
+        model.appSearch = ""
+        #expect(model.shownApps == model.apps) // open, nothing typed
+        model.appSearch = " ME "
+        #expect(model.shownApps.map(\.source.name) == ["FaceTime", "Google Chrome"])
+        model.appSearch = "musi"
+        #expect(model.shownApps.map(\.source.name) == ["Música"])
+        model.appSearch = "zoom"
+        #expect(model.shownApps.isEmpty)
+
+        model.appSearch = "a"
+        model.setAppListOrder(AppListOrder(criterion: .name))
+        #expect(model.shownApps.map(\.source.name) == ["FaceTime", "Música", "Safari"])
+    }
+
+    @Test("choosing an order is passed on once; the app's stored order is shown when it comes")
+    func appsOrderChoice() {
+        let log = ActionLog()
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        #expect(model.appListOrder == .standard)
+
+        model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
+        model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
+        #expect(log.calls == ["order name true"])
+
+        model.setApps(seen: [], ignored: [], order: AppListOrder(criterion: .state))
+        #expect(model.appListOrder == AppListOrder(criterion: .state))
+        #expect(log.calls == ["order name true"]) // shown, not chosen again
     }
 
     @Test("actions are forwarded; timings are clamped first")
@@ -243,6 +313,35 @@ struct SettingsWindowControllerTests {
         sut.close()
         sut.show()
         #expect(sut.shownTab == .general)
+    }
+
+    @Test("reopened, Apps' search is closed; Apps may grow as tall as Advanced is, measured as it shows")
+    func appsSearchAndHeight() throws {
+        let model = SettingsModel(
+            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
+            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
+                           forgetApp: { _ in }, forgetAllApps: {},
+                           setTimings: { _ in }, setDetectionMethod: { _ in },
+                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
+                           openNotificationSettings: {})
+        )
+        let sut = SettingsWindowController(model: model)
+        defer { sut.close() }
+        model.appsMaximumHeight = 0
+        sut.show(tab: .apps)
+        let advanced = model.appsMaximumHeight
+        #expect(advanced > AppsSettingsView.minimumHeight)
+
+        model.appSearch = "chr"
+        model.appsMaximumHeight = 0
+        sut.show(tab: .general)
+        sut.show(tab: .apps)
+        #expect(model.appsMaximumHeight == advanced) // measured again as Apps shows
+        #expect(model.appSearch == "chr") // still open while the window is
+
+        sut.close()
+        sut.show()
+        #expect(model.appSearch == nil)
     }
 
     @Test("when the shown tab's content changes height, the window follows at once and keeps its top")
