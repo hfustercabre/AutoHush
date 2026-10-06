@@ -385,6 +385,10 @@ The tests use mock CoreAudio, level meter, power assertion and player implementa
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 
+### Style guide
+
+[STYLE_GUIDE.md](STYLE_GUIDE.md) describes how AutoHush looks and reads: its layout, text sizes, colors and shared components, how to write its text, and how to check a visible change. Follow it, and update it when a change adds a new pattern.
+
 ### Translations
 
 English is the source language and the fallback; [Language](#language) lists the translations and how macOS picks one. Four languages come in two variants, and macOS picks the closer one for each country:
