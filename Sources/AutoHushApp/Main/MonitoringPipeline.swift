@@ -14,8 +14,8 @@ final class MonitoringPipeline {
         case playback(PlaybackState)
         case activeSources([AudioSource])
         case detection(DetectionMode)
-        /// An app was seen announcing playback with a power assertion.
-        case announcingApp(String)
+        /// AntiDot mode learned how an app tells macOS it plays.
+        case learnedAssertions(String, AnnouncedAssertions)
     }
 
     /// What the app tells the arbiter.
@@ -41,7 +41,7 @@ final class MonitoringPipeline {
         autoPauseEnabled: Bool,
         ignoredSourceIDs: Set<String>,
         detectionMethod: DetectionMethod,
-        announcingSourceIDs: Set<String>,
+        learnedAssertions: [String: AnnouncedAssertions],
         onStatusUpdate: @escaping @MainActor (StatusUpdate) -> Void
     ) {
         let (statusStream, statusUpdates) = AsyncStream.makeStream(of: StatusUpdate.self)
@@ -64,8 +64,8 @@ final class MonitoringPipeline {
             sourceIdentifier: ProcessAudioSourceIdentifier(),
             ignoredSourceIDs: ignoredSourceIDs,
             powerAssertions: IOKitPowerAssertionReader(),
-            announcingSourceIDs: announcingSourceIDs,
-            onAnnouncingSourceLearned: { statusUpdates.yield(.announcingApp($0)) },
+            learnedAssertions: learnedAssertions,
+            onAssertionsLearned: { statusUpdates.yield(.learnedAssertions($0, $1)) },
             detectionMethod: detectionMethod,
             audioLevelsNeeded: false, // until the arbiter knows the player's state
             onActiveSourcesChange: { statusUpdates.yield(.activeSources($0)) },

@@ -28,7 +28,10 @@ package final class Preferences {
         static let lastLaunchedVersion = "lastLaunchedVersion"
         static let pauseHandedOver = "pauseHandedOverAt"
         static let detectionMethod = "detectionMethod"
-        static let announcingApps = "announcingApps"
+        static let playbackAssertions = "playbackAssertions"
+        /// Earlier list of apps seen announcing playback, without the names
+        /// AntiDot mode now learns; dropped, so apps are learned again.
+        static let legacyAnnouncingApps = "announcingApps"
         /// Earlier on/off switch; `false` maps to `.openStreams`.
         static let legacyMeasuresAudioLevels = "measuresAudioLevels"
         static let musicPlayer = "musicPlayer"
@@ -123,10 +126,18 @@ package final class Preferences {
         }
     }
 
-    /// Apps seen announcing playback with a power assertion (AntiDot mode).
-    package var announcingApps: Set<String> {
-        get { Set(defaults.object(forKey: Key.announcingApps) as? [String] ?? []) }
-        set { defaults.set(newValue.sorted(), forKey: Key.announcingApps) }
+    /// What AntiDot mode learned about how apps tell macOS they play: the
+    /// names of the power assertions each app held while its sound was on.
+    package var playbackAssertions: [String: AnnouncedAssertions] {
+        get {
+            let stored = defaults.object(forKey: Key.playbackAssertions) as? [String: [String: [String]]] ?? [:]
+            return stored.mapValues { AnnouncedAssertions(system: Set($0["system"] ?? []), display: Set($0["display"] ?? [])) }
+        }
+        set {
+            let stored = newValue.mapValues { ["system": $0.system.sorted(), "display": $0.display.sorted()] }
+            defaults.set(stored, forKey: Key.playbackAssertions)
+            defaults.set(nil, forKey: Key.legacyAnnouncingApps)
+        }
     }
 
     package var checksForUpdatesAutomatically: Bool {

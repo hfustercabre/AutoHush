@@ -13,7 +13,9 @@ import os
 ///      by what it tells macOS in AntiDot mode (`PlaybackSignals`), otherwise
 ///      by its open output stream;
 ///   3. feeds that into `SourceActivityTracker` and forwards the resulting
-///      started/stopped transitions to the arbiter.
+///      started/stopped transitions to the arbiter. In AntiDot mode, an app
+///      showing no video must play longer before it counts
+///      (`AppConfiguration.startConfirmationWithoutVideo`).
 ///
 /// Level detection needs the System Audio Recording permission: without it taps
 /// deliver pure silence, which would make every source look stopped. The
@@ -59,7 +61,7 @@ package final class AudioMonitor: @unchecked Sendable {
     private let levelMeter: (any AudioLevelMetering)?
     private let permission: (any AudioCapturePermissionChecking)?
     private let sourceIdentifier: (any AudioSourceIdentifying)?
-    private let onAnnouncingSourceLearned: @Sendable (String) -> Void
+    private let onAssertionsLearned: @Sendable (String, AnnouncedAssertions) -> Void
     private let clock: @Sendable () -> Date
     private let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
     private let onDetectionModeChange: @Sendable (DetectionMode) -> Void
@@ -98,7 +100,7 @@ package final class AudioMonitor: @unchecked Sendable {
     private var hasRequestedPermission = false
     /// How playing apps are detected (Settings → General → AntiDot mode).
     private var detectionMethod: DetectionMethod
-    /// AntiDot mode's judge, and the apps it has seen announcing playback.
+    /// AntiDot mode's judge, and what it learned about how apps announce playback.
     private var signals: PlaybackSignals
     /// Whether levels can currently change a pause or resume decision.
     private var audioLevelsNeeded: Bool
@@ -117,8 +119,8 @@ package final class AudioMonitor: @unchecked Sendable {
         sourceIdentifier: (any AudioSourceIdentifying)? = nil,
         ignoredSourceIDs: Set<String> = [],
         powerAssertions: (any PowerAssertionReading)? = nil,
-        announcingSourceIDs: Set<String> = [],
-        onAnnouncingSourceLearned: @escaping @Sendable (String) -> Void = { _ in },
+        learnedAssertions: [String: AnnouncedAssertions] = [:],
+        onAssertionsLearned: @escaping @Sendable (String, AnnouncedAssertions) -> Void = { _, _ in },
         detectionMethod: DetectionMethod = .audioLevels,
         audioLevelsNeeded: Bool = true,
         audioLevelsReleaseDelay: TimeInterval = 2,
@@ -132,8 +134,8 @@ package final class AudioMonitor: @unchecked Sendable {
         self.permission = audioCapturePermission
         self.sourceIdentifier = sourceIdentifier
         self.ignoredSourceIDs = ignoredSourceIDs
-        self.signals = PlaybackSignals(powerAssertions: powerAssertions, announcingSourceIDs: announcingSourceIDs)
-        self.onAnnouncingSourceLearned = onAnnouncingSourceLearned
+        self.signals = PlaybackSignals(powerAssertions: powerAssertions, learned: learnedAssertions)
+        self.onAssertionsLearned = onAssertionsLearned
         self.detectionMethod = detectionMethod
         self.audioLevelsNeeded = audioLevelsNeeded
         self.audioLevelsReleaseDelay = audioLevelsReleaseDelay
@@ -197,6 +199,7 @@ package final class AudioMonitor: @unchecked Sendable {
             guard method != self.detectionMethod else { return }
             self.detectionMethod = method
             self.lastPermissionCheck = nil
+            self.signals.forgetAnnouncements()
             if method == .audioLevels {
                 if self.detectionMode == .disabled || self.detectionMode == .playbackSignals {
                     self.setDetectionMode(.pending)
@@ -288,6 +291,7 @@ package final class AudioMonitor: @unchecked Sendable {
         presentSourceIDs = []
         knownSources = [:]
         tracker.reset()
+        signals.forgetAnnouncements()
         lastRefresh = nil
         lastHALChange = nil
         playerTapSince = nil
@@ -405,12 +409,12 @@ package final class AudioMonitor: @unchecked Sendable {
 
         var audible: Set<String> = []
         var levels: [String: Float] = [:]
-        let announcing = appsAnnouncingPlayback()
+        let judgement = judgePlaybackSignals(at: now)
         for process in candidates {
             guard let source = sourceOfProcess[process.objectID] else { continue }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
             if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
-            if isAudible(source.id, peak: peak, isAnnouncing: announcing.contains(source.id)) {
+            if isAudible(peak: peak, verdict: judgement?.verdicts[source.id]) {
                 audible.insert(source.id)
             }
         }
@@ -418,7 +422,13 @@ package final class AudioMonitor: @unchecked Sendable {
         // Before source events, so a pause decision in this tick sees it.
         updateLocalPlayback()
 
-        let (started, stopped) = tracker.update(audible: audible, at: now)
+        // AntiDot mode: sound without video must last longer (see the type comment).
+        let slowStarts = judgement.map { judgement in
+            Dictionary(uniqueKeysWithValues: audible.subtracting(judgement.showingVideo).map {
+                ($0, configuration.startConfirmationWithoutVideo)
+            })
+        } ?? [:]
+        let (started, stopped) = tracker.update(audible: audible, at: now, startConfirmations: slowStarts)
         if !started.isEmpty || !stopped.isEmpty {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
         }
@@ -433,36 +443,36 @@ package final class AudioMonitor: @unchecked Sendable {
         knownSources = knownSources.filter { tracker.isTracking($0.key) || presentSourceIDs.contains($0.key) }
 
         publishActiveSources()
-        publishReport(audible: audible, levels: levels, announcing: announcing)
+        publishReport(audible: audible, levels: levels, verdicts: judgement?.verdicts ?? [:])
     }
 
-    /// Whether one process of a source counts as audible in this tick.
-    private func isAudible(_ sourceID: String, peak: Float?, isAnnouncing: Bool) -> Bool {
-        if detectionMethod == .playbackSignals {
-            if isAnnouncing { learnAnnouncing(sourceID) }
-            if let verdict = signals.isPlaying(sourceID, isAnnouncing: isAnnouncing) { return verdict }
-        }
+    /// Whether one process of a source counts as audible in this tick: by
+    /// AntiDot mode's verdict on its app, else by its level when measured,
+    /// else by its open output stream.
+    private func isAudible(peak: Float?, verdict: Bool?) -> Bool {
+        if let verdict { return verdict }
         if let peak { return peak >= configuration.audibleThreshold }
-        return true // judged by its open output stream
+        return true
     }
 
-    /// Apps announcing playback right now, with AntiDot mode's
-    /// `.playbackSignals` method only.
-    private func appsAnnouncingPlayback() -> Set<String> {
-        guard detectionMethod == .playbackSignals else { return [] }
+    /// AntiDot mode's verdicts on the apps with their sound on, with the
+    /// `.playbackSignals` method only. Saves what it learned.
+    private func judgePlaybackSignals(at now: Date) -> PlaybackSignals.Judgement? {
+        guard detectionMethod == .playbackSignals else { return nil }
         var appOfProcess: [pid_t: String] = [:]
         for process in candidates {
             if let source = sourceOfProcess[process.objectID] { appOfProcess[process.pid] = source.id }
         }
-        return signals.appsAnnouncingPlayback(among: presentSourceIDs) { pid in
+        let holding = signals.assertions(among: presentSourceIDs) { pid in
             appOfProcess[pid] ?? sourceIdentifier?.sourceID(forPID: pid)
         }
-    }
-
-    private func learnAnnouncing(_ id: String) {
-        guard signals.remember(id) else { return }
-        logger.info("[monitor] \(id, privacy: .public) announces playback with a power assertion")
-        onAnnouncingSourceLearned(id)
+        let judgement = signals.judge(present: presentSourceIDs, holding: holding, at: now)
+        for (id, assertions) in judgement.learned.sorted(by: { $0.key < $1.key }) {
+            // Names are the app's own words, so they stay private in the log.
+            logger.info("[monitor] \(id, privacy: .public) keeps awake while playing: system \(assertions.system.sorted()), display \(assertions.display.sorted())")
+            onAssertionsLearned(id, assertions)
+        }
+        return judgement
     }
 
     /// Infers the permission from samples; only used when TCC cannot be read.
@@ -536,15 +546,15 @@ package final class AudioMonitor: @unchecked Sendable {
         onActiveSourcesChange(active)
     }
 
-    private func publishReport(audible: Set<String>, levels: [String: Float], announcing: Set<String>) {
+    private func publishReport(audible: Set<String>, levels: [String: Float], verdicts: [String: Bool]) {
         let report = ActiveAudioReport(
             present: presentSourceIDs,
             playing: tracker.activeSources,
             audible: audible,
             levels: levels,
             ignored: ignoredSourceIDs,
-            announcing: announcing,
-            announcedBefore: detectionMethod == .playbackSignals ? signals.announcingSourceIDs : [],
+            announcing: Set(verdicts.filter { $0.value }.keys),
+            notAnnouncing: Set(verdicts.filter { !$0.value }.keys),
             sources: knownSources
         )
         latestReport.withLock { $0 = report }

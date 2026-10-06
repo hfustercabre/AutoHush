@@ -19,7 +19,7 @@ package struct ActiveAudioReport: Sendable {
         package enum Evidence: Equatable, Sendable {
             /// AntiDot mode: the app tells macOS it is playing.
             case announcing
-            /// AntiDot mode: the app told macOS it was playing before, but doesn't now.
+            /// AntiDot mode: the app stopped telling macOS it is playing.
             case notAnnouncing
             /// The app's loudest tapped peak (0…1), while audio levels are measured.
             case level(Float)
@@ -50,9 +50,10 @@ package struct ActiveAudioReport: Sendable {
     /// Loudest tapped peak (0…1) per app, when audio levels are measured.
     var levels: [String: Float]
     var ignored: Set<String>
-    /// AntiDot mode: apps telling macOS they play now, and apps that did before.
+    /// AntiDot mode: apps counted as playing because they tell macOS they
+    /// play, and apps counted as paused because they stopped telling it.
     var announcing: Set<String>
-    var announcedBefore: Set<String>
+    var notAnnouncing: Set<String>
     /// The apps' names; an app without one is shown by its ID.
     var sources: [String: AudioSource]
 
@@ -78,7 +79,7 @@ package struct ActiveAudioReport: Sendable {
     /// What the app tells macOS, or its level.
     private func evidence(for id: String) -> Entry.Evidence? {
         if announcing.contains(id) { return .announcing }
-        if announcedBefore.contains(id) { return .notAnnouncing }
+        if notAnnouncing.contains(id) { return .notAnnouncing }
         return levels[id].map { .level($0) }
     }
 }

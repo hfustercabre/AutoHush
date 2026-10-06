@@ -55,7 +55,11 @@ package struct SourceActivityTracker {
     /// True when no source is active or awaiting confirmation.
     package var isIdle: Bool { entries.isEmpty }
 
-    package mutating func update(audible: Set<String>, at now: Date) -> (started: Set<String>, stopped: Set<String>) {
+    /// `startConfirmations` replaces the start confirmation for some sources
+    /// in this update (e.g. a longer one for sound without video).
+    package mutating func update(
+        audible: Set<String>, at now: Date, startConfirmations: [String: TimeInterval] = [:]
+    ) -> (started: Set<String>, stopped: Set<String>) {
         var started: Set<String> = []
         var stopped: Set<String> = []
 
@@ -64,7 +68,8 @@ package struct SourceActivityTracker {
             // confirmation; a delayed evaluation must not.
             var entry = entries[bundleID] ?? Entry(pendingSince: now, lastAudible: now, isActive: false)
             entry.lastAudible = now
-            if !entry.isActive, now.timeIntervalSince(entry.pendingSince ?? now) >= startConfirmation {
+            let confirmation = startConfirmations[bundleID] ?? startConfirmation
+            if !entry.isActive, now.timeIntervalSince(entry.pendingSince ?? now) >= confirmation {
                 entry.isActive = true
                 entry.pendingSince = nil
                 started.insert(bundleID)

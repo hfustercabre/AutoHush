@@ -142,7 +142,7 @@ struct DiagnosticsReportTests {
         #expect(refused.sections.first { $0.kind == .permissions }?.summary == "Something's missing")
     }
 
-    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on")
+    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on, with its longer start without video")
     func quietReport() {
         var status = AppStatus()
         status.setHealth(.ready)
@@ -158,6 +158,8 @@ struct DiagnosticsReportTests {
         #expect(snapshot.text.contains("Player: None chosen"))
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode
+        let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
+        #expect(snapshot.text.contains("Pause music after: \(half) s\nPause music after, without video: 3 s\nResume music after: 2 s"))
         #expect(snapshot.text.contains("Ignored apps: None"))
         #expect(snapshot.text.contains("Updates: Automatic checks off\nLast checked: Never"))
     }

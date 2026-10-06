@@ -134,12 +134,19 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).detectionMethod == .playbackSignals)
     }
 
-    @Test("apps announcing playback are remembered")
-    func announcingApps() {
+    @Test("what AntiDot mode learns about apps is remembered; the earlier list without names is dropped")
+    func playbackAssertions() {
         let scratch = Scratch()
-        #expect(Preferences(store: scratch.defaults).announcingApps.isEmpty)
-        Preferences(store: scratch.defaults).announcingApps = ["org.videolan.vlc", "com.google.Chrome"]
-        #expect(Preferences(store: scratch.defaults).announcingApps == ["org.videolan.vlc", "com.google.Chrome"])
+        scratch.defaults.set(["com.google.Chrome"], forKey: "announcingApps")
+        #expect(Preferences(store: scratch.defaults).playbackAssertions.isEmpty)
+
+        let learned = [
+            "com.google.Chrome": AnnouncedAssertions(system: ["Playing audio"], display: ["Video Wake Lock"]),
+            "com.apple.Safari": AnnouncedAssertions(display: ["com.apple.WebCore: HTMLMediaElement playback"]),
+        ]
+        Preferences(store: scratch.defaults).playbackAssertions = learned
+        #expect(Preferences(store: scratch.defaults).playbackAssertions == learned)
+        #expect(scratch.defaults.object(forKey: "announcingApps") == nil)
     }
 
     @Test("the earlier 'measure audio levels: off' setting becomes open streams only")

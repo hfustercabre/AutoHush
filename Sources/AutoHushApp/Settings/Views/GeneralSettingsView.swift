@@ -171,7 +171,7 @@ extension DetectionMethod {
         case .audioLevels:
             return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.")
         case .playbackSignals:
-            return String(localized: "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open.")
+            return String(localized: "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.")
         case .openStreams:
             return String(localized: "Any app with its audio open counts as playing, even when paused.")
         }

@@ -66,4 +66,10 @@ struct AppConfigurationTests {
         #expect(configuration.sourceStopGrace == 2)
         #expect(TimingSettings.defaults.startConfirmation == 0.5)
     }
+
+    @Test("in AntiDot mode, sound without video must last at least 3 s, or the user's longer choice")
+    func startWithoutVideo() {
+        #expect(AppConfiguration().startConfirmationWithoutVideo == 3)
+        #expect(AppConfiguration(timings: TimingSettings(startConfirmation: 4)).startConfirmationWithoutVideo == 4)
+    }
 }

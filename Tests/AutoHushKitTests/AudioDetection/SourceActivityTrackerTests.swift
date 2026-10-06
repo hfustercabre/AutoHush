@@ -100,6 +100,20 @@ struct SourceActivityTrackerTests {
         #expect(tracker.activeSources == ["a", "b"])
     }
 
+    @Test("a source can be given its own start confirmation, e.g. a longer one")
+    func ownStartConfirmation() {
+        var tracker = makeTracker()
+        let longer = ["b": 3.0]
+        _ = tracker.update(audible: ["a", "b"], at: t0, startConfirmations: longer)
+        #expect(tracker.update(audible: ["a", "b"], at: t0 + 1.0, startConfirmations: longer).started == ["a"])
+        #expect(tracker.update(audible: ["a", "b"], at: t0 + 2.75, startConfirmations: longer).started.isEmpty)
+        #expect(tracker.update(audible: ["a", "b"], at: t0 + 3.0, startConfirmations: longer).started == ["b"])
+
+        // The usual confirmation applies again once a source no longer needs a longer one.
+        _ = tracker.update(audible: ["c"], at: t0 + 10, startConfirmations: ["c": 3])
+        #expect(tracker.update(audible: ["c"], at: t0 + 11).started == ["c"])
+    }
+
     @Test("reset forgets every source")
     func resetForgetsSources() {
         var tracker = makeTracker()

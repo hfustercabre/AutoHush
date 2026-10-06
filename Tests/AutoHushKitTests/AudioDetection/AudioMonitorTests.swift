@@ -19,6 +19,7 @@ struct AudioMonitorTests {
         configuration.activeSampleInterval = 3600
         configuration.idleSampleInterval = 3600
         configuration.musicPlayerBundleID = TestPlayer.bundleID
+        configuration.minimumStartWithoutVideo = 0 // the tests of AntiDot mode's longer start set it
         return configuration
     }
 
@@ -44,7 +45,7 @@ struct AudioMonitorTests {
             ignored: Set<String> = [],
             levelsNeeded: Bool = true,
             assertions: MockPowerAssertions? = nil,
-            announcing: Set<String> = []
+            learnedAssertions: [String: AnnouncedAssertions] = [:]
         ) {
             monitor = AudioMonitor(
                 configuration: configuration,
@@ -55,8 +56,8 @@ struct AudioMonitorTests {
                 sourceIdentifier: identifier,
                 ignoredSourceIDs: ignored,
                 powerAssertions: assertions,
-                announcingSourceIDs: announcing,
-                onAnnouncingSourceLearned: { [learned] in learned.record($0) },
+                learnedAssertions: learnedAssertions,
+                onAssertionsLearned: { [learned] id, _ in learned.record(id) },
                 audioLevelsNeeded: levelsNeeded,
                 audioLevelsReleaseDelay: 0.05,
                 clock: { [clock] in clock.now },
@@ -298,14 +299,14 @@ struct AudioMonitorTests {
         h.monitor.setDetectionMethod(.playbackSignals)
         h.start()
 
-        assertions.pids = [1001]
+        assertions.held = [1001: MockPowerAssertions.playing]
         h.step([Self.process(1, "com.example.player")]) // pid 1001
         await h.recorder.waitForEvents(count: 1)
         #expect(h.learned.values == ["com.example.player"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .playing, evidence: .announcing)])
 
         // Paused: the stream stays open but the assertion is gone.
-        assertions.pids = []
+        assertions.held = [:]
         h.step(after: 0.25)
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events == [
@@ -315,7 +316,7 @@ struct AudioMonitorTests {
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .silent, evidence: .notAnnouncing)])
 
         // Playing again.
-        assertions.pids = [1001]
+        assertions.held = [1001: MockPowerAssertions.playing]
         h.step(after: 0.25)
         await h.recorder.waitForEvents(count: 3)
         #expect(h.learned.values == ["com.example.player"]) // learned once
@@ -338,7 +339,7 @@ struct AudioMonitorTests {
     @Test("apps remembered from earlier launches count as paused without an assertion")
     func rememberedAnnouncingApps() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), assertions: MockPowerAssertions(),
-                        announcing: ["com.example.player"])
+                        learnedAssertions: ["com.example.player": AnnouncedAssertions(system: ["Playing"])])
         h.monitor.setDetectionMethod(.playbackSignals)
         h.start()
         h.step([Self.process(1, "com.example.player")])
@@ -351,7 +352,7 @@ struct AudioMonitorTests {
     @Test("a helper's assertion counts for its app")
     func helperAssertion() async {
         let assertions = MockPowerAssertions()
-        assertions.pids = [777] // e.g. the browser's main process; audio comes from a helper
+        assertions.held = [777: MockPowerAssertions.playing] // e.g. the browser's main process; audio comes from a helper
         let identifier = StubSourceIdentifier(
             ["com.google.Chrome.helper": AudioSource(id: "com.google.Chrome", name: "Google Chrome")],
             owners: [777: "com.google.Chrome"]
@@ -369,13 +370,108 @@ struct AudioMonitorTests {
     func assertionsOnlyWithPlaybackSignals(method: DetectionMethod) async {
         let assertions = MockPowerAssertions()
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, assertions: assertions,
-                        announcing: ["com.example.player"])
+                        learnedAssertions: ["com.example.player": AnnouncedAssertions(system: ["Playing"])])
         h.monitor.setDetectionMethod(method)
         h.start()
         h.step([Self.process(1, "com.example.player")])
         await h.recorder.waitForEvents(count: 1)
         // Remembered as announcing, no assertion now — but only playback signals use that.
         #expect(await h.recorder.events == [.init(bundleID: "com.example.player", isPlaying: true)])
+        h.monitor.stop()
+    }
+
+    @Test("an app using one assertion for video stays playing when its window shows again, and its audio still counts (Safari)")
+    func videoOnlyAnnouncer() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), assertions: assertions)
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.start()
+        let browser = [Self.process(1, "com.example.browser")] // pid 1001
+        let name = "com.apple.WebCore: HTMLMediaElement playback"
+
+        // A visible video, then hidden (the Mac kept awake), then visible again.
+        assertions.held = [1001: [PowerAssertion(.display, name)]]
+        h.step(browser)
+        await h.recorder.waitForEvents(count: 1)
+        assertions.held = [1001: [PowerAssertion(.system, name)]]
+        h.step(after: 1)
+        assertions.held = [1001: [PowerAssertion(.display, name)]]
+        h.step(after: 1)
+        h.step(after: 1)
+        #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.browser", state: .playing, evidence: .announcing)])
+
+        // Paused: counted as stopped while its sound stays on.
+        assertions.held = [:]
+        h.step(after: 1)
+        await h.recorder.waitForEvents(count: 2)
+
+        // Its sound goes off, then audio without video plays: it says nothing, its open output counts.
+        h.step(after: 8, [])
+        h.step(after: 10, browser)
+        await h.recorder.waitForEvents(count: 3)
+
+        // Audio started right after pausing a video keeps its sound on: it counts once the pause
+        // can no longer explain the sound.
+        assertions.held = [1001: [PowerAssertion(.display, name)]]
+        h.step(after: 1)
+        assertions.held = [:]
+        h.step(after: 1)
+        await h.recorder.waitForEvents(count: 4)
+        h.step(after: 5)
+        h.step(after: 5)
+        await h.recorder.waitForEvents(count: 5)
+        #expect(await h.recorder.events == [
+            .init(bundleID: "com.example.browser", isPlaying: true),
+            .init(bundleID: "com.example.browser", isPlaying: false),
+            .init(bundleID: "com.example.browser", isPlaying: true),
+            .init(bundleID: "com.example.browser", isPlaying: false),
+            .init(bundleID: "com.example.browser", isPlaying: true),
+        ])
+        h.monitor.stop()
+    }
+
+    @Test("in AntiDot mode, sound without video must last 3 s, so a notification sound never pauses the music")
+    func longerStartWithoutVideo() async {
+        var configuration = Self.config(startConfirmation: 0.5, stopGrace: 2)
+        configuration.minimumStartWithoutVideo = 3
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: configuration, assertions: assertions)
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.start()
+        let processes = [Self.process(1, "com.example.video"), Self.process(2, "com.example.audio"), Self.process(3, "com.example.chat")]
+        let video: Set<PowerAssertion> = [PowerAssertion(.system, "Playing"), PowerAssertion(.display, "Video")]
+        // A short sound: the chat app says it plays for 2.5 s.
+        assertions.held = [1001: video, 1002: MockPowerAssertions.playing, 1003: MockPowerAssertions.playing]
+        h.step(processes)
+        h.step(after: 0.5)
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.example.video", isPlaying: true)])
+
+        h.step(after: 2)
+        assertions.held[1003] = nil
+        h.step(after: 0.25)
+        h.step(after: 0.25)
+        await h.recorder.waitForEvents(count: 2)
+        #expect(await h.recorder.events == [
+            .init(bundleID: "com.example.video", isPlaying: true),
+            .init(bundleID: "com.example.audio", isPlaying: true),
+        ])
+        h.step(after: 5)
+        #expect(!h.monitor.activeAudioReport().contains { $0.id == "com.example.chat" && $0.state == .playing })
+        h.monitor.stop()
+    }
+
+    @Test("the longer start without video is only for AntiDot mode's playback signals", arguments: [DetectionMethod.audioLevels, .openStreams])
+    func usualStartOtherwise(method: DetectionMethod) async {
+        var configuration = Self.config(startConfirmation: 0.5)
+        configuration.minimumStartWithoutVideo = 3
+        let h = Harness(configuration: configuration, meter: false, assertions: MockPowerAssertions())
+        h.monitor.setDetectionMethod(method)
+        h.start()
+        h.step([Self.process(1, "com.example.audio")])
+        h.step(after: 0.5)
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.example.audio", isPlaying: true)])
         h.monitor.stop()
     }
 
@@ -947,13 +1043,16 @@ private struct StubSourceIdentifier: AudioSourceIdentifying {
 }
 
 private final class MockPowerAssertions: PowerAssertionReading, @unchecked Sendable {
+    /// An app saying it plays, keeping the Mac awake.
+    static let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
+
     private let lock = NSLock()
-    private var _pids: Set<pid_t> = []
-    var pids: Set<pid_t> {
-        get { lock.withLock { _pids } }
-        set { lock.withLock { _pids = newValue } }
+    private var _held: [pid_t: Set<PowerAssertion>] = [:]
+    var held: [pid_t: Set<PowerAssertion>] {
+        get { lock.withLock { _held } }
+        set { lock.withLock { _held = newValue } }
     }
-    func pidsKeepingSystemAwake() -> Set<pid_t> { pids }
+    func assertionsByProcess() -> [pid_t: Set<PowerAssertion>] { held }
 }
 
 private final class MockAudioCapturePermission: AudioCapturePermissionChecking, @unchecked Sendable {

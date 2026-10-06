@@ -5,6 +5,29 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **AntiDot mode now pauses the music for Safari.** Safari only says it's
+  playing a video, and does it differently while the video is hidden. Once
+  AntiDot mode had seen that, it took every visible Safari video, and any
+  sound without video, for paused, so the music kept playing. It now knows
+  how Safari and other apps built on WebKit tell macOS they play: the music
+  pauses for their videos and comes back about 2 s after you pause one,
+  instead of about 9.5 s. Sound without video still pauses the music, even
+  when it starts right after you pause a video. Apps are learned again
+  after updating.
+
+### Changed
+
+- **AntiDot mode ignores notification sounds from Chrome and similar
+  apps**: sound without video must now last at least 3 s before the music
+  pauses (videos still pause it after 0.5 s). These apps say they're
+  playing for about 2.5 s after even a short sound, which paused the music
+  for each message. Settings and Diagnostics show the new timing.
+- The README compares the two modes with measured times.
+
 ## [0.6.2] — 2026-10-05
 
 ### Changed

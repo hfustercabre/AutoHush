@@ -2367,84 +2367,84 @@
         }
       }
     },
-    "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open." : {
+    "An app counts as playing while it tells macOS it is playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it." : {
       "localizations" : {
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Una app compta com a reproduint mentre indica a macOS que reprodueix, i com a en pausa tan bon punt deixa de fer-ho, encara que l'àudio continuï obert. Les apps que mai ho indiquen a macOS compten mentre tenen l'àudio obert."
+            "value" : "Una app compta com a reproduint mentre indica a macOS que reprodueix, i com a en pausa tan bon punt deixa de fer-ho, encara que l'àudio continuï obert. Les apps que mai ho indiquen a macOS compten mentre tenen l'àudio obert. El so sense vídeo ha de durar almenys 3 segons abans que la música es posi en pausa, perquè els sons de notificació no la interrompin."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eine App zählt als wiedergebend, solange sie macOS eine Wiedergabe meldet, und als pausiert, sobald sie damit aufhört, auch wenn ihr Audio noch offen ist. Apps, die macOS nie etwas melden, zählen, solange ihr Audio offen ist."
+            "value" : "Eine App zählt als wiedergebend, solange sie macOS eine Wiedergabe meldet, und als pausiert, sobald sie damit aufhört, auch wenn ihr Audio noch offen ist. Apps, die macOS nie etwas melden, zählen, solange ihr Audio offen ist. Ton ohne Video muss mindestens 3 Sekunden dauern, bevor deine Musik pausiert, damit Mitteilungstöne sie nicht unterbrechen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto."
+            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto. El sonido sin vídeo debe durar al menos 3 segundos antes de que se pause tu música, para que los sonidos de notificación no la interrumpan."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto."
+            "value" : "Una app cuenta como en reproducción mientras indica a macOS que está reproduciendo, y como en pausa en cuanto deja de hacerlo, aunque su audio siga abierto. Las apps que nunca lo indican a macOS cuentan mientras tienen el audio abierto. El sonido sin video debe durar al menos 3 segundos antes de que se pause tu música, para que los sonidos de notificación no la interrumpan."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert."
+            "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert. Un son sans vidéo doit durer au moins 3 secondes avant que votre musique ne soit mise en pause, afin que les sons de notification ne l'interrompent pas."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert."
+            "value" : "Une app compte comme en lecture tant qu'elle l'indique à macOS, et comme en pause dès qu'elle cesse de le faire, même si son audio reste ouvert. Les apps qui ne l'indiquent jamais à macOS comptent tant que leur audio est ouvert. Un son sans vidéo doit durer au moins 3 secondes avant que votre musique ne soit mise en pause, afin que les sons de notification ne l'interrompent pas."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un'app conta come in riproduzione finché lo comunica a macOS, e come in pausa appena smette, anche con l'audio ancora aperto. Le app che non lo comunicano mai a macOS contano finché hanno l'audio aperto."
+            "value" : "Un'app conta come in riproduzione finché lo comunica a macOS, e come in pausa appena smette, anche con l'audio ancora aperto. Le app che non lo comunicano mai a macOS contano finché hanno l'audio aperto. Un suono senza video deve durare almeno 3 secondi prima che la musica venga messa in pausa, così i suoni di notifica non la interrompono."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AppはmacOSに再生中と伝えている間は再生中として扱われ、伝えなくなると、オーディオが開いたままでも一時停止中として扱われます。macOSに何も伝えないAppは、オーディオが開いている間は再生中として扱われます。"
+            "value" : "AppはmacOSに再生中と伝えている間は再生中として扱われ、伝えなくなると、オーディオが開いたままでも一時停止中として扱われます。macOSに何も伝えないAppは、オーディオが開いている間は再生中として扱われます。動画のないサウンドは3秒以上続いてから音楽を一時停止するため、通知音で音楽が中断されることはありません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "앱이 macOS에 재생 중이라고 알리는 동안에는 재생 중으로 간주되고, 알리지 않게 되면 오디오가 열려 있어도 일시 정지된 것으로 간주됩니다. macOS에 아무것도 알리지 않는 앱은 오디오가 열려 있는 동안 재생 중으로 간주됩니다."
+            "value" : "앱이 macOS에 재생 중이라고 알리는 동안에는 재생 중으로 간주되고, 알리지 않게 되면 오디오가 열려 있어도 일시 정지된 것으로 간주됩니다. macOS에 아무것도 알리지 않는 앱은 오디오가 열려 있는 동안 재생 중으로 간주됩니다. 동영상 없는 소리는 최소 3초 동안 이어져야 음악이 일시 정지되므로, 알림음으로 음악이 끊기지 않습니다."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Um app conta como tocando enquanto informa ao macOS que está tocando, e como pausado assim que para, mesmo com o áudio ainda aberto. Apps que nunca informam o macOS contam enquanto o áudio está aberto."
+            "value" : "Um app conta como tocando enquanto informa ao macOS que está tocando, e como pausado assim que para, mesmo com o áudio ainda aberto. Apps que nunca informam o macOS contam enquanto o áudio está aberto. Um som sem vídeo precisa durar pelo menos 3 segundos antes que sua música seja pausada, para que sons de notificação não a interrompam."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uma app conta como a tocar enquanto comunica ao macOS que está a tocar, e como em pausa assim que deixa de o fazer, mesmo com o áudio ainda aberto. As apps que nunca comunicam ao macOS contam enquanto têm o áudio aberto."
+            "value" : "Uma app conta como a tocar enquanto comunica ao macOS que está a tocar, e como em pausa assim que deixa de o fazer, mesmo com o áudio ainda aberto. As apps que nunca comunicam ao macOS contam enquanto têm o áudio aberto. Um som sem vídeo tem de durar pelo menos 3 segundos antes de a sua música ser colocada em pausa, para que os sons de notificação não a interrompam."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App 告知 macOS 正在播放时视为播放中，停止告知后即视为已暂停，即使音频仍处于打开状态。从不告知 macOS 的 App 在音频打开期间视为播放中。"
+            "value" : "App 告知 macOS 正在播放时视为播放中，停止告知后即视为已暂停，即使音频仍处于打开状态。从不告知 macOS 的 App 在音频打开期间视为播放中。没有视频的声音需持续至少 3 秒才会暂停你的音乐，因此通知音不会打断音乐。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App 告知 macOS 正在播放時視為播放中，停止告知後即視為已暫停，即使音訊仍開啟。從不告知 macOS 的 App 會在音訊開啟期間視為播放中。"
+            "value" : "App 告知 macOS 正在播放時視為播放中，停止告知後即視為已暫停，即使音訊仍開啟。從不告知 macOS 的 App 會在音訊開啟期間視為播放中。沒有影片的聲音需持續至少 3 秒才會暫停你的音樂，因此通知音不會打斷音樂。"
           }
         }
       }
@@ -13378,6 +13378,89 @@
         }
       }
     },
+    "Pause music after, without video" : {
+      "comment" : "Diagnostics, AntiDot mode: how long an app showing no video must play before the music pauses",
+      "localizations" : {
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense vídeo, posa la música en pausa després de"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musik pausieren nach (ohne Video)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin vídeo, pausar la música tras"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin video, pausar la música tras"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans vidéo, mettre en pause après"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans vidéo, mettre en pause après"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza video, metti in pausa la musica dopo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画なしの場合の一時停止までの時間"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동영상 없을 때 음악 일시 정지까지"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem vídeo, pausar a música após"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem vídeo, pausar a música após"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无视频时暂停音乐前等待"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無影片時暫停音樂前等待"
+          }
+        }
+      }
+    },
     "Paused by AutoHush" : {
       "comment" : "Diagnostics: the music player's state",
       "localizations" : {
@@ -13712,18 +13795,6 @@
     "Pauses your music while other apps play audio, and resumes it afterwards." : {
       "comment" : "Settings → About: what AutoHush does",
       "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después."
-          }
-        },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13734,6 +13805,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausiert deine Musik, während andere Apps Audio abspielen, und setzt sie danach fort."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tu música mientras otras apps reproducen audio y la reanuda después."
           }
         },
         "fr" : {
@@ -13754,18 +13837,6 @@
             "value" : "Mette in pausa la musica mentre altre app riproducono audio e poi la riprende."
           }
         },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa sua música enquanto outros apps reproduzem áudio e a retoma depois."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa a sua música enquanto outras apps reproduzem áudio e retoma-a depois."
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13776,6 +13847,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다른 앱이 오디오를 재생하는 동안 음악을 일시 정지하고, 끝나면 다시 재생합니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa sua música enquanto outros apps reproduzem áudio e a retoma depois."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa a sua música enquanto outras apps reproduzem áudio e retoma-a depois."
           }
         },
         "zh-Hans" : {
@@ -14622,18 +14705,6 @@
     "Report an Issue" : {
       "comment" : "Settings → About: opens a new issue on GitHub",
       "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Informar de un problema"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Informar un problema"
-          }
-        },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14644,6 +14715,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Problem melden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar de un problema"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar un problema"
           }
         },
         "fr" : {
@@ -14664,18 +14747,6 @@
             "value" : "Segnala un problema"
           }
         },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Relatar um Problema"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comunicar um problema"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14686,6 +14757,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "문제 보고"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatar um Problema"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comunicar um problema"
           }
         },
         "zh-Hans" : {
@@ -17518,18 +17601,6 @@
     "What's New" : {
       "comment" : "Settings → About: opens the release notes on GitHub",
       "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novedades"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novedades"
-          }
-        },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17540,6 +17611,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neue Funktionen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades"
           }
         },
         "fr" : {
@@ -17560,18 +17643,6 @@
             "value" : "Novità"
           }
         },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novidades"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novidades"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17582,6 +17653,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 기능"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novidades"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novidades"
           }
         },
         "zh-Hans" : {
@@ -17766,18 +17849,6 @@
     "Works with %@." : {
       "comment" : "Settings → About; %@ lists the music players it works with, e.g. “Spotify, Apple Music and TIDAL”",
       "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Funciona con %@."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Funciona con %@."
-          }
-        },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17788,6 +17859,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Funktioniert mit %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona con %@."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona con %@."
           }
         },
         "fr" : {
@@ -17808,18 +17891,6 @@
             "value" : "Funziona con %@."
           }
         },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Funciona com %@."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Funciona com %@."
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17830,6 +17901,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@와(과) 함께 작동합니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona com %@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona com %@."
           }
         },
         "zh-Hans" : {

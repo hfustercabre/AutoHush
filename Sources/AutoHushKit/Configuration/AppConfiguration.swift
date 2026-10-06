@@ -21,6 +21,18 @@ package struct AppConfiguration: Sendable {
     /// system notification and alert sounds are excluded by process instead.
     package var sourceStartConfirmation: TimeInterval
 
+    /// AntiDot mode ("What apps tell macOS"): the least an app showing no
+    /// video must play before it counts as playing. Chromium-based apps tell
+    /// macOS they play for about 2.5 s after even a short sound (measured), so
+    /// their notification sounds would otherwise pause the music.
+    package var minimumStartWithoutVideo: TimeInterval = 3
+
+    /// How long an app showing no video must play in AntiDot mode: the user's
+    /// start confirmation, but at least `minimumStartWithoutVideo`.
+    package var startConfirmationWithoutVideo: TimeInterval {
+        max(sourceStartConfirmation, minimumStartWithoutVideo)
+    }
+
     /// Inaudible gaps shorter than this do not restart the start confirmation.
     package var audibleGapTolerance: TimeInterval = 0.5
 

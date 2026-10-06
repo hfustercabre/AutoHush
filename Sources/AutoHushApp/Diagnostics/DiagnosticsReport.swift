@@ -136,8 +136,13 @@ enum DiagnosticsReport {
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
             Row(label: String(localized: "AntiDot mode"), value: antiDot ? on : off),
             Row(label: String(localized: "Pause music after"), value: seconds(facts.timings.startConfirmation)),
-            Row(label: String(localized: "Resume music after"), value: seconds(facts.timings.stopGrace)),
         ]
+        if facts.detectionMethod == .playbackSignals {
+            rows.append(Row(label: String(localized: "Pause music after, without video",
+                                          comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before the music pauses"),
+                            value: seconds(AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo)))
+        }
+        rows.append(Row(label: String(localized: "Resume music after"), value: seconds(facts.timings.stopGrace)))
         if !antiDot {
             rows.append(Row(label: String(localized: "Silence threshold"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))

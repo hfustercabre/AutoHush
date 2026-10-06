@@ -272,7 +272,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             preferences.recordSeen(sources)
             showApps()
         case .detection(let mode):       status.detection = mode
-        case .announcingApp(let id):     preferences.announcingApps.insert(id)
+        case .learnedAssertions(let id, let assertions): preferences.playbackAssertions[id] = assertions
         }
     }
 
@@ -617,7 +617,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
             ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
             detectionMethod: preferences.detectionMethod,
-            announcingSourceIDs: preferences.announcingApps
+            learnedAssertions: preferences.playbackAssertions
         ) { [weak self] update in
             self?.apply(update)
         }

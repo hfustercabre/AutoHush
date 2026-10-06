@@ -10,12 +10,12 @@ struct ActiveAudioReportTests {
         levels: [String: Float] = [:],
         ignored: Set<String> = [],
         announcing: Set<String> = [],
-        announcedBefore: Set<String> = [],
+        notAnnouncing: Set<String> = [],
         sources: [String: AudioSource] = [:]
     ) -> [ActiveAudioReport.Entry] {
         ActiveAudioReport(
             present: present, playing: playing, audible: audible, levels: levels, ignored: ignored,
-            announcing: announcing, announcedBefore: announcedBefore, sources: sources
+            announcing: announcing, notAnnouncing: notAnnouncing, sources: sources
         ).entries
     }
 
@@ -56,7 +56,7 @@ struct ActiveAudioReportTests {
     func announcing() {
         let entries = report(
             present: ["a", "b"], playing: ["a"], levels: ["a": 0.5, "b": 0.5],
-            announcing: ["a"], announcedBefore: ["a", "b"]
+            announcing: ["a"], notAnnouncing: ["b"]
         )
         #expect(entries == [
             .init(id: "a", state: .playing, evidence: .announcing),
