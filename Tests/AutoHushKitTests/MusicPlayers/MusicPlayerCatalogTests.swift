@@ -1,3 +1,4 @@
+import os
 import Testing
 import AutoHushKit
 import AutoHushTestSupport
@@ -26,5 +27,18 @@ struct MusicPlayerCatalogTests {
         #expect(catalog.all.map(\.name) == ["First", "Web"])
         #expect(catalog.player(bundleID: "com.example.web")?.name == "Web")
         #expect(first.kind == .app)
+    }
+
+    @Test("suggested web apps are looked up each time, and aren't players")
+    func suggestions() {
+        let added = OSAllocatedUnfairLock(initialState: false)
+        let catalog = MusicPlayerCatalog(players: [], suggested: {
+            added.withLock { $0 } ? [] : [WebAppSuggestion(name: "Deezer", address: "deezer.com")]
+        })
+        #expect(catalog.webAppSuggestions == [WebAppSuggestion(name: "Deezer", address: "deezer.com")])
+        #expect(catalog.all.isEmpty)
+        added.withLock { $0 = true }
+        #expect(catalog.webAppSuggestions.isEmpty)
+        #expect(MusicPlayerCatalog(players: []).webAppSuggestions.isEmpty)
     }
 }

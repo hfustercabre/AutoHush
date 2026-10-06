@@ -39,7 +39,8 @@ final class PlayerChooserWindowController: NSWindowController, PlayerChooserPres
 }
 
 /// The music players as rows in a card, like Settings → Apps, then the
-/// Safari web apps in a card of their own; the user picks one and continues.
+/// Safari web apps in a card of their own, and "Add a Web App…"; the user
+/// picks one and continues.
 /// Players that aren't installed come after the installed apps, dimmed, and
 /// can't be picked. When only one is installed, it starts picked. From
 /// `PlayerOption.searchThreshold` players on, a search narrows them down and
@@ -111,9 +112,15 @@ struct PlayerChooserView: View {
                 Card { players(apps) }
             }
             if !webApps.isEmpty {
-                SectionHeading(Text(verbatim: PlayerOption.webAppsHeading), isFirst: apps.isEmpty)
+                WebAppsHeading()
+                    .padding(.leading, 4) // as a SectionHeading
+                    .padding(.top, apps.isEmpty ? 0 : 6)
                 Card { players(webApps) }
             }
+            Button { model.addWebApp() } label: {
+                Label { Text(verbatim: PlayerOption.addWebAppTitle) } icon: { Image(systemName: "plus.circle") }
+            }
+            .buttonStyle(.chip)
         }
     }
 
@@ -135,11 +142,16 @@ struct PlayerChooserView: View {
     }
 
     /// The player's icon and name, "Not installed" under one that isn't, and
-    /// a check on the picked one.
+    /// a check on the picked one. A suggested web app isn't picked: a click
+    /// opens "Add a Web App" filled in.
     private func row(for option: PlayerOption) -> some View {
         let isPicked = option.bundleID == picked
         return Button {
-            clicked = option.bundleID
+            if option.webAddress != nil {
+                model.chooseMusicPlayer(option.bundleID)
+            } else {
+                clicked = option.bundleID
+            }
         } label: {
             HStack(spacing: 10) {
                 Image(nsImage: option.icon(size: 32))
@@ -153,6 +165,7 @@ struct PlayerChooserView: View {
                     .font(.system(size: 18))
                     .foregroundStyle(isPicked ? AnyShapeStyle(.white) : AnyShapeStyle(.tertiary),
                                      isPicked ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
+                    .opacity(option.webAddress == nil ? 1 : 0) // a suggestion isn't picked
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, 6)
@@ -160,7 +173,7 @@ struct PlayerChooserView: View {
         }
         .buttonStyle(ChipButtonStyle()) // which dims it while disabled
         .padding(.horizontal, -6)
-        .disabled(!option.isInstalled)
+        .disabled(!option.isClickable)
         .accessibilityAddTraits(isPicked ? .isSelected : [])
     }
 }

@@ -70,3 +70,30 @@ actor MockLearningPlayer: LearningMusicPlayer {
         MockStateObserver()
     }
 }
+
+/// Stands in for the "Add a Web App" window.
+@MainActor
+final class FakeAddWebAppWindow: AddWebAppPresenting {
+    private(set) var isVisible = false
+    func show() { isVisible = true }
+    func close() { isVisible = false }
+}
+
+/// Makes a web app in memory: reports the steps, then `onMake` puts it in place.
+final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
+    var result: Result<MadeWebApp, WebAppMakingError>
+    var onMake: @Sendable () -> Void = {}
+
+    init(_ result: Result<MadeWebApp, WebAppMakingError>) {
+        self.result = result
+    }
+
+    func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp {
+        let made = try result.get()
+        onStep(.checked)
+        onStep(.opened)
+        onMake()
+        onStep(.made(made))
+        return made
+    }
+}

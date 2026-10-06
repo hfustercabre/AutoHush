@@ -30,6 +30,9 @@ struct AppDelegateTests {
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
         let learningWindow = FakeLearningWindow()
+        let addWindow = FakeAddWebAppWindow()
+        var maker = FakeWebAppMaker(.failure(.notAWebAddress))
+        var opened: [URL] = []
 
         private var onFolderChange: (@MainActor () -> Void)?
 
@@ -89,6 +92,9 @@ struct AppDelegateTests {
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
             makeLearningWindow: { _ in scratch.learningWindow },
+            webAppMaker: scratch.maker,
+            makeAddWebAppWindow: { _, _ in scratch.addWindow },
+            openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
@@ -138,6 +144,98 @@ struct AppDelegateTests {
         #expect(sut.status.learning == nil)
         sut.chooseMusicPlayer(webApp.bundleID) // learned already: no window
         #expect(scratch.learningWindow.shownCount == 1)
+    }
+
+    @MainActor
+    @Test("a web app added from its address is chosen and opened, its steps shown in the add window, which closes once learned")
+    func addWebApp() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
+        let found = FoundPlayers()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        scratch.installed.insert(webApp.bundleID)
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
+        scratch.maker.onMake = { found.players = [webApp] }
+        let (sut, _) = makeSUT(scratch)
+
+        sut.showAddWebApp()
+        #expect(scratch.addWindow.isVisible)
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.opened.isEmpty }
+        #expect(sut.status.chosenPlayerID == webApp.bundleID)
+        #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: false))
+        #expect(scratch.opened == [appURL])
+        #expect(!scratch.learningWindow.isVisible) // the add window shows the steps
+
+        webApp.set(.learned)
+        await waitFor { !scratch.addWindow.isVisible }
+        #expect(!scratch.addWindow.isVisible)
+    }
+
+    @MainActor
+    @Test("a suggested web app opens the add window filled in with its address, and the player stays")
+    func suggestedWebApp() {
+        let scratch = Scratch()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], suggested: {
+            [WebAppSuggestion(name: "Deezer", address: "deezer.com")]
+        })
+        let (sut, _) = makeSUT(scratch)
+        let suggestion = PlayerOption.suggestionID("deezer.com")
+        #expect(sut.status.playerOptions.contains { $0.bundleID == suggestion && $0.webAddress == "deezer.com" })
+
+        sut.chooseMusicPlayer(suggestion)
+        #expect(scratch.addWindow.isVisible)
+        #expect(sut.addWebAppModel.address == "deezer.com")
+        #expect(sut.addWebAppModel.phase == .entering)
+        #expect(sut.status.chosenPlayerID == Players.first)
+
+        sut.addWebAppModel.address = "something else"
+        sut.showAddWebApp() // the window's open: what's typed stays
+        #expect(sut.addWebAppModel.address == "something else")
+        sut.chooseMusicPlayer(suggestion) // another click fills it in again
+        #expect(sut.addWebAppModel.address == "deezer.com")
+    }
+
+    @MainActor
+    @Test("a web app made moments ago is chosen once it counts as installed")
+    func addWebAppNotYetInstalled() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learned)
+        let found = FoundPlayers()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz",
+                                                            url: URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app"),
+                                                            alreadyThere: false)))
+        scratch.maker.onMake = { found.players = [webApp] }
+        let (sut, _) = makeSUT(scratch)
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        // Launch Services knows of it only a moment later.
+        try? await Task.sleep(for: .milliseconds(400))
+        #expect(sut.status.chosenPlayerID == Players.first)
+        scratch.installed.insert(webApp.bundleID)
+        await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
+        #expect(sut.status.chosenPlayerID == webApp.bundleID)
+    }
+
+    @MainActor
+    @Test("a web app that can't be added says why, and keeps the address to try again")
+    func addWebAppFails() async {
+        let scratch = Scratch()
+        scratch.maker = FakeWebAppMaker(.failure(.noAnswer(host: "nowhere.example")))
+        let (sut, _) = makeSUT(scratch)
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "nowhere.example"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.problem != nil }
+        #expect(sut.addWebAppModel.problem == .noAnswer(host: "nowhere.example"))
+        #expect(sut.addWebAppModel.phase == .entering)
+        #expect(sut.addWebAppModel.address == "nowhere.example")
+        #expect(sut.addWebAppModel.problemText?.contains("nowhere.example") == true)
+        #expect(sut.status.chosenPlayerID == Players.first)
     }
 
     @MainActor
@@ -757,5 +855,15 @@ struct AppDelegateTests {
     func installUnavailableNote() {
         let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))
         #expect(sut.settingsModel.updateInstallNote == "AutoHush can't update itself, because it can't write to the folder it's in.")
+    }
+}
+
+/// Players found on the Mac, changed by a test.
+private final class FoundPlayers: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _players: [any MusicPlayer] = []
+    var players: [any MusicPlayer] {
+        get { lock.withLock { _players } }
+        set { lock.withLock { _players = newValue } }
     }
 }

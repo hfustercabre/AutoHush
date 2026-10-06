@@ -173,4 +173,9 @@ package final class SafariWebAppPlayers: Sendable {
             }
         }
     }
+
+    /// Those of `suggested` that no web app installed now opens.
+    package func notAdded(_ suggested: [SuggestedWebApp]) -> [WebAppSuggestion] {
+        SuggestedWebApp.notAdded(suggested, among: finder.webApps())
+    }
 }

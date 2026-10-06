@@ -24,6 +24,8 @@ final class SettingsModel {
         var openNotificationSettings: @MainActor () -> Void
         /// Brings `diagnostics` up to date.
         var refreshDiagnostics: @MainActor () -> Void = {}
+        /// Opens the "Add a Web App" window.
+        var addWebApp: @MainActor () -> Void = {}
     }
 
     /// One app in Settings → Apps, and whether it is ignored.
@@ -184,6 +186,7 @@ final class SettingsModel {
     // MARK: - Forwarded actions
 
     func chooseMusicPlayer(_ bundleID: String) { actions.chooseMusicPlayer(bundleID) }
+    func addWebApp() { actions.addWebApp() }
     func setAutoPause(_ on: Bool) { actions.setAutoPause(on) }
     func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
     func forget(_ source: AudioSource) { actions.forgetApp(source) }

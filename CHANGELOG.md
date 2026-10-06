@@ -12,11 +12,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Safari web apps can be your music player.** Any website you add to the
   Dock from Safari (File → Add to Dock), such as YouTube Music, Amazon Music
   or Spotify's web player, is offered under **Safari Web Apps** in the menu,
-  Settings and the welcome window.
+  Settings and the welcome window. They're marked **Experimental**: every
+  website works differently, so a web app may not pause or resume as
+  expected, as the heading and the windows that add and learn one say.
   - AutoHush presses the site's own Play/Pause button, so the site stays in
     step. It learns which button that is: when you choose a web app, a
     window asks you to play something in it, then pause it, and closes once
-    it has seen both. The same steps show in the menu and in Settings until
+    it has seen both. A tip under each step says how: let the music itself
+    play for 5 to 10 seconds (ads don't count), then wait for the tick. The same steps show in the menu and in Settings until
     then. It presses nothing before it has learned.
   - It works with the window visible, minimized or on another Space. It
     needs the Accessibility permission, and pauses without fading.
@@ -27,6 +30,14 @@ This project follows [Semantic Versioning](https://semver.org/).
     AutoHush asks to learn it again, and keeps both layouts.
   - Settings → Diagnostics shows whether the button has been learned and
     whether windows on other Spaces can be reached.
+- **Add a Web App…** makes a website your music player from its address:
+  in the menu's players, Settings (the player pop-up and a **+** button)
+  and the welcome window. Paste the address; AutoHush checks that the site
+  answers, adds it to the Dock with Safari's own Add to Dock, chooses it,
+  opens it and learns its controls, all in one window.
+  - Spotify, YouTube Music, Amazon Music and Deezer are offered after your
+    web apps, with a download symbol, until you add them: choosing one
+    opens the window with its address filled in.
 
 ### Fixed
 

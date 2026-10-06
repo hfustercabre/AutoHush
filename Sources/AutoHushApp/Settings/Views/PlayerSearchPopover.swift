@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Settings → General's search over the music players, opened by the
 /// magnifier beside their pop-up: the players whose names match, as the
-/// pop-up offers them; a click on an installed one chooses it.
+/// pop-up offers them; a click on an installed one chooses it, and on a
+/// suggested web app opens "Add a Web App".
 struct PlayerSearchPopover: View {
     let options: [PlayerOption]
     /// The chosen player's bundle ID, checked in the list.
@@ -23,7 +24,7 @@ struct PlayerSearchPopover: View {
                     }
                     ForEach(Array(shown.enumerated()), id: \.element.id) { index, option in
                         if index == shown.webAppsStart {
-                            SectionLabel(Text(verbatim: PlayerOption.webAppsHeading))
+                            WebAppsHeading()
                                 .padding(.horizontal, 6)
                                 .padding(.top, index == 0 ? 0 : 6)
                         }
@@ -62,7 +63,7 @@ struct PlayerSearchPopover: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 6)) // which dims it while disabled
-        .disabled(!option.isInstalled)
+        .disabled(!option.isClickable)
         .accessibilityAddTraits(option.bundleID == chosen ? .isSelected : [])
     }
 }

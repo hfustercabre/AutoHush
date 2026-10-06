@@ -1,5 +1,6 @@
 import AppKit
 import os
+import Security
 import AutoHushKit
 
 /// A website added to the Dock from Safari (File → Add to Dock). Each is an
@@ -12,14 +13,17 @@ package struct SafariWebApp: Equatable, Sendable {
     package let name: String
     /// Where it's installed.
     package let url: URL
+    /// The page it opens on; `nil` when its Info.plist doesn't say.
+    package let startURL: URL?
 
     /// Every Safari web app's bundle ID starts with it.
     package static let bundleIDPrefix = "com.apple.Safari.WebApp."
 
-    package init(bundleID: String, name: String, url: URL) {
+    package init(bundleID: String, name: String, url: URL, startURL: URL? = nil) {
         self.bundleID = bundleID
         self.name = name
         self.url = url
+        self.startURL = startURL
     }
 
     /// The web app in the bundle at `url`; `nil` for any other app.
@@ -31,7 +35,30 @@ package struct SafariWebApp: Equatable, Sendable {
         else { return nil }
         let name = (info["CFBundleName"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             ?? url.deletingPathExtension().lastPathComponent
-        self.init(bundleID: bundleID, name: Self.shortName(name), url: url)
+        let startURL = ((info["Manifest"] as? [String: Any])?["start_url"] as? String).flatMap(URL.init(string:))
+        self.init(bundleID: bundleID, name: Self.shortName(name), url: url, startURL: startURL)
+    }
+
+    /// Whether it opens the website at `address`: the same host, with or
+    /// without "www.".
+    package func opens(_ address: URL) -> Bool {
+        address.host().map(opens(host:)) ?? false
+    }
+
+    /// Whether it opens the website on `host`, with or without "www.".
+    package func opens(host: String) -> Bool {
+        guard let start = startURL?.host() else { return false }
+        return WebAddress.siteHost(start) == WebAddress.siteHost(host)
+    }
+
+    /// Whether the bundle at `url` is complete. Safari writes a new web app's
+    /// Info.plist first, then its icon, and seals it with a code signature
+    /// last, about 0.3 s later; macOS refuses to open it before ("damaged or
+    /// incomplete").
+    package static func isSealed(at url: URL) -> Bool {
+        var code: SecStaticCode?
+        guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code else { return false }
+        return SecStaticCodeCheckValidity(code, [], nil) == errSecSuccess
     }
 
     /// A web app is named after the page's title, which often adds a slogan

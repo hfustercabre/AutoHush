@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import Testing
 import AutoHushKit
 import AutoHushPlayers
@@ -7,6 +8,7 @@ import SpotifySupport
 import AppleMusicSupport
 import MenuPlayers
 import VLCSupport
+import WebAppPlayers
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
@@ -31,6 +33,21 @@ struct SupportedPlayersTests {
             let mark = placeholder.markShape().boundingBoxOfPath
             #expect(!mark.isEmpty && tile.contains(mark), "\(player.name)'s mark is off its tile")
         }
+    }
+
+    @Test("Spotify, YouTube Music, Amazon Music and Deezer are suggested as web apps; Amazon Music on the Mac's country's site")
+    func suggestedWebApps() {
+        #expect(SupportedPlayers.suggestedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer"])
+        #expect(SupportedPlayers.suggestedWebApps.map(\.address).allSatisfy { WebAddress.url(from: $0) != nil })
+        #expect(SupportedPlayers.amazonMusicSite(region: "ES") == "music.amazon.es")
+        #expect(SupportedPlayers.amazonMusicSite(region: "GB") == "music.amazon.co.uk")
+        #expect(SupportedPlayers.amazonMusicSite(region: "US") == "music.amazon.com")
+        #expect(SupportedPlayers.amazonMusicSite(region: "NL") == "music.amazon.com")
+        #expect(SupportedPlayers.amazonMusicSite(region: nil) == "music.amazon.com")
+        let amazon = SupportedPlayers.suggestedWebApps[2]
+        let made = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "A", name: "Amazon Music",
+                                url: URL(fileURLWithPath: "/Applications/A.app"), startURL: URL(string: "https://music.amazon.de/"))
+        #expect(amazon.isAdded(as: made)) // whatever site the Mac's country gets
     }
 
     @Test("people updating from before the choice keep Spotify")

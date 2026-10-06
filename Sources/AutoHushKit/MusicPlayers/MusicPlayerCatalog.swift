@@ -11,19 +11,27 @@ package struct MusicPlayerCatalog: Sendable {
     /// Players found on this Mac besides those (its Safari web apps), looked
     /// up afresh each time; each app keeps its instance.
     private let found: @Sendable () -> [any MusicPlayer]
+    /// The suggested web apps that no web app opens yet, looked up afresh
+    /// each time.
+    private let suggested: @Sendable () -> [WebAppSuggestion]
 
     package init(
         players: [any MusicPlayer],
         formerDefault: String? = nil,
-        found: @escaping @Sendable () -> [any MusicPlayer] = { [] }
+        found: @escaping @Sendable () -> [any MusicPlayer] = { [] },
+        suggested: @escaping @Sendable () -> [WebAppSuggestion] = { [] }
     ) {
         self.players = players
         self.formerDefault = formerDefault
         self.found = found
+        self.suggested = suggested
     }
 
     /// Every player to choose from now: the built-in ones, then those found.
     package var all: [any MusicPlayer] { players + found() }
+
+    /// Websites to offer as web apps, to add: those no web app opens yet.
+    package var webAppSuggestions: [WebAppSuggestion] { suggested() }
 
     /// The player with this bundle ID; `nil` for one not in the catalog.
     package func player(bundleID: String?) -> (any MusicPlayer)? {

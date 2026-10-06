@@ -1,6 +1,7 @@
 import AppKit
 import Testing
 @testable import AutoHushApp
+import AutoHushKit
 
 @Suite("PlayerPopUp")
 @MainActor
@@ -15,10 +16,11 @@ struct PlayerPopUpTests {
     func items() {
         let button = PlayerPopUpButton()
         button.update(options: options, selection: "com.example.second")
-        #expect(button.itemTitles == ["First", "Second", "Third"])
-        #expect(button.itemArray.map(\.isEnabled) == [true, true, false])
-        #expect(button.itemArray.map(\.subtitle) == [nil, nil, "Not installed"])
-        #expect(button.itemArray.allSatisfy { $0.image != nil })
+        #expect(button.itemTitles == ["First", "Second", "Third", "", "Add a Web App…"])
+        let players = Array(button.itemArray.prefix(3))
+        #expect(players.map(\.isEnabled) == [true, true, false])
+        #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
+        #expect(players.allSatisfy { $0.image != nil })
         #expect(button.titleOfSelectedItem == "Second")
     }
 
@@ -26,13 +28,51 @@ struct PlayerPopUpTests {
     func placeholder() {
         let button = PlayerPopUpButton()
         button.update(options: options, selection: nil)
-        #expect(button.itemTitles == ["Choose…", "First", "Second", "Third"])
+        #expect(button.itemTitles == ["Choose…", "First", "Second", "Third", "", "Add a Web App…"])
         #expect(button.itemArray.first?.isEnabled == false)
         #expect(button.titleOfSelectedItem == "Choose…")
 
         // Chosen since: the placeholder goes.
         button.update(options: options, selection: "com.example.first")
-        #expect(button.itemTitles == ["First", "Second", "Third"])
+        #expect(button.itemTitles == ["First", "Second", "Third", "", "Add a Web App…"])
+    }
+
+    @Test("“Add a Web App…” opens the window, and the chosen player stays shown")
+    func addWebApp() {
+        let button = PlayerPopUpButton()
+        var picked: [String] = []
+        var adds = 0
+        button.onSelect = { picked.append($0) }
+        button.onAddWebApp = { adds += 1 }
+        button.update(options: options, selection: "com.example.second")
+        button.selectItem(withTitle: "Add a Web App…")
+        _ = button.target?.perform(button.action, with: button)
+        #expect(adds == 1)
+        #expect(picked.isEmpty)
+        #expect(button.titleOfSelectedItem == "Second")
+    }
+
+    @Test("a suggested web app can be picked though not installed; the chosen player stays shown")
+    func suggestion() {
+        let button = PlayerPopUpButton()
+        var picked: [String] = []
+        button.onSelect = { picked.append($0) }
+        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
+        button.update(options: options + [suggestion], selection: "com.example.second")
+        let heading = button.itemArray.first { $0.identifier?.rawValue == "webAppsHeading" }
+        #expect(heading?.title == "Safari Web Apps")
+        #expect(heading?.isEnabled == false)
+        #expect(heading?.view != nil)
+        #expect(button.itemTitles.firstIndex(of: "Safari Web Apps") == button.itemTitles.firstIndex(of: "Deezer").map { $0 - 1 })
+        let item = button.itemArray.first { $0.title == "Deezer" }
+        #expect(item?.isEnabled == true)
+        #expect(item?.subtitle == "Not installed")
+        #expect(item?.image?.isTemplate == true)
+
+        button.selectItem(withTitle: "Deezer")
+        _ = button.target?.perform(button.action, with: button)
+        #expect(picked == [suggestion.bundleID])
+        #expect(button.titleOfSelectedItem == "Second")
     }
 
     @Test("picking a player reports its bundle ID")

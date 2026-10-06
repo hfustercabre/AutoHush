@@ -37,10 +37,10 @@ struct GeneralSettingsView: View {
                 HStack {
                     RowTitle(Text("Music player"), subtitle: Text("AutoHush pauses and resumes this app."))
                     Spacer(minLength: 8)
-                    PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID) {
-                        model.chooseMusicPlayer($0)
-                    }
+                    PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID,
+                                onSelect: { model.chooseMusicPlayer($0) }, onAddWebApp: { model.addWebApp() })
                     if model.playerOptions.isSearchable { playerSearchButton }
+                    IconChipButton(symbol: "plus", label: Text(verbatim: PlayerOption.addWebAppTitle)) { model.addWebApp() }
                 }
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)

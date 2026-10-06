@@ -74,6 +74,10 @@ extension ShapeStyle where Self == AppearanceStyle {
     static var switchOffFill: AppearanceStyle {
         AppearanceStyle(light: Color.black.opacity(0.26), dark: .quaternary)
     }
+    /// Behind a `HeadingBadge`: `appWarning`, faint.
+    static var warningBadgeFill: AppearanceStyle {
+        AppearanceStyle(light: Color(red: 0xB0 / 255, green: 0x30 / 255, blue: 0).opacity(0.12), dark: Color.orange.opacity(0.18))
+    }
 }
 
 /// A switch drawn in the accent color, the same in the menu and in Settings.
@@ -161,6 +165,23 @@ struct SectionLabel: View {
 
     var body: some View {
         title.font(.appCaption).foregroundStyle(.appSecondary)
+    }
+}
+
+/// A word in a capsule after a heading that qualifies everything under it,
+/// e.g. "Experimental" after "Safari Web Apps".
+struct HeadingBadge: View {
+    /// Already localized.
+    let text: String
+
+    var body: some View {
+        Text(verbatim: text)
+            .font(.appCaption.weight(.semibold))
+            .foregroundStyle(.appWarning)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(Capsule().fill(.warningBadgeFill))
+            .fixedSize()
     }
 }
 

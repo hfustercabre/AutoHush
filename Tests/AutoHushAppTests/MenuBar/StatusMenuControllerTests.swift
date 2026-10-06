@@ -151,7 +151,7 @@ struct StatusMenuControllerTests {
 
         sut.perform(.togglePlayerList)
         #expect(sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(5) == ["card", "First", "Third", "Second", "snooze"])
+        #expect(rows(sut.menu).prefix(6) == ["card", "First", "Third", "Second", "Add a Web App…", "snooze"])
         let players = Array(sut.menu.items[1...3])
         #expect(players.map(\.state) == [.on, .off, .off])
         #expect(players.map(\.isEnabled) == [true, true, false])
@@ -163,6 +163,35 @@ struct StatusMenuControllerTests {
         sut.perform(.togglePlayerList)
         #expect(!sut.model.isChoosingPlayer)
         #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+    }
+
+    @Test("a suggested web app is offered after the web apps, can be clicked, and goes the way a player does")
+    func suggestedWebApp() throws {
+        let log = ActionLog()
+        let sut = makeController(log)
+        defer { sut.remove() }
+        var status = readyStatus()
+        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            suggestion,
+        ]
+        status.chosenPlayerID = "com.example.first"
+        sut.status = status
+        prepareToOpen(sut)
+
+        sut.perform(.togglePlayerList)
+        #expect(rows(sut.menu).prefix(5) == ["card", "First", "webAppsHeading", "Deezer", "Add a Web App…"])
+        let heading = sut.menu.items[2] // drawn: a section header can't show the "Experimental" badge
+        #expect(heading.title == "Safari Web Apps")
+        #expect(!heading.isEnabled)
+        #expect((heading.view?.frame.height ?? 0) > 20) // the note under it too
+        let row = sut.menu.items[3]
+        #expect(row.isEnabled)
+        #expect(row.subtitle == "Not installed")
+        #expect(row.image?.isTemplate == true)
+        try perform(row)
+        #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
     }
 
     @Test("from eight players on, a search comes first and narrows them down; fewer have none")
@@ -182,9 +211,9 @@ struct StatusMenuControllerTests {
                                               "TIDAL", "Qobuz", "Música", "Deezer"])
         sut.perform(.searchPlayers("MUSI"))
         #expect(sut.model.playerSearch == "MUSI")
-        #expect(rows(sut.menu).prefix(5) == ["card", "playerSearch", "Apple Music", "Música", "snooze"])
+        #expect(rows(sut.menu).prefix(6) == ["card", "playerSearch", "Apple Music", "Música", "Add a Web App…", "snooze"])
         sut.perform(.searchPlayers("zz"))
-        #expect(rows(sut.menu).prefix(4) == ["card", "playerSearch", "No players match “zz”.", "snooze"])
+        #expect(rows(sut.menu).prefix(5) == ["card", "playerSearch", "No players match “zz”.", "Add a Web App…", "snooze"])
         #expect(sut.menu.items[2].isEnabled == false)
         sut.perform(.searchPlayers(""))
         #expect(rows(sut.menu).count(where: { names.contains($0) }) == 8)

@@ -27,9 +27,25 @@ enum LearningText {
     static var pauseStep: String {
         String(localized: "Pause it", comment: "The step after “Play something in %@”: pause the web app")
     }
+
+    /// Under the play step until it's done: a start is told by the button
+    /// changing as the sound comes on, and an ad's own controls aren't the
+    /// player's.
+    static var playTip: String {
+        String(localized: "Let the music itself play for 5 to 10 seconds. Ads don’t count.",
+               comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls")
+    }
+
+    /// Under the pause step until it's done: a web app's sound goes off only
+    /// about 8 seconds after a pause, and playing again before hides it.
+    static var pauseTip: String {
+        String(localized: "Wait for the tick before playing again. It can take up to 10 seconds.",
+               comment: "Under the step “Pause it” while AutoHush learns a web app's controls")
+    }
 }
 
-/// The two things the user does while AutoHush learns, each ticked once seen.
+/// The two things the user does while AutoHush learns, each ticked once
+/// seen, with a tip under the one to do now.
 struct LearningSteps: View {
     let name: String
     let hasPlayed: Bool
@@ -37,19 +53,26 @@ struct LearningSteps: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            step(done: hasPlayed, LearningText.playStep(name))
-            step(done: hasPaused, LearningText.pauseStep)
+            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed ? nil : LearningText.playTip)
+            step(done: hasPaused, LearningText.pauseStep, tip: hasPlayed && !hasPaused ? LearningText.pauseTip : nil)
         }
     }
 
-    private func step(done: Bool, _ text: String) -> some View {
-        HStack(spacing: 8) {
+    private func step(done: Bool, _ text: String, tip: String?) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: done ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(done ? AnyShapeStyle(.appSuccess) : AnyShapeStyle(.appSecondary))
                 .accessibilityHidden(true)
-            Text(verbatim: text)
-                .foregroundStyle(done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: text)
+                    .foregroundStyle(done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
+                    .fixedSize(horizontal: false, vertical: true)
+                if let tip {
+                    Text(verbatim: tip)
+                        .captionStyle()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(done ? .isSelected : [])
@@ -141,6 +164,7 @@ struct LearningWindowView: View {
                         .captionStyle()
                 }
             }
+            NoteLabel(PlayerOption.webAppsWarning)
             Card {
                 LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned)
                 CardDivider()

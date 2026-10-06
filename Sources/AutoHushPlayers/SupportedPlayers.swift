@@ -28,12 +28,41 @@ package enum SupportedPlayers {
             MenuPlayer(profile: .tidal),
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
-        found: { webApps.current() }
+        found: { webApps.current() },
+        suggested: { webApps.notAdded(suggestedWebApps) }
     )
 
     /// Every Safari web app (YouTube Music, Amazon Music, Spotify's web
     /// player…) can be chosen: AutoHush learns its Play/Pause button.
     private static let webApps = SafariWebAppPlayers()
+
+    /// Music services' web players, offered after the web apps until one
+    /// is added, the most used first (2026): Spotify, YouTube Music (125
+    /// million subscribers), Amazon Music, then Deezer (about 10 million).
+    package static let suggestedWebApps: [SuggestedWebApp] = [
+        SuggestedWebApp(name: "Spotify", address: "open.spotify.com"),
+        SuggestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
+        SuggestedWebApp(name: "Amazon Music", address: amazonMusicSite(region: Locale.current.region?.identifier),
+                        otherHosts: ["music.amazon.com"] + amazonMusicSites.values),
+        SuggestedWebApp(name: "Deezer", address: "deezer.com"),
+    ]
+
+    /// Amazon Music's site for each country that has its own; the others
+    /// use music.amazon.com. A sign-in on another country's site doesn't
+    /// carry over, so the web app opens the Mac's own.
+    package static let amazonMusicSites: [String: String] = [
+        "GB": "music.amazon.co.uk", "DE": "music.amazon.de", "AT": "music.amazon.de",
+        "FR": "music.amazon.fr", "IT": "music.amazon.it", "ES": "music.amazon.es",
+        "JP": "music.amazon.co.jp", "CA": "music.amazon.ca", "BR": "music.amazon.com.br",
+        "MX": "music.amazon.com.mx", "IN": "music.amazon.in", "AU": "music.amazon.com.au",
+    ]
+
+    package static func amazonMusicSite(region: String?) -> String {
+        region.flatMap { amazonMusicSites[$0] } ?? "music.amazon.com"
+    }
+
+    /// Makes a Safari web app from an address the user typed.
+    package static let webAppMaker: any WebAppMaking = SafariWebAppMaker()
 
     /// The app a process runs as when its program doesn't say: a Safari web
     /// app (for `ProcessAudioSourceIdentifier`).

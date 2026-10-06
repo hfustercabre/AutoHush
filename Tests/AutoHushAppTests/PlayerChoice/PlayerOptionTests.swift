@@ -48,6 +48,38 @@ struct PlayerOptionTests {
         #expect(options.offered.matching("yt").webAppsStart == 0)
         #expect(options.offered.matching("b").webAppsStart == nil)
         #expect(!PlayerOption.webAppsHeading.isEmpty)
+        #expect(PlayerOption.experimentalBadge == "Experimental")
+        #expect(PlayerOption.webAppsWarning.hasPrefix("Web apps are experimental."))
+    }
+
+    @Test("suggested web apps come after the web apps, marked with a download symbol, and can be clicked though not installed")
+    func suggestions() {
+        let catalog = MusicPlayerCatalog(
+            players: [MockMusicPlayer(bundleID: "com.example.first", name: "First")],
+            found: { [MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.A", name: "YT Music", status: .learned)] },
+            suggested: { [WebAppSuggestion(name: "Deezer", address: "deezer.com")] }
+        )
+        let options = PlayerOption.list(catalog) { $0.hasPrefix("com.") ? URL(fileURLWithPath: "/Applications/\($0).app") : nil }
+        #expect(options.offered.map(\.name) == ["First", "YT Music", "Deezer"])
+        #expect(options.offered.webAppsStart == 1)
+        let deezer = options[2]
+        #expect(deezer.bundleID == PlayerOption.suggestionID("deezer.com"))
+        #expect(deezer.webAddress == "deezer.com")
+        #expect(deezer.kind == .safariWebApp)
+        #expect(!deezer.isInstalled && deezer.isClickable)
+        #expect(deezer.icon(size: 16).isTemplate)
+        #expect(options.map(\.isClickable) == [true, true, true])
+        #expect(!PlayerOption(bundleID: "com.example.gone", name: "Gone", appURL: nil).isClickable)
+        #expect(options.onlyInstalled == nil) // two installed
+    }
+
+    @Test("the welcome window's note names only the apps that aren't installed, not suggested web apps")
+    func onlyInstalledNoteSkipsSuggestions() {
+        let options = [option("Spotify", installed: true), option("VLC", installed: false),
+                       .suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))]
+        let note = PlayerOption.onlyInstalledNote(among: options)
+        #expect(note?.contains("VLC") == true)
+        #expect(note?.contains("Deezer") == false)
     }
 
     @Test("from eight players on, they can be searched by name, ignoring case and accents")

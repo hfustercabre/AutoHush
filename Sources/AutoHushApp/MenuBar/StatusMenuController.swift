@@ -14,6 +14,7 @@ import AutoHushKit
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
 /// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
 ///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
+///   ⊕ Add a Web App…                                 (makes a website one)
 /// ╭────────────────────────────────────────────╮
 /// │ Learning YT Music's Controls                │  (until AutoHush has learned
 /// │ ✓ Play something in YT Music  ○ Pause it    │  the chosen web app's button)
@@ -43,6 +44,8 @@ final class StatusMenuController: NSObject {
         var toggleAutoPause: @MainActor () -> Void
         var snooze: @MainActor (AutoPauseSnooze) -> Void
         var chooseMusicPlayer: @MainActor (String) -> Void
+        /// Opens the "Add a Web App" window.
+        var addWebApp: @MainActor () -> Void = {}
         /// The menu is about to open: a last chance to bring `status` up to
         /// date (e.g. which players are installed) before it is built.
         var menuWillOpen: @MainActor () -> Void
@@ -262,29 +265,38 @@ final class StatusMenuController: NSObject {
     }
 
     /// Inserts a row for each of `options` at `index`, with a heading over
-    /// the Safari web apps; a note when there's none, because the search
-    /// matched none.
+    /// the Safari web apps, and "Add a Web App…" last; a note when there's
+    /// none, because the search matched none.
     private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
         playerRows = options.map(playerRow)
         if let start = options.webAppsStart {
-            playerRows.insert(.sectionHeader(title: PlayerOption.webAppsHeading), at: start)
+            playerRows.insert(.webAppsHeading(width: menuContentWidth), at: start)
         }
         if playerRows.isEmpty {
             let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
             note.isEnabled = false
             playerRows = [note]
         }
+        playerRows.append(addWebAppRow())
         for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
     }
 
+    /// Last under the players: makes a website a Safari web app.
+    private func addWebAppRow() -> NSMenuItem {
+        let row = item(PlayerOption.addWebAppTitle, #selector(addWebApp))
+        row.image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil)
+        return row
+    }
+
     /// A player to choose, checked when chosen. One that isn't installed
-    /// can't be, and comes after those that are.
+    /// can't be, and comes after those that are; a suggested web app opens
+    /// "Add a Web App" filled in.
     private func playerRow(for option: PlayerOption) -> NSMenuItem {
         let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
         row.image = option.icon(size: 16)
         row.state = option.bundleID == status.chosenPlayerID ? .on : .off
         if !option.isInstalled {
-            row.isEnabled = false
+            row.isEnabled = option.isClickable
             row.subtitle = PlayerOption.notInstalledLabel
         }
         return row
@@ -336,6 +348,8 @@ final class StatusMenuController: NSObject {
     }
 
     @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
+
+    @objc private func addWebApp() { actions.addWebApp() }
 
     @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }

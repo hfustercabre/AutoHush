@@ -37,6 +37,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
     /// Follows how learning the chosen player goes.
     private var learningWatch: Task<Void, Never>?
+    /// Makes a Safari web app from an address ("Add a Web App…").
+    private let webAppMaker: any WebAppMaking
+    let addWebAppModel = AddWebAppModel()
+    private var addWebAppWindow: (any AddWebAppPresenting)?
+    private let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
+    private var addingWebApp: Task<Void, Never>?
+    /// Opens an app (the web app just added, so it can be played).
+    private let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.
     private let learnedWindowDelay: Duration
     /// Update checks (menu, Settings and the daily automatic one), downloads,
@@ -100,6 +108,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         makeLearningWindow: @escaping @MainActor (SettingsModel) -> any LearningWindowPresenting = {
             LearningWindowController(model: $0)
         },
+        webAppMaker: any WebAppMaking = SupportedPlayers.webAppMaker,
+        makeAddWebAppWindow: @escaping @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting = {
+            AddWebAppWindowController(model: $0, settings: $1)
+        },
+        openApp: @escaping @MainActor (URL) async -> Void = {
+            _ = try? await NSWorkspace.shared.openApplication(at: $0, configuration: NSWorkspace.OpenConfiguration())
+        },
         learnedWindowDelay: Duration = .seconds(1.5),
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
@@ -116,6 +131,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
         self.learnedWindowDelay = learnedWindowDelay
+        self.webAppMaker = webAppMaker
+        self.makeAddWebAppWindow = makeAddWebAppWindow
+        self.openApp = openApp
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
         self.player = players.player(bundleID: preferences.musicPlayer)
@@ -155,7 +173,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 setAutomaticUpdates: { [weak self] in self?.setAutomaticUpdates($0) },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
                 openNotificationSettings: { SystemSettingsPane.notifications.open() },
-                refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() }
+                refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() },
+                addWebApp: { [weak self] in self?.showAddWebApp() }
             )
         )
         settingsModel.timings = preferences.timings
@@ -170,6 +189,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showApps()
         applyAutoPause()
         watchLearning()
+        addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
+        addWebAppModel.openAccessibilitySettings = { SystemSettingsPane.accessibility.open() }
     }
 
     // MARK: - NSApplicationDelegate
@@ -181,6 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 toggleAutoPause: { [weak self] in self?.toggleAutoPause() },
                 snooze: { [weak self] in self?.snooze($0) },
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
+                addWebApp: { [weak self] in self?.showAddWebApp() },
                 menuWillOpen: { [weak self] in self?.refreshPlayerOptions() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { $0.settingsPane.open() },
@@ -436,9 +458,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Makes `bundleID` the player AutoHush controls and starts over with it.
     /// A player that isn't installed, or is chosen already, is ignored. Music
     /// that AutoHush holds paused in the previous player stays paused: the
-    /// user is moving to another one.
-    func chooseMusicPlayer(_ bundleID: String) {
+    /// user is moving to another one. A player AutoHush must learn opens the
+    /// learning window, unless another window shows the steps. A suggested
+    /// web app opens "Add a Web App", filled in with its address.
+    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true) {
         refreshPlayerOptions()
+        if let address = status.playerOptions.first(where: { $0.bundleID == bundleID })?.webAddress {
+            showAddWebApp(address: address)
+            return
+        }
         guard bundleID != player?.bundleID,
               let chosen = players.player(bundleID: bundleID),
               let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
@@ -452,7 +480,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showApps()
         playerChooser?.close()
         watchLearning()
-        if case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus { showLearningWindow() }
+        if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus { showLearningWindow() }
         setHealth(.starting)
         requestBootstrap()
     }
@@ -481,13 +509,77 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if status.learning != learning { status.learning = learning }
         if settingsModel.learning != learning { settingsModel.learning = learning }
         if learning != nil, learning != .learned { return }
-        // Learned (both steps ticked), or nothing to learn: the window goes.
-        guard let window = learningWindow, window.isVisible else { return }
+        // Learned (both steps ticked), or nothing to learn: the windows go.
         let delay = learning == .learned ? learnedWindowDelay : .zero
-        Task { [weak self] in
-            try? await Task.sleep(for: delay)
-            guard let self, self.status.learning == learning else { return }
-            window.close()
+        if let window = learningWindow, window.isVisible {
+            Task { [weak self] in
+                try? await Task.sleep(for: delay)
+                guard let self, self.status.learning == learning else { return }
+                window.close()
+            }
+        }
+        if let window = addWebAppWindow, window.isVisible, case .learning = addWebAppModel.phase {
+            Task { [weak self] in
+                try? await Task.sleep(for: delay)
+                guard let self, self.status.learning == learning else { return }
+                window.close()
+            }
+        }
+    }
+
+    // MARK: - Adding a web app
+
+    /// The "Add a Web App" window, ready for an address, filled in with
+    /// `address` if there's one (or showing the one being added).
+    func showAddWebApp(address: String? = nil) {
+        if addWebAppWindow == nil { addWebAppWindow = makeAddWebAppWindow(addWebAppModel, settingsModel) }
+        if addingWebApp == nil, address != nil || addWebAppWindow?.isVisible != true {
+            addWebAppModel.reset(address: address ?? "")
+        }
+        addWebAppWindow?.show()
+    }
+
+    /// A web app just made is looked for this often, this far apart, until
+    /// it counts as installed.
+    static let newAppChecks = 20
+    static let newAppCheckInterval: Duration = .milliseconds(250)
+
+    /// Whether the "Add a Web App" window is on screen.
+    var isShowingAddWebApp: Bool { addWebAppWindow?.isVisible == true }
+
+    /// Makes the address a web app, then opens it, chooses it, and lets the
+    /// window show the learning.
+    private func addWebApp(from address: String) {
+        guard addingWebApp == nil else { return }
+        let model = addWebAppModel
+        let maker = webAppMaker
+        addingWebApp = Task { [weak self] in
+            defer { self?.addingWebApp = nil }
+            do {
+                let made = try await maker.makeWebApp(from: address) { step in
+                    DispatchQueue.main.async { MainActor.assumeIsolated { model.apply(step) } }
+                }
+                guard let self else { return }
+                model.apply(.made(made))
+                self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")
+                // Opened first, so it's running by the time it's chosen.
+                await self.openApp(made.url)
+                // A web app made moments ago may not count as installed yet.
+                for _ in 0..<Self.newAppChecks {
+                    self.refreshPlayerOptions()
+                    if self.status.playerOptions.contains(where: { $0.bundleID == made.bundleID && $0.isInstalled }) { break }
+                    try? await Task.sleep(for: Self.newAppCheckInterval)
+                }
+                self.chooseMusicPlayer(made.bundleID, showsLearningWindow: false)
+                if self.player?.bundleID != made.bundleID {
+                    self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
+                }
+            } catch let error as WebAppMakingError {
+                self?.logger.error("Couldn't add a web app: \(String(describing: error), privacy: .public)")
+                model.fail(error)
+            } catch {
+                model.fail(.browserFailed(error.localizedDescription))
+            }
         }
     }
 

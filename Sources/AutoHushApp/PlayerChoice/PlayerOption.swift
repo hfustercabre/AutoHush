@@ -3,6 +3,7 @@ import AutoHushKit
 
 /// A music player as the menu, Settings and the welcome window offer it.
 struct PlayerOption: Equatable, Identifiable {
+    /// A suggested web app's is made up (`suggestionID(_:)`): it has none yet.
     let bundleID: String
     let name: String
     /// Where the app is installed; `nil` when it isn't, and then it can't be
@@ -12,14 +13,29 @@ struct PlayerOption: Equatable, Identifiable {
     var iconPlaceholder: PlayerIconPlaceholder?
     /// An app, or a Safari web app: they're offered apart.
     var kind: MusicPlayerKind = .app
+    /// A suggested web app's address: it isn't added yet, and a click opens
+    /// "Add a Web App" filled in with it.
+    var webAddress: String?
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
+    /// A click does something: chooses the player, or adds the suggested web app.
+    var isClickable: Bool { isInstalled || webAddress != nil }
 
     /// A player's placeholder is its own, so it doesn't tell options apart.
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
+            && lhs.webAddress == rhs.webAddress
     }
+
+    /// A suggested web app, not added yet.
+    static func suggestion(_ suggestion: WebAppSuggestion) -> PlayerOption {
+        PlayerOption(bundleID: suggestionID(suggestion.address), name: suggestion.name, appURL: nil,
+                     kind: .safariWebApp, webAddress: suggestion.address)
+    }
+
+    /// Stands for a suggested web app's bundle ID, which isn't known yet.
+    static func suggestionID(_ address: String) -> String { "suggested-web-app:" + address }
 
     /// Finds an installed app by bundle ID.
     typealias Locate = @MainActor (String) -> URL?
@@ -51,22 +67,43 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// Every player in the catalog, the Safari web apps found included, in
-    /// its order, and whether it is installed.
+    /// its order, and whether it is installed; then the suggested web apps
+    /// not added yet.
     @MainActor
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
         catalog.all.map {
             PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID),
                          iconPlaceholder: $0.iconPlaceholder, kind: $0.kind)
-        }
+        } + catalog.webAppSuggestions.map(suggestion)
     }
 
-    /// The app's icon; its placeholder while it isn't installed.
+    /// The app's icon; its placeholder while it isn't installed; a download
+    /// symbol for a suggested web app.
     @MainActor
     func icon(size: CGFloat) -> NSImage {
+        if webAddress != nil { return Self.downloadSymbol(size: size) }
         if appURL == nil, let iconPlaceholder {
             return AppIcon.image(placeholder: iconPlaceholder, id: bundleID, size: size)
         }
         return AppIcon.image(bundlePath: appURL?.path, size: size)
+    }
+
+    /// A download arrow in a circle, about as big as an app icon's artwork,
+    /// in the text's color (a template).
+    @MainActor
+    static func downloadSymbol(size: CGFloat) -> NSImage {
+        let configuration = NSImage.SymbolConfiguration(pointSize: size * 0.68, weight: .regular)
+        let symbol = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)?
+            .withSymbolConfiguration(configuration)
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            guard let symbol else { return false }
+            let drawn = symbol.size
+            symbol.draw(in: NSRect(x: rect.midX - drawn.width / 2, y: rect.midY - drawn.height / 2,
+                                   width: drawn.width, height: drawn.height))
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 
     /// From this many players on, every place that offers them has a search.
@@ -76,6 +113,24 @@ struct PlayerOption: Equatable, Identifiable {
     static var webAppsHeading: String {
         String(localized: "Safari Web Apps",
                comment: "Where music players are offered: heading over the websites added to the Dock from Safari")
+    }
+
+    /// After `webAppsHeading`, as a `HeadingBadge`.
+    static var experimentalBadge: String {
+        String(localized: "Experimental",
+               comment: "Badge after the “Safari Web Apps” heading where music players are offered: web apps may not work as expected")
+    }
+
+    /// Under `webAppsHeading` wherever players are offered.
+    static var webAppsNote: String {
+        String(localized: "Every website works differently, so a web app may not pause or resume as expected.",
+               comment: "Where music players are offered, under the “Safari Web Apps” heading and its “Experimental” badge")
+    }
+
+    /// In the "Add a Web App" and learning windows.
+    static var webAppsWarning: String {
+        String(localized: "Web apps are experimental. Every website works differently, so AutoHush may not pause or resume one as expected.",
+               comment: "Warning in the Add a Web App window and in the window that learns a web app's controls")
     }
 
     /// Instead of the players when none matches the search.
@@ -101,7 +156,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// AutoHush also works with Apple Music and VLC."; `nil` otherwise.
     static func onlyInstalledNote(among options: [PlayerOption]) -> String? {
         guard let only = options.onlyInstalled else { return nil }
-        let others = options.filter { !$0.isInstalled }.map(\.name)
+        let others = options.filter { !$0.isInstalled && $0.kind == .app }.map(\.name)
         guard !others.isEmpty else { return nil }
         let list = others.formatted(.list(type: .and))
         return String(localized: "\(only.name) is the only supported music player on this Mac. AutoHush also works with \(list).",
@@ -111,8 +166,8 @@ struct PlayerOption: Equatable, Identifiable {
 
 extension [PlayerOption] {
     /// How players are offered: the apps, installed ones first, then the
-    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them), each
-    /// group in the catalog's order.
+    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them), the
+    /// suggested ones last, each group in the catalog's order.
     var offered: [PlayerOption] {
         let apps = filter { $0.kind == .app }
         return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled } + filter { $0.kind == .safariWebApp }

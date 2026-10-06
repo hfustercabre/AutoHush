@@ -86,6 +86,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.cardFill` / `.cardBorder` | black 5% / 10% | quaternary 60% / none | A card's background and outline |
 | `.chipFill` / `.chipHoverFill` | black 8% / 13% | quaternary 60% / quaternary | A chip at rest / under the pointer; search fields |
 | `.switchOffFill` | black 26% | quaternary | A switch's track while off |
+| `.warningBadgeFill` | deep orange 12% | orange 18% | Behind a `HeadingBadge` |
 
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity. A control that's dimmed twice,
@@ -106,6 +107,8 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the welcome window's players, the player search's rows. |
 | `ChipButtonStyle(cornerRadius: 6)` | Small buttons inside the menu card: the player button and Retry. |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
+| `HeadingBadge` | A word in an orange capsule after a heading that qualifies everything under it: "Experimental" after "Safari Web Apps". |
+| `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In menus and pop-ups it's a drawn row (`NSMenuItem.webAppsHeading`), since a section header can't show a badge. |
 | Pop-ups | The system's pop-up (`NSPopUpButton` or a SwiftUI `Picker` with `.menu`), always **without a border**: `isBordered = false` or `.buttonStyle(.borderless)`. |
 | `SearchField` | Every search. Its ✕ closes the search or, when the search can't close, clears it. |
 | `NoteLabel` | A note with a symbol: `.warning` (orange triangle) or `.info` (grey "i"). |
@@ -137,10 +140,23 @@ where they appear:
   you choose the order, and remembers it. Music players are listed by how
   many people use them, with those that aren't installed after them,
   dimmed, and marked "Not installed". Safari web apps come last, by name,
-  under a "Safari Web Apps" heading: a section header in menus and pop-ups,
-  a `SectionLabel` in the player search, and a `SectionHeading` over a card
-  of their own in the welcome window. A search keeps the heading only while
-  a web app matches.
+  under the `WebAppsHeading` (with its "Experimental" badge and note), in
+  line with the rows' icons in menus and pop-ups and with the cards' text in
+  the welcome window. A search keeps the heading only while a web app
+  matches. The "Add a Web App" and learning windows show the same warning
+  as a `NoteLabel` under their title. Suggested web apps not added yet follow them, marked
+  "Not installed" like a missing app but not dimmed, with the
+  `arrow.down.circle` symbol for an icon and no pick circle in the welcome
+  window: a click opens "Add a Web App" filled in with the address.
+  **Add a Web App…** (with `plus.circle`) comes last
+  wherever players are offered: the menu's last row, the pop-up's last item
+  after a separator, a `.chip` under the welcome window's list, and a `+`
+  `IconChipButton` beside Settings' pop-up.
+- **A process the user waits for** shows its steps in a card, as the
+  "Add a Web App" window does: done steps ticked in `.appSuccess` and dimmed,
+  the current one bold with an accent arrow and a caption under it, the
+  next ones as empty circles. A tip on how to do a step (`.captionStyle()`)
+  shows under that step only while it's the one to do. The window closes by itself once done.
 - **Searches** appear where a list can grow long: always in Settings → Apps,
   and wherever music players are offered once there are eight or more.
   - A search matches anywhere in a name, ignoring case and accents
