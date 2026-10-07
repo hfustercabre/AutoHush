@@ -37,6 +37,28 @@ struct SettingsModelTests {
         #expect(model.fullVersion == (build.map { "1.2.3 (\($0))" } ?? "1.2.3"))
     }
 
+    @Test("a login item macOS waits to have allowed shows as such, followed when refreshed")
+    func loginItemNeedsApproval() {
+        let controller = MockLaunchAtLoginController(isEnabled: false)
+        let model = makeModel(controller)
+        #expect(!model.launchAtLoginNeedsApproval)
+        controller.needsApproval = true
+        model.refreshLaunchAtLogin()
+        #expect(model.launchAtLoginNeedsApproval)
+    }
+
+    @Test("AntiDot mode is the way past Audio Recording; Back returns to the welcome window's players")
+    func permissionActions() {
+        let log = ActionLog()
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        model.useAntiDotMode()
+        #expect(model.detectionMethod == .playbackSignals)
+        #expect(log.calls == ["method askApps"])
+        model.welcomeAsksPermissions = true
+        model.showWelcomePlayers()
+        #expect(!model.welcomeAsksPermissions)
+    }
+
     @Test("reflects the login item's state")
     func reflectsLaunchAtLogin() {
         #expect(makeModel(MockLaunchAtLoginController(isEnabled: true)).launchAtLoginEnabled)

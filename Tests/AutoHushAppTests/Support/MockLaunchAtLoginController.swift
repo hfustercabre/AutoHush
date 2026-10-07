@@ -7,6 +7,7 @@ import AutoHushTestSupport
 @MainActor
 final class MockLaunchAtLoginController: LaunchAtLoginControlling {
     var isEnabled: Bool
+    var needsApproval = false
     var setEnabledCalls: [Bool] = []
     /// Override per-test to control what `setEnabled(_:)` returns.
     /// Defaults to `.success(())` so tests that don't set it get a passing result.

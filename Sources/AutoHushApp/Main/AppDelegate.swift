@@ -86,6 +86,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// repeats (every few seconds while a permission is missing) go to the
     /// debug log.
     private(set) var loggedStartupProblem: String?
+    /// Reads the permissions AutoHush needs, and asks for them.
+    let permissionCenter: PermissionCenter
+    /// The player chosen in the welcome window is to be learned: the learning
+    /// window opens once the welcome window is done.
+    private var learningAfterWelcome = false
     /// The check that AutoHush may still control the player, while one runs:
     /// see `checkControlAccess()`.
     private var accessCheck: Task<Void, Never>?
@@ -135,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         retryDelays: ClosedRange<TimeInterval> = 5...60,
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
         installCheckDelay: Duration = .seconds(1),
+        permissionCenter: PermissionCenter = PermissionCenter(),
         bootstrapOverride: (@MainActor () -> Void)? = nil
     ) {
         self.preferences = preferences
@@ -157,6 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.retryDelays = retryDelays
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
+        self.permissionCenter = permissionCenter
         super.init()
         updates = UpdateController(
             checker: updateChecker,
@@ -187,7 +194,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
                 openNotificationSettings: { SystemSettingsPane.notifications.open() },
                 refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() },
-                addWebApp: { [weak self] in self?.showAddWebApp() }
+                addWebApp: { [weak self] in self?.showAddWebApp() },
+                requestPermission: { [weak self] in self?.requestPermission($0) },
+                finishWelcome: { [weak self] in self?.finishWelcome() }
             )
         )
         settingsModel.timings = preferences.timings
@@ -204,7 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         watchLearning()
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
         addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
-        addWebAppModel.openAccessibilitySettings = { SystemSettingsPane.accessibility.open() }
+        addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(.accessibility(player: "Safari")) }
     }
 
     // MARK: - NSApplicationDelegate
@@ -222,8 +231,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.checkControlAccess()
                 },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
-                resolveWarning: { [weak self] in self?.resolveWarning($0) },
+                resolveWarning: { [weak self] in self?.requestPermission($0) },
                 reopen: { [weak self] in self?.reopen() },
+                useAntiDotMode: { [weak self] in self?.settingsModel.useAntiDotMode() },
                 retry: { [weak self] in self?.retry() },
                 openSettings: { [weak self] in self?.openSettings() },
                 showDiagnostics: { [weak self] in self?.showDiagnostics() },
@@ -290,6 +300,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setHealth(_ health: AppHealthState) {
         status.setHealth(health)
+        if settingsModel.playerNeedsPermission != status.needsPermission {
+            settingsModel.playerNeedsPermission = status.needsPermission
+        }
     }
 
     /// Tries starting again after `error`, unless an event will: see
@@ -339,14 +352,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .detection(let mode):       status.detection = mode
         case .learnedAssertions(let id, let assertions): preferences.playbackAssertions[id] = assertions
         }
-    }
-
-    /// Opens where `permission` is granted. macOS applies System Audio
-    /// Recording only from the next launch, so the menu then offers to reopen
-    /// AutoHush instead of asking again.
-    func resolveWarning(_ permission: Permission, open: (SystemSettingsPane) -> Void = { $0.open() }) {
-        open(permission.settingsPane)
-        if permission == .systemAudioRecording { status.awaitsReopenForAudioRecording = true }
     }
 
     /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
@@ -524,11 +529,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         watchFolders(holding: appURL)
         showChosenPlayer()
         showApps()
-        playerChooser?.close()
+        // From the welcome window: it goes on to what the player needs, and
+        // closes once that's allowed; the learning window waits for it.
+        let fromWelcome = isShowingPlayerChooser
+        if fromWelcome { settingsModel.welcomeAsksPermissions = true }
         watchLearning()
-        if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus { showLearningWindow() }
+        learningAfterWelcome = false
+        if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus {
+            if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
+        }
         setHealth(.starting)
         requestBootstrap()
+        if fromWelcome { watchWindows() }
+    }
+
+    /// The welcome window is done: the player is chosen and what it needs
+    /// allowed (or the window was closed). A player to learn opens the
+    /// learning window then.
+    func finishWelcome() {
+        settingsModel.welcomeAsksPermissions = false
+        if isShowingPlayerChooser { playerChooser?.close() }
+        guard learningAfterWelcome else { return }
+        learningAfterWelcome = false
+        if case .learning = status.learning { showLearningWindow() }
     }
 
     /// Shows how learning goes in the menu and Settings; once learned, or
@@ -659,6 +682,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if playerChooser == nil {
             playerChooser = makePlayerChooser(settingsModel)
         }
+        settingsModel.welcomeAsksPermissions = false
         refreshPlayerOptions()
         playerChooser?.show()
         watchWindows()
@@ -867,17 +891,80 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the windows follow at once and a reset is asked about again. macOS
     /// doesn't announce these changes. While the Diagnostics tab shows, it
     /// follows what AutoHush sees, too.
-    private func watchWindows() {
+    ///
+    /// The learning and Add a Web App windows are followed too: while any of
+    /// these shows, the permissions AutoHush needs are read again, so a
+    /// window waiting for one goes on by itself once it's allowed.
+    func watchWindows() {
         windowsWatch?.cancel()
         windowsWatch = Task { [weak self] in
-            while !Task.isCancelled, let self,
-                  self.settingsWindowController?.window?.isVisible == true || self.isShowingPlayerChooser {
-                self.refreshPlayerOptions()
-                if self.settingsWindowController?.shownTab == .diagnostics { self.refreshDiagnostics() }
-                let off = await self.updates.followNotificationPermission() == .off
-                if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
+            while !Task.isCancelled, let self, self.isShowingWatchedWindow {
+                let settingsShown = self.settingsWindowController?.window?.isVisible == true
+                if settingsShown || self.isShowingPlayerChooser {
+                    self.refreshPlayerOptions()
+                    if settingsShown, self.settingsWindowController?.shownTab == .diagnostics { self.refreshDiagnostics() }
+                    let off = await self.updates.followNotificationPermission() == .off
+                    if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
+                }
+                if settingsShown { self.settingsModel.refreshLaunchAtLogin() }
+                await self.refreshPermissions()
+                self.followWelcomeClosed()
                 try? await Task.sleep(for: .seconds(1))
             }
+            self?.followWelcomeClosed()
+        }
+    }
+
+    /// Settings, the welcome, learning or Add a Web App window is on screen.
+    private var isShowingWatchedWindow: Bool {
+        settingsWindowController?.window?.isVisible == true || isShowingPlayerChooser
+            || learningWindow?.isVisible == true || addWebAppWindow?.isVisible == true
+    }
+
+    /// The welcome window closed while it asked for the permissions: done,
+    /// as with its Done button.
+    func followWelcomeClosed() {
+        if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
+    }
+
+    // MARK: - Permissions
+
+    /// Brings what the windows show about the permissions up to date.
+    func refreshPermissions() async {
+        let state = await permissionCenter.state(
+            player: player, detectionMethod: preferences.detectionMethod, detection: status.detection,
+            awaitsReopen: status.awaitsReopenForAudioRecording
+        )
+        if settingsModel.permissions != state { settingsModel.permissions = state }
+    }
+
+    /// A click on a missing permission's button, wherever it shows: macOS's
+    /// own prompt when it hasn't asked yet, else System Settings; for
+    /// Automation with the player closed, the player; for Audio Recording
+    /// allowed in System Settings, reopening AutoHush.
+    func requestPermission(_ permission: Permission) {
+        Task { [weak self] in
+            guard let self else { return }
+            await self.refreshPermissions()
+            let state = self.settingsModel.permissions
+            let access: PermissionAccess = switch permission {
+            case .systemAudioRecording: state.audio
+            case _ where permission == state.control: state.controlAccess
+            case .accessibility: state.accessibility ? .allowed : .denied
+            case .automation: .denied
+            }
+            guard let request = PermissionCenter.request(for: permission, access: access) else { return }
+            switch request {
+            case .openPlayer:
+                if let url = self.status.chosenPlayer?.appURL { await self.openApp(url) }
+            case .reopen:
+                self.reopen()
+            case .openSettings, .askMacOS:
+                await self.permissionCenter.perform(request, player: self.player)
+                // macOS applies Audio Recording switched on there only from the next launch.
+                if request == .openSettings(.audioCapture) { self.status.awaitsReopenForAudioRecording = true }
+            }
+            await self.refreshPermissions()
         }
     }
 

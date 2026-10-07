@@ -50,22 +50,24 @@ struct LearningSteps: View {
     let name: String
     let hasPlayed: Bool
     let hasPaused: Bool
+    /// A permission is missing: the steps wait, locked, without tips.
+    var locked = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed ? nil : LearningText.playTip(name))
-            step(done: hasPaused, LearningText.pauseStep, tip: hasPlayed && !hasPaused ? LearningText.pauseTip : nil)
+            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed || locked ? nil : LearningText.playTip(name))
+            step(done: hasPaused, LearningText.pauseStep, tip: hasPlayed && !hasPaused && !locked ? LearningText.pauseTip : nil)
         }
     }
 
     private func step(done: Bool, _ text: String, tip: String?) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: done ? "checkmark.circle.fill" : "circle")
+            Image(systemName: done ? "checkmark.circle.fill" : locked ? "lock.circle" : "circle")
                 .foregroundStyle(done ? AnyShapeStyle(.appSuccess) : AnyShapeStyle(.appSecondary))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: text)
-                    .foregroundStyle(done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
+                    .foregroundStyle(done || locked ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
                     .fixedSize(horizontal: false, vertical: true)
                 if let tip {
                     Text(verbatim: tip)
@@ -153,7 +155,14 @@ struct LearningWindowView: View {
             }
             NoteLabel(PlayerOption.webAppsWarning)
             Card {
-                LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned)
+                // Without the permission AutoHush can't watch the player:
+                // asking for it comes first, and the steps unlock once it's allowed.
+                let state = model.permissions
+                if let control = state.control, !state.controlAccess.isSatisfied {
+                    permissionStep(control, access: state.controlAccess, name: name)
+                }
+                LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
+                              locked: state.control != nil && !state.controlAccess.isSatisfied)
                 CardDivider()
                 Text("AutoHush only watches; it doesn’t press anything until it has learned.",
                      comment: "The learning window, under the steps")
@@ -172,5 +181,24 @@ struct LearningWindowView: View {
         .padding(20)
         .frame(width: 440)
         .font(.appBody)
+    }
+
+    private func permissionStep(_ permission: Permission, access: PermissionAccess, name: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "circle")
+                .foregroundStyle(.appSecondary)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: permission.statusLine)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(String(localized: "AutoHush needs it to see \(name)’s buttons. The steps below unlock once it’s allowed.",
+                            comment: "The learning window, under the permission it needs first; %@ is the web app"))
+                    .captionStyle()
+                    .fixedSize(horizontal: false, vertical: true)
+                PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
+                    .padding(.top, 2)
+            }
+        }
+        .accessibilityElement(children: .contain)
     }
 }

@@ -5,6 +5,29 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **AutoHush asks for what it needs where it needs it, and waits for it.**
+  After you choose your player, the welcome window lists the permissions
+  it needs, each with a button: **Open Spotify** (macOS asks for Automation
+  only while the player is open), **Allow…**, which shows macOS's own
+  prompt or the right place in System Settings, or **Use AntiDot Mode
+  Instead**, which needs no audio permission. **Done** unlocks once
+  everything's allowed; each line ticks by itself.
+  - The window that learns a web app asks for Accessibility first, and its
+    steps unlock once it's allowed. Before, it asked you to play the web
+    app while AutoHush couldn't watch it yet, so the steps didn't tick
+    until you chose the player again.
+  - Add a Web App checks Accessibility as it opens; Continue waits for it.
+  - Settings → General shows what's missing under the player and under
+    AntiDot mode, with the same buttons, and says when macOS waits for you
+    to allow AutoHush in Login Items.
+  - The menu's permission row asks macOS first when it hasn't asked yet
+    (it opened System Settings, which lists AutoHush only once asked), and
+    with audio recording missing, a second row offers AntiDot mode.
+
 ## [0.8.0] — 2026-10-07
 
 ### Added

@@ -34,6 +34,7 @@ extension AppDelegate {
             addWebAppModel.reset(address: address ?? "")
         }
         addWebAppWindow?.show()
+        watchWindows() // follows Accessibility, which adding needs
     }
 
     /// Makes the address a web app, then opens it, chooses it, and lets the
@@ -95,6 +96,7 @@ extension AppDelegate {
     func showLearningWindow() {
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
         learningWindow?.show()
+        watchWindows() // follows the permission it may wait for
     }
 }
 

@@ -9,6 +9,40 @@ struct GeneralSettingsView: View {
     /// The players' search is open, beside their pop-up.
     @State private var searchingPlayers = false
 
+    private static var approvalNote: String {
+        String(localized: "macOS is waiting for you to allow AutoHush in Login Items.",
+               comment: "Settings → General, under Launch at login, while macOS waits for the user's approval in Login Items")
+    }
+
+    private func controlNote(_ permission: Permission, access: PermissionAccess) -> String {
+        let name = model.chosenPlayerName ?? ""
+        switch (permission, access) {
+        case (_, .playerNotRunning):
+            return PermissionText.controlNote(name, .playerNotRunning)
+        case (.automation, _):
+            return String(localized: "AutoHush can’t control \(name) without Automation access.",
+                          comment: "Settings → General, under the music player, while Automation isn't allowed; %@ is the player")
+        default:
+            return String(localized: "AutoHush can’t control \(name) without Accessibility access.",
+                          comment: "Settings → General, under the music player, while Accessibility isn't allowed; %@ is the player")
+        }
+    }
+
+    @ViewBuilder private var audioButtons: some View {
+        PermissionButton(model: model, permission: .systemAudioRecording, access: model.permissions.audio, long: true)
+            .fixedSize()
+        Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
+            .buttonStyle(.chip)
+            .fixedSize()
+    }
+
+    private var audioNote: String {
+        model.permissions.audio == .needsReopen
+            ? PermissionText.audioNote(.needsReopen)
+            : String(localized: "Without Audio Recording access, a silent app with its sound open keeps your music paused.",
+                     comment: "Settings → General, under AntiDot mode, while Audio Recording isn't allowed")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Card {
@@ -16,8 +50,8 @@ struct GeneralSettingsView: View {
                     get: { model.launchAtLoginEnabled },
                     set: { model.setLaunchAtLogin($0) }
                 ))
-                if let error = model.launchAtLoginError {
-                    NoteLabel(error)
+                if let note = model.launchAtLoginError ?? (model.launchAtLoginNeedsApproval ? Self.approvalNote : nil) {
+                    NoteLabel(note)
                     Button { model.openLoginItemsSettings() } label: {
                         Text("Open Login Items Settings…", comment: "Settings → General: button that opens System Settings → Login Items")
                     }
@@ -48,6 +82,11 @@ struct GeneralSettingsView: View {
                 if model.playerOptions.noneInstalled {
                     NoteLabel(PlayerOption.noneInstalledWarning)
                 }
+                // What the chosen player needs and lacks, and the way to allow it.
+                if let control = model.permissions.control, !model.permissions.controlAccess.isSatisfied {
+                    NoteLabel(controlNote(control, access: model.permissions.controlAccess))
+                    PermissionButton(model: model, permission: control, access: model.permissions.controlAccess, long: true)
+                }
                 // Until AutoHush has learned the chosen web app's controls.
                 if let name = model.chosenPlayerName, let hasPlayed = model.learningHasPlayed {
                     CardDivider()
@@ -63,6 +102,15 @@ struct GeneralSettingsView: View {
                                    comment: "Settings, under AntiDot mode"),
                     isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
                 )
+                // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
+                if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {
+                    NoteLabel(audioNote)
+                    // Side by side when they fit, else one under the other.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 6) { audioButtons }
+                        VStack(alignment: .leading, spacing: 6) { audioButtons }
+                    }
+                }
                 if model.isAntiDotMode {
                     CardDivider()
                     SectionLabel(Text("Detect playing apps by", comment: "Settings → General, AntiDot mode: lead-in to the ways of detecting playing apps"))

@@ -8,6 +8,8 @@ import AutoHushKit
 @MainActor
 protocol LaunchAtLoginControlling: AnyObject {
     var isEnabled: Bool { get }
+    /// On, but macOS waits for the user to allow it in Login Items.
+    var needsApproval: Bool { get }
     @discardableResult
     func setEnabled(_ enabled: Bool) -> Result<Void, Error>
     func openSystemSettings()
@@ -36,6 +38,7 @@ final class LaunchAtLoginController: LaunchAtLoginControlling {
     }
 
     var isEnabled: Bool { statusProvider() == .enabled }
+    var needsApproval: Bool { statusProvider() == .requiresApproval }
 
     @discardableResult
     func setEnabled(_ enabled: Bool) -> Result<Void, Error> {

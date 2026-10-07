@@ -168,6 +168,17 @@ struct AppStatusTests {
         #expect(status.warning == .automation(player: "Jukebox") && !status.offersReopen)
     }
 
+    @Test("no learning steps show while a permission is missing")
+    func learningHiddenWhilePermissionMissing() {
+        var status = ready()
+        status.learning = .learning(hasPlayed: false)
+        #expect(status.learningHasPlayed == false)
+        status.setHealth(.needsPermission(.accessibility(player: "Jukebox")))
+        #expect(status.needsPermission && status.learningHasPlayed == nil)
+        status.setHealth(.ready)
+        #expect(!status.needsPermission && status.learningHasPlayed == false)
+    }
+
     @Test("missing audio access warns only when ready")
     func audioAccessWarning() {
         var status = ready()

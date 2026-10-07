@@ -47,6 +47,15 @@ struct PlayerChooserView: View {
     }
 
     var body: some View {
+        if model.welcomeAsksPermissions {
+            WelcomePermissionsView(model: model)
+        } else {
+            playersPage
+        }
+    }
+
+    /// The first page: the players to choose from.
+    private var playersPage: some View {
         VStack(spacing: 16) {
             Image(nsImage: NSApplication.shared.applicationIconImage)
                 .resizable()

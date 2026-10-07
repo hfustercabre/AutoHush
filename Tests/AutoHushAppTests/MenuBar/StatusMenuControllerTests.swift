@@ -23,6 +23,7 @@ struct StatusMenuControllerTests {
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             resolveWarning: { log.calls.append("warning \($0.grantTitle)") },
             reopen: { log.calls.append("reopen") },
+            useAntiDotMode: { log.calls.append("antiDot") },
             retry: { log.calls.append("retry") },
             openSettings: { log.calls.append("settings") },
             showDiagnostics: { log.calls.append("diagnostics") },
@@ -386,9 +387,10 @@ struct StatusMenuControllerTests {
         sut.status = status
         prepareToOpen(sut)
 
-        #expect(rows(sut.menu).prefix(3) == ["card", "Reopen AutoHush", "snooze"])
+        #expect(rows(sut.menu).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
         try perform(try item("Reopen AutoHush", in: sut.menu))
-        #expect(log.calls == ["menuWillOpen", "reopen"])
+        try perform(try item("Use AntiDot Mode Instead", in: sut.menu))
+        #expect(log.calls == ["menuWillOpen", "reopen", "antiDot"])
     }
 
     @Test("a warning appears under the card as one actionable row")

@@ -33,6 +33,21 @@ struct AppDelegateTests {
         let addWindow = FakeAddWebAppWindow()
         var maker = FakeWebAppMaker(.failure(.notAWebAddress))
         var opened: [URL] = []
+        /// The permissions as the stand-in system reports them, and what was asked of it.
+        var trusted = true
+        var automationStatus: OSStatus = noErr
+        var running: Set<String> = []
+        var audio: AudioCapturePermission? = .granted
+        var asked: [String] = []
+        lazy var permissionCenter = PermissionCenter(system: .init(
+            isTrusted: { [unowned self] in self.trusted },
+            promptAccessibility: { [unowned self] in self.asked.append("prompt accessibility") },
+            automation: { [status = automationStatus] _, ask in ask ? noErr : status },
+            runningPID: { [unowned self] in self.running.contains($0) ? 4242 : nil },
+            audio: { [unowned self] in self.audio },
+            requestAudio: { [unowned self] _ in self.asked.append("ask audio") },
+            openPane: { [unowned self] in self.asked.append("open \($0.rawValue)") }
+        ))
 
         private var onFolderChange: (@MainActor () -> Void)?
 
@@ -101,6 +116,7 @@ struct AppDelegateTests {
             retryDelays: 0.02...0.08,
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
+            permissionCenter: scratch.permissionCenter,
             bootstrapOverride: realBootstrap ? nil : countBootstrap
         )
         return (sut, counter)
@@ -144,6 +160,45 @@ struct AppDelegateTests {
         #expect(sut.status.learning == nil)
         sut.chooseMusicPlayer(webApp.bundleID) // learned already: no window
         #expect(scratch.learningWindow.shownCount == 1)
+    }
+
+    @MainActor
+    @Test("while a permission is missing, the learning window asks for it first; the menu and Settings show no steps")
+    func learningWaitsForPermission() {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+
+        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.setHealth(.needsPermission(.accessibility(player: "YT Music")))
+        #expect(scratch.learningWindow.isVisible) // with the permission as its first step
+        #expect(sut.settingsModel.playerNeedsPermission)
+        #expect(sut.status.learningHasPlayed == nil) // the menu asks for the permission instead
+        #expect(sut.settingsModel.learningHasPlayed == nil)
+
+        sut.setHealth(.ready) // allowed: the retry started monitoring
+        #expect(!sut.settingsModel.playerNeedsPermission)
+        #expect(sut.status.learningHasPlayed == false)
+        #expect(sut.settingsModel.learningHasPlayed == false)
+        #expect(scratch.learningWindow.shownCount == 1)
+    }
+
+    @MainActor
+    @Test("a web app that isn't running yet still opens the learning window, which says to play it")
+    func learningWindowForPlayerNotRunning() {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+
+        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.setHealth(.degraded("YT Music is not running"))
+        #expect(scratch.learningWindow.isVisible)
     }
 
     @MainActor
@@ -478,7 +533,12 @@ struct AppDelegateTests {
         #expect(bootstraps.count == 0)
 
         sut.chooseMusicPlayer(Players.second)
+        // It goes on to what the player needs, and closes once done.
+        #expect(sut.isShowingPlayerChooser)
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        sut.finishWelcome()
         #expect(!sut.isShowingPlayerChooser)
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
     }
 
     @MainActor
@@ -708,6 +768,85 @@ struct AppDelegateTests {
         #expect(scratch.preferences.pauseHandedOverAt == nil)
     }
 
+    // MARK: - Permissions in the windows
+
+    @MainActor
+    @Test("a web app chosen in the welcome window is learned once the welcome window is done, or closed")
+    func welcomeThenLearning() {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed = [Players.first, webApp.bundleID]
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
+        #expect(sut.isShowingPlayerChooser)
+
+        sut.chooseMusicPlayer(webApp.bundleID)
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        #expect(!scratch.learningWindow.isVisible) // waits for the welcome window
+
+        scratch.chooser.close() // closed instead of Done: the same
+        sut.followWelcomeClosed()
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+        #expect(scratch.learningWindow.isVisible)
+    }
+
+    @MainActor
+    @Test("the windows learn what's missing: the player's control permission, Audio Recording unless in AntiDot mode")
+    func permissionsFollowed() async {
+        let scratch = Scratch()
+        scratch.automationStatus = OSStatus(errAEEventNotPermitted)
+        scratch.audio = .denied
+        let (sut, _) = makeSUT(scratch)
+        await sut.refreshPermissions()
+        #expect(sut.settingsModel.permissions.control == .automation(player: "First"))
+        #expect(sut.settingsModel.permissions.controlAccess == .playerNotRunning)
+        #expect(sut.settingsModel.permissions.audio == .denied)
+        #expect(!sut.settingsModel.permissions.allSatisfied)
+
+        scratch.running = [Players.first]
+        await sut.refreshPermissions()
+        #expect(sut.settingsModel.permissions.controlAccess == .denied)
+
+        sut.settingsModel.useAntiDotMode()
+        await sut.refreshPermissions()
+        #expect(sut.settingsModel.permissions.audio == .notNeeded)
+    }
+
+    @MainActor
+    @Test("a missing permission's button opens the player, asks macOS, or opens System Settings, as it stands")
+    func permissionRequests() async {
+        let scratch = Scratch()
+        scratch.audio = .denied
+        let (sut, _) = makeSUT(scratch)
+
+        // Automation with the player closed: the button opens it.
+        sut.requestPermission(.automation(player: "First"))
+        await waitFor { !scratch.opened.isEmpty }
+        #expect(scratch.opened.map(\.lastPathComponent) == ["\(Players.first).app"])
+
+        // Accessibility: macOS's prompt, then System Settings.
+        scratch.trusted = false
+        sut.requestPermission(.accessibility(player: "Safari"))
+        await waitFor { scratch.asked.count == 2 }
+        #expect(scratch.asked == ["prompt accessibility", "open Privacy_Accessibility"])
+
+        // Audio Recording turned down: System Settings, then AutoHush is to be reopened.
+        sut.requestPermission(.systemAudioRecording)
+        await waitFor { scratch.asked.count == 3 }
+        #expect(scratch.asked.last == "open Privacy_AudioCapture")
+        #expect(sut.status.awaitsReopenForAudioRecording)
+        await sut.refreshPermissions()
+        #expect(sut.settingsModel.permissions.audio == .needsReopen)
+
+        // Never asked: macOS's own prompt.
+        scratch.audio = .notDetermined
+        sut.requestPermission(.systemAudioRecording)
+        await waitFor { scratch.asked.count == 4 }
+        #expect(scratch.asked.last == "ask audio")
+    }
+
     // MARK: - Permissions while running
 
     @MainActor
@@ -754,14 +893,20 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("after going to allow audio recording, the menu offers to reopen AutoHush; other permissions are asked again")
-    func audioRecordingOffersReopen() {
-        let (sut, _) = makeSUT()
-        var opened: [SystemSettingsPane] = []
-        sut.resolveWarning(.automation(player: "First")) { opened.append($0) }
+    @Test("after going to allow audio recording in System Settings, the menu offers to reopen AutoHush; other permissions don't")
+    func audioRecordingOffersReopen() async {
+        let scratch = Scratch()
+        scratch.running = [Players.first]
+        scratch.automationStatus = OSStatus(errAEEventNotPermitted)
+        scratch.audio = .denied
+        let (sut, _) = makeSUT(scratch)
+        sut.requestPermission(.automation(player: "First"))
+        await waitFor { !scratch.asked.isEmpty }
+        #expect(scratch.asked == ["open Privacy_Automation"])
         #expect(!sut.status.awaitsReopenForAudioRecording)
-        sut.resolveWarning(.systemAudioRecording) { opened.append($0) }
-        #expect(opened == [.automation, .audioCapture])
+        sut.requestPermission(.systemAudioRecording)
+        await waitFor { scratch.asked.count == 2 }
+        #expect(scratch.asked.last == "open Privacy_AudioCapture")
         #expect(sut.status.awaitsReopenForAudioRecording)
     }
 

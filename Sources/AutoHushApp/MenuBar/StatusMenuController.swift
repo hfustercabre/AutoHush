@@ -54,6 +54,8 @@ final class StatusMenuController: NSObject {
         /// Quits and opens AutoHush again, so macOS applies System Audio
         /// Recording (see `AppStatus.offersReopen`).
         var reopen: @MainActor () -> Void = {}
+        /// AntiDot mode doesn't need Audio Recording: the way past its warning.
+        var useAntiDotMode: @MainActor () -> Void = {}
         var retry: @MainActor () -> Void
         var openSettings: @MainActor () -> Void
         var showDiagnostics: @MainActor () -> Void
@@ -147,7 +149,15 @@ final class StatusMenuController: NSObject {
         menu.addItem(card)
         learningItem = status.learningHasPlayed == nil ? nil : hostedItem("learning", LearningCardView(model: model))
         if let learningItem { menu.addItem(learningItem) }
-        if let warning = status.warning { menu.addItem(warningItem(for: warning)) }
+        if let warning = status.warning {
+            menu.addItem(warningItem(for: warning))
+            if warning == .systemAudioRecording {
+                // Its title lines up with the warning's, after its symbol.
+                let antiDot = item(PermissionText.useAntiDot, #selector(useAntiDotMode))
+                antiDot.image = NSImage(size: menu.items.last?.image?.size ?? .zero)
+                menu.addItem(antiDot)
+            }
+        }
         menu.addItem(hostedItem("snooze", SnoozeBarView(model: model)))
         if !status.activeSources.isEmpty {
             menu.addItem(.separator())
@@ -187,17 +197,13 @@ final class StatusMenuController: NSObject {
 
     private func warningItem(for warning: Permission) -> NSMenuItem {
         let item = status.offersReopen
-            ? item(Self.reopenTitle, #selector(reopen))
+            ? item(PermissionText.reopen, #selector(reopen))
             : item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
         let description = String(localized: "Warning", comment: "VoiceOver label: this menu item needs attention")
         item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
         return item
     }
 
-    private static var reopenTitle: String {
-        String(localized: "Reopen AutoHush",
-               comment: "Menu item, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again")
-    }
 
     /// "Install AutoHush 0.3.8…", which shows the update found; while it
     /// installs, a greyed-out "Installing…".
@@ -367,6 +373,8 @@ final class StatusMenuController: NSObject {
     @objc private func addWebApp() { actions.addWebApp() }
 
     @objc private func reopen() { actions.reopen() }
+
+    @objc private func useAntiDotMode() { actions.useAntiDotMode() }
 
     @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }

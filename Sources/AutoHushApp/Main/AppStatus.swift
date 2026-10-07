@@ -56,8 +56,15 @@ struct AppStatus: Equatable {
     /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
     /// to learn, or while the chosen player isn't offered (deleted).
     var learningHasPlayed: Bool? {
-        guard chosenPlayer != nil, case .learning(let hasPlayed) = learning else { return nil }
+        guard chosenPlayer != nil, !needsPermission, case .learning(let hasPlayed) = learning else { return nil }
         return hasPlayed
+    }
+    /// A permission the chosen player needs is missing: the menu asks for it,
+    /// and shows the learning steps only once it's allowed, since AutoHush
+    /// can't watch the player before.
+    var needsPermission: Bool {
+        if case .needsPermission = health { return true }
+        return false
     }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown

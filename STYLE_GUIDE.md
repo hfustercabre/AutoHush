@@ -120,6 +120,16 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `BottomBar` | Buttons fixed at the foot of a scrolling tab, with a line above them only while content scrolls under them. |
 | `SupportLine` | "Would you like to support me?" with its link, at the foot of General and About. |
 | `LearningSteps` / `LearningSummary` | What the user does so AutoHush can learn a player (play it, then pause it), each step ticked in `.appSuccess` once seen. `LearningSummary` adds a headline and a caption: a card of its own under the menu's card, and a section under the player in Settings → General. |
+| `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
+| `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs, a row each (a symbol on a colored square, `RowTitle`, then the `PermissionButton` or an "Allowed" check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done. |
+
+**Permission blocks.** Wherever something needs a permission that's
+missing, say what's missing in a `NoteLabel` (`.warning`) with its
+`PermissionButton` right under it, and keep the main action disabled
+(Continue, Done) or its steps locked (`lock.circle`, grey) until it's
+allowed. Follow the permission while the window shows (about once a
+second), so it unlocks by itself; never ask the user to click again.
+Audio Recording always offers "Use AntiDot Mode Instead" beside it.
 
 **App icons** come from `AppIcon` (or `PlayerOption.icon`), at the size for
 where they appear:

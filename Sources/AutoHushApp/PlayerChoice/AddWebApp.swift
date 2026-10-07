@@ -156,11 +156,20 @@ struct AddWebAppView: View {
                 }
             }
             NoteLabel(PlayerOption.webAppsWarning)
+            // Adding drives Safari through Accessibility: without it, the
+            // window says so first, and Continue waits until it's allowed.
+            if needsAccessibility {
+                VStack(alignment: .leading, spacing: 8) {
+                    NoteLabel(String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
+                                     comment: "Add a Web App window, while the Accessibility permission is missing"))
+                    PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
+                }
+            }
             addressField
-            if let problem = model.problemText {
+            if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
                 NoteLabel(problem)
                 if model.problem == .accessibilityDenied {
-                    Button(Permission.accessibility(player: "Safari").grantTitle) { model.openAccessibilitySettings() }
+                    Button(Self.safariAccess.grantTitle) { model.openAccessibilitySettings() }
                         .buttonStyle(.chip)
                 }
             }
@@ -182,7 +191,7 @@ struct AddWebAppView: View {
                     }
                     // Blue, without Return: AutoHush has no keyboard shortcuts.
                     .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
-                    .disabled(!model.canContinue)
+                    .disabled(!model.canContinue || needsAccessibility)
                 }
             }
         }
@@ -190,6 +199,13 @@ struct AddWebAppView: View {
         .frame(width: 440)
         .font(.appBody)
     }
+
+    /// Accessibility, which adding needs, is missing while an address is typed.
+    private var needsAccessibility: Bool {
+        model.phase == .entering && !settings.permissions.accessibility
+    }
+
+    private static let safariAccess = Permission.accessibility(player: "Safari")
 
     private var addressField: some View {
         HStack(spacing: 6) {

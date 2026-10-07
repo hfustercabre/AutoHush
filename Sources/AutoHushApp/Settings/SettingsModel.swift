@@ -26,6 +26,11 @@ final class SettingsModel {
         var refreshDiagnostics: @MainActor () -> Void = {}
         /// Opens the "Add a Web App" window.
         var addWebApp: @MainActor () -> Void = {}
+        /// Asks for a missing permission: macOS's prompt, System Settings,
+        /// opening the player, or reopening AutoHush (`PermissionCenter`).
+        var requestPermission: @MainActor (Permission) -> Void = { _ in }
+        /// The welcome window is done: the player chosen, what it needs allowed.
+        var finishWelcome: @MainActor () -> Void = {}
     }
 
     /// One app in Settings → Apps, and whether it is ignored.
@@ -41,6 +46,8 @@ final class SettingsModel {
     // General
     private(set) var launchAtLoginEnabled = false
     private(set) var launchAtLoginError: String?
+    /// macOS waits for the user to allow AutoHush in Login Items.
+    private(set) var launchAtLoginNeedsApproval = false
     /// The music players to choose from (also in the welcome window).
     var playerOptions: [PlayerOption] = []
     /// The bundle ID of the chosen player; `nil` while none is chosen.
@@ -52,6 +59,14 @@ final class SettingsModel {
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
     var learning: LearningStatus?
+    /// A permission the chosen player needs is missing: its learning steps
+    /// wait until it's allowed (the menu asks for it).
+    var playerNeedsPermission = false
+    /// What AutoHush needs for the chosen player, as it stands; followed
+    /// about once a second while a window that waits for it shows.
+    var permissions = PermissionsState()
+    /// The welcome window shows what the chosen player needs, after its list.
+    var welcomeAsksPermissions = false
 
     /// The chosen player as it's offered.
     var chosenPlayer: PlayerOption? {
@@ -65,7 +80,7 @@ final class SettingsModel {
     /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
     /// to learn, or while the chosen player isn't offered (deleted).
     var learningHasPlayed: Bool? {
-        guard chosenPlayer != nil, case .learning(let hasPlayed) = learning else { return nil }
+        guard chosenPlayer != nil, !playerNeedsPermission, case .learning(let hasPlayed) = learning else { return nil }
         return hasPlayed
     }
     var isAutoPauseOn = true
@@ -166,7 +181,9 @@ final class SettingsModel {
     // MARK: - Launch at login
 
     func refreshLaunchAtLogin() {
-        launchAtLoginEnabled = launchAtLoginController.isEnabled
+        let enabled = launchAtLoginController.isEnabled, needsApproval = launchAtLoginController.needsApproval
+        if launchAtLoginEnabled != enabled { launchAtLoginEnabled = enabled }
+        if launchAtLoginNeedsApproval != needsApproval { launchAtLoginNeedsApproval = needsApproval }
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -227,6 +244,14 @@ final class SettingsModel {
     }
     func checkForUpdates() { actions.checkForUpdates() }
     func openNotificationSettings() { actions.openNotificationSettings() }
+    func requestPermission(_ permission: Permission) { actions.requestPermission(permission) }
+    func finishWelcome() { actions.finishWelcome() }
+
+    /// Back to the welcome window's list, to choose another player.
+    func showWelcomePlayers() { welcomeAsksPermissions = false }
+
+    /// AntiDot mode doesn't need Audio Recording: the way past it without allowing it.
+    func useAntiDotMode() { setDetectionMethod(.playbackSignals) }
     func refreshDiagnostics() { actions.refreshDiagnostics() }
 
     func setTimings(_ timings: TimingSettings) {
