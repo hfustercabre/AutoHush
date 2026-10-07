@@ -75,6 +75,7 @@ package final class Preferences {
     }
 
     /// Each timing's key in the stored dictionary. A missing key keeps its default.
+    /// Whether fades are on is stored there too, as 1 or 0 (`fadesEnabledKey`).
     private static let timingKeys: [(key: String, value: WritableKeyPath<TimingSettings, Double>)] = [
         ("startConfirmation", \.startConfirmation),
         ("stopGrace", \.stopGrace),
@@ -82,6 +83,7 @@ package final class Preferences {
         ("fadeOutDuration", \.fadeOutDuration),
         ("fadeInDuration", \.fadeInDuration),
     ]
+    private static let fadesEnabledKey = "fadesEnabled"
 
     package var timings: TimingSettings {
         get {
@@ -90,11 +92,13 @@ package final class Preferences {
             for (key, value) in Self.timingKeys {
                 if let number = stored[key] { timings[keyPath: value] = number }
             }
+            if let enabled = stored[Self.fadesEnabledKey] { timings.fadesEnabled = enabled != 0 }
             return timings.clamped
         }
         set {
             let value = newValue.clamped
-            let stored = Dictionary(uniqueKeysWithValues: Self.timingKeys.map { ($0.key, value[keyPath: $0.value]) })
+            var stored = Dictionary(uniqueKeysWithValues: Self.timingKeys.map { ($0.key, value[keyPath: $0.value]) })
+            stored[Self.fadesEnabledKey] = value.fadesEnabled ? 1 : 0
             defaults.set(stored, forKey: Key.timings)
         }
     }

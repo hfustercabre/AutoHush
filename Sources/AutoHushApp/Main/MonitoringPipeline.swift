@@ -27,6 +27,8 @@ final class MonitoringPipeline {
 
     private let arbiter: PlaybackArbiter
     private let monitor: AudioMonitor
+    /// Told whether it may tap its sound, when it can (see `allowTaps`).
+    private let tappingPlayer: (any TappingMusicPlayer)?
     private let playerObserver: any PlayerStateObserving
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
@@ -75,9 +77,8 @@ final class MonitoringPipeline {
             onDetectionModeChange: { statusUpdates.yield(.detection($0)) }
         )
         monitorLink.monitor = monitor
-        // AntiDot mode promises no audio taps: a web app that refuses to
-        // pause isn't muted then.
-        (player as? any MutingMusicPlayer)?.allowMuting(detectionMethod != .playbackSignals)
+        tappingPlayer = player as? any TappingMusicPlayer
+        Self.allowTaps(for: tappingPlayer, in: detectionMethod)
         self.playerObserver = player.makeStateObserver { [weak monitor] state in
             arbiterCommands.yield(.playerState(state))
             monitor?.setPlayerPlaying(state == .playing)
@@ -148,7 +149,16 @@ final class MonitoringPipeline {
 
     func setDetectionMethod(_ method: DetectionMethod) {
         monitor.setDetectionMethod(method)
+        Self.allowTaps(for: tappingPlayer, in: method)
     }
+
+    /// AntiDot mode promises no audio taps: a player that mutes itself
+    /// through one (a web app that refuses to pause) doesn't then.
+    private static func allowTaps(for player: (any TappingMusicPlayer)?, in method: DetectionMethod) {
+        player?.allowTaps(Self.allowsTaps(method))
+    }
+
+    static func allowsTaps(_ method: DetectionMethod) -> Bool { method != .playbackSignals }
 
     func setIgnoredSources(_ ids: Set<String>) {
         monitor.setIgnoredSources(ids)

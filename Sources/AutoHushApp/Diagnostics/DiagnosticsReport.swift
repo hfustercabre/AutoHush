@@ -126,8 +126,9 @@ enum DiagnosticsReport {
         var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
             Row(label: String(localized: "State", comment: "Diagnostics: the music player's state"), value: state),
+            // Yes, Off (turned off in Settings → Advanced), or No (the player can't fade).
             Row(label: String(localized: "Fades", comment: "Diagnostics: whether AutoHush can fade the music player"),
-                value: facts.playerCanFade ? yes : no),
+                value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
         if let learned = facts.playerLearned {
             rows.append(Row(label: String(localized: "Play/Pause button learned",

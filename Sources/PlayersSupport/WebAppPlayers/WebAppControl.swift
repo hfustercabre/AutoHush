@@ -18,7 +18,11 @@ import AutoHushKit
 ///
 /// A site may refuse to pause: it disables its button during an ad, or a
 /// press doesn't take. Only then is the web app muted instead (`AudioMuting`)
-/// and reported as paused, until it's played again or monitoring stops.
+/// and reported as paused, until it's played again or monitoring stops. So
+/// is a site whose button says it's paused while it can be heard (YouTube
+/// Music during an ad). Once the site lets itself be paused (the ad is over,
+/// the music plays), it's paused for real and heard again: played later, it
+/// goes on from there.
 final class WebAppControl: @unchecked Sendable {
     /// After a look finds no window, the next one waits this long: looking
     /// for windows on other Spaces tries a thousand elements.
@@ -39,6 +43,7 @@ final class WebAppControl: @unchecked Sendable {
     private let sleep: @Sendable (TimeInterval) -> Void
     private let status: LearningStatusBroadcast
     private let muter: any AudioMuting
+    private let levelProbe: any AudioLevelProbing
     /// Whether muting may stand in for a pause now (not in AntiDot mode).
     private let mayMute: @Sendable () -> Bool
     private let logger = Logger(category: "WebAppPlayer")
@@ -58,6 +63,8 @@ final class WebAppControl: @unchecked Sendable {
         case buttonDisabled
         /// A press didn't take in time; it may still pause the page later.
         case pressIgnored
+        /// Its button said it was paused while it could be heard (an ad).
+        case playsAnyway
     }
 
     /// The web app muted in place of a pause, by its pid.
@@ -78,6 +85,7 @@ final class WebAppControl: @unchecked Sendable {
         store: any PlayPauseRecipeStore,
         status: LearningStatusBroadcast,
         muter: any AudioMuting,
+        levelProbe: any AudioLevelProbing,
         mayMute: @escaping @Sendable () -> Bool = { true },
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
@@ -88,6 +96,7 @@ final class WebAppControl: @unchecked Sendable {
         self.store = store
         self.status = status
         self.muter = muter
+        self.levelProbe = levelProbe
         self.mayMute = mayMute
         self.clock = clock
         self.sleep = sleep
@@ -99,7 +108,10 @@ final class WebAppControl: @unchecked Sendable {
     /// The music's state in the app running as `pid`. Learns meanwhile.
     func state(pid: pid_t) -> PlayerState {
         if let muted {
-            if muted.pid == pid { return .paused } // muted in place of a pause
+            if muted.pid == pid { // muted in place of a pause
+                if muted.reason != .pressIgnored { pauseOnceItCan(pid: pid) }
+                return .paused
+            }
             releaseMute() // the app was opened again since
         }
         let now = clock()
@@ -154,14 +166,27 @@ final class WebAppControl: @unchecked Sendable {
             logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
             throw MusicPlayerError.playerCommandFailed("\(name)'s Play/Pause couldn't be pressed")
         }
-        let deadline = clock().addingTimeInterval(Self.pressConfirmation)
-        repeat {
-            if let now = page.button(button), let shown = recipe.state(of: now), shown != state { return }
-            sleep(Self.pressCheckInterval)
-        } while clock() < deadline
+        if follows(button, recipe: recipe, from: state) { return }
         logger.error("\(self.name, privacy: .public)'s Play/Pause didn't change after a press")
         if state == .playing, mute(pid: pid, reason: .pressIgnored) { return }
         throw MusicPlayerError.playerCommandFailed("\(name) didn't respond to its Play/Pause button")
+    }
+
+    /// The button says the music is paused (or can't play) while the web app
+    /// can be heard: an ad its site won't let be paused, as YouTube Music's,
+    /// whose Play/Pause reads "Play" meanwhile. Mutes it then, as for a
+    /// refused pause; `false` when it's silent or can't be muted. Its level is
+    /// measured, since a page keeps its output open, silent, for seconds
+    /// after a pause.
+    func muteIfPlayingAnyway(pid: pid_t) -> Bool {
+        if let muted { return muted.pid == pid }
+        guard mayMute(), learner == nil, [.paused, .stopped].contains(state(pid: pid)),
+              page.isPlayingSound(pid: pid) else { return false }
+        guard levelProbe.isAudible(appPID: pid) else {
+            logger.debug("\(self.name, privacy: .public)'s sound is open but silent: not muted")
+            return false
+        }
+        return mute(pid: pid, reason: .playsAnyway)
     }
 
     /// Lifts a mute, without playing anything: monitoring stops.
@@ -177,8 +202,38 @@ final class WebAppControl: @unchecked Sendable {
     private func mute(pid: pid_t, reason: MuteReason) -> Bool {
         guard mayMute(), muter.mute(appPID: pid) else { return false }
         muted = (pid, reason)
-        logger.notice("\(self.name, privacy: .public) refused to pause: muted instead")
+        if reason == .playsAnyway {
+            logger.notice("\(self.name, privacy: .public) plays while its button says it's paused: muted instead")
+        } else {
+            logger.notice("\(self.name, privacy: .public) refused to pause: muted instead")
+        }
         return true
+    }
+
+    /// Muted while its site wouldn't pause: once the button lets it (the ad
+    /// is over, the music plays), pauses it for real and lifts the mute, so
+    /// playing it later goes on from there. A press that doesn't take leaves
+    /// it muted, as for any press ignored.
+    private func pauseOnceItCan(pid: pid_t) {
+        guard let recipe, case .found(let found) = lookup(recipe, pid: pid, now: clock()),
+              found.isEnabled, recipe.state(of: found) == .playing else { return }
+        guard page.press(found.handle) else { return }
+        guard follows(found.handle, recipe: recipe, from: .playing) else {
+            muted = (pid, .pressIgnored)
+            return
+        }
+        logger.notice("\(self.name, privacy: .public) can be paused now: paused, and no longer muted")
+        releaseMute()
+    }
+
+    /// Whether the button's words changed from `state` within `pressConfirmation`.
+    private func follows(_ button: ButtonHandle, recipe: PlayPauseRecipe, from state: PlayerState) -> Bool {
+        let deadline = clock().addingTimeInterval(Self.pressConfirmation)
+        repeat {
+            if let now = page.button(button), let shown = recipe.state(of: now), shown != state { return true }
+            sleep(Self.pressCheckInterval)
+        } while clock() < deadline
+        return false
     }
 
     /// Lets the web app be heard again. If the press that didn't take paused

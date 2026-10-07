@@ -25,6 +25,17 @@ struct TimingSettingsTests {
         #expect(clamped == TimingSettings(startConfirmation: 0, stopGrace: 10, silenceThresholdDB: -30))
     }
 
+    @Test("fades are on by default; off, both last 0 s, and the durations chosen are kept")
+    func fadesSwitch() {
+        #expect(TimingSettings.defaults.fadesEnabled)
+        let off = TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false)
+        #expect(off.clamped == off)
+        let configuration = AppConfiguration(timings: off)
+        #expect(configuration.fadeOutDuration == 0 && configuration.fadeInDuration == 0)
+        let on = AppConfiguration(timings: TimingSettings(fadeOutDuration: 3, fadeInDuration: 4))
+        #expect(on.fadeOutDuration == 3 && on.fadeInDuration == 4)
+    }
+
     @Test("an app counts as stopped after at least a second of silence")
     func stopGraceMinimum() {
         #expect(TimingSettings(stopGrace: 0).clamped.stopGrace == 1)

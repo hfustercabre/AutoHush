@@ -14,7 +14,8 @@ import AutoHushKit
 /// too. It never presses the button blindly: pausing presses it only while
 /// the button says the music plays, playing only while it says it's paused.
 /// Its volume can't be read, so it pauses and plays without fading. A pause
-/// the site refuses (during an ad) mutes the web app instead.
+/// the site refuses, or an ad that plays while its button says "Play", mutes
+/// the web app instead.
 package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package nonisolated let app: SafariWebApp
     /// Its site isn't one AutoHush has been tested with.
@@ -32,7 +33,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     private let page: any WebPage
     private let processIdentifier: @Sendable () -> pid_t?
     private let status = LearningStatusBroadcast()
-    private let mutingAllowed = OSAllocatedUnfairLock(initialState: true)
+    private let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Used only on `queue`.
     private nonisolated let control: WebAppControl
     /// macOS's request for Accessibility is shown once per launch, not at
@@ -47,6 +48,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         page: any WebPage = AccessibilityWebPage(),
         store: any PlayPauseRecipeStore = DefaultsRecipeStore(),
         muter: any AudioMuting = ProcessTapMuter(),
+        levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
         processIdentifier: (@Sendable () -> pid_t?)? = nil,
         clock: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }
@@ -61,7 +63,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
                 .processIdentifier
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
-                                muter: muter, mayMute: { [mutingAllowed] in mutingAllowed.withLock { $0 } },
+                                muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
                                 clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
     }
@@ -70,8 +72,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package nonisolated func learningUpdates() -> AsyncStream<LearningStatus> { status.updates() }
 
-    package nonisolated func allowMuting(_ allowed: Bool) {
-        mutingAllowed.withLock { $0 = allowed }
+    package nonisolated func allowTaps(_ allowed: Bool) {
+        tapsAllowed.withLock { $0 = allowed }
     }
 
     /// Needs the app running and Accessibility, not the button learned: it's
@@ -94,6 +96,12 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package func pause() async throws {
         try await press(from: .playing)
+    }
+
+    package func muteIfPlayingAnyway() async -> Bool {
+        guard let pid = processIdentifier() else { return false }
+        let control = control
+        return await onQueue { control.muteIfPlayingAnyway(pid: pid) }
     }
 
     package func play() async throws {

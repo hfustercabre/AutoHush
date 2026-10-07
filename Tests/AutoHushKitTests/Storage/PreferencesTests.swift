@@ -68,6 +68,15 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).timings.fadeInDuration == 0)
     }
 
+    @Test("fades turned off persist with their durations, and timings stored before the switch keep fades on")
+    func fadesSwitchPersists() {
+        let scratch = Scratch()
+        Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false)
+        #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
+        scratch.defaults.set(["fadeOutDuration": 1.5], forKey: "timings") // as 0.7.0 stored them
+        #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 1.5))
+    }
+
     @Test("seen apps keep the most recent first, once each, up to the limit")
     func seenApps() {
         let scratch = Scratch()

@@ -2,8 +2,9 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → Advanced, in cards like the menu's: Detection (when another
-/// app counts as playing or stopped, and the silence threshold), Fades
-/// (dimmed for a player AutoHush can't fade) and Restore Defaults.
+/// app counts as playing or stopped, and the silence threshold), Fades (a
+/// switch, and the fades' lengths while it's on; dimmed for a player
+/// AutoHush can't fade) and Restore Defaults.
 struct AdvancedSettingsView: View {
     let model: SettingsModel
 
@@ -39,24 +40,27 @@ struct AdvancedSettingsView: View {
             SectionHeading(Text("Fades", comment: "Settings → Advanced: heading of the fade out and fade in settings"))
             Card {
                 Group {
-                    slider(
-                        Text("Fade out before pausing", comment: "Settings → Advanced: slider for how long the music fades out before it pauses"),
-                        value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                        format: seconds,
-                        help: Text("How long the music fades out before it pauses. 0 pauses it at once.",
-                                   comment: "Settings → Advanced, under “Fade out before pausing”")
+                    SwitchRow(
+                        Text("Fade the music", comment: "Settings → Advanced: the switch that turns the music's fades on or off"),
+                        subtitle: Text("Out before pausing, and back in when resuming.",
+                                       comment: "Settings → Advanced, under “Fade the music”"),
+                        isOn: Binding(
+                            get: { model.timings.fadesEnabled },
+                            set: { enabled in
+                                var timings = model.timings
+                                timings.fadesEnabled = enabled
+                                model.setTimings(timings)
+                            }
+                        )
                     )
-                    CardDivider()
-                    slider(
-                        Text("Fade in when resuming", comment: "Settings → Advanced: slider for how long the music fades back in when it resumes"),
-                        value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                        format: seconds,
-                        help: Text("How long the music takes to fade back in once it resumes. 0 resumes at full volume.",
-                                   comment: "Settings → Advanced, under “Fade in when resuming”")
-                    )
+                    // The lengths show only while there's something to fade.
+                    if model.timings.fadesEnabled && model.playerCanFade {
+                        CardDivider()
+                        fadeSliders
+                    }
                 }
                 .disabled(!model.playerCanFade)
-                .opacity(model.playerCanFade ? 1 : 0.45) // a disabled slider alone barely shows it
+                .opacity(model.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
                 if !model.playerCanFade, let player = model.chosenPlayerName {
                     NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can't change its volume.",
                                      comment: "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL"),
@@ -77,6 +81,25 @@ struct AdvancedSettingsView: View {
         .padding(16)
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// How long each fade lasts.
+    @ViewBuilder private var fadeSliders: some View {
+        slider(
+            Text("Fade out before pausing", comment: "Settings → Advanced: slider for how long the music fades out before it pauses"),
+            value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+            format: seconds,
+            help: Text("How long the music fades out before it pauses. 0 pauses it at once.",
+                       comment: "Settings → Advanced, under “Fade out before pausing”")
+        )
+        CardDivider()
+        slider(
+            Text("Fade in when resuming", comment: "Settings → Advanced: slider for how long the music fades back in when it resumes"),
+            value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
+            format: seconds,
+            help: Text("How long the music takes to fade back in once it resumes. 0 resumes at full volume.",
+                       comment: "Settings → Advanced, under “Fade in when resuming”")
+        )
     }
 
     private func seconds(_ value: Double) -> String {

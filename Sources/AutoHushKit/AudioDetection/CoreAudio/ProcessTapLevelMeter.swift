@@ -58,7 +58,7 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
 
         for objectID in objectIDs where taps[objectID] == nil && !failed.contains(objectID) {
             do {
-                taps[objectID] = try ProcessTap(processObjectID: objectID, ioQueue: ioQueue)
+                taps[objectID] = try ProcessTap(processObjectIDs: [objectID], ioQueue: ioQueue)
                 logger.debug("[meter] tapping process object \(objectID, privacy: .public)")
             } catch {
                 failed.insert(objectID)
@@ -94,7 +94,14 @@ package struct ProcessTapError: LocalizedError {
     package var errorDescription: String? { "\(step) failed with OSStatus \(status)" }
 }
 
-private final class ProcessTap {
+/// A tap on some processes, read by a private aggregate device whose IO block
+/// records their peak and average level. Unmuted, it only listens. Muted, the
+/// processes can't be heard while it runs: macOS mutes a tap's processes only
+/// while something reads it, so a tap alone mutes nothing (heard 2026-10-07).
+///
+/// Its owner creates, reads and invalidates it one call at a time; the levels
+/// are locked.
+final class ProcessTap: @unchecked Sendable {
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var ioProcID: AudioDeviceIOProcID?
@@ -106,9 +113,9 @@ private final class ProcessTap {
 
     private let accumulator = OSAllocatedUnfairLock(initialState: Accumulator())
 
-    init(processObjectID: AudioObjectID, ioQueue: DispatchQueue) throws {
+    init(processObjectIDs: [AudioObjectID], muted: Bool = false, ioQueue: DispatchQueue) throws {
         do {
-            try start(processObjectID: processObjectID, ioQueue: ioQueue)
+            try start(processObjectIDs: processObjectIDs, muted: muted, ioQueue: ioQueue)
         } catch {
             invalidate()
             throw error
@@ -139,16 +146,17 @@ private final class ProcessTap {
         }
     }
 
-    private func start(processObjectID: AudioObjectID, ioQueue: DispatchQueue) throws {
-        let description = CATapDescription(stereoMixdownOfProcesses: [processObjectID])
+    private func start(processObjectIDs: [AudioObjectID], muted: Bool, ioQueue: DispatchQueue) throws {
+        let description = CATapDescription(stereoMixdownOfProcesses: processObjectIDs)
         description.uuid = UUID()
         description.isPrivate = true
-        description.muteBehavior = .unmuted
+        // Muted only while read: should reading stop, the sound comes back.
+        description.muteBehavior = muted ? .mutedWhenTapped : .unmuted
         try check("AudioHardwareCreateProcessTap", AudioHardwareCreateProcessTap(description, &tapID))
         try requireFloat32Format()
 
         let aggregateDescription: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "AutoHush Level Meter",
+            kAudioAggregateDeviceNameKey: muted ? "AutoHush Mute" : "AutoHush Level Meter",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceIsPrivateKey: true,
             kAudioAggregateDeviceIsStackedKey: false,

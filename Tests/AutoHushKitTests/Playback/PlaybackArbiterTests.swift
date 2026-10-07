@@ -78,6 +78,53 @@ struct PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 0)
     }
 
+    @Test("a player heard while it says it's paused (a web app's ad) is muted, and played again when the other app stops")
+    func mutesPlayerHeardWhilePaused() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
+                                      debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.commandLog == ["mute"])
+        #expect(await player.pauseCallCount == 0)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        await settle()
+        #expect(await player.commandLog == ["mute", "play"])
+    }
+
+    @Test("a paused player that is silent is left alone, and not played afterwards")
+    func leavesSilentPausedPlayer() async {
+        let player = MockMusicPlayer(state: .paused)
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
+                                      debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.muteIfPlayingAnywayCount == 1)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("a player that isn't playing on this Mac isn't asked to mute, nor one that can't mute")
+    func doesNotMuteRemotePlayer() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let plain = makeArbiter(player: player)
+        await plain.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.muteIfPlayingAnywayCount == 0)
+
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
+                                      debounceScheduler: ManualDebounceScheduler())
+        await arbiter.handleLocalPlaybackChange(false)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.muteIfPlayingAnywayCount == 0)
+        #expect(await player.commandLog.isEmpty)
+    }
+
     @Test("does not issue duplicate pause calls for repeated start events from the same source")
     func doesNotDuplicatePauseCalls() async {
         let player = MockMusicPlayer()

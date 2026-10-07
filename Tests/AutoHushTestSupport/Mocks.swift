@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import os
 import Testing
 import AutoHushKit
 
@@ -105,6 +106,52 @@ package actor MockMusicPlayer: MusicPlayer {
         commandLog.append("play")
         if let error = failPlayWith { throw error }
         state = .playing
+    }
+
+    /// It can be heard while it says it's paused (a web app's ad), for
+    /// `MockMutingMusicPlayer`: asked to, it mutes itself, and counts as paused.
+    package var playsAnyway = false
+    package var muteIfPlayingAnywayCount = 0
+
+    package func setPlaysAnyway(_ value: Bool) { playsAnyway = value }
+
+    package func muteIfPlayingAnyway() -> Bool {
+        muteIfPlayingAnywayCount += 1
+        guard playsAnyway else { return false }
+        commandLog.append("mute")
+        state = .paused
+        return true
+    }
+}
+
+// MARK: - MockMutingMusicPlayer
+
+/// A `MockMusicPlayer` that taps its own sound, as a web app does: it mutes
+/// itself through a tap, which `allowTaps` turns off.
+package actor MockMutingMusicPlayer: MutingMusicPlayer {
+    package let mock: MockMusicPlayer
+    private let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
+
+    package init(_ mock: MockMusicPlayer) {
+        self.mock = mock
+    }
+
+    package nonisolated var bundleID: String { mock.bundleID }
+    package nonisolated var name: String { mock.name }
+    package nonisolated var tapsAreAllowed: Bool { tapsAllowed.withLock { $0 } }
+
+    package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.withLock { $0 = allowed } }
+    package func muteIfPlayingAnyway() async -> Bool { await mock.muteIfPlayingAnyway() }
+    package func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
+    package func playerState() async -> PlayerState { await mock.playerState() }
+    package func pause() async throws { try await mock.pause() }
+    package func play() async throws { try await mock.play() }
+    package func volume() async -> Int? { await mock.volume() }
+    package func setVolume(_ volume: Int) async throws { try await mock.setVolume(volume) }
+
+    @MainActor
+    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+        MockStateObserver()
     }
 }
 

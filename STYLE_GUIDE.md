@@ -91,6 +91,10 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity. A control that's dimmed twice,
   inside a dimmed group, stays at 45%.
+- **Settings that only matter while a switch is on** show only then, under
+  it in the same card (the fades' lengths under "Fade the music"). What the
+  user can't change at all, because of the chosen player, is dimmed
+  instead, with a note saying why.
 
 ## Components
 

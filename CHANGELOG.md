@@ -29,9 +29,12 @@ This project follows [Semantic Versioning](https://semver.org/).
     slogan after " | " or a dash.
   - It works with the window visible, minimized or on another Space. It
     needs the Accessibility permission, and pauses without fading.
-  - When a site refuses to pause, as during an ad that can't be paused,
-    AutoHush mutes the web app instead and unmutes it afterwards. A web app
-    that pauses is never muted, and none is muted in AntiDot mode.
+  - When a site won't pause, AutoHush mutes the web app instead: during an
+    ad whose button is disabled, or still reads "Play" as on YouTube Music,
+    or when a press doesn't take. As soon as the site can be paused (the ad
+    is over and the music plays), AutoHush pauses it and unmutes it, so the
+    music goes on from there afterwards. A web app that pauses is never
+    muted, and none is muted in AntiDot mode.
   - If a site changes so that its button can't be found for a minute,
     AutoHush asks to learn it again, and keeps both layouts.
   - Settings → Diagnostics shows whether the button has been learned and
@@ -44,6 +47,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   before anything is added; once added, the Safari tab it opened is closed.
   - The tested sites are offered with a download symbol until you add them:
     choosing one opens the window with its address filled in.
+
+- **Fades can be turned off** with a switch in Settings → Advanced, without
+  moving their sliders to 0: the music then pauses and resumes at once. The
+  sliders show only while it's on, and Diagnostics says "Off".
 
 ### Fixed
 

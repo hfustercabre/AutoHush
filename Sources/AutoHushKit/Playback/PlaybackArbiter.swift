@@ -314,6 +314,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         }
         let state = await livePlayerState()
         guard state == .playing else {
+            if await muteIfPlayingAnyway(saying: state) { return }
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
@@ -349,6 +350,20 @@ package actor PlaybackArbiter: PlaybackArbiting {
             // Every app stopped while we were pausing, too late to call it off.
             scheduleResume(after: nil)
         }
+    }
+
+    /// A player that says it's paused or stopped while it plays here (a web
+    /// app's ad, during which its button reads "Play") is muted instead, if it
+    /// can be: that's our pause, and resuming lifts the mute.
+    private func muteIfPlayingAnyway(saying state: PlayerState) async -> Bool {
+        guard state == .paused || state == .stopped, let muting = player as? any MutingMusicPlayer,
+              await muting.muteIfPlayingAnyway() else { return false }
+        pausedByUs = true
+        playerState = .paused
+        logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted")
+        // Things may have changed while it was measured.
+        if !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
+        return true
     }
 
     /// Resumes the music in a task of its own: after `delay`, or right away

@@ -174,6 +174,17 @@ struct DiagnosticsReportTests {
         #expect(rows.last?.value == "No")
     }
 
+    @Test("fades turned off in Settings read Off; a player that can't fade still reads No")
+    func fadesOff() throws {
+        func fades(_ change: (inout DiagnosticsFacts) -> Void) throws -> String? {
+            let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(change))
+            return try #require(snapshot.sections.first { $0.kind == .player }).rows.first { $0.label == "Fades" }?.value
+        }
+        #expect(try fades { _ in } == "Yes")
+        #expect(try fades { $0.timings.fadesEnabled = false } == "Off")
+        #expect(try fades { $0.timings.fadesEnabled = false; $0.playerCanFade = false } == "No")
+    }
+
     @Test("a web app's section says whether its button is learned and its windows on other Spaces reachable")
     func webAppRows() throws {
         func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {

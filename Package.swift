@@ -19,6 +19,8 @@ import PackageDescription
 //                               private APIs, configuration and storage
 //
 //   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
+//   listen-to-fades (developer tool, in Tools/): records a loopback device
+//                               and measures AutoHush's fades in it
 //
 // Code inside a module is grouped by domain. Types shared between modules use
 // `package` access: visible inside this package, not to anyone else. Bundle
@@ -32,6 +34,7 @@ let package = Package(
     products: [
         .executable(name: "AutoHush", targets: ["AutoHush"]),
         .executable(name: "measure-volume-curve", targets: ["MeasureVolumeCurve"]),
+        .executable(name: "listen-to-fades", targets: ["ListenToFades"]),
     ],
     targets: [
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
@@ -75,6 +78,13 @@ let package = Package(
             name: "MeasureVolumeCurve",
             dependencies: ["AutoHushKit", "AutoHushPlayers"],
             path: "Tools/MeasureVolumeCurve"
+        ),
+
+        // Records a loopback audio device and measures AutoHush's fades in it,
+        // as you hear them. A developer tool: never part of AutoHush.app.
+        .executableTarget(
+            name: "ListenToFades",
+            path: "Tools/ListenToFades"
         ),
 
         // Fakes shared by the test targets.

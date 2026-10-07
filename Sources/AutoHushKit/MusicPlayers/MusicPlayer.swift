@@ -81,11 +81,21 @@ package protocol LearningMusicPlayer: MusicPlayer {
     func learningUpdates() -> AsyncStream<LearningStatus>
 }
 
+/// A player that uses Core Audio's process taps on its own sound, to mute
+/// itself (`MutingMusicPlayer`) or to tell whether it can be heard.
+package protocol TappingMusicPlayer: MusicPlayer {
+    /// Whether it may tap its sound: not in AntiDot mode, which promises no
+    /// audio taps. Without taps it doesn't mute.
+    func allowTaps(_ allowed: Bool)
+}
+
 /// A player that mutes itself when it refuses to pause (see `AudioMuting`).
-package protocol MutingMusicPlayer: MusicPlayer {
-    /// Whether muting may stand in for a pause: not in AntiDot mode, which
-    /// promises no audio taps.
-    func allowMuting(_ allowed: Bool)
+package protocol MutingMusicPlayer: TappingMusicPlayer {
+    /// For a player that says it isn't playing while it can be heard (a web
+    /// app during an ad its site won't pause): mutes it until it's played
+    /// again, as for a refused pause. `false` when it's silent, or muting
+    /// isn't possible or allowed.
+    func muteIfPlayingAnyway() async -> Bool
 }
 
 /// How far a `LearningMusicPlayer` has come.

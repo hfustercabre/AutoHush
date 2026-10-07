@@ -74,13 +74,14 @@ package struct AppConfiguration: Sendable {
     ]
 
     /// The fixed values, with the user's timings (clamped to their ranges).
+    /// With fades off, both fades last 0 s: the music pauses and resumes at once.
     package init(timings: TimingSettings = .defaults) {
         let timings = timings.clamped
         sourceStartConfirmation = timings.startConfirmation
         sourceStopGrace = timings.stopGrace
         audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
-        fadeOutDuration = timings.fadeOutDuration
-        fadeInDuration = timings.fadeInDuration
+        fadeOutDuration = timings.fadesEnabled ? timings.fadeOutDuration : 0
+        fadeInDuration = timings.fadesEnabled ? timings.fadeInDuration : 0
     }
 
     /// True for the chosen music player's own app, or one of its helpers

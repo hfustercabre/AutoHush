@@ -13,19 +13,24 @@ package struct TimingSettings: Equatable, Sendable {
     package var fadeOutDuration: TimeInterval
     /// Seconds the music fades back in after resuming.
     package var fadeInDuration: TimeInterval
+    /// Whether the music fades at all; off, it pauses and resumes at once,
+    /// whatever the fade durations say.
+    package var fadesEnabled: Bool
 
     package init(
         startConfirmation: TimeInterval = 0.5,
         stopGrace: TimeInterval = 2.0,
         silenceThresholdDB: Double = -60,
         fadeOutDuration: TimeInterval = 1,
-        fadeInDuration: TimeInterval = 2
+        fadeInDuration: TimeInterval = 2,
+        fadesEnabled: Bool = true
     ) {
         self.startConfirmation = startConfirmation
         self.stopGrace = stopGrace
         self.silenceThresholdDB = silenceThresholdDB
         self.fadeOutDuration = fadeOutDuration
         self.fadeInDuration = fadeInDuration
+        self.fadesEnabled = fadesEnabled
     }
 
     package static let defaults = TimingSettings()
@@ -44,7 +49,8 @@ package struct TimingSettings: Equatable, Sendable {
             stopGrace: stopGrace.clamped(to: Self.stopGraceRange),
             silenceThresholdDB: silenceThresholdDB.clamped(to: Self.silenceThresholdRange),
             fadeOutDuration: fadeOutDuration.clamped(to: Self.fadeDurationRange),
-            fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange)
+            fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
+            fadesEnabled: fadesEnabled
         )
     }
 }
