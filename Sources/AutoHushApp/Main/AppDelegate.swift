@@ -226,10 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 snooze: { [weak self] in self?.snooze($0) },
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
-                menuWillOpen: { [weak self] in
-                    self?.refreshPlayerOptions()
-                    self?.checkControlAccess()
-                },
+                menuWillOpen: { [weak self] in self?.menuWillOpen() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { [weak self] in self?.requestPermission($0) },
                 reopen: { [weak self] in self?.reopen() },
@@ -690,6 +687,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Whether the welcome window is on screen.
     var isShowingPlayerChooser: Bool { playerChooser?.isVisible == true }
+
+    /// The menu opens: what it lists is brought up to date. The welcome
+    /// window, still open, comes forward to the desktop the user is on:
+    /// another app may have covered it, or taken the user to another desktop,
+    /// since it opened, and AutoHush has no Dock icon to bring it back.
+    func menuWillOpen() {
+        refreshPlayerOptions()
+        checkControlAccess()
+        if isShowingPlayerChooser { playerChooser?.bringForward() }
+    }
 
     // MARK: - Player relaunch
 

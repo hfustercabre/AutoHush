@@ -28,8 +28,22 @@ class HostedWindowController: NSWindowController {
     var isVisible: Bool { window?.isVisible == true }
 
     func show() {
-        if !isVisible { window?.center() }
-        window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate()
+        guard let window else { return }
+        if !window.isVisible {
+            // Sized to its content first: centered at its first, empty size,
+            // it would grow from the middle of the screen, partly off it.
+            if let fitting = window.contentView?.fittingSize, fitting.width > 0, fitting.height > 0 {
+                window.setContentSize(fitting)
+            }
+            window.center()
+        }
+        window.showInFront()
+    }
+
+    /// Brings it in front of other apps' windows, on the desktop the user is
+    /// on, without making it key: for while AutoHush's menu opens.
+    func bringForward() {
+        guard isVisible else { return }
+        window?.bringForward()
     }
 }

@@ -15,6 +15,13 @@ import Foundation
 ///      pause first) is a candidate.
 /// A change back while the music plays on isn't a stop: YouTube Music turns
 /// the playing song's own button back to "Play <song>" by itself (measured).
+/// Two more kinds of start, both measured on a fresh YouTube Music window,
+/// which shows its player bar only once something plays:
+///   - a button that comes onto the page as the sound comes on, already
+///     saying "Pause";
+///   - a change while the sound is on, before the stop: with an ad first, the
+///     bar comes saying "Play" and turns to "Pause" only once the song
+///     itself begins, the sound on all along.
 /// Other buttons can change too: the playing song's own ("Pause <song>"), a
 /// playlist's ("Play <playlist>"), a page's big Play. So among candidates it
 /// keeps those with the barest words (dropping "Play X" when there's a
@@ -28,12 +35,15 @@ package struct PlayPauseLearner {
         package let pauseLabel: String
     }
 
-    /// One button's words changing between two looks.
+    /// One button's words changing between two looks; from no words, it came
+    /// onto the page.
     private struct Change {
         let handle: ButtonHandle
         let from: String
         let to: String
         let at: Date
+        /// The app's sound was on at that look.
+        let soundOn: Bool
     }
 
     /// From the look that saw a change to the one that saw the sound come on,
@@ -53,6 +63,11 @@ package struct PlayPauseLearner {
     /// The words of each button at the last look.
     private var previous: [ButtonHandle: String] = [:]
     private var changes: [Change] = []
+    /// Buttons that came onto the page in the last few seconds, until a
+    /// sound start shows they came with the music or they're too old to have.
+    private var arrivals: [Change] = []
+    /// The arrivals that came with the music: starts.
+    private var arrivedStarts: [Change] = []
     /// When the app's sound came on, and when it went off.
     private var soundStarts: [Date] = []
     private var soundStops: [Date] = []
@@ -60,8 +75,9 @@ package struct PlayPauseLearner {
 
     package init() {}
 
-    /// A start was seen: the user played the app.
-    package var hasPlayed: Bool { !starts.isEmpty }
+    /// The sound came on with a button changing (or coming): the user played
+    /// the app.
+    package var hasPlayed: Bool { !arrivedStarts.isEmpty || changes.contains(where: isNearSoundStart) }
 
     /// Takes one look at the page (`nil` while the app has no window).
     package mutating func observe(_ buttons: [PageButton]?, soundIsOn: Bool, at now: Date) {
@@ -72,37 +88,64 @@ package struct PlayPauseLearner {
             previous = [:] // its next page is new
             return
         }
-        for button in buttons {
-            if let before = previous[button.handle], before != button.label, !before.isEmpty, !button.label.isEmpty {
-                changes.append(Change(handle: button.handle, from: before, to: button.label, at: now))
+        // On a page's first look, every button is new: none came.
+        let comparable = !previous.isEmpty
+        for button in buttons where !button.label.isEmpty {
+            if let before = previous[button.handle] {
+                if before != button.label, !before.isEmpty {
+                    changes.append(Change(handle: button.handle, from: before, to: button.label, at: now, soundOn: soundIsOn))
+                }
+            } else if comparable {
+                arrivals.append(Change(handle: button.handle, from: "", to: button.label, at: now, soundOn: soundIsOn))
             }
         }
         previous = Dictionary(buttons.map { ($0.handle, $0.label) }, uniquingKeysWith: { first, _ in first })
-        changes.removeAll { now.timeIntervalSince($0.at) > Self.memory }
-        if changes.count > Self.changeLimit { changes.removeFirst(changes.count - Self.changeLimit) }
+        arrivedStarts += arrivals.filter(isNearSoundStart)
+        // A sound start can come at most `startWindow.upperBound` after.
+        arrivals = arrivals.filter { !isNearSoundStart($0) && now.timeIntervalSince($0.at) <= Self.startWindow.upperBound }
+        Self.forgetOld(&changes, now: now)
+        Self.forgetOld(&arrivedStarts, now: now)
         soundStarts.removeAll { now.timeIntervalSince($0) > Self.memory }
         soundStops.removeAll { now.timeIntervalSince($0) > Self.memory }
     }
 
-    /// Each button's first start: its words before and after.
-    private var starts: [ButtonHandle: Change] {
-        var starts: [ButtonHandle: Change] = [:]
-        for change in changes where starts[change.handle] == nil {
-            if soundStarts.contains(where: { Self.startWindow.contains($0.timeIntervalSince(change.at)) }) {
-                starts[change.handle] = change
-            }
-        }
-        return starts
+    private static func forgetOld(_ changes: inout [Change], now: Date) {
+        changes.removeAll { now.timeIntervalSince($0.at) > memory }
+        if changes.count > changeLimit { changes.removeFirst(changes.count - changeLimit) }
     }
 
-    /// The buttons that changed at a start, and changed back at a stop.
+    private func isNearSoundStart(_ change: Change) -> Bool {
+        soundStarts.contains { Self.startWindow.contains($0.timeIntervalSince(change.at)) }
+    }
+
+    private func isNearSoundStop(_ change: Change) -> Bool {
+        soundStops.contains { Self.stopWindow.contains($0.timeIntervalSince(change.at)) }
+    }
+
+    /// Every start, oldest first: changes close to the sound coming on, or
+    /// while it was on (but not the pause itself, which the sound going off
+    /// follows), and the buttons that came with it.
+    private var starts: [Change] {
+        let changed = changes.filter { isNearSoundStart($0) || ($0.soundOn && !isNearSoundStop($0)) }
+        return (changed + arrivedStarts).sorted { $0.at < $1.at }
+    }
+
+    /// The buttons that changed (or came) at a start, and changed back at a
+    /// stop: each with its first start that has one.
     package var candidates: [Candidate] {
-        starts.values.sorted { $0.at < $1.at }.compactMap { start in
-            let changedBack = changes.contains { change in
-                change.handle == start.handle && change.from == start.to && change.to == start.from
-                    && soundStops.contains { Self.stopWindow.contains($0.timeIntervalSince(change.at)) }
+        let changesOf = Dictionary(grouping: changes, by: \.handle)
+        var found: Set<ButtonHandle> = []
+        return starts.compactMap { start in
+            guard !found.contains(start.handle) else { return nil }
+            let back = changesOf[start.handle]?.first { change in
+                change.from == start.to && (start.from.isEmpty || change.to == start.from)
+                    // A start while the sound was on comes before its stop.
+                    && (isNearSoundStart(start) || start.from.isEmpty || start.at < change.at)
+                    && isNearSoundStop(change)
             }
-            return changedBack ? Candidate(handle: start.handle, playLabel: start.from, pauseLabel: start.to) : nil
+            guard let back else { return nil }
+            found.insert(start.handle)
+            return Candidate(handle: start.handle, playLabel: back.to, pauseLabel: start.to)
         }
     }
 

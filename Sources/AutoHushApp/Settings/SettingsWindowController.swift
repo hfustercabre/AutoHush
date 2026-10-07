@@ -97,8 +97,7 @@ final class SettingsWindowController: NSWindowController {
         model.refreshLaunchAtLogin()
         measureAppsMaximumHeight()
         if window?.isVisible != true { window?.center() }
-        window?.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        window?.showInFront()
     }
 
     /// Apps may grow as tall as Advanced is now, in this language and with

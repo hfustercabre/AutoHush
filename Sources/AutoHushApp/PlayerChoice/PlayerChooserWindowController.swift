@@ -7,6 +7,7 @@ import SwiftUI
 protocol PlayerChooserPresenting: AnyObject {
     var isVisible: Bool { get }
     func show()
+    func bringForward()
     func close()
 }
 
@@ -16,8 +17,10 @@ protocol PlayerChooserPresenting: AnyObject {
 /// choose too.
 @MainActor
 final class PlayerChooserWindowController: HostedWindowController, PlayerChooserPresenting {
-    init(model: SettingsModel) {
-        super.init(content: Self.sizedToFit(PlayerChooserView(model: model)),
+    /// `tallestPage`: as for `PlayerChooserView`, else the screen's.
+    init(model: SettingsModel, tallestPage: CGFloat? = nil) {
+        let view = PlayerChooserView(model: model, tallestPage: tallestPage ?? PlayerChooserView.tallestOnScreen)
+        super.init(content: Self.sizedToFit(view),
                    title: String(localized: "Welcome to AutoHush", comment: "Title of the window that asks for the music player"))
     }
 
@@ -31,15 +34,29 @@ final class PlayerChooserWindowController: HostedWindowController, PlayerChooser
 /// Players that aren't installed come after the installed apps, dimmed, and
 /// can't be picked. When only one is installed, it starts picked. From
 /// `PlayerOption.searchThreshold` players on, a search narrows them down and
-/// the list scrolls at a fixed height.
+/// the list scrolls at a fixed height. With fewer, it scrolls only when the
+/// window would be taller than the screen (web apps add rows), so Continue
+/// stays on it.
 struct PlayerChooserView: View {
     let model: SettingsModel
+    /// The tallest the first page may be: past it, its list scrolls. `nil`:
+    /// as tall as the players make it.
+    var tallestPage: CGFloat?
     /// The player the user clicked.
     @State private var clicked: String?
     @State private var search = ""
 
     /// The players' list's height while it scrolls: about six rows.
     static let scrollingListHeight: CGFloat = 340
+
+    /// The tallest the first page may be on the screen it opens on: the
+    /// screen's height without the menu bar and the Dock, less the window's
+    /// title bar and a margin above and below.
+    static var tallestOnScreen: CGFloat? {
+        guard let screen = NSScreen.main else { return nil }
+        let titleBar = NSWindow.frameRect(forContentRect: .zero, styleMask: [.titled, .closable]).height
+        return screen.visibleFrame.height - titleBar - 2 * 20
+    }
 
     /// The clicked player or, until one is, the only installed one.
     private var picked: String? {
@@ -56,6 +73,11 @@ struct PlayerChooserView: View {
 
     /// The first page: the players to choose from.
     private var playersPage: some View {
+        HeightLimit(limit: tallestPage) { playersPageContent }
+            .font(.appBody)
+    }
+
+    private var playersPageContent: some View {
         VStack(spacing: 16) {
             Image(nsImage: NSApplication.shared.applicationIconImage)
                 .resizable()
@@ -74,7 +96,12 @@ struct PlayerChooserView: View {
                 }
                 .frame(height: Self.scrollingListHeight)
             } else {
-                groups(model.playerOptions.offered)
+                // The list as it is, or scrolling when the page can't be
+                // that tall.
+                ViewThatFits(in: .vertical) {
+                    groups(model.playerOptions.offered)
+                    ScrollView { groups(model.playerOptions.offered) }
+                }
             }
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
@@ -95,7 +122,29 @@ struct PlayerChooserView: View {
         }
         .padding(24)
         .frame(width: 420)
-        .font(.appBody)
+    }
+
+    /// Its content as tall as it wants, or `limit` tall when that's less: the
+    /// content then has to fit, as a list in it does by scrolling.
+    private struct HeightLimit: Layout {
+        let limit: CGFloat?
+
+        func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+            guard let content = subviews.first else { return .zero }
+            return content.sizeThatFits(contentProposal(width: proposal.width, content))
+        }
+
+        func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+            guard let content = subviews.first else { return }
+            content.place(at: bounds.origin, proposal: contentProposal(width: bounds.width, content))
+        }
+
+        /// Its ideal height, unless that's more than `limit`.
+        private func contentProposal(width: CGFloat?, _ content: LayoutSubview) -> ProposedViewSize {
+            let ideal = content.sizeThatFits(ProposedViewSize(width: width, height: nil))
+            guard let limit, ideal.height > limit else { return ProposedViewSize(width: width, height: nil) }
+            return ProposedViewSize(width: width, height: limit)
+        }
     }
 
     /// The apps' card, then the web apps' under their heading. A card shows

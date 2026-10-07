@@ -542,6 +542,23 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("opening the menu brings the welcome window forward while it's open, in case other windows covered it")
+    func menuBringsWelcomeForward() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 0) // not open
+
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second) // brings the welcome window
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 1)
+
+        scratch.chooser.close()
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 1)
+    }
+
+    @MainActor
     @Test("the chosen player is left out of Settings → Apps and the ignored apps")
     func chosenPlayerNotListedAsApp() {
         let scratch = Scratch()

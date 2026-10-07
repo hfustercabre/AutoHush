@@ -5,6 +5,28 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **The welcome window can't get lost anymore.** Opened while another app
+  was in front (as after System Settings' **Open Anyway**), it could end up
+  behind that app's windows, or on another desktop when that app took you
+  there, and AutoHush has no Dock icon to bring it back. It now opens in
+  front, on the desktop you're on, and opening AutoHush's menu brings it
+  there again while it's open. It's also centered: it grew from the middle
+  of the screen, so its bottom, Continue included, could be off the screen.
+  And it's never taller than the screen: with web apps added, the list of
+  players could make it taller than a 13-inch MacBook's; the list now
+  scrolls instead. The learning, Add a Web App and Settings windows come
+  forward the same way.
+- **Learning works on a fresh YouTube Music window.** Such a window shows
+  its player bar only once something plays, already saying "Pause"; with
+  an ad first, the bar turns to "Pause" only when the song itself begins.
+  AutoHush missed the bar's button then, and learned the song's own button
+  instead, which stops working once another song plays. Both now count, so
+  the bar's button is learned.
+
 ## [0.8.1] — 2026-10-07
 
 ### Fixed

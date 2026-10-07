@@ -5,7 +5,10 @@ import Foundation
 @MainActor
 final class FakePlayerChooser: PlayerChooserPresenting {
     private(set) var isVisible = false
+    /// How many times it was brought forward while open.
+    private(set) var broughtForward = 0
     func show() { isVisible = true }
+    func bringForward() { if isVisible { broughtForward += 1 } }
     func close() { isVisible = false }
 }
 
