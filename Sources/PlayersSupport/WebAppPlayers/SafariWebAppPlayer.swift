@@ -15,12 +15,15 @@ import AutoHushKit
 /// the button says the music plays, playing only while it says it's paused.
 /// Its volume can't be read, so it pauses and plays without fading. A pause
 /// the site refuses (during an ad) mutes the web app instead.
-package actor SafariWebAppPlayer: LearningMusicPlayer {
+package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package nonisolated let app: SafariWebApp
+    /// Its site isn't one AutoHush has been tested with.
+    package nonisolated let isUntested: Bool
 
     package nonisolated var bundleID: String { app.bundleID }
     package nonisolated var name: String { app.name }
     package nonisolated var kind: MusicPlayerKind { .safariWebApp }
+    package nonisolated var installedURL: URL? { app.url }
     /// Its page is read and pressed through Accessibility.
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }
     /// Its volume can't be read or set.
@@ -29,6 +32,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer {
     private let page: any WebPage
     private let processIdentifier: @Sendable () -> pid_t?
     private let status = LearningStatusBroadcast()
+    private let mutingAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Used only on `queue`.
     private nonisolated let control: WebAppControl
     /// macOS's request for Accessibility is shown once per launch, not at
@@ -39,6 +43,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer {
 
     package init(
         app: SafariWebApp,
+        isUntested: Bool = false,
         page: any WebPage = AccessibilityWebPage(),
         store: any PlayPauseRecipeStore = DefaultsRecipeStore(),
         muter: any AudioMuting = ProcessTapMuter(),
@@ -47,6 +52,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer {
         sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }
     ) {
         self.app = app
+        self.isUntested = isUntested
         self.page = page
         // Only a running app is ever controlled, so AutoHush never opens it.
         self.processIdentifier = processIdentifier ?? { [bundleID = app.bundleID] in
@@ -55,13 +61,18 @@ package actor SafariWebAppPlayer: LearningMusicPlayer {
                 .processIdentifier
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
-                                muter: muter, clock: clock, sleep: sleep)
+                                muter: muter, mayMute: { [mutingAllowed] in mutingAllowed.withLock { $0 } },
+                                clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
     }
 
     package nonisolated var learningStatus: LearningStatus { status.current }
 
     package nonisolated func learningUpdates() -> AsyncStream<LearningStatus> { status.updates() }
+
+    package nonisolated func allowMuting(_ allowed: Bool) {
+        mutingAllowed.withLock { $0 = allowed }
+    }
 
     /// Needs the app running and Accessibility, not the button learned: it's
     /// learned while the state is read.
@@ -148,34 +159,49 @@ final class WebAppStateObserver: PlayerStateObserving {
 /// installed: a player remembers its button and how learning goes.
 package final class SafariWebAppPlayers: Sendable {
     private let finder: SafariWebAppFinder
-    private let makePlayer: @Sendable (SafariWebApp) -> SafariWebAppPlayer
+    private let tested: [TestedWebApp]
+    private let makePlayer: @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer
     private let players = OSAllocatedUnfairLock<[String: SafariWebAppPlayer]>(initialState: [:])
 
+    /// `tested`: the sites AutoHush has been tested with; any other web app
+    /// is untested.
     package init(
         finder: SafariWebAppFinder = SafariWebAppFinder(),
-        makePlayer: @escaping @Sendable (SafariWebApp) -> SafariWebAppPlayer = { SafariWebAppPlayer(app: $0) }
+        tested: [TestedWebApp] = [],
+        makePlayer: @escaping @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer = {
+            SafariWebAppPlayer(app: $0, isUntested: $1)
+        }
     ) {
         self.finder = finder
+        self.tested = tested
         self.makePlayer = makePlayer
     }
 
-    /// One player for each web app installed now, by name. A web app that
-    /// was renamed or moved gets a new one.
+    /// One player for each web app installed now, by name; a tested site's
+    /// is named as the site ("YouTube Music", whatever Safari called it). A
+    /// web app that was renamed or moved gets a new one.
     package func current() -> [SafariWebAppPlayer] {
-        let apps = finder.webApps()
+        let apps = finder.webApps().map(named).sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
         return players.withLock { players in
             let kept = players
             players = [:]
             return apps.map { app in
-                let player = kept[app.bundleID].flatMap { $0.app == app ? $0 : nil } ?? makePlayer(app)
+                let player = kept[app.bundleID].flatMap { $0.app == app ? $0 : nil }
+                    ?? makePlayer(app, !tested.contains { $0.isAdded(as: app) })
                 players[app.bundleID] = player
                 return player
             }
         }
     }
 
-    /// Those of `suggested` that no web app installed now opens.
-    package func notAdded(_ suggested: [SuggestedWebApp]) -> [WebAppSuggestion] {
-        SuggestedWebApp.notAdded(suggested, among: finder.webApps())
+    /// `app`, named as its tested site when it's one's.
+    private func named(_ app: SafariWebApp) -> SafariWebApp {
+        guard let site = tested.first(where: { $0.isAdded(as: app) }), site.name != app.name else { return app }
+        return SafariWebApp(bundleID: app.bundleID, name: site.name, url: app.url, startURL: app.startURL)
+    }
+
+    /// The tested sites that no web app installed now opens, to suggest.
+    package func suggestions() -> [WebAppSuggestion] {
+        TestedWebApp.notAdded(tested, among: finder.webApps())
     }
 }

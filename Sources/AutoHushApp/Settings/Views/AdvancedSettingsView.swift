@@ -12,24 +12,27 @@ struct AdvancedSettingsView: View {
             SectionHeading(Text("Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"))
             Card {
                 slider(
-                    "Pause music after",
+                    Text("Pause music after", comment: "Settings → Advanced and Diagnostics: how long another app must play before the music pauses"),
                     value: \.startConfirmation, range: TimingSettings.startConfirmationRange, step: 0.25,
                     format: seconds,
-                    help: "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored."
+                    help: Text("How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored.",
+                               comment: "Settings → Advanced, under “Pause music after”")
                 )
                 CardDivider()
                 slider(
-                    "Resume music after",
+                    Text("Resume music after", comment: "Settings → Advanced and Diagnostics: how long other apps must be quiet before the music resumes"),
                     value: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
                     format: seconds,
-                    help: "How long another app must be silent. Bridges gaps between tracks and videos."
+                    help: Text("How long another app must be silent. Bridges gaps between tracks and videos.",
+                               comment: "Settings → Advanced, under “Resume music after”")
                 )
                 CardDivider()
                 slider(
-                    "Silence threshold",
+                    Text("Silence threshold", comment: "Settings → Advanced and Diagnostics: the sound level below which an app counts as silent"),
                     value: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
                     format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
-                    help: "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)."
+                    help: Text("Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off).",
+                               comment: "Settings → Advanced, under “Silence threshold”")
                 )
             }
 
@@ -37,17 +40,19 @@ struct AdvancedSettingsView: View {
             Card {
                 Group {
                     slider(
-                        "Fade out before pausing",
+                        Text("Fade out before pausing", comment: "Settings → Advanced: slider for how long the music fades out before it pauses"),
                         value: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
                         format: seconds,
-                        help: "How long the music fades out before it pauses. 0 pauses it at once."
+                        help: Text("How long the music fades out before it pauses. 0 pauses it at once.",
+                                   comment: "Settings → Advanced, under “Fade out before pausing”")
                     )
                     CardDivider()
                     slider(
-                        "Fade in when resuming",
+                        Text("Fade in when resuming", comment: "Settings → Advanced: slider for how long the music fades back in when it resumes"),
                         value: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
                         format: seconds,
-                        help: "How long the music takes to fade back in once it resumes. 0 resumes at full volume."
+                        help: Text("How long the music takes to fade back in once it resumes. 0 resumes at full volume.",
+                                   comment: "Settings → Advanced, under “Fade in when resuming”")
                     )
                 }
                 .disabled(!model.playerCanFade)
@@ -61,7 +66,9 @@ struct AdvancedSettingsView: View {
 
             HStack {
                 Spacer()
-                Button("Restore Defaults") { model.restoreDefaultTimings() }
+                Button { model.restoreDefaultTimings() } label: {
+                    Text("Restore Defaults", comment: "Settings → Advanced: button that sets every timing back to its default")
+                }
                     .buttonStyle(.chip)
                     .disabled(model.timings == .defaults)
             }
@@ -78,16 +85,16 @@ struct AdvancedSettingsView: View {
     }
 
     private func slider(
-        _ title: LocalizedStringKey,
+        _ title: Text,
         value keyPath: WritableKeyPath<TimingSettings, Double>,
         range: ClosedRange<Double>,
         step: Double,
         format: @escaping (Double) -> String,
-        help: LocalizedStringKey
+        help: Text
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(title)
+                title
                 Spacer()
                 Text(format(model.timings[keyPath: keyPath]))
                     .monospacedDigit()
@@ -105,7 +112,7 @@ struct AdvancedSettingsView: View {
                 in: range,
                 step: step
             )
-            Text(help).captionStyle()
+            help.captionStyle()
         }
     }
 }

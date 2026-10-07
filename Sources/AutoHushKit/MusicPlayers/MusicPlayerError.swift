@@ -10,6 +10,9 @@ package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
     case playerNotResponding
     /// The player rejected or failed a command; the message carries the details.
     case playerCommandFailed(String)
+    /// The player can't be controlled until AutoHush has learned how
+    /// (`LearningMusicPlayer`): an expected wait, not a failure.
+    case stillLearning
 
     package var errorDescription: String? {
         switch self {
@@ -23,6 +26,8 @@ package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
             return "The music player is not responding."
         case .playerCommandFailed(let message):
             return "Controlling the music player failed: \(message)"
+        case .stillLearning:
+            return "AutoHush is still learning how to control the music player."
         }
     }
 }

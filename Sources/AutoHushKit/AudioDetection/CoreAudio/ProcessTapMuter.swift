@@ -57,14 +57,9 @@ package final class ProcessTapMuter: AudioMuting {
     /// The Core Audio processes of the app and of its helpers (a web app's
     /// sound comes from its WebKit process).
     private static func processObjects(ownedBy appPID: pid_t) -> [AudioObjectID] {
-        var address = CoreAudioProperty.address(kAudioHardwarePropertyProcessObjectList)
-        var size: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(CoreAudioProperty.systemObject, &address, 0, nil, &size) == noErr else { return [] }
-        var objects = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
-        guard AudioObjectGetPropertyData(CoreAudioProperty.systemObject, &address, 0, nil, &size, &objects) == noErr else { return [] }
-        return objects.filter { object in
+        CoreAudioProperty.objectIDs(kAudioHardwarePropertyProcessObjectList, of: CoreAudioProperty.systemObject).filter { object in
             guard let pid = CoreAudioProperty.value(kAudioProcessPropertyPID, of: object, initial: pid_t(0)), pid > 0 else { return false }
-            return pid == appPID || ProcessResponsibility.responsiblePID(for: pid) == appPID
+            return ProcessResponsibility.isOwned(pid, by: appPID)
         }
     }
 }

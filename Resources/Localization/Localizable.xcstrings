@@ -8829,6 +8829,7 @@
       }
     },
     "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it." : {
+      "comment" : "Settings → General, under the ways of detecting playing apps: how “What apps tell macOS” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -9037,6 +9038,7 @@
       }
     },
     "AntiDot mode" : {
+      "comment" : "Settings → General and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -9245,6 +9247,7 @@
       }
     },
     "Any app with its audio open counts as playing, even when paused." : {
+      "comment" : "Settings → General, under the ways of detecting playing apps: how “Open audio streams only” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -9662,6 +9665,7 @@
       }
     },
     "Apps appear here once they have played audio." : {
+      "comment" : "Settings → Apps, while the list is empty",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -14677,6 +14681,7 @@
       }
     },
     "AutoHush pauses and resumes this app." : {
+      "comment" : "Settings → General, under “Music player”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -14885,6 +14890,7 @@
       }
     },
     "AutoHush pauses it while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings." : {
+      "comment" : "Welcome window, under its title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -17810,7 +17816,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Add a Web App window: closes it",
+      "comment" : "Add a Web App window: stops adding the website and closes the window",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18019,6 +18025,7 @@
       }
     },
     "Check Now" : {
+      "comment" : "Settings → General: checks for an update now",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18227,6 +18234,7 @@
       }
     },
     "Check for updates automatically" : {
+      "comment" : "Settings → General: switch for the daily update check",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18853,6 +18861,7 @@
       }
     },
     "Choose Your Music Player" : {
+      "comment" : "Welcome window: its title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -19479,6 +19488,7 @@
       }
     },
     "Choose which apps pause your music in the Apps tab." : {
+      "comment" : "Settings → General, under the Auto-Pause Music switch",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -20941,6 +20951,7 @@
       }
     },
     "Continue" : {
+      "comment" : "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23030,6 +23041,7 @@
       }
     },
     "Detect playing apps by" : {
+      "comment" : "Settings → General, AntiDot mode: lead-in to the ways of detecting playing apps",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -24492,6 +24504,7 @@
       }
     },
     "Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio." : {
+      "comment" : "Settings → Apps: what Reset List does, in its confirmation",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -25118,6 +25131,7 @@
       }
     },
     "Fade in when resuming" : {
+      "comment" : "Settings → Advanced: slider for how long the music fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -25326,6 +25340,7 @@
       }
     },
     "Fade out before pausing" : {
+      "comment" : "Settings → Advanced: slider for how long the music fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26579,6 +26594,7 @@
       }
     },
     "How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored." : {
+      "comment" : "Settings → Advanced, under “Pause music after”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26787,6 +26803,7 @@
       }
     },
     "How long another app must be silent. Bridges gaps between tracks and videos." : {
+      "comment" : "Settings → Advanced, under “Resume music after”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26995,6 +27012,7 @@
       }
     },
     "How long the music fades out before it pauses. 0 pauses it at once." : {
+      "comment" : "Settings → Advanced, under “Fade out before pausing”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27203,6 +27221,7 @@
       }
     },
     "How long the music takes to fade back in once it resumes. 0 resumes at full volume." : {
+      "comment" : "Settings → Advanced, under “Fade in when resuming”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27406,6 +27425,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "繼續播放後音樂恢復原本音量的時間。設為 0 會直接以原本音量繼續播放。"
+          }
+        }
+      }
+    },
+    "If a Safari extension asks for access to the site, answer it first." : {
+      "comment" : "Add a Web App window, under the step “Open it in Safari” while it's under way",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إذا طلب أحد ملحقات Safari الوصول إلى الموقع، فأجب عنه أولًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si una extensió del Safari demana accés al lloc, respon-li primer."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokud rozšíření Safari požádá o přístup k webu, nejdřív na to odpovězte."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis en Safari-udvidelse beder om adgang til webstedet, så svar på den først."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine Safari-Erweiterung Zugriff auf die Website anfordert, beantworte die Anfrage zuerst."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αν μια επέκταση του Safari ζητήσει πρόσβαση στον ιστότοπο, απαντήστε της πρώτα."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si una extensión de Safari pide acceso al sitio, respóndele primero."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si una extensión de Safari pide acceso al sitio, respóndele primero."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jos Safari-laajennus pyytää pääsyä sivustolle, vastaa siihen ensin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si une extension Safari demande l'accès au site, répondez-y d'abord."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si une extension Safari demande l'accès au site Web, répondez-y d'abord."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगर कोई Safari एक्सटेंशन साइट तक पहुँच माँगे, तो पहले उसका जवाब दें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ako proširenje za Safari zatraži pristup web-mjestu, najprije odgovorite na to."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ha egy Safari-bővítmény hozzáférést kér a webhelyhez, előbb válaszoljon rá."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jika ekstensi Safari meminta akses ke situs, jawab terlebih dahulu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se un'estensione di Safari chiede l'accesso al sito, rispondi prima."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari機能拡張がサイトへのアクセスを求めてきた場合は、先に応答してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 확장 프로그램이 사이트 접근 권한을 요청하면 먼저 응답하세요."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis en Safari-utvidelse ber om tilgang til nettstedet, svarer du på den først."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als een Safari-extensie toegang tot de website vraagt, beantwoord dat dan eerst."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeśli rozszerzenie Safari poprosi o dostęp do witryny, najpierw na to odpowiedz."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se uma extensão do Safari pedir acesso ao site, responda primeiro."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se uma extensão do Safari pedir acesso ao site, responda primeiro."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dacă o extensie Safari cere acces la site, răspundeți-i mai întâi."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если расширение Safari запросит доступ к сайту, сначала ответьте на запрос."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ak rozšírenie Safari požiada o prístup k webu, najprv naň odpovedzte."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Če razširitev za Safari zahteva dostop do spletnega mesta, najprej odgovorite nanjo."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om ett Safari-tillägg ber om åtkomst till webbplatsen, svara på det först."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir Safari uzantısı siteye erişim isterse önce ona yanıt verin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Якщо розширення Safari попросить доступ до сайту, спершу дайте відповідь."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nếu một tiện ích mở rộng của Safari yêu cầu quyền truy cập trang web, hãy trả lời trước."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 Safari 延伸功能要求取用該網站，請先回應。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 Safari 扩展请求访问该网站，请先回应。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 Safari 延伸功能要求取用該網站，請先回應。"
           }
         }
       }
@@ -27620,6 +27848,7 @@
       }
     },
     "Ignore Another App…" : {
+      "comment" : "Settings → Apps: button that opens a panel to pick an app that never pauses the music",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -30545,7 +30774,7 @@
       }
     },
     "Later" : {
-      "comment" : "Button that closes it for now: an update alert, or the window that learns a web app's controls",
+      "comment" : "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -30754,6 +30983,7 @@
       }
     },
     "Launch at login" : {
+      "comment" : "Settings → General and Diagnostics: whether AutoHush opens when you log in",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -31379,211 +31609,211 @@
         }
       }
     },
-    "Let the music itself play for 5 to 10 seconds. Ads don’t count." : {
-      "comment" : "Under the step “Play something in %@” while AutoHush learns a web app's controls",
+    "Log in first if %@ asks you to. Let the music itself play for 5 to 10 seconds. Ads don’t count." : {
+      "comment" : "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "دع الموسيقى نفسها تُشغَّل لمدة 5 إلى 10 ثوانٍ. الإعلانات لا تُحتسب."
+            "value" : "سجّل الدخول أولًا إذا طلب %@ ذلك. دع الموسيقى نفسها تُشغَّل لمدة 5 إلى 10 ثوانٍ. الإعلانات لا تُحتسب."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deixa que soni la mateixa música entre 5 i 10 segons. Els anuncis no compten."
+            "value" : "Inicia la sessió primer si %@ t'ho demana. Deixa que soni la mateixa música entre 5 i 10 segons. Els anuncis no compten."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nechte samotnou hudbu hrát 5 až 10 sekund. Reklamy se nepočítají."
+            "value" : "Nejdřív se přihlaste, pokud o to %@ požádá. Nechte samotnou hudbu hrát 5 až 10 sekund. Reklamy se nepočítají."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lad selve musikken spille i 5 til 10 sekunder. Reklamer tæller ikke."
+            "value" : "Log ind først, hvis %@ beder om det. Lad selve musikken spille i 5 til 10 sekunder. Reklamer tæller ikke."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lass die Musik selbst 5 bis 10 Sekunden lang spielen. Werbung zählt nicht."
+            "value" : "Melde dich zuerst an, wenn %@ danach fragt. Lass die Musik selbst 5 bis 10 Sekunden lang spielen. Werbung zählt nicht."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Αφήστε την ίδια τη μουσική να παίξει για 5 έως 10 δευτερόλεπτα. Οι διαφημίσεις δεν μετράνε."
+            "value" : "Συνδεθείτε πρώτα, αν σας το ζητήσει η εφαρμογή %@. Αφήστε την ίδια τη μουσική να παίξει για 5 έως 10 δευτερόλεπτα. Οι διαφημίσεις δεν μετράνε."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deja que suene la propia música de 5 a 10 segundos. Los anuncios no cuentan."
+            "value" : "Inicia sesión primero si %@ te lo pide. Deja que suene la propia música de 5 a 10 segundos. Los anuncios no cuentan."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deja que suene la propia música de 5 a 10 segundos. Los anuncios no cuentan."
+            "value" : "Inicia sesión primero si %@ te lo pide. Deja que suene la propia música de 5 a 10 segundos. Los anuncios no cuentan."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anna itse musiikin soida 5–10 sekuntia. Mainoksia ei lasketa."
+            "value" : "Kirjaudu ensin sisään, jos %@ pyytää. Anna itse musiikin soida 5–10 sekuntia. Mainoksia ei lasketa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laissez la musique elle-même jouer 5 à 10 secondes. Les publicités ne comptent pas."
+            "value" : "Connectez-vous d'abord si %@ vous le demande. Laissez la musique elle-même jouer 5 à 10 secondes. Les publicités ne comptent pas."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laissez la musique elle-même jouer 5 à 10 secondes. Les publicités ne comptent pas."
+            "value" : "Connectez-vous d'abord si %@ vous le demande. Laissez la musique elle-même jouer 5 à 10 secondes. Les publicités ne comptent pas."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "असली संगीत को 5 से 10 सेकंड तक चलने दें। विज्ञापन नहीं गिने जाते।"
+            "value" : "अगर %@ कहे, तो पहले साइन इन करें। असली संगीत को 5 से 10 सेकंड तक चलने दें। विज्ञापन नहीं गिने जाते।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pustite da sama glazba svira 5 do 10 sekundi. Oglasi se ne računaju."
+            "value" : "Najprije se prijavite ako %@ to zatraži. Pustite da sama glazba svira 5 do 10 sekundi. Oglasi se ne računaju."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hagyja, hogy maga a zene szóljon 5–10 másodpercig. A hirdetések nem számítanak."
+            "value" : "Először jelentkezzen be, ha a(z) %@ kéri. Hagyja, hogy maga a zene szóljon 5–10 másodpercig. A hirdetések nem számítanak."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Biarkan musiknya sendiri diputar selama 5 hingga 10 detik. Iklan tidak dihitung."
+            "value" : "Masuk terlebih dahulu jika %@ memintanya. Biarkan musiknya sendiri diputar selama 5 hingga 10 detik. Iklan tidak dihitung."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lascia suonare la musica vera e propria per 5-10 secondi. Le pubblicità non contano."
+            "value" : "Accedi prima, se %@ te lo chiede. Lascia suonare la musica vera e propria per 5-10 secondi. Le pubblicità non contano."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音楽そのものを5〜10秒再生してください。広告は数えられません。"
+            "value" : "%@からログインを求められた場合は、先にログインしてください。音楽そのものを5〜10秒再生してください。広告は数えられません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "음악 자체를 5~10초 동안 재생하세요. 광고는 포함되지 않습니다."
+            "value" : "%@에서 로그인을 요청하면 먼저 로그인하세요. 음악 자체를 5~10초 동안 재생하세요. 광고는 포함되지 않습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La selve musikken spille i 5 til 10 sekunder. Reklame teller ikke."
+            "value" : "Logg inn først hvis %@ ber om det. La selve musikken spille i 5 til 10 sekunder. Reklame teller ikke."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laat de muziek zelf 5 tot 10 seconden spelen. Advertenties tellen niet mee."
+            "value" : "Log eerst in als %@ daarom vraagt. Laat de muziek zelf 5 tot 10 seconden spelen. Advertenties tellen niet mee."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pozwól, by sama muzyka grała przez 5–10 sekund. Reklamy się nie liczą."
+            "value" : "Najpierw zaloguj się, jeśli %@ o to poprosi. Pozwól, by sama muzyka grała przez 5–10 sekund. Reklamy się nie liczą."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deixe a própria música tocar por 5 a 10 segundos. Anúncios não contam."
+            "value" : "Faça login primeiro se %@ pedir. Deixe a própria música tocar por 5 a 10 segundos. Anúncios não contam."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deixe a própria música tocar durante 5 a 10 segundos. Os anúncios não contam."
+            "value" : "Inicie sessão primeiro se %@ o pedir. Deixe a própria música tocar durante 5 a 10 segundos. Os anúncios não contam."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lăsați muzica propriu-zisă să cânte 5–10 secunde. Reclamele nu contează."
+            "value" : "Conectați-vă mai întâi dacă %@ vă cere. Lăsați muzica propriu-zisă să cânte 5–10 secunde. Reclamele nu contează."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Дайте самой музыке поиграть 5–10 секунд. Реклама не считается."
+            "value" : "Сначала войдите, если %@ попросит. Дайте самой музыке поиграть 5–10 секунд. Реклама не считается."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nechajte samotnú hudbu hrať 5 až 10 sekúnd. Reklamy sa nepočítajú."
+            "value" : "Najprv sa prihláste, ak o to %@ požiada. Nechajte samotnú hudbu hrať 5 až 10 sekúnd. Reklamy sa nepočítajú."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pustite, da sama glasba igra od 5 do 10 sekund. Oglasi ne štejejo."
+            "value" : "Najprej se prijavite, če %@ to zahteva. Pustite, da sama glasba igra od 5 do 10 sekund. Oglasi ne štejejo."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Låt själva musiken spela i 5 till 10 sekunder. Reklam räknas inte."
+            "value" : "Logga in först om %@ ber dig. Låt själva musiken spela i 5 till 10 sekunder. Reklam räknas inte."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Müziğin kendisinin 5 ila 10 saniye çalmasını bekleyin. Reklamlar sayılmaz."
+            "value" : "%@ isterse önce oturum açın. Müziğin kendisinin 5 ila 10 saniye çalmasını bekleyin. Reklamlar sayılmaz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Дайте самій музиці пограти 5–10 секунд. Реклама не враховується."
+            "value" : "Спершу увійдіть, якщо %@ попросить. Дайте самій музиці пограти 5–10 секунд. Реклама не враховується."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hãy để chính bản nhạc phát trong 5 đến 10 giây. Quảng cáo không được tính."
+            "value" : "Hãy đăng nhập trước nếu %@ yêu cầu. Hãy để chính bản nhạc phát trong 5 đến 10 giây. Quảng cáo không được tính."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "讓音樂本身播放 5 至 10 秒。廣告不計算在內。"
+            "value" : "如果 %@ 要求登入，請先登入。讓音樂本身播放 5 至 10 秒。廣告不計算在內。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "让音乐本身播放 5 到 10 秒。广告不算。"
+            "value" : "如果 %@ 要求登录，请先登录。让音乐本身播放 5 到 10 秒。广告不算。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "讓音樂本身播放 5 到 10 秒。廣告不算。"
+            "value" : "如果 %@ 要求登入，請先登入。讓音樂本身播放 5 到 10 秒。廣告不算。"
           }
         }
       }
@@ -31798,6 +32028,7 @@
       }
     },
     "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures." : {
+      "comment" : "Settings → General, under the ways of detecting playing apps: what measuring audio levels does",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -32006,6 +32237,7 @@
       }
     },
     "Music" : {
+      "comment" : "Settings → General: heading of the music settings",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -32423,6 +32655,7 @@
       }
     },
     "Music player" : {
+      "comment" : "The menu's card and Settings → General: label of the chosen music player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37229,6 +37462,7 @@
       }
     },
     "Notifications are off for AutoHush, so it can't tell you about updates." : {
+      "comment" : "Settings → General, under the update choices, while notifications are off for AutoHush",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -38900,6 +39134,7 @@
       }
     },
     "Open Login Items Settings…" : {
+      "comment" : "Settings → General: button that opens System Settings → Login Items",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -39108,6 +39343,7 @@
       }
     },
     "Open Notifications Settings…" : {
+      "comment" : "Settings → General: button that opens System Settings → Notifications",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -40570,6 +40806,7 @@
       }
     },
     "Pause music after" : {
+      "comment" : "Settings → Advanced and Diagnostics: how long another app must play before the music pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -41405,6 +41642,7 @@
       }
     },
     "Pauses Music" : {
+      "comment" : "Settings → Apps: heading of the list of apps that pause the music",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -43703,6 +43941,7 @@
       }
     },
     "Privacy" : {
+      "comment" : "Settings → General: heading of the AntiDot mode setting",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44120,6 +44359,7 @@
       }
     },
     "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)." : {
+      "comment" : "Settings → Advanced, under “Silence threshold”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44746,6 +44986,7 @@
       }
     },
     "Remove from List" : {
+      "comment" : "Settings → Apps: item of an app's contextual menu that forgets it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45163,6 +45404,7 @@
       }
     },
     "Reset List" : {
+      "comment" : "Settings → Apps: confirms forgetting every app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45371,6 +45613,7 @@
       }
     },
     "Reset List…" : {
+      "comment" : "Settings → Apps: button that asks to forget every app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45579,6 +45822,7 @@
       }
     },
     "Reset the list of apps?" : {
+      "comment" : "Settings → Apps: title of the confirmation for Reset List",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45787,6 +46031,7 @@
       }
     },
     "Restore Defaults" : {
+      "comment" : "Settings → Advanced: button that sets every timing back to its default",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45995,6 +46240,7 @@
       }
     },
     "Resume music after" : {
+      "comment" : "Settings → Advanced and Diagnostics: how long other apps must be quiet before the music resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -47875,6 +48121,7 @@
       }
     },
     "Silence threshold" : {
+      "comment" : "Settings → Advanced and Diagnostics: the sound level below which an app counts as silent",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -48501,6 +48748,7 @@
       }
     },
     "Starting services" : {
+      "comment" : "Status line while AutoHush starts",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -51008,6 +51256,7 @@
       }
     },
     "Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list." : {
+      "comment" : "Settings → Apps, under the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -51842,6 +52091,215 @@
         }
       }
     },
+    "Untested" : {
+      "comment" : "Badge after the name of a Safari web app whose site AutoHush hasn't been tested with, where music players are offered",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غير مُختبَر"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense provar"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netestováno"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke testet"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungetestet"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μη δοκιμασμένη"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin probar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin probar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testaamaton"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non testée"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non testée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "परीक्षण नहीं हुआ"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neprovjereno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nem tesztelt"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum diuji"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non testata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未テスト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테스트되지 않음"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke testet"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet getest"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprzetestowana"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não testado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não testada"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netestată"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не проверено"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netestované"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepreizkušeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ej testad"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test edilmedi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не перевірено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa thử nghiệm"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未測試"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未测试"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未測試"
+          }
+        }
+      }
+    },
     "Update" : {
       "comment" : "VoiceOver label of the update icon",
       "localizations" : {
@@ -52261,6 +52719,7 @@
       }
     },
     "Updates" : {
+      "comment" : "Menu toolbar button, Settings → General heading and Diagnostics row: AutoHush's updates",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -54977,6 +55436,7 @@
       }
     },
     "When an update is found" : {
+      "comment" : "Settings → General: lead-in to what happens when an update is found",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

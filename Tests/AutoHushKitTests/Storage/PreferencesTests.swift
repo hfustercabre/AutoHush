@@ -11,6 +11,17 @@ struct PreferencesTests {
         let defaults = InMemoryPreferenceStore()
     }
 
+    @Test("the learned buttons of web apps that are gone are forgotten, the others kept")
+    func forgetsWebAppButtons() {
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
+        preferences.forgetWebAppButtons { _ in true } // nothing stored: nothing to do
+        #expect(store.object(forKey: Preferences.webAppButtonsKey) == nil)
+        store.set(["A": ["play": "Play"], "B": ["play": "Play"]], forKey: Preferences.webAppButtonsKey)
+        preferences.forgetWebAppButtons { $0 == "B" }
+        #expect((store.object(forKey: Preferences.webAppButtonsKey) as? [String: Any]).map { Array($0.keys) } == ["A"])
+    }
+
     @Test("auto-pause defaults to enabled without snooze")
     func defaults() {
         let scratch = Scratch()

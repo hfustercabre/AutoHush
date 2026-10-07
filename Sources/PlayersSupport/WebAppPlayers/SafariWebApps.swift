@@ -62,10 +62,15 @@ package struct SafariWebApp: Equatable, Sendable {
     }
 
     /// A web app is named after the page's title, which often adds a slogan
-    /// after " | ": "Amazon Music Unlimited | Escucha millones de canciones"
-    /// is offered as "Amazon Music Unlimited".
+    /// after " | " or a dash: "Amazon Music Unlimited | Escucha millones de
+    /// canciones" is offered as "Amazon Music Unlimited", "Deezer - music
+    /// streaming" as "Deezer".
     package static func shortName(_ name: String) -> String {
-        let short = name.components(separatedBy: " | ").first?.trimmingCharacters(in: .whitespaces) ?? ""
+        var short = name
+        for separator in [" | ", " - ", " – ", " — "] {
+            short = short.components(separatedBy: separator).first ?? short
+        }
+        short = short.trimmingCharacters(in: .whitespaces)
         return short.isEmpty ? name : short
     }
 
@@ -84,12 +89,16 @@ package struct SafariWebApp: Equatable, Sendable {
 
 /// Finds the Safari web apps in the Applications folders (not in folders
 /// inside them, where Safari never puts them). An app's Info.plist is read
-/// again only when it changed, so looking often costs little.
+/// again only when it changed, and a look less than `maxAge` old is reused
+/// (offering the players looks twice in a row), so looking often costs
+/// little.
 package final class SafariWebAppFinder: Sendable {
     private let folders: [URL]
     /// What each app's Info.plist said, by the app's path, with the date it
     /// was changed then.
     private let cache = OSAllocatedUnfairLock<[String: (changed: Date, app: SafariWebApp?)]>(initialState: [:])
+    /// The last look's result, and when.
+    private let lastLook = OSAllocatedUnfairLock<(at: Date, apps: [SafariWebApp])?>(initialState: nil)
 
     /// The current user's Applications folder and /Applications.
     package static let applicationFolders: [URL] = [
@@ -101,8 +110,17 @@ package final class SafariWebAppFinder: Sendable {
         self.folders = folders
     }
 
-    /// The web apps installed now, by name.
-    package func webApps() -> [SafariWebApp] {
+    /// The web apps installed now, by name; from a look at most `maxAge`
+    /// old (0 looks afresh).
+    package func webApps(maxAge: TimeInterval = 1) -> [SafariWebApp] {
+        let now = Date()
+        if let last = lastLook.withLock({ $0 }), now.timeIntervalSince(last.at) < maxAge { return last.apps }
+        let apps = look()
+        lastLook.withLock { [apps] in $0 = (now, apps) }
+        return apps
+    }
+
+    private func look() -> [SafariWebApp] {
         let fileManager = FileManager.default
         var found: [String: (changed: Date, app: SafariWebApp?)] = [:]
         let known = cache.withLock { $0 }

@@ -21,6 +21,8 @@ final class FakeLearningWindow: LearningWindowPresenting {
 actor MockLearningPlayer: LearningMusicPlayer {
     nonisolated let bundleID: String
     nonisolated let name: String
+    nonisolated let installedURL: URL?
+    nonisolated let isUntested: Bool
     nonisolated var kind: MusicPlayerKind { .safariWebApp }
     nonisolated var controlPermission: Permission { .accessibility(player: name) }
     nonisolated var canFade: Bool { false }
@@ -32,9 +34,11 @@ actor MockLearningPlayer: LearningMusicPlayer {
 
     private nonisolated let state: OSAllocatedUnfairLock<State>
 
-    init(bundleID: String, name: String, status: LearningStatus) {
+    init(bundleID: String, name: String, status: LearningStatus, installedURL: URL? = nil, isUntested: Bool = false) {
         self.bundleID = bundleID
         self.name = name
+        self.installedURL = installedURL
+        self.isUntested = isUntested
         state = OSAllocatedUnfairLock(initialState: State(status: status))
     }
 
@@ -83,6 +87,9 @@ final class FakeAddWebAppWindow: AddWebAppPresenting {
 final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
     var result: Result<MadeWebApp, WebAppMakingError>
     var onMake: @Sendable () -> Void = {}
+    /// Once the address is checked, waits until it's cancelled.
+    var waitsForCancel = false
+    private(set) var wasCancelled = false
 
     init(_ result: Result<MadeWebApp, WebAppMakingError>) {
         self.result = result
@@ -91,6 +98,11 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
     func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp {
         let made = try result.get()
         onStep(.checked)
+        if waitsForCancel {
+            while !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
+            wasCancelled = true
+            throw CancellationError()
+        }
         onStep(.opened)
         onMake()
         onStep(.made(made))

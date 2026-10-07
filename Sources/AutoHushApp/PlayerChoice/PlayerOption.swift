@@ -16,6 +16,9 @@ struct PlayerOption: Equatable, Identifiable {
     /// A suggested web app's address: it isn't added yet, and a click opens
     /// "Add a Web App" filled in with it.
     var webAddress: String?
+    /// A web app of a site AutoHush hasn't been tested with: offered last,
+    /// marked "Untested".
+    var isUntested = false
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
@@ -25,7 +28,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// A player's placeholder is its own, so it doesn't tell options apart.
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
-            && lhs.webAddress == rhs.webAddress
+            && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested
     }
 
     /// A suggested web app, not added yet.
@@ -67,13 +70,13 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// Every player in the catalog, the Safari web apps found included, in
-    /// its order, and whether it is installed; then the suggested web apps
-    /// not added yet.
+    /// its order, and where it is installed (where the player says, else
+    /// where macOS knows it); then the suggested web apps not added yet.
     @MainActor
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
         catalog.all.map {
-            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: locate($0.bundleID),
-                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind)
+            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: $0.installedURL ?? locate($0.bundleID),
+                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested)
         } + catalog.webAppSuggestions.map(suggestion)
     }
 
@@ -113,6 +116,13 @@ struct PlayerOption: Equatable, Identifiable {
     static var webAppsHeading: String {
         String(localized: "Safari Web Apps",
                comment: "Where music players are offered: heading over the websites added to the Dock from Safari")
+    }
+
+    /// After the name of a web app whose site AutoHush hasn't been tested
+    /// with, as a `HeadingBadge`.
+    static var untestedBadge: String {
+        String(localized: "Untested",
+               comment: "Badge after the name of a Safari web app whose site AutoHush hasn't been tested with, where music players are offered")
     }
 
     /// After `webAppsHeading`, as a `HeadingBadge`.
@@ -166,11 +176,15 @@ struct PlayerOption: Equatable, Identifiable {
 
 extension [PlayerOption] {
     /// How players are offered: the apps, installed ones first, then the
-    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them), the
-    /// suggested ones last, each group in the catalog's order.
+    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them): those
+    /// of tested sites, the tested sites not added yet, then the untested
+    /// ones; each group in the catalog's order.
     var offered: [PlayerOption] {
         let apps = filter { $0.kind == .app }
-        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled } + filter { $0.kind == .safariWebApp }
+        let webApps = filter { $0.kind == .safariWebApp }
+        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled }
+            + webApps.filter { $0.webAddress == nil && !$0.isUntested } + webApps.filter { $0.webAddress != nil }
+            + webApps.filter(\.isUntested)
     }
 
     /// Where the Safari web apps start, for their heading; `nil` without any.
@@ -178,8 +192,9 @@ extension [PlayerOption] {
         firstIndex { $0.kind == .safariWebApp }
     }
 
-    /// Long enough to need a search: `PlayerOption.searchThreshold` or more.
-    var isSearchable: Bool { count >= PlayerOption.searchThreshold }
+    /// Long enough to need a search: `PlayerOption.searchThreshold` or more,
+    /// not counting the suggested web apps.
+    var isSearchable: Bool { count(where: { $0.webAddress == nil }) >= PlayerOption.searchThreshold }
 
     /// The players whose names contain `search`, ignoring case and accents;
     /// all of them while it's empty.

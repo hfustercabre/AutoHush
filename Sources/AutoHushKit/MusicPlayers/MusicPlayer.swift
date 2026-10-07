@@ -19,6 +19,13 @@ package protocol MusicPlayer: Sendable {
     var controlPermission: Permission { get }
     /// What kind of app it is; players are offered grouped by kind.
     var kind: MusicPlayerKind { get }
+    /// Where it's installed, when the player knows (a web app, found in the
+    /// Applications folders); `nil` to ask macOS by its bundle ID, which can
+    /// take a moment to learn of a new app.
+    var installedURL: URL? { get }
+    /// Offered without AutoHush having been tried with it (the web app of a
+    /// site nobody has tested), and marked so.
+    var isUntested: Bool { get }
 
     /// Asks for (if needed) and checks permission to control the player.
     /// Throws a `MusicPlayerError` when the player can't be controlled.
@@ -49,6 +56,8 @@ extension MusicPlayer {
     package var canFade: Bool { true }
     package var iconPlaceholder: PlayerIconPlaceholder? { nil }
     package var kind: MusicPlayerKind { .app }
+    package var installedURL: URL? { nil }
+    package var isUntested: Bool { false }
     /// Most players are scripted with Apple events.
     package var controlPermission: Permission { .automation(player: name) }
 }
@@ -70,6 +79,13 @@ package protocol LearningMusicPlayer: MusicPlayer {
     var learningStatus: LearningStatus { get }
     /// The status now, then every change.
     func learningUpdates() -> AsyncStream<LearningStatus>
+}
+
+/// A player that mutes itself when it refuses to pause (see `AudioMuting`).
+package protocol MutingMusicPlayer: MusicPlayer {
+    /// Whether muting may stand in for a pause: not in AntiDot mode, which
+    /// promises no audio taps.
+    func allowMuting(_ allowed: Bool)
 }
 
 /// How far a `LearningMusicPlayer` has come.

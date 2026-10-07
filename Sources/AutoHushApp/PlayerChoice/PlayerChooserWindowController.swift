@@ -64,9 +64,10 @@ struct PlayerChooserView: View {
             Image(nsImage: NSApplication.shared.applicationIconImage)
                 .resizable()
                 .frame(width: 64, height: 64)
-            Text("Choose Your Music Player")
+            Text("Choose Your Music Player", comment: "Welcome window: its title")
                 .font(.appTitle)
-            Text("AutoHush pauses it while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.")
+            Text("AutoHush pauses it while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.",
+                 comment: "Welcome window, under its title")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.appSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -87,7 +88,7 @@ struct PlayerChooserView: View {
             Button {
                 if let picked { model.chooseMusicPlayer(picked) }
             } label: {
-                Text("Continue")
+                Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed")
                     .font(.appBody.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 7)
@@ -159,7 +160,8 @@ struct PlayerChooserView: View {
                     .frame(width: 32, height: 32)
                     .accessibilityHidden(true)
                 RowTitle(Text(verbatim: option.name),
-                         subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel))
+                         subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel),
+                         badge: option.isUntested ? PlayerOption.untestedBadge : nil)
                 Spacer(minLength: 8)
                 Image(systemName: isPicked ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))

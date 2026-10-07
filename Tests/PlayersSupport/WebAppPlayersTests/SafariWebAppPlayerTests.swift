@@ -46,6 +46,8 @@ struct SafariWebAppPlayerTests {
         #expect(setup.player.name == "YT Music")
         #expect(setup.player.controlPermission == .accessibility(player: "YT Music"))
         #expect(!setup.player.canFade)
+        #expect(setup.player.installedURL == SafariWebAppPlayerTests.app.url)
+        #expect(!setup.player.isUntested)
     }
 
     @Test("it learns the button while its state is read, then reads the state from it")
@@ -203,8 +205,23 @@ struct SafariWebAppPlayerTests {
         let setup = Setup()
         setup.showPage("Pause")
         setup.page.sound = true
-        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        await #expect(throws: MusicPlayerError.stillLearning) { try await setup.player.pause() }
         #expect(setup.page.presses.isEmpty)
+    }
+
+    @Test("muting isn't allowed in AntiDot mode: a disabled Pause is then an error, and nothing is muted")
+    func mutingNotAllowed() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.player.allowMuting(false)
+        setup.showPage("Pause")
+        setup.page.buttonsByNumber[1]?.isEnabled = false
+        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        #expect(setup.muter.muted.isEmpty)
+        #expect(setup.page.presses.isEmpty)
+
+        setup.player.allowMuting(true)
+        try? await setup.player.pause()
+        #expect(setup.muter.muted == [4242])
     }
 
     @Test("after a reload the button is found again by its place, not by another Play")

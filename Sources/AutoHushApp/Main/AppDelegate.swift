@@ -190,6 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyAutoPause()
         watchLearning()
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
+        addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
         addWebAppModel.openAccessibilitySettings = { SystemSettingsPane.accessibility.open() }
     }
 
@@ -539,48 +540,62 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         addWebAppWindow?.show()
     }
 
-    /// A web app just made is looked for this often, this far apart, until
-    /// it counts as installed.
-    static let newAppChecks = 20
-    static let newAppCheckInterval: Duration = .milliseconds(250)
-
     /// Whether the "Add a Web App" window is on screen.
     var isShowingAddWebApp: Bool { addWebAppWindow?.isVisible == true }
 
     /// Makes the address a web app, then opens it, chooses it, and lets the
-    /// window show the learning.
+    /// window show the learning. Closing the window cancels it until the web
+    /// app is made.
     private func addWebApp(from address: String) {
         guard addingWebApp == nil else { return }
         let model = addWebAppModel
         let maker = webAppMaker
+        model.attempt += 1
+        let attempt = model.attempt
         addingWebApp = Task { [weak self] in
-            defer { self?.addingWebApp = nil }
+            defer { if model.attempt == attempt { self?.addingWebApp = nil } }
             do {
                 let made = try await maker.makeWebApp(from: address) { step in
-                    DispatchQueue.main.async { MainActor.assumeIsolated { model.apply(step) } }
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated {
+                            guard model.attempt == attempt else { return } // cancelled since
+                            model.apply(step)
+                        }
+                    }
                 }
-                guard let self else { return }
+                guard let self, model.attempt == attempt, !Task.isCancelled else { return }
                 model.apply(.made(made))
                 self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")
                 // Opened first, so it's running by the time it's chosen.
                 await self.openApp(made.url)
-                // A web app made moments ago may not count as installed yet.
-                for _ in 0..<Self.newAppChecks {
-                    self.refreshPlayerOptions()
-                    if self.status.playerOptions.contains(where: { $0.bundleID == made.bundleID && $0.isInstalled }) { break }
-                    try? await Task.sleep(for: Self.newAppCheckInterval)
-                }
                 self.chooseMusicPlayer(made.bundleID, showsLearningWindow: false)
-                if self.player?.bundleID != made.bundleID {
+                guard self.player?.bundleID == made.bundleID else {
                     self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
+                    return
                 }
-            } catch let error as WebAppMakingError {
-                self?.logger.error("Couldn't add a web app: \(String(describing: error), privacy: .public)")
-                model.fail(error)
+                // Chosen and learned already: there's nothing left to show.
+                if case .learned? = (self.player as? any LearningMusicPlayer)?.learningStatus {
+                    try? await Task.sleep(for: self.learnedWindowDelay)
+                    if case .learning = model.phase { self.addWebAppWindow?.close() }
+                }
+            } catch is CancellationError {
+                // Logged when it was cancelled.
             } catch {
-                model.fail(.browserFailed(error.localizedDescription))
+                guard model.attempt == attempt else { return }
+                let failure = error as? WebAppMakingError ?? .browserFailed(error.localizedDescription)
+                self?.logger.error("Couldn't add a web app: \(String(describing: failure), privacy: .public)")
+                model.fail(failure)
             }
         }
+    }
+
+    /// Stops the add under way; a step it reports later is ignored.
+    private func cancelAddingWebApp() {
+        guard let task = addingWebApp else { return }
+        logger.notice("Adding a web app was cancelled")
+        task.cancel()
+        addingWebApp = nil
+        addWebAppModel.attempt += 1
     }
 
     /// The window that asks to play and pause the chosen player once.
@@ -607,8 +622,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = PlayerOption.list(players, locate: locateApp)
         if status.playerOptions != options { status.playerOptions = options }
         if settingsModel.playerOptions != options { settingsModel.playerOptions = options }
+        forgetDeletedWebApps(among: options)
         guard let player else {
             setHealth(.waitingForPlayer(among: options))
+            return
+        }
+        // A deleted web app can't come back as the same app (adding the site
+        // again makes a new one): no player is chosen any more.
+        if player.kind == .safariWebApp, !options.contains(where: { $0.bundleID == player.bundleID }),
+           Self.isDeleted(player.bundleID) {
+            logger.notice("\(player.name, privacy: .public) was deleted: no music player is chosen")
+            forgetChosenPlayer(among: options)
             return
         }
         let appURL = options.first { $0.bundleID == player.bundleID }?.appURL
@@ -639,6 +663,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let watch = watchFolder(folder, { [weak self] in self?.checkInstalledPlayersSoon() }) else { continue }
             folderWatches[path] = watch
             logger.debug("Watching \(path, privacy: .public) for installed music players")
+        }
+    }
+
+    /// Whether the app is deleted: macOS doesn't know it, or only in the Trash.
+    private static func isDeleted(_ bundleID: String) -> Bool {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return true }
+        return url.pathComponents.contains(".Trash")
+    }
+
+    /// No player is chosen any more: the status line asks for one.
+    private func forgetChosenPlayer(among options: [PlayerOption]) {
+        preferences.musicPlayer = nil
+        player = nil
+        bootstrapGeneration += 1 // a start under way gives up
+        cancelRetry()
+        tearDownPipeline()
+        showChosenPlayer()
+        watchLearning()
+        setHealth(.waitingForPlayer(among: options))
+    }
+
+    /// Forgets the learned buttons of web apps that are gone: deleted, not
+    /// just moved (macOS still knows those, the Trash included). Adding a site
+    /// again makes a new web app, with a new ID.
+    private func forgetDeletedWebApps(among options: [PlayerOption]) {
+        let installed = Set(options.filter { $0.kind == .safariWebApp && $0.isInstalled }.map(\.bundleID))
+        preferences.forgetWebAppButtons { id in
+            !installed.contains(id) && NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) == nil
         }
     }
 

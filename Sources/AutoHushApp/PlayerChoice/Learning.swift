@@ -28,12 +28,12 @@ enum LearningText {
         String(localized: "Pause it", comment: "The step after “Play something in %@”: pause the web app")
     }
 
-    /// Under the play step until it's done: a start is told by the button
-    /// changing as the sound comes on, and an ad's own controls aren't the
-    /// player's.
-    static var playTip: String {
-        String(localized: "Let the music itself play for 5 to 10 seconds. Ads don’t count.",
-               comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls")
+    /// Under the play step until it's done: a site that needs an account
+    /// plays nothing until you log in; a start is told by the button changing
+    /// as the sound comes on, and an ad's own controls aren't the player's.
+    static func playTip(_ name: String) -> String {
+        String(localized: "Log in first if \(name) asks you to. Let the music itself play for 5 to 10 seconds. Ads don’t count.",
+               comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app")
     }
 
     /// Under the pause step until it's done: a web app's sound goes off only
@@ -53,7 +53,7 @@ struct LearningSteps: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed ? nil : LearningText.playTip)
+            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed ? nil : LearningText.playTip(name))
             step(done: hasPaused, LearningText.pauseStep, tip: hasPlayed && !hasPaused ? LearningText.pauseTip : nil)
         }
     }
@@ -177,7 +177,7 @@ struct LearningWindowView: View {
                 Button {
                     later()
                 } label: {
-                    Text("Later", comment: "Button that closes it for now: an update alert, or the window that learns a web app's controls")
+                    Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
                 }
                 .buttonStyle(.chip)
             }

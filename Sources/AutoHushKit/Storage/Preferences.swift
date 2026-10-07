@@ -37,6 +37,7 @@ package final class Preferences {
         /// Earlier on/off switch; `false` maps to `.openStreams`.
         static let legacyMeasuresAudioLevels = "measuresAudioLevels"
         static let musicPlayer = "musicPlayer"
+        static let webAppButtons = Preferences.webAppButtonsKey
         /// Set once the music player could be chosen (see `keepFormerPlayer`).
         static let playerChoiceIntroduced = "playerChoiceIntroduced"
         /// Kept by any earlier AutoHush that ran on this Mac.
@@ -45,6 +46,11 @@ package final class Preferences {
             detectionMethod, legacyMeasuresAudioLevels, checksForUpdates, automaticUpdates, legacyInstallsUpdates,
         ]
     }
+
+    /// Each web app's learned Play/Pause button, by its bundle ID. The
+    /// players read and save theirs from their own queues (`UserDefaults` is
+    /// thread-safe); this class only clears out old ones.
+    package nonisolated static let webAppButtonsKey = "webAppPlayPauseButtons"
 
     /// How many apps that played audio are remembered for Settings → Apps.
     package static let seenAppsLimit = 50
@@ -95,6 +101,14 @@ package final class Preferences {
 
     /// The bundle ID of the music player AutoHush controls; `nil` until the
     /// user chooses one.
+    /// Forgets the learned buttons of web apps for which `isGone` is true
+    /// (deleted: adding a site again makes a new app, with a new ID).
+    package func forgetWebAppButtons(where isGone: (String) -> Bool) {
+        guard let stored = defaults.object(forKey: Key.webAppButtons) as? [String: Any] else { return }
+        let kept = stored.filter { !isGone($0.key) }
+        if kept.count != stored.count { defaults.set(kept, forKey: Key.webAppButtons) }
+    }
+
     package var musicPlayer: String? {
         get { defaults.object(forKey: Key.musicPlayer) as? String }
         set { defaults.set(newValue, forKey: Key.musicPlayer) }

@@ -75,6 +75,18 @@ struct PlayerPopUpTests {
         #expect(button.titleOfSelectedItem == "Second")
     }
 
+    @Test("an untested web app's item shows the “Untested” badge after its name")
+    func untested() {
+        let button = PlayerPopUpButton()
+        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud",
+                                    appURL: URL(fileURLWithPath: "/Applications/SoundCloud.app"), kind: .safariWebApp)
+        untested.isUntested = true
+        button.update(options: options + [untested], selection: "com.example.first")
+        let item = button.itemArray.first { $0.title == "SoundCloud" }
+        #expect(item?.isEnabled == true)
+        #expect(item?.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: item?.attributedTitle?.length ?? 0)) == true)
+    }
+
     @Test("picking a player reports its bundle ID")
     func pick() {
         let button = PlayerPopUpButton()

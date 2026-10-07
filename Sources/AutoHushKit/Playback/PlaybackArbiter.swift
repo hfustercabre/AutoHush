@@ -323,6 +323,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
         let paused: Bool
         do {
             paused = try await fader.fadeOutAndPause()
+        } catch MusicPlayerError.stillLearning {
+            isFadingOut = false
+            logger.debug("[arbiter] \(self.player.name, privacy: .public)'s controls aren't learned yet — not pausing")
+            return
         } catch {
             isFadingOut = false
             logger.error("[arbiter] pause failed: \(error.localizedDescription, privacy: .public)")

@@ -5,10 +5,13 @@ import AutoHushKit
 
 /// Makes a Safari web app from an address, the way a person does: it opens
 /// the website in Safari and uses Safari's own File → Add to Dock, then
-/// clicks Add (keeping the name Safari suggests). Nothing else is created or
-/// changed; macOS has no other way to make one.
+/// clicks Add (keeping the name Safari suggests) and closes the tab it
+/// opened. Nothing else is created or changed; macOS has no other way to
+/// make one.
 ///
-/// A website that already has a web app isn't added again: that one is used.
+/// A website that already has a web app isn't added again: that one is
+/// used. Cancelling stops it before Add is clicked (Safari's dialog is
+/// cancelled too); after that, the web app exists and is left as it is.
 package final class SafariWebAppMaker: WebAppMaking {
     /// How long the new web app may take to appear after Add.
     static let appearTimeout: TimeInterval = 20
@@ -16,15 +19,20 @@ package final class SafariWebAppMaker: WebAppMaking {
 
     private let safari: any SafariDriving
     private let webApps: @Sendable () -> [SafariWebApp]
+    private let sameSite: @Sendable (SafariWebApp, URL) -> Bool
     private let isSealed: @Sendable (URL) -> Bool
     private let checkAnswers: @Sendable (URL) async throws -> Void
     private let sleep: @Sendable (TimeInterval) async -> Void
     private let clock: @Sendable () -> Date
     private let logger = Logger(category: "WebAppPlayer")
 
+    /// `webApps` lists the web apps installed now (looked at afresh);
+    /// `sameSite` tells whether one opens the site at an address (another
+    /// country's site of the same service counts).
     package init(
         safari: any SafariDriving = SafariUI(),
         webApps: @escaping @Sendable () -> [SafariWebApp] = { SafariWebAppFinder().webApps() },
+        sameSite: @escaping @Sendable (SafariWebApp, URL) -> Bool = { $0.opens($1) },
         isSealed: @escaping @Sendable (URL) -> Bool = { SafariWebApp.isSealed(at: $0) },
         checkAnswers: @escaping @Sendable (URL) async throws -> Void = { try await WebAddress.checkAnswers($0) },
         sleep: @escaping @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) },
@@ -32,18 +40,21 @@ package final class SafariWebAppMaker: WebAppMaking {
     ) {
         self.safari = safari
         self.webApps = webApps
+        self.sameSite = sameSite
         self.isSealed = isSealed
         self.checkAnswers = checkAnswers
         self.sleep = sleep
         self.clock = clock
     }
 
+    /// Throws `CancellationError` once cancelled before Add.
     package func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp {
         guard let url = WebAddress.url(from: address) else { throw WebAppMakingError.notAWebAddress }
         try await checkAnswers(url)
+        try Task.checkCancellation()
         onStep(.checked)
 
-        if let existing = webApps().first(where: { $0.opens(url) }) {
+        if let existing = webApps().first(where: { sameSite($0, url) }) {
             let made = MadeWebApp(bundleID: existing.bundleID, name: existing.name, url: existing.url, alreadyThere: true)
             onStep(.made(made))
             return made
@@ -51,11 +62,17 @@ package final class SafariWebAppMaker: WebAppMaking {
         guard await safari.isTrusted(prompt: true) else { throw WebAppMakingError.accessibilityDenied }
 
         let before = Set(webApps().map(\.bundleID))
+        try Task.checkCancellation()
         guard await safari.open(url) else { throw WebAppMakingError.browserFailed("Safari couldn't open \(url.absoluteString)") }
-        guard await safari.waitForPage() else { throw WebAppMakingError.browserFailed("the page didn't load in Safari") }
+        guard let tab = await safari.waitForPage() else {
+            try Task.checkCancellation()
+            throw WebAppMakingError.browserFailed("the page didn't load in Safari")
+        }
+        try Task.checkCancellation()
         onStep(.opened)
 
         guard let suggested = await safari.addToDock(url) else {
+            try Task.checkCancellation() // the dialog was cancelled instead of added
             throw WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")
         }
         logger.notice("Added a web app in Safari (suggested name: \(suggested, privacy: .private))")
@@ -63,9 +80,10 @@ package final class SafariWebAppMaker: WebAppMaking {
         while clock() < deadline {
             // Safari seals the new app last: it can't be opened before.
             if let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) {
-                // Launch Services may learn of it only later: AutoHush looks
-                // apps up there to tell they're installed.
+                // Launch Services learns of it only later: opening it by
+                // its bundle ID needs it.
                 LSRegisterURL(app.url as CFURL, true)
+                await safari.closeTab(tab)
                 let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
                 onStep(.made(made))
                 return made
@@ -76,24 +94,39 @@ package final class SafariWebAppMaker: WebAppMaking {
     }
 }
 
+/// The tab `SafariDriving` opened a website in, to close it afterwards.
+package struct SafariTab: @unchecked Sendable {
+    /// Its page's Accessibility element (a number in tests).
+    let page: AnyHashable
+
+    package init(page: AnyHashable) {
+        self.page = page
+    }
+}
+
 /// What `SafariWebAppMaker` does in Safari. A protocol, so tests stand in.
 package protocol SafariDriving: Sendable {
     func isTrusted(prompt: Bool) async -> Bool
     /// Opens the address in Safari, in front; `false` when it couldn't.
     func open(_ url: URL) async -> Bool
     /// Waits until the page in Safari's front window has loaded and can be
-    /// added; `false` after a while.
-    func waitForPage() async -> Bool
+    /// added: that tab; `nil` after a while.
+    func waitForPage() async -> SafariTab?
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
-    /// may have moved), and clicks Add. Returns the name Safari suggested;
-    /// `nil` when the dialog didn't come.
+    /// may have moved), and clicks Add, unless the task is cancelled
+    /// meanwhile: then it clicks the dialog's Cancel. Returns the name
+    /// Safari suggested; `nil` when the dialog didn't come or was cancelled.
     func addToDock(_ url: URL) async -> String?
+    /// Closes `tab`, if it's still the one in front showing the same page:
+    /// never a tab the user moved to since.
+    func closeTab(_ tab: SafariTab) async
 }
 
-/// Safari, driven through Accessibility. Its menu item and the dialog's
+/// Safari, driven through Accessibility. Its menu items and the dialog's
 /// fields and buttons are found by their identifiers, the same in every
-/// language (measured on macOS 27): `AddToDock`, `AddToDockFormNameTextField`,
-/// `AddToDockFormURLTextField`, `AddToDockFormAddButton`.
+/// language (measured on macOS 27): `AddToDock`, `CloseTab`,
+/// `AddToDockFormNameTextField`, `AddToDockFormURLTextField`,
+/// `AddToDockFormAddButton`, `AddToDockFormCancelButton`.
 package struct SafariUI: SafariDriving {
     static let bundleID = "com.apple.Safari"
     /// The page gets at least this long, so the menu reflects the new tab.
@@ -128,17 +161,18 @@ package struct SafariUI: SafariDriving {
         }
     }
 
-    package func waitForPage() async -> Bool {
+    package func waitForPage() async -> SafariTab? {
         try? await Task.sleep(for: .seconds(Self.settleTime))
         let deadline = Date().addingTimeInterval(Self.pageTimeout)
-        while Date() < deadline {
+        while Date() < deadline, !Task.isCancelled {
             if let app = Self.safariElement(), Self.pageLoaded(in: app),
-               let item = Self.menuItem("AddToDock", in: app), Self.value(kAXEnabledAttribute, of: item) as? Bool == true {
-                return true
+               let item = Self.menuItem("AddToDock", in: app), item.value(kAXEnabledAttribute) as? Bool == true,
+               let page = Self.frontPage(in: app) {
+                return SafariTab(page: page)
             }
             try? await Task.sleep(for: .milliseconds(300))
         }
-        return false
+        return nil
     }
 
     package func addToDock(_ url: URL) async -> String? {
@@ -158,15 +192,21 @@ package struct SafariUI: SafariDriving {
         let deadline = Date().addingTimeInterval(Self.dialogTimeout)
         while Date() < deadline {
             if let add = Self.find("AddToDockFormAddButton", in: app) {
-                let name = Self.find("AddToDockFormNameTextField", in: app)
-                    .flatMap { Self.value(kAXValueAttribute, of: $0) as? String } ?? ""
+                let name = Self.find("AddToDockFormNameTextField", in: app)?.string(kAXValueAttribute) ?? ""
                 if let field = Self.find("AddToDockFormURLTextField", in: app) {
-                    let shown = (Self.value(kAXValueAttribute, of: field) as? String).flatMap(URL.init(string:))
+                    let shown = field.string(kAXValueAttribute).flatMap(URL.init(string:))
                     if shown.flatMap({ $0.host() }).map(WebAddress.siteHost) != url.host().map(WebAddress.siteHost) {
                         AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, url.absoluteString as CFString)
                     }
                 }
                 try? await Task.sleep(for: .seconds(Self.iconTime))
+                guard !Task.isCancelled else {
+                    if let cancel = Self.find("AddToDockFormCancelButton", in: app) {
+                        AXUIElementPerformAction(cancel, kAXPressAction as CFString)
+                    }
+                    logger.notice("Add to Dock cancelled")
+                    return nil
+                }
                 guard AXUIElementPerformAction(add, kAXPressAction as CFString) == .success else { return nil }
                 return name
             }
@@ -174,6 +214,16 @@ package struct SafariUI: SafariDriving {
         }
         logger.error("Add to Dock: Safari's dialog didn't come within \(Int(Self.dialogTimeout), privacy: .public) s")
         return nil
+    }
+
+    package func closeTab(_ tab: SafariTab) async {
+        guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page,
+              let item = Self.menuItem("CloseTab", in: app)
+        else {
+            logger.notice("The tab Add a Web App opened isn't in front any more: left open")
+            return
+        }
+        AXUIElementPerformAction(item, kAXPressAction as CFString)
     }
 
     // MARK: - Accessibility
@@ -189,16 +239,21 @@ package struct SafariUI: SafariDriving {
     /// The front window's page has loaded (Safari's browser view says so in
     /// its identifier, e.g. "BrowserView?IsPageLoaded=true&…").
     private static func pageLoaded(in app: AXUIElement) -> Bool {
-        guard let window = element(kAXFocusedWindowAttribute, of: app) else { return false }
-        return first(in: window, depth: 6) {
-            (value("AXIdentifier", of: $0) as? String)?.contains("IsPageLoaded=true") == true
-        } != nil
+        guard let window = app.element(kAXFocusedWindowAttribute) else { return false }
+        return first(in: window, depth: 6) { $0.string("AXIdentifier")?.contains("IsPageLoaded=true") == true } != nil
+    }
+
+    /// The page in the front window's tab: the same element for as long as
+    /// that tab shows that page.
+    private static func frontPage(in app: AXUIElement) -> AXUIElement? {
+        guard let window = app.element(kAXFocusedWindowAttribute) else { return nil }
+        return first(in: window, depth: 8) { $0.string(kAXRoleAttribute) == "AXWebArea" }
     }
 
     private static func menuItem(_ identifier: String, in app: AXUIElement) -> AXUIElement? {
-        guard let bar = element(kAXMenuBarAttribute, of: app) else { return nil }
-        for menu in children(of: bar).flatMap(children(of:)) {
-            if let item = children(of: menu).first(where: { value("AXIdentifier", of: $0) as? String == identifier }) {
+        guard let bar = app.element(kAXMenuBarAttribute) else { return nil }
+        for menu in bar.children.flatMap(\.children) {
+            if let item = menu.children.first(where: { $0.string("AXIdentifier") == identifier }) {
                 return item
             }
         }
@@ -208,18 +263,18 @@ package struct SafariUI: SafariDriving {
     /// An element of the dialog, by identifier: in the front window's sheet,
     /// else around the focused field.
     private static func find(_ identifier: String, in app: AXUIElement) -> AXUIElement? {
-        let matches: (AXUIElement) -> Bool = { value("AXIdentifier", of: $0) as? String == identifier }
+        let matches: (AXUIElement) -> Bool = { $0.string("AXIdentifier") == identifier }
         var roots: [AXUIElement] = []
-        if let window = element(kAXFocusedWindowAttribute, of: app) { roots.append(window) }
-        if let focused = element(kAXFocusedUIElementAttribute, of: app) {
+        if let window = app.element(kAXFocusedWindowAttribute) { roots.append(window) }
+        if let focused = app.element(kAXFocusedUIElementAttribute) {
             var node = focused
-            while let parent = element(kAXParentAttribute, of: node) {
-                if value(kAXRoleAttribute, of: parent) as? String == "AXSheet" { roots.append(parent) }
+            while let parent = node.element(kAXParentAttribute) {
+                if parent.string(kAXRoleAttribute) == "AXSheet" { roots.append(parent) }
                 node = parent
             }
         }
         for root in roots {
-            for sheet in [root] + children(of: root) where value(kAXRoleAttribute, of: sheet) as? String == "AXSheet" {
+            for sheet in [root] + root.children where sheet.string(kAXRoleAttribute) == "AXSheet" {
                 if let found = first(in: sheet, depth: 4, where: matches) { return found }
             }
         }
@@ -229,25 +284,9 @@ package struct SafariUI: SafariDriving {
     private static func first(in element: AXUIElement, depth: Int, where matches: (AXUIElement) -> Bool) -> AXUIElement? {
         if matches(element) { return element }
         guard depth > 0 else { return nil }
-        for child in children(of: element) {
+        for child in element.children {
             if let found = first(in: child, depth: depth - 1, where: matches) { return found }
         }
         return nil
-    }
-
-    private static func value(_ attribute: String, of element: AXUIElement) -> CFTypeRef? {
-        var value: CFTypeRef?
-        return AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success ? value : nil
-    }
-
-    private static func element(_ attribute: String, of element: AXUIElement) -> AXUIElement? {
-        guard let value = value(attribute, of: element), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return (value as! AXUIElement)
-    }
-
-    private static func children(of element: AXUIElement) -> [AXUIElement] {
-        (value(kAXChildrenAttribute, of: element) as? [AnyObject] ?? []).compactMap { child in
-            CFGetTypeID(child) == AXUIElementGetTypeID() ? (child as! AXUIElement) : nil
-        }
     }
 }

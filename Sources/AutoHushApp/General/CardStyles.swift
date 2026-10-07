@@ -283,15 +283,25 @@ struct SwitchRow: View {
 struct RowTitle: View {
     let title: Text
     var subtitle: Text?
+    /// After the title, as a `HeadingBadge`, e.g. "Untested".
+    var badge: String?
 
-    init(_ title: Text, subtitle: Text? = nil) {
+    init(_ title: Text, subtitle: Text? = nil, badge: String? = nil) {
         self.title = title
         self.subtitle = subtitle
+        self.badge = badge
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            title
+            if let badge {
+                HStack(spacing: 6) {
+                    title
+                    HeadingBadge(text: badge)
+                }
+            } else {
+                title
+            }
             if let subtitle {
                 subtitle
                     .font(.appCaption)

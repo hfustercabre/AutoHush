@@ -75,6 +75,9 @@ final class MonitoringPipeline {
             onDetectionModeChange: { statusUpdates.yield(.detection($0)) }
         )
         monitorLink.monitor = monitor
+        // AntiDot mode promises no audio taps: a web app that refuses to
+        // pause isn't muted then.
+        (player as? any MutingMusicPlayer)?.allowMuting(detectionMethod != .playbackSignals)
         self.playerObserver = player.makeStateObserver { [weak monitor] state in
             arbiterCommands.yield(.playerState(state))
             monitor?.setPlayerPlaying(state == .playing)

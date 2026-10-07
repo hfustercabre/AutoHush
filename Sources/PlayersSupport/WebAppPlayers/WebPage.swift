@@ -96,7 +96,11 @@ package struct AccessibilityWebPage: WebPage {
             guard AXUIElementCopyParameterizedAttributeValue(
                 area, "AXUIElementsForSearchPredicate" as CFString, search as CFDictionary, &result
             ) == .success else { return [] }
-            return Self.elements(result).compactMap { button(ButtonHandle($0)) }
+            return AXUIElement.elements(in: result).compactMap { element in
+                // Each element waits macOS's default 6 s otherwise.
+                AXUIElementSetMessagingTimeout(element, Self.timeout)
+                return button(ButtonHandle(element))
+            }
         }
     }
 
@@ -107,9 +111,9 @@ package struct AccessibilityWebPage: WebPage {
         case .invalidUIElement, .cannotComplete: return nil // gone, or not answering
         default: break
         }
-        let label = [description as? String, Self.value(kAXTitleAttribute, of: element) as? String]
+        let label = [description as? String, element.string(kAXTitleAttribute)]
             .compactMap { $0 }.first { !$0.isEmpty } ?? ""
-        let enabled = Self.value(kAXEnabledAttribute, of: element) as? Bool ?? false
+        let enabled = element.value(kAXEnabledAttribute) as? Bool ?? false
         return PageButton(handle: handle, label: label, isEnabled: enabled)
     }
 
@@ -120,16 +124,16 @@ package struct AccessibilityWebPage: WebPage {
         var window: AXUIElement?
         var inPage = true
         for _ in 0..<Self.pathDepth {
-            guard let parent = Self.element(kAXParentAttribute, of: node) else { break }
+            guard let parent = node.element(kAXParentAttribute) else { break }
             node = parent
-            let role = Self.value(kAXRoleAttribute, of: node) as? String ?? ""
+            let role = node.string(kAXRoleAttribute) ?? ""
             if role == kAXWindowRole {
                 window = node
                 break
             }
             if role == "AXWebArea" { inPage = false }
             guard inPage else { continue } // on to its window
-            let subrole = Self.value(kAXSubroleAttribute, of: node) as? String
+            let subrole = node.string(kAXSubroleAttribute)
             path.append(subrole.map { "\(role):\($0)" } ?? role)
         }
         guard let window, let windowFrame = Self.frame(of: window) else { return nil }
@@ -142,9 +146,7 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     package func isPlayingSound(pid: pid_t) -> Bool {
-        HALAudioProcessSnapshotProvider().activeProcesses().contains {
-            $0.pid == pid || ProcessResponsibility.responsiblePID(for: $0.pid) == pid
-        }
+        HALAudioProcessSnapshotProvider().activeProcesses().contains { ProcessResponsibility.isOwned($0.pid, by: pid) }
     }
 
     // MARK: - Windows and pages
@@ -154,16 +156,16 @@ package struct AccessibilityWebPage: WebPage {
     private func windows(of pid: pid_t) -> [AXUIElement] {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, Self.timeout)
-        let shown = Self.elements(Self.value(kAXWindowsAttribute, of: app))
+        let shown = app.elements(kAXWindowsAttribute)
         let windows = shown.isEmpty ? (AccessibilityWindows.windows(ofProcess: pid) ?? []) : shown
         windows.forEach { AXUIElementSetMessagingTimeout($0, Self.timeout) }
         return windows
     }
 
     private static func webAreas(in element: AXUIElement, depth: Int = 0) -> [AXUIElement] {
-        if value(kAXRoleAttribute, of: element) as? String == "AXWebArea" { return [element] }
+        if element.string(kAXRoleAttribute) == "AXWebArea" { return [element] }
         guard depth < webAreaDepth else { return [] }
-        return elements(value(kAXChildrenAttribute, of: element)).flatMap { webAreas(in: $0, depth: depth + 1) }
+        return element.children.flatMap { webAreas(in: $0, depth: depth + 1) }
     }
 
     // MARK: - Accessibility values
@@ -173,27 +175,11 @@ package struct AccessibilityWebPage: WebPage {
         return (element as! AXUIElement)
     }
 
-    private static func value(_ attribute: String, of element: AXUIElement) -> CFTypeRef? {
-        var value: CFTypeRef?
-        return AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success ? value : nil
-    }
-
-    private static func element(_ attribute: String, of element: AXUIElement) -> AXUIElement? {
-        guard let value = value(attribute, of: element), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return (value as! AXUIElement)
-    }
-
-    private static func elements(_ value: CFTypeRef?) -> [AXUIElement] {
-        (value as? [AnyObject] ?? []).compactMap { item in
-            CFGetTypeID(item) == AXUIElementGetTypeID() ? (item as! AXUIElement) : nil
-        }
-    }
-
     /// Its frame on screen, from the top left corner.
     private static func frame(of element: AXUIElement) -> CGRect? {
         var origin = CGPoint.zero
         var size = CGSize.zero
-        guard let position = value(kAXPositionAttribute, of: element), let extent = value(kAXSizeAttribute, of: element),
+        guard let position = element.value(kAXPositionAttribute), let extent = element.value(kAXSizeAttribute),
               CFGetTypeID(position) == AXValueGetTypeID(), CFGetTypeID(extent) == AXValueGetTypeID(),
               AXValueGetValue(position as! AXValue, .cgPoint, &origin),
               AXValueGetValue(extent as! AXValue, .cgSize, &size)

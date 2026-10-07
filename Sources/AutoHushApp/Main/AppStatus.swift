@@ -54,9 +54,10 @@ struct AppStatus: Equatable {
     var learning: LearningStatus?
     /// Whether the user has still to play the chosen player (`false`) or to
     /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
-    /// to learn.
+    /// to learn, or while the chosen player isn't offered (deleted).
     var learningHasPlayed: Bool? {
-        if case .learning(let hasPlayed) = learning { hasPlayed } else { nil }
+        guard chosenPlayer != nil, case .learning(let hasPlayed) = learning else { return nil }
+        return hasPlayed
     }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown

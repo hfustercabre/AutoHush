@@ -29,23 +29,29 @@ package enum SupportedPlayers {
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
         found: { webApps.current() },
-        suggested: { webApps.notAdded(suggestedWebApps) }
+        suggested: { webApps.suggestions() }
     )
+
+    /// The music services' web players AutoHush has been tested with (live,
+    /// 2026-10-06), the most used first: Spotify, YouTube Music (125 million
+    /// subscribers), Amazon Music, then Deezer (about 10 million). Their web
+    /// apps are offered first, and suggested until added; any other web app
+    /// is offered after them, marked untested.
+    package static let testedWebApps: [TestedWebApp] = [
+        TestedWebApp(name: "Spotify", address: "open.spotify.com"),
+        TestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
+        TestedWebApp(name: "Amazon Music", address: amazonMusicSite(region: Locale.current.region?.identifier),
+                     otherHosts: ["music.amazon.com"] + amazonMusicSites.values),
+        TestedWebApp(name: "Deezer", address: "deezer.com"),
+    ]
+
+    /// The Safari web apps in the Applications folders, looked for once for
+    /// the players, the suggestions and Add a Web App.
+    private static let webAppFinder = SafariWebAppFinder()
 
     /// Every Safari web app (YouTube Music, Amazon Music, Spotify's web
     /// player…) can be chosen: AutoHush learns its Play/Pause button.
-    private static let webApps = SafariWebAppPlayers()
-
-    /// Music services' web players, offered after the web apps until one
-    /// is added, the most used first (2026): Spotify, YouTube Music (125
-    /// million subscribers), Amazon Music, then Deezer (about 10 million).
-    package static let suggestedWebApps: [SuggestedWebApp] = [
-        SuggestedWebApp(name: "Spotify", address: "open.spotify.com"),
-        SuggestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
-        SuggestedWebApp(name: "Amazon Music", address: amazonMusicSite(region: Locale.current.region?.identifier),
-                        otherHosts: ["music.amazon.com"] + amazonMusicSites.values),
-        SuggestedWebApp(name: "Deezer", address: "deezer.com"),
-    ]
+    private static let webApps = SafariWebAppPlayers(finder: webAppFinder, tested: testedWebApps)
 
     /// Amazon Music's site for each country that has its own; the others
     /// use music.amazon.com. A sign-in on another country's site doesn't
@@ -62,7 +68,10 @@ package enum SupportedPlayers {
     }
 
     /// Makes a Safari web app from an address the user typed.
-    package static let webAppMaker: any WebAppMaking = SafariWebAppMaker()
+    package static let webAppMaker: any WebAppMaking = SafariWebAppMaker(
+        webApps: { webAppFinder.webApps(maxAge: 0) },
+        sameSite: { TestedWebApp.sameSite($0, $1, tested: testedWebApps) }
+    )
 
     /// The app a process runs as when its program doesn't say: a Safari web
     /// app (for `ProcessAudioSourceIdentifier`).

@@ -58,6 +58,7 @@ struct SafariWebAppMakerTests {
         let installed = Locked<[SafariWebApp]>([SafariWebAppMakerTests.existing])
         let steps = Locked<[WebAppMakingStep]>([])
         let checked = Locked<[URL]>([])
+        var sameSite: @Sendable (SafariWebApp, URL) -> Bool = { $0.opens($1) }
         /// How many more looks a new app takes to be sealed.
         let unsealedLooks = Locked(0)
         let clock = TestClock()
@@ -65,6 +66,7 @@ struct SafariWebAppMakerTests {
             SafariWebAppMaker(
                 safari: safari,
                 webApps: { [installed] in installed.value },
+                sameSite: sameSite,
                 isSealed: { [unsealedLooks] _ in
                     unsealedLooks.withLock { looks in
                         defer { looks = max(0, looks - 1) }
@@ -89,7 +91,7 @@ struct SafariWebAppMakerTests {
         let made = try await setup.make("play.qobuz.com")
         #expect(made == MadeWebApp(bundleID: Self.made.bundleID, name: "Qobuz", url: Self.made.url, alreadyThere: false))
         #expect(setup.checked.value == [URL(string: "https://play.qobuz.com")!])
-        #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "add https://play.qobuz.com"])
+        #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "add https://play.qobuz.com", "close tab 1"])
         #expect(setup.steps.value == [.checked, .opened, .made(made)])
     }
 
@@ -132,6 +134,35 @@ struct SafariWebAppMakerTests {
         #expect(made.bundleID == Self.existing.bundleID)
         #expect(setup.safari.log.value.isEmpty)
         #expect(setup.steps.value == [.checked, .made(made)])
+    }
+
+    @Test("cancelled while Safari's dialog is open, it cancels the dialog: nothing is added")
+    func cancelled() async throws {
+        let setup = Setup()
+        setup.safari.holdsDialog = true
+        setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        let task = Task { try await setup.make("play.qobuz.com") }
+        while !setup.safari.log.value.contains("add https://play.qobuz.com") { try await Task.sleep(for: .milliseconds(5)) }
+        task.cancel()
+        await #expect(throws: CancellationError.self) { try await task.value }
+        #expect(setup.safari.log.value.last == "cancel dialog")
+        #expect(setup.installed.value == [Self.existing])
+        #expect(setup.steps.value == [.checked, .opened])
+    }
+
+    @Test("another country's site of a tested service counts as the same: its web app is used")
+    func sameService() async throws {
+        var setup = Setup()
+        let amazon = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "AMZ", name: "Amazon Music",
+                                  url: URL(fileURLWithPath: "/Users/test/Applications/Amazon Music.app"),
+                                  startURL: URL(string: "https://music.amazon.es/"))
+        setup.installed.withLock { $0.append(amazon) }
+        let tested = [TestedWebApp(name: "Amazon Music", address: "music.amazon.com", otherHosts: ["music.amazon.es"])]
+        setup.sameSite = { TestedWebApp.sameSite($0, $1, tested: tested) }
+        let made = try await setup.make("music.amazon.com")
+        #expect(made.bundleID == amazon.bundleID)
+        #expect(made.alreadyThere)
+        #expect(setup.safari.log.value.isEmpty)
     }
 
     @Test("what isn't a web address is never looked up")
@@ -179,12 +210,21 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
 
     func isTrusted(prompt: Bool) async -> Bool { log.append("trusted"); return trusted }
     func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return true }
-    func waitForPage() async -> Bool { log.append("wait"); return loads }
+    /// The dialog stays open until the task is cancelled.
+    var holdsDialog = false
+
+    func waitForPage() async -> SafariTab? { log.append("wait"); return loads ? SafariTab(page: 1) : nil }
     func addToDock(_ url: URL) async -> String? {
         log.append("add \(url.absoluteString)")
+        while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
+        guard !Task.isCancelled else {
+            log.append("cancel dialog")
+            return nil
+        }
         onAdd?()
         return "Qobuz"
     }
+    func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
 }
 
 /// A value shared with closures.

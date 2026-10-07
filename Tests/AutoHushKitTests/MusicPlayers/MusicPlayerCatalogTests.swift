@@ -29,6 +29,13 @@ struct MusicPlayerCatalogTests {
         #expect(first.kind == .app)
     }
 
+    @Test("a player says nothing of where it's installed or of being untested, unless it knows")
+    func defaults() {
+        let player = MockMusicPlayer(bundleID: "com.example.first", name: "First")
+        #expect(player.installedURL == nil)
+        #expect(!player.isUntested)
+    }
+
     @Test("suggested web apps are looked up each time, and aren't players")
     func suggestions() {
         let added = OSAllocatedUnfairLock(initialState: false)

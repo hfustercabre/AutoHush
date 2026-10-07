@@ -39,6 +39,8 @@ final class WebAppControl: @unchecked Sendable {
     private let sleep: @Sendable (TimeInterval) -> Void
     private let status: LearningStatusBroadcast
     private let muter: any AudioMuting
+    /// Whether muting may stand in for a pause now (not in AntiDot mode).
+    private let mayMute: @Sendable () -> Bool
     private let logger = Logger(category: "WebAppPlayer")
 
     private var recipe: PlayPauseRecipe?
@@ -76,6 +78,7 @@ final class WebAppControl: @unchecked Sendable {
         store: any PlayPauseRecipeStore,
         status: LearningStatusBroadcast,
         muter: any AudioMuting,
+        mayMute: @escaping @Sendable () -> Bool = { true },
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
     ) {
@@ -85,6 +88,7 @@ final class WebAppControl: @unchecked Sendable {
         self.store = store
         self.status = status
         self.muter = muter
+        self.mayMute = mayMute
         self.clock = clock
         self.sleep = sleep
         recipe = store.recipe(for: bundleID)
@@ -139,9 +143,7 @@ final class WebAppControl: @unchecked Sendable {
             }
             return
         }
-        guard learner == nil, let recipe, let button else {
-            throw MusicPlayerError.playerCommandFailed("AutoHush hasn't learned \(name)'s Play/Pause button yet")
-        }
+        guard learner == nil, let recipe, let button else { throw MusicPlayerError.stillLearning }
         // Sites disable it while they can't be paused, such as during an ad.
         guard page.button(button)?.isEnabled == true else {
             logger.notice("\(self.name, privacy: .public)'s Play/Pause is disabled: not pressed")
@@ -173,7 +175,7 @@ final class WebAppControl: @unchecked Sendable {
 
     /// Mutes the web app since it refused to pause; `false` when it couldn't.
     private func mute(pid: pid_t, reason: MuteReason) -> Bool {
-        guard muter.mute(appPID: pid) else { return false }
+        guard mayMute(), muter.mute(appPID: pid) else { return false }
         muted = (pid, reason)
         logger.notice("\(self.name, privacy: .public) refused to pause: muted instead")
         return true

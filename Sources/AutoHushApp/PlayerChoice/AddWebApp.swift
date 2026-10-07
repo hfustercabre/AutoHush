@@ -28,7 +28,15 @@ final class AddWebAppModel {
     private(set) var problem: WebAppMakingError?
 
     @ObservationIgnored var start: @MainActor (String) -> Void = { _ in }
+    /// Stops the add under way.
+    @ObservationIgnored var cancel: @MainActor () -> Void = {}
+    /// Counts the adds started, so steps a cancelled one reports later are
+    /// told apart.
+    @ObservationIgnored var attempt = 0
     @ObservationIgnored var openAccessibilitySettings: @MainActor () -> Void = {}
+
+    /// The address is being checked, opened or added in Safari.
+    var isAdding: Bool { [.checking, .opening, .adding].contains(phase) }
 
     /// Whether what's typed can be tried: something that could be an address.
     var canContinue: Bool {
@@ -49,7 +57,17 @@ final class AddWebAppModel {
         start(address)
     }
 
+    /// The window closed: an add under way stops (Safari's dialog is
+    /// cancelled, nothing is added). Once the web app is made, learning goes
+    /// on in the menu and Settings.
+    func windowClosed() {
+        guard isAdding else { return }
+        cancel()
+        reset()
+    }
+
     func apply(_ step: WebAppMakingStep) {
+        guard phase != .entering else { return } // a step reported after it was cancelled
         switch step {
         case .checked:          phase = .opening
         case .opened:           phase = .adding
@@ -94,8 +112,11 @@ protocol AddWebAppPresenting: AnyObject {
 }
 
 @MainActor
-final class AddWebAppWindowController: NSWindowController, AddWebAppPresenting {
+final class AddWebAppWindowController: NSWindowController, AddWebAppPresenting, NSWindowDelegate {
+    private let model: AddWebAppModel
+
     init(model: AddWebAppModel, settings: SettingsModel) {
+        self.model = model
         let hosting = NSHostingController(rootView: AddWebAppView(model: model, settings: settings, close: {}))
         hosting.sizingOptions = .preferredContentSize
         let window = NSWindow(contentViewController: hosting)
@@ -103,7 +124,13 @@ final class AddWebAppWindowController: NSWindowController, AddWebAppPresenting {
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         super.init(window: window)
+        window.delegate = self
         hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
+    }
+
+    /// Closing it (Cancel, Later or its close button) stops an add under way.
+    func windowWillClose(_ notification: Notification) {
+        model.windowClosed()
     }
 
     @available(*, unavailable)
@@ -153,12 +180,17 @@ struct AddWebAppView: View {
             HStack(spacing: 8) {
                 Spacer()
                 Button { close() } label: {
-                    Text("Cancel", comment: "Add a Web App window: closes it")
+                    if case .learning = model.phase {
+                        // The web app is added: learning goes on in the menu.
+                        Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
+                    } else {
+                        Text("Cancel", comment: "Add a Web App window: stops adding the website and closes the window")
+                    }
                 }
                 .buttonStyle(.chip)
                 if model.phase == .entering {
                     Button { model.continueTapped() } label: {
-                        Text("Continue").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
+                        Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                     }
                     // Blue, without Return: AutoHush has no keyboard shortcuts.
                     .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
@@ -207,12 +239,20 @@ struct AddWebAppView: View {
                                    comment: "Add a Web App window: a step done; %@ is the web app's name"))
                 learningStep(name)
             default:
-                step(model.phase == .opening ? .current : model.phase == .checking ? .todo : .done, openStep)
+                step(model.phase == .opening ? .current : model.phase == .checking ? .todo : .done, openStep,
+                     notes: model.phase == .opening ? [extensionTip] : [])
                 step(model.phase == .adding ? .current : .todo,
                      String(localized: "Add it to the Dock", comment: "Add a Web App window: a step, before it's done"))
                 step(.todo, learnStepTitle)
             }
         }
+    }
+
+    /// While Safari opens the site: an extension's request for access
+    /// holds it up until it's answered.
+    private var extensionTip: String {
+        String(localized: "If a Safari extension asks for access to the site, answer it first.",
+               comment: "Add a Web App window, under the step “Open it in Safari” while it's under way")
     }
 
     private var openStep: String {
@@ -231,7 +271,7 @@ struct AddWebAppView: View {
                     LearningText.pauseTip]
                  : [String(localized: "\(name) is open. AutoHush watches which button plays and pauses it.",
                            comment: "Add a Web App window, under its last step; %@ is the web app"),
-                    LearningText.playTip])
+                    LearningText.playTip(name)])
         default:
             step(.done, learnStepTitle)
         }

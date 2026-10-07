@@ -295,6 +295,11 @@ final class StatusMenuController: NSObject {
         let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
         row.image = option.icon(size: 16)
         row.state = option.bundleID == status.chosenPlayerID ? .on : .off
+        if option.isUntested {
+            // The row's title starts about 37 pt in and ends 16 pt short of
+            // the menu's edge.
+            row.setTitle(option.name, badge: PlayerOption.untestedBadge, font: Self.rowFont, maxWidth: menuContentWidth - 56)
+        }
         if !option.isInstalled {
             row.isEnabled = option.isClickable
             row.subtitle = PlayerOption.notInstalledLabel

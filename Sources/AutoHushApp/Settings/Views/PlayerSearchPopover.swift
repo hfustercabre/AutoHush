@@ -55,7 +55,8 @@ struct PlayerSearchPopover: View {
                     .frame(width: 20, height: 20)
                     .accessibilityHidden(true)
                 RowTitle(Text(verbatim: option.name),
-                         subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel))
+                         subtitle: option.isInstalled ? nil : Text(PlayerOption.notInstalledLabel),
+                         badge: option.isUntested ? PlayerOption.untestedBadge : nil)
                 Spacer(minLength: 8)
             }
             .padding(.horizontal, 6)

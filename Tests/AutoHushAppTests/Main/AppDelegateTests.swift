@@ -21,7 +21,7 @@ struct AppDelegateTests {
     /// test fires.
     @MainActor
     private final class Scratch {
-        let preferences = Preferences(store: InMemoryPreferenceStore())
+        var preferences = Preferences(store: InMemoryPreferenceStore())
         let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         let notifier = MockUpdateNotifier()
         let first = MockMusicPlayer(bundleID: Players.first, name: "First", failVerifyWith: Denied.automation)
@@ -199,26 +199,90 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("a web app made moments ago is chosen once it counts as installed")
-    func addWebAppNotYetInstalled() async {
+    @Test("a web app made moments ago is chosen from where it was found, before macOS knows it")
+    func addWebAppFoundWhereMade() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learned)
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learned,
+                                        installedURL: appURL)
         let found = FoundPlayers()
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
-        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz",
-                                                            url: URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app"),
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL,
                                                             alreadyThere: false)))
         scratch.maker.onMake = { found.players = [webApp] }
         let (sut, _) = makeSUT(scratch)
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        // Launch Services knows of it only a moment later.
-        try? await Task.sleep(for: .milliseconds(400))
-        #expect(sut.status.chosenPlayerID == Players.first)
-        scratch.installed.insert(webApp.bundleID)
         await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
+        #expect(sut.status.chosenPlayerID == webApp.bundleID) // not in `scratch.installed`: macOS doesn't know it
+        #expect(sut.status.playerOptions.first { $0.bundleID == webApp.bundleID }?.appURL == appURL)
+    }
+
+    @MainActor
+    @Test("closing the add window while it adds cancels it; the next add isn't held up")
+    func addWebAppCancelled() async {
+        let scratch = Scratch()
+        scratch.maker = FakeWebAppMaker(.failure(.notAWebAddress))
+        scratch.maker.result = .success(MadeWebApp(bundleID: "x", name: "X", url: URL(fileURLWithPath: "/x.app"), alreadyThere: false))
+        scratch.maker.waitsForCancel = true
+        let (sut, _) = makeSUT(scratch)
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .opening }
+        #expect(sut.addWebAppModel.phase == .opening)
+
+        sut.addWebAppModel.windowClosed() // the window's Cancel, or its close button
+        #expect(sut.addWebAppModel.phase == .entering)
+        await waitFor { scratch.maker.wasCancelled }
+        #expect(scratch.maker.wasCancelled)
+        #expect(scratch.opened.isEmpty)
+        #expect(sut.status.chosenPlayerID == Players.first)
+
+        scratch.maker.waitsForCancel = false
+        scratch.maker.result = .failure(.noAnswer(host: "play.qobuz.com"))
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.problem != nil }
+        #expect(sut.addWebAppModel.problem == .noAnswer(host: "play.qobuz.com"))
+    }
+
+    @MainActor
+    @Test("adding the web app already chosen and learned just closes the window")
+    func addWebAppAlreadyChosen() async {
+        let scratch = Scratch()
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learned,
+                                        installedURL: appURL)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL,
+                                                            alreadyThere: true)))
+        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { !scratch.addWindow.isVisible }
+        #expect(!scratch.addWindow.isVisible)
+    }
+
+    @MainActor
+    @Test("the learned buttons of deleted web apps are forgotten; installed ones' are kept")
+    func forgetsDeletedWebApps() {
+        let scratch = Scratch()
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.KEPT", name: "Qobuz", status: .learned,
+                                        installedURL: appURL)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        let store = InMemoryPreferenceStore()
+        store.set([webApp.bundleID: ["play": "Play"], "com.apple.Safari.WebApp.GONE-\(UUID())": ["play": "Play"]],
+                  forKey: Preferences.webAppButtonsKey)
+        scratch.preferences = Preferences(store: store)
+        _ = makeSUT(scratch)
+        let kept = store.object(forKey: Preferences.webAppButtonsKey) as? [String: Any]
+        #expect(kept.map { Array($0.keys) } == [webApp.bundleID])
     }
 
     @MainActor
@@ -236,6 +300,30 @@ struct AppDelegateTests {
         #expect(sut.addWebAppModel.address == "nowhere.example")
         #expect(sut.addWebAppModel.problemText?.contains("nowhere.example") == true)
         #expect(sut.status.chosenPlayerID == Players.first)
+    }
+
+    @MainActor
+    @Test("a chosen web app that's deleted is no longer chosen: no learning card, and the status line asks for a player")
+    func chosenWebAppDeleted() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.DELETED-\(UUID())", name: "Spotify",
+                                        status: .learning(hasPlayed: false),
+                                        installedURL: URL(fileURLWithPath: "/Users/test/Applications/Spotify.app"))
+        let found = FoundPlayers()
+        found.players = [webApp]
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
+        #expect(sut.status.chosenPlayerID == webApp.bundleID)
+        #expect(sut.status.learningHasPlayed == false)
+
+        found.players = [] // moved to the Trash, or deleted
+        scratch.changeFolder()
+        await waitFor { sut.status.chosenPlayerID == nil }
+        #expect(sut.status.chosenPlayerID == nil)
+        #expect(sut.status.learningHasPlayed == nil)
+        #expect(sut.settingsModel.learningHasPlayed == nil)
+        #expect(scratch.preferences.musicPlayer == nil)
+        #expect(sut.status.health == .waitingForPlayer(among: sut.status.playerOptions))
     }
 
     @MainActor

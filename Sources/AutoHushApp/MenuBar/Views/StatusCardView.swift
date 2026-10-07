@@ -37,7 +37,7 @@ struct StatusCardView: View {
             }
             CardDivider()
             HStack(spacing: 6) {
-                SectionLabel(Text("Music player"))
+                SectionLabel(Text("Music player", comment: "The menu's card and Settings → General: label of the chosen music player"))
                 Spacer(minLength: 4)
                 playerButton
             }

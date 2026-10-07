@@ -18,14 +18,20 @@ This project follows [Semantic Versioning](https://semver.org/).
   - AutoHush presses the site's own Play/Pause button, so the site stays in
     step. It learns which button that is: when you choose a web app, a
     window asks you to play something in it, then pause it, and closes once
-    it has seen both. A tip under each step says how: let the music itself
-    play for 5 to 10 seconds (ads don't count), then wait for the tick. The same steps show in the menu and in Settings until
-    then. It presses nothing before it has learned.
+    it has seen both. A tip under each step says how: log in first if the
+    site asks, let the music itself play for 5 to 10 seconds (ads don't
+    count), then wait for the tick. The
+    same steps show in the menu and in Settings until then. It presses
+    nothing before it has learned.
+  - Spotify, YouTube Music, Amazon Music and Deezer have been tested: their
+    web apps are offered first, under the site's name. Any other web app
+    comes after them, marked **Untested**, its page title without the
+    slogan after " | " or a dash.
   - It works with the window visible, minimized or on another Space. It
     needs the Accessibility permission, and pauses without fading.
   - When a site refuses to pause, as during an ad that can't be paused,
     AutoHush mutes the web app instead and unmutes it afterwards. A web app
-    that pauses is never muted.
+    that pauses is never muted, and none is muted in AntiDot mode.
   - If a site changes so that its button can't be found for a minute,
     AutoHush asks to learn it again, and keeps both layouts.
   - Settings → Diagnostics shows whether the button has been learned and
@@ -34,10 +40,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   in the menu's players, Settings (the player pop-up and a **+** button)
   and the welcome window. Paste the address; AutoHush checks that the site
   answers, adds it to the Dock with Safari's own Add to Dock, chooses it,
-  opens it and learns its controls, all in one window.
-  - Spotify, YouTube Music, Amazon Music and Deezer are offered after your
-    web apps, with a download symbol, until you add them: choosing one
-    opens the window with its address filled in.
+  opens it and learns its controls, all in one window. **Cancel** stops it
+  before anything is added; once added, the Safari tab it opened is closed.
+  - The tested sites are offered with a download symbol until you add them:
+    choosing one opens the window with its address filled in.
 
 ### Fixed
 

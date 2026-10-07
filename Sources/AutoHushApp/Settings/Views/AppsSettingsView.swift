@@ -34,7 +34,7 @@ struct AppsSettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Card {
                         if model.apps.isEmpty {
-                            Text("Apps appear here once they have played audio.")
+                            Text("Apps appear here once they have played audio.", comment: "Settings → Apps, while the list is empty")
                                 .foregroundStyle(.appSecondary)
                         } else if model.shownApps.isEmpty, let search = model.appSearch {
                             Text(verbatim: String(localized: "No apps match “\(search)”.",
@@ -47,7 +47,8 @@ struct AppsSettingsView: View {
                         }
                     }
                     .animation(.default, value: model.apps)
-                    Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.")
+                    Text("Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list.",
+                 comment: "Settings → Apps, under the list")
                         .captionStyle()
                         .padding(.horizontal, 4)
                 }
@@ -56,19 +57,27 @@ struct AppsSettingsView: View {
                 .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 }
             }
             BottomBar(showsDivider: listScrolls) {
-                Button("Ignore Another App…") { chooseAppToIgnore() }
+                Button { chooseAppToIgnore() } label: {
+                    Text("Ignore Another App…", comment: "Settings → Apps: button that opens a panel to pick an app that never pauses the music")
+                }
                     .buttonStyle(.chip)
                 Spacer()
-                Button("Reset List…", role: .destructive) { confirmingReset = true }
+                Button(role: .destructive) { confirmingReset = true } label: {
+                    Text("Reset List…", comment: "Settings → Apps: button that asks to forget every app in the list")
+                }
                     .buttonStyle(.chip)
                     .disabled(model.apps.isEmpty)
             }
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { barHeight = $0 }
         }
-        .confirmationDialog("Reset the list of apps?", isPresented: $confirmingReset) {
-            Button("Reset List", role: .destructive) { model.forgetAllApps() }
+        .confirmationDialog(Text("Reset the list of apps?", comment: "Settings → Apps: title of the confirmation for Reset List"),
+                            isPresented: $confirmingReset) {
+            Button(role: .destructive) { model.forgetAllApps() } label: {
+                Text("Reset List", comment: "Settings → Apps: confirms forgetting every app in the list")
+            }
         } message: {
-            Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.")
+            Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.",
+                 comment: "Settings → Apps: what Reset List does, in its confirmation")
         }
         .frame(width: 480, height: heightWhileSearching ?? height)
         .onChange(of: model.appSearch != nil) { _, searching in
@@ -105,7 +114,7 @@ struct AppsSettingsView: View {
                 }
                 .padding(.trailing, 10)
             } else {
-                SectionHeading(Text("Pauses Music"), isFirst: true)
+                SectionHeading(Text("Pauses Music", comment: "Settings → Apps: heading of the list of apps that pause the music"), isFirst: true)
                 Spacer()
             }
             Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
@@ -165,7 +174,9 @@ struct AppsSettingsView: View {
         }
         .contentShape(Rectangle())
         .contextMenu {
-            Button("Remove from List") { model.forget(row.source) }
+            Button { model.forget(row.source) } label: {
+                Text("Remove from List", comment: "Settings → Apps: item of an app's contextual menu that forgets it")
+            }
         }
     }
 

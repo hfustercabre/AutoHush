@@ -52,6 +52,9 @@ extension AppHealthState {
         case .playerCommandFailed(let message):
             self = .retrying(String(localized: "\(playerName) control error: \(message)",
                                     comment: "Status line; the music player, then the error it reported"))
+        case .stillLearning: // never at startup: learning happens while the player runs
+            self = .retrying(String(localized: "\(playerName) control error: \(error.localizedDescription)",
+                                    comment: "Status line; the music player, then the error it reported"))
         case nil:
             self = .failed(error.localizedDescription)
         }

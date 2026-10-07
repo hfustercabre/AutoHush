@@ -12,22 +12,25 @@ struct GeneralSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Card {
-                SwitchRow(Text("Launch at login"), isOn: Binding(
+                SwitchRow(Text("Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
                     set: { model.setLaunchAtLogin($0) }
                 ))
                 if let error = model.launchAtLoginError {
                     NoteLabel(error)
-                    Button("Open Login Items Settings…") { model.openLoginItemsSettings() }
+                    Button { model.openLoginItemsSettings() } label: {
+                        Text("Open Login Items Settings…", comment: "Settings → General: button that opens System Settings → Login Items")
+                    }
                         .buttonStyle(.chip)
                 }
             }
 
-            SectionHeading(Text("Music"))
+            SectionHeading(Text("Music", comment: "Settings → General: heading of the music settings"))
             Card {
                 SwitchRow(
                     Text("Auto-Pause Music"),
-                    subtitle: Text("Choose which apps pause your music in the Apps tab."),
+                    subtitle: Text("Choose which apps pause your music in the Apps tab.",
+                                   comment: "Settings → General, under the Auto-Pause Music switch"),
                     isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
                 )
                 if let note = model.autoPauseNote {
@@ -35,7 +38,8 @@ struct GeneralSettingsView: View {
                 }
                 CardDivider()
                 HStack {
-                    RowTitle(Text("Music player"), subtitle: Text("AutoHush pauses and resumes this app."))
+                    RowTitle(Text("Music player", comment: "The menu's card and Settings → General: label of the chosen music player"),
+                             subtitle: Text("AutoHush pauses and resumes this app.", comment: "Settings → General, under “Music player”"))
                     Spacer(minLength: 8)
                     PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID,
                                 onSelect: { model.chooseMusicPlayer($0) }, onAddWebApp: { model.addWebApp() })
@@ -52,17 +56,17 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            SectionHeading(Text("Privacy"))
+            SectionHeading(Text("Privacy", comment: "Settings → General: heading of the AntiDot mode setting"))
             Card {
                 SwitchRow(
-                    Text("AntiDot mode"),
+                    Text("AntiDot mode", comment: "Settings → General and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"),
                     subtitle: Text("Hides the purple recording indicator. Detection is less precise.",
                                    comment: "Settings, under AntiDot mode"),
                     isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
                 )
                 if model.isAntiDotMode {
                     CardDivider()
-                    SectionLabel(Text("Detect playing apps by"))
+                    SectionLabel(Text("Detect playing apps by", comment: "Settings → General, AntiDot mode: lead-in to the ways of detecting playing apps"))
                     ChoiceChips(
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: model.detectionMethod,
@@ -72,16 +76,16 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            SectionHeading(Text("Updates"))
+            SectionHeading(Text("Updates", comment: "Menu toolbar button, Settings → General heading and Diagnostics row: AutoHush's updates"))
             Card {
-                SwitchRow(Text("Check for updates automatically"), isOn: Binding(
+                SwitchRow(Text("Check for updates automatically", comment: "Settings → General: switch for the daily update check"), isOn: Binding(
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.setChecksForUpdates($0) }
                 ))
                 // What checks lead to only matters while they run.
                 if model.checksForUpdatesAutomatically {
                     CardDivider()
-                    SectionLabel(Text("When an update is found"))
+                    SectionLabel(Text("When an update is found", comment: "Settings → General: lead-in to what happens when an update is found"))
                     ChoiceChips(
                         options: [AutomaticUpdates.notify, .download, .install].map {
                             .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
@@ -97,18 +101,23 @@ struct GeneralSettingsView: View {
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
                     // Blinks bright after a click on a choice that needs notifications.
-                    Text("Notifications are off for AutoHush, so it can't tell you about updates.")
+                    Text("Notifications are off for AutoHush, so it can't tell you about updates.",
+                         comment: "Settings → General, under the update choices, while notifications are off for AutoHush")
                         .font(.appCaption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Open Notifications Settings…") { model.openNotificationSettings() }
+                    Button { model.openNotificationSettings() } label: {
+                        Text("Open Notifications Settings…", comment: "Settings → General: button that opens System Settings → Notifications")
+                    }
                         .buttonStyle(.chip)
                 }
                 CardDivider()
                 HStack {
                     RowTitle(Text(model.updateTitle), subtitle: model.lastCheckedNote().map { Text($0) })
                     Spacer(minLength: 8)
-                    Button("Check Now") { model.checkForUpdates() }
+                    Button { model.checkForUpdates() } label: {
+                        Text("Check Now", comment: "Settings → General: checks for an update now")
+                    }
                         .buttonStyle(.chip)
                 }
             }
@@ -155,11 +164,14 @@ extension DetectionMethod {
     var summary: String {
         switch self {
         case .audioLevels:
-            return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.")
+            return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.",
+                          comment: "Settings → General, under the ways of detecting playing apps: what measuring audio levels does")
         case .playbackSignals:
-            return String(localized: "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.")
+            return String(localized: "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.",
+                          comment: "Settings → General, under the ways of detecting playing apps: how “What apps tell macOS” works")
         case .openStreams:
-            return String(localized: "Any app with its audio open counts as playing, even when paused.")
+            return String(localized: "Any app with its audio open counts as playing, even when paused.",
+                          comment: "Settings → General, under the ways of detecting playing apps: how “Open audio streams only” works")
         }
     }
 }

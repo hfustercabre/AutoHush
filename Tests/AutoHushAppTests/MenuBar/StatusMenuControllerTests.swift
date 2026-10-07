@@ -194,6 +194,51 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
     }
 
+    @Test("an untested web app comes last, its name followed by an “Untested” badge")
+    func untestedWebApp() {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud",
+                                    appURL: URL(fileURLWithPath: "/Applications/SoundCloud.app"), kind: .safariWebApp)
+        untested.isUntested = true
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            untested,
+            .suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com")),
+        ]
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        #expect(rows(sut.menu).prefix(5) == ["card", "First", "webAppsHeading", "Deezer", "SoundCloud"])
+        let row = sut.menu.items[4]
+        #expect(row.title == "SoundCloud")
+        #expect(row.attributedTitle?.string.hasPrefix("SoundCloud") == true)
+        #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
+        #expect(sut.menu.items[3].attributedTitle == nil) // a tested one has no badge
+    }
+
+    @Test("a long untested name is cut short with “…”, so its badge still shows; its plain title stays whole")
+    func longUntestedName() {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        let long = "A Music Service With A Very Long Name That Goes On And On Well Past The Menu's Edge"
+        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.L", name: long,
+                                    appURL: URL(fileURLWithPath: "/Applications/Long.app"), kind: .safariWebApp)
+        untested.isUntested = true
+        status.playerOptions = [untested]
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        let row = try! #require(sut.menu.items.first { $0.title == long })
+        let shown = row.attributedTitle?.string ?? ""
+        #expect(shown.contains("…"))
+        #expect(!shown.contains("Edge"))
+        #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
+        #expect(NSMenuItem.truncated("Short", toFit: 500, font: StatusMenuController.rowFont) == "Short")
+    }
+
     @Test("from eight players on, a search comes first and narrows them down; fewer have none")
     func playerSearch() {
         let sut = makeController()

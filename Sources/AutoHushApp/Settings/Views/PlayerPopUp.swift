@@ -79,6 +79,10 @@ final class PlayerPopUpButton: NSPopUpButton {
             let item = NSMenuItem(title: option.name, action: nil, keyEquivalent: "")
             item.representedObject = option.bundleID
             item.image = option.icon(size: 16)
+            if option.isUntested {
+                item.setTitle(option.name, badge: PlayerOption.untestedBadge, font: font ?? .menuFont(ofSize: 0),
+                              maxWidth: Self.webAppsHeadingWidth - 50)
+            }
             if !option.isInstalled {
                 item.isEnabled = option.isClickable
                 item.subtitle = PlayerOption.notInstalledLabel

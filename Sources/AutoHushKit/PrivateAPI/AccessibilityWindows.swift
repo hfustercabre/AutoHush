@@ -1,5 +1,6 @@
 import ApplicationServices
 import Darwin
+import Foundation
 
 /// The undocumented HIServices function `_AXUIElementCreateWithRemoteToken`:
 /// an app's windows on every Space, where the public `kAXWindowsAttribute`
@@ -20,6 +21,9 @@ package enum AccessibilityWindows {
     static let elementLimit: UInt64 = 1000
     /// How long a single element may take to answer.
     static let timeout: Float = 0.3
+    /// The whole search stops after this long: an app that doesn't answer
+    /// (frozen) would otherwise take `timeout` for each of the numbers.
+    static let budget: TimeInterval = 1
 
     /// Whether the function is there.
     package static var isAvailable: Bool { function != nil }
@@ -29,23 +33,18 @@ package enum AccessibilityWindows {
     /// minimized Safari web app's window calls itself a dialog (measured).
     package static func windows(ofProcess pid: pid_t) -> [AXUIElement]? {
         guard let function else { return nil }
+        let deadline = Date().addingTimeInterval(budget)
         var token = Data(count: 20)
         token.replaceSubrange(0..<4, with: withUnsafeBytes(of: pid) { Data($0) })
         token.replaceSubrange(8..<12, with: withUnsafeBytes(of: Int32(0x636f_636f)) { Data($0) })
         var windows: [AXUIElement] = []
-        for number in 0..<elementLimit {
+        for number in 0..<elementLimit where Date() < deadline {
             token.replaceSubrange(12..<20, with: withUnsafeBytes(of: number) { Data($0) })
             guard let element = function(token as CFData)?.takeRetainedValue() else { continue }
             AXUIElementSetMessagingTimeout(element, timeout)
-            if string(kAXRoleAttribute, of: element) == kAXWindowRole { windows.append(element) }
+            if element.string(kAXRoleAttribute) == kAXWindowRole { windows.append(element) }
         }
         return windows
-    }
-
-    private static func string(_ attribute: String, of element: AXUIElement) -> String? {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success else { return nil }
-        return value as? String
     }
 
     private typealias Function = @convention(c) (CFData) -> Unmanaged<AXUIElement>?

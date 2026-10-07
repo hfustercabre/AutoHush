@@ -18,11 +18,14 @@ struct SupportedPlayersTests {
         #expect(catalog.players.map(\.bundleID)
             == ["com.spotify.client", "com.apple.Music", "org.videolan.vlc", "com.apple.podcasts", "com.tidal.desktop"])
         #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL"])
-        #expect(catalog.player(bundleID: "com.apple.Music") is ScriptablePlayer)
-        #expect(catalog.player(bundleID: "com.tidal.desktop") is MenuPlayer)
-        #expect(catalog.player(bundleID: "com.apple.podcasts") is MenuPlayer)
-        #expect(catalog.player(bundleID: "org.videolan.vlc") is VLCPlayer)
-        #expect(catalog.player(bundleID: "com.example.unknown") == nil)
+        // The built-in players only: `player(bundleID:)` would also look for
+        // the Safari web apps in this Mac's Applications folders.
+        let player = { (id: String) in catalog.players.first { $0.bundleID == id } }
+        #expect(player("com.apple.Music") is ScriptablePlayer)
+        #expect(player("com.tidal.desktop") is MenuPlayer)
+        #expect(player("com.apple.podcasts") is MenuPlayer)
+        #expect(player("org.videolan.vlc") is VLCPlayer)
+        #expect(catalog.players.allSatisfy { !$0.isUntested && $0.installedURL == nil })
     }
 
     @Test("every player has a placeholder icon, its mark on its tile")
@@ -35,16 +38,16 @@ struct SupportedPlayersTests {
         }
     }
 
-    @Test("Spotify, YouTube Music, Amazon Music and Deezer are suggested as web apps; Amazon Music on the Mac's country's site")
+    @Test("Spotify, YouTube Music, Amazon Music and Deezer are the tested web apps; Amazon Music on the Mac's country's site")
     func suggestedWebApps() {
-        #expect(SupportedPlayers.suggestedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer"])
-        #expect(SupportedPlayers.suggestedWebApps.map(\.address).allSatisfy { WebAddress.url(from: $0) != nil })
+        #expect(SupportedPlayers.testedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer"])
+        #expect(SupportedPlayers.testedWebApps.map(\.address).allSatisfy { WebAddress.url(from: $0) != nil })
         #expect(SupportedPlayers.amazonMusicSite(region: "ES") == "music.amazon.es")
         #expect(SupportedPlayers.amazonMusicSite(region: "GB") == "music.amazon.co.uk")
         #expect(SupportedPlayers.amazonMusicSite(region: "US") == "music.amazon.com")
         #expect(SupportedPlayers.amazonMusicSite(region: "NL") == "music.amazon.com")
         #expect(SupportedPlayers.amazonMusicSite(region: nil) == "music.amazon.com")
-        let amazon = SupportedPlayers.suggestedWebApps[2]
+        let amazon = SupportedPlayers.testedWebApps[2]
         let made = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "A", name: "Amazon Music",
                                 url: URL(fileURLWithPath: "/Applications/A.app"), startURL: URL(string: "https://music.amazon.de/"))
         #expect(amazon.isAdded(as: made)) // whatever site the Mac's country gets

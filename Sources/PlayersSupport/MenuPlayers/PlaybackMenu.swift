@@ -48,8 +48,8 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
     package func toggle(pid: pid_t) -> MenuToggle? {
         guard let item = toggleItem(pid: pid) else { return nil }
         return MenuToggle(
-            title: Self.value(of: kAXTitleAttribute, in: item) as? String ?? "",
-            isEnabled: Self.value(of: kAXEnabledAttribute, in: item) as? Bool ?? false
+            title: item.string(kAXTitleAttribute) ?? "",
+            isEnabled: item.value(kAXEnabledAttribute) as? Bool ?? false
         )
     }
 
@@ -63,13 +63,13 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
     private func toggleItem(pid: pid_t) -> AXUIElement? {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, Self.timeout)
-        guard let menuBar = Self.element(kAXMenuBarAttribute, of: app) else { return nil }
-        for menu in Self.children(of: menuBar).compactMap({ Self.children(of: $0).first }) {
-            let items = Self.children(of: menu)
+        guard let menuBar = app.element(kAXMenuBarAttribute) else { return nil }
+        for menu in menuBar.children.compactMap({ $0.children.first }) {
+            let items = menu.children
             let shortcuts = Set(items.compactMap { item -> Int? in
                 // Modifiers 0 is ⌘ alone (kAXMenuItemModifierNone).
-                guard Self.value(of: kAXMenuItemCmdModifiersAttribute, in: item) as? Int == 0 else { return nil }
-                return Self.value(of: kAXMenuItemCmdVirtualKeyAttribute, in: item) as? Int
+                guard item.value(kAXMenuItemCmdModifiersAttribute) as? Int == 0 else { return nil }
+                return item.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int
             })
             if shortcuts.isSuperset(of: [Self.leftArrow, Self.rightArrow]) { return items.first }
         }
@@ -78,20 +78,4 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
 
     private static let leftArrow = 123
     private static let rightArrow = 124
-
-    private static func value(of attribute: String, in element: AXUIElement) -> CFTypeRef? {
-        var value: CFTypeRef?
-        return AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success ? value : nil
-    }
-
-    private static func element(_ attribute: String, of element: AXUIElement) -> AXUIElement? {
-        guard let value = value(of: attribute, in: element), CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return (value as! AXUIElement)
-    }
-
-    private static func children(of element: AXUIElement) -> [AXUIElement] {
-        (value(of: kAXChildrenAttribute, in: element) as? [AnyObject] ?? []).compactMap { child in
-            CFGetTypeID(child) == AXUIElementGetTypeID() ? (child as! AXUIElement) : nil
-        }
-    }
 }

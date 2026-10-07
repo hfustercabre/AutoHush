@@ -73,6 +73,29 @@ struct PlayerOptionTests {
         #expect(options.onlyInstalled == nil) // two installed
     }
 
+    @Test("web apps: tested sites' first, then the tested sites not added, then untested ones; suggestions don't count for the search")
+    func webAppOrder() {
+        let untested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud", status: .learned,
+                                          installedURL: URL(fileURLWithPath: "/Users/test/Applications/SoundCloud.app"),
+                                          isUntested: true)
+        let tested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.T", name: "YT Music", status: .learned,
+                                        installedURL: URL(fileURLWithPath: "/Users/test/Applications/YT Music.app"))
+        let catalog = MusicPlayerCatalog(
+            players: (1...6).map { MockMusicPlayer(bundleID: "com.example.\($0)", name: "App \($0)") },
+            found: { [untested, tested] },
+            suggested: { [WebAppSuggestion(name: "Spotify", address: "open.spotify.com"),
+                          WebAppSuggestion(name: "Deezer", address: "deezer.com")] }
+        )
+        let options = PlayerOption.list(catalog) { _ in nil } // macOS knows none: web apps say where they are
+        #expect(options.offered.map(\.name).suffix(4) == ["YT Music", "Spotify", "Deezer", "SoundCloud"])
+        #expect(options.first { $0.name == "SoundCloud" }?.isUntested == true)
+        #expect(options.first { $0.name == "YT Music" }.map { $0.isInstalled && !$0.isUntested } == true)
+        #expect(options.count == 10)
+        #expect(options.isSearchable) // 6 apps and 2 web apps: 8
+        #expect(!options.filter { $0.name != "SoundCloud" }.isSearchable) // the 2 suggestions don't count
+        #expect(PlayerOption.untestedBadge == "Untested")
+    }
+
     @Test("the welcome window's note names only the apps that aren't installed, not suggested web apps")
     func onlyInstalledNoteSkipsSuggestions() {
         let options = [option("Spotify", installed: true), option("VLC", installed: false),

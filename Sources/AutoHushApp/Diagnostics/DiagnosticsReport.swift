@@ -151,17 +151,17 @@ enum DiagnosticsReport {
         let antiDot = facts.detectionMethod != .audioLevels
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
-            Row(label: String(localized: "AntiDot mode"), value: antiDot ? on : off),
-            Row(label: String(localized: "Pause music after"), value: seconds(facts.timings.startConfirmation)),
+            Row(label: String(localized: "AntiDot mode", comment: "Settings → General and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
+            Row(label: String(localized: "Pause music after", comment: "Settings → Advanced and Diagnostics: how long another app must play before the music pauses"), value: seconds(facts.timings.startConfirmation)),
         ]
         if facts.detectionMethod == .playbackSignals {
             rows.append(Row(label: String(localized: "Pause music after, without video",
                                           comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before the music pauses"),
                             value: seconds(AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo)))
         }
-        rows.append(Row(label: String(localized: "Resume music after"), value: seconds(facts.timings.stopGrace)))
+        rows.append(Row(label: String(localized: "Resume music after", comment: "Settings → Advanced and Diagnostics: how long other apps must be quiet before the music resumes"), value: seconds(facts.timings.stopGrace)))
         if !antiDot {
-            rows.append(Row(label: String(localized: "Silence threshold"),
+            rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Advanced and Diagnostics: the sound level below which an app counts as silent"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
         }
         return .init(kind: .detection, title: String(localized: "Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"), summary: method, rows: rows)
@@ -237,8 +237,8 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
                         Row(label: String(localized: "Auto-Pause", comment: "Diagnostics: whether Auto-Pause is on"), value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause the music"), value: ignored),
-                        Row(label: String(localized: "Launch at login"), value: facts.launchAtLogin ? on : off),
-                        Row(label: String(localized: "Updates"), value: updates),
+                        Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
+                        Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings → General heading and Diagnostics row: AutoHush's updates"), value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])
     }
