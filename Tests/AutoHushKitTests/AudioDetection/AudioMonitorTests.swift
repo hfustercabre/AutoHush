@@ -757,6 +757,46 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
+    @Test("a command-line player (afplay run in Terminal) counts as the app that owns it")
+    func commandLinePlayerCountsAsItsOwner() async {
+        let terminal = AudioSource(id: "com.apple.Terminal", name: "Terminal")
+        let identifier = StubSourceIdentifier([:], ownersOfPrograms: [1001: terminal])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
+        h.start()
+        h.step([Self.process(1, "")])
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.apple.Terminal", isPlaying: true)])
+        #expect(h.activeSources.values.last == [terminal])
+        h.monitor.stop()
+    }
+
+    @Test("a process without a bundle ID that no app owns (a system daemon) never counts")
+    func ownerlessProgramIsIgnored() async {
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: StubSourceIdentifier([:]))
+        h.start()
+        h.step([Self.process(1, "")])
+        h.step(after: 1.0)
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(await h.recorder.events.isEmpty)
+        #expect(h.activeSources.values.last?.isEmpty ?? true)
+        #expect(h.monitor.activeAudioReport().isEmpty)
+        h.monitor.stop()
+    }
+
+    @Test("a command-line program the player owns is its output, never a source")
+    func playerOwnedProgramIsLocal() async {
+        let identifier = StubSourceIdentifier([:], ownersOfPrograms: [1001: AudioSource(id: TestPlayer.bundleID, name: "Jukebox")])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
+        h.start()
+        h.step([Self.process(1, "")])
+        await h.recorder.waitForPlayerLocal(count: 2)
+        #expect(await h.recorder.playerLocal == [false, true])
+        h.step(after: 1.0)
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(await h.recorder.events.isEmpty)
+        h.monitor.stop()
+    }
+
     @Test("an ignored app is published as playing but never reaches the arbiter")
     func ignoredAppIsPublishedNotForwarded() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, ignored: ["org.videolan.vlc"])
@@ -1083,13 +1123,17 @@ private final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
 private struct StubSourceIdentifier: AudioSourceIdentifying {
     let sources: [String: AudioSource]
     let owners: [pid_t: String]
-    init(_ sources: [String: AudioSource], owners: [pid_t: String] = [:]) {
+    /// Owners of processes without a bundle ID (command-line programs), by pid.
+    let ownersOfPrograms: [pid_t: AudioSource]
+    init(_ sources: [String: AudioSource], owners: [pid_t: String] = [:], ownersOfPrograms: [pid_t: AudioSource] = [:]) {
         self.sources = sources
         self.owners = owners
+        self.ownersOfPrograms = ownersOfPrograms
     }
 
     func source(for process: AudioProcessInfo) -> AudioSource {
-        sources[process.bundleID] ?? AudioSource(id: process.bundleID, name: process.bundleID)
+        if process.bundleID.isEmpty, let owner = ownersOfPrograms[process.pid] { return owner }
+        return sources[process.bundleID] ?? AudioSource(id: process.bundleID, name: process.bundleID)
     }
 
     func sourceID(forPID pid: pid_t) -> String? { owners[pid] }

@@ -43,7 +43,8 @@ package protocol AudioSourceIdentifying: Sendable {
 ///   2. for that process, then for the process itself: the app it runs as,
 ///      when `hostedApp` knows it, else the outermost bundle in its executable
 ///      path (public `proc_pidpath`);
-///   3. otherwise the process's own bundle ID, shown as is.
+///   3. otherwise the process's own bundle ID, shown as is (empty for a
+///      command-line program no app owns).
 /// Results are cached per process.
 package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendable {
     /// The app a process runs as when its executable belongs to another
@@ -55,13 +56,15 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendab
         self.hostedApp = hostedApp
     }
 
-    /// Owner of each audio process; its bundle ID guards against pid reuse.
+    /// Owner of each audio process; its bundle ID (or, without one, its
+    /// executable path) guards against pid reuse.
     private let sources = ProcessCache<AudioSource>()
     /// Owner of any process; its executable path guards against pid reuse.
     private let owners = ProcessCache<String?>()
 
     package func source(for process: AudioProcessInfo) -> AudioSource {
-        sources.value(for: process.pid, key: process.bundleID) { resolve(process) }
+        let key = process.bundleID.isEmpty ? Self.executablePath(of: process.pid) ?? "" : process.bundleID
+        return sources.value(for: process.pid, key: key) { resolve(process) }
     }
 
     package func sourceID(forPID pid: pid_t) -> String? {

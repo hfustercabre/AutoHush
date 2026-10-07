@@ -38,6 +38,22 @@ struct AudioSourceIdentifierTests {
         #expect(ProcessAudioSourceIdentifier().source(for: process) == AudioSource(id: "com.example.gone", name: "com.example.gone"))
     }
 
+    @Test("a process without a bundle ID (a command-line program) is named by the app that owns it")
+    func programNamedByItsOwner() {
+        let terminal = AudioSource(id: "com.apple.Terminal", name: "Terminal", bundlePath: "/System/Applications/Utilities/Terminal.app")
+        // Whichever process answers first (this one's responsible app, or this one).
+        let identifier = ProcessAudioSourceIdentifier { _ in terminal }
+        let program = AudioProcessInfo(objectID: 1, bundleID: "", pid: getpid())
+        #expect(identifier.source(for: program) == terminal)
+        #expect(identifier.source(for: program) == terminal) // cached by its executable path
+    }
+
+    @Test("a process without a bundle ID that no app owns has an empty ID")
+    func ownerlessProgram() {
+        let gone = AudioProcessInfo(objectID: 1, bundleID: "", pid: 999_999)
+        #expect(ProcessAudioSourceIdentifier().source(for: gone).id.isEmpty)
+    }
+
     @Test("a process owner is looked up only while the process exists, and cached consistently")
     func ownerOfProcess() {
         let identifier = ProcessAudioSourceIdentifier()

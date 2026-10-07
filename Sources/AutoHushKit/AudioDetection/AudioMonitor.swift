@@ -332,10 +332,13 @@ package final class AudioMonitor: @unchecked Sendable {
         needsRefresh = false
         lastRefresh = now
         let ownPID = getpid()
-        candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID && !$0.bundleID.isEmpty }
+        candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID }
         playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
         sourceOfProcess = [:]
-        for process in candidates where configuration.isMediaSource(process.bundleID) {
+        // A process without a bundle ID (a command-line player such as afplay
+        // or mpv) counts as the app that owns it, e.g. Terminal; one no app
+        // owns (a system daemon) is left with an empty ID and doesn't count.
+        for process in candidates where process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) {
             let source = sourceIdentifier?.source(for: process)
                 ?? AudioSource(id: process.bundleID, name: process.bundleID)
             if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }

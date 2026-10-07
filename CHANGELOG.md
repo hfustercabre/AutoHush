@@ -70,6 +70,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   Mac sleeps.
 - **A resume that doesn't take is tried again,** twice, a second apart,
   as when the player doesn't answer.
+- **Command-line players pause the music too.** Sound from a program run
+  in Terminal, such as afplay, mpv or ffplay, was never counted, since it
+  has no app of its own. It now counts as the app that started it, e.g.
+  Terminal, and can be ignored like any app.
 
 ---
 
