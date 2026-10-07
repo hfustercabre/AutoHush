@@ -13,3 +13,5 @@ sudo cp -R "$SRC" "$DEST"
 sudo chown -R root:wheel "$DEST"
 sudo killall coreaudiod
 echo "Installed: \"AutoHush Loopback\" shows in Sound's output list in a few seconds."
+echo "While it's the output, any app allowed to use the microphone can record what plays through it."
+echo "Switch the output back when you're done, and run uninstall.sh once you no longer test."

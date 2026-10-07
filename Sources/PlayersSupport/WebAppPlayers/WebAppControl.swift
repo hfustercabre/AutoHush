@@ -7,8 +7,10 @@ import AutoHushKit
 /// player's own queue, one call at a time (Accessibility calls block).
 ///
 /// Once it knows the button (`PlayPauseRecipe`), the music's state is what
-/// the button says: a cheap read of one element. After a reload every
-/// element is new, so the button is looked for again. While it doesn't know
+/// the button says: a read of one element, which the page answers. The state
+/// observer's reads, about once a second, ask it less while the web app is
+/// silent (`polledState`). After a reload every element is new, so the
+/// button is looked for again. While it doesn't know
 /// the button, it learns it (`PlayPauseLearner`), and reports the music as
 /// playing while the app's sound is on.
 ///
@@ -28,9 +30,17 @@ import AutoHushKit
 /// the music plays), it's paused for real and heard again: played later, it
 /// goes on from there.
 final class WebAppControl: @unchecked Sendable {
-    /// After a look finds no window, the next one waits this long: looking
-    /// for windows on other Spaces tries a thousand elements.
+    /// After a look finds no window, the next one waits this long, and twice
+    /// as long after each look that finds none, up to `noWindowPauseLimit`:
+    /// looking for windows on other Spaces tries a thousand elements. A web
+    /// app whose sound is on is looked at at once.
     static let noWindowPause: TimeInterval = 5
+    static let noWindowPauseLimit: TimeInterval = 60
+    /// While the web app is silent and its button last said it isn't playing,
+    /// the state observer's reads reuse that for this long: each read asks the
+    /// page, which costs the web app some work (measured: as much as AutoHush's
+    /// own). Its sound coming on reads the button at once.
+    static let quietReadInterval: TimeInterval = 5
     /// The button missing this long from a page that shows starts learning.
     static let missingBeforeLearning: TimeInterval = 60
     /// A page with fewer buttons is still loading (or asks to log in).
@@ -63,7 +73,10 @@ final class WebAppControl: @unchecked Sendable {
     /// Since when the page shows without the learned button.
     private var missingSince: Date?
     private var noWindowUntil: Date?
+    private var noWindowWait = WebAppControl.noWindowPause
     private var otherWindowsCheckedAt: Date?
+    /// The state the button last gave, for which app, and when.
+    private var lastRead: (state: PlayerState, pid: pid_t, at: Date)?
 
     /// Why the web app was muted instead of paused.
     private enum MuteReason {
@@ -118,6 +131,26 @@ final class WebAppControl: @unchecked Sendable {
 
     /// The music's state in the app running as `pid`. Learns meanwhile.
     func state(pid: pid_t) -> PlayerState {
+        let state = readState(pid: pid)
+        lastRead = (state, pid, clock())
+        return state
+    }
+
+    /// The state, for the observer that reads it about once a second: while
+    /// the web app is silent and its button last said it isn't playing, with
+    /// nothing to learn and nothing muted, that's reused for
+    /// `quietReadInterval`. Before deciding, AutoHush reads `state` afresh.
+    func polledState(pid: pid_t) -> PlayerState {
+        if let lastRead, lastRead.pid == pid, lastRead.state == .paused || lastRead.state == .stopped,
+           muted == nil, learner == nil,
+           clock().timeIntervalSince(lastRead.at) < Self.quietReadInterval,
+           !page.isPlayingSound(pid: pid) {
+            return lastRead.state
+        }
+        return state(pid: pid)
+    }
+
+    private func readState(pid: pid_t) -> PlayerState {
         if let muted {
             if muted.pid == pid { // muted in place of a pause
                 if muted.reason != .pressIgnored { pauseOnceItCan(pid: pid) }
@@ -314,11 +347,18 @@ final class WebAppControl: @unchecked Sendable {
     }
 
     /// The page's buttons; `nil` while the app has no window, and for a
-    /// while after a look found none.
+    /// while after a look found none (longer each time), unless its sound is
+    /// on.
     private func look(pid: pid_t, now: Date) -> [PageButton]? {
-        if let noWindowUntil, now < noWindowUntil { return nil }
+        if let noWindowUntil, now < noWindowUntil, !page.isPlayingSound(pid: pid) { return nil }
         let buttons = page.buttons(pid: pid)
-        noWindowUntil = buttons == nil ? now.addingTimeInterval(Self.noWindowPause) : nil
+        if buttons == nil {
+            noWindowUntil = now.addingTimeInterval(noWindowWait)
+            noWindowWait = min(noWindowWait * 2, Self.noWindowPauseLimit)
+        } else {
+            noWindowUntil = nil
+            noWindowWait = Self.noWindowPause
+        }
         return buttons
     }
 

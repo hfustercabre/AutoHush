@@ -110,7 +110,10 @@ final class MonitoringPipeline {
     /// Observes the player, seeds the arbiter with its live state, takes over
     /// a pause handed over by the AutoHush before this one when asked to, then
     /// starts audio monitoring — unless `stop()` was called in the meantime.
-    func start(takingOverPause: Bool = false) async {
+    /// Started while the Mac sleeps (`asleep`), the arbiter knows it from the
+    /// start.
+    func start(takingOverPause: Bool = false, asleep: Bool = false) async {
+        if asleep { await arbiter.setAsleep(true) }
         // Observe before seeding so no state change can slip in between.
         playerObserver.start()
         let initialState = await arbiter.refreshPlaybackState()

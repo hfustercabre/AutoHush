@@ -33,20 +33,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var playerChooser: (any PlayerChooserPresenting)?
     private let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
     /// Asks to play and pause a player AutoHush must learn, once it's chosen.
-    private var learningWindow: (any LearningWindowPresenting)?
-    private let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
+    var learningWindow: (any LearningWindowPresenting)?
+    let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
     /// Follows how learning the chosen player goes.
-    private var learningWatch: Task<Void, Never>?
+    var learningWatch: Task<Void, Never>?
     /// Makes a Safari web app from an address ("Add a Web App…").
-    private let webAppMaker: any WebAppMaking
+    let webAppMaker: any WebAppMaking
     let addWebAppModel = AddWebAppModel()
-    private var addWebAppWindow: (any AddWebAppPresenting)?
-    private let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
-    private var addingWebApp: Task<Void, Never>?
+    var addWebAppWindow: (any AddWebAppPresenting)?
+    let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
+    var addingWebApp: Task<Void, Never>?
     /// Opens an app (the web app just added, so it can be played).
-    private let openApp: @MainActor (URL) async -> Void
+    let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.
-    private let learnedWindowDelay: Duration
+    let learnedWindowDelay: Duration
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -54,7 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var playerLaunchObserver: (any NSObjectProtocol)?
     /// The Mac going to sleep and waking up.
     private var sleepObservers: [any NSObjectProtocol] = []
-    private let logger = Logger(category: "AppDelegate")
+    /// Between the Mac going to sleep and waking up: a pipeline started
+    /// meanwhile (the player relaunched in a dark wake) knows it too.
+    private var macIsAsleep = false
+    let logger = Logger(category: "AppDelegate")
     /// Replaces the real bootstrap in tests, so they never script the music player or
     /// tap real audio processes.
     private let bootstrapOverride: (@MainActor () -> Void)?
@@ -114,8 +117,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         makeAddWebAppWindow: @escaping @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting = {
             AddWebAppWindowController(model: $0, settings: $1)
         },
-        openApp: @escaping @MainActor (URL) async -> Void = {
-            _ = try? await NSWorkspace.shared.openApplication(at: $0, configuration: NSWorkspace.OpenConfiguration())
+        openApp: @escaping @MainActor (URL) async -> Void = { url in
+            do {
+                _ = try await NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+            } catch {
+                Logger(category: "AppDelegate").error(
+                    "Couldn't open \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
         },
         learnedWindowDelay: Duration = .seconds(1.5),
         currentVersion: AppVersion? = .current,
@@ -491,27 +499,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         requestBootstrap()
     }
 
-    // MARK: - Learning a player
-
-    /// Shows how learning the chosen player goes, as it goes; nothing for a
-    /// player that needs no learning.
-    private func watchLearning() {
-        learningWatch?.cancel()
-        learningWatch = nil
-        guard let learner = player as? any LearningMusicPlayer else {
-            showLearning(nil)
-            return
-        }
-        showLearning(learner.learningStatus)
-        learningWatch = Task { [weak self] in
-            for await learning in learner.learningUpdates() {
-                guard !Task.isCancelled else { return }
-                self?.showLearning(learning)
-            }
-        }
-    }
-
-    private func showLearning(_ learning: LearningStatus?) {
+    /// Shows how learning goes in the menu and Settings; once learned, or
+    /// with nothing to learn, the windows that show the steps close.
+    func showLearning(_ learning: LearningStatus?) {
         if status.learning != learning { status.learning = learning }
         if settingsModel.learning != learning { settingsModel.learning = learning }
         if learning != nil, learning != .learned { return }
@@ -532,85 +522,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-
-    // MARK: - Adding a web app
-
-    /// The "Add a Web App" window, ready for an address, filled in with
-    /// `address` if there's one (or showing the one being added).
-    func showAddWebApp(address: String? = nil) {
-        if addWebAppWindow == nil { addWebAppWindow = makeAddWebAppWindow(addWebAppModel, settingsModel) }
-        if addingWebApp == nil, address != nil || addWebAppWindow?.isVisible != true {
-            addWebAppModel.reset(address: address ?? "")
-        }
-        addWebAppWindow?.show()
-    }
-
-    /// Whether the "Add a Web App" window is on screen.
-    var isShowingAddWebApp: Bool { addWebAppWindow?.isVisible == true }
-
-    /// Makes the address a web app, then opens it, chooses it, and lets the
-    /// window show the learning. Closing the window cancels it until the web
-    /// app is made.
-    private func addWebApp(from address: String) {
-        guard addingWebApp == nil else { return }
-        let model = addWebAppModel
-        let maker = webAppMaker
-        model.attempt += 1
-        let attempt = model.attempt
-        addingWebApp = Task { [weak self] in
-            defer { if model.attempt == attempt { self?.addingWebApp = nil } }
-            do {
-                let made = try await maker.makeWebApp(from: address) { step in
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated {
-                            guard model.attempt == attempt else { return } // cancelled since
-                            model.apply(step)
-                        }
-                    }
-                }
-                guard let self, model.attempt == attempt, !Task.isCancelled else { return }
-                model.apply(.made(made))
-                self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")
-                // Opened first, so it's running by the time it's chosen.
-                await self.openApp(made.url)
-                self.chooseMusicPlayer(made.bundleID, showsLearningWindow: false)
-                guard self.player?.bundleID == made.bundleID else {
-                    self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
-                    return
-                }
-                // Chosen and learned already: there's nothing left to show.
-                if case .learned? = (self.player as? any LearningMusicPlayer)?.learningStatus {
-                    try? await Task.sleep(for: self.learnedWindowDelay)
-                    if case .learning = model.phase { self.addWebAppWindow?.close() }
-                }
-            } catch is CancellationError {
-                // Logged when it was cancelled.
-            } catch {
-                guard model.attempt == attempt else { return }
-                let failure = error as? WebAppMakingError ?? .browserFailed(error.localizedDescription)
-                self?.logger.error("Couldn't add a web app: \(String(describing: failure), privacy: .public)")
-                model.fail(failure)
-            }
-        }
-    }
-
-    /// Stops the add under way; a step it reports later is ignored.
-    private func cancelAddingWebApp() {
-        guard let task = addingWebApp else { return }
-        logger.notice("Adding a web app was cancelled")
-        task.cancel()
-        addingWebApp = nil
-        addWebAppModel.attempt += 1
-    }
-
-    /// The window that asks to play and pause the chosen player once.
-    private func showLearningWindow() {
-        if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
-        learningWindow?.show()
-    }
-
-    /// Whether the learning window is on screen.
-    var isShowingLearningWindow: Bool { learningWindow?.isVisible == true }
 
     /// Shows the chosen player in the menu and Settings.
     private func showChosenPlayer() {
@@ -761,20 +672,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Music AutoHush paused stays paused after the Mac sleeps: the
     /// arbiter forgets the pause as the Mac falls asleep, when the other
-    /// apps' sound stops too, and decides nothing until it's awake.
+    /// apps' sound stops too, and decides nothing until it's awake. The
+    /// screens waking count as awake too, so a wake macOS didn't announce
+    /// can't leave AutoHush deciding nothing.
     private func registerSleepObservers() {
         let center = NSWorkspace.shared.notificationCenter
         sleepObservers = [
             (NSWorkspace.willSleepNotification, true),
             (NSWorkspace.didWakeNotification, false),
+            (NSWorkspace.screensDidWakeNotification, false),
         ].map { name, asleep in
             center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
-                    self?.pipeline?.setAsleep(asleep)
-                }
+                Task { @MainActor [weak self] in self?.setMacAsleep(asleep) }
             }
         }
+    }
+
+    private func setMacAsleep(_ asleep: Bool) {
+        guard asleep != macIsAsleep else { return }
+        macIsAsleep = asleep
+        logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
+        pipeline?.setAsleep(asleep)
     }
 
     private func unregisterPlayerLaunchObserver() {
@@ -857,7 +775,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.apply(update)
         }
         self.pipeline = pipeline
-        await pipeline.start(takingOverPause: takesOverPause())
+        await pipeline.start(takingOverPause: takesOverPause(), asleep: macIsAsleep)
         guard generation == bootstrapGeneration else { return }
         failedStarts = 0
         loggedStartupProblem = nil

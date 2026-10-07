@@ -110,29 +110,16 @@ protocol LearningWindowPresenting: AnyObject {
 /// once AutoHush has learned. "Later" closes it; the menu and Settings keep
 /// showing the steps.
 @MainActor
-final class LearningWindowController: NSWindowController, LearningWindowPresenting {
+final class LearningWindowController: HostedWindowController, LearningWindowPresenting {
     init(model: SettingsModel) {
         // Later closes the window, which exists only once this has run.
-        let hosting = NSHostingController(rootView: LearningWindowView(model: model, later: {}))
-        hosting.sizingOptions = .preferredContentSize
-        let window = NSWindow(contentViewController: hosting)
-        window.title = "AutoHush"
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        super.init(window: window)
+        let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}))
+        super.init(content: hosting, title: "AutoHush")
         hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    var isVisible: Bool { window?.isVisible == true }
-
-    func show() {
-        if !isVisible { window?.center() }
-        window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate()
-    }
 }
 
 /// The learning window's content: the player, why AutoHush learns, the

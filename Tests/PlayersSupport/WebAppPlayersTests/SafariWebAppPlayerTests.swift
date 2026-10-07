@@ -474,6 +474,58 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .paused)
     }
 
+    @Test("with no window, each look waits twice as long, up to a minute; a web app with its sound on is looked at at once")
+    func noWindowBacksOff() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage()
+        setup.page.hasWindow = false
+        #expect(await setup.player.playerState() == .stopped)
+        setup.clock.advance(WebAppControl.noWindowPause)
+        _ = await setup.player.playerState() // the second look
+        let looks = setup.page.looks
+        setup.clock.advance(WebAppControl.noWindowPause)
+        _ = await setup.player.playerState()
+        #expect(setup.page.looks == looks) // it waits 10 s now
+        setup.clock.advance(WebAppControl.noWindowPause)
+        _ = await setup.player.playerState()
+        #expect(setup.page.looks == looks + 1)
+
+        for _ in 0..<8 { // it never waits more than a minute
+            setup.clock.advance(WebAppControl.noWindowPauseLimit)
+            _ = await setup.player.playerState()
+        }
+        #expect(setup.page.looks == looks + 9)
+
+        setup.page.sound = true
+        setup.page.hasWindow = true
+        #expect(await setup.player.playerState() == .paused)
+    }
+
+    @Test("the observer's reads ask the page less while the web app is silent; its sound, or AutoHush deciding, reads it at once")
+    func polledReadsWhileSilent() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Play")
+        #expect(await setup.player.polledPlayerState() == .paused)
+        let reads = setup.page.buttonReads
+        setup.clock.advance(1)
+        #expect(await setup.player.polledPlayerState() == .paused)
+        #expect(setup.page.buttonReads == reads) // silent and paused: the last state
+
+        setup.page.set(1, label: "Pause") // played without sound yet (loading)
+        #expect(await setup.player.playerState() == .playing) // a decision reads afresh
+        setup.page.set(1, label: "Play")
+        _ = await setup.player.playerState()
+
+        setup.clock.advance(WebAppControl.quietReadInterval)
+        let before = setup.page.buttonReads
+        _ = await setup.player.polledPlayerState()
+        #expect(setup.page.buttonReads > before) // read again after a while
+
+        setup.page.set(1, label: "Pause")
+        setup.page.sound = true
+        #expect(await setup.player.polledPlayerState() == .playing) // the sound came on
+    }
+
     @Test("a button missing a minute from a page that shows is learned again, keeping the old place")
     func relearns() async {
         let setup = Setup(recipe: Self.learned)

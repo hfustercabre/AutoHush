@@ -70,9 +70,7 @@ package actor MenuPlayer: MusicPlayer {
         self.menu = menu
         // Only a running app is ever controlled, so AutoHush never launches it.
         self.processIdentifier = processIdentifier ?? { [bundleID = profile.bundleID] in
-            NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                .first { !$0.isTerminated }?
-                .processIdentifier
+            NSRunningApplication.running(bundleID)?.processIdentifier
         }
         self.words = words ?? { [bundleID = profile.bundleID, read = profile.readWords] in
             PlayPauseWords.installed(bundleID: bundleID, read: read)

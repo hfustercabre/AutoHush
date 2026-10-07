@@ -30,7 +30,7 @@ package final class ProcessTapMuter: AudioMuting {
 
     package func mute(appPID: pid_t) -> Bool {
         if taps.withLock({ $0[appPID] }) != nil { return true }
-        let processes = Self.processObjects(ownedBy: appPID)
+        let processes = OwnedAudioProcesses.objects(ownedBy: appPID)
         guard !processes.isEmpty else { return false }
         let tap: ProcessTap
         do {
@@ -57,14 +57,5 @@ package final class ProcessTapMuter: AudioMuting {
 
     deinit {
         taps.withLock { $0.values }.forEach { $0.invalidate() }
-    }
-
-    /// The Core Audio processes of the app and of its helpers (a web app's
-    /// sound comes from its WebKit process).
-    static func processObjects(ownedBy appPID: pid_t) -> [AudioObjectID] {
-        CoreAudioProperty.objectIDs(kAudioHardwarePropertyProcessObjectList, of: CoreAudioProperty.systemObject).filter { object in
-            guard let pid = CoreAudioProperty.value(kAudioProcessPropertyPID, of: object, initial: pid_t(0)), pid > 0 else { return false }
-            return ProcessResponsibility.isOwned(pid, by: appPID)
-        }
     }
 }

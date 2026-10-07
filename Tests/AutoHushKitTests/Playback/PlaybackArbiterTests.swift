@@ -264,6 +264,20 @@ struct PlaybackArbiterTests {
         #expect(await player.state == .paused)
     }
 
+    @Test("a pause handed over while the Mac sleeps is forgotten too")
+    func handoverForgottenInSleep() async {
+        let player = MockMusicPlayer(state: .paused)
+        let arbiter = makeArbiter(player: player)
+
+        await arbiter.setAsleep(true)
+        await arbiter.takeOverPause()
+        await arbiter.setAsleep(false)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+        #expect(await player.playCallCount == 0)
+    }
+
     @Test("nothing is paused while the Mac sleeps; an app still playing once it's awake pauses the music")
     func noPauseInSleep() async {
         let player = MockMusicPlayer()

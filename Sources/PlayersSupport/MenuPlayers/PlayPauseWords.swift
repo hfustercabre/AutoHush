@@ -19,9 +19,7 @@ package struct PlayPauseWords: Equatable, Sendable {
     /// version; while none runs, of the copy Launch Services knows. `read`
     /// reads them from a copy of the app.
     package static func installed(bundleID: String, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
-        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-            .first { !$0.isTerminated }?
-            .bundleURL
+        let running = NSRunningApplication.running(bundleID)?.bundleURL
         guard let appURL = running ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
         else { return nil }
         return words(ofAppAt: appURL, read: read)

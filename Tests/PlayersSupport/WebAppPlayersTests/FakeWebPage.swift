@@ -19,6 +19,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     private var _trusted = true
     private var _presses: [Int] = []
     private var _looks = 0
+    private var _buttonReads = 0
     /// What a press does; by default it swaps the button's words.
     var onPress: (@Sendable (FakeWebPage, Int) -> Void)?
 
@@ -41,6 +42,8 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     var presses: [Int] { lock.withLock { _presses } }
     /// How many times every button was looked for.
     var looks: Int { lock.withLock { _looks } }
+    /// How many times a button known already was read.
+    var buttonReads: Int { lock.withLock { _buttonReads } }
 
     func set(_ number: Int, label: String) {
         lock.withLock { _buttons[number]?.label = label }
@@ -67,6 +70,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
 
     func button(_ handle: ButtonHandle) -> PageButton? {
         lock.withLock {
+            _buttonReads += 1
             guard let number = handle.element.base as? Int, let button = _buttons[number] else { return nil }
             return PageButton(handle: handle, label: button.label, isEnabled: button.isEnabled)
         }

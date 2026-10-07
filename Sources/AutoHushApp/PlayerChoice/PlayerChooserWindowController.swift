@@ -15,27 +15,14 @@ protocol PlayerChooserPresenting: AnyObject {
 /// then. Closing it leaves AutoHush waiting; the menu and Settings can
 /// choose too.
 @MainActor
-final class PlayerChooserWindowController: NSWindowController, PlayerChooserPresenting {
+final class PlayerChooserWindowController: HostedWindowController, PlayerChooserPresenting {
     init(model: SettingsModel) {
-        let hosting = NSHostingController(rootView: PlayerChooserView(model: model))
-        hosting.sizingOptions = .preferredContentSize
-        let window = NSWindow(contentViewController: hosting)
-        window.title = String(localized: "Welcome to AutoHush", comment: "Title of the window that asks for the music player")
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        super.init(window: window)
+        super.init(content: Self.sizedToFit(PlayerChooserView(model: model)),
+                   title: String(localized: "Welcome to AutoHush", comment: "Title of the window that asks for the music player"))
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    var isVisible: Bool { window?.isVisible == true }
-
-    func show() {
-        if !isVisible { window?.center() }
-        window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate()
-    }
 }
 
 /// The music players as rows in a card, like Settings → Apps, then the

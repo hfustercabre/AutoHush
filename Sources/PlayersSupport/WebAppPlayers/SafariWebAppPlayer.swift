@@ -58,9 +58,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         self.page = page
         // Only a running app is ever controlled, so AutoHush never opens it.
         self.processIdentifier = processIdentifier ?? { [bundleID = app.bundleID] in
-            NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-                .first { !$0.isTerminated }?
-                .processIdentifier
+            NSRunningApplication.running(bundleID)?.processIdentifier
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
                                 muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
@@ -87,11 +85,21 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     }
 
     package func playerState() async -> PlayerState {
+        await readState { $0.state(pid: $1) }
+    }
+
+    /// The state for the observer, which reads it about once a second: it
+    /// asks the page less while the web app is silent (see `polledState`).
+    func polledPlayerState() async -> PlayerState {
+        await readState { $0.polledState(pid: $1) }
+    }
+
+    private func readState(_ read: @escaping @Sendable (WebAppControl, pid_t) -> PlayerState) async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
         let page = page
         guard await onQueue({ page.isTrusted(prompt: false) }) else { return .unknown }
         let control = control
-        return await onQueue { control.state(pid: pid) }
+        return await onQueue { read(control, pid) }
     }
 
     package func pause() async throws {
@@ -122,7 +130,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
         WebAppStateObserver(
-            polled: PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange),
+            polled: PolledStateObserver(read: { [self] in await self.polledPlayerState() }, onChange: onChange),
             onStop: { [self] in Task { await self.releaseMute() } }
         )
     }

@@ -97,7 +97,7 @@ package protocol PlayPauseRecipeStore: Sendable {
 /// The recipes in AutoHush's preferences, by the web app's bundle ID. Read
 /// and written from the players' own queues: `UserDefaults` is thread-safe.
 package struct DefaultsRecipeStore: PlayPauseRecipeStore {
-    package static let key = "webAppPlayPauseButtons"
+    package static let key = Preferences.webAppButtonsKey
 
     package init() {}
 
@@ -106,9 +106,13 @@ package struct DefaultsRecipeStore: PlayPauseRecipeStore {
         return stored?[bundleID].flatMap(PlayPauseRecipe.init(propertyList:))
     }
 
+    /// Under `Preferences.webAppButtonsLock`: another web app may be saving
+    /// its own, or old ones being cleared out, at the same time.
     package func save(_ recipe: PlayPauseRecipe, for bundleID: String) {
-        var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
-        stored[bundleID] = recipe.propertyList
-        UserDefaults.standard.set(stored, forKey: Self.key)
+        Preferences.webAppButtonsLock.withLockUnchecked {
+            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            stored[bundleID] = recipe.propertyList
+            UserDefaults.standard.set(stored, forKey: Self.key)
+        }
     }
 }

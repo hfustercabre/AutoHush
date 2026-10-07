@@ -112,19 +112,15 @@ protocol AddWebAppPresenting: AnyObject {
 }
 
 @MainActor
-final class AddWebAppWindowController: NSWindowController, AddWebAppPresenting, NSWindowDelegate {
+final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenting, NSWindowDelegate {
     private let model: AddWebAppModel
 
     init(model: AddWebAppModel, settings: SettingsModel) {
         self.model = model
-        let hosting = NSHostingController(rootView: AddWebAppView(model: model, settings: settings, close: {}))
-        hosting.sizingOptions = .preferredContentSize
-        let window = NSWindow(contentViewController: hosting)
-        window.title = String(localized: "Add a Web App", comment: "Title and heading of the window that makes a website a Safari web app")
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        super.init(window: window)
-        window.delegate = self
+        let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: {}))
+        super.init(content: hosting,
+                   title: String(localized: "Add a Web App", comment: "Title and heading of the window that makes a website a Safari web app"))
+        window?.delegate = self
         hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
     }
 
@@ -135,14 +131,6 @@ final class AddWebAppWindowController: NSWindowController, AddWebAppPresenting, 
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    var isVisible: Bool { window?.isVisible == true }
-
-    func show() {
-        if !isVisible { window?.center() }
-        window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate()
-    }
 }
 
 /// The window's content: what it's for, the address, then each step.
@@ -299,11 +287,12 @@ struct AddWebAppView: View {
         .accessibilityAddTraits(state == .done ? .isSelected : [])
     }
 
-    /// Safari's own icon (its app in /Applications is a link into the system).
-    private static var safariIcon: NSImage {
+    /// Safari's own icon (its app in /Applications is a link into the
+    /// system), looked up once rather than at every redraw.
+    private static let safariIcon: NSImage = {
         let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.resolvingSymlinksInPath().path
         return NSWorkspace.shared.icon(forFile: path ?? "/Applications/Safari.app")
-    }
+    }()
 }
 
 extension PlayerOption {

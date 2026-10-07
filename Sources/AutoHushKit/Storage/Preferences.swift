@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Where preferences are kept: `UserDefaults` in the app, memory in tests.
 package protocol PreferenceStore: AnyObject {
@@ -51,6 +52,9 @@ package final class Preferences {
     /// players read and save theirs from their own queues (`UserDefaults` is
     /// thread-safe); this class only clears out old ones.
     package nonisolated static let webAppButtonsKey = "webAppPlayPauseButtons"
+    /// Every change to them holds this lock: a change reads them all, then
+    /// writes them all back, from several queues.
+    package nonisolated static let webAppButtonsLock = OSAllocatedUnfairLock()
 
     /// How many apps that played audio are remembered for Settings → Apps.
     package static let seenAppsLimit = 50
@@ -108,9 +112,11 @@ package final class Preferences {
     /// Forgets the learned buttons of web apps for which `isGone` is true
     /// (deleted: adding a site again makes a new app, with a new ID).
     package func forgetWebAppButtons(where isGone: (String) -> Bool) {
-        guard let stored = defaults.object(forKey: Key.webAppButtons) as? [String: Any] else { return }
-        let kept = stored.filter { !isGone($0.key) }
-        if kept.count != stored.count { defaults.set(kept, forKey: Key.webAppButtons) }
+        Self.webAppButtonsLock.withLockUnchecked {
+            guard let stored = defaults.object(forKey: Key.webAppButtons) as? [String: Any] else { return }
+            let kept = stored.filter { !isGone($0.key) }
+            if kept.count != stored.count { defaults.set(kept, forKey: Key.webAppButtons) }
+        }
     }
 
     package var musicPlayer: String? {

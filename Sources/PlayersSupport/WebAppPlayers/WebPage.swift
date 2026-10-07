@@ -77,6 +77,8 @@ package struct AccessibilityWebPage: WebPage {
     private static let webAreaDepth = 16
     /// A button is this deep in its page at most.
     private static let pathDepth = 60
+    /// The web app's own audio processes, kept between checks of its sound.
+    private let audioProcesses = OwnedAudioProcesses()
 
     package init() {}
 
@@ -146,7 +148,7 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     package func isPlayingSound(pid: pid_t) -> Bool {
-        HALAudioProcessSnapshotProvider().activeProcesses().contains { ProcessResponsibility.isOwned($0.pid, by: pid) }
+        audioProcesses.isPlayingSound(appPID: pid)
     }
 
     // MARK: - Windows and pages

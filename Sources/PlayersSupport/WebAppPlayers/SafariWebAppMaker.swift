@@ -141,6 +141,8 @@ package struct SafariUI: SafariDriving {
     /// Add keeps what's shown.
     static let iconTime: TimeInterval = 3
     static let timeout: Float = 1
+    /// How far up from the focused field the dialog is looked for.
+    static let parentDepth = 30
     private let logger = Logger(category: "WebAppPlayer")
 
     package init() {}
@@ -229,8 +231,7 @@ package struct SafariUI: SafariDriving {
     // MARK: - Accessibility
 
     private static func safariElement() -> AXUIElement? {
-        guard let safari = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first(where: { !$0.isTerminated })
-        else { return nil }
+        guard let safari = NSRunningApplication.running(bundleID) else { return nil }
         let app = AXUIElementCreateApplication(safari.processIdentifier)
         AXUIElementSetMessagingTimeout(app, timeout)
         return app
@@ -268,7 +269,8 @@ package struct SafariUI: SafariDriving {
         if let window = app.element(kAXFocusedWindowAttribute) { roots.append(window) }
         if let focused = app.element(kAXFocusedUIElementAttribute) {
             var node = focused
-            while let parent = node.element(kAXParentAttribute) {
+            for _ in 0..<parentDepth {
+                guard let parent = node.element(kAXParentAttribute) else { break }
                 if parent.string(kAXRoleAttribute) == "AXSheet" { roots.append(parent) }
                 node = parent
             }

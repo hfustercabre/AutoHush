@@ -26,7 +26,7 @@ package struct ProcessTapLevelProbe: AudioLevelProbing {
     }
 
     package func isAudible(appPID: pid_t) -> Bool {
-        let processes = ProcessTapMuter.processObjects(ownedBy: appPID)
+        let processes = OwnedAudioProcesses.objects(ownedBy: appPID)
         guard !processes.isEmpty else { return false }
         let meter = ProcessTapLevelMeter()
         meter.setMeteredProcesses(Set(processes))

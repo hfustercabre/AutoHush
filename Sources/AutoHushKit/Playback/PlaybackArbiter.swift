@@ -219,7 +219,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// again first; when none is, the music resumes after the start
     /// confirmation plus `takeOverMargin`.
     package func takeOverPause() async {
-        guard !isShutDown else { return }
+        // Handed over while the Mac sleeps: forgotten, as any pause then.
+        guard !isShutDown, !isAsleep else { return }
         let state = await livePlayerState()
         guard !isShutDown, state == .paused else { return }
         pausedByUs = true
