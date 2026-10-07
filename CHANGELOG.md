@@ -20,9 +20,8 @@ This project follows [Semantic Versioning](https://semver.org/).
     window asks you to play something in it, then pause it, and closes once
     it has seen both. A tip under each step says how: log in first if the
     site asks, let the music itself play for 5 to 10 seconds (ads don't
-    count), then wait for the tick. The
-    same steps show in the menu and in Settings until then. It presses
-    nothing before it has learned.
+    count), then wait for the tick. The same steps show in the menu and in
+    Settings until then. It presses nothing before it has learned.
   - Spotify, YouTube Music, Amazon Music and Deezer have been tested: their
     web apps are offered first, under the site's name. Any other web app
     comes after them, marked **Untested**, its page title without the
@@ -41,14 +40,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   - Settings → Diagnostics shows whether the button has been learned and
     whether windows on other Spaces can be reached.
 - **Add a Web App…** makes a website your music player from its address:
-  in the menu's players, Settings (the player pop-up's last item)
-  and the welcome window. Paste the address; AutoHush checks that the site
+  in the menu's players, Settings (the player pop-up's last item) and the
+  welcome window. Paste the address; AutoHush checks that the site
   answers, adds it to the Dock with Safari's own Add to Dock, chooses it,
   opens it and learns its controls, all in one window. **Cancel** stops it
   before anything is added; once added, the Safari tab it opened is closed.
   - The tested sites are offered with a download symbol until you add them:
     choosing one opens the window with its address filled in.
-
 - **Fades can be turned off** with a switch in Settings → Advanced, without
   moving their sliders to 0: the music then pauses and resumes at once. The
   sliders show only while it's on, and Diagnostics says "Off".
