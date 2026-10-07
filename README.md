@@ -100,7 +100,7 @@ AutoHush lives in the menu bar; it has no Dock icon. The first time it opens, it
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/welcome-dark.png">
-    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, Apple Music, VLC and Apple Podcasts, then TIDAL dimmed as not installed, above a Continue button" width="420">
+    <img src=".github/images/welcome-light.png" alt="The welcome window: Choose Your Music Player, with Spotify picked, then Apple Music, VLC, Apple Podcasts and TIDAL; below them Safari Web Apps, marked Experimental, with Spotify and YouTube Music added and Amazon Music and Deezer not installed yet; an Add a Web App… button, and Continue" width="420">
   </picture>
 </p>
 
