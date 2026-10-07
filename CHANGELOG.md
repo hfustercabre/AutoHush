@@ -7,9 +7,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
+### Fixed
 
-- **AutoHush asks for what it needs where it needs it, and waits for it.**
+- **A missing permission is asked for where it's needed, and waited for.**
   After you choose your player, the welcome window lists the permissions
   it needs, each with a button: **Open Spotify** (macOS asks for Automation
   only while the player is open), **Allow…**, which shows macOS's own
