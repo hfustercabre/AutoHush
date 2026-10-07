@@ -73,8 +73,14 @@ layout_window() {
     osascript - "$1" <<APPLESCRIPT
 on run argv
     set volumePath to item 1 of argv
+    set volumeName to name of (info for (POSIX file volumePath as alias))
     tell application "Finder"
-        set theVolume to disk (name of (info for (POSIX file volumePath as alias)))
+        -- Finder lists a disk only a moment after it's mounted (-1728 before).
+        repeat 20 times
+            if exists disk volumeName then exit repeat
+            delay 0.5
+        end repeat
+        set theVolume to disk volumeName
         open theVolume
         set theWindow to container window of theVolume
         set current view of theWindow to icon view
