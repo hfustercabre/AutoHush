@@ -51,6 +51,9 @@ final class StatusMenuController: NSObject {
         var menuWillOpen: @MainActor () -> Void
         var setIgnored: @MainActor (AudioSource, Bool) -> Void
         var resolveWarning: @MainActor (Permission) -> Void
+        /// Quits and opens AutoHush again, so macOS applies System Audio
+        /// Recording (see `AppStatus.offersReopen`).
+        var reopen: @MainActor () -> Void = {}
         var retry: @MainActor () -> Void
         var openSettings: @MainActor () -> Void
         var showDiagnostics: @MainActor () -> Void
@@ -183,10 +186,17 @@ final class StatusMenuController: NSObject {
     }
 
     private func warningItem(for warning: Permission) -> NSMenuItem {
-        let item = item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
+        let item = status.offersReopen
+            ? item(Self.reopenTitle, #selector(reopen))
+            : item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
         let description = String(localized: "Warning", comment: "VoiceOver label: this menu item needs attention")
         item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
         return item
+    }
+
+    private static var reopenTitle: String {
+        String(localized: "Reopen AutoHush",
+               comment: "Menu item, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again")
     }
 
     /// "Install AutoHush 0.3.8…", which shows the update found; while it
@@ -355,6 +365,8 @@ final class StatusMenuController: NSObject {
     @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
 
     @objc private func addWebApp() { actions.addWebApp() }
+
+    @objc private func reopen() { actions.reopen() }
 
     @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }

@@ -70,6 +70,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   Mac sleeps.
 - **A resume that doesn't take is tried again,** twice, a second apart,
   as when the player doesn't answer.
+- **A permission taken away while AutoHush runs is noticed.** If you
+  turned off its Automation or Accessibility access in System Settings,
+  AutoHush stopped pausing your music without a word, its menu still
+  saying "Not playing". Now it checks again when another app starts
+  playing or you open the menu, asks for the permission as it does at
+  launch, and carries on by itself once you allow it again.
+- **After you allow audio recording, the menu offers Reopen AutoHush.**
+  macOS applies that permission only once AutoHush is opened again; until
+  then the menu kept asking for it, as if you hadn't allowed it.
 - **Command-line players pause the music too.** Sound from a program run
   in Terminal, such as afplay, mpv or ffplay, was never counted, since it
   has no app of its own. It now counts as the app that started it, e.g.

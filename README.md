@@ -115,7 +115,7 @@ macOS then asks for these permissions:
 
 The audio permission sounds scarier than it is: AutoHush only measures *how loud* other apps are, in memory, and never records or saves anything (see [Privacy](#privacy)). Without it, AutoHush still works, but a paused video may keep your music paused until you close it.
 
-If you said no by mistake, the menu shows a button that opens the right place in System Settings. Once you allow it there, AutoHush starts by itself within a few seconds.
+If you said no by mistake, the menu shows a button that opens the right place in System Settings. Once you allow it there, AutoHush starts by itself within a few seconds. Audio recording is the exception: macOS applies it only once AutoHush is opened again, so the menu then offers **Reopen AutoHush**. If you take a permission away later, AutoHush notices when another app starts playing or when you open the menu, and asks for it again.
 
 **Start it automatically:** click **Settings** at the bottom of the menu and turn on **Launch at login**.
 
@@ -218,7 +218,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - **Music keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps) and that Auto-Pause is on.
 - **Music stays paused after a video ends.** Some apps keep their sound switched on after playback. Allow audio recording, or in AntiDot mode close the app or tab.
 - **Something looks off?** **Settings → Diagnostics** shows what AutoHush sees (hold **⌥ Option** and click **Settings** in the menu to go straight there), and **Copy Report** copies it for a bug report.
-- **"Spotify is not running", a permission warning, or "not responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access, or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
+- **"Spotify is not running", a permission warning, or "not responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access (audio recording: once you reopen AutoHush), or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
 
 ## Privacy
 

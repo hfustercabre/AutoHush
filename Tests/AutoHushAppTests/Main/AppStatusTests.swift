@@ -157,6 +157,17 @@ struct AppStatusTests {
         #expect(!status.canRetry)
     }
 
+    @Test("once the user went to allow audio recording, its warning reopens AutoHush; other warnings ask as usual")
+    func audioAccessWarningOffersReopen() {
+        var status = ready()
+        status.detection = .unavailable
+        #expect(status.warning == .systemAudioRecording && !status.offersReopen)
+        status.awaitsReopenForAudioRecording = true
+        #expect(status.offersReopen)
+        status.setHealth(.needsPermission(.automation(player: "Jukebox")))
+        #expect(status.warning == .automation(player: "Jukebox") && !status.offersReopen)
+    }
+
     @Test("missing audio access warns only when ready")
     func audioAccessWarning() {
         var status = ready()

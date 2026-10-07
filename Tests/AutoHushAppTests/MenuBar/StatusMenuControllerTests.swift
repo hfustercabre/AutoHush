@@ -22,6 +22,7 @@ struct StatusMenuControllerTests {
             menuWillOpen: { log.calls.append("menuWillOpen") },
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             resolveWarning: { log.calls.append("warning \($0.grantTitle)") },
+            reopen: { log.calls.append("reopen") },
             retry: { log.calls.append("retry") },
             openSettings: { log.calls.append("settings") },
             showDiagnostics: { log.calls.append("diagnostics") },
@@ -372,6 +373,22 @@ struct StatusMenuControllerTests {
         #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
         try perform(submenu.items[1])
         #expect(log.calls == ["menuWillOpen", "ignore org.videolan.vlc false"])
+    }
+
+    @Test("once the user went to allow audio recording, its row reopens AutoHush")
+    func reopenItem() throws {
+        let log = ActionLog()
+        let sut = makeController(log)
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.detection = .unavailable
+        status.awaitsReopenForAudioRecording = true
+        sut.status = status
+        prepareToOpen(sut)
+
+        #expect(rows(sut.menu).prefix(3) == ["card", "Reopen AutoHush", "snooze"])
+        try perform(try item("Reopen AutoHush", in: sut.menu))
+        #expect(log.calls == ["menuWillOpen", "reopen"])
     }
 
     @Test("a warning appears under the card as one actionable row")

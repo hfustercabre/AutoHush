@@ -708,6 +708,76 @@ struct AppDelegateTests {
         #expect(scratch.preferences.pauseHandedOverAt == nil)
     }
 
+    // MARK: - Permissions while running
+
+    @MainActor
+    @Test("a permission taken away while monitoring runs is noticed when another app starts playing, and starts over")
+    func lostPermissionNoticedWhenOthersPlay() async {
+        let scratch = Scratch() // its players refuse Automation
+        let (sut, bootstraps) = makeSUT(scratch)
+        sut.setHealth(.ready)
+
+        sut.apply(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC")]))
+        await waitFor { bootstraps.count == 1 }
+        #expect(bootstraps.count == 1)
+
+        // Still playing: not checked again.
+        sut.apply(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC"), AudioSource(id: "com.apple.Safari", name: "Safari")]))
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(await scratch.first.verifyCallCount == 1)
+    }
+
+    @MainActor
+    @Test("checking control access starts over only for a missing permission, and only while monitoring runs")
+    func controlAccessCheck() async {
+        let scratch = Scratch()
+        let (sut, bootstraps) = makeSUT(scratch)
+
+        sut.checkControlAccess() // not monitoring yet
+        try? await Task.sleep(for: .milliseconds(30))
+        #expect(await scratch.first.verifyCallCount == 0)
+
+        sut.setHealth(.ready)
+        for error: MusicPlayerError? in [nil, .playerNotRunning, .playerNotResponding] {
+            await scratch.first.setFailVerify(error)
+            let calls = await scratch.first.verifyCallCount
+            sut.checkControlAccess()
+            for _ in 0..<200 { if await scratch.first.verifyCallCount > calls { break }; try? await Task.sleep(for: .milliseconds(10)) }
+            try? await Task.sleep(for: .milliseconds(30))
+        }
+        #expect(bootstraps.count == 0)
+
+        await scratch.first.setFailVerify(MusicPlayerError.accessibilityPermissionDenied)
+        sut.checkControlAccess()
+        await waitFor { bootstraps.count == 1 }
+        #expect(bootstraps.count == 1)
+    }
+
+    @MainActor
+    @Test("after going to allow audio recording, the menu offers to reopen AutoHush; other permissions are asked again")
+    func audioRecordingOffersReopen() {
+        let (sut, _) = makeSUT()
+        var opened: [SystemSettingsPane] = []
+        sut.resolveWarning(.automation(player: "First")) { opened.append($0) }
+        #expect(!sut.status.awaitsReopenForAudioRecording)
+        sut.resolveWarning(.systemAudioRecording) { opened.append($0) }
+        #expect(opened == [.automation, .audioCapture])
+        #expect(sut.status.awaitsReopenForAudioRecording)
+    }
+
+    @MainActor
+    @Test("reopening opens AutoHush again once it has quit, then quits; if that can't be set up, it stays open")
+    func reopenRelaunchesThenQuits() {
+        let (sut, _) = makeSUT()
+        var calls: [String] = []
+        sut.reopen(openAfterExit: { calls.append("open \($0.lastPathComponent)") }, terminate: { calls.append("quit") })
+        #expect(calls == ["open \(Bundle.main.bundleURL.lastPathComponent)", "quit"])
+
+        calls = []
+        sut.reopen(openAfterExit: { _ in throw CocoaError(.fileNoSuchFile) }, terminate: { calls.append("quit") })
+        #expect(calls.isEmpty)
+    }
+
     // MARK: - Auto-pause and ignored apps
 
     @MainActor

@@ -68,6 +68,10 @@ struct AppStatus: Equatable {
     var ignoredApps: [AudioSource] = []
     /// A newer release found by the update check, and how far along it is.
     var updateOffer: UpdateOffer?
+    /// The user went to allow System Audio Recording during this launch.
+    /// macOS applies it only from the next launch, so the menu then offers to
+    /// reopen AutoHush instead of asking again.
+    var awaitsReopenForAudioRecording = false
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
     mutating func setHealth(_ health: AppHealthState) {
@@ -135,6 +139,12 @@ struct AppStatus: Equatable {
         if case .needsPermission(let permission) = health { return permission }
         if isReady, detection == .unavailable { return .systemAudioRecording }
         return nil
+    }
+
+    /// Whether the warning's menu item reopens AutoHush rather than asking
+    /// for the permission: see `awaitsReopenForAudioRecording`.
+    var offersReopen: Bool {
+        warning == .systemAudioRecording && awaitsReopenForAudioRecording
     }
 
     /// Whether the menu offers Retry: only after a failed start that nothing

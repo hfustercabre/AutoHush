@@ -86,6 +86,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// repeats (every few seconds while a permission is missing) go to the
     /// debug log.
     private(set) var loggedStartupProblem: String?
+    /// The check that AutoHush may still control the player, while one runs:
+    /// see `checkControlAccess()`.
+    private var accessCheck: Task<Void, Never>?
     /// Watches the Applications folders, and the one holding the chosen
     /// player's app, so AutoHush notices at once when it's uninstalled or
     /// installed again.
@@ -214,9 +217,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 snooze: { [weak self] in self?.snooze($0) },
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
-                menuWillOpen: { [weak self] in self?.refreshPlayerOptions() },
+                menuWillOpen: { [weak self] in
+                    self?.refreshPlayerOptions()
+                    self?.checkControlAccess()
+                },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
-                resolveWarning: { $0.settingsPane.open() },
+                resolveWarning: { [weak self] in self?.resolveWarning($0) },
+                reopen: { [weak self] in self?.reopen() },
                 retry: { [weak self] in self?.retry() },
                 openSettings: { [weak self] in self?.openSettings() },
                 showDiagnostics: { [weak self] in self?.showDiagnostics() },
@@ -324,12 +331,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch update {
         case .playback(let state):       status.playback = state
         case .activeSources(let sources):
+            let othersStarted = status.activeSources.isEmpty && !sources.isEmpty
             status.setActiveSources(sources)
             preferences.recordSeen(sources)
             showApps()
+            if othersStarted { checkControlAccess() }
         case .detection(let mode):       status.detection = mode
         case .learnedAssertions(let id, let assertions): preferences.playbackAssertions[id] = assertions
         }
+    }
+
+    /// Opens where `permission` is granted. macOS applies System Audio
+    /// Recording only from the next launch, so the menu then offers to reopen
+    /// AutoHush instead of asking again.
+    func resolveWarning(_ permission: Permission, open: (SystemSettingsPane) -> Void = { $0.open() }) {
+        open(permission.settingsPane)
+        if permission == .systemAudioRecording { status.awaitsReopenForAudioRecording = true }
+    }
+
+    /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
+    /// handing over a pause it holds.
+    func reopen(
+        openAfterExit: (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) },
+        terminate: () -> Void = { NSApp.terminate(nil) }
+    ) {
+        do {
+            try openAfterExit(Bundle.main.bundleURL)
+        } catch {
+            logger.error("Couldn't reopen AutoHush: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        terminate()
     }
 
     // MARK: - Auto-pause and ignored apps
@@ -780,6 +812,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         failedStarts = 0
         loggedStartupProblem = nil
         setHealth(.ready)
+    }
+
+    /// Checks again that AutoHush may still control the player, when it
+    /// matters: another app starts playing, or the menu opens. macOS doesn't
+    /// announce a permission taken away while monitoring runs, and the player
+    /// then only reads as unknown, so nothing would be paused, silently. A
+    /// missing permission starts over as at launch: the menu asks for it, and
+    /// monitoring starts again by itself once it's given back.
+    func checkControlAccess() {
+        guard status.isReady, let player, accessCheck == nil else { return }
+        let generation = bootstrapGeneration
+        accessCheck = Task { [weak self] in
+            defer { self?.accessCheck = nil }
+            do {
+                try await player.verifyControlAccess()
+            } catch {
+                guard let self, generation == self.bootstrapGeneration else { return }
+                switch error as? MusicPlayerError {
+                case .automationPermissionDenied?, .accessibilityPermissionDenied?:
+                    self.logger.error("Lost control of \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    self.requestBootstrap()
+                default:
+                    break // the player quit or didn't answer: monitoring follows those
+                }
+            }
+        }
     }
 
     /// Without a pipeline nothing is known about the music: a state it left
