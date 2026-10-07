@@ -160,8 +160,7 @@ where they appear:
   window: a click opens "Add a Web App" filled in with the address.
   **Add a Web App…** (with `plus.circle`) comes last
   wherever players are offered: the menu's last row, the pop-up's last item
-  after a separator, a `.chip` under the welcome window's list, and a `+`
-  `IconChipButton` beside Settings' pop-up.
+  after a separator, and a `.chip` under the welcome window's list.
 - **A process the user waits for** shows its steps in a card, as the
   "Add a Web App" window does: done steps ticked in `.appSuccess` and dimmed,
   the current one bold with an accent arrow and a caption under it, the

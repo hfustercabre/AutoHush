@@ -27,8 +27,9 @@ This project follows [Semantic Versioning](https://semver.org/).
     web apps are offered first, under the site's name. Any other web app
     comes after them, marked **Untested**, its page title without the
     slogan after " | " or a dash.
-  - It works with the window visible, minimized or on another Space. It
-    needs the Accessibility permission, and pauses without fading.
+  - It works with the window visible, minimized or on another Space, and
+    with more than one window: it follows the one that plays. It needs the
+    Accessibility permission, and pauses without fading.
   - When a site won't pause, AutoHush mutes the web app instead: during an
     ad whose button is disabled, or still reads "Play" as on YouTube Music,
     or when a press doesn't take. As soon as the site can be paused (the ad
@@ -40,7 +41,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   - Settings → Diagnostics shows whether the button has been learned and
     whether windows on other Spaces can be reached.
 - **Add a Web App…** makes a website your music player from its address:
-  in the menu's players, Settings (the player pop-up and a **+** button)
+  in the menu's players, Settings (the player pop-up's last item)
   and the welcome window. Paste the address; AutoHush checks that the site
   answers, adds it to the Dock with Safari's own Add to Dock, chooses it,
   opens it and learns its controls, all in one window. **Cancel** stops it

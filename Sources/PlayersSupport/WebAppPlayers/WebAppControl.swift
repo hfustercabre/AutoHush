@@ -16,6 +16,10 @@ import AutoHushKit
 /// changed), it learns again, keeping what it knew: if the button turns up
 /// again, it stops learning.
 ///
+/// Each window of the web app has its own page, so with two windows there are
+/// two buttons in the same place: the one that says the music plays is
+/// followed, also when the music moves to the other window.
+///
 /// A site may refuse to pause: it disables its button during an ad, or a
 /// press doesn't take. Only then is the web app muted instead (`AudioMuting`)
 /// and reported as paused, until it's played again or monitoring stops. So
@@ -34,6 +38,9 @@ final class WebAppControl: @unchecked Sendable {
     /// After a press, how long the button gets to change its words.
     static let pressConfirmation: TimeInterval = 2
     static let pressCheckInterval: TimeInterval = 0.1
+    /// While the button says the music isn't playing, how often the other
+    /// windows are checked for one that plays.
+    static let otherWindowsInterval: TimeInterval = 2
 
     private let name: String
     private let bundleID: String
@@ -56,6 +63,7 @@ final class WebAppControl: @unchecked Sendable {
     /// Since when the page shows without the learned button.
     private var missingSince: Date?
     private var noWindowUntil: Date?
+    private var otherWindowsCheckedAt: Date?
 
     /// Why the web app was muted instead of paused.
     private enum MuteReason {
@@ -248,15 +256,39 @@ final class WebAppControl: @unchecked Sendable {
 
     // MARK: - The learned button
 
+    /// The learned button. With two windows of the web app there are two, in
+    /// the same place: the one that says the music plays wins.
     private func lookup(_ recipe: PlayPauseRecipe, pid: pid_t, now: Date) -> Lookup {
-        if let button, let found = page.button(button), recipe.state(of: found) != nil {
+        if let button, let found = page.button(button), let shown = recipe.state(of: found) {
+            if shown != .playing, let other = playingElsewhere(recipe, pid: pid, now: now) {
+                logger.notice("\(self.name, privacy: .public) plays in another window: following its Play/Pause")
+                self.button = other.handle
+                return .found(other)
+            }
             return .found(found)
         }
         button = nil
         guard let buttons = look(pid: pid, now: now) else { return .noWindow }
-        guard let found = recipe.find(in: buttons, place: page.place(of:)) else { return .missing(buttons: buttons) }
+        guard let found = Self.playing(in: buttons, recipe: recipe, place: page.place(of:))
+            ?? recipe.find(in: buttons, place: page.place(of:)) else { return .missing(buttons: buttons) }
         button = found.handle
         return .found(found)
+    }
+
+    /// Another window's button saying the music plays, while the one known
+    /// says it doesn't and the web app can be heard: the user plays it in a
+    /// second window. Looked for every `otherWindowsInterval` at most.
+    private func playingElsewhere(_ recipe: PlayPauseRecipe, pid: pid_t, now: Date) -> PageButton? {
+        if let checked = otherWindowsCheckedAt, now.timeIntervalSince(checked) < Self.otherWindowsInterval { return nil }
+        otherWindowsCheckedAt = now
+        guard page.isPlayingSound(pid: pid), let buttons = look(pid: pid, now: now) else { return nil }
+        return Self.playing(in: buttons, recipe: recipe, place: page.place(of:))
+    }
+
+    /// The learned button among `buttons` that says the music plays.
+    private static func playing(in buttons: [PageButton], recipe: PlayPauseRecipe,
+                                place: (ButtonHandle) -> ButtonPlace?) -> PageButton? {
+        recipe.find(in: buttons.filter { recipe.state(of: $0) == .playing }, place: place)
     }
 
     /// The page's buttons; `nil` while the app has no window, and for a

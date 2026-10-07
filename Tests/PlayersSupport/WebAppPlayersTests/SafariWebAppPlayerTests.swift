@@ -38,6 +38,17 @@ struct SafariWebAppPlayerTests {
             for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
             page.buttonsByNumber = buttons
         }
+
+        /// Two windows of the web app, each with the page: the first one's
+        /// buttons are 1 to 13, the second one's 21 to 33.
+        func showTwoWindows(_ first: String, _ second: String) {
+            showPage(first)
+            var buttons = page.buttonsByNumber
+            buttons[21] = .init(label: second, place: Places.playerBar)
+            buttons[22] = .init(label: "Play", place: Places.main)
+            for number in 23..<34 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
+            page.buttonsByNumber = buttons
+        }
     }
 
     @Test("it's a Safari web app, controlled through Accessibility, without fades")
@@ -352,6 +363,57 @@ struct SafariWebAppPlayerTests {
         setup.page.set(101, label: "Pause")
         #expect(await setup.player.playerState() == .playing)
         #expect(setup.page.looks == looks + 1)
+    }
+
+    @Test("with two windows, the one whose button says the music plays is pressed")
+    func twoWindowsPlayingFirst() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showTwoWindows("Play", "Pause")
+        #expect(await setup.player.playerState() == .playing)
+        try await setup.player.pause()
+        #expect(setup.page.presses == [21])
+        try await setup.player.play()
+        #expect(setup.page.presses == [21, 21])
+    }
+
+    @Test("music moving to a second window is followed there: paused, played, and never muted")
+    func twoWindowsMusicMoves() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.probe.audible = true
+        setup.showTwoWindows("Play", "Play")
+        #expect(await setup.player.playerState() == .paused) // the first window's button
+
+        // The user plays the second window.
+        setup.page.set(21, label: "Pause")
+        setup.page.sound = true
+        #expect(await setup.player.playerState() == .playing)
+        #expect(!(await setup.player.muteIfPlayingAnyway()))
+        try await setup.player.pause()
+        #expect(setup.page.presses == [21])
+        #expect(setup.muter.log.isEmpty)
+        #expect(setup.probe.listens == 0)
+        try await setup.player.play()
+        #expect(setup.page.presses == [21, 21])
+    }
+
+    @Test("other windows are looked at only while the web app is heard, and every 2 s at most")
+    func twoWindowsLookedAtSparingly() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showTwoWindows("Play", "Play")
+        #expect(await setup.player.playerState() == .paused)
+        let looks = setup.page.looks
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.looks == looks) // silent: nothing else plays
+
+        setup.page.sound = true // a pause's silent tail, or an ad
+        setup.clock.advance(WebAppControl.otherWindowsInterval)
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.looks == looks + 1)
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.looks == looks + 1)
+        setup.clock.advance(WebAppControl.otherWindowsInterval)
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.looks == looks + 2)
     }
 
     @Test("without a window it's stopped, and windows aren't looked for again for a while")
