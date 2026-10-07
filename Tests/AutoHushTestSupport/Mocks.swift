@@ -65,6 +65,7 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
+    package func setFailPlay(_ error: Error?) { failPlayWith = error }
     package func setFailVerify(_ error: Error?) { failVerifyWith = error }
 
     package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
@@ -122,6 +123,8 @@ package actor MockMusicPlayer: MusicPlayer {
         state = .paused
         return true
     }
+
+    package func forgetPause() { commandLog.append("forgetPause") }
 }
 
 // MARK: - MockMutingMusicPlayer
@@ -142,6 +145,7 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
 
     package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.withLock { $0 = allowed } }
     package func muteIfPlayingAnyway() async -> Bool { await mock.muteIfPlayingAnyway() }
+    package func forgetPause() async { await mock.forgetPause() }
     package func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
     package func playerState() async -> PlayerState { await mock.playerState() }
     package func pause() async throws { try await mock.pause() }

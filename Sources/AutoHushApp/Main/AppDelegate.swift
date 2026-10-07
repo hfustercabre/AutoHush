@@ -52,6 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var updates: UpdateController!
     private let updateNotifier: any UpdateNotifying
     private var playerLaunchObserver: (any NSObjectProtocol)?
+    /// The Mac going to sleep and waking up.
+    private var sleepObservers: [any NSObjectProtocol] = []
     private let logger = Logger(category: "AppDelegate")
     /// Replaces the real bootstrap in tests, so they never script the music player or
     /// tap real audio processes.
@@ -218,6 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
+        registerSleepObservers()
         // Opened last, this copy is the one that runs: any opened before it
         // quits first, handing over a pause it held, so they never both pause
         // and resume the music.
@@ -263,6 +266,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         unregisterPlayerLaunchObserver()
+        sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        sleepObservers = []
         tearDownPipeline()
     }
 
@@ -752,6 +757,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setHealth(.starting)
         // The player may not answer yet while it finishes starting up.
         requestBootstrap(retries: Self.startupRetries)
+    }
+
+    /// Music AutoHush paused stays paused after the Mac sleeps: the
+    /// arbiter forgets the pause as the Mac falls asleep, when the other
+    /// apps' sound stops too, and decides nothing until it's awake.
+    private func registerSleepObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        sleepObservers = [
+            (NSWorkspace.willSleepNotification, true),
+            (NSWorkspace.didWakeNotification, false),
+        ].map { name, asleep in
+            center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
+                    self?.pipeline?.setAsleep(asleep)
+                }
+            }
+        }
     }
 
     private func unregisterPlayerLaunchObserver() {

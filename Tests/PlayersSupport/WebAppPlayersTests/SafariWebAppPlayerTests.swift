@@ -259,6 +259,49 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
+    @Test("after a sleep, an ad's mute ends in a real pause once the song plays, and nothing plays it again")
+    func forgottenMuteEndsInPause() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Play")
+        setup.page.sound = true
+        setup.probe.audible = true
+        #expect(await setup.player.muteIfPlayingAnyway())
+
+        await setup.player.forgetPause()
+        #expect(!(await setup.player.muteIfPlayingAnyway())) // no longer a pause AutoHush holds
+        #expect(await setup.player.playerState() == .paused) // the ad still plays
+        #expect(setup.muter.muted == [4242])
+
+        setup.page.set(1, label: "Pause") // the song starts after the ad
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.presses == [1])
+        #expect(setup.muter.muted.isEmpty)
+    }
+
+    @Test("after a sleep, a mute is lifted once the page is silent, and when its pause doesn't take")
+    func forgottenMuteLifted() async throws {
+        let silent = Setup(recipe: Self.learned)
+        silent.showPage("Play")
+        silent.page.sound = true
+        silent.probe.audible = true
+        #expect(await silent.player.muteIfPlayingAnyway())
+        await silent.player.forgetPause()
+        silent.page.sound = false
+        _ = await silent.player.playerState()
+        #expect(silent.muter.muted.isEmpty)
+        #expect(silent.page.presses.isEmpty)
+
+        let ignored = Setup(recipe: Self.learned)
+        ignored.showPage("Pause")
+        ignored.page.onPress = { _, _ in }
+        try await ignored.player.pause() // muted instead
+        #expect(ignored.muter.muted == [4242])
+        await ignored.player.forgetPause()
+        _ = await ignored.player.playerState() // pressed again, and still not followed
+        #expect(ignored.page.presses == [1, 1])
+        #expect(ignored.muter.muted.isEmpty)
+    }
+
     @Test("the silent sound a page keeps open after a pause is measured, and not muted")
     func silentAfterPauseNotMuted() async {
         let setup = Setup(recipe: Self.learned)

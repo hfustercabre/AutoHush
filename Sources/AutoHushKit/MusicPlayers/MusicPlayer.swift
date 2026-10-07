@@ -96,6 +96,10 @@ package protocol MutingMusicPlayer: TappingMusicPlayer {
     /// again, as for a refused pause. `false` when it's silent, or muting
     /// isn't possible or allowed.
     func muteIfPlayingAnyway() async -> Bool
+    /// AutoHush no longer holds the pause a mute stands in for (the Mac
+    /// slept): the player is paused for real as soon as it can be, and the
+    /// mute lifted then, or once it's silent. It isn't played again.
+    func forgetPause() async
 }
 
 /// How far a `LearningMusicPlayer` has come.

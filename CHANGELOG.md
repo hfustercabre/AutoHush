@@ -64,6 +64,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Each Safari web app is told apart.** Their sound was all put down to
   one "Web App", so Settings → Apps showed a single entry for them; each
   now shows under its own name.
+- **Music AutoHush paused stays paused after the Mac sleeps,** as music
+  players keep it after a sleep. Other apps' sound stops as the Mac falls
+  asleep, and AutoHush took that for them ending: it tried to resume the
+  music while the Mac slept, which a web app's page couldn't follow, and
+  the music didn't come back. Now nothing is paused or resumed while the
+  Mac sleeps.
+- **A resume that doesn't take is tried again,** twice, a second apart,
+  as when the player doesn't answer.
 
 ---
 

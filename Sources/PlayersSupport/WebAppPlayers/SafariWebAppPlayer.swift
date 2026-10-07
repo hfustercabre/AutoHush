@@ -104,6 +104,11 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         return await onQueue { control.muteIfPlayingAnyway(pid: pid) }
     }
 
+    package func forgetPause() async {
+        let control = control
+        await onQueue { control.forgetPause() }
+    }
+
     package func play() async throws {
         try await press(from: .paused)
     }

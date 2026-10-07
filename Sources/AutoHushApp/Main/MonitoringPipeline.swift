@@ -23,6 +23,7 @@ final class MonitoringPipeline {
         case playerState(PlayerState)
         case autoPause(Bool)
         case configuration(AppConfiguration)
+        case asleep(Bool)
     }
 
     private let arbiter: PlaybackArbiter
@@ -94,6 +95,7 @@ final class MonitoringPipeline {
                     case .playerState(let state): await arbiter.handlePlayerStateChange(state)
                     case .autoPause(let enabled):  await arbiter.setAutoPauseEnabled(enabled)
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
+                    case .asleep(let asleep): await arbiter.setAsleep(asleep)
                     }
                 }
             },
@@ -139,6 +141,11 @@ final class MonitoringPipeline {
 
     func setAutoPauseEnabled(_ enabled: Bool) {
         arbiterCommands.yield(.autoPause(enabled))
+    }
+
+    /// The Mac goes to sleep, or woke up: see `PlaybackArbiter.setAsleep`.
+    func setAsleep(_ asleep: Bool) {
+        arbiterCommands.yield(.asleep(asleep))
     }
 
     /// Applies new timings and thresholds live.

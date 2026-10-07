@@ -64,6 +64,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     private var pausedByUs = false
     private var isShutDown = false
+    /// While the Mac sleeps, nothing is paused or resumed (see `setAsleep`).
+    private var isAsleep = false
+    /// A pause held when the Mac went to sleep, forgotten: the player is
+    /// told once the Mac is awake.
+    private var forgotPauseInSleep = false
     private var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     private var playsLocally = true
@@ -80,7 +85,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private var pauseTask: Task<Void, Never>?
 
     /// A resume is retried this often, this far apart, while the player does
-    /// not answer: a timed-out query is not the user changing the player.
+    /// not answer, or doesn't do what it was told (a page that didn't follow
+    /// its Play button): a timed-out query is not the user changing the player.
     package static let resumeRetries = 2
     package static let resumeRetryDelay: TimeInterval = 1
     /// Once auto-pause is back on, the pause for apps already playing waits
@@ -124,6 +130,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingPause() // this app pauses the music now
             activeSources.insert(sourceID)
             logActiveSources(after: "+\(sourceID)")
+            guard !isAsleep else {
+                publishPlaybackState()
+                return
+            }
             // The music may be coming back up after a cancelled fade-out: stop
             // that, so the pause in progress fades out again.
             if isFadingOut { await fader.stopComeback() }
@@ -131,7 +141,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
         } else {
             activeSources.remove(sourceID)
             logActiveSources(after: "-\(sourceID)")
-            if activeSources.isEmpty {
+            if isAsleep {
+                publishPlaybackState()
+            } else if activeSources.isEmpty {
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
                 scheduleResume(after: nil)
@@ -169,6 +181,33 @@ package actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingResume()
             if isFadingOut { await fader.cancel() }
             if pausedByUs { scheduleResume(after: nil) }
+        }
+        publishPlaybackState()
+    }
+
+    /// The Mac goes to sleep (`true`) or is awake again (`false`).
+    ///
+    /// The other apps' sound stops as the Mac falls asleep, which isn't them
+    /// ending: a pause AutoHush holds is forgotten, so the music stays paused
+    /// after waking, as music players keep it after a sleep. While asleep
+    /// nothing is paused or resumed (a web page can't be pressed then); once
+    /// awake, apps playing pause the music as usual.
+    package func setAsleep(_ asleep: Bool) async {
+        guard !isShutDown, asleep != isAsleep else { return }
+        isAsleep = asleep
+        if asleep {
+            cancelPendingPause()
+            cancelPendingResume()
+            if pausedByUs {
+                pausedByUs = false
+                forgotPauseInSleep = true
+                logger.debug("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
+            }
+        } else {
+            logger.debug("[arbiter] the Mac is awake")
+            if forgotPauseInSleep, let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
+            forgotPauseInSleep = false
+            if autoPauseEnabled, !activeSources.isEmpty { startPause() }
         }
         publishPlaybackState()
     }
@@ -307,7 +346,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     private func pauseMusicIfNeeded() async {
-        guard autoPauseEnabled else { return }
+        guard autoPauseEnabled, !isAsleep else { return }
         guard playsLocally else {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
             return
@@ -380,7 +419,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     private func resumeIfStillPending(id: UUID, retriesLeft: Int) async {
-        guard pendingResumeID == id, !isShutDown else { return }
+        guard pendingResumeID == id, !isShutDown, !isAsleep else { return }
         // With auto-pause off, music we paused comes back even while others play.
         guard activeSources.isEmpty || !autoPauseEnabled else { return }
         guard pausedByUs else {
@@ -420,6 +459,12 @@ package actor PlaybackArbiter: PlaybackArbiting {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) resumed")
         } catch {
             logger.error("[arbiter] resume failed: \(error.localizedDescription, privacy: .public)")
+            // Still ours to resume, unless something called it off meanwhile.
+            if retriesLeft > 0, !isShutDown, !isAsleep, pendingResumeID == nil,
+               activeSources.isEmpty || !autoPauseEnabled {
+                pausedByUs = true
+                scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
+            }
         }
         publishPlaybackState()
     }

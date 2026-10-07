@@ -73,6 +73,9 @@ final class WebAppControl: @unchecked Sendable {
         case pressIgnored
         /// Its button said it was paused while it could be heard (an ad).
         case playsAnyway
+        /// AutoHush no longer holds the pause (the Mac slept): lifted once
+        /// the page is paused for real, or silent.
+        case forgotten
     }
 
     /// The web app muted in place of a pause, by its pid.
@@ -187,7 +190,7 @@ final class WebAppControl: @unchecked Sendable {
     /// measured, since a page keeps its output open, silent, for seconds
     /// after a pause.
     func muteIfPlayingAnyway(pid: pid_t) -> Bool {
-        if let muted { return muted.pid == pid }
+        if let muted { return muted.pid == pid && muted.reason != .forgotten }
         guard mayMute(), learner == nil, [.paused, .stopped].contains(state(pid: pid)),
               page.isPlayingSound(pid: pid) else { return false }
         guard levelProbe.isAudible(appPID: pid) else {
@@ -195,6 +198,14 @@ final class WebAppControl: @unchecked Sendable {
             return false
         }
         return mute(pid: pid, reason: .playsAnyway)
+    }
+
+    /// AutoHush no longer holds the pause a mute stands in for (the Mac
+    /// slept): the web app stays muted only until it's paused for real, or
+    /// silent, and isn't played again.
+    func forgetPause() {
+        guard let muted else { return }
+        self.muted = (muted.pid, .forgotten)
     }
 
     /// Lifts a mute, without playing anything: monitoring stops.
@@ -222,12 +233,23 @@ final class WebAppControl: @unchecked Sendable {
     /// is over, the music plays), pauses it for real and lifts the mute, so
     /// playing it later goes on from there. A press that doesn't take leaves
     /// it muted, as for any press ignored.
+    ///
+    /// A pause AutoHush no longer holds (`.forgotten`) keeps it muted only
+    /// while that can still end in a real pause: the mute is lifted once the
+    /// page is silent, and when a press fails.
     private func pauseOnceItCan(pid: pid_t) {
-        guard let recipe, case .found(let found) = lookup(recipe, pid: pid, now: clock()),
-              found.isEnabled, recipe.state(of: found) == .playing else { return }
-        guard page.press(found.handle) else { return }
+        guard let recipe, case .found(let found) = lookup(recipe, pid: pid, now: clock()) else { return }
+        let forgotten = muted?.reason == .forgotten
+        guard found.isEnabled, recipe.state(of: found) == .playing else {
+            if forgotten, !page.isPlayingSound(pid: pid) { releaseMute() }
+            return
+        }
+        guard page.press(found.handle) else {
+            if forgotten { releaseMute() }
+            return
+        }
         guard follows(found.handle, recipe: recipe, from: .playing) else {
-            muted = (pid, .pressIgnored)
+            if forgotten { releaseMute() } else { muted = (pid, .pressIgnored) }
             return
         }
         logger.notice("\(self.name, privacy: .public) can be paused now: paused, and no longer muted")
