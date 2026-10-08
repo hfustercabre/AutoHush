@@ -89,8 +89,10 @@ package protocol LearningMusicPlayer: MusicPlayer {
     /// since it played.
     func markPaused() async -> LearningMark
     /// The pause didn't come within `LearningStatus.pauseWait`: it waits to be
-    /// told it plays again.
-    func restartLearning() async
+    /// told it plays again. `false` when it wasn't waiting for the pause any
+    /// more (It's Paused came at the last moment).
+    @discardableResult
+    func restartLearning() async -> Bool
 }
 
 /// What came of the user telling a learning player it plays, or was paused.

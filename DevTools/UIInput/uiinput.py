@@ -21,7 +21,9 @@ class Point(ctypes.Structure):
 quartz.CGEventCreateMouseEvent.restype = ctypes.c_void_p
 quartz.CGEventCreateMouseEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, Point, ctypes.c_uint32]
 quartz.CGEventCreateScrollWheelEvent.restype = ctypes.c_void_p
-quartz.CGEventCreateScrollWheelEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int32]
+# Variadic (the wheels follow the count): only the fixed arguments are declared,
+# so ctypes passes the wheel as a variadic argument, as arm64 needs.
+quartz.CGEventCreateScrollWheelEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32]
 quartz.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
 quartz.CFRelease.argtypes = [ctypes.c_void_p]
 
@@ -60,7 +62,7 @@ def scroll(x, y, lines):
     time.sleep(0.2)
     step = -1 if lines < 0 else 1
     for _ in range(abs(lines)):
-        post(quartz.CGEventCreateScrollWheelEvent(None, 1, 1, step * 3))  # 1: line units, 1 wheel
+        post(quartz.CGEventCreateScrollWheelEvent(None, 1, 1, ctypes.c_int32(step * 3)))  # 1: line units, 1 wheel
         time.sleep(0.05)
 
 

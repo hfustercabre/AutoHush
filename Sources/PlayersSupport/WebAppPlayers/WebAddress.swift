@@ -29,11 +29,11 @@ package enum WebAddress {
     /// Whether the page shown is the site at `typed`, rather than another
     /// one asking something first: the same host (with or without "www."),
     /// a part of the site (listen.tidal.com for tidal.com), or the same
-    /// service in another country (music.amazon.es for music.amazon.com: the
-    /// same first two parts, then only a country's ending, such as "es" or
-    /// "co.uk": parts of three letters at most, two parts at most). Another part of the same domain is another site
-    /// (consent.youtube.com for music.youtube.com, accounts.spotify.com for
-    /// open.spotify.com). Without hosts to compare, it counts as the site.
+    /// service in another place (music.amazon.es for music.amazon.com: the
+    /// same first two parts, then only a place's ending, see `isPlaceEnding`).
+    /// Another part of the same domain is another site (consent.youtube.com
+    /// for music.youtube.com, accounts.spotify.com for open.spotify.com).
+    /// Without hosts to compare, it counts as the site.
     package static func isSameSite(_ shown: URL, as typed: URL) -> Bool {
         guard let shownHost = shown.host(), !shownHost.isEmpty, let typedHost = typed.host() else { return true }
         let page = siteHost(shownHost)
@@ -41,10 +41,35 @@ package enum WebAddress {
         if page == site || page.hasSuffix("." + site) { return true }
         let pageParts = page.split(separator: ".")
         let siteParts = site.split(separator: ".")
-        let isCountryEnding: ([Substring]) -> Bool = { $0.count <= 2 && $0.allSatisfy { $0.count <= 3 } }
         return pageParts.count >= 3 && siteParts.count >= 3 && pageParts.prefix(2) == siteParts.prefix(2)
-            && isCountryEnding(Array(pageParts.dropFirst(2))) && isCountryEnding(Array(siteParts.dropFirst(2)))
+            && isPlaceEnding(pageParts.dropFirst(2)) && isPlaceEnding(siteParts.dropFirst(2))
     }
+
+    /// Whether a host ends the way a service's sites for different places
+    /// do: com, a country's code (es, de), the same after co or com (co.uk,
+    /// com.br), or the ending of a region, nation or city (`placeEndings`:
+    /// cat for Catalonia, berlin). Not any short ending (bad.co), nor an IP
+    /// address.
+    static func isPlaceEnding(_ labels: ArraySlice<Substring>) -> Bool {
+        let isCountry: (Substring) -> Bool = { $0.count == 2 && $0.allSatisfy { $0.isASCII && $0.isLetter } }
+        guard let last = labels.last else { return false }
+        switch labels.count {
+        case 1: return last == "com" || isCountry(last) || placeEndings.contains(String(last))
+        case 2: return ["co", "com"].contains(labels.first!) && isCountry(last)
+        default: return false
+        }
+    }
+
+    /// Internet endings that stand for a place rather than a country: regions,
+    /// nations and cultures, then cities.
+    static let placeEndings: Set<String> = [
+        "cat", "eus", "gal", "bzh", "scot", "wales", "cymru", "quebec", "bayern", "nrw", "ruhr", "saarland",
+        "tirol", "alsace", "corsica", "frl", "vlaanderen", "swiss", "tatar", "krd", "africa", "asia", "lat", "arab",
+        "berlin", "hamburg", "koeln", "cologne", "wien", "london", "paris", "amsterdam", "barcelona", "bcn",
+        "madrid", "brussels", "gent", "zuerich", "stockholm", "helsinki", "budapest", "moscow", "istanbul", "ist",
+        "tokyo", "kyoto", "nagoya", "okinawa", "osaka", "yokohama", "ryukyu", "taipei", "sydney", "melbourne",
+        "capetown", "durban", "joburg", "nyc", "boston", "miami", "vegas", "rio", "abudhabi", "dubai", "doha",
+    ]
 
     /// Asks the site once whether it answers, without cookies or a cache
     /// (an ephemeral session). Any answer counts but "not found"; a site

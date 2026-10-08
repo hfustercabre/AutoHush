@@ -87,9 +87,10 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         return await onQueue { control.notePaused(pid: pid) }
     }
 
-    package func restartLearning() async {
+    @discardableResult
+    package func restartLearning() async -> Bool {
         let control = control
-        await onQueue { control.restartLearning() }
+        return await onQueue { control.restartLearning() }
     }
 
     package nonisolated func allowTaps(_ allowed: Bool) {

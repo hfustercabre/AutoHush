@@ -140,12 +140,12 @@ final class WebAppControl: @unchecked Sendable {
 
     /// The state, for the observer that reads it about once a second: while
     /// the web app is silent and its button last said it isn't playing (or
-    /// couldn't be found), with nothing to learn and nothing muted, that's
-    /// reused for `quietReadInterval`. Before deciding, AutoHush reads `state`
-    /// afresh.
+    /// couldn't be found, or it's learning and isn't heard), with nothing
+    /// muted, that's reused for `quietReadInterval`. Before deciding,
+    /// AutoHush reads `state` afresh.
     func polledState(pid: pid_t) -> PlayerState {
         if let lastRead, lastRead.pid == pid, [.paused, .stopped, .unknown].contains(lastRead.state),
-           muted == nil, learner == nil,
+           muted == nil,
            clock().timeIntervalSince(lastRead.at) < Self.quietReadInterval,
            !page.isPlayingSound(pid: pid) {
             return lastRead.state
@@ -180,12 +180,12 @@ final class WebAppControl: @unchecked Sendable {
             }
         }
         guard learner != nil else { return hasWindow ? .unknown : .stopped }
-        // Learning needs no look at the page until the user says so; whether
-        // it has a window is enough (known already when it looked for the
-        // button).
+        // Learning needs no look at the page until the user says so. Heard,
+        // it plays; silent, whether it has a window is enough (known already
+        // when it looked for the button).
+        if page.isPlayingSound(pid: pid) { return .playing }
         if recipe == nil { hasWindow = windowShows(pid: pid, now: now) }
-        guard hasWindow else { return .stopped }
-        return page.isPlayingSound(pid: pid) ? .playing : .paused
+        return hasWindow ? .paused : .stopped
     }
 
     /// Presses the button if the music is in `state`; does nothing if it's
@@ -314,23 +314,24 @@ final class WebAppControl: @unchecked Sendable {
         return .noted
     }
 
-    /// The page's buttons, unless it has no window or too few buttons with
-    /// words to tell them apart: a window macOS restores at login can show
-    /// its buttons without their words (measured in the VM).
+    /// The page's buttons, unless it has no window or none of its buttons
+    /// has words: a window macOS restores at login can show its buttons
+    /// without their words (measured in the VM). A small page with a few
+    /// named buttons is read.
     private func readablePage(pid: pid_t) -> [PageButton]? {
-        guard let buttons = page.buttons(pid: pid),
-              buttons.count(where: { !$0.label.isEmpty }) >= Self.loadedPageButtons else { return nil }
+        guard let buttons = page.buttons(pid: pid), buttons.contains(where: { !$0.label.isEmpty }) else { return nil }
         return buttons
     }
 
     /// The pause didn't come in time: back to waiting for the user to say it
-    /// plays.
-    func restartLearning() {
-        guard var learner, learner.hasPlayed else { return }
+    /// plays. `false` when it wasn't waiting for the pause.
+    func restartLearning() -> Bool {
+        guard var learner, learner.hasPlayed else { return false }
         learner.forgetPlaying()
         self.learner = learner
         logger.notice("\(self.name, privacy: .public) wasn't paused within a minute: learning starts over")
         status.send(.learning(hasPlayed: false))
+        return true
     }
 
     /// Lifts a mute, without playing anything: monitoring stops.

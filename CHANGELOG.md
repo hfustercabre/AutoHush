@@ -20,6 +20,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   button to allow it as the learning window.
 - **Adding a web app after answering a site's question left its Safari tab
   open.** The tab is now closed, as for any other site.
+- **Add a Web App could take another website for the one you typed** when
+  their addresses began the same way and ended in short parts
+  (music.amazon.bad.co for music.amazon.com). Now only another country's
+  ending (es, co.uk, com.br) or a region's or city's (cat, berlin) counts as
+  the same service's site.
 
 ## [0.8.5] — 2026-10-08
 

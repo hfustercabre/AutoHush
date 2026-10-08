@@ -84,6 +84,10 @@ package final class SafariWebAppMaker: WebAppMaking {
 
         let site = url.host() ?? url.absoluteString
         var asking: String?
+        // The tab to close once added: the one opened, or, once the site
+        // asked something first, the page it then showed in it (answering
+        // loads another page). Never a tab the user moves to later.
+        var addedTab = tab
         while true {
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) {
                 let host = shown.host() ?? shown.absoluteString
@@ -96,6 +100,7 @@ package final class SafariWebAppMaker: WebAppMaking {
                 try Task.checkCancellation()
                 continue
             }
+            if asking != nil, let shown = await safari.frontTab() { addedTab = shown }
             asking = nil
             onStep(.readyToAdd(site: site))
             guard await confirmAdd() else { throw CancellationError() }
@@ -104,9 +109,6 @@ package final class SafariWebAppMaker: WebAppMaking {
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
             break
         }
-        // Answering the site's question loaded another page in the tab: it's
-        // the one shown now that's closed afterwards.
-        let addedTab = await safari.frontTab() ?? tab
         onStep(.adding)
 
         guard let suggested = await safari.addToDock(url) else {

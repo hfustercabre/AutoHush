@@ -32,6 +32,8 @@ actor MockLearningPlayer: LearningMusicPlayer {
         var listeners: [AsyncStream<LearningStatus>.Continuation] = []
         var learnAgainCount = 0
         var restartCount = 0
+        /// It's Paused comes as the minute ends: learned instead of restarted.
+        var learnedAtTheLastMoment = false
         /// What It's Playing and It's Paused answer; `.noted` moves it on.
         var playingMark = LearningMark.noted
         var pausedMark = LearningMark.noted
@@ -99,9 +101,19 @@ actor MockLearningPlayer: LearningMusicPlayer {
         return mark
     }
 
-    func restartLearning() async {
+    func restartLearning() async -> Bool {
+        if state.withLock({ $0.learnedAtTheLastMoment }) {
+            set(.learned)
+            try? await Task.sleep(for: .milliseconds(50)) // the app hears of it first
+            return false
+        }
         state.withLock { $0.restartCount += 1 }
         set(.learning(hasPlayed: false))
+        return true
+    }
+
+    nonisolated func learnAtTheLastMoment() {
+        state.withLock { $0.learnedAtTheLastMoment = true }
     }
 
     func verifyControlAccess() async throws { throw MusicPlayerError.accessibilityPermissionDenied }

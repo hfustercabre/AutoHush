@@ -96,11 +96,12 @@ struct SafariWebAppMakerTests {
     func makesOne() async throws {
         let setup = Setup()
         setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        setup.safari.frontTabPage.withLock { $0 = 3 } // the user's own tab of the site, gone to meanwhile
         let made = try await setup.make("play.qobuz.com")
         #expect(made == MadeWebApp(bundleID: Self.made.bundleID, name: "Qobuz", url: Self.made.url, alreadyThere: false))
         #expect(setup.checked.value == [URL(string: "https://play.qobuz.com")!])
         #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "page", "click Add to Dock", "page",
-                                           "front tab", "add https://play.qobuz.com", "close tab 1"])
+                                           "add https://play.qobuz.com", "close tab 1"])
         #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
     }
 
@@ -120,7 +121,7 @@ struct SafariWebAppMakerTests {
                                       .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
         #expect(setup.clock.now.timeIntervalSince(start) >= 2 * SafariWebAppMaker.siteCheckInterval)
         #expect(setup.clicks.value == 1)
-        #expect(setup.safari.log.value.last == "close tab 2") // the tab as it is now
+        #expect(setup.safari.log.value.last == "close tab 2") // the tab the site then showed in
     }
 
     @Test("nothing is added until the user clicks Add to Dock; cancelling instead adds nothing")
@@ -158,6 +159,12 @@ struct SafariWebAppMakerTests {
             ("https://play.qobuz.com", "https://play.qobuz.com.example.net/", false),
             ("https://music.amazon.com", "https://music.amazon.evil.co/", false),
             ("https://music.amazon.com", "https://music.amazon.com.br/", true),
+            ("https://music.amazon.com", "https://music.amazon.co.uk/", true),
+            ("https://music.amazon.de", "https://music.amazon.com/", true),
+            ("https://radio.example.com", "https://radio.example.cat/", true),
+            ("https://music.amazon.com", "https://music.amazon.bad.co/", false),
+            ("https://music.amazon.com", "https://music.amazon.org/", false),
+            ("http://192.168.1.10", "http://192.168.1.20/", false),
           ])
     func sameSite(typed: String, shown: String, expected: Bool) {
         #expect(WebAddress.isSameSite(URL(string: shown)!, as: URL(string: typed)!) == expected)
@@ -285,8 +292,8 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// The front page's address at each look, the last one staying; none:
     /// it can't be read.
     let pages = Locked<[URL]>([])
-    /// The tab in front at the add: the same one, unless the test says
-    /// the page changed (`frontTabPage`).
+    /// The tab in front once the site shows after asking something: the same
+    /// one, unless the test says the page changed (`frontTabPage`).
     let frontTabPage = Locked<Int>(1)
     func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(page: frontTabPage.value) }
 

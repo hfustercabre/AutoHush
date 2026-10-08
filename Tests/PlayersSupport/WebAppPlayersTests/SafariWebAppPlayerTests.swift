@@ -150,6 +150,33 @@ struct SafariWebAppPlayerTests {
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
     }
 
+    @Test("a small page, with only a few buttons that have words, can be learned")
+    func smallPage() async {
+        let setup = Setup()
+        setup.page.sound = true
+        setup.page.buttonsByNumber = [1: .init(label: "Pause", place: Places.playerBar),
+                                      2: .init(label: "Volume", place: Places.playerBar),
+                                      3: .init(label: "", place: Places.main)]
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.page.set(1, label: "Play")
+        #expect(await setup.player.markPaused() == .noted)
+        #expect(setup.player.learningStatus == .learned)
+    }
+
+    @Test("while it learns, the observer's silent reads are reused, and a web app that's heard plays without a look for windows")
+    func polledWhileLearning() async {
+        let setup = Setup()
+        #expect(await setup.player.polledPlayerState() == .paused)
+        let looks = setup.page.windowLooks
+        setup.clock.advance(1)
+        #expect(await setup.player.polledPlayerState() == .paused)
+        #expect(setup.page.windowLooks == looks) // silent: the last state
+        setup.page.sound = true
+        #expect(await setup.player.polledPlayerState() == .playing)
+        #expect(setup.page.windowLooks == looks) // heard: it plays
+        #expect(setup.page.looks == 0)
+    }
+
     @Test("while it learns, a web app without a window is stopped, and windows aren't looked for again for a while")
     func learningWithoutWindow() async {
         let setup = Setup()
@@ -180,8 +207,9 @@ struct SafariWebAppPlayerTests {
         setup.page.set(1, label: "Pause")
         _ = await setup.player.markPlaying()
         #expect(setup.player.learningStatus == .learning(hasPlayed: true))
-        await setup.player.restartLearning()
+        #expect(await setup.player.restartLearning())
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
+        #expect(await setup.player.restartLearning() == false) // nothing to start over
         setup.page.set(1, label: "Play")
         #expect(await setup.player.markPaused() == .notLearning)
     }

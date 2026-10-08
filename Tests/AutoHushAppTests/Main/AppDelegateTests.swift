@@ -379,6 +379,24 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("It's Paused as the minute ends: learned, and nothing says the minute went by")
+    func learningPausedAtTheLastMoment() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        sut.chooseMusicPlayer(webApp.bundleID)
+        webApp.learnAtTheLastMoment()
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learning == .learned }
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(webApp.restartCount == 0)
+        #expect(sut.status.learningNote == nil)
+    }
+
+    @MainActor
     @Test("without It's Paused in time, learning starts over and says why")
     func learningPauseTimesOut() async {
         let scratch = Scratch()
