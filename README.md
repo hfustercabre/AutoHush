@@ -469,7 +469,7 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 |---|---|
 | `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
-| `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`: a drag-to-Applications window in AutoHush's colours, with a first-launch note, drawn by `Scripts/lib/dmg-background.swift`. Laying out the window scripts Finder (asks once for permission); `PLAIN_DMG=1` skips it |
+| `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`: a drag-to-Applications window in AutoHush's colours, with a first-launch note, drawn by `Scripts/lib/dmg-background.swift` and laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild) (`Scripts/lib/dmg-settings.py`), without Finder. dmgbuild is installed on first use into `.build/`, pinned and hash-checked (`Scripts/lib/dmgbuild-requirements.txt`); it needs Python 3.10 or later (`PYTHON` picks one) |
 | `Scripts/release.sh <version>` | Prepares a release: version and changelog, tests, signed build, DMG and release notes. It refuses unsigned builds and never commits, tags or publishes |
 | `Scripts/update-tap.sh <version>` | Points the Homebrew tap at a published release: checks that the DMG on GitHub is the one in `dist/`, then commits the new version and checksum to the tap's cask and pushes it |
 

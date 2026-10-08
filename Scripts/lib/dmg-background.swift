@@ -3,7 +3,7 @@
 // launch, on the lavender of the light app icon.
 //
 // Built together with the app's MenuBarIcon.swift, so the mark is the real
-// menu bar icon (see build-dmg.sh):
+// menu bar icon (see Scripts/build-dmg.sh):
 //   swiftc -parse-as-library Sources/AutoHushApp/MenuBar/MenuBarIcon.swift \
 //       Scripts/lib/dmg-background.swift -o dmg-background
 //   dmg-background <output.png> <scale>
@@ -11,7 +11,7 @@
 // The window is 640 × 480 points; scale 2 renders it for Retina displays.
 // Everything sits in the top 400 points: the rest is room for Finder's tab
 // and path bars, which some people show in every window. Icon centres (in
-// points, from the top left) must match build-dmg.sh.
+// points, from the top left) must match Scripts/lib/dmg-settings.py.
 import AppKit
 
 @main

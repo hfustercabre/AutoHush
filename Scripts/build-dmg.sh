@@ -7,27 +7,42 @@
 # Usage: bash Scripts/build-dmg.sh [version]
 # Environment:
 #   SKIP_BUILD=1      package the existing AutoHush.app instead of rebuilding it
-#   PLAIN_DMG=1       skip the window layout (no Finder scripting, e.g. on CI)
+#   PYTHON            the Python (3.10 or later) for dmgbuild, if python3 is older
 #   SIGNING_IDENTITY, SIGNING_KEYCHAIN, BUILD_NUMBER  passed through to build-app.sh
 #
-# The window layout is set by scripting Finder, so the first run asks for
-# permission to control Finder. If that fails, a plain DMG is built instead.
+# dmgbuild (https://github.com/dmgbuild/dmgbuild) builds the image and writes
+# its window layout (Scripts/lib/dmg-settings.py) without Finder. It's
+# installed on first use into .build/, pinned by Scripts/lib/dmgbuild-requirements.txt.
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
 VERSION="${1:-$(plist_value "$INFO_PLIST" CFBundleShortVersionString)}"
 DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 
-# Window geometry in points; icon centres must match Scripts/lib/dmg-background.swift.
-# The bottom 80 points are room for Finder's tab and path bars.
-WINDOW_WIDTH=640
-WINDOW_HEIGHT=480
-APP_ICON_POSITION="170, 200"
-APPLICATIONS_POSITION="470, 200"
-ICON_SIZE=112
-# The volume's own files go below the window, out of sight for people who
-# show hidden files.
-HIDDEN_ITEMS_TOP=640
+# The window's layout, icon places included, is in Scripts/lib/dmg-settings.py.
+DMG_SETTINGS="$PROJECT_DIR/Scripts/lib/dmg-settings.py"
+DMGBUILD_REQUIREMENTS="$PROJECT_DIR/Scripts/lib/dmgbuild-requirements.txt"
+
+# Prints the path of dmgbuild, installing it first if needed: into a Python
+# environment of its own in .build/, from the pinned, hash-checked files.
+dmgbuild_tool() {
+    local venv="$PROJECT_DIR/.build/dmgbuild-$(shasum -a 256 "$DMGBUILD_REQUIREMENTS" | cut -c1-12)"
+    if [[ ! -x "$venv/bin/dmgbuild" ]]; then
+        local python="" candidate
+        for candidate in "${PYTHON:-}" python3 /opt/homebrew/bin/python3; do
+            [[ -n "$candidate" ]] && command -v "$candidate" >/dev/null || continue
+            "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null && { python="$candidate"; break; }
+        done
+        [[ -n "$python" ]] || fail "dmgbuild needs Python 3.10 or later: install one, or set PYTHON"
+        note "installing dmgbuild into $(basename "$venv")" >&2
+        rm -rf "${venv:?}"
+        "$python" -m venv "$venv" >&2 &&
+            "$venv/bin/pip" install --quiet --disable-pip-version-check --require-hashes \
+                -r "$DMGBUILD_REQUIREMENTS" >&2 ||
+            fail "couldn't install dmgbuild"
+    fi
+    echo "$venv/bin/dmgbuild"
+}
 
 if [[ "${SKIP_BUILD:-0}" != 1 ]]; then
     VERSION="$VERSION" bash "$PROJECT_DIR/Scripts/build-app.sh" release
@@ -36,128 +51,28 @@ fi
 codesign --verify --strict "$APP_BUNDLE" || fail "$APP_BUNDLE is not validly signed"
 
 step "Creating $(basename "$DMG_PATH")"
+DMGBUILD="$(dmgbuild_tool)"
 WORK="$(mktemp -d)"
-DEVICE=""
-cleanup() {
-    [[ -n "$DEVICE" ]] && diskutil eject "$DEVICE" >/dev/null 2>&1 || true
-    rm -rf "$WORK"
-}
-trap cleanup EXIT
+trap 'rm -rf "${WORK:?}"' EXIT
 
-STAGING="$WORK/$APP_NAME"
-mkdir -p "$STAGING"
-ditto "$APP_BUNDLE" "$STAGING/$APP_NAME.app"
-ln -s /Applications "$STAGING/Applications"
+note "drawing the window background"
+# Built with the app's menu bar icon, which the background shows.
+swiftc -O -parse-as-library "$PROJECT_DIR/Sources/AutoHushApp/MenuBar/MenuBarIcon.swift" \
+    "$PROJECT_DIR/Scripts/lib/dmg-background.swift" -o "$WORK/dmg-background"
+"$WORK/dmg-background" "$WORK/background.png" 1
+"$WORK/dmg-background" "$WORK/background@2x.png" 2
+tiffutil -cathidpicheck "$WORK/background.png" "$WORK/background@2x.png" \
+    -out "$WORK/background.tiff" >/dev/null 2>&1
 
-styled=0
-if [[ "${PLAIN_DMG:-0}" != 1 ]]; then
-    note "drawing the window background"
-    mkdir "$STAGING/.background"
-    # Built with the app's menu bar icon, which the background shows.
-    swiftc -O -parse-as-library "$PROJECT_DIR/Sources/AutoHushApp/MenuBar/MenuBarIcon.swift" \
-        "$PROJECT_DIR/Scripts/lib/dmg-background.swift" -o "$WORK/dmg-background"
-    "$WORK/dmg-background" "$WORK/background.png" 1
-    "$WORK/dmg-background" "$WORK/background@2x.png" 2
-    tiffutil -cathidpicheck "$WORK/background.png" "$WORK/background@2x.png" \
-        -out "$STAGING/.background/background.tiff" >/dev/null 2>&1
-    styled=1
-fi
-
+note "building the image and laying out its window"
 mkdir -p "$DIST_DIR"
 rm -f "$DMG_PATH"
-diskutil image create from --format UDZO --volumeName "$APP_NAME" "$STAGING" "$WORK/plain.dmg" >/dev/null 2>&1
-
-# Lays out the Finder window of the volume mounted at $1. Finder saves the
-# layout in the volume's .DS_Store, which travels with the image.
-layout_window() {
-    osascript - "$1" <<APPLESCRIPT
-on run argv
-    set volumePath to item 1 of argv
-    set volumeName to name of (info for (POSIX file volumePath as alias))
-    tell application "Finder"
-        -- Finder lists a disk only a moment after it's mounted (-1728 before).
-        repeat 20 times
-            if exists disk volumeName then exit repeat
-            delay 0.5
-        end repeat
-        set theVolume to disk volumeName
-        open theVolume
-        set theWindow to container window of theVolume
-        set current view of theWindow to icon view
-        set toolbar visible of theWindow to false
-        set statusbar visible of theWindow to false
-        set sidebar width of theWindow to 0
-        -- Bounds include the title bar; the content area is the background's size.
-        set {leftEdge, topEdge} to {200, 120}
-        set bounds of theWindow to {leftEdge, topEdge, leftEdge + $WINDOW_WIDTH, topEdge + $WINDOW_HEIGHT + 28}
-        set viewOptions to icon view options of theWindow
-        set arrangement of viewOptions to not arranged
-        set icon size of viewOptions to $ICON_SIZE
-        set text size of viewOptions to 13
-        set label position of viewOptions to bottom
-        set background picture of viewOptions to file ".background:background.tiff" of theVolume
-        set position of item "$APP_NAME.app" of theVolume to {$APP_ICON_POSITION}
-        set position of item "Applications" of theVolume to {$APPLICATIONS_POSITION}
-        -- Only reachable while Finder shows hidden files; harmless otherwise.
-        set hiddenItems to {".background", ".fseventsd"}
-        repeat with i from 1 to count of hiddenItems
-            try
-                set position of item (item i of hiddenItems) of theVolume to {i * 160, $HIDDEN_ITEMS_TOP}
-            end try
-        end repeat
-        update theVolume without registering applications
-        delay 1
-        close theWindow
-    end tell
-end run
-APPLESCRIPT
-}
-
-# Gives the volume mounted at $1 the app's icon. Runs after layout_window,
-# whose Finder update would delete it, and parks the icon file below the
-# window like the volume's other files.
-add_volume_icon() {
-    local icns="$APP_BUNDLE/Contents/Resources/$APP_NAME.icns"
-    [[ -f "$icns" ]] || return 0
-    cp "$icns" "$1/.VolumeIcon.icns"
-    SetFile -a C "$1"
-    osascript - "$1" >/dev/null <<APPLESCRIPT || true
-on run argv
-    tell application "Finder"
-        set theVolume to disk (name of (info for (POSIX file (item 1 of argv) as alias)))
-        open theVolume
-        delay 1
-        try
-            set position of item ".VolumeIcon.icns" of theVolume to {480, $HIDDEN_ITEMS_TOP}
-        end try
-        close container window of theVolume
-    end tell
-end run
-APPLESCRIPT
-}
-
-if [[ "$styled" == 1 ]]; then
-    note "laying out the installer window (Finder may ask for permission)"
-    # Changes go to a shadow file, then are folded into the final image.
-    attach_output="$(diskutil image attach --shadow "$WORK/layout.shadow" "$WORK/plain.dmg")"
-    DEVICE="$(awk 'NR == 1 { print $1 }' <<<"$attach_output")"
-    MOUNT_POINT="$(grep -o '/Volumes/.*' <<<"$attach_output" | head -n 1)"
-    if [[ -n "$MOUNT_POINT" ]] && layout_window "$MOUNT_POINT"; then
-        add_volume_icon "$MOUNT_POINT"
-        sync
-        diskutil eject "$DEVICE" >/dev/null
-        DEVICE=""
-        diskutil image create from --format UDZO --shadow "$WORK/layout.shadow" \
-            "$WORK/plain.dmg" "$DMG_PATH" >/dev/null 2>&1
-    else
-        note "warning: could not lay out the window; building a plain DMG instead"
-        styled=0
-    fi
-fi
-if [[ "$styled" != 1 ]]; then
-    [[ -n "$DEVICE" ]] && { diskutil eject "$DEVICE" >/dev/null 2>&1 || true; DEVICE=""; }
-    mv "$WORK/plain.dmg" "$DMG_PATH"
-fi
+volume_icon="$APP_BUNDLE/Contents/Resources/$APP_NAME.icns"
+[[ -f "$volume_icon" ]] || volume_icon=""
+# dmgbuild drives hdiutil, which newer macOS calls deprecated on every use.
+"$DMGBUILD" -s "$DMG_SETTINGS" -D app="$APP_BUNDLE" -D background="$WORK/background.tiff" \
+    -D icon="$volume_icon" "$APP_NAME" "$DMG_PATH" >/dev/null 2> >(grep -v "is deprecated" >&2) ||
+    fail "dmgbuild couldn't build $(basename "$DMG_PATH")"
 
 echo ""
 echo "Done: $DMG_PATH"
