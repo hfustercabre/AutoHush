@@ -41,9 +41,10 @@ bash DevTools/TestVM/vm.sh --gui 'open -n AutoHush.app'
   through [AutoHush Loopback](../LoopbackDriver).
 - `--gui` wraps the command in `launchctl asuser 501`, the desktop user's
   session.
-- The shared folder can show a file's previous content for a few seconds
-  after it's edited on the Mac, so a run started right after an edit may
-  mirror the old one: check the mirror (with `grep`) when it matters.
+- The shared folder can show a file's previous content for minutes after
+  it's edited on the Mac, so before mirroring, `vm.sh` waits (up to a
+  minute per file) until the share shows every file edited in the last hour
+  with the size and time it has on the Mac.
 
 Signing in the VM needs the app's signing identity imported into the VM's
 keychain. For permission tests, System Integrity Protection is off in the

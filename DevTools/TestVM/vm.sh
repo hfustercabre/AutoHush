@@ -21,6 +21,24 @@ if [[ "${1:-}" == "shot" ]]; then
 fi
 if [[ "${1:-}" == "--gui" ]]; then gui=1; shift; fi
 
+# The share can show a file edited here with its old content for minutes, so
+# first wait (up to a minute) until it shows each file edited in the last hour
+# with the size and time it has here.
+PROJECT="$(cd "$(dirname "$0")/../.." && pwd)"
+recent="$(cd "$PROJECT" && find . \( -path ./.build -o -path ./.git -o -path ./AutoHush.app -o -path ./dist \
+    -o -path ./Harness/.work \) -prune -o -type f -mmin -60 -print0 | xargs -0 stat -f '%m %z %N' 2>/dev/null || true)"
+if [[ -n "$recent" ]]; then
+    printf '%s\n' "$recent" | tart exec -i "$VM" sh -c '
+        cd "/Volumes/My Shared Files/project" || exit 0
+        while read -r time size name; do
+            for i in $(seq 1 60); do
+                [ "$(stat -f "%m %z" "$name" 2>/dev/null)" = "$time $size" ] && break
+                [ "$i" = 60 ] && echo "vm.sh: the share still shows an older $name" >&2
+                sleep 1
+            done
+        done'
+fi
+
 # The project, from the VM's read-only share of the working copy; builds stay
 # on the VM's own disk.
 tart exec "$VM" rsync -a --delete \
