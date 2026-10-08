@@ -7,7 +7,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="$HERE/../../.build/loopback/AutoHushLoopback.driver"
 DEST="/Library/Audio/Plug-Ins/HAL/AutoHushLoopback.driver"
-[ -d "$SRC" ] || { echo "Build it first: bash Tools/LoopbackDriver/build.sh"; exit 1; }
+[ -d "$SRC" ] || { echo "Build it first: bash DevTools/LoopbackDriver/build.sh"; exit 1; }
 if [ -d "$DEST" ]; then sudo mv "$DEST" "$HOME/.Trash/AutoHushLoopback-$(date +%Y%m%d-%H%M%S).driver"; fi
 sudo cp -R "$SRC" "$DEST"
 sudo chown -R root:wheel "$DEST"

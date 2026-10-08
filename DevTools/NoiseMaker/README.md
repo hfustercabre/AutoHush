@@ -29,7 +29,7 @@ the VM, into `~/vmtools`):
 
 ```bash
 mkdir -p NoiseMaker.app/Contents/MacOS
-cp Tools/NoiseMaker/Info.plist NoiseMaker.app/Contents/
-swiftc -swift-version 5 -O -o NoiseMaker.app/Contents/MacOS/NoiseMaker Tools/NoiseMaker/main.swift
+cp DevTools/NoiseMaker/Info.plist NoiseMaker.app/Contents/
+swiftc -swift-version 5 -O -o NoiseMaker.app/Contents/MacOS/NoiseMaker DevTools/NoiseMaker/main.swift
 codesign --force -s - NoiseMaker.app
 ```

@@ -333,8 +333,8 @@ AutoHush (executable: the entry point only)
        │    ├─ MenuPlayers         shared by the players controlled through their playback menu
        │    └─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
        └─ AutoHushKit       the engine: no user interface, no specific player
-measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
-listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
+measure-volume-curve (developer tool, in DevTools/) → AutoHushPlayers, AutoHushKit
+listen-to-fades (developer tool, in DevTools/): records a loopback device, measures fades
 ```
 
 ```text
@@ -376,18 +376,19 @@ Sources/
                          their button, controlling them)
 Tests/                   a test module per module, mirroring its folders (only the player modules' tests
                          name a player), plus AutoHushTestSupport (shared fakes)
-Tools/MeasureVolumeCurve/   the volume-curve measuring tool (never part of the app)
-Tools/ListenToFades/     records a loopback device and measures the fades in it (never part of the app)
-Tools/LoopbackDriver/    AutoHush Loopback, a test-only virtual audio device for it, with build,
-                         install and uninstall scripts (never part of the app)
-Tools/TestVM/            runs builds, tests and apps in a macOS VM, so live tests don't disturb the Mac
-Tools/NoiseMaker/        a test app that plays a tone or a file, as "another app playing"
-Tools/PauseCheck/        in the VM, times AutoHush's pause and resume around a Noise Maker sound
-Tools/PageButtons/       lists or presses a web page's buttons by name (to drive a web app in tests)
-Tools/SoundNow/          lists the apps playing sound right now, the way AutoHush counts them
-Tools/WindowList/        lists an app's windows with their place, to check or capture one
-Tools/MemWatch/          samples a process's memory over hours (leak checks)
-                         Each of these has a README.md saying what it does and how; none is part of the app.
+DevTools/                tools for developing AutoHush, never part of the app or its disk image; each has
+                         a README.md saying what it does and how (DevTools/README.md lists them)
+  MeasureVolumeCurve/    measures a player's volume curve
+  ListenToFades/         records a loopback device and measures the fades in it
+  LoopbackDriver/        AutoHush Loopback, a test-only virtual audio device, with build, install and
+                         uninstall scripts
+  TestVM/                runs builds, tests and apps in a macOS VM, so live tests don't disturb the Mac
+  NoiseMaker/            a test app that plays a tone or a file, as "another app playing"
+  PauseCheck/            in the VM, times AutoHush's pause and resume around a Noise Maker sound
+  PageButtons/           lists or presses a web page's buttons by name (to drive a web app in tests)
+  SoundNow/              lists the apps playing sound right now, the way AutoHush counts them
+  WindowList/            lists an app's windows with their place, to check or capture one
+  MemWatch/              samples a process's memory over hours (leak checks)
 Resources/               Info.plist, entitlements, AutoHush.icon (the app icon), and Localization/ with the
                          String Catalogs, assembled into the .app by Scripts/build-app.sh
 ```
@@ -426,7 +427,7 @@ The tests use mock CoreAudio, level meter, power assertion and player implementa
 
 `measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
 
-`listen-to-fades` hears the fades the way you do. Build and install the test-only loopback device (`bash Tools/LoopbackDriver/build.sh`, then `install.sh`, which asks for an administrator's password and restarts Core Audio; `uninstall.sh` moves it to the Trash), set the Mac's sound output to "AutoHush Loopback", and record while the music fades: `swift run listen-to-fades record 90 fades.wav`. Capture AutoHush's log meanwhile (`log stream --level debug --style compact --predicate 'subsystem == "com.autohush.AutoHush"' > fades.log`: its fade lines are debug-level, which `log show` doesn't keep), then `swift run listen-to-fades analyze fades.wav --log fades.log` prints the music's level through each fade next to an ideal one, and any dropout or jump. Recording a device needs the Microphone permission; only that device is read. While "AutoHush Loopback" is the sound output, everything the Mac plays can be recorded from it like a microphone, by any app allowed to use one: switch the output back when you're done, and uninstall it once you no longer test.
+`listen-to-fades` hears the fades the way you do. Build and install the test-only loopback device (`bash DevTools/LoopbackDriver/build.sh`, then `install.sh`, which asks for an administrator's password and restarts Core Audio; `uninstall.sh` moves it to the Trash), set the Mac's sound output to "AutoHush Loopback", and record while the music fades: `swift run listen-to-fades record 90 fades.wav`. Capture AutoHush's log meanwhile (`log stream --level debug --style compact --predicate 'subsystem == "com.autohush.AutoHush"' > fades.log`: its fade lines are debug-level, which `log show` doesn't keep), then `swift run listen-to-fades analyze fades.wav --log fades.log` prints the music's level through each fade next to an ideal one, and any dropout or jump. Recording a device needs the Microphone permission; only that device is read. While "AutoHush Loopback" is the sound output, everything the Mac plays can be recorded from it like a microphone, by any app allowed to use one: switch the output back when you're done, and uninstall it once you no longer test.
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 

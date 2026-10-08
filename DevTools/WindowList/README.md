@@ -4,7 +4,7 @@ Lists one app's windows, front to back, with their number, size, position,
 whether they're on screen, and title. Read only.
 
 ```bash
-swiftc -O -o cgwins Tools/WindowList/cgwins.swift
+swiftc -O -o cgwins DevTools/WindowList/cgwins.swift
 ./cgwins AutoHush        # by app name, or by process ID
 ```
 

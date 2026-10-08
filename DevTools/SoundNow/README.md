@@ -4,7 +4,7 @@ Lists the apps playing sound right now, the way AutoHush counts them.
 Read only.
 
 ```bash
-swiftc -O -o soundnow Tools/SoundNow/soundnow.swift
+swiftc -O -o soundnow DevTools/SoundNow/soundnow.swift
 ./soundnow          # e.g. "6044 VLC", or "silent"
 ```
 

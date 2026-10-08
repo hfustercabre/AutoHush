@@ -4,7 +4,7 @@ Samples a process's memory over hours, to show whether it leaks. Read
 only.
 
 ```bash
-bash Tools/MemWatch/memwatch.sh <pid> memwatch.txt 180 60   # 3 hours, every minute
+bash DevTools/MemWatch/memwatch.sh <pid> memwatch.txt 180 60   # 3 hours, every minute
 ```
 
 Each line is the time, the physical footprint (what Activity Monitor calls

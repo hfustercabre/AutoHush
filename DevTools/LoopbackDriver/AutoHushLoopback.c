@@ -1,7 +1,7 @@
 // AutoHush Loopback: a virtual audio device for testing AutoHush, never shipped
 // with it. Whatever apps play to its output comes back on its input, so a
 // recorder hears exactly what would have reached the speakers, after macOS
-// has mixed every app and applied every tap (see Tools/ListenToFades).
+// has mixed every app and applied every tap (see DevTools/ListenToFades).
 //
 // A Core Audio server plug-in (AudioServerPlugIn.h): one device, 48 kHz
 // stereo 32-bit float, one output and one input stream sharing a ring buffer.

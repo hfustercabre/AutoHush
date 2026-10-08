@@ -4,8 +4,8 @@ Checks, in the test VM, that AutoHush pauses the music when another app
 plays and resumes it afterwards, and how long each took.
 
 ```bash
-bash Tools/PauseCheck/pause-check.sh            # 8 s of sound
-bash Tools/PauseCheck/pause-check.sh 20 440     # 20 s of a 440 Hz tone
+bash DevTools/PauseCheck/pause-check.sh            # 8 s of sound
+bash DevTools/PauseCheck/pause-check.sh 20 440     # 20 s of a 440 Hz tone
 ```
 
 Before running it, AutoHush and its music player must be running and

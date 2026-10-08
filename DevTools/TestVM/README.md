@@ -14,9 +14,9 @@ the transfer folder and prints where it is on the Mac
 (`~/Applications/Tart/transfer`, or `AUTOHUSH_VM_TRANSFER`).
 
 ```bash
-bash Tools/TestVM/vm.sh 'swift test'
-bash Tools/TestVM/vm.sh 'KEEP_PERMISSIONS=1 bash Scripts/build-app.sh'
-bash Tools/TestVM/vm.sh --gui 'open -n AutoHush.app'
+bash DevTools/TestVM/vm.sh 'swift test'
+bash DevTools/TestVM/vm.sh 'KEEP_PERMISSIONS=1 bash Scripts/build-app.sh'
+bash DevTools/TestVM/vm.sh --gui 'open -n AutoHush.app'
 ```
 
 ## How it works

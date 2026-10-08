@@ -10,7 +10,7 @@ WAIT=$(( ${SECONDS_ON%.*} + 14 ))
 
 tart exec "$VM" sh -c '
 pgrep -x AutoHush >/dev/null || { echo "AutoHush is not running in the VM"; exit 1; }
-[ -d ~/vmtools/NoiseMaker.app ] || { echo "Noise Maker is not built: run Tools/TestVM/vm.sh sync"; exit 1; }
+[ -d ~/vmtools/NoiseMaker.app ] || { echo "Noise Maker is not built: run DevTools/TestVM/vm.sh sync"; exit 1; }
 rm -f /tmp/noisemaker.log /tmp/pause-check.log
 log stream --level debug --style compact --predicate "subsystem == \"com.autohush.AutoHush\"" > /tmp/pause-check.log 2>&1 &
 stream=$!

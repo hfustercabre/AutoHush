@@ -6,7 +6,7 @@ reads them. Used in tests to play and pause a web app like a user would,
 and to answer a page (a cookie notice, for example).
 
 ```bash
-swiftc -O -o pagebuttons Tools/PageButtons/pagebuttons.swift
+swiftc -O -o pagebuttons DevTools/PageButtons/pagebuttons.swift
 ./pagebuttons "YT Music" list Reproducir Pausar       # buttons starting with these words
 ./pagebuttons "YT Music" press Pausar                 # the lowest button named exactly that
 ./pagebuttons "YT Music" press-prefix "Reproducir "   # the highest song card, say

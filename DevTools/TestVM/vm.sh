@@ -30,7 +30,7 @@ tart exec "$VM" rsync -a --delete \
 # The test tools, built in the VM outside the mirror, into ~/vmtools: a
 # command-line tool per Swift file, and the Noise Maker app. SwitchAudioSource
 # (Homebrew's switchaudio-osx) changes the sound output.
-tart exec "$VM" sh -c 'mkdir -p ~/vmtools; T='"$MIRROR"'/Tools
+tart exec "$VM" sh -c 'mkdir -p ~/vmtools; T='"$MIRROR"'/DevTools
 [ -x /opt/homebrew/bin/SwitchAudioSource ] || HOMEBREW_NO_AUTO_UPDATE=1 /opt/homebrew/bin/brew install -q switchaudio-osx >/dev/null
 for tool in SoundNow/soundnow WindowList/cgwins PageButtons/pagebuttons; do
     src="$T/$tool.swift"; bin=~/vmtools/$(basename "$tool")
