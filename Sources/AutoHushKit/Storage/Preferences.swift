@@ -30,6 +30,7 @@ package final class Preferences {
         static let lastUpdateNotice = "lastUpdateNotice"
         static let lastLaunchedVersion = "lastLaunchedVersion"
         static let pauseHandedOver = "pauseHandedOverAt"
+        static let pauseHandedOverPlayer = "pauseHandedOverPlayer"
         static let detectionMethod = "detectionMethod"
         static let playbackAssertions = "playbackAssertions"
         /// Earlier list of apps seen announcing playback, without the names
@@ -226,11 +227,26 @@ package final class Preferences {
         set { defaults.set(newValue, forKey: Key.lastLaunchedVersion) }
     }
 
-    /// When AutoHush last quit to install an update while holding the music
-    /// paused; the new version takes that pause over.
-    package var pauseHandedOverAt: Date? {
-        get { defaults.object(forKey: Key.pauseHandedOver) as? Date }
-        set { defaults.set(newValue, forKey: Key.pauseHandedOver) }
+    /// The pause AutoHush last handed over when it quit while holding the
+    /// music paused (to install an update, say); the next AutoHush takes it
+    /// over.
+    package var pauseHandover: PauseHandover? {
+        get {
+            guard let at = defaults.object(forKey: Key.pauseHandedOver) as? Date else { return nil }
+            // AutoHush 0.8.2 and earlier write the date alone and leave the
+            // player as it was: it's this pause's only if written with it.
+            let named = defaults.object(forKey: Key.pauseHandedOverPlayer) as? [String: Any]
+            let namedAt = named?["at"] as? Date
+            let isThisPause = namedAt.map { abs($0.timeIntervalSince(at)) < 1 } ?? false
+            return PauseHandover(at: at, player: isThisPause ? named?["player"] as? String : nil)
+        }
+        set {
+            defaults.set(newValue?.at, forKey: Key.pauseHandedOver)
+            let named: [String: Any]? = newValue.flatMap { handover in
+                handover.player.map { ["at": handover.at, "player": $0] }
+            }
+            defaults.set(named, forKey: Key.pauseHandedOverPlayer)
+        }
     }
 
     /// Apps that have played audio, most recent first (for Settings → Apps).

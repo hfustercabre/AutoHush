@@ -10,7 +10,11 @@ import Foundation
 ///   1. between looks, it notes every button whose words changed;
 ///   2. a change close to the moment the sound came on is a start: its new
 ///      words are the button's while the music plays;
-///   3. a change back shortly before the sound went off is a stop;
+///   3. a change back shortly before the sound went off (or just after: a
+///      page can update its words a moment late) is a stop, once the sound
+///      has stayed off a few seconds or the button changed again: music that
+///      comes back by itself (a stall, the gap between an ad and the song)
+///      wasn't paused;
 ///   4. a button with a start and a stop (in either order: the user may
 ///      pause first) is a candidate.
 /// A change back while the music plays on isn't a stop: YouTube Music turns
@@ -22,6 +26,9 @@ import Foundation
 ///   - a change while the sound is on, before the stop: with an ad first, the
 ///     bar comes saying "Play" and turns to "Pause" only once the song
 ///     itself begins, the sound on all along.
+/// The stop is the button's last change before the sound went off (else its
+/// first one just after), and gives the words: what it said before is
+/// "Pause", after is "Play".
 /// Other buttons can change too: the playing song's own ("Pause <song>"), a
 /// playlist's ("Play <playlist>"), a page's big Play. So among candidates it
 /// keeps those with the barest words (dropping "Play X" when there's a
@@ -55,6 +62,10 @@ package struct PlayPauseLearner {
     /// 7.5 s after a pause (measured on YouTube Music; Amazon Music and
     /// Spotify about 2 s).
     static let stopWindow: ClosedRange<TimeInterval> = -1.5...12
+    /// How long the sound has to stay off for a stop to count, unless the
+    /// button changes meanwhile: music that comes back by itself (a stall,
+    /// the gap between an ad and the song) wasn't paused.
+    static let stopSettle: TimeInterval = 3
     /// Changes older than this are forgotten.
     static let memory: TimeInterval = 600
     /// At most this many changes are kept: a page can change a lot of words.
@@ -72,6 +83,7 @@ package struct PlayPauseLearner {
     private var soundStarts: [Date] = []
     private var soundStops: [Date] = []
     private var soundWasOn: Bool?
+    private var lastLook: Date?
 
     package init() {}
 
@@ -84,6 +96,7 @@ package struct PlayPauseLearner {
         if soundWasOn == false, soundIsOn { soundStarts.append(now) }
         if soundWasOn == true, !soundIsOn { soundStops.append(now) }
         soundWasOn = soundIsOn
+        lastLook = now
         guard let buttons else {
             previous = [:] // its next page is new
             return
@@ -118,35 +131,58 @@ package struct PlayPauseLearner {
         soundStarts.contains { Self.startWindow.contains($0.timeIntervalSince(change.at)) }
     }
 
-    private func isNearSoundStop(_ change: Change) -> Bool {
-        soundStops.contains { Self.stopWindow.contains($0.timeIntervalSince(change.at)) }
-    }
-
-    /// Every start, oldest first: changes close to the sound coming on, or
-    /// while it was on (but not the pause itself, which the sound going off
-    /// follows), and the buttons that came with it.
-    private var starts: [Change] {
-        let changed = changes.filter { isNearSoundStart($0) || ($0.soundOn && !isNearSoundStop($0)) }
-        return (changed + arrivedStarts).sorted { $0.at < $1.at }
-    }
-
-    /// The buttons that changed (or came) at a start, and changed back at a
-    /// stop: each with its first start that has one.
-    package var candidates: [Candidate] {
-        let changesOf = Dictionary(grouping: changes, by: \.handle)
-        var found: Set<ButtonHandle> = []
-        return starts.compactMap { start in
-            guard !found.contains(start.handle) else { return nil }
-            let back = changesOf[start.handle]?.first { change in
-                change.from == start.to && (start.from.isEmpty || change.to == start.from)
-                    // A start while the sound was on comes before its stop.
-                    && (isNearSoundStart(start) || start.from.isEmpty || start.at < change.at)
-                    && isNearSoundStop(change)
-            }
-            guard let back else { return nil }
-            found.insert(start.handle)
-            return Candidate(handle: start.handle, playLabel: back.to, pauseLabel: start.to)
+    /// What may have been the button's pause, for each time the sound went
+    /// off (newest first): its last change up to `stopWindow.upperBound`
+    /// before, then its first one just after (a page can update its words a
+    /// moment late). Only stops that `settled`.
+    private func pauses(in own: [Change]) -> [Change] {
+        soundStops.reversed().filter { settled($0, own) }.flatMap { stop in
+            [
+                own.last { (0...Self.stopWindow.upperBound).contains(stop.timeIntervalSince($0.at)) },
+                own.first { (Self.stopWindow.lowerBound..<0).contains(stop.timeIntervalSince($0.at)) },
+            ].compactMap { $0 }
         }
+    }
+
+    /// Whether the sound stayed off `stopSettle` after a stop (until it came
+    /// back, or until the last look), or the button changed meanwhile: the
+    /// user paused rather than the music stopping a moment by itself.
+    private func settled(_ stop: Date, _ own: [Change]) -> Bool {
+        let end = soundStarts.first { $0 > stop } ?? lastLook ?? stop
+        return end.timeIntervalSince(stop) >= Self.stopSettle || own.contains { $0.at > stop && $0.at <= end }
+    }
+
+    /// The buttons whose pause had a matching start: the opposite change
+    /// close to the sound coming on (in either order: the user may pause
+    /// first) or while it was on before the pause, or the button coming onto
+    /// the page with the sound, saying what it said before the pause. The
+    /// pause gives the words: what it said before is the pause button's,
+    /// after is the play button's. Taking the last change before the sound
+    /// went off keeps an earlier change from passing for the pause: with an
+    /// ad first, YouTube Music's bar turns to "Pause" as the song begins,
+    /// and a pause right after would otherwise swap the words (measured).
+    package var candidates: [Candidate] {
+        let arrivalsOf = Dictionary(grouping: arrivedStarts, by: \.handle)
+        let changesOf = Dictionary(grouping: changes, by: \.handle)
+        // In the page's order, so candidates that started together keep it.
+        var seen: Set<ButtonHandle> = []
+        let handles = changes.map(\.handle).filter { seen.insert($0).inserted }
+        var found: [(candidate: Candidate, start: Date)] = []
+        for handle in handles {
+            let own = changesOf[handle] ?? []
+            for pause in pauses(in: own) {
+                let start = own.first { change in
+                    change.from == pause.to && change.to == pause.from
+                        && (isNearSoundStart(change) || (change.soundOn && change.at < pause.at))
+                } ?? arrivalsOf[handle]?.first { $0.to == pause.from && $0.at < pause.at }
+                guard let start else { continue }
+                found.append((Candidate(handle: handle, playLabel: pause.to, pauseLabel: pause.from), start.at))
+                break
+            }
+        }
+        return found.enumerated()
+            .sorted { ($0.element.start, $0.offset) < ($1.element.start, $1.offset) }
+            .map(\.element.candidate)
     }
 
     /// The candidate to keep, as a recipe: the barest words, then the lowest

@@ -137,11 +137,26 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).automaticUpdates == .download)
         #expect(Preferences(store: scratch.defaults).lastUpdateCheck == date)
 
-        #expect(preferences.pauseHandedOverAt == nil)
-        preferences.pauseHandedOverAt = date
-        #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == date)
-        preferences.pauseHandedOverAt = nil
-        #expect(Preferences(store: scratch.defaults).pauseHandedOverAt == nil)
+        #expect(preferences.pauseHandover == nil)
+        preferences.pauseHandover = PauseHandover(at: date, player: "com.example.jukebox")
+        #expect(Preferences(store: scratch.defaults).pauseHandover == PauseHandover(at: date, player: "com.example.jukebox"))
+        preferences.pauseHandover = PauseHandover(at: date, player: nil)
+        #expect(Preferences(store: scratch.defaults).pauseHandover == PauseHandover(at: date, player: nil))
+        preferences.pauseHandover = nil
+        #expect(Preferences(store: scratch.defaults).pauseHandover == nil)
+    }
+
+    @Test("a handover from AutoHush 0.8.2 or earlier names no player, even with one left from before")
+    func pauseHandoverFromAnEarlierVersion() {
+        let scratch = Scratch()
+        let preferences = Preferences(store: scratch.defaults)
+        let earlier = Date(timeIntervalSinceReferenceDate: 5_000)
+        preferences.pauseHandover = PauseHandover(at: earlier, player: "com.example.jukebox")
+        // An earlier version takes it over (clearing only the date), then hands one over itself.
+        scratch.defaults.set(nil, forKey: "pauseHandedOverAt")
+        let later = earlier.addingTimeInterval(120)
+        scratch.defaults.set(later, forKey: "pauseHandedOverAt")
+        #expect(preferences.pauseHandover == PauseHandover(at: later, player: nil))
     }
 
     @Test("the earlier 'install updates automatically' switch becomes the matching choice", arguments: [

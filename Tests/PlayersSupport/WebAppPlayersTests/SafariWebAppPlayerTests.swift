@@ -89,6 +89,9 @@ struct SafariWebAppPlayerTests {
         setup.page.sound = false
         setup.clock.advance(7)
         #expect(await setup.player.playerState() == .paused)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: true)) // unless the music comes back by itself
+        setup.clock.advance(PlayPauseLearner.stopSettle)
+        #expect(await setup.player.playerState() == .paused)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
 
@@ -112,6 +115,8 @@ struct SafariWebAppPlayerTests {
         setup.page.sound = false
         setup.clock.advance(1)
         _ = await setup.player.playerState()
+        setup.clock.advance(PlayPauseLearner.stopSettle)
+        _ = await setup.player.playerState() // the sound stayed off
         #expect(await updates.next() == .learned)
     }
 
@@ -544,6 +549,8 @@ struct SafariWebAppPlayerTests {
         setup.page.set(1, label: "Play")
         setup.page.sound = false
         setup.clock.advance(1)
+        #expect(await setup.player.playerState() == .paused)
+        setup.clock.advance(PlayPauseLearner.stopSettle)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID)?.places == [Places.fullScreen, Places.playerBar])

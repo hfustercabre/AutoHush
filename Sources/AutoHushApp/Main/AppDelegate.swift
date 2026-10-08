@@ -265,8 +265,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // A pause AutoHush is holding is handed over: an AutoHush opened next
         // (an update, another copy, a quick reopen) resumes the music once the
-        // other apps stop. Later than `pauseHandoverMaxAge`, it's ignored.
-        if status.playback == .pausedByMonitor { preferences.pauseHandedOverAt = Date() }
+        // other apps stop. Later than `pauseHandoverMaxAge`, it's ignored,
+        // and so is one for another player than the one chosen by then.
+        if status.playback == .pausedByMonitor {
+            preferences.pauseHandover = PauseHandover(at: Date(), player: player?.bundleID)
+        }
         guard let pipeline else { return .terminateNow }
         self.pipeline = nil
         var replied = false
@@ -1082,15 +1085,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Whether monitoring takes over a pause handed over by the AutoHush before
-    /// this one, at most `pauseHandoverMaxAge` before `now`. Only the first
+    /// this one, at most `pauseHandoverMaxAge` before `now`, and for the
+    /// player chosen now: the player may have changed meanwhile (one that
+    /// didn't say, from AutoHush 0.8.2 and earlier, counts). Only the first
     /// monitoring asks; it starts after other copies have quit, so their
     /// handover is in by then.
     func takesOverPause(now: Date = Date()) -> Bool {
         guard !pauseHandoverChecked else { return false }
         pauseHandoverChecked = true
-        guard let handedOver = preferences.pauseHandedOverAt else { return false }
-        preferences.pauseHandedOverAt = nil
-        return (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handedOver))
+        guard let handover = preferences.pauseHandover else { return false }
+        preferences.pauseHandover = nil
+        if let paused = handover.player, paused != player?.bundleID { return false }
+        return (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at))
     }
 
     /// A moment when AutoHush can restart for an update unnoticed: it isn't

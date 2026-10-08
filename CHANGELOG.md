@@ -5,6 +5,23 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Learning a web app's button could swap its words.** With an ad before
+  the song, pausing right as the song itself began could make AutoHush
+  learn YouTube Music's Play/Pause button with "Play" and "Pause" the wrong
+  way round, so it read the music's state backwards. The words now come
+  from the pause itself: the button's last change before the sound went
+  off. A moment of silence the music comes back from by itself (a stall
+  after the ad) no longer counts as the pause either.
+- **A pause handed over at a restart could resume the wrong player.** When
+  AutoHush quits while holding the music paused (an update, a reopen), the
+  next AutoHush resumes it once the other apps stop. If the music player
+  was changed in between, it resumed the newly chosen one, which wasn't
+  paused. The handover now names the player, and only that one is resumed.
+
 ## [0.8.2] — 2026-10-07
 
 ### Fixed

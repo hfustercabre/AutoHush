@@ -782,7 +782,7 @@ struct AppDelegateTests {
         #expect(sut.status.playback == .unknown)
         #expect(sut.status.detection == .pending)
         #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
-        #expect(scratch.preferences.pauseHandedOverAt == nil)
+        #expect(scratch.preferences.pauseHandover == nil)
     }
 
     // MARK: - Permissions in the windows
@@ -1129,16 +1129,43 @@ struct AppDelegateTests {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
         // Handed over after launch, as a copy that quits for this one does.
-        scratch.preferences.pauseHandedOverAt = now.addingTimeInterval(-5)
+        scratch.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil)
         #expect(sut.takesOverPause(now: now))
-        #expect(scratch.preferences.pauseHandedOverAt == nil) // read once
-        scratch.preferences.pauseHandedOverAt = now
+        #expect(scratch.preferences.pauseHandover == nil) // read once
+        scratch.preferences.pauseHandover = PauseHandover(at: now, player: nil)
         #expect(!sut.takesOverPause(now: now)) // only the first monitoring takes one over
 
         let stale = Scratch()
-        stale.preferences.pauseHandedOverAt = now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1))
+        stale.preferences.pauseHandover = PauseHandover(
+            at: now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1)), player: nil
+        )
         #expect(!makeSUT(stale).0.takesOverPause(now: now))
         #expect(!makeSUT().0.takesOverPause(now: now))
+    }
+
+    @MainActor
+    @Test("a pause handed over for another player than the one chosen now isn't taken over")
+    func pauseHandoverForAnotherPlayer() {
+        let now = Date()
+        let other = Scratch()
+        // The player was changed outside the app meanwhile.
+        other.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: Players.second)
+        #expect(!makeSUT(other, chosenPlayer: Players.first).0.takesOverPause(now: now))
+        #expect(other.preferences.pauseHandover == nil)
+
+        let same = Scratch()
+        same.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: Players.first)
+        #expect(makeSUT(same, chosenPlayer: Players.first).0.takesOverPause(now: now))
+    }
+
+    @MainActor
+    @Test("quitting while holding a pause hands it over for the chosen player")
+    func pauseHandedOverOnQuit() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.first)
+        sut.apply(.playback(.pausedByMonitor))
+        _ = sut.applicationShouldTerminate(NSApplication.shared)
+        #expect(scratch.preferences.pauseHandover?.player == Players.first)
     }
 
     @MainActor
