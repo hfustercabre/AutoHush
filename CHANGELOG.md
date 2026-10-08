@@ -7,14 +7,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
-- **A web app's controls can be learned again.** If AutoHush pauses or
-  resumes a web app at the wrong times, it may have learned its Play/Pause
-  button wrong (0.8.2 could, with an ad before the song). **Learn Controls
+- **A web app's button learned wrong stayed wrong.** AutoHush learned a web
+  app's Play/Pause button again only when it went missing, so one learned
+  the wrong way round (0.8.2 could, with an ad before the song) kept
+  AutoHush pausing or resuming it at the wrong times. **Learn Controls
   Again…**, under the players in the menu and in Settings' player pop-up,
-  or **Learn Again** in Settings → General, forgets the button and asks you
-  to play and pause the web app once more.
+  or **Learn Again** in Settings → General, now forgets the button and asks
+  you to play and pause the web app once more.
 
 ## [0.8.3] — 2026-10-08
 
