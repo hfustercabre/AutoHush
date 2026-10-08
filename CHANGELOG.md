@@ -18,8 +18,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The Add a Web App window offered It's Playing before Accessibility was
   allowed.** Its learning steps now wait for the permission, with the same
   button to allow it as the learning window.
-- **Adding a web app after answering a site's question left its Safari tab
-  open.** The tab is now closed, as for any other site.
+- **Adding a web app left its Safari tab open** when it was the window's
+  only tab (Safari wasn't open before), or after answering the site's
+  question. The tab is now closed, or its window when it's the only tab
+  there.
 - **Add a Web App could take another website for the one you typed** when
   their addresses began the same way and ended in short parts
   (music.amazon.bad.co for music.amazon.com). Now only another country's

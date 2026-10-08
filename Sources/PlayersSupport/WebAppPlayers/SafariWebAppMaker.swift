@@ -163,8 +163,9 @@ package protocol SafariDriving: Sendable {
     /// meanwhile: then it clicks the dialog's Cancel. Returns the name
     /// Safari suggested; `nil` when the dialog didn't come or was cancelled.
     func addToDock(_ url: URL) async -> String?
-    /// Closes `tab`, if it's still the one in front showing the same page:
-    /// never a tab the user moved to since.
+    /// Closes `tab` (its window, when it's the window's only tab), if it's
+    /// still the one in front showing the same page: never a tab the user
+    /// moved to since.
     func closeTab(_ tab: SafariTab) async
 }
 
@@ -284,10 +285,16 @@ package struct SafariUI: SafariDriving {
     }
 
     package func closeTab(_ tab: SafariTab) async {
-        guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page,
-              let item = Self.menuItem("CloseTab", in: app)
-        else {
+        guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page else {
             logger.notice("The tab Add a Web App opened isn't in front any more: left open")
+            return
+        }
+        // Safari disables Close Tab for a window's only tab (measured on
+        // macOS 27): its window is closed instead.
+        let closeTab = Self.menuItem("CloseTab", in: app)
+        let isOnlyTab = closeTab?.value(kAXEnabledAttribute) as? Bool == false
+        guard let item = isOnlyTab ? Self.menuItem("CloseWindow", in: app) : closeTab else {
+            logger.error("Safari's Close Tab wasn't found: the tab Add a Web App opened was left open")
             return
         }
         AXUIElementPerformAction(item, kAXPressAction as CFString)
