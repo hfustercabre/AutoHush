@@ -79,8 +79,16 @@ struct SafariWebAppMakerTests {
             )
         }
 
+        /// Whether the user clicks Add to Dock (`false`: they cancel instead).
+        let clicksAdd = Locked(true)
+        let clicks = Locked(0)
+
         func make(_ address: String) async throws -> MadeWebApp {
-            try await maker.makeWebApp(from: address) { [steps] in steps.append($0) }
+            try await maker.makeWebApp(from: address, onStep: { [steps] in steps.append($0) }, confirmAdd: { [clicksAdd, clicks, safari] in
+                clicks.withLock { $0 += 1 }
+                safari.log.append("click Add to Dock")
+                return clicksAdd.value
+            })
         }
     }
 
@@ -91,8 +99,63 @@ struct SafariWebAppMakerTests {
         let made = try await setup.make("play.qobuz.com")
         #expect(made == MadeWebApp(bundleID: Self.made.bundleID, name: "Qobuz", url: Self.made.url, alreadyThere: false))
         #expect(setup.checked.value == [URL(string: "https://play.qobuz.com")!])
-        #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "add https://play.qobuz.com", "close tab 1"])
-        #expect(setup.steps.value == [.checked, .opened, .made(made)])
+        #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "page", "click Add to Dock", "page",
+                                           "add https://play.qobuz.com", "close tab 1"])
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+    }
+
+    @Test("a site that asks something first on another of its hosts is waited for: added only once it shows, and the user clicks")
+    func siteAsksFirst() async throws {
+        let setup = Setup()
+        setup.safari.pages.withLock {
+            $0 = [URL(string: "https://consent.qobuz.com/m?continue=https://play.qobuz.com")!,
+                  URL(string: "https://consent.qobuz.com/m?continue=https://play.qobuz.com")!,
+                  URL(string: "https://play.qobuz.com/discover")!]
+        }
+        setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        let start = setup.clock.now
+        let made = try await setup.make("play.qobuz.com")
+        #expect(setup.steps.value == [.checked, .opened, .siteAsks(shown: "consent.qobuz.com", site: "play.qobuz.com"),
+                                      .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+        #expect(setup.clock.now.timeIntervalSince(start) >= 2 * SafariWebAppMaker.siteCheckInterval)
+        #expect(setup.clicks.value == 1)
+    }
+
+    @Test("nothing is added until the user clicks Add to Dock; cancelling instead adds nothing")
+    func waitsForTheClick() async throws {
+        let setup = Setup()
+        setup.clicksAdd.withLock { $0 = false }
+        await #expect(throws: CancellationError.self) { try await setup.make("play.qobuz.com") }
+        #expect(!setup.safari.log.value.contains { $0.hasPrefix("add ") })
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com")])
+    }
+
+    @Test("if Safari left the site by the time the user clicks, it waits for the site again")
+    func leftBeforeTheClick() async throws {
+        let setup = Setup()
+        setup.safari.pages.withLock {
+            $0 = [URL(string: "https://play.qobuz.com")!, URL(string: "https://accounts.qobuz.com/login")!,
+                  URL(string: "https://accounts.qobuz.com/login")!, URL(string: "https://play.qobuz.com")!]
+        }
+        setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        _ = try await setup.make("play.qobuz.com")
+        #expect(setup.clicks.value == 2)
+        #expect(setup.steps.value.contains(.siteAsks(shown: "accounts.qobuz.com", site: "play.qobuz.com")))
+    }
+
+    @Test("the site itself: the same host with or without www, a part of a bare address, another country's site; not another host of the domain",
+          arguments: [
+            ("https://music.youtube.com", "https://music.youtube.com/watch?v=1", true),
+            ("https://deezer.com", "https://www.deezer.com/en/", true),
+            ("https://tidal.com", "https://listen.tidal.com/", true),
+            ("https://music.amazon.com", "https://music.amazon.es/", true),
+            ("https://music.amazon.com", "https://music.amazon.co.uk/", true),
+            ("https://music.youtube.com", "https://consent.youtube.com/m?continue=x", false),
+            ("https://open.spotify.com", "https://accounts.spotify.com/login", false),
+            ("https://music.youtube.com", "about:blank", true),
+          ])
+    func sameSite(typed: String, shown: String, expected: Bool) {
+        #expect(WebAddress.isSameSite(URL(string: shown)!, as: URL(string: typed)!) == expected)
     }
 
     @Test("a new web app is returned only once Safari has sealed it: macOS won't open it before")
@@ -147,7 +210,7 @@ struct SafariWebAppMakerTests {
         await #expect(throws: CancellationError.self) { try await task.value }
         #expect(setup.safari.log.value.last == "cancel dialog")
         #expect(setup.installed.value == [Self.existing])
-        #expect(setup.steps.value == [.checked, .opened])
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding])
     }
 
     @Test("another country's site of a tested service counts as the same: its web app is used")
@@ -214,6 +277,16 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     var holdsDialog = false
 
     func waitForPage() async -> SafariTab? { log.append("wait"); return loads ? SafariTab(page: 1) : nil }
+    /// The front page's address at each look, the last one staying; none:
+    /// it can't be read.
+    let pages = Locked<[URL]>([])
+    func frontPageURL() async -> URL? {
+        log.append("page")
+        return pages.withLock { pages in
+            defer { if pages.count > 1 { pages.removeFirst() } }
+            return pages.first
+        }
+    }
     func addToDock(_ url: URL) async -> String? {
         log.append("add \(url.absoluteString)")
         while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }

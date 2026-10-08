@@ -4,7 +4,8 @@ import AutoHushKit
 
 // "Add a Web App…", in the menu's players, Settings → General (its "+" and
 // the pop-up's last item) and the welcome window: the user pastes a
-// website's address, and AutoHush makes it a Safari web app (Safari's own
+// website's address, AutoHush opens it in Safari and, once the site shows
+// and the user clicks Add to Dock, makes it a Safari web app (Safari's own
 // Add to Dock), chooses it, opens it and learns its controls, ticking each
 // step in one window.
 
@@ -17,6 +18,11 @@ final class AddWebAppModel {
         case entering
         case checking
         case opening
+        /// Safari shows another site first (`shown`), asking something: the
+        /// user answers it there, until `site` shows.
+        case siteAsks(shown: String, site: String)
+        /// `site` shows in Safari: it waits for the user's Add to Dock.
+        case readyToAdd(site: String)
         case adding
         /// The web app is the player; AutoHush learns it (or already knows it).
         case learning(name: String, alreadyThere: Bool)
@@ -26,6 +32,11 @@ final class AddWebAppModel {
     private(set) var phase = Phase.entering
     /// Why the last try failed; shown under the field.
     private(set) var problem: WebAppMakingError?
+    /// The site asked something first, on this try: the step that said so
+    /// stays, ticked.
+    private(set) var siteAsked = false
+    /// Resumed by Add to Dock (`true`), or once the add is cancelled.
+    @ObservationIgnored private var addConfirmation: CheckedContinuation<Bool, Never>?
 
     @ObservationIgnored var start: @MainActor (String) -> Void = { _ in }
     /// Stops the add under way.
@@ -36,7 +47,12 @@ final class AddWebAppModel {
     @ObservationIgnored var openAccessibilitySettings: @MainActor () -> Void = {}
 
     /// The address is being checked, opened or added in Safari.
-    var isAdding: Bool { [.checking, .opening, .adding].contains(phase) }
+    var isAdding: Bool {
+        switch phase {
+        case .checking, .opening, .siteAsks, .readyToAdd, .adding: true
+        case .entering, .learning: false
+        }
+    }
 
     /// Whether what's typed can be tried: something that could be an address.
     var canContinue: Bool {
@@ -48,13 +64,41 @@ final class AddWebAppModel {
         self.address = address
         phase = .entering
         problem = nil
+        siteAsked = false
+        resumeAdd(false)
     }
 
     func continueTapped() {
         guard canContinue else { return }
         problem = nil
+        siteAsked = false
         phase = .checking
         start(address)
+    }
+
+    /// Waits for the user to click Add to Dock: `false` once the add is
+    /// cancelled instead.
+    func waitForAdd() async -> Bool {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                addConfirmation?.resume(returning: false)
+                addConfirmation = continuation
+            }
+        } onCancel: {
+            Task { @MainActor in self.resumeAdd(false) }
+        }
+    }
+
+    /// Add to Dock, once the site shows.
+    func addTapped() {
+        guard case .readyToAdd = phase else { return }
+        phase = .adding
+        resumeAdd(true)
+    }
+
+    private func resumeAdd(_ add: Bool) {
+        addConfirmation?.resume(returning: add)
+        addConfirmation = nil
     }
 
     /// The window closed: an add under way stops (Safari's dialog is
@@ -69,15 +113,21 @@ final class AddWebAppModel {
     func apply(_ step: WebAppMakingStep) {
         guard phase != .entering else { return } // a step reported after it was cancelled
         switch step {
-        case .checked:          phase = .opening
-        case .opened:           phase = .adding
-        case .made(let app):    phase = .learning(name: app.name, alreadyThere: app.alreadyThere)
+        case .checked:                  phase = .opening
+        case .opened:                   break
+        case .siteAsks(let shown, let site):
+            siteAsked = true
+            phase = .siteAsks(shown: shown, site: site)
+        case .readyToAdd(let site):     phase = .readyToAdd(site: site)
+        case .adding:                   phase = .adding
+        case .made(let app):            phase = .learning(name: app.name, alreadyThere: app.alreadyThere)
         }
     }
 
     func fail(_ error: WebAppMakingError) {
         problem = error
         phase = .entering
+        resumeAdd(false)
     }
 
     /// The problem in words.
@@ -226,81 +276,136 @@ struct AddWebAppView: View {
 
     // MARK: - The steps
 
-    private enum StepState { case done, current, todo }
-
     @ViewBuilder private var steps: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            step(model.phase == .checking ? .current : .done,
-                 String(localized: "Check the address", comment: "Add a Web App window: a step"))
-            switch model.phase {
-            case .learning(let name, true):
-                step(.done, String(localized: "Already in your Dock as “\(name)”",
-                                   comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"))
-                learningStep(name)
-            case .learning(let name, false):
-                step(.done, openStep)
-                step(.done, String(localized: "Add it to the Dock as “\(name)”",
-                                   comment: "Add a Web App window: a step done; %@ is the web app's name"))
-                learningStep(name)
-            default:
-                step(model.phase == .opening ? .current : model.phase == .checking ? .todo : .done, openStep,
-                     notes: model.phase == .opening ? [extensionTip] : [])
-                step(model.phase == .adding ? .current : .todo,
-                     String(localized: "Add it to the Dock", comment: "Add a Web App window: a step, before it's done"))
-                step(.todo, learnStepTitle)
+        if let deadline = settings.learningPauseDeadline, case .learning(hasPlayed: true)? = settings.learning {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                stepList(remaining: max(0, deadline.timeIntervalSince(context.date)))
             }
+        } else {
+            stepList(remaining: nil)
+        }
+    }
+
+    private func stepList(remaining: TimeInterval?) -> some View {
+        let steps = Self.steps(for: model.phase, siteAsked: model.siteAsked, learning: settings.learning,
+                               remaining: remaining, note: settings.learningNote)
+        return VStack(alignment: .leading, spacing: 8) {
+            ForEach(steps, id: \.title) { step($0) }
+        }
+        .announcesCurrentStep(steps.currentAnnouncement)
+    }
+
+    /// Each step of adding `phase`'s web app and learning it, with where it
+    /// stands: “Answer the site in Safari” only once the site asked
+    /// something first (`siteAsked`); `learning` is the chosen player's
+    /// learning, once it's made, with the countdown and note of its steps.
+    static func steps(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, learning: LearningStatus?,
+                      remaining: TimeInterval? = nil, note: LearningNote? = nil) -> [ChecklistStep] {
+        let check = ChecklistStep(title: String(localized: "Check the address", comment: "Add a Web App window: a step"),
+                                  state: phase == .checking ? .current : .done)
+        let opened = ChecklistStep(title: openStep, state: .done)
+        let answered = siteAsked ? [ChecklistStep(title: answerStep, state: .done)] : []
+        let learnLater = ChecklistStep(title: learnStepTitle, state: .todo)
+        switch phase {
+        case .learning(let name, true):
+            return [check,
+                    ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
+                                                comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
+                                  state: .done)]
+                + learningSteps(name, learning: learning, remaining: remaining, note: note)
+        case .learning(let name, false):
+            return [check, opened] + answered
+                + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
+                                               comment: "Add a Web App window: a step done; %@ is the web app's name"),
+                                 state: .done)]
+                + learningSteps(name, learning: learning, remaining: remaining, note: note)
+        case .siteAsks(let shown, let site):
+            return [check, opened,
+                    ChecklistStep(title: answerStep,
+                                  notes: [String(localized: "\(shown) asks something before showing \(site) (cookies, signing in…). AutoHush goes on once it shows.",
+                                                 comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.youtube.com), the second the one typed (e.g. music.youtube.com)")],
+                                  state: .current),
+                    ChecklistStep(title: addStep, state: .todo), learnLater]
+        case .readyToAdd(let site):
+            return [check, opened] + answered
+                + [ChecklistStep(title: addStep,
+                                 notes: [String(localized: "Once \(site) shows in Safari (answer anything it asks first), click Add to Dock.",
+                                                comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.youtube.com")],
+                                 state: .current, button: .addToDock),
+                   learnLater]
+        case .adding:
+            return [check, opened] + answered + [ChecklistStep(title: addStep, state: .current), learnLater]
+        case .entering, .checking, .opening:
+            return [check,
+                    ChecklistStep(title: openStep, notes: phase == .opening ? [extensionTip] : [],
+                                  state: phase == .opening ? .current : phase == .checking ? .todo : .done),
+                    ChecklistStep(title: addStep, state: .todo), learnLater]
         }
     }
 
     /// While Safari opens the site: an extension's request for access
     /// holds it up until it's answered.
-    private var extensionTip: String {
+    private static var extensionTip: String {
         String(localized: "If a Safari extension asks for access to the site, answer it first.",
                comment: "Add a Web App window, under the step “Open it in Safari” while it's under way")
     }
 
-    private var openStep: String {
+    private static var openStep: String {
         String(localized: "Open it in Safari", comment: "Add a Web App window: a step")
     }
 
-    private var learnStepTitle: String {
+    /// Only when Safari shows another site first, asking something.
+    private static var answerStep: String {
+        String(localized: "Answer the site in Safari",
+               comment: "Add a Web App window: a step shown only when the website asks something first on another of its sites (a cookie page, signing in)")
+    }
+
+    private static var addStep: String {
+        String(localized: "Add it to the Dock", comment: "Add a Web App window: a step, before it's done")
+    }
+
+    /// The learning steps, before the web app is made.
+    private static var learnStepTitle: String {
         String(localized: "Play something in it, then pause it", comment: "Add a Web App window: the last step")
     }
 
-    @ViewBuilder private func learningStep(_ name: String) -> some View {
-        switch settings.learning {
-        case .learning(let hasPlayed)?:
-            step(.current, learnStepTitle, notes: hasPlayed
-                 ? [String(localized: "Now pause it.", comment: "Add a Web App window, once the web app has played"),
-                    LearningText.pauseTip]
-                 : [String(localized: "\(name) is open. AutoHush watches which button plays and pauses it.",
-                           comment: "Add a Web App window, under its last step; %@ is the web app"),
-                    LearningText.playTip(name)])
-        default:
-            step(.done, learnStepTitle)
+    /// Learning, once the web app is made: the learning window's two steps
+    /// (both ticked once learned).
+    private static func learningSteps(_ name: String, learning: LearningStatus?, remaining: TimeInterval?,
+                                      note: LearningNote?) -> [ChecklistStep] {
+        guard case .learning(let hasPlayed)? = learning else {
+            return LearningSteps.steps(name: name, hasPlayed: true, hasPaused: true, locked: false)
         }
+        return LearningSteps.steps(name: name, hasPlayed: hasPlayed, hasPaused: false, locked: false, remaining: remaining, note: note)
     }
 
-    private func step(_ state: StepState, _ text: String, notes: [String] = []) -> some View {
+    private func step(_ step: ChecklistStep) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Group {
-                switch state {
+                switch step.state {
                 case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
                 case .current: Image(systemName: "arrow.right.circle.fill").foregroundStyle(Color.accentColor)
                 case .todo: Image(systemName: "circle").foregroundStyle(.appSecondary)
                 }
             }
             .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: text)
-                    .foregroundStyle(state == .done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
-                    .fontWeight(state == .current ? .semibold : .regular)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(notes, id: \.self) { Text(verbatim: $0).captionStyle().fixedSize(horizontal: false, vertical: true) }
+            VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: step.title)
+                        .foregroundStyle(step.state == .done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
+                        .fontWeight(step.state == .current ? .semibold : .regular)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(step.notes, id: \.self) { Text(verbatim: $0).captionStyle().fixedSize(horizontal: false, vertical: true) }
+                    if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
+                }
+                .checklistStepAccessibility(step)
+                if let button = step.button {
+                    StepActionButton(button: button) {
+                        if button == .addToDock { model.addTapped() } else { settings.learningStep(button) }
+                    }
+                }
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(state == .done ? .isSelected : [])
     }
 
     /// Safari's own icon (its app in /Applications is a link into the

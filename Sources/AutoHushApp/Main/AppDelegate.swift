@@ -47,6 +47,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.
     let learnedWindowDelay: Duration
+    /// How long the user has to pause the player and say so, once they said
+    /// it plays (`LearningStatus.pauseWait`).
+    let learningPauseWait: Duration
+    /// Runs while the user has said the player plays: once `learningPauseWait`
+    /// is over, learning starts over.
+    var learningTimer: Task<Void, Never>?
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -134,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         },
         learnedWindowDelay: Duration = .seconds(1.5),
+        learningPauseWait: Duration = .seconds(LearningStatus.pauseWait),
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         permissionRetryInterval: TimeInterval = 3,
@@ -150,6 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
         self.learnedWindowDelay = learnedWindowDelay
+        self.learningPauseWait = learningPauseWait
         self.webAppMaker = webAppMaker
         self.makeAddWebAppWindow = makeAddWebAppWindow
         self.openApp = openApp
@@ -196,6 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
                 learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
+                learningStep: { [weak self] in self?.learningStep($0) },
                 requestPermission: { [weak self] in self?.requestPermission($0) },
                 finishWelcome: { [weak self] in self?.finishWelcome() }
             )
@@ -228,6 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
                 learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
+                learningStep: { [weak self] in self?.learningStep($0) },
                 menuWillOpen: { [weak self] in self?.menuWillOpen() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { [weak self] in self?.requestPermission($0) },
@@ -561,6 +571,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showLearning(_ learning: LearningStatus?) {
         if status.learning != learning { status.learning = learning }
         if settingsModel.learning != learning { settingsModel.learning = learning }
+        followLearningPause(learning)
         if learning != nil, learning != .learned { return }
         // Learned (both steps ticked), or nothing to learn: the windows go.
         let delay = learning == .learned ? learnedWindowDelay : .zero
@@ -578,6 +589,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 window.close()
             }
         }
+    }
+
+    /// Shows the countdown and the note in the menu, Settings and the windows.
+    func setLearningPause(deadline: Date?, note: LearningNote?) {
+        if status.learningPauseDeadline != deadline { status.learningPauseDeadline = deadline }
+        if settingsModel.learningPauseDeadline != deadline { settingsModel.learningPauseDeadline = deadline }
+        if status.learningNote != note { status.learningNote = note }
+        if settingsModel.learningNote != note { settingsModel.learningNote = note }
     }
 
     /// Shows the chosen player in the menu and Settings.

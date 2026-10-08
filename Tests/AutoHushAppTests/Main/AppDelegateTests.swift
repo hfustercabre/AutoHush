@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import os
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -91,7 +92,8 @@ struct AppDelegateTests {
         chosenPlayer: String? = Players.first,
         realBootstrap: Bool = false,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
-        updateInstaller: MockUpdateInstaller = MockUpdateInstaller()
+        updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
+        learningPauseWait: Duration = .seconds(60)
     ) -> (AppDelegate, BootstrapCounter) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let counter = BootstrapCounter()
@@ -111,6 +113,7 @@ struct AppDelegateTests {
             makeAddWebAppWindow: { _, _ in scratch.addWindow },
             openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
+            learningPauseWait: learningPauseWait,
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
             retryDelays: 0.02...0.08,
@@ -249,6 +252,9 @@ struct AppDelegateTests {
         #expect(scratch.addWindow.isVisible)
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        #expect(found.players.isEmpty) // nothing's added before the user clicks Add to Dock
+        sut.addWebAppModel.addTapped()
         await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.opened.isEmpty }
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
         #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: false))
@@ -300,9 +306,90 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebAppModel.addTapped()
         await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
         #expect(sut.status.chosenPlayerID == webApp.bundleID) // not in `scratch.installed`: macOS doesn't know it
         #expect(sut.status.playerOptions.first { $0.bundleID == webApp.bundleID }?.appURL == appURL)
+    }
+
+    @MainActor
+    @Test("closing the add window while it waits for Add to Dock cancels it: nothing is added")
+    func addWebAppClosedBeforeTheClick() async {
+        let scratch = Scratch()
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: "x", name: "X", url: URL(fileURLWithPath: "/x.app"),
+                                                            alreadyThere: false)))
+        let made = OSAllocatedUnfairLock(initialState: false)
+        scratch.maker.onMake = { made.withLock { $0 = true } }
+        let (sut, _) = makeSUT(scratch)
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebAppModel.windowClosed()
+        #expect(sut.addWebAppModel.phase == .entering)
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(!made.withLock { $0 })
+        #expect(scratch.opened.isEmpty)
+    }
+
+    @MainActor
+    @Test("It's Playing and It's Paused go to the player; a click it can't take says why under its step")
+    func learningClicks() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+
+        webApp.answer(playing: .notHeard)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningNote == .notHeard }
+        #expect(sut.settingsModel.learningNote == .notHeard)
+        #expect(sut.status.learningPauseDeadline == nil)
+
+        webApp.answer(playing: .noted, paused: .nothingChanged)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningHasPlayed == true }
+        #expect(sut.status.learningNote == nil)
+        let deadline = sut.status.learningPauseDeadline
+        #expect(deadline.map { abs($0.timeIntervalSinceNow - 60) < 2 } == true)
+        #expect(sut.settingsModel.learningPauseDeadline == deadline)
+
+        sut.learningStep(.itsPaused)
+        await waitFor { sut.status.learningNote == .nothingChanged }
+        #expect(sut.status.learningPauseDeadline == deadline) // the minute goes on
+
+        webApp.answer(paused: .noted)
+        sut.learningStep(.itsPaused)
+        await waitFor { sut.status.learning == .learned }
+        #expect(sut.status.learningNote == nil)
+        #expect(sut.status.learningPauseDeadline == nil)
+    }
+
+    @MainActor
+    @Test("without It's Paused in time, learning starts over and says why")
+    func learningPauseTimesOut() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningHasPlayed == true }
+        await waitFor { sut.status.learningHasPlayed == false }
+        #expect(webApp.restartCount == 1)
+        #expect(sut.status.learningNote == .timedOut)
+        #expect(sut.status.learningPauseDeadline == nil)
+        #expect(scratch.learningWindow.isVisible) // still learning
+
+        // Choosing another player forgets it all.
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.status.learningNote == nil)
     }
 
     @MainActor

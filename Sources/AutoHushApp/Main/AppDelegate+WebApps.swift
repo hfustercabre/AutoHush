@@ -11,6 +11,10 @@ extension AppDelegate {
     func watchLearning() {
         learningWatch?.cancel()
         learningWatch = nil
+        // Another player: nothing it was told carries over.
+        learningTimer?.cancel()
+        learningTimer = nil
+        setLearningPause(deadline: nil, note: nil)
         guard let learner = player as? any LearningMusicPlayer else {
             showLearning(nil)
             return
@@ -35,6 +39,50 @@ extension AppDelegate {
             await learner.learnAgain()
             guard let self, self.player?.bundleID == learner.bundleID else { return }
             self.showLearningWindow()
+        }
+    }
+
+    /// The user says, while AutoHush learns the chosen player, that it plays
+    /// (It's Playing) or that they paused it (It's Paused). A click that
+    /// can't be taken leaves a note under its step saying why.
+    func learningStep(_ button: StepButton) {
+        guard button != .addToDock, let learner = player as? any LearningMusicPlayer else { return }
+        Task { [weak self] in
+            let mark = button == .itsPlaying ? await learner.markPlaying() : await learner.markPaused()
+            guard let self, self.player?.bundleID == learner.bundleID else { return }
+            switch mark {
+            case .notHeard:       self.setLearningPause(deadline: self.status.learningPauseDeadline, note: .notHeard)
+            case .nothingChanged: self.setLearningPause(deadline: self.status.learningPauseDeadline, note: .nothingChanged)
+            case .tooLate:        self.setLearningPause(deadline: nil, note: .timedOut)
+            case .noted, .notLearning: break
+            }
+        }
+    }
+
+    /// Once the user said the player plays, they have `learningPauseWait` to
+    /// pause it and say so; the steps count it down, then learning starts
+    /// over, saying why.
+    func followLearningPause(_ learning: LearningStatus?) {
+        if learning == .learning(hasPlayed: true) {
+            guard learningTimer == nil else { return }
+            setLearningPause(deadline: Date().addingTimeInterval(Double(learningPauseWait.components.seconds)), note: nil)
+            let wait = learningPauseWait
+            learningTimer = Task { [weak self] in
+                try? await Task.sleep(for: wait)
+                guard !Task.isCancelled, let learner = self?.player as? any LearningMusicPlayer else { return }
+                await learner.restartLearning()
+            }
+            return
+        }
+        let wasWaiting = learningTimer != nil
+        learningTimer?.cancel()
+        learningTimer = nil
+        if wasWaiting, learning == .learning(hasPlayed: false) {
+            setLearningPause(deadline: nil, note: .timedOut)
+        } else if learning != .learning(hasPlayed: false) {
+            setLearningPause(deadline: nil, note: nil)
+        } else {
+            setLearningPause(deadline: nil, note: status.learningNote)
         }
     }
 
@@ -63,14 +111,17 @@ extension AppDelegate {
         addingWebApp = Task { [weak self] in
             defer { if model.attempt == attempt { self?.addingWebApp = nil } }
             do {
-                let made = try await maker.makeWebApp(from: address) { step in
+                let made = try await maker.makeWebApp(from: address, onStep: { step in
                     DispatchQueue.main.async {
                         MainActor.assumeIsolated {
                             guard model.attempt == attempt else { return } // cancelled since
                             model.apply(step)
                         }
                     }
-                }
+                }, confirmAdd: {
+                    // The user clicks Add to Dock once the site shows.
+                    await model.waitForAdd()
+                })
                 guard let self, model.attempt == attempt, !Task.isCancelled else { return }
                 model.apply(.made(made))
                 self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")

@@ -39,6 +39,8 @@ package enum CoreAudioProperty {
         guard AudioObjectGetPropertyDataSize(objectID, &address, 0, nil, &size) == noErr, size > 0 else { return [] }
         var ids = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
         guard AudioObjectGetPropertyData(objectID, &address, 0, nil, &size, &ids) == noErr else { return [] }
-        return ids
+        // The list can shrink between the two calls (a process ending): only
+        // what was written counts, not the zeros after it (object 0 is none).
+        return Array(ids.prefix(Int(size) / MemoryLayout<AudioObjectID>.size))
     }
 }

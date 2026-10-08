@@ -28,6 +28,9 @@ final class SettingsModel {
         var addWebApp: @MainActor () -> Void = {}
         /// Forgets the chosen player's learned controls and learns them again.
         var learnControlsAgain: @MainActor () -> Void = {}
+        /// The user says, while AutoHush learns the player, that it plays
+        /// (It's Playing) or that it's paused (It's Paused).
+        var learningStep: @MainActor (StepButton) -> Void = { _ in }
         /// Asks for a missing permission: macOS's prompt, System Settings,
         /// opening the player, or reopening AutoHush (`PermissionCenter`).
         var requestPermission: @MainActor (Permission) -> Void = { _ in }
@@ -61,6 +64,11 @@ final class SettingsModel {
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
     var learning: LearningStatus?
+    /// Once the user said the chosen player plays: when learning starts
+    /// over without the pause.
+    var learningPauseDeadline: Date?
+    /// Why the user's last learning click didn't move it on.
+    var learningNote: LearningNote?
     /// A permission the chosen player needs is missing: its learning steps
     /// wait until it's allowed (the menu asks for it).
     var playerNeedsPermission = false
@@ -211,6 +219,7 @@ final class SettingsModel {
     func chooseMusicPlayer(_ bundleID: String) { actions.chooseMusicPlayer(bundleID) }
     func addWebApp() { actions.addWebApp() }
     func learnControlsAgain() { actions.learnControlsAgain() }
+    func learningStep(_ button: StepButton) { actions.learningStep(button) }
     func setAutoPause(_ on: Bool) { actions.setAutoPause(on) }
     func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
     func forget(_ source: AudioSource) { actions.forgetApp(source) }

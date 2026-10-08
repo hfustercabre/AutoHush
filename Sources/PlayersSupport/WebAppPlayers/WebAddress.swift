@@ -26,6 +26,23 @@ package enum WebAddress {
         return lower.hasPrefix("www.") ? String(lower.dropFirst(4)) : lower
     }
 
+    /// Whether the page shown is the site at `typed`, rather than another
+    /// one asking something first: the same host (with or without "www."),
+    /// a part of the site (listen.tidal.com for tidal.com), or the same
+    /// service in another country (music.amazon.es for music.amazon.com: the
+    /// same first two parts). Another part of the same domain is another site
+    /// (consent.youtube.com for music.youtube.com, accounts.spotify.com for
+    /// open.spotify.com). Without hosts to compare, it counts as the site.
+    package static func isSameSite(_ shown: URL, as typed: URL) -> Bool {
+        guard let shownHost = shown.host(), !shownHost.isEmpty, let typedHost = typed.host() else { return true }
+        let page = siteHost(shownHost)
+        let site = siteHost(typedHost)
+        if page == site || page.hasSuffix("." + site) { return true }
+        let pageParts = page.split(separator: ".")
+        let siteParts = site.split(separator: ".")
+        return pageParts.count >= 3 && siteParts.count >= 3 && pageParts.prefix(2) == siteParts.prefix(2)
+    }
+
     /// Asks the site once whether it answers, without cookies or a cache
     /// (an ephemeral session). Any answer counts but "not found"; a site
     /// that refuses a HEAD request is asked with GET.

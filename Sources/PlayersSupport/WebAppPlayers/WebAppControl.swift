@@ -11,12 +11,14 @@ import AutoHushKit
 /// observer's reads, about once a second, ask it less while the web app is
 /// silent (`polledState`). After a reload every element is new, so the
 /// button is looked for again. While it doesn't know
-/// the button, it learns it (`PlayPauseLearner`), and reports the music as
-/// playing while the app's sound is on.
+/// the button, it learns it from the user saying when the music plays and
+/// when they've paused it (`PlayPauseLearner`), and meanwhile reports the
+/// music as playing while the app's sound is on.
 ///
-/// When the page shows but the button can't be found for a minute (the site
-/// changed), it learns again, keeping what it knew: if the button turns up
-/// again, it stops learning.
+/// When the web app is heard but the button can't be found for a minute
+/// (the site changed), it learns again, keeping what it knew: if the button
+/// turns up again, it stops learning. A silent page isn't missing it: a fresh
+/// YouTube Music window shows its player bar only once something plays.
 ///
 /// Each window of the web app has its own page, so with two windows there are
 /// two buttons in the same place: the one that says the music plays is
@@ -41,7 +43,7 @@ final class WebAppControl: @unchecked Sendable {
     /// page, which costs the web app some work (measured: as much as AutoHush's
     /// own). Its sound coming on reads the button at once.
     static let quietReadInterval: TimeInterval = 5
-    /// The button missing this long from a page that shows starts learning.
+    /// The button missing this long from a page that's heard starts learning.
     static let missingBeforeLearning: TimeInterval = 60
     /// A page with fewer buttons is still loading (or asks to log in).
     static let loadedPageButtons = 10
@@ -70,7 +72,7 @@ final class WebAppControl: @unchecked Sendable {
     private var button: ButtonHandle?
     /// Learning, when there's no recipe or the button went missing.
     private var learner: PlayPauseLearner?
-    /// Since when the page shows without the learned button.
+    /// Since when the web app is heard without the learned button.
     private var missingSince: Date?
     private var noWindowUntil: Date?
     private var noWindowWait = WebAppControl.noWindowPause
@@ -137,11 +139,12 @@ final class WebAppControl: @unchecked Sendable {
     }
 
     /// The state, for the observer that reads it about once a second: while
-    /// the web app is silent and its button last said it isn't playing, with
-    /// nothing to learn and nothing muted, that's reused for
-    /// `quietReadInterval`. Before deciding, AutoHush reads `state` afresh.
+    /// the web app is silent and its button last said it isn't playing (or
+    /// couldn't be found), with nothing to learn and nothing muted, that's
+    /// reused for `quietReadInterval`. Before deciding, AutoHush reads `state`
+    /// afresh.
     func polledState(pid: pid_t) -> PlayerState {
-        if let lastRead, lastRead.pid == pid, lastRead.state == .paused || lastRead.state == .stopped,
+        if let lastRead, lastRead.pid == pid, [.paused, .stopped, .unknown].contains(lastRead.state),
            muted == nil, learner == nil,
            clock().timeIntervalSince(lastRead.at) < Self.quietReadInterval,
            !page.isPlayingSound(pid: pid) {
@@ -159,7 +162,6 @@ final class WebAppControl: @unchecked Sendable {
             releaseMute() // the app was opened again since
         }
         let now = clock()
-        var buttons: [PageButton]?
         var hasWindow = true
         if let recipe {
             switch lookup(recipe, pid: pid, now: now) {
@@ -174,13 +176,13 @@ final class WebAppControl: @unchecked Sendable {
             case .noWindow:
                 hasWindow = false
             case .missing(let looked):
-                buttons = looked
-                noteMissing(buttons: looked, at: now)
+                noteMissing(buttons: looked, pid: pid, at: now)
             }
         }
         guard learner != nil else { return hasWindow ? .unknown : .stopped }
-        if hasWindow, buttons == nil { buttons = look(pid: pid, now: now) }
-        return learn(buttons: buttons, pid: pid, now: now)
+        // Learning needs no look at the page until the user says so.
+        guard hasWindow else { return .stopped }
+        return page.isPlayingSound(pid: pid) ? .playing : .paused
     }
 
     /// Presses the button if the music is in `state`; does nothing if it's
@@ -254,6 +256,66 @@ final class WebAppControl: @unchecked Sendable {
         store.forget(for: bundleID)
         learner = PlayPauseLearner()
         logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button again, as asked")
+        status.send(.learning(hasPlayed: false))
+    }
+
+    // MARK: - Learning, as the user says
+
+    /// The user says the music itself plays: the page is looked at, to
+    /// compare once they've paused it. Only while the web app can be heard.
+    func notePlaying(pid: pid_t) -> LearningMark {
+        guard var learner else { return .notLearning }
+        guard page.isPlayingSound(pid: pid) else { return .notHeard }
+        guard let buttons = page.buttons(pid: pid) else { return .notLearning }
+        learner.notePlaying(buttons, at: clock())
+        self.learner = learner
+        logger.notice("\(self.name, privacy: .public) plays, the user says: its page is noted (\(buttons.count, privacy: .public) buttons)")
+        status.send(.learning(hasPlayed: true))
+        return .noted
+    }
+
+    /// The user says they paused it: the button whose words changed since
+    /// it played is learned (see `PlayPauseLearner`), keeping the places
+    /// learned before.
+    func notePaused(pid: pid_t) -> LearningMark {
+        guard var learner, learner.hasPlayed else { return .notLearning }
+        guard !learner.playedTooLongAgo(at: clock()) else {
+            learner.forgetPlaying()
+            self.learner = learner
+            status.send(.learning(hasPlayed: false))
+            return .tooLate
+        }
+        guard let buttons = page.buttons(pid: pid) else { return .notLearning }
+        let found = learner.candidates(paused: buttons)
+        let candidates = found.compactMap { candidate in page.place(of: candidate.handle).map { (candidate, $0) } }
+        // Where each candidate was (none: its place couldn't be read), never its words.
+        let places = found.map { candidate in
+            candidates.first { $0.0 == candidate }.map { "\(Int($0.1.distanceFromBottom)) pt" } ?? "none"
+        }
+        logger.debug("Learning: \(found.count, privacy: .public) buttons changed, at \(places.joined(separator: ", "), privacy: .public)")
+        guard let (learned, handle) = PlayPauseLearner.recipe(from: candidates) else {
+            logger.notice("\(self.name, privacy: .public) was paused, the user says, but no button changed")
+            return .nothingChanged
+        }
+        let merged = recipe?.merging(learned) ?? learned
+        recipe = merged
+        button = handle
+        missingSince = nil
+        lastRead = nil
+        self.learner = nil
+        store.save(merged, for: bundleID)
+        logger.notice("Learned \(self.name, privacy: .public)'s Play/Pause button")
+        status.send(.learned)
+        return .noted
+    }
+
+    /// The pause didn't come in time: back to waiting for the user to say it
+    /// plays.
+    func restartLearning() {
+        guard var learner, learner.hasPlayed else { return }
+        learner.forgetPlaying()
+        self.learner = learner
+        logger.notice("\(self.name, privacy: .public) wasn't paused within a minute: learning starts over")
         status.send(.learning(hasPlayed: false))
     }
 
@@ -379,9 +441,11 @@ final class WebAppControl: @unchecked Sendable {
     }
 
     /// Starts learning again once the button has been missing for long from
-    /// a page that has loaded.
-    private func noteMissing(buttons: [PageButton]?, at now: Date) {
-        guard learner == nil, let buttons, buttons.count >= Self.loadedPageButtons else {
+    /// a page that has loaded, while the web app is heard all along: a page
+    /// that doesn't play may not show its player at all.
+    private func noteMissing(buttons: [PageButton]?, pid: pid_t, at now: Date) {
+        guard learner == nil, let buttons, buttons.count >= Self.loadedPageButtons,
+              page.isPlayingSound(pid: pid) else {
             if learner == nil { missingSince = nil }
             return
         }
@@ -397,31 +461,6 @@ final class WebAppControl: @unchecked Sendable {
         guard let state = recipe.state(of: button) else { return .unknown }
         // A disabled Play: nothing to play yet.
         return state == .paused && !button.isEnabled ? .stopped : state
-    }
-
-    // MARK: - Learning
-
-    private func learn(buttons: [PageButton]?, pid: pid_t, now: Date) -> PlayerState {
-        guard var learner else { return .unknown }
-        let sound = page.isPlayingSound(pid: pid)
-        learner.observe(buttons, soundIsOn: sound, at: now)
-        let candidates = learner.candidates.compactMap { candidate in page.place(of: candidate.handle).map { (candidate, $0) } }
-        if let (learned, handle) = PlayPauseLearner.recipe(from: candidates) {
-            let merged = recipe?.merging(learned) ?? learned
-            recipe = merged
-            button = handle
-            missingSince = nil
-            self.learner = nil
-            store.save(merged, for: bundleID)
-            logger.notice("Learned \(self.name, privacy: .public)'s Play/Pause button")
-            status.send(.learned)
-            if let found = page.button(handle) { return Self.state(of: found, recipe: merged) }
-            return .unknown
-        }
-        self.learner = learner
-        status.send(.learning(hasPlayed: learner.hasPlayed))
-        guard buttons != nil else { return .stopped }
-        return sound ? .playing : .paused
     }
 }
 

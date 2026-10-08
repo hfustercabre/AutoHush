@@ -49,6 +49,8 @@ final class StatusMenuController: NSObject {
         var addWebApp: @MainActor () -> Void = {}
         /// Forgets the chosen player's learned controls and learns them again.
         var learnControlsAgain: @MainActor () -> Void = {}
+        /// While AutoHush learns the player: it plays, or it's paused.
+        var learningStep: @MainActor (StepButton) -> Void = { _ in }
         /// The menu is about to open: a last chance to bring `status` up to
         /// date (e.g. which players are installed) before it is built.
         var menuWillOpen: @MainActor () -> Void
@@ -358,6 +360,8 @@ final class StatusMenuController: NSObject {
             searchPlayers(search)
         case .retry:
             actions.retry() // the card shows how it goes
+        case .learningStep(let button):
+            actions.learningStep(button) // the card ticks the step
         case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
@@ -375,7 +379,7 @@ final class StatusMenuController: NSObject {
         case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
         case .showAbout:          actions.showAbout()
         case .quit:               actions.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .learningStep: break // they act in perform(_:)
         }
     }
 

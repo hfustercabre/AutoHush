@@ -31,6 +31,10 @@ actor MockLearningPlayer: LearningMusicPlayer {
         var status: LearningStatus
         var listeners: [AsyncStream<LearningStatus>.Continuation] = []
         var learnAgainCount = 0
+        var restartCount = 0
+        /// What It's Playing and It's Paused answer; `.noted` moves it on.
+        var playingMark = LearningMark.noted
+        var pausedMark = LearningMark.noted
     }
 
     private nonisolated let state: OSAllocatedUnfairLock<State>
@@ -71,6 +75,35 @@ actor MockLearningPlayer: LearningMusicPlayer {
         set(.learning(hasPlayed: false))
     }
 
+    /// What It's Playing and It's Paused answer from now on.
+    nonisolated func answer(playing: LearningMark = .noted, paused: LearningMark = .noted) {
+        state.withLock {
+            $0.playingMark = playing
+            $0.pausedMark = paused
+        }
+    }
+
+    /// How many times learning started over (the pause didn't come in time).
+    nonisolated var restartCount: Int { state.withLock { $0.restartCount } }
+
+    func markPlaying() async -> LearningMark {
+        let mark = state.withLock { $0.playingMark }
+        if mark == .noted { set(.learning(hasPlayed: true)) }
+        return mark
+    }
+
+    func markPaused() async -> LearningMark {
+        let mark = state.withLock { $0.pausedMark }
+        if mark == .noted { set(.learned) }
+        if mark == .tooLate { set(.learning(hasPlayed: false)) }
+        return mark
+    }
+
+    func restartLearning() async {
+        state.withLock { $0.restartCount += 1 }
+        set(.learning(hasPlayed: false))
+    }
+
     func verifyControlAccess() async throws { throw MusicPlayerError.accessibilityPermissionDenied }
     func playerState() async -> PlayerState { .unknown }
     func pause() async throws {}
@@ -104,7 +137,8 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
         self.result = result
     }
 
-    func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp {
+    func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
+                    confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {
         let made = try result.get()
         onStep(.checked)
         if waitsForCancel {
@@ -113,7 +147,12 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
             throw CancellationError()
         }
         onStep(.opened)
-        onMake()
+        if !made.alreadyThere {
+            onStep(.readyToAdd(site: address))
+            guard await confirmAdd() else { throw CancellationError() }
+            onStep(.adding)
+            onMake()
+        }
         onStep(.made(made))
         return made
     }

@@ -3,7 +3,8 @@ import SwiftUI
 import AutoHushKit
 
 // A player AutoHush must first learn to control (a Safari web app: which of
-// its buttons plays and pauses it) asks the user to play and pause it once.
+// its buttons plays and pauses it) asks the user to play it and say so
+// (It's Playing), then pause it and say so (It's Paused), within a minute.
 // A window asks when it's chosen; until it has learned, the menu and
 // Settings → General show the same steps, in case the window was closed.
 
@@ -15,13 +16,13 @@ enum LearningText {
     }
 
     static func explanation(_ name: String) -> String {
-        String(localized: "Use \(name) as usual. AutoHush watches which button plays and pauses it.",
+        String(localized: "AutoHush learns which button plays and pauses \(name): tell it when the song plays, and when you’ve paused it.",
                comment: "Menu and Settings, under “Learning %@’s Controls”; %@ is the web app")
     }
 
     static func playStep(_ name: String) -> String {
-        String(localized: "Play something in \(name)",
-               comment: "A step AutoHush waits for while it learns a web app's controls, ticked once done; %@ is the web app")
+        String(localized: "Play a song in \(name)",
+               comment: "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; %@ is the web app")
     }
 
     static var pauseStep: String {
@@ -29,18 +30,25 @@ enum LearningText {
     }
 
     /// Under the play step until it's done: a site that needs an account
-    /// plays nothing until you log in; a start is told by the button changing
-    /// as the sound comes on, and an ad's own controls aren't the player's.
+    /// plays nothing until you log in, and during an ad the player's own
+    /// button may say it's paused (YouTube Music's does).
     static func playTip(_ name: String) -> String {
-        String(localized: "Log in first if \(name) asks you to. Let the music itself play for 5 to 10 seconds. Ads don’t count.",
-               comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app")
+        String(localized: "Log in first if \(name) asks you to. Ads don’t count: wait for the song itself. Then click It’s Playing.",
+               comment: "Under the step “Play a song in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it")
     }
 
-    /// Under the pause step until it's done: a web app's sound goes off only
-    /// about 8 seconds after a pause, and playing again before hides it.
+    /// Under the pause step until it's done.
     static var pauseTip: String {
-        String(localized: "Wait for the tick before playing again. It can take up to 10 seconds.",
-               comment: "Under the step “Pause it” while AutoHush learns a web app's controls")
+        String(localized: "Then click It’s Paused. AutoHush sees which button changed.",
+               comment: "Under the step “Pause it” while AutoHush learns a web app's controls; “It’s Paused” is the button under it")
+    }
+
+    /// Under the pause step: how long is left before learning starts over
+    /// from “Play a song in …”.
+    static func countdown(_ remaining: TimeInterval) -> String {
+        let time = Duration.seconds(Int(remaining.rounded(.up))).formatted(.time(pattern: .minuteSecond))
+        return String(localized: "Back to the first step in \(time)",
+                      comment: "Under the step “Pause it” while AutoHush learns a web app's controls: a countdown; %@ is the time left, e.g. 0:45")
     }
 
     // Learning them again, once learned (they may have been learned wrong).
@@ -72,40 +80,111 @@ enum LearningText {
     }
 }
 
-/// The two things the user does while AutoHush learns, each ticked once
-/// seen, with a tip under the one to do now.
+/// Why the user's last click didn't move the learning on, shown under its
+/// step until the next one.
+enum LearningNote: Equatable, Sendable {
+    /// It's Playing, while the web app couldn't be heard.
+    case notHeard
+    /// It's Paused, while no button had changed since It's Playing.
+    case nothingChanged
+    /// It's Paused didn't come within `LearningStatus.pauseWait`.
+    case timedOut
+
+    func text(_ name: String) -> String {
+        switch self {
+        case .notHeard:
+            String(localized: "AutoHush can’t hear \(name) yet. Play a song, then click It’s Playing again.",
+                   comment: "Under the step “Play a song in %@” after “It’s Playing” was clicked while the web app was silent; %@ is the web app")
+        case .nothingChanged:
+            String(localized: "No button changed in \(name). Make sure it’s paused, then click It’s Paused again.",
+                   comment: "Under the step “Pause it” after “It’s Paused” was clicked while nothing had changed on the web app's page; %@ is the web app")
+        case .timedOut:
+            String(localized: "A minute went by without the pause. Play the song again, then click It’s Playing.",
+                   comment: "Under the step “Play a song in %@” once learning went back to it: “It’s Paused” wasn't clicked within a minute")
+        }
+    }
+}
+
+/// The two things the user does while AutoHush learns, each ticked once they
+/// say it's done, with a tip and a button under the one to do now.
 struct LearningSteps: View {
     let name: String
     let hasPlayed: Bool
     let hasPaused: Bool
     /// A permission is missing: the steps wait, locked, without tips.
     var locked = false
+    /// Tells VoiceOver when the next step comes (in the learning window,
+    /// not the menu or Settings).
+    var announces = false
+    /// Once it plays: when learning starts over without the pause.
+    var deadline: Date?
+    var note: LearningNote?
+    var action: @MainActor (StepButton) -> Void = { _ in }
 
     var body: some View {
+        Group {
+            if let deadline, hasPlayed, !hasPaused, !locked {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    list(remaining: max(0, deadline.timeIntervalSince(context.date)))
+                }
+            } else {
+                list(remaining: nil)
+            }
+        }
+        .announcesCurrentStep(announces ? Self.steps(name: name, hasPlayed: hasPlayed, hasPaused: hasPaused, locked: locked).currentAnnouncement : nil)
+    }
+
+    private func list(remaining: TimeInterval?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            step(done: hasPlayed, LearningText.playStep(name), tip: hasPlayed || locked ? nil : LearningText.playTip(name))
-            step(done: hasPaused, LearningText.pauseStep, tip: hasPlayed && !hasPaused && !locked ? LearningText.pauseTip : nil)
+            ForEach(Self.steps(name: name, hasPlayed: hasPlayed, hasPaused: hasPaused, locked: locked,
+                               remaining: remaining, note: note), id: \.title) { step($0) }
         }
     }
 
-    private func step(done: Bool, _ text: String, tip: String?) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
+    /// Play, then pause: the one to do now has its tip, its button, and the
+    /// note about the last click; the pause step counts down. Locked, neither
+    /// is to do yet.
+    static func steps(name: String, hasPlayed: Bool, hasPaused: Bool, locked: Bool,
+                      remaining: TimeInterval? = nil, note: LearningNote? = nil) -> [ChecklistStep] {
+        let play: StepState = hasPlayed ? .done : locked ? .todo : .current
+        let pause: StepState = hasPaused ? .done : hasPlayed && !locked ? .current : .todo
+        var pauseNotes: [String] = []
+        if pause == .current {
+            pauseNotes.append(LearningText.pauseTip)
+            if let remaining { pauseNotes.append(LearningText.countdown(remaining)) }
+        }
+        return [
+            ChecklistStep(title: LearningText.playStep(name), notes: play == .current ? [LearningText.playTip(name)] : [],
+                          state: play, button: play == .current ? .itsPlaying : nil,
+                          warning: play == .current && note != .nothingChanged ? note?.text(name) : nil),
+            ChecklistStep(title: LearningText.pauseStep, notes: pauseNotes,
+                          state: pause, button: pause == .current ? .itsPaused : nil,
+                          warning: pause == .current && note == .nothingChanged ? note?.text(name) : nil),
+        ]
+    }
+
+    private func step(_ step: ChecklistStep) -> some View {
+        let done = step.state == .done
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: done ? "checkmark.circle.fill" : locked ? "lock.circle" : "circle")
                 .foregroundStyle(done ? AnyShapeStyle(.appSuccess) : AnyShapeStyle(.appSecondary))
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: text)
-                    .foregroundStyle(done || locked ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
-                    .fixedSize(horizontal: false, vertical: true)
-                if let tip {
-                    Text(verbatim: tip)
-                        .captionStyle()
+            VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: step.title)
+                        .foregroundStyle(done || locked ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
                         .fixedSize(horizontal: false, vertical: true)
+                    ForEach(step.notes, id: \.self) { note in
+                        Text(verbatim: note)
+                            .captionStyle()
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
                 }
+                .checklistStepAccessibility(step)
+                if let button = step.button { StepActionButton(button: button) { action(button) } }
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(done ? .isSelected : [])
     }
 }
 
@@ -114,12 +193,15 @@ struct LearningSteps: View {
 struct LearningSummary: View {
     let name: String
     let hasPlayed: Bool
+    var deadline: Date?
+    var note: LearningNote?
+    var action: @MainActor (StepButton) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(verbatim: LearningText.title(name)).font(.appHeadline)
             Text(verbatim: LearningText.explanation(name)).captionStyle()
-            LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: false)
+            LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: false, deadline: deadline, note: note, action: action)
         }
     }
 }
@@ -190,7 +272,9 @@ struct LearningWindowView: View {
                     permissionStep(control, access: state.controlAccess, name: name)
                 }
                 LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
-                              locked: state.control != nil && !state.controlAccess.isSatisfied)
+                              locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
+                              deadline: model.learningPauseDeadline, note: model.learningNote,
+                              action: { model.learningStep($0) })
                 CardDivider()
                 Text("AutoHush only watches; it doesn’t press anything until it has learned.",
                      comment: "The learning window, under the steps")

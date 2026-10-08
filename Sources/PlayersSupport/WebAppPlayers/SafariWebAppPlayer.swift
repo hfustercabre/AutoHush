@@ -9,8 +9,8 @@ import AutoHushKit
 /// apps can't be scripted and have no playback menu.
 ///
 /// Sites differ, and their words are in the site's language, so the button
-/// is learned by watching the user play and pause the web app once (see
-/// `WebAppControl`). Its windows are reached on every Space, minimized ones
+/// is learned once, from the user saying when the web app plays and when
+/// they've paused it (see `WebAppControl`). Its windows are reached on every Space, minimized ones
 /// too. It never presses the button blindly: pausing presses it only while
 /// the button says the music plays, playing only while it says it's paused.
 /// Its volume can't be read, so it pauses and plays without fading. A pause
@@ -73,6 +73,23 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package func learnAgain() async {
         let control = control
         await onQueue { control.learnAgain() }
+    }
+
+    package func markPlaying() async -> LearningMark {
+        guard let pid = processIdentifier() else { return .notLearning }
+        let control = control
+        return await onQueue { control.notePlaying(pid: pid) }
+    }
+
+    package func markPaused() async -> LearningMark {
+        guard let pid = processIdentifier() else { return .notLearning }
+        let control = control
+        return await onQueue { control.notePaused(pid: pid) }
+    }
+
+    package func restartLearning() async {
+        let control = control
+        await onQueue { control.restartLearning() }
     }
 
     package nonisolated func allowTaps(_ allowed: Bool) {

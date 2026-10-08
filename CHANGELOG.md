@@ -5,6 +5,36 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **You tell AutoHush when a web app plays and when you've paused it.**
+  Learning a web app's Play/Pause button no longer guesses from its sound:
+  play a song, click **It's Playing**, pause it, click **It's Paused**, and
+  the button that changed is learned. Guessing could take the playing
+  song's own button (it stops working at the next song), when an ad came
+  first or the player bar came late. You have a minute between the two
+  clicks (the step counts down), and a click AutoHush can't take says why.
+  The buttons show wherever the steps do: the learning window, the Add a
+  Web App window, the menu and Settings.
+- **Add a Web App waits for your Add to Dock.** AutoHush opens the site in
+  Safari and adds it once you click **Add to Dock**, after answering
+  anything the site asks.
+
+### Fixed
+
+- **A web app added from a cookie page couldn't play.** On a Mac with no
+  YouTube cookies in Safari (in Europe), YouTube shows its cookie page
+  first, and AutoHush added that page: a web app called "Before you
+  continue", with Google's icon, that sends the music to Safari. Now an
+  **Answer the site in Safari** step waits until the site itself shows.
+- **A fresh YouTube Music window made AutoHush learn its button again.**
+  Such a window shows its player bar only once something plays, so after a
+  minute AutoHush took the button for gone and asked you to play and pause
+  it once more. The button now counts as missing only while the web app
+  plays.
+
 ## [0.8.4] — 2026-10-08
 
 ### Fixed

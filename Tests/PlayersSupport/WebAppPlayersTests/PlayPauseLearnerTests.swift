@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import AutoHushKit
 @testable import WebAppPlayers
 
 @Suite("PlayPauseLearner")
@@ -10,230 +11,50 @@ struct PlayPauseLearnerTests {
         labels.keys.sorted().map { PageButton(handle: ButtonHandle($0), label: labels[$0]!) }
     }
 
-    @Test("a button that changes as the sound comes on, then changes back before it goes off, is a candidate")
-    func playThenPause() {
+    @Test("the buttons whose words changed between It's Playing and It's Paused are the candidates, with their words the right way round")
+    func changedButtons() {
         var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pause", 2: "Shuffle"]), soundIsOn: false, at: start + 1)
         #expect(!learner.hasPlayed)
-        learner.observe(look([1: "Pause", 2: "Shuffle"]), soundIsOn: true, at: start + 2)
+        #expect(learner.candidates(paused: look([1: "Play"])).isEmpty) // nothing noted yet
+        learner.notePlaying(look([1: "Pause", 2: "Shuffle", 3: "Pause Song"]), at: start)
         #expect(learner.hasPlayed)
-        #expect(learner.candidates.isEmpty)
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: true, at: start + 5)
-        #expect(learner.candidates.isEmpty) // WebKit keeps the sound open a while
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start + 12)
-        #expect(learner.candidates.isEmpty) // not yet: the music could come back by itself
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start + 15)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")])
+        let candidates = learner.candidates(paused: look([1: "Play", 2: "Shuffle", 3: "Play Song"]))
+        #expect(candidates == [
+            .init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause"),
+            .init(handle: ButtonHandle(3), playLabel: "Play Song", pauseLabel: "Pause Song"),
+        ])
     }
 
-    @Test("a button changing back while the music plays on is no stop (YouTube Music's song button)")
-    func changeBackWhilePlaying() {
+    @Test("buttons that came or went between the two looks, or have no words, aren't candidates")
+    func onlyButtonsInBoth() {
         var learner = PlayPauseLearner()
-        learner.observe(look([1: "Reproducir", 2: "Reproducir On The Run"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pausar", 2: "Pausar On The Run"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Pausar", 2: "Reproducir On The Run"]), soundIsOn: true, at: start + 9)
-        learner.observe(look([1: "Pausar", 2: "Reproducir On The Run"]), soundIsOn: true, at: start + 30)
-        #expect(learner.candidates.isEmpty)
-        // The user pauses: only the player's own button changes back, and the sound goes off.
-        learner.observe(look([1: "Reproducir", 2: "Reproducir On The Run"]), soundIsOn: true, at: start + 40)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir On The Run"]), soundIsOn: false, at: start + 47)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir On The Run"]), soundIsOn: false, at: start + 50)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Reproducir", pauseLabel: "Pausar")])
+        learner.notePlaying(look([1: "Pause", 2: "Skip ad", 4: ""]), at: start)
+        #expect(learner.candidates(paused: look([1: "Pause", 3: "Play", 4: "Play"])).isEmpty)
     }
 
-    @Test("a change back long before the sound goes off isn't a stop")
-    func farFromTheStop() {
+    @Test("with an ad first, YouTube Music's bar says Play while it plays: told only once the song itself plays, it's the bar that's learned")
+    func afterAnAd() throws {
         var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Play"]), soundIsOn: true, at: start + 2)
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start + 30)
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start + 33)
-        #expect(learner.candidates.isEmpty)
-    }
-
-    @Test("pausing first, then playing, teaches it too")
-    func pauseThenPlay() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Pausar"]), soundIsOn: true, at: start) // playing already
-        learner.observe(look([1: "Reproducir"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Reproducir"]), soundIsOn: false, at: start + 8) // WebKit's output lingers
-        #expect(!learner.hasPlayed && learner.candidates.isEmpty)
-        learner.observe(look([1: "Pausar"]), soundIsOn: false, at: start + 20)
-        learner.observe(look([1: "Pausar"]), soundIsOn: true, at: start + 21)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Reproducir", pauseLabel: "Pausar")])
-    }
-
-    @Test("a change long before the sound comes on isn't a start")
-    func farFromTheSound() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pause"]), soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start + 2)
-        learner.observe(look([1: "Play"]), soundIsOn: true, at: start + 10)
-        #expect(!learner.hasPlayed)
-        #expect(learner.candidates.isEmpty)
-    }
-
-    @Test("sound that was on from the first look isn't a start")
-    func soundAlreadyOn() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: true, at: start)
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Play"]), soundIsOn: true, at: start + 2)
-        #expect(learner.candidates.isEmpty)
-    }
-
-    @Test("nothing is compared across a reload or a closed window")
-    func acrossReload() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start)
-        learner.observe(nil, soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 2)
-        #expect(!learner.hasPlayed)
-    }
-
-    @Test("a player bar that comes with the music, already saying Pause, beats the song's own button (fresh YouTube Music)")
-    func barComesWithTheMusic() throws {
-        var learner = PlayPauseLearner()
-        learner.observe(look([2: "Reproducir Canción"]), soundIsOn: false, at: start)
-        // The user plays the song's card: the player bar comes, saying "Pausar".
-        learner.observe(look([1: "Pausar", 2: "Pausar Canción"]), soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Pausar", 2: "Pausar Canción"]), soundIsOn: true, at: start + 2)
-        #expect(learner.hasPlayed)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: true, at: start + 20)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 27)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 30)
-        #expect(Set(learner.candidates.map(\.playLabel)) == ["Reproducir", "Reproducir Canción"])
-        let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 676)]
-        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: learner.candidates.map {
+        // The song itself plays (the user waited for the ad to end): the bar says Pause.
+        learner.notePlaying(look([1: "Pause", 2: "Pause Song"]), at: start)
+        let candidates = learner.candidates(paused: look([1: "Play", 2: "Play Song"]))
+        let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 407)]
+        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: candidates.map {
             ($0, places[$0.handle.element.base as! Int]!)
         }))
         #expect(handle == ButtonHandle(1))
-        #expect(recipe.playLabel == "Reproducir" && recipe.pauseLabel == "Pausar")
+        #expect(recipe.playLabel == "Play" && recipe.pauseLabel == "Pause")
     }
 
-    @Test("with an ad first, the player bar turning to Pause as the song begins, the sound on all along, is a start (YouTube Music)")
-    func barAfterAnAd() throws {
+    @Test("It's Playing longer ago than a minute is too late; forgotten, it waits to be told again")
+    func tooLate() {
         var learner = PlayPauseLearner()
-        learner.observe(look([2: "Reproducir Canción"]), soundIsOn: false, at: start)
-        // The user plays the song's card: an ad plays, the bar comes saying "Reproducir".
-        learner.observe(look([1: "Reproducir", 2: "Pausar Canción"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Pausar", 2: "Pausar Canción"]), soundIsOn: true, at: start + 15) // the song begins
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: true, at: start + 30)
-        #expect(learner.candidates.isEmpty) // the pause isn't a start
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 37)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 40)
-        let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 651)]
-        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: learner.candidates.map {
-            ($0, places[$0.handle.element.base as! Int]!)
-        }))
-        #expect(handle == ButtonHandle(1))
-        #expect(recipe.playLabel == "Reproducir" && recipe.pauseLabel == "Pausar")
-    }
-
-    @Test("with an ad first and a pause just after the song begins, the words aren't swapped (measured in the VM)")
-    func quickPauseAfterAnAd() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([2: "Play Morning Drive"]), soundIsOn: false, at: start)
-        // The ad plays, the bar comes saying "Play".
-        learner.observe(look([1: "Play", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Pause", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 28) // the song
-        learner.observe(look([1: "Play", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 29) // paused at once
-        learner.observe(look([1: "Play", 2: "Pause Morning Drive"]), soundIsOn: false, at: start + 36)
-        learner.observe(look([1: "Play", 2: "Pause Morning Drive"]), soundIsOn: false, at: start + 39)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")])
-    }
-
-    @Test("playing again right after the sound went off doesn't count as the pause")
-    func playRightAfterTheStop() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Play"]), soundIsOn: true, at: start + 10)
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start + 17)
-        learner.observe(look([1: "Pause"]), soundIsOn: false, at: start + 18) // played again at once
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 19)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")])
-    }
-
-    @Test("silence the music comes back from by itself isn't a pause (a stall after the ad)")
-    func gapAfterAnAd() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([2: "Play Morning Drive"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Play", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 1) // the ad
-        learner.observe(look([1: "Pause", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 28) // the song
-        learner.observe(look([1: "Pause", 2: "Pause Morning Drive"]), soundIsOn: false, at: start + 36) // it stalls
-        #expect(learner.candidates.isEmpty)
-        learner.observe(look([1: "Pause", 2: "Pause Morning Drive"]), soundIsOn: true, at: start + 38) // and goes on
-        #expect(learner.candidates.isEmpty)
-        // The user pauses.
-        learner.observe(look([1: "Play", 2: "Play Morning Drive"]), soundIsOn: true, at: start + 60)
-        learner.observe(look([1: "Play", 2: "Play Morning Drive"]), soundIsOn: false, at: start + 67)
-        learner.observe(look([1: "Play", 2: "Play Morning Drive"]), soundIsOn: false, at: start + 70)
-        #expect(learner.candidates.contains(.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")))
-        #expect(!learner.candidates.contains { $0.playLabel.hasPrefix("Pause") })
-    }
-
-    @Test("a pause whose words change only once the sound is off is learned too")
-    func wordsAfterTheSound() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pause"]), soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Pause"]), soundIsOn: true, at: start + 2)
-        learner.observe(look([1: "Pause"]), soundIsOn: false, at: start + 5) // paused; the words lag
-        learner.observe(look([1: "Play"]), soundIsOn: false, at: start + 6)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")])
-    }
-
-    @Test("candidates that started together come in the page's order")
-    func sameStartInPageOrder() {
-        var learner = PlayPauseLearner()
-        let buttons = Array(1...8)
-        learner.observe(look(Dictionary(uniqueKeysWithValues: buttons.map { ($0, "Play") })), soundIsOn: false, at: start)
-        learner.observe(look(Dictionary(uniqueKeysWithValues: buttons.map { ($0, "Pause") })), soundIsOn: true, at: start + 1)
-        learner.observe(look(Dictionary(uniqueKeysWithValues: buttons.map { ($0, "Play") })), soundIsOn: true, at: start + 5)
-        learner.observe(look(Dictionary(uniqueKeysWithValues: buttons.map { ($0, "Play") })), soundIsOn: false, at: start + 8)
-        learner.observe(look(Dictionary(uniqueKeysWithValues: buttons.map { ($0, "Play") })), soundIsOn: false, at: start + 11)
-        #expect(learner.candidates.map(\.handle) == buttons.map { ButtonHandle($0) })
-    }
-
-    @Test("pausing, then playing again before the sound goes off, still learns the right words")
-    func playAgainBeforeTheSoundGoesOff() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Pausar"]), soundIsOn: true, at: start) // playing already
-        learner.observe(look([1: "Reproducir"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Pausar"]), soundIsOn: true, at: start + 4) // played again before it went off
-        learner.observe(look([1: "Reproducir"]), soundIsOn: true, at: start + 20)
-        learner.observe(look([1: "Reproducir"]), soundIsOn: false, at: start + 27)
-        learner.observe(look([1: "Reproducir"]), soundIsOn: false, at: start + 30)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Reproducir", pauseLabel: "Pausar")])
-    }
-
-    @Test("a button that came long before the music, or with a page's first look, isn't a start")
-    func arrivalsAwayFromTheMusic() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Pausar"]), soundIsOn: false, at: start) // the first look
-        learner.observe(look([1: "Pausar", 2: "Pausar Mix"]), soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Pausar", 2: "Pausar Mix"]), soundIsOn: true, at: start + 10)
+        learner.notePlaying(look([1: "Pause"]), at: start)
+        #expect(!learner.playedTooLongAgo(at: start + LearningStatus.pauseWait))
+        #expect(learner.playedTooLongAgo(at: start + LearningStatus.pauseWait + 1))
+        learner.forgetPlaying()
         #expect(!learner.hasPlayed)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Mix"]), soundIsOn: true, at: start + 20)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Mix"]), soundIsOn: false, at: start + 27)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Mix"]), soundIsOn: false, at: start + 30)
-        #expect(learner.candidates.isEmpty)
-    }
-
-    @Test("a player bar that comes saying Play, then changes as the sound comes on, is learned by its change")
-    func barComesLoading() {
-        var learner = PlayPauseLearner()
-        learner.observe(look([2: "Shuffle"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start + 1)
-        learner.observe(look([1: "Pause", 2: "Shuffle"]), soundIsOn: true, at: start + 2)
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: true, at: start + 20)
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start + 27)
-        learner.observe(look([1: "Play", 2: "Shuffle"]), soundIsOn: false, at: start + 30)
-        #expect(learner.candidates == [.init(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")])
+        #expect(!learner.playedTooLongAgo(at: start + 600))
     }
 
     @Test("among candidates the barest words win, then the lowest in the window")
@@ -248,22 +69,5 @@ struct PlayPauseLearnerTests {
         #expect(handle == ButtonHandle(1))
         #expect(recipe == PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar]))
         #expect(PlayPauseLearner.recipe(from: []) == nil)
-    }
-
-    @Test("the playing song's own button changing along doesn't win (YouTube Music)")
-    func songButton() throws {
-        var learner = PlayPauseLearner()
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start)
-        learner.observe(look([1: "Pausar", 2: "Pausar Canción"]), soundIsOn: true, at: start + 1)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: true, at: start + 4)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 11)
-        learner.observe(look([1: "Reproducir", 2: "Reproducir Canción"]), soundIsOn: false, at: start + 14)
-        #expect(learner.candidates.count == 2)
-        let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 0)]
-        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: learner.candidates.map {
-            ($0, places[$0.handle.element.base as! Int]!)
-        }))
-        #expect(handle == ButtonHandle(1))
-        #expect(recipe.pauseLabel == "Pausar")
     }
 }

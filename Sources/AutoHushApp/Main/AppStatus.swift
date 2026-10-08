@@ -52,6 +52,11 @@ struct AppStatus: Equatable {
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
     var learning: LearningStatus?
+    /// Once the user said the chosen player plays: when learning starts
+    /// over without the pause.
+    var learningPauseDeadline: Date?
+    /// Why the user's last learning click didn't move it on.
+    var learningNote: LearningNote?
     /// Whether the user has still to play the chosen player (`false`) or to
     /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
     /// to learn, or while the chosen player isn't offered (deleted).

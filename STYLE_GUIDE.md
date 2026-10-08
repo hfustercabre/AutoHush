@@ -184,6 +184,17 @@ where they appear:
   itself once done. Its button says **Cancel** while closing it stops the
   process, and **Later** once what's left goes on anyway (as in the
   learning window).
+  - **A step the user says is done** (It's Playing, It's Paused, Add to Dock)
+    has its button under its caption while it's the one to do: a blue chip
+    (`StepActionButton`), outside the step's VoiceOver element. Its caption
+    ends by naming the button ("Then click It's Paused."). The same steps
+    and buttons show wherever the steps do (the menu's card, Settings).
+  - **A time limit** shows as a caption line that counts down ("Back to the
+    first step in 0:45").
+  - **A click that couldn't be taken** says why in a `NoteLabel` under that
+    step, until the next click.
+  - **A step only some cases need** ("Answer the site in Safari") shows only
+    once it's needed, and stays ticked afterwards.
 - **Searches** appear where a list can grow long: always in Settings → Apps,
   and wherever music players are offered once there are eight or more (not
   counting suggested web apps).
@@ -303,6 +314,14 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
   does this).
 - **Chosen items** carry the "selected" trait.
+- **Checklist steps** (adding a web app, learning a player) are one
+  VoiceOver element each: the step's words and caption as its label, then
+  where it stands as its value, "Completed", "In progress" or "To do"
+  (`checklistStepAccessibility`), never the "selected" trait. (Combined
+  text keeps its words in its value: a value of its own would replace them.) A window's
+  checklist announces the step to do now each time it changes
+  (`announcesCurrentStep`); the menu and Settings, showing the same steps,
+  don't, so nothing is said twice.
 - **Contrast:** text in light mode keeps at least 4.5:1.
 
 ## Keyboard

@@ -4,10 +4,16 @@ import OSLog
 import AutoHushKit
 
 /// Makes a Safari web app from an address, the way a person does: it opens
-/// the website in Safari and uses Safari's own File → Add to Dock, then
-/// clicks Add (keeping the name Safari suggests) and closes the tab it
-/// opened. Nothing else is created or changed; macOS has no other way to
-/// make one.
+/// the website in Safari and, once the user says to add it, uses Safari's
+/// own File → Add to Dock, then clicks Add (keeping the name Safari
+/// suggests) and closes the tab it opened. Nothing else is created or
+/// changed; macOS has no other way to make one.
+///
+/// Safari makes the web app from the page it shows, so the site itself must
+/// show first: a site can ask something first on another of its hosts
+/// (YouTube's cookie page on consent.youtube.com, in the EU), and a web app
+/// made from that page would open that page, named after it. Until the site
+/// shows, it waits for the user to answer there; then the user adds it.
 ///
 /// A website that already has a web app isn't added again: that one is
 /// used. Cancelling stops it before Add is clicked (Safari's dialog is
@@ -16,6 +22,9 @@ package final class SafariWebAppMaker: WebAppMaking {
     /// How long the new web app may take to appear after Add.
     static let appearTimeout: TimeInterval = 20
     static let pollInterval: TimeInterval = 0.25
+    /// While another site asks something first, how often Safari's page is
+    /// looked at again.
+    static let siteCheckInterval: TimeInterval = 1
 
     private let safari: any SafariDriving
     private let webApps: @Sendable () -> [SafariWebApp]
@@ -48,7 +57,9 @@ package final class SafariWebAppMaker: WebAppMaking {
     }
 
     /// Throws `CancellationError` once cancelled before Add.
-    package func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp {
+    package func makeWebApp(from address: String,
+                            onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
+                            confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {
         guard let url = WebAddress.url(from: address) else { throw WebAppMakingError.notAWebAddress }
         try await checkAnswers(url)
         try Task.checkCancellation()
@@ -70,6 +81,30 @@ package final class SafariWebAppMaker: WebAppMaking {
         }
         try Task.checkCancellation()
         onStep(.opened)
+
+        let site = url.host() ?? url.absoluteString
+        var asking: String?
+        while true {
+            if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) {
+                let host = shown.host() ?? shown.absoluteString
+                if asking != host {
+                    asking = host
+                    logger.notice("Safari shows another site first: waiting for the user to answer it")
+                    onStep(.siteAsks(shown: host, site: site))
+                }
+                await sleep(Self.siteCheckInterval)
+                try Task.checkCancellation()
+                continue
+            }
+            asking = nil
+            onStep(.readyToAdd(site: site))
+            guard await confirmAdd() else { throw CancellationError() }
+            try Task.checkCancellation()
+            // The user may have gone elsewhere since.
+            if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
+            break
+        }
+        onStep(.adding)
 
         guard let suggested = await safari.addToDock(url) else {
             try Task.checkCancellation() // the dialog was cancelled instead of added
@@ -112,6 +147,9 @@ package protocol SafariDriving: Sendable {
     /// Waits until the page in Safari's front window has loaded and can be
     /// added: that tab; `nil` after a while.
     func waitForPage() async -> SafariTab?
+    /// The address of the page in Safari's front window; `nil` when it
+    /// can't be read.
+    func frontPageURL() async -> URL?
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
     /// may have moved), and clicks Add, unless the task is cancelled
     /// meanwhile: then it clicks the dialog's Cancel. Returns the name
@@ -177,10 +215,24 @@ package struct SafariUI: SafariDriving {
         return nil
     }
 
+    package func frontPageURL() async -> URL? {
+        guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
+        return page.value(kAXURLAttribute) as? URL
+    }
+
     package func addToDock(_ url: URL) async -> String? {
         guard let app = Self.safariElement() else {
             logger.error("Add to Dock: Safari isn't running")
             return nil
+        }
+        // The user's click on Add to Dock put AutoHush in front: Safari shows
+        // its dialog only while it's the active app, and its menu is looked
+        // up afresh once it is.
+        if let safari = NSRunningApplication.running(Self.bundleID), !safari.isActive {
+            safari.activate()
+            let deadline = Date().addingTimeInterval(2)
+            while !safari.isActive, Date() < deadline { try? await Task.sleep(for: .milliseconds(100)) }
+            try? await Task.sleep(for: .milliseconds(300))
         }
         guard let item = Self.menuItem("AddToDock", in: app) else {
             logger.error("Add to Dock: Safari's menu item wasn't found")

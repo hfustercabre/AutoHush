@@ -82,6 +82,29 @@ package protocol LearningMusicPlayer: MusicPlayer {
     /// Forgets what it learned and learns it again from the user, who asked
     /// (it may have been learned wrong). It can't be controlled meanwhile.
     func learnAgain() async
+    /// The user says the music itself plays now ("It's Playing"): it notes
+    /// how the player looks, and waits to be told it's paused.
+    func markPlaying() async -> LearningMark
+    /// The user says they paused it ("It's Paused"): it learns what changed
+    /// since it played.
+    func markPaused() async -> LearningMark
+    /// The pause didn't come within `LearningStatus.pauseWait`: it waits to be
+    /// told it plays again.
+    func restartLearning() async
+}
+
+/// What came of the user telling a learning player it plays, or was paused.
+package enum LearningMark: Equatable, Sendable {
+    /// Noted (it plays), or learned (it was paused).
+    case noted
+    /// It can't be heard: it isn't playing yet.
+    case notHeard
+    /// Nothing changed since it played: it isn't paused yet.
+    case nothingChanged
+    /// It played longer ago than `LearningStatus.pauseWait`: start over.
+    case tooLate
+    /// It isn't learning, or isn't running.
+    case notLearning
 }
 
 /// A player that uses Core Audio's process taps on its own sound, to mute
@@ -109,9 +132,13 @@ package protocol MutingMusicPlayer: TappingMusicPlayer {
 package enum LearningStatus: Equatable, Sendable {
     /// It can be controlled.
     case learned
-    /// It waits for the user to play it (`hasPlayed`), then pause it: once it
-    /// has seen both, it has learned.
+    /// It waits for the user to say it plays (`hasPlayed` once they have),
+    /// then that they paused it: then it has learned.
     case learning(hasPlayed: Bool)
+
+    /// How long the user has to pause it and say so, once they said it
+    /// plays; then it starts over.
+    package static let pauseWait: TimeInterval = 60
 }
 
 /// Watches a player's state; created by `MusicPlayer.makeStateObserver`.

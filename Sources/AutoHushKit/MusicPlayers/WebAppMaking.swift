@@ -4,9 +4,13 @@ import Foundation
 /// user typed, so it can be chosen as the music player. The app shows the
 /// steps; `AutoHushPlayers` provides the way (Safari's Add to Dock).
 package protocol WebAppMaking: Sendable {
-    /// Checks the address, asks the site whether it answers, then makes the
-    /// web app, reporting each step done. Throws a `WebAppMakingError`.
-    func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void) async throws -> MadeWebApp
+    /// Checks the address, asks the site whether it answers, opens it, then
+    /// makes the web app once `confirmAdd` says the user wants it added
+    /// (`false`: cancelled), reporting each step. Throws a
+    /// `WebAppMakingError`.
+    func makeWebApp(from address: String,
+                    onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
+                    confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp
 }
 
 /// A website suggested as a web app, such as a music service's web player:
@@ -22,12 +26,19 @@ package struct WebAppSuggestion: Equatable, Sendable {
     }
 }
 
-/// A step of making a web app, once it's done.
+/// A step of making a web app, as it comes.
 package enum WebAppMakingStep: Equatable, Sendable {
     /// The address is a web address, and the site answers.
     case checked
-    /// The website is open in the browser, ready to be added.
+    /// The website is open in the browser.
     case opened
+    /// The browser shows another site first (`shown`), asking something
+    /// (cookies, signing in): the user answers it there, until `site` shows.
+    case siteAsks(shown: String, site: String)
+    /// `site` shows in the browser: it waits for the user to add it.
+    case readyToAdd(site: String)
+    /// Adding it with the browser.
+    case adding
     /// The web app exists, made now or already there.
     case made(MadeWebApp)
 }

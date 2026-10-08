@@ -9,7 +9,9 @@ struct LearningCardView: View {
     var body: some View {
         if let hasPlayed = model.status.learningHasPlayed {
             Card(padding: 10) {
-                LearningSummary(name: model.status.playerName, hasPlayed: hasPlayed)
+                LearningSummary(name: model.status.playerName, hasPlayed: hasPlayed,
+                                deadline: model.status.learningPauseDeadline, note: model.status.learningNote,
+                                action: { model.perform(.learningStep($0)) })
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 2)

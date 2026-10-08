@@ -92,7 +92,8 @@ struct GeneralSettingsView: View {
                 // Until AutoHush has learned the chosen web app's controls.
                 if let name = model.chosenPlayerName, let hasPlayed = model.learningHasPlayed {
                     CardDivider()
-                    LearningSummary(name: name, hasPlayed: hasPlayed)
+                    LearningSummary(name: name, hasPlayed: hasPlayed, deadline: model.learningPauseDeadline,
+                                    note: model.learningNote, action: { model.learningStep($0) })
                 }
                 // Once learned: the way to learn them again, as they may have been learned wrong.
                 if let name = model.chosenPlayerName, model.canLearnControlsAgain {
