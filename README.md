@@ -383,8 +383,8 @@ Tools/LoopbackDriver/    AutoHush Loopback, a test-only virtual audio device for
 Tools/TestVM/            runs builds, tests and apps in a macOS VM, so live tests don't disturb the Mac
 Tools/NoiseMaker/        a test app that plays a tone or a file, as "another app playing"
 Tools/PauseCheck/        in the VM, times AutoHush's pause and resume around a Noise Maker sound
+Tools/PageButtons/       lists or presses a web page's buttons by name (to drive a web app in tests)
 Tools/SoundNow/          lists the apps playing sound right now, the way AutoHush counts them
-Tools/AudioOutput/       reads or changes the sound output (e.g. to AutoHush Loopback)
 Tools/WindowList/        lists an app's windows with their place, to check or capture one
 Tools/MemWatch/          samples a process's memory over hours (leak checks)
                          Each of these has a README.md saying what it does and how; none is part of the app.

@@ -9,7 +9,9 @@ disturb it.
 `vm.sh [--gui] <command>` copies the project into the VM, then runs
 `<command>` there, inside that copy. With `--gui`, the command runs in the
 VM's desktop session, where apps open windows and Accessibility works.
-`vm.sh sync` only copies.
+`vm.sh sync` only copies. `vm.sh shot [name]` captures the VM's screen into
+the transfer folder and prints where it is on the Mac
+(`~/Applications/Tart/transfer`, or `AUTOHUSH_VM_TRANSFER`).
 
 ```bash
 bash Tools/TestVM/vm.sh 'swift test'
@@ -31,10 +33,17 @@ bash Tools/TestVM/vm.sh --gui 'open -n AutoHush.app'
   with `rsync --delete`, keeping `.build`, `AutoHush.app` and the harness's
   work folder, so builds use the VM's own disk and stay incremental.
 - It then builds the test tools into `~/vmtools` when their source changed:
-  [AudioOutput](../AudioOutput), [SoundNow](../SoundNow),
-  [WindowList](../WindowList) and the [NoiseMaker](../NoiseMaker) app.
+  [SoundNow](../SoundNow), [WindowList](../WindowList),
+  [PageButtons](../PageButtons) and the [NoiseMaker](../NoiseMaker) app. It
+  also installs [SwitchAudioSource](https://github.com/deweller/switchaudio-osx)
+  (Homebrew's `switchaudio-osx`) to change the sound output:
+  `SwitchAudioSource -t output -u AutoHushLoopback_UID` plays everything
+  through [AutoHush Loopback](../LoopbackDriver).
 - `--gui` wraps the command in `launchctl asuser 501`, the desktop user's
   session.
+- The shared folder can show a file's previous content for a few seconds
+  after it's edited on the Mac, so a run started right after an edit may
+  mirror the old one: check the mirror (with `grep`) when it matters.
 
 Signing in the VM needs the app's signing identity imported into the VM's
 keychain. For permission tests, System Integrity Protection is off in the
