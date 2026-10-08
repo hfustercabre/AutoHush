@@ -11,6 +11,7 @@ background = defines.get("background") or None  # noqa: F821
 icon = defines.get("icon") or None  # noqa: F821
 
 format = "UDZO"
+compression_level = 9  # zlib's best: dmgbuild's roomier volume costs ~6 % otherwise
 filesystem = "APFS"
 files = [app]
 symlinks = {"Applications": "/Applications"}
