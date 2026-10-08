@@ -77,14 +77,16 @@ let package = Package(
         .executableTarget(
             name: "MeasureVolumeCurve",
             dependencies: ["AutoHushKit", "AutoHushPlayers"],
-            path: "Tools/MeasureVolumeCurve"
+            path: "Tools/MeasureVolumeCurve",
+            exclude: ["README.md"]
         ),
 
         // Records a loopback audio device and measures AutoHush's fades in it,
         // as you hear them. A developer tool: never part of AutoHush.app.
         .executableTarget(
             name: "ListenToFades",
-            path: "Tools/ListenToFades"
+            path: "Tools/ListenToFades",
+            exclude: ["README.md"]
         ),
 
         // Fakes shared by the test targets.
