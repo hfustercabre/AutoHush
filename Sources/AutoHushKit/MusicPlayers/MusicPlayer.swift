@@ -103,7 +103,11 @@ package enum LearningMark: Equatable, Sendable {
     case nothingChanged
     /// It played longer ago than `LearningStatus.pauseWait`: start over.
     case tooLate
-    /// It isn't learning, or isn't running.
+    /// Its page can't be read (it isn't running, has no window, or its window
+    /// shows no usable buttons, as one macOS restores at login can): it waits
+    /// to be told it plays again, once the page can be read.
+    case cantSeePage
+    /// It isn't learning.
     case notLearning
 }
 

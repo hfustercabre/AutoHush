@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **It's Playing did nothing when AutoHush couldn't read the web app's
+  page.** With the web app closed, without a window, or with a window macOS
+  restored at login (it can show its buttons without their names), the
+  click did nothing, or It's Paused then always said no button changed. Now
+  the step says AutoHush can't see the page, and to open its window, or
+  close it and open it again.
+- **The Add a Web App window offered It's Playing before Accessibility was
+  allowed.** Its learning steps now wait for the permission, with the same
+  button to allow it as the learning window.
+- **Adding a web app after answering a site's question left its Safari tab
+  open.** The tab is now closed, as for any other site.
+
 ## [0.8.5] — 2026-10-08
 
 ### Fixed

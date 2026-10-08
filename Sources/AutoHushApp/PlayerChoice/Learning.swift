@@ -31,7 +31,7 @@ enum LearningText {
 
     /// Under the play step until it's done: a site that needs an account
     /// plays nothing until you log in, and during an ad the player's own
-    /// button may say it's paused (YouTube Music's does).
+    /// button may say it's paused (some sites' do).
     static func playTip(_ name: String) -> String {
         String(localized: "Log in first if \(name) asks you to. Ads don’t count: wait for the song itself. Then click It’s Playing.",
                comment: "Under the step “Play a song in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it")
@@ -89,6 +89,9 @@ enum LearningNote: Equatable, Sendable {
     case nothingChanged
     /// It's Paused didn't come within `LearningStatus.pauseWait`.
     case timedOut
+    /// The web app's page couldn't be read: it isn't running, has no window,
+    /// or its window shows its buttons without their words.
+    case cantSeePage
 
     func text(_ name: String) -> String {
         switch self {
@@ -101,6 +104,9 @@ enum LearningNote: Equatable, Sendable {
         case .timedOut:
             String(localized: "A minute went by without the pause. Play the song again, then click It’s Playing.",
                    comment: "Under the step “Play a song in %@” once learning went back to it: “It’s Paused” wasn't clicked within a minute")
+        case .cantSeePage:
+            String(localized: "AutoHush can’t see \(name)’s page. Open its window, or close it and open it again, then click It’s Playing again.",
+                   comment: "Under the step “Play a song in %@” when AutoHush couldn't read the web app's page (not running, no window, or a window restored without its buttons' names); %@ is the web app")
         }
     }
 }
@@ -131,14 +137,15 @@ struct LearningSteps: View {
                 list(remaining: nil)
             }
         }
-        .announcesCurrentStep(announces ? Self.steps(name: name, hasPlayed: hasPlayed, hasPaused: hasPaused, locked: locked).currentAnnouncement : nil)
     }
 
     private func list(remaining: TimeInterval?) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(Self.steps(name: name, hasPlayed: hasPlayed, hasPaused: hasPaused, locked: locked,
-                               remaining: remaining, note: note), id: \.title) { step($0) }
+        let steps = Self.steps(name: name, hasPlayed: hasPlayed, hasPaused: hasPaused, locked: locked,
+                               remaining: remaining, note: note)
+        return VStack(alignment: .leading, spacing: 8) {
+            ForEach(steps, id: \.title) { step($0) }
         }
+        .announcesCurrentStep(announces ? steps.currentAnnouncement : nil)
     }
 
     /// Play, then pause: the one to do now has its tip, its button, and the
@@ -165,25 +172,9 @@ struct LearningSteps: View {
 
     private func step(_ step: ChecklistStep) -> some View {
         let done = step.state == .done
-        return HStack(alignment: .firstTextBaseline, spacing: 8) {
+        return ChecklistStepRow(step: step, dimmed: done || locked, action: action) {
             Image(systemName: done ? "checkmark.circle.fill" : locked ? "lock.circle" : "circle")
                 .foregroundStyle(done ? AnyShapeStyle(.appSuccess) : AnyShapeStyle(.appSecondary))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: step.title)
-                        .foregroundStyle(done || locked ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
-                        .fixedSize(horizontal: false, vertical: true)
-                    ForEach(step.notes, id: \.self) { note in
-                        Text(verbatim: note)
-                            .captionStyle()
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
-                }
-                .checklistStepAccessibility(step)
-                if let button = step.button { StepActionButton(button: button) { action(button) } }
-            }
         }
     }
 }
@@ -269,7 +260,7 @@ struct LearningWindowView: View {
                 // asking for it comes first, and the steps unlock once it's allowed.
                 let state = model.permissions
                 if let control = state.control, !state.controlAccess.isSatisfied {
-                    permissionStep(control, access: state.controlAccess, name: name)
+                    LearningPermissionStep(model: model, permission: control, access: state.controlAccess, name: name)
                 }
                 LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
                               locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
@@ -294,8 +285,17 @@ struct LearningWindowView: View {
         .frame(width: 440)
         .font(.appBody)
     }
+}
 
-    private func permissionStep(_ permission: Permission, access: PermissionAccess, name: String) -> some View {
+/// The permission learning needs first, as a step with its button: in the
+/// learning window and the Add a Web App window, above the steps it locks.
+struct LearningPermissionStep: View {
+    let model: SettingsModel
+    let permission: Permission
+    let access: PermissionAccess
+    let name: String
+
+    var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: "circle")
                 .foregroundStyle(.appSecondary)

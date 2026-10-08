@@ -15522,6 +15522,215 @@
         }
       }
     },
+    "AutoHush can’t see %@’s page. Open its window, or close it and open it again, then click It’s Playing again." : {
+      "comment" : "Under the step “Play a song in %@” when AutoHush couldn't read the web app's page (not running, no window, or a window restored without its buttons' names); %@ is the web app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يستطيع AutoHush رؤية صفحة %@. افتح نافذته، أو أغلقها وافتحها مرة أخرى، ثم انقر على «قيد التشغيل» مرة أخرى."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush no pot veure la pàgina de %@. Obre’n la finestra, o tanca-la i torna-la a obrir, i després torna a fer clic a «Està sonant»."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nevidí stránku aplikace %@. Otevřete její okno, nebo ho zavřete a znovu otevřete, a pak znovu klikněte na „Hraje“."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan ikke se siden i %@. Åbn vinduet, eller luk det og åbn det igen, og klik derefter på ”Afspiller” igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kann die Seite von %@ nicht sehen. Öffne das Fenster oder schließe es und öffne es erneut. Klicke dann erneut auf „Es läuft“."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush δεν μπορεί να δει τη σελίδα της εφαρμογής %@. Ανοίξτε το παράθυρό της ή κλείστε το και ανοίξτε το ξανά και, στη συνέχεια, κάντε ξανά κλικ στο «Παίζει»."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no puede ver la página de %@. Abre su ventana, o ciérrala y vuelve a abrirla, y luego vuelve a hacer clic en «Está sonando»."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no puede ver la página de %@. Abre su ventana, o ciérrala y vuelve a abrirla, y luego vuelve a hacer clic en «Está sonando»."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ei näe apin %@ sivua. Avaa sen ikkuna tai sulje se ja avaa uudelleen, ja osoita sitten uudelleen ”Soi nyt”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne voit pas la page de %@. Ouvrez sa fenêtre, ou fermez-la et rouvrez-la, puis cliquez à nouveau sur « Lecture en cours »."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne voit pas la page de %@. Ouvrez sa fenêtre, ou fermez-la et rouvrez-la, puis cliquez à nouveau sur « Lecture en cours »."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush को %@ का पेज नहीं दिख रहा। उसकी विंडो खोलें, या उसे बंद करके फिर से खोलें, फिर दोबारा “चल रहा है” पर क्लिक करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne vidi stranicu aplikacije %@. Otvorite njezin prozor ili ga zatvorite i ponovno otvorite, a zatim ponovno kliknite „Svira”."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush nem látja a(z) %@ app oldalát. Nyissa meg az ablakát, vagy zárja be, és nyissa meg újra, majd kattintson újra a „Szól” gombra."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tidak bisa melihat halaman %@. Buka jendelanya, atau tutup lalu buka lagi, kemudian klik “Sedang Diputar” lagi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush non riesce a vedere la pagina di %@. Apri la sua finestra, oppure chiudila e riaprila, poi fai di nuovo clic su «In riproduzione»."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushで%@のページを確認できません。ウインドウを開くか、閉じてもう一度開いてから、もう一度「再生中」をクリックしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 %@의 페이지를 볼 수 없습니다. 윈도우를 열거나, 닫았다가 다시 연 다음 '재생 중'을 다시 클릭하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan ikke se siden i %@. Åpne vinduet, eller lukk det og åpne det igjen, og klikk deretter på «Spiller» igjen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan de pagina van %@ niet zien. Open het venster, of sluit het en open het opnieuw, en klik dan nogmaals op ‘Speelt af’."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nie widzi strony aplikacji %@. Otwórz jej okno albo zamknij je i otwórz ponownie, a następnie ponownie kliknij „Gra”."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não consegue ver a página de %@. Abra a janela, ou feche-a e abra-a de novo, e depois clique em “Está tocando” de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não consegue ver a página de %@. Abra a janela, ou feche-a e volte a abri-la, e depois volte a clicar em “A reproduzir”."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nu poate vedea pagina aplicației %@. Deschideți fereastra acesteia sau închideți-o și deschideți-o din nou, apoi faceți clic din nou pe „Se redă”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не видит страницу %@. Откройте окно приложения или закройте его и откройте снова, затем снова нажмите «Играет»."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nevidí stránku apky %@. Otvorte jej okno alebo ho zatvorte a znova otvorte a potom znova kliknite na „Hrá“."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne vidi strani aplikacije %@. Odprite njeno okno ali ga zaprite in znova odprite, nato znova kliknite »Predvaja se«."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan inte se sidan i %@. Öppna fönstret, eller stäng det och öppna det igen, och klicka sedan på ”Spelas upp” igen."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %@ sayfasını göremiyor. Penceresini açın ya da kapatıp yeniden açın, sonra yeniden “Çalıyor” düğmesine tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не бачить сторінку програми %@. Відкрийте її вікно або закрийте його й відкрийте знову, а потім знову натисніть «Грає»."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush không thấy được trang của %@. Hãy mở cửa sổ của ứng dụng, hoặc đóng rồi mở lại, sau đó bấm lại “Đang phát”."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 無法查看 %@ 的頁面。請開啟它的視窗，或關閉後重新開啟，然後再按一下「正在播放」。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 无法查看 %@ 的页面。请打开它的窗口，或关闭后重新打开，然后再次点按“正在播放”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 無法查看 %@ 的頁面。請打開它的視窗，或關閉後重新打開，然後再按一下「正在播放」。"
+          }
+        }
+      }
+    },
     "AutoHush couldn't replace itself: %@" : {
       "comment" : "Update install error; %@ is the reason macOS gave",
       "localizations" : {

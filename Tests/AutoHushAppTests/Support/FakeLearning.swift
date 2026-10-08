@@ -95,7 +95,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
     func markPaused() async -> LearningMark {
         let mark = state.withLock { $0.pausedMark }
         if mark == .noted { set(.learned) }
-        if mark == .tooLate { set(.learning(hasPlayed: false)) }
+        if mark == .tooLate || mark == .cantSeePage { set(.learning(hasPlayed: false)) }
         return mark
     }
 

@@ -43,6 +43,8 @@ struct ChecklistStepTests {
         #expect(notHeard[0].warning == LearningNote.notHeard.text("YT Music"))
         let timedOut = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .timedOut)
         #expect(timedOut[0].warning == LearningNote.timedOut.text("YT Music"))
+        let cantSee = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .cantSeePage)
+        #expect(cantSee[0].warning == LearningNote.cantSeePage.text("YT Music"))
         let nothing = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, note: .nothingChanged)
         #expect(nothing[0].warning == nil)
         #expect(nothing[1].warning == LearningNote.nothingChanged.text("YT Music"))
@@ -95,6 +97,10 @@ struct ChecklistStepTests {
         let learned = AddWebAppView.steps(for: made, learning: .learned)
         #expect(learned.allSatisfy { $0.state == .done })
         #expect(learned.currentAnnouncement == nil)
+
+        let locked = AddWebAppView.steps(for: made, learning: .learning(hasPlayed: false), locked: true)
+        #expect(locked.suffix(2).map(\.state) == [.todo, .todo]) // until Accessibility is allowed
+        #expect(locked.allSatisfy { $0.button == nil })
 
         let already = AddWebAppView.steps(for: .learning(name: "YT Music", alreadyThere: true), learning: .learning(hasPlayed: false))
         #expect(already.map(\.title)[1] == "Already in your Dock as “YT Music”")

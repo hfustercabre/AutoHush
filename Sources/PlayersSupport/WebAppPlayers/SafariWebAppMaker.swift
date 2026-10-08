@@ -104,6 +104,9 @@ package final class SafariWebAppMaker: WebAppMaking {
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
             break
         }
+        // Answering the site's question loaded another page in the tab: it's
+        // the one shown now that's closed afterwards.
+        let addedTab = await safari.frontTab() ?? tab
         onStep(.adding)
 
         guard let suggested = await safari.addToDock(url) else {
@@ -118,7 +121,7 @@ package final class SafariWebAppMaker: WebAppMaking {
                 // Launch Services learns of it only later: opening it by
                 // its bundle ID needs it.
                 LSRegisterURL(app.url as CFURL, true)
-                await safari.closeTab(tab)
+                await safari.closeTab(addedTab)
                 let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
                 onStep(.made(made))
                 return made
@@ -150,6 +153,9 @@ package protocol SafariDriving: Sendable {
     /// The address of the page in Safari's front window; `nil` when it
     /// can't be read.
     func frontPageURL() async -> URL?
+    /// The tab showing the page in Safari's front window now; `nil` when
+    /// there's none.
+    func frontTab() async -> SafariTab?
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
     /// may have moved), and clicks Add, unless the task is cancelled
     /// meanwhile: then it clicks the dialog's Cancel. Returns the name
@@ -213,6 +219,11 @@ package struct SafariUI: SafariDriving {
             try? await Task.sleep(for: .milliseconds(300))
         }
         return nil
+    }
+
+    package func frontTab() async -> SafariTab? {
+        guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
+        return SafariTab(page: page)
     }
 
     package func frontPageURL() async -> URL? {

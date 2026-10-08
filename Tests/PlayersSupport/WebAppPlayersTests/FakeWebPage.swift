@@ -19,6 +19,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     private var _trusted = true
     private var _presses: [Int] = []
     private var _looks = 0
+    private var _windowLooks = 0
     private var _buttonReads = 0
     /// What a press does; by default it swaps the button's words.
     var onPress: (@Sendable (FakeWebPage, Int) -> Void)?
@@ -42,6 +43,8 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     var presses: [Int] { lock.withLock { _presses } }
     /// How many times every button was looked for.
     var looks: Int { lock.withLock { _looks } }
+    /// How many times it was asked whether it has a window.
+    var windowLooks: Int { lock.withLock { _windowLooks } }
     /// How many times a button known already was read.
     var buttonReads: Int { lock.withLock { _buttonReads } }
 
@@ -57,6 +60,13 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     // MARK: - WebPage
 
     func isTrusted(prompt: Bool) -> Bool { trusted }
+
+    func hasWindow(pid: pid_t) -> Bool {
+        lock.withLock {
+            _windowLooks += 1
+            return _hasWindow
+        }
+    }
 
     func buttons(pid: pid_t) -> [PageButton]? {
         lock.withLock {

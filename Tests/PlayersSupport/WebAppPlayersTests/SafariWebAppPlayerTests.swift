@@ -127,6 +127,44 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.markPlaying() == .notLearning) // learned: nothing to tell
     }
 
+    @Test("a page AutoHush can't read (not running, no window, buttons without words) is said so, and It's Paused then starts over")
+    func cantSeePage() async {
+        let notRunning = Setup(running: false)
+        #expect(await notRunning.player.markPlaying() == .cantSeePage)
+
+        let setup = Setup()
+        setup.page.sound = true
+        setup.page.hasWindow = false
+        #expect(await setup.player.markPlaying() == .cantSeePage)
+
+        // A window macOS restored at login: buttons, but without their words.
+        setup.page.hasWindow = true
+        setup.page.buttonsByNumber = Dictionary(uniqueKeysWithValues: (1...20).map { ($0, FakeWebPage.Button(label: "", place: Places.main)) })
+        #expect(await setup.player.markPlaying() == .cantSeePage)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
+
+        setup.showPage("Pause")
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.page.hasWindow = false // the window was closed before It's Paused
+        #expect(await setup.player.markPaused() == .cantSeePage)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
+    }
+
+    @Test("while it learns, a web app without a window is stopped, and windows aren't looked for again for a while")
+    func learningWithoutWindow() async {
+        let setup = Setup()
+        setup.page.hasWindow = false
+        #expect(await setup.player.playerState() == .stopped)
+        let looks = setup.page.windowLooks
+        setup.clock.advance(1)
+        #expect(await setup.player.playerState() == .stopped)
+        #expect(setup.page.windowLooks == looks) // waits before looking again
+        setup.page.hasWindow = true
+        setup.clock.advance(WebAppControl.noWindowPause)
+        #expect(await setup.player.playerState() == .paused)
+        #expect(setup.page.looks == 0) // the page itself is never read while learning
+    }
+
     @Test("It's Paused more than a minute after It's Playing is too late: it starts over; so does restarting")
     func pauseTooLate() async {
         let setup = Setup()

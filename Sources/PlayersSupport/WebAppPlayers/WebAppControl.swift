@@ -180,7 +180,10 @@ final class WebAppControl: @unchecked Sendable {
             }
         }
         guard learner != nil else { return hasWindow ? .unknown : .stopped }
-        // Learning needs no look at the page until the user says so.
+        // Learning needs no look at the page until the user says so; whether
+        // it has a window is enough (known already when it looked for the
+        // button).
+        if recipe == nil { hasWindow = windowShows(pid: pid, now: now) }
         guard hasWindow else { return .stopped }
         return page.isPlayingSound(pid: pid) ? .playing : .paused
     }
@@ -262,11 +265,12 @@ final class WebAppControl: @unchecked Sendable {
     // MARK: - Learning, as the user says
 
     /// The user says the music itself plays: the page is looked at, to
-    /// compare once they've paused it. Only while the web app can be heard.
-    func notePlaying(pid: pid_t) -> LearningMark {
+    /// compare once they've paused it. Only while the web app can be heard,
+    /// and its page read (`pid` is `nil` while it isn't running).
+    func notePlaying(pid: pid_t?) -> LearningMark {
         guard var learner else { return .notLearning }
+        guard let pid, let buttons = readablePage(pid: pid) else { return .cantSeePage }
         guard page.isPlayingSound(pid: pid) else { return .notHeard }
-        guard let buttons = page.buttons(pid: pid) else { return .notLearning }
         learner.notePlaying(buttons, at: clock())
         self.learner = learner
         logger.notice("\(self.name, privacy: .public) plays, the user says: its page is noted (\(buttons.count, privacy: .public) buttons)")
@@ -277,15 +281,16 @@ final class WebAppControl: @unchecked Sendable {
     /// The user says they paused it: the button whose words changed since
     /// it played is learned (see `PlayPauseLearner`), keeping the places
     /// learned before.
-    func notePaused(pid: pid_t) -> LearningMark {
+    func notePaused(pid: pid_t?) -> LearningMark {
         guard var learner, learner.hasPlayed else { return .notLearning }
-        guard !learner.playedTooLongAgo(at: clock()) else {
+        let tooLate = learner.playedTooLongAgo(at: clock())
+        guard !tooLate, let pid, let buttons = readablePage(pid: pid) else {
+            // Back to the first step: it played too long ago, or its page went.
             learner.forgetPlaying()
             self.learner = learner
             status.send(.learning(hasPlayed: false))
-            return .tooLate
+            return tooLate ? .tooLate : .cantSeePage
         }
-        guard let buttons = page.buttons(pid: pid) else { return .notLearning }
         let found = learner.candidates(paused: buttons)
         let candidates = found.compactMap { candidate in page.place(of: candidate.handle).map { (candidate, $0) } }
         // Where each candidate was (none: its place couldn't be read), never its words.
@@ -307,6 +312,15 @@ final class WebAppControl: @unchecked Sendable {
         logger.notice("Learned \(self.name, privacy: .public)'s Play/Pause button")
         status.send(.learned)
         return .noted
+    }
+
+    /// The page's buttons, unless it has no window or too few buttons with
+    /// words to tell them apart: a window macOS restores at login can show
+    /// its buttons without their words (measured in the VM).
+    private func readablePage(pid: pid_t) -> [PageButton]? {
+        guard let buttons = page.buttons(pid: pid),
+              buttons.count(where: { !$0.label.isEmpty }) >= Self.loadedPageButtons else { return nil }
+        return buttons
     }
 
     /// The pause didn't come in time: back to waiting for the user to say it
@@ -428,16 +442,35 @@ final class WebAppControl: @unchecked Sendable {
     /// while after a look found none (longer each time), unless its sound is
     /// on.
     private func look(pid: pid_t, now: Date) -> [PageButton]? {
-        if let noWindowUntil, now < noWindowUntil, !page.isPlayingSound(pid: pid) { return nil }
+        guard mayLookForWindows(pid: pid, now: now) else { return nil }
         let buttons = page.buttons(pid: pid)
-        if buttons == nil {
-            noWindowUntil = now.addingTimeInterval(noWindowWait)
-            noWindowWait = min(noWindowWait * 2, Self.noWindowPauseLimit)
-        } else {
+        noteWindow(shows: buttons != nil, at: now)
+        return buttons
+    }
+
+    /// Whether the app has a window, without reading its page; `false` for a
+    /// while after a look found none, as for `look`.
+    private func windowShows(pid: pid_t, now: Date) -> Bool {
+        guard mayLookForWindows(pid: pid, now: now) else { return false }
+        let shows = page.hasWindow(pid: pid)
+        noteWindow(shows: shows, at: now)
+        return shows
+    }
+
+    private func mayLookForWindows(pid: pid_t, now: Date) -> Bool {
+        guard let noWindowUntil, now < noWindowUntil else { return true }
+        return page.isPlayingSound(pid: pid)
+    }
+
+    /// After a look that found no window, the next one waits, longer each time.
+    private func noteWindow(shows: Bool, at now: Date) {
+        if shows {
             noWindowUntil = nil
             noWindowWait = Self.noWindowPause
+        } else {
+            noWindowUntil = now.addingTimeInterval(noWindowWait)
+            noWindowWait = min(noWindowWait * 2, Self.noWindowPauseLimit)
         }
-        return buttons
     }
 
     /// Starts learning again once the button has been missing for long from

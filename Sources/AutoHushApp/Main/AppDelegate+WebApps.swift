@@ -54,6 +54,7 @@ extension AppDelegate {
             case .notHeard:       self.setLearningPause(deadline: self.status.learningPauseDeadline, note: .notHeard)
             case .nothingChanged: self.setLearningPause(deadline: self.status.learningPauseDeadline, note: .nothingChanged)
             case .tooLate:        self.setLearningPause(deadline: nil, note: .timedOut)
+            case .cantSeePage:    self.setLearningPause(deadline: nil, note: .cantSeePage)
             case .noted, .notLearning: break
             }
         }
@@ -61,7 +62,8 @@ extension AppDelegate {
 
     /// Once the user said the player plays, they have `learningPauseWait` to
     /// pause it and say so; the steps count it down, then learning starts
-    /// over, saying why.
+    /// over, saying why. Back at the first step, the note that says why stays
+    /// (set by whatever sent it back); learned, or nothing to learn, none.
     func followLearningPause(_ learning: LearningStatus?) {
         if learning == .learning(hasPlayed: true) {
             guard learningTimer == nil else { return }
@@ -71,19 +73,13 @@ extension AppDelegate {
                 try? await Task.sleep(for: wait)
                 guard !Task.isCancelled, let learner = self?.player as? any LearningMusicPlayer else { return }
                 await learner.restartLearning()
+                self?.setLearningPause(deadline: nil, note: .timedOut)
             }
             return
         }
-        let wasWaiting = learningTimer != nil
         learningTimer?.cancel()
         learningTimer = nil
-        if wasWaiting, learning == .learning(hasPlayed: false) {
-            setLearningPause(deadline: nil, note: .timedOut)
-        } else if learning != .learning(hasPlayed: false) {
-            setLearningPause(deadline: nil, note: nil)
-        } else {
-            setLearningPause(deadline: nil, note: status.learningNote)
-        }
+        setLearningPause(deadline: nil, note: learning == .learning(hasPlayed: false) ? status.learningNote : nil)
     }
 
     // MARK: - Adding a web app

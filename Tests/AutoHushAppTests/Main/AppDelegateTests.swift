@@ -362,7 +362,16 @@ struct AppDelegateTests {
         await waitFor { sut.status.learningNote == .nothingChanged }
         #expect(sut.status.learningPauseDeadline == deadline) // the minute goes on
 
-        webApp.answer(paused: .noted)
+        // The page went before It's Paused: back to the first step, saying why.
+        webApp.answer(paused: .cantSeePage)
+        sut.learningStep(.itsPaused)
+        await waitFor { sut.status.learningHasPlayed == false && sut.status.learningNote == .cantSeePage }
+        #expect(sut.status.learningNote == .cantSeePage)
+        #expect(sut.status.learningPauseDeadline == nil)
+
+        webApp.answer(playing: .noted, paused: .noted)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningHasPlayed == true }
         sut.learningStep(.itsPaused)
         await waitFor { sut.status.learning == .learned }
         #expect(sut.status.learningNote == nil)

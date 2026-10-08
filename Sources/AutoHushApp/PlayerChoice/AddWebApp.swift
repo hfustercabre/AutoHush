@@ -287,12 +287,29 @@ struct AddWebAppView: View {
     }
 
     private func stepList(remaining: TimeInterval?) -> some View {
+        let locked = learningLocked
         let steps = Self.steps(for: model.phase, siteAsked: model.siteAsked, learning: settings.learning,
-                               remaining: remaining, note: settings.learningNote)
+                               remaining: remaining, note: settings.learningNote, locked: locked)
+        // Locked, the permission comes right above the two learning steps it
+        // unlocks.
+        let before = locked ? Array(steps.dropLast(2)) : steps
+        let after = locked ? Array(steps.suffix(2)) : []
         return VStack(alignment: .leading, spacing: 8) {
-            ForEach(steps, id: \.title) { step($0) }
+            ForEach(before, id: \.title) { step($0, locked: false) }
+            if locked, let control = settings.permissions.control, case .learning(let name, _) = model.phase {
+                LearningPermissionStep(model: settings, permission: control, access: settings.permissions.controlAccess, name: name)
+                ForEach(after, id: \.title) { step($0, locked: true) }
+            }
         }
         .announcesCurrentStep(steps.currentAnnouncement)
+    }
+
+    /// Once the web app is chosen, learning it needs its control permission
+    /// (Accessibility): without it, the learning steps wait, locked.
+    private var learningLocked: Bool {
+        guard case .learning = model.phase else { return false }
+        let state = settings.permissions
+        return state.control != nil && !state.controlAccess.isSatisfied
     }
 
     /// Each step of adding `phase`'s web app and learning it, with where it
@@ -300,7 +317,7 @@ struct AddWebAppView: View {
     /// something first (`siteAsked`); `learning` is the chosen player's
     /// learning, once it's made, with the countdown and note of its steps.
     static func steps(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, learning: LearningStatus?,
-                      remaining: TimeInterval? = nil, note: LearningNote? = nil) -> [ChecklistStep] {
+                      remaining: TimeInterval? = nil, note: LearningNote? = nil, locked: Bool = false) -> [ChecklistStep] {
         let check = ChecklistStep(title: String(localized: "Check the address", comment: "Add a Web App window: a step"),
                                   state: phase == .checking ? .current : .done)
         let opened = ChecklistStep(title: openStep, state: .done)
@@ -312,13 +329,13 @@ struct AddWebAppView: View {
                     ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
                                                 comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
                                   state: .done)]
-                + learningSteps(name, learning: learning, remaining: remaining, note: note)
+                + learningSteps(name, learning: learning, remaining: remaining, note: note, locked: locked)
         case .learning(let name, false):
             return [check, opened] + answered
                 + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
                                                comment: "Add a Web App window: a step done; %@ is the web app's name"),
                                  state: .done)]
-                + learningSteps(name, learning: learning, remaining: remaining, note: note)
+                + learningSteps(name, learning: learning, remaining: remaining, note: note, locked: locked)
         case .siteAsks(let shown, let site):
             return [check, opened,
                     ChecklistStep(title: answerStep,
@@ -372,38 +389,22 @@ struct AddWebAppView: View {
     /// Learning, once the web app is made: the learning window's two steps
     /// (both ticked once learned).
     private static func learningSteps(_ name: String, learning: LearningStatus?, remaining: TimeInterval?,
-                                      note: LearningNote?) -> [ChecklistStep] {
+                                      note: LearningNote?, locked: Bool) -> [ChecklistStep] {
         guard case .learning(let hasPlayed)? = learning else {
             return LearningSteps.steps(name: name, hasPlayed: true, hasPaused: true, locked: false)
         }
-        return LearningSteps.steps(name: name, hasPlayed: hasPlayed, hasPaused: false, locked: false, remaining: remaining, note: note)
+        return LearningSteps.steps(name: name, hasPlayed: hasPlayed, hasPaused: false, locked: locked,
+                                   remaining: remaining, note: note)
     }
 
-    private func step(_ step: ChecklistStep) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Group {
-                switch step.state {
-                case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
-                case .current: Image(systemName: "arrow.right.circle.fill").foregroundStyle(Color.accentColor)
-                case .todo: Image(systemName: "circle").foregroundStyle(.appSecondary)
-                }
-            }
-            .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: step.title)
-                        .foregroundStyle(step.state == .done ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
-                        .fontWeight(step.state == .current ? .semibold : .regular)
-                        .fixedSize(horizontal: false, vertical: true)
-                    ForEach(step.notes, id: \.self) { Text(verbatim: $0).captionStyle().fixedSize(horizontal: false, vertical: true) }
-                    if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
-                }
-                .checklistStepAccessibility(step)
-                if let button = step.button {
-                    StepActionButton(button: button) {
-                        if button == .addToDock { model.addTapped() } else { settings.learningStep(button) }
-                    }
-                }
+    private func step(_ step: ChecklistStep, locked: Bool) -> some View {
+        ChecklistStepRow(step: step, dimmed: step.state == .done || locked, bold: step.state == .current, action: { button in
+            if button == .addToDock { model.addTapped() } else { settings.learningStep(button) }
+        }) {
+            switch step.state {
+            case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
+            case .current: Image(systemName: "arrow.right.circle.fill").foregroundStyle(Color.accentColor)
+            case .todo: Image(systemName: locked ? "lock.circle" : "circle").foregroundStyle(.appSecondary)
             }
         }
     }

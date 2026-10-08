@@ -50,3 +50,13 @@ Signing in the VM needs the app's signing identity imported into the VM's
 keychain. For permission tests, System Integrity Protection is off in the
 VM, so permissions can be granted and taken away by writing to its TCC
 database.
+
+## A fresh VM for clean installs
+
+`tart clone ghcr.io/cirruslabs/macos-golden-gate-base:latest <name>` makes
+one (copy-on-write); run it with `--no-audio`, or its sound plays on the
+Mac. Its Gatekeeper is off (`sudo spctl --master-enable`), and the first
+capture waits on a screen-recording prompt: `approve-screen-capture.py`
+approves it for Tart's guest agent, then `killall replayd`. `vm.sh shot`
+works with it through `AUTOHUSH_VM=<name>`.
+

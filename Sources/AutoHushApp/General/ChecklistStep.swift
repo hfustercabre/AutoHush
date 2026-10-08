@@ -100,3 +100,33 @@ struct StepActionButton: View {
         .padding(.top, 2)
     }
 }
+
+/// A checklist step as a row: its icon, words, lines and warning (one
+/// VoiceOver element), then its button while it's the one to do.
+struct ChecklistStepRow<Icon: View>: View {
+    let step: ChecklistStep
+    /// Done (or waiting on a permission): its words in the secondary color.
+    var dimmed: Bool
+    /// The one to do now, in a window that marks it.
+    var bold = false
+    var action: (StepButton) -> Void
+    @ViewBuilder let icon: Icon
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            icon.accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: step.title)
+                        .foregroundStyle(dimmed ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
+                        .fontWeight(bold ? .semibold : .regular)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(step.notes, id: \.self) { Text(verbatim: $0).captionStyle().fixedSize(horizontal: false, vertical: true) }
+                    if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
+                }
+                .checklistStepAccessibility(step)
+                if let button = step.button { StepActionButton(button: button) { action(button) } }
+            }
+        }
+    }
+}

@@ -30,7 +30,8 @@ package enum WebAddress {
     /// one asking something first: the same host (with or without "www."),
     /// a part of the site (listen.tidal.com for tidal.com), or the same
     /// service in another country (music.amazon.es for music.amazon.com: the
-    /// same first two parts). Another part of the same domain is another site
+    /// same first two parts, then only a country's ending, such as "es" or
+    /// "co.uk": parts of three letters at most, two parts at most). Another part of the same domain is another site
     /// (consent.youtube.com for music.youtube.com, accounts.spotify.com for
     /// open.spotify.com). Without hosts to compare, it counts as the site.
     package static func isSameSite(_ shown: URL, as typed: URL) -> Bool {
@@ -40,7 +41,9 @@ package enum WebAddress {
         if page == site || page.hasSuffix("." + site) { return true }
         let pageParts = page.split(separator: ".")
         let siteParts = site.split(separator: ".")
+        let isCountryEnding: ([Substring]) -> Bool = { $0.count <= 2 && $0.allSatisfy { $0.count <= 3 } }
         return pageParts.count >= 3 && siteParts.count >= 3 && pageParts.prefix(2) == siteParts.prefix(2)
+            && isCountryEnding(Array(pageParts.dropFirst(2))) && isCountryEnding(Array(siteParts.dropFirst(2)))
     }
 
     /// Asks the site once whether it answers, without cookies or a cache

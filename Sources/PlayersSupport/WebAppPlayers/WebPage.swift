@@ -52,6 +52,8 @@ package protocol WebPage: Sendable {
     /// The buttons on the pages in the app's windows, on any Space; `nil`
     /// while it has no window.
     func buttons(pid: pid_t) -> [PageButton]?
+    /// Whether the app has a window, on any Space (minimized ones too).
+    func hasWindow(pid: pid_t) -> Bool
     /// The button as it is now; `nil` once it's gone (the page reloaded) or
     /// doesn't answer.
     func button(_ handle: ButtonHandle) -> PageButton?
@@ -84,6 +86,10 @@ package struct AccessibilityWebPage: WebPage {
 
     package func isTrusted(prompt: Bool) -> Bool {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": prompt] as CFDictionary)
+    }
+
+    package func hasWindow(pid: pid_t) -> Bool {
+        !windows(of: pid).isEmpty
     }
 
     package func buttons(pid: pid_t) -> [PageButton]? {

@@ -76,13 +76,13 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     }
 
     package func markPlaying() async -> LearningMark {
-        guard let pid = processIdentifier() else { return .notLearning }
+        let pid = processIdentifier()
         let control = control
         return await onQueue { control.notePlaying(pid: pid) }
     }
 
     package func markPaused() async -> LearningMark {
-        guard let pid = processIdentifier() else { return .notLearning }
+        let pid = processIdentifier()
         let control = control
         return await onQueue { control.notePaused(pid: pid) }
     }
