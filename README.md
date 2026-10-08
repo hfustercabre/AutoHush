@@ -380,6 +380,14 @@ Tools/MeasureVolumeCurve/   the volume-curve measuring tool (never part of the a
 Tools/ListenToFades/     records a loopback device and measures the fades in it (never part of the app)
 Tools/LoopbackDriver/    AutoHush Loopback, a test-only virtual audio device for it, with build,
                          install and uninstall scripts (never part of the app)
+Tools/TestVM/            runs builds, tests and apps in a macOS VM, so live tests don't disturb the Mac
+Tools/NoiseMaker/        a test app that plays a tone or a file, as "another app playing"
+Tools/PauseCheck/        in the VM, times AutoHush's pause and resume around a Noise Maker sound
+Tools/SoundNow/          lists the apps playing sound right now, the way AutoHush counts them
+Tools/AudioOutput/       reads or changes the sound output (e.g. to AutoHush Loopback)
+Tools/WindowList/        lists an app's windows with their place, to check or capture one
+Tools/MemWatch/          samples a process's memory over hours (leak checks)
+                         Each of these has a README.md saying what it does and how; none is part of the app.
 Resources/               Info.plist, entitlements, AutoHush.icon (the app icon), and Localization/ with the
                          String Catalogs, assembled into the .app by Scripts/build-app.sh
 ```
