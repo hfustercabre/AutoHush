@@ -52,6 +52,28 @@ struct PlayerPopUpTests {
         #expect(button.titleOfSelectedItem == "Second")
     }
 
+    @Test("an item learns the chosen web app's controls again, once learned; the chosen player stays shown")
+    func learnAgain() {
+        let button = PlayerPopUpButton()
+        var picked: [String] = []
+        var again = 0
+        button.onSelect = { picked.append($0) }
+        button.onLearnAgain = { again += 1 }
+        let title = "Learn Controls Again…"
+        button.update(options: options, selection: "com.example.second", learnAgainName: "Second")
+        #expect(button.itemTitles == ["First", "Second", "Third", "", title, "Add a Web App…"])
+        #expect(button.item(withTitle: title)?.subtitle == "Second") // the name under it
+        button.selectItem(withTitle: title)
+        _ = button.target?.perform(button.action, with: button)
+        #expect(again == 1)
+        #expect(picked.isEmpty)
+        #expect(button.titleOfSelectedItem == "Second")
+
+        // Learning them again: the item goes.
+        button.update(options: options, selection: "com.example.second", learnAgainName: nil)
+        #expect(button.itemTitles == ["First", "Second", "Third", "", "Add a Web App…"])
+    }
+
     @Test("a suggested web app can be picked though not installed; the chosen player stays shown")
     func suggestion() {
         let button = PlayerPopUpButton()

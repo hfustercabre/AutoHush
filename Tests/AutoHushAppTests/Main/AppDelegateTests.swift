@@ -163,6 +163,37 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("a web app's learned controls can be learned again: the player forgets them and the learning window opens")
+    func learnControlsAgain() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        await waitFor { sut.status.learning == .learned }
+        #expect(!scratch.learningWindow.isVisible)
+        #expect(sut.status.canLearnControlsAgain)
+        #expect(sut.settingsModel.canLearnControlsAgain)
+
+        sut.learnControlsAgain()
+        await waitFor { scratch.learningWindow.isVisible && sut.status.learningHasPlayed != nil }
+        #expect(scratch.learningWindow.isVisible)
+        #expect(webApp.learnAgainCount == 1)
+        #expect(sut.status.learningHasPlayed == false)
+        #expect(!sut.status.canLearnControlsAgain) // until they're learned
+        #expect(!sut.settingsModel.canLearnControlsAgain)
+
+        sut.learnControlsAgain() // learning already: nothing to forget
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(webApp.learnAgainCount == 1)
+
+        sut.chooseMusicPlayer(Players.first) // a player that learns nothing
+        #expect(!sut.status.canLearnControlsAgain)
+        #expect(!sut.settingsModel.canLearnControlsAgain)
+    }
+
+    @MainActor
     @Test("while a permission is missing, the learning window asks for it first; the menu and Settings show no steps")
     func learningWaitsForPermission() {
         let scratch = Scratch()

@@ -26,6 +26,8 @@ final class SettingsModel {
         var refreshDiagnostics: @MainActor () -> Void = {}
         /// Opens the "Add a Web App" window.
         var addWebApp: @MainActor () -> Void = {}
+        /// Forgets the chosen player's learned controls and learns them again.
+        var learnControlsAgain: @MainActor () -> Void = {}
         /// Asks for a missing permission: macOS's prompt, System Settings,
         /// opening the player, or reopening AutoHush (`PermissionCenter`).
         var requestPermission: @MainActor (Permission) -> Void = { _ in }
@@ -83,6 +85,9 @@ final class SettingsModel {
         guard chosenPlayer != nil, !playerNeedsPermission, case .learning(let hasPlayed) = learning else { return nil }
         return hasPlayed
     }
+    /// The chosen player's controls are learned, so they can be learned
+    /// again (they may have been learned wrong).
+    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning == .learned }
     var isAutoPauseOn = true
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String?
@@ -205,6 +210,7 @@ final class SettingsModel {
 
     func chooseMusicPlayer(_ bundleID: String) { actions.chooseMusicPlayer(bundleID) }
     func addWebApp() { actions.addWebApp() }
+    func learnControlsAgain() { actions.learnControlsAgain() }
     func setAutoPause(_ on: Bool) { actions.setAutoPause(on) }
     func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
     func forget(_ source: AudioSource) { actions.forgetApp(source) }

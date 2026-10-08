@@ -24,6 +24,20 @@ extension AppDelegate {
         }
     }
 
+    /// Forgets the chosen player's learned controls and learns them again,
+    /// as the user asked (they may have been learned wrong): the learning
+    /// window shows the steps, as the first time. Nothing while it's
+    /// learning already.
+    func learnControlsAgain() {
+        guard let learner = player as? any LearningMusicPlayer, learner.learningStatus == .learned else { return }
+        logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
+        Task { [weak self] in
+            await learner.learnAgain()
+            guard let self, self.player?.bundleID == learner.bundleID else { return }
+            self.showLearningWindow()
+        }
+    }
+
     // MARK: - Adding a web app
 
     /// The "Add a Web App" window, ready for an address, filled in with

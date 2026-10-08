@@ -79,6 +79,9 @@ package protocol LearningMusicPlayer: MusicPlayer {
     var learningStatus: LearningStatus { get }
     /// The status now, then every change.
     func learningUpdates() -> AsyncStream<LearningStatus>
+    /// Forgets what it learned and learns it again from the user, who asked
+    /// (it may have been learned wrong). It can't be controlled meanwhile.
+    func learnAgain() async
 }
 
 /// A player that uses Core Audio's process taps on its own sound, to mute

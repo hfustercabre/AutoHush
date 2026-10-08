@@ -42,6 +42,34 @@ enum LearningText {
         String(localized: "Wait for the tick before playing again. It can take up to 10 seconds.",
                comment: "Under the step “Pause it” while AutoHush learns a web app's controls")
     }
+
+    // Learning them again, once learned (they may have been learned wrong).
+
+    /// In the menu's player list and Settings' player pop-up, with the web
+    /// app's name under it: the menu's width can't take the name in the
+    /// title in most languages.
+    static var learnAgainItem: String {
+        String(localized: "Learn Controls Again…",
+               comment: "The menu's player list and Settings' player pop-up: forgets the chosen web app's learned controls (its Play/Pause button) and learns them again; the web app's name shows under it")
+    }
+
+    /// Settings → General: the row's title.
+    static var controlsTitle: String {
+        String(localized: "Controls",
+               comment: "Settings → General: title of the row about the chosen web app's learned controls (its Play/Pause button), under “Music player”")
+    }
+
+    /// Settings → General: under the row's title.
+    static func controlsNote(_ name: String) -> String {
+        String(localized: "Learned from you playing and pausing \(name). If AutoHush gets them wrong, learn them again.",
+               comment: "Settings → General, under “Controls”: how the web app's controls were learned, and what to do if AutoHush gets them wrong; %@ is the web app's name")
+    }
+
+    /// Settings → General: the row's button.
+    static var learnAgainButton: String {
+        String(localized: "Learn Again",
+               comment: "Settings → General, in the “Controls” row: button that forgets the web app's learned controls and learns them again")
+    }
 }
 
 /// The two things the user does while AutoHush learns, each ticked once

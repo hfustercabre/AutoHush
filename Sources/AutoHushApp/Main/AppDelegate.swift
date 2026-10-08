@@ -195,6 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 openNotificationSettings: { SystemSettingsPane.notifications.open() },
                 refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
+                learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
                 requestPermission: { [weak self] in self?.requestPermission($0) },
                 finishWelcome: { [weak self] in self?.finishWelcome() }
             )
@@ -226,6 +227,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 snooze: { [weak self] in self?.snooze($0) },
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
+                learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
                 menuWillOpen: { [weak self] in self?.menuWillOpen() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { [weak self] in self?.requestPermission($0) },

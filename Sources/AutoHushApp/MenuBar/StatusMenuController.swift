@@ -14,6 +14,7 @@ import AutoHushKit
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
 /// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
 ///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
+///   ↻ Learn Controls Again… / YT Music               (once the chosen one's are learned)
 ///   ⊕ Add a Web App…                                 (makes a website one)
 /// ╭────────────────────────────────────────────╮
 /// │ Learning YT Music's Controls                │  (until AutoHush has learned
@@ -46,6 +47,8 @@ final class StatusMenuController: NSObject {
         var chooseMusicPlayer: @MainActor (String) -> Void
         /// Opens the "Add a Web App" window.
         var addWebApp: @MainActor () -> Void = {}
+        /// Forgets the chosen player's learned controls and learns them again.
+        var learnControlsAgain: @MainActor () -> Void = {}
         /// The menu is about to open: a last chance to bring `status` up to
         /// date (e.g. which players are installed) before it is built.
         var menuWillOpen: @MainActor () -> Void
@@ -282,7 +285,9 @@ final class StatusMenuController: NSObject {
 
     /// Inserts a row for each of `options` at `index`, with a heading over
     /// the Safari web apps, and "Add a Web App…" last; a note when there's
-    /// none, because the search matched none.
+    /// none, because the search matched none. Before "Add a Web App…", once
+    /// the chosen player's controls are learned (and nothing is searched
+    /// for), the row that learns them again.
     private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
         playerRows = options.map(playerRow)
         if let start = options.webAppsStart {
@@ -292,6 +297,12 @@ final class StatusMenuController: NSObject {
             let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
             note.isEnabled = false
             playerRows = [note]
+        }
+        if status.canLearnControlsAgain, model.playerSearch.isEmpty {
+            let again = item(LearningText.learnAgainItem, #selector(learnControlsAgain))
+            again.image = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: nil)
+            again.subtitle = status.playerName
+            playerRows.append(again)
         }
         playerRows.append(addWebAppRow())
         for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
@@ -371,6 +382,8 @@ final class StatusMenuController: NSObject {
     @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
 
     @objc private func addWebApp() { actions.addWebApp() }
+
+    @objc private func learnControlsAgain() { actions.learnControlsAgain() }
 
     @objc private func reopen() { actions.reopen() }
 

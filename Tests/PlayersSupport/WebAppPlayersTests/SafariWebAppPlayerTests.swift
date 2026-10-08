@@ -172,6 +172,42 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
+    @Test("learning again forgets the button, lifts a mute, presses nothing, and learns it afresh from a play and a pause")
+    func learnAgain() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.buttonsByNumber[1]?.isEnabled = false
+        try await setup.player.pause() // an ad: muted in place of a pause
+        #expect(setup.muter.muted == [4242])
+
+        await setup.player.learnAgain()
+        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
+        #expect(setup.store.recipe(for: Self.app.bundleID) == nil)
+        #expect(setup.muter.muted.isEmpty)
+        await #expect(throws: MusicPlayerError.stillLearning) { try await setup.player.play() }
+        #expect(setup.page.presses.isEmpty)
+
+        // Learned again, its words the other way round from before.
+        setup.page.buttonsByNumber[1]?.isEnabled = true
+        setup.page.set(1, label: "Reproducir")
+        _ = await setup.player.playerState()
+        setup.page.set(1, label: "Pausar")
+        setup.page.sound = true
+        setup.clock.advance(1)
+        _ = await setup.player.playerState()
+        setup.page.set(1, label: "Reproducir")
+        setup.clock.advance(1)
+        _ = await setup.player.playerState()
+        setup.page.sound = false
+        setup.clock.advance(3)
+        _ = await setup.player.playerState()
+        setup.clock.advance(PlayPauseLearner.stopSettle)
+        _ = await setup.player.playerState()
+        #expect(setup.player.learningStatus == .learned)
+        #expect(setup.store.recipe(for: Self.app.bundleID)?.playLabel == "Reproducir")
+        #expect(setup.store.recipe(for: Self.app.bundleID)?.pauseLabel == "Pausar")
+    }
+
     @Test("a disabled Pause (an ad) is never pressed: muted instead, and only unmuted after")
     func disabledPauseMutes() async throws {
         let setup = Setup(recipe: Self.learned)

@@ -30,6 +30,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
     private struct State {
         var status: LearningStatus
         var listeners: [AsyncStream<LearningStatus>.Continuation] = []
+        var learnAgainCount = 0
     }
 
     private nonisolated let state: OSAllocatedUnfairLock<State>
@@ -60,6 +61,14 @@ actor MockLearningPlayer: LearningMusicPlayer {
             return state.listeners
         }
         listeners.forEach { $0.yield(status) }
+    }
+
+    /// How many times it was asked to learn again.
+    nonisolated var learnAgainCount: Int { state.withLock { $0.learnAgainCount } }
+
+    func learnAgain() async {
+        state.withLock { $0.learnAgainCount += 1 }
+        set(.learning(hasPlayed: false))
     }
 
     func verifyControlAccess() async throws { throw MusicPlayerError.accessibilityPermissionDenied }

@@ -92,6 +92,7 @@ extension PlayPauseRecipe {
 package protocol PlayPauseRecipeStore: Sendable {
     func recipe(for bundleID: String) -> PlayPauseRecipe?
     func save(_ recipe: PlayPauseRecipe, for bundleID: String)
+    func forget(for bundleID: String)
 }
 
 /// The recipes in AutoHush's preferences, by the web app's bundle ID. Read
@@ -112,6 +113,15 @@ package struct DefaultsRecipeStore: PlayPauseRecipeStore {
         Preferences.webAppButtonsLock.withLockUnchecked {
             var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
             stored[bundleID] = recipe.propertyList
+            UserDefaults.standard.set(stored, forKey: Self.key)
+        }
+    }
+
+    /// Under `Preferences.webAppButtonsLock`, like `save`.
+    package func forget(for bundleID: String) {
+        Preferences.webAppButtonsLock.withLockUnchecked {
+            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            guard stored.removeValue(forKey: bundleID) != nil else { return }
             UserDefaults.standard.set(stored, forKey: Self.key)
         }
     }

@@ -170,7 +170,12 @@ where they appear:
   window: a click opens "Add a Web App" filled in with the address.
   **Add a Web App…** (with `plus.circle`) comes last
   wherever players are offered: the menu's last row, the pop-up's last item
-  after a separator, and a `.chip` under the welcome window's list.
+  after a separator, and a `.chip` under the welcome window's list. Once the
+  chosen web app's controls are learned, **Learn Controls Again…** (with
+  `arrow.clockwise`) comes just before it in the menu and the pop-up, with
+  the web app's name as the item's subtitle: the menu's width can't take the
+  name in the title in most languages. Settings → General then shows a
+  **Controls** row with a **Learn Again** `.chip`.
 - **A process the user waits for** shows its steps in a card, as the
   "Add a Web App" window does: done steps ticked in `.appSuccess` and dimmed,
   the current one bold with an accent arrow and a caption under it, the

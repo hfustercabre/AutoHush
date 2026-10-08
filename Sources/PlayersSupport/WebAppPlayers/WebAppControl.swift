@@ -241,6 +241,22 @@ final class WebAppControl: @unchecked Sendable {
         self.muted = (muted.pid, .forgotten)
     }
 
+    /// Forgets the learned button, and learns it afresh from the user playing
+    /// and pausing the web app once: the user asked, as it may have been
+    /// learned wrong. Nothing is pressed until then, so a mute in place of a
+    /// pause is lifted.
+    func learnAgain() {
+        releaseMute()
+        recipe = nil
+        button = nil
+        missingSince = nil
+        lastRead = nil
+        store.forget(for: bundleID)
+        learner = PlayPauseLearner()
+        logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button again, as asked")
+        status.send(.learning(hasPlayed: false))
+    }
+
     /// Lifts a mute, without playing anything: monitoring stops.
     func releaseMute() {
         guard let muted else { return }

@@ -70,6 +70,11 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package nonisolated func learningUpdates() -> AsyncStream<LearningStatus> { status.updates() }
 
+    package func learnAgain() async {
+        let control = control
+        await onQueue { control.learnAgain() }
+    }
+
     package nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
     }

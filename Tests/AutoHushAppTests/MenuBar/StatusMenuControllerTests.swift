@@ -19,6 +19,7 @@ struct StatusMenuControllerTests {
             toggleAutoPause: { log.calls.append("toggleAutoPause") },
             snooze: { log.calls.append("snooze \($0.title)") },
             chooseMusicPlayer: { log.calls.append("player \($0)") },
+            learnControlsAgain: { log.calls.append("learnAgain") },
             menuWillOpen: { log.calls.append("menuWillOpen") },
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
             resolveWarning: { log.calls.append("warning \($0.grantTitle)") },
@@ -194,6 +195,40 @@ struct StatusMenuControllerTests {
         #expect(row.image?.isTemplate == true)
         try perform(row)
         #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
+    }
+
+    @Test("once the chosen web app's controls are learned, the players end with learning them again, before Add a Web App")
+    func learnControlsAgain() async throws {
+        let log = ActionLog()
+        let sut = makeController(log)
+        defer { sut.remove() }
+        var status = readyStatus()
+        let webApp = PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                  appURL: URL(fileURLWithPath: "/Applications/Safari.app"), kind: .safariWebApp)
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            webApp,
+        ]
+        status.chosenPlayerID = webApp.bundleID
+        status.learning = .learned
+        sut.status = status
+        prepareToOpen(sut)
+
+        sut.perform(.togglePlayerList)
+        let again = "Learn Controls Again…"
+        #expect(rows(sut.menu).prefix(6) == ["card", "First", "webAppsHeading", "YT Music", again, "Add a Web App…"])
+        #expect(try item(again, in: sut.menu).subtitle == "YT Music") // the menu is too narrow for the name in the title
+        try perform(try item(again, in: sut.menu))
+        await wait(for: 2, in: log)
+        #expect(log.calls == ["menuWillOpen", "learnAgain"])
+
+        // Still learning them: nothing to learn again.
+        status.learning = .learning(hasPlayed: false)
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        #expect(!rows(sut.menu).contains(again))
+        #expect(rows(sut.menu).contains("Add a Web App…"))
     }
 
     @Test("an untested web app comes last, its name followed by an “Untested” badge")

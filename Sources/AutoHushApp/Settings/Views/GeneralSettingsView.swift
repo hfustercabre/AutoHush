@@ -76,7 +76,9 @@ struct GeneralSettingsView: View {
                              subtitle: Text("AutoHush pauses and resumes this app.", comment: "Settings → General, under “Music player”"))
                     Spacer(minLength: 8)
                     PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID,
-                                onSelect: { model.chooseMusicPlayer($0) }, onAddWebApp: { model.addWebApp() })
+                                onSelect: { model.chooseMusicPlayer($0) }, onAddWebApp: { model.addWebApp() },
+                                learnAgainName: model.canLearnControlsAgain ? model.chosenPlayerName : nil,
+                                onLearnAgain: { model.learnControlsAgain() })
                     if model.playerOptions.isSearchable { playerSearchButton }
                 }
                 if model.playerOptions.noneInstalled {
@@ -91,6 +93,18 @@ struct GeneralSettingsView: View {
                 if let name = model.chosenPlayerName, let hasPlayed = model.learningHasPlayed {
                     CardDivider()
                     LearningSummary(name: name, hasPlayed: hasPlayed)
+                }
+                // Once learned: the way to learn them again, as they may have been learned wrong.
+                if let name = model.chosenPlayerName, model.canLearnControlsAgain {
+                    CardDivider()
+                    HStack {
+                        RowTitle(Text(verbatim: LearningText.controlsTitle), subtitle: Text(verbatim: LearningText.controlsNote(name)))
+                        Spacer(minLength: 8)
+                        Button { model.learnControlsAgain() } label: {
+                            Text(verbatim: LearningText.learnAgainButton)
+                        }
+                            .buttonStyle(.chip)
+                    }
                 }
             }
 

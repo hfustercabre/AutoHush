@@ -59,6 +59,9 @@ struct AppStatus: Equatable {
         guard chosenPlayer != nil, !needsPermission, case .learning(let hasPlayed) = learning else { return nil }
         return hasPlayed
     }
+    /// The chosen player's controls are learned, so they can be learned
+    /// again (they may have been learned wrong).
+    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning == .learned }
     /// A permission the chosen player needs is missing: the menu asks for it,
     /// and shows the learning steps only once it's allowed, since AutoHush
     /// can't watch the player before.

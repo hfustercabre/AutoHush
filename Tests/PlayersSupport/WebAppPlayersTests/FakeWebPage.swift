@@ -116,6 +116,7 @@ final class MemoryRecipeStore: PlayPauseRecipeStore, @unchecked Sendable {
 
     func recipe(for bundleID: String) -> PlayPauseRecipe? { lock.withLock { recipes[bundleID] } }
     func save(_ recipe: PlayPauseRecipe, for bundleID: String) { lock.withLock { recipes[bundleID] = recipe } }
+    func forget(for bundleID: String) { lock.withLock { recipes[bundleID] = nil } }
 }
 
 /// A clock the tests move by hand.
