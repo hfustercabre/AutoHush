@@ -96,8 +96,9 @@ extension AppDelegate {
     }
 
     /// Makes the address a web app, then opens it, chooses it, and lets the
-    /// window show the learning. Closing the window cancels it until the web
-    /// app is made.
+    /// window show the learning (or, added from the welcome window, closes:
+    /// the welcome window goes on). Closing the window cancels it until the
+    /// web app is made.
     func addWebApp(from address: String) {
         guard addingWebApp == nil else { return }
         let model = addWebAppModel
@@ -123,9 +124,17 @@ extension AppDelegate {
                 self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")
                 // Opened first, so it's running by the time it's chosen.
                 await self.openApp(made.url)
-                self.chooseMusicPlayer(made.bundleID, showsLearningWindow: false)
+                // Added from the welcome window: that one asks for what the
+                // web app needs, and the learning window follows its Done, as
+                // for a web app picked there; this window's work is done.
+                let fromWelcome = self.isShowingPlayerChooser
+                self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
                 guard self.player?.bundleID == made.bundleID else {
                     self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
+                    return
+                }
+                if fromWelcome {
+                    self.addWebAppWindow?.close()
                     return
                 }
                 // Chosen and learned already: there's nothing left to show.

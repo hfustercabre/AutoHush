@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Adding a suggested web app from the welcome window left two windows
+  asking for the same permission.** Now the Add a Web App window closes once
+  the web app is added, the welcome window asks for what it needs, and Done
+  opens the window that learns its controls.
+
+### Changed
+
+- **Settings → Apps: click an app, then Remove.** Removing one app was only
+  in its right-click menu. Now a click selects it, and **Remove**, under the
+  list, takes it off. Removing an app you turned off asks first, since it
+  then pauses your music again.
+
 ## [0.8.6] — 2026-10-09
 
 ### Fixed

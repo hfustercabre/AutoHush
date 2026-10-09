@@ -267,6 +267,36 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("added from the welcome window, the add window closes: the welcome window asks for what it needs, and learning follows its Done")
+    func addWebAppFromWelcome() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
+        let found = FoundPlayers()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        scratch.installed = [Players.first, webApp.bundleID]
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
+        scratch.maker.onMake = { found.players = [webApp] }
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
+        #expect(sut.isShowingPlayerChooser)
+
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebAppModel.addTapped()
+        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isVisible }
+        #expect(!scratch.addWindow.isVisible) // one window asks: the welcome window
+        #expect(sut.isShowingPlayerChooser)
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        #expect(!scratch.learningWindow.isVisible)
+
+        sut.finishWelcome()
+        #expect(scratch.learningWindow.isVisible)
+    }
+
+    @MainActor
     @Test("a suggested web app opens the add window filled in with its address, and the player stays")
     func suggestedWebApp() {
         let scratch = Scratch()

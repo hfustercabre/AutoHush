@@ -87,6 +87,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.chipFill` / `.chipHoverFill` | black 8% / 13% | quaternary 60% / quaternary | A chip at rest / under the pointer; search fields |
 | `.switchOffFill` | black 26% | quaternary | A switch's track while off |
 | `.warningBadgeFill` | deep orange 12% | orange 18% | Behind a `HeadingBadge` |
+| `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Apps) |
 
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity. A control that's dimmed twice,
@@ -206,6 +207,14 @@ where they appear:
   - A search starts empty again when its window or menu opens again.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
+- **Removing from a list** (Settings → Apps): a click on a row, anywhere but
+  its switch, selects it, behind a `.selectedRowFill` rounded rectangle; a
+  second click deselects it. **Remove** sits in the bottom bar after the
+  button that adds, disabled while nothing is selected. Removing something
+  whose loss changes what AutoHush does (an app turned off would pause the
+  music again) asks first, as **Reset List…** does; one that changes nothing
+  goes at once. The row's right-click menu offers the same (**Remove from
+  List**), and VoiceOver gets it as an action.
 
 ## Writing
 
@@ -256,6 +265,11 @@ AutoHush is translated into 34 languages besides English. The README's
   appears and what each placeholder holds.
 - **A changed English string is a new key.** Carry its translations over,
   update them, and delete the old key.
+- **A bottom bar's buttons stay on one line** (`.fixedSize()`). When a
+  translation makes them wider than the window, that translation is
+  shortened, keeping its meaning (in Settings → Apps: Russian "Сбросить…",
+  Greek "Παράβλεψη εφαρμογής…", Hungarian "Lista visszaállítása…"). Check
+  by rendering the window in every language.
 - **Keep the menu card short.** The label under its switch shows whole and
   takes room from the status line beside it. So the feature's name stays
   short ("Autopauza", "Autopause"), and a status line fits in three lines

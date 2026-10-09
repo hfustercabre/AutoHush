@@ -78,6 +78,11 @@ extension ShapeStyle where Self == AppearanceStyle {
     static var warningBadgeFill: AppearanceStyle {
         AppearanceStyle(light: Color(red: 0xB0 / 255, green: 0x30 / 255, blue: 0).opacity(0.12), dark: Color.orange.opacity(0.18))
     }
+
+    /// Behind a list row the user selected (Settings → Apps).
+    static var selectedRowFill: AppearanceStyle {
+        AppearanceStyle(light: Color.accentColor.opacity(0.14), dark: Color.accentColor.opacity(0.18))
+    }
 }
 
 /// A switch drawn in the accent color, the same in the menu and in Settings.

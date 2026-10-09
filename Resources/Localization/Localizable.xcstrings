@@ -2552,6 +2552,215 @@
         }
       }
     },
+    "%@ is turned off now. Removed from the list, it pauses your music again when it plays." : {
+      "comment" : "Settings → Apps: what removing an app that's turned off does, in its confirmation; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التطبيق %@ مُوقَف الآن. إذا أزلته من القائمة، فسيعود إلى إيقاف موسيقاك مؤقتًا عندما يُشغّل الصوت."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'app %@ està desactivada. Si l'elimines de la llista, tornarà a posar la música en pausa quan reprodueixi àudio."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ je teď vypnutá. Pokud ji odstraníte ze seznamu, bude znovu pozastavovat vaši hudbu, když přehraje zvuk."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ er slået fra nu. Hvis den fjernes fra listen, sætter den igen din musik på pause, når den afspiller lyd."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist gerade ausgeschaltet. Aus der Liste entfernt, pausiert die App deine Musik wieder, sobald sie Audio abspielt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η εφαρμογή %@ είναι απενεργοποιημένη. Αν την αφαιρέσετε από τη λίστα, θα θέτει ξανά τη μουσική σας σε παύση όταν αναπαράγει ήχο."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app %@ está desactivada. Si la eliminas de la lista, volverá a pausar tu música cuando reproduzca audio."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app %@ está desactivada. Si la eliminas de la lista, volverá a pausar tu música cuando reproduzca audio."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ on nyt pois päältä. Jos se poistetaan listalta, se keskeyttää musiikkisi taas toistaessaan ääntä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'app %@ est désactivée. Si vous la retirez de la liste, elle mettra de nouveau votre musique en pause quand elle lira du son."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'app %@ est désactivée. Si vous la retirez de la liste, elle mettra de nouveau votre musique en pause quand elle lira du son."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ अभी बंद है। सूची से हटाने पर, आवाज़ चलाते समय यह फिर से आपका संगीत पॉज़ करेगा।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ sada je isključena. Ako je uklonite s popisa, ponovno će pauzirati vašu glazbu kad reproducira zvuk."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ most ki van kapcsolva. Ha eltávolítja a listából, ismét szünetelteti a zenéjét, amikor hangot játszik le."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sedang dimatikan. Jika dihapus dari daftar, app ini akan kembali menjeda musik Anda saat memutar audio."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'app %@ ora è disattivata. Se la rimuovi dall'elenco, metterà di nuovo in pausa la musica quando riproduce audio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は現在オフです。リストから削除すると、オーディオを再生したときに再び音楽が一時停止します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 현재 꺼져 있습니다. 목록에서 제거하면 오디오를 재생할 때 다시 음악을 일시 정지시킵니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ er slått av nå. Hvis den fjernes fra listen, setter den musikken din på pause igjen når den spiller av lyd."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ staat nu uit. Als je de app uit de lijst verwijdert, pauzeert hij je muziek weer zodra hij audio afspeelt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ jest teraz wyłączona. Po usunięciu z listy znów będzie wstrzymywać muzykę, gdy odtworzy dźwięk."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O app %@ está desativado agora. Se você removê-lo da lista, ele voltará a pausar sua música quando reproduzir áudio."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A app %@ está desativada. Se a remover da lista, voltará a pausar a música quando reproduzir áudio."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicația %@ este acum dezactivată. Dacă o eliminați din listă, vă va pune din nou muzica pe pauză când redă sunet."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приложение %@ сейчас выключено. Если удалить его из списка, оно снова будет ставить музыку на паузу, когда воспроизводит звук."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ je teraz vypnutá. Ak ju odstránite zo zoznamu, bude znova pozastavovať vašu hudbu, keď prehrá zvuk."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ je zdaj izklopljena. Če jo odstranite s seznama, bo spet zaustavljala vašo glasbo, ko predvaja zvok."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ är avstängd nu. Om den tas bort från listan pausar den din musik igen när den spelar upp ljud."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ şu anda kapalı. Listeden kaldırılırsa, ses çaldığında müziğinizi yeniden duraklatır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програму %@ зараз вимкнено. Якщо вилучити її зі списку, вона знову призупинятиме вашу музику, коли відтворюватиме звук."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hiện đang tắt. Nếu bị xóa khỏi danh sách, ứng dụng này sẽ lại tạm dừng nhạc của bạn khi phát âm thanh."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」目前已關閉。從列表中移除後，它播放音訊時會再次暫停音樂。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”现在已关闭。从列表中移除后，它播放音频时会再次暂停音乐。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」目前已關閉。從列表中移除後，它播放音訊時會再次暫停音樂。"
+          }
+        }
+      }
+    },
     "%@ pauses and resumes without fading: AutoHush can't change its volume." : {
       "comment" : "Settings → Advanced, under the dimmed fade settings; %@ is the music player, e.g. TIDAL",
       "localizations" : {
@@ -32696,7 +32905,7 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Παράβλεψη άλλης εφαρμογής…"
+            "value" : "Παράβλεψη εφαρμογής…"
           }
         },
         "es" : {
@@ -32810,7 +33019,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Игнорировать другое приложение…"
+            "value" : "Игнорировать приложение…"
           }
         },
         "sk" : {
@@ -52515,6 +52724,424 @@
         }
       }
     },
+    "Remove" : {
+      "comment" : "Settings → Apps: the button under the list that removes the selected app, and the one confirming it for an app that's turned off",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstranit"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हटाएँ"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloni"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eltávolítás"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제거"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrani"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaldır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучити"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
+        }
+      }
+    },
+    "Remove %@ from the list?" : {
+      "comment" : "Settings → Apps: title of the confirmation for removing an app that's turned off; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد إزالة %@ من القائمة؟"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vols eliminar %@ de la llista?"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstranit aplikaci %@ ze seznamu?"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern %@ fra listen?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ aus der Liste entfernen?"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αφαίρεση της εφαρμογής %@ από τη λίστα;"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar %@ de la lista?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar %@ de la lista?"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poistetaanko %@ listalta?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer %@ de la liste ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer %@ de la liste?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ को सूची से हटाएँ?"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloniti aplikaciju %@ s popisa?"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eltávolítja a(z) %@ appot a listából?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hapus %@ dari daftar?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rimuovere %@ dall'elenco?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@をリストから削除しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@을(를) 목록에서 제거하겠습니까?"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjerne %@ fra listen?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uit de lijst verwijderen?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunąć aplikację %@ z listy?"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover %@ da lista?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover %@ da lista?"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați aplicația %@ din listă?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить приложение %@ из списка?"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť apku %@ zo zoznamu?"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstraniti aplikacijo %@ s seznama?"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort %@ från listan?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ listeden kaldırılsın mı?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вилучити програму %@ зі списку?"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa %@ khỏi danh sách?"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要將「%@」從列表中移除嗎？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要将“%@”从列表中移除吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要將「%@」從列表中移除嗎？"
+          }
+        }
+      }
+    },
     "Remove from List" : {
       "comment" : "Settings → Apps: item of an app's contextual menu that forgets it",
       "localizations" : {
@@ -53226,7 +53853,7 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lista alaphelyzetbe állítása"
+            "value" : "Lista visszaállítása"
           }
         },
         "id" : {
@@ -53435,7 +54062,7 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lista alaphelyzetbe állítása…"
+            "value" : "Lista visszaállítása…"
           }
         },
         "id" : {
@@ -53501,7 +54128,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сбросить список…"
+            "value" : "Сбросить…"
           }
         },
         "sk" : {
@@ -59621,211 +60248,211 @@
         }
       }
     },
-    "Turn an app off to keep your music playing while it makes sound. Right-click an app to remove it from the list." : {
-      "comment" : "Settings → Apps, under the list",
+    "Turn an app off to keep your music playing while it makes sound. Select an app to remove it from the list." : {
+      "comment" : "Settings → Apps, under the list; “Select” as in clicking an app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "أوقف تطبيقًا لتستمر موسيقاك في التشغيل بينما يُصدر صوتًا. انقر بزر الماوس الأيمن على تطبيق لإزالته من القائمة."
+            "value" : "أوقف تطبيقًا لتستمر موسيقاك في التشغيل بينما يُصدر صوتًا. حدّد تطبيقًا لإزالته من القائمة."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desactiva una app perquè la música continuï sonant mentre aquesta app fa so. Fes clic amb el botó dret en una app per eliminar-la de la llista."
+            "value" : "Desactiva una app perquè la música continuï sonant mentre aquesta app fa so. Selecciona una app per eliminar-la de la llista."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vypněte aplikaci, aby vaše hudba hrála dál, i když tato aplikace vydává zvuk. Klikněte na aplikaci pravým tlačítkem, chcete-li ji odstranit ze seznamu."
+            "value" : "Vypněte aplikaci, aby vaše hudba hrála dál, i když tato aplikace vydává zvuk. Vyberte aplikaci, chcete-li ji odstranit ze seznamu."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Slå en app fra for at lade din musik spille videre, mens appen laver lyd. Højreklik på en app for at fjerne den fra listen."
+            "value" : "Slå en app fra for at lade din musik spille videre, mens appen laver lyd. Vælg en app for at fjerne den fra listen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schalte eine App aus, damit deine Musik weiterläuft, während sie Ton abspielt. Klicke mit der rechten Maustaste auf eine App, um sie aus der Liste zu entfernen."
+            "value" : "Schalte eine App aus, damit deine Musik weiterläuft, während sie Ton abspielt. Wähle eine App aus, um sie aus der Liste zu entfernen."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Απενεργοποιήστε μια εφαρμογή για να συνεχίσει η μουσική σας όσο η εφαρμογή αυτή βγάζει ήχο. Κάντε δεξί κλικ σε μια εφαρμογή για να την αφαιρέσετε από τη λίστα."
+            "value" : "Απενεργοποιήστε μια εφαρμογή για να συνεχίσει η μουσική σας όσο η εφαρμογή αυτή βγάζει ήχο. Επιλέξτε μια εφαρμογή για να την αφαιρέσετε από τη λίστα."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Haz clic con el botón derecho en una app para eliminarla de la lista."
+            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Selecciona una app para eliminarla de la lista."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Haz clic con el botón derecho en una app para eliminarla de la lista."
+            "value" : "Desactiva una app para que tu música siga sonando mientras esa app emite sonido. Selecciona una app para eliminarla de la lista."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laita appi pois päältä, niin musiikkisi jatkuu sen toistaessa ääntä. Poista appi listalta klikkaamalla sitä oikealla painikkeella."
+            "value" : "Laita appi pois päältä, niin musiikkisi jatkuu sen toistaessa ääntä. Poista appi listalta valitsemalla se."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Cliquez sur une app avec le bouton droit pour la retirer de la liste."
+            "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Sélectionnez une app pour la retirer de la liste."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Cliquez sur une app avec le bouton droit pour la retirer de la liste."
+            "value" : "Désactivez une app pour que votre musique continue pendant qu'elle émet du son. Sélectionnez une app pour la retirer de la liste."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "किसी ऐप को बंद करें ताकि उसके आवाज़ करते समय आपका संगीत चलता रहे। किसी ऐप को सूची से हटाने के लिए उस पर राइट-क्लिक करें।"
+            "value" : "किसी ऐप को बंद करें ताकि उसके आवाज़ करते समय आपका संगीत चलता रहे। किसी ऐप को सूची से हटाने के लिए उसे चुनें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Isključite aplikaciju da bi vaša glazba svirala dalje dok ta aplikacija proizvodi zvuk. Desnom tipkom kliknite aplikaciju da biste je uklonili s popisa."
+            "value" : "Isključite aplikaciju da bi vaša glazba svirala dalje dok ta aplikacija proizvodi zvuk. Odaberite aplikaciju da biste je uklonili s popisa."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kapcsoljon ki egy appot, hogy a zenéje tovább szóljon, amíg az az app hangot ad ki. Az appot a jobb gombbal rákattintva távolíthatja el a listából."
+            "value" : "Kapcsoljon ki egy appot, hogy a zenéje tovább szóljon, amíg az az app hangot ad ki. Az appot kijelölve távolíthatja el a listából."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Matikan app agar musik Anda tetap diputar saat app tersebut mengeluarkan suara. Klik kanan app untuk menghapusnya dari daftar."
+            "value" : "Matikan app agar musik Anda tetap diputar saat app tersebut mengeluarkan suara. Pilih app untuk menghapusnya dari daftar."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Disattiva un'app per continuare ad ascoltare la musica mentre emette suoni. Fai clic con il tasto destro su un'app per rimuoverla dall'elenco."
+            "value" : "Disattiva un'app per continuare ad ascoltare la musica mentre emette suoni. Seleziona un'app per rimuoverla dall'elenco."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appをオフにすると、そのAppが音を出しても音楽は再生を続けます。Appを右クリックするとリストから削除できます。"
+            "value" : "Appをオフにすると、そのAppが音を出しても音楽は再生を続けます。Appを選択するとリストから削除できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "앱을 끄면 해당 앱에서 소리가 나도 음악이 계속 재생됩니다. 목록에서 제거하려면 앱을 오른쪽 클릭하십시오."
+            "value" : "앱을 끄면 해당 앱에서 소리가 나도 음악이 계속 재생됩니다. 목록에서 제거하려면 앱을 선택하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Slå av en app for å la musikken din spille videre mens appen lager lyd. Høyreklikk på en app for å fjerne den fra listen."
+            "value" : "Slå av en app for å la musikken din spille videre mens appen lager lyd. Velg en app for å fjerne den fra listen."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zet een app uit om je muziek te laten doorspelen terwijl die app geluid maakt. Klik met de rechtermuisknop op een app om hem uit de lijst te verwijderen."
+            "value" : "Zet een app uit om je muziek te laten doorspelen terwijl die app geluid maakt. Selecteer een app om hem uit de lijst te verwijderen."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wyłącz aplikację, aby muzyka grała dalej, gdy ta aplikacja wydaje dźwięk. Kliknij aplikację prawym przyciskiem, aby usunąć ją z listy."
+            "value" : "Wyłącz aplikację, aby muzyka grała dalej, gdy ta aplikacja wydaje dźwięk. Zaznacz aplikację, aby usunąć ją z listy."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desative um app para manter sua música tocando enquanto ele emite som. Clique com o botão direito em um app para removê-lo da lista."
+            "value" : "Desative um app para manter sua música tocando enquanto ele emite som. Selecione um app para removê-lo da lista."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desative uma app para que a música continue a tocar enquanto essa app emite som. Clique com o botão direito numa app para a remover da lista."
+            "value" : "Desative uma app para que a música continue a tocar enquanto essa app emite som. Selecione uma app para a remover da lista."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dezactivați o aplicație pentru ca muzica să continue cât timp aplicația respectivă scoate sunet. Faceți clic dreapta pe o aplicație pentru a o elimina din listă."
+            "value" : "Dezactivați o aplicație pentru ca muzica să continue cât timp aplicația respectivă scoate sunet. Selectați o aplicație pentru a o elimina din listă."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выключите приложение, чтобы музыка продолжала играть, пока оно издаёт звук. Чтобы удалить приложение из списка, нажмите на него правой кнопкой мыши."
+            "value" : "Выключите приложение, чтобы музыка продолжала играть, пока оно издаёт звук. Чтобы удалить приложение из списка, выберите его."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vypnite apku, aby vaša hudba hrala ďalej, aj keď táto apka vydáva zvuk. Kliknutím na apku pravým tlačidlom ju odstránite zo zoznamu."
+            "value" : "Vypnite apku, aby vaša hudba hrala ďalej, aj keď táto apka vydáva zvuk. Vyberte apku, ak ju chcete odstrániť zo zoznamu."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Izklopite aplikacijo, da se vaša glasba predvaja naprej, medtem ko ta aplikacija oddaja zvok. Z desno tipko kliknite aplikacijo, da jo odstranite s seznama."
+            "value" : "Izklopite aplikacijo, da se vaša glasba predvaja naprej, medtem ko ta aplikacija oddaja zvok. Izberite aplikacijo, da jo odstranite s seznama."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stäng av en app för att låta din musik fortsätta spela medan appen låter. Högerklicka på en app för att ta bort den från listan."
+            "value" : "Stäng av en app för att låta din musik fortsätta spela medan appen låter. Markera en app för att ta bort den från listan."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bir uygulama ses çıkarırken müziğinizin çalmaya devam etmesi için o uygulamayı kapatın. Bir uygulamayı listeden kaldırmak için sağ tıklayın."
+            "value" : "Bir uygulama ses çıkarırken müziğinizin çalmaya devam etmesi için o uygulamayı kapatın. Bir uygulamayı listeden kaldırmak için seçin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Вимкніть програму, щоб ваша музика грала далі, поки ця програма видає звук. Щоб вилучити програму зі списку, клацніть її правою кнопкою."
+            "value" : "Вимкніть програму, щоб ваша музика грала далі, поки ця програма видає звук. Щоб вилучити програму зі списку, виберіть її."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tắt một ứng dụng để nhạc của bạn tiếp tục phát khi ứng dụng đó phát ra âm thanh. Bấm chuột phải vào một ứng dụng để xóa nó khỏi danh sách."
+            "value" : "Tắt một ứng dụng để nhạc của bạn tiếp tục phát khi ứng dụng đó phát ra âm thanh. Chọn một ứng dụng để xóa nó khỏi danh sách."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "關閉 App 後，它發出聲音時音樂會繼續播放。在 App 上按一下右鍵即可將其從列表中移除。"
+            "value" : "關閉 App 後，它發出聲音時音樂會繼續播放。選取 App 即可將其從列表中移除。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关闭 App 后，它发出声音时音乐会继续播放。右键点按 App 可将其从列表中移除。"
+            "value" : "关闭 App 后，它发出声音时音乐会继续播放。选择 App 可将其从列表中移除。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "關閉 App 後，它發出聲音時音樂會繼續播放。在 App 上按一下右鍵即可將其從列表中移除。"
+            "value" : "關閉 App 後，它發出聲音時音樂會繼續播放。選取 App 即可將其從列表中移除。"
           }
         }
       }
