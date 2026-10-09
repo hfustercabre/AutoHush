@@ -30,7 +30,7 @@ AutoHush is a small menu bar app for macOS. When another app starts making sound
 - 🔒 **Minds its own business:** no accounts, no analytics, no tracking. It never records or saves sound, and it only goes online to check GitHub for updates (more under [Privacy](#privacy)).
 - 🪶 **Featherweight:** built to sip, not gulp: about 0.05 % CPU and 15 MB of memory while it waits or your music plays, and well under 1 % while it's working, so your battery won't notice it.
 
-**Works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL**: choose yours in the menu or in Settings. Support for more players, such as YouTube Music, is planned.
+**Works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL**, and, as an experiment, with music websites added to the Dock from Safari, such as YouTube Music, Amazon Music or Deezer ([Safari web apps](#safari-web-apps)): choose yours in the menu or in Settings.
 
 ## Thanks to Background Music
 
