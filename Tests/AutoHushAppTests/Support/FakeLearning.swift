@@ -34,6 +34,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
         var restartCount = 0
         /// It's Paused comes as the minute ends: learned instead of restarted.
         var learnedAtTheLastMoment = false
+        var pausesByItself = false
         /// What It's Playing and It's Paused answer; `.noted` moves it on.
         var playingMark = LearningMark.noted
         var pausedMark = LearningMark.noted
@@ -92,6 +93,18 @@ actor MockLearningPlayer: LearningMusicPlayer {
         let mark = state.withLock { $0.playingMark }
         if mark == .noted { set(.learning(hasPlayed: true)) }
         return mark
+    }
+
+    /// Whether AutoHush's own pause (the Play/Pause key) takes; it doesn't
+    /// unless a test says so.
+    nonisolated func pausesByItself(_ pauses: Bool) {
+        state.withLock { $0.pausesByItself = pauses }
+    }
+
+    func pauseByItself() async -> Bool {
+        let pauses = state.withLock { $0.pausesByItself }
+        if pauses { set(.learned) }
+        return pauses
     }
 
     func markPaused() async -> LearningMark {

@@ -26,10 +26,24 @@ struct AppHealthStateTests {
         #expect(health(MusicPlayerError.playerNotResponding) == .retrying("Jukebox is not responding"))
     }
 
-    @Test("a failed player command is retried, with its message")
+    @Test("a failed player command is retried; the line says AutoHush can't control it, the menu tells why")
     func commandFailed() {
-        #expect(health(MusicPlayerError.playerCommandFailed("OSStatus -50"))
-            == .retrying("Jukebox control error: OSStatus -50"))
+        #expect(health(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil)))
+            == .retrying("Can't control Jukebox right now"))
+    }
+
+    @Test("each failure is said in words, with the log's English for a bug report")
+    func controlErrorWords() {
+        let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
+        #expect(menu.text == "AutoHush can't find Play/Pause in TIDAL's menus.")
+        #expect(menu.detail == "Controlling the music player failed: its Play/Pause menu item wasn't found.")
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")), player: "Spotify").text
+                == "Spotify answered with an error (-1708).")
+        #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn't responding.")
+        #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "VLC").text == "AutoHush may no longer control VLC.")
+        for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
+            #expect(failure.text(player: "YT Music").contains("YT Music"))
+        }
     }
 
     @Test("messages name the player")
@@ -52,8 +66,9 @@ struct AppHealthStateTests {
         #expect(AppHealthState.playerNotInstalled("Jukebox") == .degraded("Jukebox is not installed"))
     }
 
-    @Test("any other error fails with its description")
+    @Test("any other error fails; the menu tells why, in the error's own words")
     func otherError() {
-        #expect(health(StubError.failed) == .failed("stub failed"))
+        #expect(health(StubError.failed) == .failed("Can't control Jukebox right now"))
+        #expect(ControlError(StubError.failed, player: "Jukebox").text == "stub failed")
     }
 }

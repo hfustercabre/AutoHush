@@ -27,7 +27,7 @@ HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-mo
         -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$STRINGS_DIR"
 
 step "Assembling $APP_NAME.app"
-rm -rf "$APP_BUNDLE"
+rm -rf "${APP_BUNDLE:?}"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 cp "$PRODUCTS_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 cp "$INFO_PLIST" "$APP_BUNDLE/Contents/Info.plist"

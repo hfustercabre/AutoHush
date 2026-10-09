@@ -19,15 +19,13 @@ struct MusicPlayerErrorTests {
         #expect(error.localizedDescription.lowercased().contains("player"))
     }
 
-    @Test("playerCommandFailed surfaces the provided message")
+    @Test("playerCommandFailed describes its failure, in English for the log")
     func playerCommandFailedDescription() {
-        let error = MusicPlayerError.playerCommandFailed("OSStatus -1712")
-        #expect(error.errorDescription?.contains("OSStatus -1712") == true)
-    }
-
-    @Test("playerCommandFailed with empty message still produces a description")
-    func playerCommandFailedEmptyMessage() {
-        let error = MusicPlayerError.playerCommandFailed("")
-        #expect(error.errorDescription?.isEmpty == false)
+        let error = MusicPlayerError.playerCommandFailed(.appleEventError(-1712, message: nil))
+        #expect(error.errorDescription == "Controlling the music player failed: OSStatus -1712.")
+        #expect(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")).errorDescription
+                == "Controlling the music player failed: Not understood (OSStatus -1708).")
+        #expect(MusicPlayerError.playerCommandFailed(.menuItemNotFound).errorDescription
+                == "Controlling the music player failed: its Play/Pause menu item wasn't found.")
     }
 }

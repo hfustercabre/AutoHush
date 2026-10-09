@@ -26,6 +26,10 @@ package protocol MusicPlayer: Sendable {
     /// Offered without AutoHush having been tried with it (the web app of a
     /// site nobody has tested), and marked so.
     var isUntested: Bool { get }
+    /// For a player whose state is told apart by its own words for Play and
+    /// Pause, read from its app (one controlled through its menu): whether
+    /// they could be read; `nil` for any other player. Diagnostics shows it.
+    var ownWordsRead: Bool? { get }
 
     /// Asks for (if needed) and checks permission to control the player.
     /// Throws a `MusicPlayerError` when the player can't be controlled.
@@ -58,6 +62,7 @@ extension MusicPlayer {
     package var kind: MusicPlayerKind { .app }
     package var installedURL: URL? { nil }
     package var isUntested: Bool { false }
+    package var ownWordsRead: Bool? { nil }
     /// Most players are scripted with Apple events.
     package var controlPermission: Permission { .automation(player: name) }
 }
@@ -85,6 +90,10 @@ package protocol LearningMusicPlayer: MusicPlayer {
     /// The user says the music itself plays now ("It's Playing"): it notes
     /// how the player looks, and waits to be told it's paused.
     func markPlaying() async -> LearningMark
+    /// Right after `markPlaying` noted it: it pauses itself, without the
+    /// user (the keyboard's Play/Pause key), learns what changed, and plays
+    /// again. `false` when it couldn't: the user pauses it, then says so.
+    func pauseByItself() async -> Bool
     /// The user says they paused it ("It's Paused"): it learns what changed
     /// since it played.
     func markPaused() async -> LearningMark

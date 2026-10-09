@@ -11,7 +11,7 @@ struct LearningCardView: View {
             Card(padding: 10) {
                 LearningSummary(name: model.status.playerName, hasPlayed: hasPlayed,
                                 deadline: model.status.learningPauseDeadline, note: model.status.learningNote,
-                                action: { model.perform(.learningStep($0)) })
+                                pauseMode: model.status.learningPauseMode, action: { model.perform(.learningStep($0)) })
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 2)

@@ -40,12 +40,7 @@ package final class AppleEventChannel: Sendable {
     /// Asks for consent to control the app up front: a send times out after a
     /// few seconds, which is too short for a user reading the TCC prompt.
     package func requestPermission(pid: pid_t) async throws {
-        let status = try await onQueue {
-            let target = NSAppleEventDescriptor(processIdentifier: pid)
-            return AEDeterminePermissionToAutomateTarget(
-                target.aeDesc, ScriptablePlayer.Code.coreSuite, ScriptablePlayer.Code.getData, true
-            )
-        }
+        let status = await queue.run { AutomationPermission.check(pid: pid, ask: true) }
         if status != noErr {
             throw ScriptablePlayer.mapError(number: Int(status), message: nil)
         }
@@ -57,7 +52,7 @@ package final class AppleEventChannel: Sendable {
         _ makeEvent: @escaping @Sendable (pid_t) -> NSAppleEventDescriptor,
         to pid: pid_t
     ) async throws -> PlayerReply {
-        try await onQueue {
+        try await queue.runThrowing {
             let event = makeEvent(pid)
             let reply: NSAppleEventDescriptor
             do {
@@ -67,14 +62,6 @@ package final class AppleEventChannel: Sendable {
             }
             if let error = ScriptablePlayer.replyError(reply) { throw error }
             return PlayerReply(reply)
-        }
-    }
-
-    private func onQueue<T: Sendable>(_ work: @escaping @Sendable () throws -> T) async throws -> T {
-        try await withCheckedThrowingContinuation { continuation in
-            queue.async {
-                continuation.resume(with: Result { try work() })
-            }
         }
     }
 }

@@ -49,6 +49,9 @@ package actor MenuPlayer: MusicPlayer {
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }
     /// Its volume can't be read or set.
     package nonisolated var canFade: Bool { false }
+    /// Whether its words for Play and Pause could be read from its app (read
+    /// once per copy and version).
+    package nonisolated var ownWordsRead: Bool? { words() != nil }
 
     private let menu: any PlaybackMenu
     private let processIdentifier: @Sendable () -> pid_t?
@@ -83,20 +86,21 @@ package actor MenuPlayer: MusicPlayer {
         let prompt = !hasAskedForAccess
         hasAskedForAccess = true
         let menu = menu
-        guard await onQueue({ menu.isTrusted(prompt: prompt) }) else { throw MusicPlayerError.accessibilityPermissionDenied }
-        guard await onQueue({ menu.toggle(pid: pid) }) != nil else {
-            throw MusicPlayerError.playerCommandFailed("\(name)'s \(profile.menuName) menu wasn't found")
+        guard await queue.run({ menu.isTrusted(prompt: prompt) }) else { throw MusicPlayerError.accessibilityPermissionDenied }
+        guard await queue.run({ menu.toggle(pid: pid) }) != nil else {
+            logger.error("\(self.name, privacy: .public)'s \(self.profile.menuName, privacy: .public) menu wasn't found")
+            throw MusicPlayerError.playerCommandFailed(.menuItemNotFound)
         }
     }
 
     package func playerState() async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
         let menu = menu
-        guard await onQueue({ menu.isTrusted(prompt: false) }),
-              let toggle = await onQueue({ menu.toggle(pid: pid) })
+        guard await queue.run({ menu.isTrusted(prompt: false) }),
+              let toggle = await queue.run({ menu.toggle(pid: pid) })
         else { return .unknown }
         guard toggle.isEnabled else { return .stopped } // nothing to play
-        guard let words = await onQueue(words) else { return .unknown }
+        guard let words = await queue.run(words) else { return .unknown }
         return Self.state(of: toggle, words: words)
     }
 
@@ -133,22 +137,15 @@ package actor MenuPlayer: MusicPlayer {
         let current = await playerState()
         guard current == state else {
             if current == .notRunning { throw MusicPlayerError.playerNotRunning }
-            if current == .unknown || current == .stopped {
-                throw MusicPlayerError.playerCommandFailed("\(name)'s state is \(current.rawValue)")
-            }
+            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
+            if current == .stopped { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
             return
         }
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let menu = menu
-        guard await onQueue({ menu.pressToggle(pid: pid) }) else {
+        guard await queue.run({ menu.pressToggle(pid: pid) }) else {
             logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
-            throw MusicPlayerError.playerCommandFailed("\(name)'s Play/Pause couldn't be pressed")
-        }
-    }
-
-    private func onQueue<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
-        await withCheckedContinuation { continuation in
-            queue.async { continuation.resume(returning: work()) }
+            throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
     }
 }

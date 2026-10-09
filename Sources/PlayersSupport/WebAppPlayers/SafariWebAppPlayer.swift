@@ -9,8 +9,8 @@ import AutoHushKit
 /// apps can't be scripted and have no playback menu.
 ///
 /// Sites differ, and their words are in the site's language, so the button
-/// is learned once, from the user saying when the web app plays and when
-/// they've paused it (see `WebAppControl`). Its windows are reached on every Space, minimized ones
+/// is learned once, from the user saying when the web app plays, and the
+/// page once paused, by AutoHush itself or the user (see `WebAppControl`). Its windows are reached on every Space, minimized ones
 /// too. It never presses the button blindly: pausing presses it only while
 /// the button says the music plays, playing only while it says it's paused.
 /// Its volume can't be read, so it pauses and plays without fading. A pause
@@ -51,7 +51,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
         processIdentifier: (@Sendable () -> pid_t?)? = nil,
         clock: @escaping @Sendable () -> Date = { Date() },
-        sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }
+        sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },
+        pressKey: @escaping @Sendable () -> Void = { DispatchQueue.main.async { PlayPauseKey.press() } }
     ) {
         self.app = app
         self.isUntested = isUntested
@@ -62,7 +63,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
                                 muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
-                                clock: clock, sleep: sleep)
+                                pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
     }
 
@@ -72,25 +73,31 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package func learnAgain() async {
         let control = control
-        await onQueue { control.learnAgain() }
+        await queue.run { control.learnAgain() }
     }
 
     package func markPlaying() async -> LearningMark {
         let pid = processIdentifier()
         let control = control
-        return await onQueue { control.notePlaying(pid: pid) }
+        return await queue.run { control.notePlaying(pid: pid) }
+    }
+
+    package func pauseByItself() async -> Bool {
+        let pid = processIdentifier()
+        let control = control
+        return await queue.run { control.pauseByItself(pid: pid) }
     }
 
     package func markPaused() async -> LearningMark {
         let pid = processIdentifier()
         let control = control
-        return await onQueue { control.notePaused(pid: pid) }
+        return await queue.run { control.notePaused(pid: pid) }
     }
 
     @discardableResult
     package func restartLearning() async -> Bool {
         let control = control
-        return await onQueue { control.restartLearning() }
+        return await queue.run { control.restartLearning() }
     }
 
     package nonisolated func allowTaps(_ allowed: Bool) {
@@ -104,7 +111,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         let prompt = !hasAskedForAccess
         hasAskedForAccess = true
         let page = page
-        guard await onQueue({ page.isTrusted(prompt: prompt) }) else { throw MusicPlayerError.accessibilityPermissionDenied }
+        guard await queue.run({ page.isTrusted(prompt: prompt) }) else { throw MusicPlayerError.accessibilityPermissionDenied }
     }
 
     package func playerState() async -> PlayerState {
@@ -120,9 +127,9 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     private func readState(_ read: @escaping @Sendable (WebAppControl, pid_t) -> PlayerState) async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
         let page = page
-        guard await onQueue({ page.isTrusted(prompt: false) }) else { return .unknown }
+        guard await queue.run({ page.isTrusted(prompt: false) }) else { return .unknown }
         let control = control
-        return await onQueue { read(control, pid) }
+        return await queue.run { read(control, pid) }
     }
 
     package func pause() async throws {
@@ -132,12 +139,12 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package func muteIfPlayingAnyway() async -> Bool {
         guard let pid = processIdentifier() else { return false }
         let control = control
-        return await onQueue { control.muteIfPlayingAnyway(pid: pid) }
+        return await queue.run { control.muteIfPlayingAnyway(pid: pid) }
     }
 
     package func forgetPause() async {
         let control = control
-        await onQueue { control.forgetPause() }
+        await queue.run { control.forgetPause() }
     }
 
     package func play() async throws {
@@ -161,22 +168,13 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     /// Lifts a mute in place of a pause, without playing anything.
     package func releaseMute() async {
         let control = control
-        await onQueue { control.releaseMute() }
+        await queue.run { control.releaseMute() }
     }
 
     private func press(from state: PlayerState) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let control = control
-        let result: Result<Void, any Error> = await onQueue {
-            Result { try control.press(from: state, pid: pid) }
-        }
-        try result.get()
-    }
-
-    private func onQueue<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
-        await withCheckedContinuation { continuation in
-            queue.async { continuation.resume(returning: work()) }
-        }
+        try await queue.runThrowing { try control.press(from: state, pid: pid) }
     }
 }
 

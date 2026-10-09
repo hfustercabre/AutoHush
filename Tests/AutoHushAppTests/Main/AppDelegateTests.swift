@@ -129,7 +129,7 @@ struct AppDelegateTests {
 
     @MainActor
     private func waitFor(_ condition: @MainActor () -> Bool) async {
-        for _ in 0..<200 where !condition() { try? await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until(condition)
     }
 
     @MainActor
@@ -364,7 +364,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("It's Playing and It's Paused go to the player; a click it can't take says why under its step")
+    @Test("It's Playing, Pause It Manually and It's Paused go to the player; a click it can't take says why under its step")
     func learningClicks() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
@@ -382,8 +382,17 @@ struct AppDelegateTests {
 
         webApp.answer(playing: .noted, paused: .nothingChanged)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningHasPlayed == true }
+        // AutoHush's own pause didn't take: its step failed, and no minute counts yet.
+        await waitFor { sut.status.learningPauseMode == .failed }
+        #expect(sut.settingsModel.learningPauseMode == .failed)
+        #expect(sut.status.learningHasPlayed == true)
         #expect(sut.status.learningNote == nil)
+        #expect(sut.status.learningPauseDeadline == nil)
+
+        // Pause It Manually: the user has a minute to pause it.
+        sut.learningStep(.pauseManually)
+        await waitFor { sut.status.learningPauseDeadline != nil }
+        #expect(sut.status.learningPauseMode == .byHand)
         let deadline = sut.status.learningPauseDeadline
         #expect(deadline.map { abs($0.timeIntervalSinceNow - 60) < 2 } == true)
         #expect(sut.settingsModel.learningPauseDeadline == deadline)
@@ -398,14 +407,73 @@ struct AppDelegateTests {
         await waitFor { sut.status.learningHasPlayed == false && sut.status.learningNote == .cantSeePage }
         #expect(sut.status.learningNote == .cantSeePage)
         #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.status.learningPauseMode == .automatic)
 
         webApp.answer(playing: .noted, paused: .noted)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningHasPlayed == true }
+        await waitFor { sut.status.learningPauseMode == .failed }
+        sut.learningStep(.pauseManually)
+        await waitFor { sut.status.learningPauseMode == .byHand }
         sut.learningStep(.itsPaused)
         await waitFor { sut.status.learning == .learned }
         #expect(sut.status.learningNote == nil)
         #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.status.learningPauseMode == .byHand) // the steps show the user paused it
+    }
+
+    @MainActor
+    @Test("once AutoHush couldn't pause it: Try Again tries once more; Pause It Manually while it's silent goes back to the first step")
+    func learningAfterAFailedPause() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningPauseMode == .failed }
+
+        // The song stopped meanwhile: back to the first step, saying why.
+        webApp.answer(playing: .notHeard)
+        sut.learningStep(.pauseManually)
+        await waitFor { sut.status.learningHasPlayed == false }
+        #expect(webApp.restartCount == 1)
+        #expect(sut.status.learningNote == .notHeard)
+        #expect(sut.status.learningPauseMode == .automatic)
+        #expect(sut.status.learningPauseDeadline == nil)
+
+        webApp.answer(playing: .noted)
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningPauseMode == .failed }
+        webApp.pausesByItself(true)
+        sut.learningStep(.tryAgain)
+        #expect(sut.status.learningPauseMode == .trying)
+        await waitFor { sut.status.learning == .learned }
+        #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.status.learningNote == nil)
+    }
+
+    @MainActor
+    @Test("It's Playing: AutoHush pauses it itself meanwhile; when that takes, it has learned, with no minute to count")
+    func learningPausesByItself() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        sut.chooseMusicPlayer(webApp.bundleID)
+        webApp.pausesByItself(true)
+        sut.learningStep(.itsPlaying)
+        #expect(sut.status.learningPauseMode == .trying)
+        #expect(sut.settingsModel.learningPauseMode == .trying)
+        await waitFor { sut.status.learning == .learned }
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(sut.status.learningPauseMode != .failed)
+        #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.status.learningNote == nil)
+        #expect(webApp.restartCount == 0)
     }
 
     @MainActor
@@ -420,6 +488,8 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(webApp.bundleID)
         webApp.learnAtTheLastMoment()
         sut.learningStep(.itsPlaying)
+        await waitFor { sut.status.learningPauseMode == .failed }
+        sut.learningStep(.pauseManually)
         await waitFor { sut.status.learning == .learned }
         try? await Task.sleep(for: .milliseconds(150))
         #expect(webApp.restartCount == 0)
@@ -437,10 +507,14 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningHasPlayed == true }
+        await waitFor { sut.status.learningPauseMode == .failed }
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(sut.status.learningHasPlayed == true) // no minute counts until Pause It Manually
+        sut.learningStep(.pauseManually)
         await waitFor { sut.status.learningHasPlayed == false }
         #expect(webApp.restartCount == 1)
         #expect(sut.status.learningNote == .timedOut)
+        #expect(sut.status.learningPauseMode == .automatic)
         #expect(sut.status.learningPauseDeadline == nil)
         #expect(scratch.learningWindow.isVisible) // still learning
 
@@ -785,7 +859,7 @@ struct AppDelegateTests {
         // The real bootstrap stops at the permission check, before monitoring anything.
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
         sut.chooseMusicPlayer(Players.first)
-        for _ in 0..<200 where await scratch.first.verifyCallCount < 3 { try? await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { await scratch.first.verifyCallCount >= 3 }
         #expect(await scratch.first.verifyCallCount >= 3)
         #expect(sut.status.health == .needsPermission(.automation(player: "First")))
         // Logged as an error once; the repeats are the same problem.
@@ -799,7 +873,7 @@ struct AppDelegateTests {
         await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
         sut.chooseMusicPlayer(Players.second)
-        for _ in 0..<200 where await scratch.second.verifyCallCount < 3 { try? await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { await scratch.second.verifyCallCount >= 3 }
         #expect(await scratch.second.verifyCallCount >= 3)
         #expect(sut.status.health == .retrying("Second is not responding"))
         #expect(sut.status.canRetry) // the menu offers Retry too
@@ -812,7 +886,7 @@ struct AppDelegateTests {
         await scratch.second.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
         sut.chooseMusicPlayer(Players.second)
-        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        await TestWait.until { sut.status.health != .starting }
         try? await Task.sleep(for: .milliseconds(200))
         #expect(await scratch.second.verifyCallCount == 1)
         #expect(sut.status.health == .degraded("Second is not running"))
@@ -850,7 +924,7 @@ struct AppDelegateTests {
         #expect(await scratch.second.verifyCallCount == 0)
 
         sut.chooseMusicPlayer(Players.second) // also closes the welcome window
-        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.health == .needsPermission(.automation(player: "Second")))
         #expect(await scratch.second.verifyCallCount == 1)
         #expect(await scratch.first.verifyCallCount == 0)
@@ -864,17 +938,48 @@ struct AppDelegateTests {
         // The real bootstrap stops at the install check, before scripting the player.
         let (sut, _) = makeSUT(scratch, realBootstrap: true)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
-        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.health == .degraded("First is not installed"))
 
         // Installed again: it's controlled afresh as soon as AutoHush notices.
         scratch.installed = [Players.first]
         sut.refreshPlayerOptions()
-        for _ in 0..<1000 where sut.status.health != .needsPermission(.automation(player: "First")) {
-            await Task.yield()
-        }
+        await TestWait.until { sut.status.health == .needsPermission(.automation(player: "First")) }
         #expect(sut.status.health == .needsPermission(.automation(player: "First")))
         #expect(await scratch.first.verifyCallCount == 1)
+    }
+
+    @MainActor
+    @Test("a start that fails with the player's error says AutoHush can't control it, and keeps why for the menu")
+    func failedStartKeepsItsCause() async {
+        let scratch = Scratch()
+        await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
+        let (sut, _) = makeSUT(scratch, realBootstrap: true)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        await TestWait.until { sut.status.health != .starting }
+        #expect(sut.status.statusLine == "Can't control First right now")
+        #expect(sut.status.controlError?.text == "AutoHush can't find Play/Pause in First's menus.")
+
+        // A pause that fails once it runs says why too, and the cause goes once it's over.
+        sut.apply(.pauseFailure(.playerCommandFailed(.pressIgnored)))
+        #expect(sut.status.controlError?.text == "First didn't respond to its Play/Pause.")
+        sut.apply(.pauseFailure(nil))
+        #expect(sut.status.controlError == nil)
+    }
+
+    @MainActor
+    @Test("a web app macOS doesn't know of yet is started from where it is, as it's listed")
+    func webAppStartsFromItsOwnPlace() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.new", name: "New Site", status: .learned,
+                                        installedURL: URL(fileURLWithPath: "/Users/someone/Applications/New Site.app"))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        // Not in `installed`: Launch Services hasn't caught up with it.
+        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID, realBootstrap: true)
+        sut.handleApplicationDidLaunch(bundleIdentifier: webApp.bundleID)
+        await TestWait.until { sut.status.health != .starting }
+        // The real bootstrap went past the install check, and stopped at the permission one.
+        #expect(sut.status.health == .needsPermission(.accessibility(player: "New Site")))
     }
 
     @MainActor
@@ -888,7 +993,7 @@ struct AppDelegateTests {
         // Moved to the Trash: its folder changes, and nothing else happens.
         scratch.installed = []
         scratch.changeFolder()
-        for _ in 0..<1000 where sut.status.health == .ready { await Task.yield() }
+        await TestWait.until { sut.status.health != .ready }
         #expect(sut.status.health == .degraded("First is not installed"))
         #expect(sut.status.playback == .unknown)
         #expect(bootstraps.count == 0)
@@ -896,7 +1001,7 @@ struct AppDelegateTests {
         // Put back: controlled afresh.
         scratch.installed = [Players.first]
         scratch.changeFolder()
-        for _ in 0..<1000 where bootstraps.count == 0 { await Task.yield() }
+        await TestWait.until { bootstraps.count > 0 }
         #expect(sut.status.health == .starting)
         #expect(bootstraps.count == 1)
     }
@@ -953,7 +1058,7 @@ struct AppDelegateTests {
 
         // The other player's start stops at the permission check.
         sut.chooseMusicPlayer(Players.second)
-        for _ in 0..<1000 where sut.status.health == .starting { await Task.yield() }
+        await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.playback == .unknown)
         #expect(sut.status.detection == .pending)
         #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
@@ -1073,7 +1178,7 @@ struct AppDelegateTests {
             await scratch.first.setFailVerify(error)
             let calls = await scratch.first.verifyCallCount
             sut.checkControlAccess()
-            for _ in 0..<200 { if await scratch.first.verifyCallCount > calls { break }; try? await Task.sleep(for: .milliseconds(10)) }
+            await TestWait.until { await scratch.first.verifyCallCount > calls }
             try? await Task.sleep(for: .milliseconds(30))
         }
         #expect(bootstraps.count == 0)
@@ -1267,7 +1372,7 @@ struct AppDelegateTests {
         #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotResponding))
         #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotRunning))
         #expect(!AppDelegate.isTransientStartupError(MusicPlayerError.automationPermissionDenied))
-        #expect(!AppDelegate.isTransientStartupError(MusicPlayerError.playerCommandFailed("OSStatus -50")))
+        #expect(!AppDelegate.isTransientStartupError(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil))))
         #expect(!AppDelegate.isTransientStartupError(StubError.failed))
     }
 

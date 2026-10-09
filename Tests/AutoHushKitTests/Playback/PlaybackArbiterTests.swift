@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
@@ -8,13 +9,9 @@ struct PlaybackArbiterTests {
 
     // MARK: - Helpers
 
-    /// Yields until `condition` holds (or about a second has passed), for
-    /// work that hops between actors.
+    /// Waits until `condition` holds, for work that hops between actors.
     private func waitUntil(_ condition: () async -> Bool) async {
-        for _ in 0..<1000 {
-            if await condition() { return }
-            try? await Task.sleep(for: .milliseconds(1))
-        }
+        await TestWait.until(condition)
     }
 
     /// Gives work that hops between actors time to finish before checking
@@ -148,6 +145,47 @@ struct PlaybackArbiterTests {
         #expect(await player.state == .playing) // state unchanged because pause threw
     }
 
+    @Test("a pause that fails while another app plays says why, until the app stops")
+    func failedPauseReported() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.buttonDisabled))
+        let states = OSAllocatedUnfairLock<[PlaybackState]>(initialState: [])
+        let failures = OSAllocatedUnfairLock<[MusicPlayerError?]>(initialState: [])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { state in states.withLock { $0.append(state) } },
+                                      onPauseFailure: { error in failures.withLock { $0.append(error) } })
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(states.withLock { $0.last } == .pauseFailed)
+        #expect(failures.withLock { $0 } == [.playerCommandFailed(.buttonDisabled)])
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { states.withLock { $0.last } == .musicPlaying }
+        #expect(states.withLock { $0.last } == .musicPlaying)
+        #expect(failures.withLock { $0 } == [.playerCommandFailed(.buttonDisabled), nil])
+    }
+
+    @Test("a failed pause is over once a later one works, or the user pauses the music")
+    func failedPauseOver() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
+        let failures = OSAllocatedUnfairLock<[MusicPlayerError?]>(initialState: [])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onPauseFailure: { error in failures.withLock { $0.append(error) } })
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.setFailPause(nil)
+        await arbiter.sourceChanged("com.apple.Safari", playing: true) // a second app: this pause works
+        #expect(await player.pauseCallCount == 2)
+        #expect(failures.withLock { $0 } == [.playerCommandFailed(.pressFailed), nil])
+
+        let other = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
+        let otherFailures = OSAllocatedUnfairLock<[MusicPlayerError?]>(initialState: [])
+        let second = PlaybackArbiter(player: other, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                     onPauseFailure: { error in otherFailures.withLock { $0.append(error) } })
+        await second.sourceChanged("org.videolan.vlc", playing: true)
+        await second.handlePlayerStateChange(.paused) // the user paused it
+        #expect(otherFailures.withLock { $0 } == [.playerCommandFailed(.pressFailed), nil])
+    }
+
     // MARK: - Resume behaviour
 
     @Test("resumes the player as soon as the other app stops", arguments: [
@@ -214,7 +252,7 @@ struct PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await player.setFailPlay(MusicPlayerError.playerCommandFailed("the page didn't follow"))
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await waitUntil { scheduler.scheduledDelays.count == 1 } // the retry, a second later
         #expect(await player.playCallCount == 1)
@@ -233,7 +271,7 @@ struct PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await player.setFailPlay(MusicPlayerError.playerCommandFailed("the page didn't follow"))
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await waitUntil { scheduler.scheduledDelays.count == attempt }
@@ -262,6 +300,17 @@ struct PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
         #expect(scheduler.scheduledDelays.isEmpty)
         #expect(await player.state == .paused)
+    }
+
+    @Test("a sleep that arrives after a later wake is ignored")
+    func lateSleepIgnored() async {
+        let player = MockMusicPlayer()
+        let arbiter = makeArbiter(player: player)
+
+        await arbiter.setAsleep(false, change: 2) // the wake, told second, arrives first
+        await arbiter.setAsleep(true, change: 1)  // the sleep, told first, arrives late
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.pauseCallCount == 1) // awake: it pauses
     }
 
     @Test("a pause handed over while the Mac sleeps is forgotten too")
@@ -304,6 +353,51 @@ struct PlaybackArbiterTests {
         await arbiter.setAsleep(true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         #expect(await player.commandLog == ["mute"]) // told once awake, when it can act
+        await arbiter.setAsleep(false)
+        await settle()
+        #expect(await player.commandLog == ["mute", "forgetPause"])
+    }
+
+    @Test("a pause that ends after the Mac went to sleep is forgotten too: no resume once it's awake")
+    func pauseFinishingInSleepForgotten() async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let fading = Gate()
+        let started = Gate()
+        let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await started.open(); await fading.wait() })
+
+        await arbiter.handleSourceChange(sourceID: "com.apple.QuickTimePlayerX", isPlaying: true)
+        await started.wait() // the fade-out is under way
+        await arbiter.setAsleep(true)
+        await fading.open()
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == 1)
+        await arbiter.setAsleep(false)
+        // Its sound stopped as the Mac fell asleep; the monitor reports it once awake.
+        await arbiter.handleSourceChange(sourceID: "com.apple.QuickTimePlayerX", isPlaying: false)
+        await settle()
+        #expect(await player.playCallCount == 0)
+        #expect(await player.state == .paused)
+    }
+
+    @Test("a mute that comes after the Mac went to sleep is forgotten once it's awake")
+    func muteFinishingInSleepForgotten() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let muting = Gate()
+        let started = Gate()
+        let arbiter = PlaybackArbiter(player: SlowMutingPlayer(MockMutingMusicPlayer(player), started: started, gate: muting),
+                                      configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await started.wait() // it's being listened to
+        await arbiter.setAsleep(true)
+        await muting.open()
+        await arbiter.waitForPause()
+        #expect(await player.commandLog == ["mute"])
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await arbiter.setAsleep(false)
         await settle()
         #expect(await player.commandLog == ["mute", "forgetPause"])
@@ -1110,6 +1204,41 @@ private extension PlaybackArbiter {
 private actor Counter {
     private(set) var value = 0
     func increment() { value += 1 }
+}
+
+/// A muting player whose check before muting waits for `gate`, saying so
+/// on `started`: the Mac can go to sleep meanwhile.
+private actor SlowMutingPlayer: MutingMusicPlayer {
+    let wrapped: MockMutingMusicPlayer
+    let started: Gate
+    let gate: Gate
+
+    init(_ wrapped: MockMutingMusicPlayer, started: Gate, gate: Gate) {
+        self.wrapped = wrapped
+        self.started = started
+        self.gate = gate
+    }
+
+    nonisolated var bundleID: String { wrapped.bundleID }
+    nonisolated var name: String { wrapped.name }
+    nonisolated func allowTaps(_ allowed: Bool) { wrapped.allowTaps(allowed) }
+    func muteIfPlayingAnyway() async -> Bool {
+        await started.open()
+        await gate.wait()
+        return await wrapped.muteIfPlayingAnyway()
+    }
+    func forgetPause() async { await wrapped.forgetPause() }
+    func verifyControlAccess() async throws { try await wrapped.verifyControlAccess() }
+    func playerState() async -> PlayerState { await wrapped.playerState() }
+    func pause() async throws { try await wrapped.pause() }
+    func play() async throws { try await wrapped.play() }
+    func volume() async -> Int? { await wrapped.volume() }
+    func setVolume(_ volume: Int) async throws { try await wrapped.setVolume(volume) }
+
+    @MainActor
+    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+        MockStateObserver()
+    }
 }
 
 /// Holds whoever waits on it until it is opened.

@@ -5,6 +5,39 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **The menu showed some errors in English.** When the music player answered
+  a start with an error, the status line showed the technical message. Now
+  it says "Can't control TIDAL right now" in your language, and an ⓘ after
+  it tells why, in words.
+- **A pause the music player refused went unnoticed.** The card kept saying
+  "Playing" while the other app played. Now it says "Couldn't pause —
+  Safari is playing", with the same ⓘ, until the other app stops.
+- **Music paused just as the Mac went to sleep could come back after
+  waking.** When another app started playing as the Mac fell asleep, the
+  pause finished after it, and the music was resumed once awake. Now it
+  stays paused, as after any sleep.
+- **A web app just added could be reported as not installed** while macOS
+  hadn't caught up with it yet.
+- Smaller fixes: adding a web app no longer holds AutoHush up while Safari is
+  slow to answer, and the learning steps can no longer go back to an
+  earlier step.
+
+### Changed
+
+- **Learning a web app's controls takes one click.** Once the song plays and
+  you click It's Playing, AutoHush pauses the web app itself with the
+  keyboard's Play/Pause key, learns which button changed, and plays it
+  again. If that doesn't take, the step says so, with Try Again and Pause It
+  Manually, which lets you pause it yourself, as before. The minute you have
+  for that now stands out.
+- **Settings → Diagnostics** shows the music player's last error, and for
+  TIDAL and Apple Podcasts whether AutoHush could read their own words for
+  Play and Pause.
+
 ## [0.9.0] — 2026-10-09
 
 ### Fixed

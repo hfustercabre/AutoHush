@@ -28,6 +28,8 @@ package enum SupportedPlayers {
             MenuPlayer(profile: .tidal),
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
+        // Shown in Add a Web App's address field and its "not a web address" note.
+        exampleWebAddress: "music.youtube.com",
         found: { webApps.current() },
         suggested: { webApps.suggestions() }
     )

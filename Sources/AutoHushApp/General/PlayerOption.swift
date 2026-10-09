@@ -118,6 +118,12 @@ struct PlayerOption: Equatable, Identifiable {
                comment: "Where music players are offered: heading over the websites added to the Dock from Safari")
     }
 
+    /// Where players are offered: the entry that adds a Safari web app.
+    static var addWebAppTitle: String {
+        String(localized: "Add a Web App…",
+               comment: "Menu item and button where music players are offered: makes a website a Safari web app")
+    }
+
     /// After the name of a web app whose site AutoHush hasn't been tested
     /// with, as a `HeadingBadge`.
     static var untestedBadge: String {

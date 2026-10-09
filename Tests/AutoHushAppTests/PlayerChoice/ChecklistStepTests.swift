@@ -10,21 +10,25 @@ struct ChecklistStepTests {
         #expect(StepState.done.voiceOverValue == "Completed")
         #expect(StepState.current.voiceOverValue == "In progress")
         #expect(StepState.todo.voiceOverValue == "To do")
+        #expect(StepState.failed.voiceOverValue == "Failed")
     }
 
-    @Test("learning: play is the step to do with It's Playing, then pause with It's Paused and the countdown; locked, neither")
+    @Test("learning: play is the step to do with It's Playing; paused by hand, It's Paused with the countdown; locked, neither")
     func learning() {
         let fresh = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false)
         #expect(fresh.map(\.state) == [.current, .todo])
+        #expect(fresh.map(\.title) == ["Play a song in YT Music", "Let AutoHush pause it"])
         #expect(fresh[0].notes == [LearningText.playTip("YT Music")] && fresh[1].notes.isEmpty)
         #expect(fresh.map(\.button) == [.itsPlaying, nil])
         #expect(fresh.currentAnnouncement == "Play a song in YT Music")
 
-        let played = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 44.2)
-        #expect(played.map(\.state) == [.done, .current])
-        #expect(played[1].notes == [LearningText.pauseTip, "Back to the first step in 0:45"])
-        #expect(played.map(\.button) == [nil, .itsPaused])
-        #expect(played.currentAnnouncement == "Pause it")
+        let played = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 44.2,
+                                         pauseMode: .byHand)
+        #expect(played.map(\.state) == [.done, .failed, .current])
+        #expect(played[2].notes == [LearningText.pauseTip])
+        #expect(played[2].countdown == "You have 0:45 to pause it and click It’s Paused.")
+        #expect(played.map(\.button) == [nil, nil, .itsPaused])
+        #expect(played.currentAnnouncement == "Pause it yourself")
 
         let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false)
         #expect(learned.map(\.state) == [.done, .done])
@@ -45,9 +49,34 @@ struct ChecklistStepTests {
         #expect(timedOut[0].warning == LearningNote.timedOut.text("YT Music"))
         let cantSee = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .cantSeePage)
         #expect(cantSee[0].warning == LearningNote.cantSeePage.text("YT Music"))
-        let nothing = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, note: .nothingChanged)
+        let nothing = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, note: .nothingChanged,
+                                          pauseMode: .byHand)
         #expect(nothing[0].warning == nil)
-        #expect(nothing[1].warning == LearningNote.nothingChanged.text("YT Music"))
+        #expect(nothing[2].warning == LearningNote.nothingChanged.text("YT Music"))
+    }
+
+    @Test("AutoHush's pause: a spinner while it tries; failed, Try Again and Pause It Manually; learned, ticked")
+    func learningAutoPause() {
+        // Right after It's Playing, before the player says it plays.
+        let trying = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, remaining: 59,
+                                         pauseMode: .trying)
+        #expect(trying.map(\.state) == [.done, .current])
+        #expect(trying[1].isBusy)
+        #expect(trying[1].notes == [LearningText.autoPauseTip("YT Music")])
+        #expect(trying.allSatisfy { $0.button == nil && $0.warning == nil && $0.countdown == nil })
+
+        let failed = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, pauseMode: .failed)
+        #expect(failed.map(\.state) == [.done, .failed])
+        #expect(failed[1].warning == LearningText.autoPauseFailed("YT Music"))
+        #expect(failed[1].button == .tryAgain && failed[1].secondaryButton == .pauseManually)
+        #expect(failed.currentAnnouncement == "Let AutoHush pause it")
+
+        let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false, pauseMode: .trying)
+        #expect(learned.map(\.state) == [.done, .done])
+        #expect(!learned[1].isBusy)
+        let learnedByHand = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false, pauseMode: .byHand)
+        #expect(learnedByHand.map(\.state) == [.done, .failed, .done])
+        #expect(learnedByHand.allSatisfy { $0.button == nil && $0.countdown == nil })
     }
 
     @Test("adding a web app: each phase has its step to do, and VoiceOver hears it")
@@ -68,7 +97,7 @@ struct ChecklistStepTests {
         let asks = AddWebAppView.steps(for: .siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"), siteAsked: true,
                                        learning: nil)
         #expect(asks.map(\.title) == ["Check the address", "Open it in Safari", "Answer the site in Safari", "Add it to the Dock",
-                                      "Play something in it, then pause it"])
+                                      "Learn its controls"])
         #expect(asks.map(\.state) == [.done, .done, .current, .todo, .todo])
         #expect(asks.currentAnnouncement == "Answer the site in Safari")
 
@@ -86,13 +115,13 @@ struct ChecklistStepTests {
         let made = AddWebAppModel.Phase.learning(name: "YT Music", alreadyThere: false)
         let toPlay = AddWebAppView.steps(for: made, siteAsked: true, learning: .learning(hasPlayed: false))
         #expect(toPlay.map(\.title) == ["Check the address", "Open it in Safari", "Answer the site in Safari",
-                                        "Add it to the Dock as “YT Music”", "Play a song in YT Music", "Pause it"])
+                                        "Add it to the Dock as “YT Music”", "Play a song in YT Music", "Let AutoHush pause it"])
         #expect(toPlay.map(\.state) == [.done, .done, .done, .done, .current, .todo])
         #expect(toPlay[4].button == .itsPlaying)
 
-        let toPause = AddWebAppView.steps(for: made, learning: .learning(hasPlayed: true), remaining: 30)
-        #expect(toPause.currentAnnouncement == "Pause it")
-        #expect(toPause.last?.notes.last == "Back to the first step in 0:30")
+        let toPause = AddWebAppView.steps(for: made, learning: .learning(hasPlayed: true), remaining: 30, pauseMode: .byHand)
+        #expect(toPause.currentAnnouncement == "Pause it yourself")
+        #expect(toPause.last?.countdown == "You have 0:30 to pause it and click It’s Paused.")
 
         let learned = AddWebAppView.steps(for: made, learning: .learned)
         #expect(learned.allSatisfy { $0.state == .done })

@@ -69,6 +69,7 @@ Use the `Font` tokens. Never set a text's size by hand.
   - the card's chevron is 9 pt bold;
   - Diagnostics' fold chevron is 11 pt semibold;
   - the welcome window's pick circles are 18 pt;
+  - the symbols on the welcome window's permission tiles are 14 pt semibold;
   - Diagnostics' status symbol is 28 pt.
 
 ## Colors
@@ -88,6 +89,8 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.switchOffFill` | black 26% | quaternary | A switch's track while off |
 | `.warningBadgeFill` | deep orange 12% | orange 18% | Behind a `HeadingBadge` |
 | `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Apps) |
+| `.controlPermissionTile` / `.audioPermissionTile` | system green / purple | system green / purple | The square behind a permission's symbol (the welcome window) |
+| `.onColorSymbol` | white | white | A symbol on a colored square or on the accent color (a permission's tile, the welcome window's pick circle) |
 
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity. A control that's dimmed twice,
@@ -111,6 +114,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `ChipButtonStyle(filled: true)` | Chips in a row, such as the menu's durations ("5 min"). |
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the welcome window's players, the player search's rows. |
 | `ChipButtonStyle(cornerRadius: 6)` | Small buttons inside the menu card: the player button and Retry. |
+| The card's status line with `info.circle` | When the music player couldn't be controlled ("Can't control TIDAL right now", "Couldn't pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can't Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
 | `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Untested" after an untested web app. |
 | `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In menus and pop-ups it's a drawn row (`NSMenuItem.webAppsHeading`), since a section header can't show a badge. |
@@ -120,7 +124,8 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.captionStyle()` | A description or note under a card or a control: small, grey, wrapping. |
 | `BottomBar` | Buttons fixed at the foot of a scrolling tab, with a line above them only while content scrolls under them. |
 | `SupportLine` | "Would you like to support me?" with its link, at the foot of General and About. |
-| `LearningSteps` / `LearningSummary` | What the user does so AutoHush can learn a player (play it, then pause it), each step ticked in `.appSuccess` once seen. `LearningSummary` adds a headline and a caption: a card of its own under the menu's card, and a section under the player in Settings → General. |
+| `LearningSteps` / `LearningSummary` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold. A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (the menu, longer languages), they go one under the other. `LearningSummary` adds a headline and a caption: a card of its own under the menu's card, and a section under the player in Settings → General. |
+| `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It's Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
 | `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs, a row each (a symbol on a colored square, `RowTitle`, then the `PermissionButton` or an "Allowed" check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done. |
 
@@ -330,7 +335,8 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
 - **Chosen items** carry the "selected" trait.
 - **Checklist steps** (adding a web app, learning a player) are one
   VoiceOver element each: the step's words and caption as its label, then
-  where it stands as its value, "Completed", "In progress" or "To do"
+  where it stands as its value, "Completed", "In progress", "To do" or
+  "Failed"
   (`checklistStepAccessibility`), never the "selected" trait. (Combined
   text keeps its words in its value: a value of its own would replace them.) A window's
   checklist announces the step to do now each time it changes

@@ -111,6 +111,24 @@ struct DiagnosticsReportTests {
         #expect(kinds[2].title == "Auto-Pause is off until 15:30")
     }
 
+    @Test("the music player's part says whether its words were read, and its last error in words and in English")
+    func playerWordsAndLastError() {
+        var status = workingStatus()
+        status.controlError = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "Jukebox")
+        let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts { $0.playerWordsRead = false })
+        let rows = snapshot.sections.first { $0.kind == .player }?.rows ?? []
+        #expect(rows.contains(DiagnosticsSnapshot.Row(label: "Play/Pause words read", value: "No", mark: .problem)))
+        #expect(rows.contains(DiagnosticsSnapshot.Row(
+            label: "Last error",
+            value: "AutoHush can't find Play/Pause in Jukebox's menus.\nControlling the music player failed: its Play/Pause menu item wasn't found.",
+            mark: .problem)))
+
+        let plain = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts())
+        let plainRows = plain.sections.first { $0.kind == .player }?.rows.map(\.label) ?? []
+        #expect(!plainRows.contains("Play/Pause words read")) // a player that needs no words
+        #expect(!plainRows.contains("Last error"))
+    }
+
     @Test("permissions: allowed, refused, not needed in AntiDot mode, and not checked yet, each with its mark")
     func permissions() throws {
         func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {

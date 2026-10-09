@@ -11,7 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var statusMenu: StatusMenuController?
-    private var pipeline: MonitoringPipeline?
+    private(set) var pipeline: MonitoringPipeline?
     let preferences: Preferences
     private var snoozeTimer: Timer?
     private var bootstrapGeneration = 0
@@ -221,6 +221,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showApps()
         applyAutoPause()
         watchLearning()
+        addWebAppModel.exampleAddress = players.exampleWebAddress
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
         addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
         addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(.accessibility(player: "Safari")) }
@@ -249,6 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showAvailableUpdate: { [weak self] in self?.updates.presentAvailableUpdate() },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
                 showAbout: { [weak self] in self?.openSettings(tab: .about) },
+                showControlError: { [weak self] in self?.showControlError() },
                 quit: { NSApp.terminate(nil) }
             )
         )
@@ -363,6 +365,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if othersStarted { checkControlAccess() }
         case .detection(let mode):       status.detection = mode
         case .learnedAssertions(let id, let assertions): preferences.playbackAssertions[id] = assertions
+        case .pauseFailure(let error):
+            status.controlError = error.map { ControlError($0, player: status.playerName) }
         }
     }
 
@@ -591,12 +595,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Shows the countdown and the note in the menu, Settings and the windows.
-    func setLearningPause(deadline: Date?, note: LearningNote?) {
+    /// Shows the countdown, the note, and how the pause goes (`mode`; `nil`
+    /// keeps it) in the menu, Settings and the windows.
+    func setLearningPause(deadline: Date?, note: LearningNote?, mode: LearningPauseMode? = nil) {
         if status.learningPauseDeadline != deadline { status.learningPauseDeadline = deadline }
         if settingsModel.learningPauseDeadline != deadline { settingsModel.learningPauseDeadline = deadline }
         if status.learningNote != note { status.learningNote = note }
         if settingsModel.learningNote != note { settingsModel.learningNote = note }
+        guard let mode else { return }
+        if status.learningPauseMode != mode { status.learningPauseMode = mode }
+        if settingsModel.learningPauseMode != mode { settingsModel.learningPauseMode = mode }
     }
 
     /// Shows the chosen player in the menu and Settings.
@@ -820,7 +828,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             setHealth(.waitingForPlayer(among: status.playerOptions)) // nothing to control yet
             return
         }
-        guard locateApp(player.bundleID) != nil else {
+        // Where the player says, else where macOS knows it, as the players are listed.
+        guard player.installedURL ?? locateApp(player.bundleID) != nil else {
             setHealth(.playerNotInstalled(player.name))
             return
         }
@@ -842,6 +851,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 logger.error("Can't control \(problem, privacy: .public)")
                 loggedStartupProblem = problem
+            }
+            // The line says AutoHush can't control it: the menu tells why.
+            switch error as? MusicPlayerError {
+            case .playerCommandFailed?, .stillLearning?, nil: status.controlError = ControlError(error, player: player.name)
+            default: status.controlError = nil
             }
             setHealth(AppHealthState(startupError: error, playerName: player.name))
             retryLater(after: error)
@@ -866,6 +880,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard generation == bootstrapGeneration else { return }
         failedStarts = 0
         loggedStartupProblem = nil
+        status.controlError = nil
         setHealth(.ready)
     }
 
@@ -958,116 +973,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
     }
 
-    // MARK: - Permissions
+    // MARK: - Permissions (the rest in AppDelegate+Permissions)
 
-    /// Brings what the windows show about the permissions up to date.
-    func refreshPermissions() async {
-        let state = await permissionCenter.state(
-            player: player, detectionMethod: preferences.detectionMethod, detection: status.detection,
-            awaitsReopen: status.awaitsReopenForAudioRecording
-        )
-        if settingsModel.permissions != state { settingsModel.permissions = state }
+    /// The user went to allow Audio Recording in System Settings: macOS
+    /// applies it only from the next launch, so the menu offers to reopen.
+    func noteAudioRecordingAllowedInSettings() {
+        status.awaitsReopenForAudioRecording = true
     }
 
-    /// A click on a missing permission's button, wherever it shows: macOS's
-    /// own prompt when it hasn't asked yet, else System Settings; for
-    /// Automation with the player closed, the player; for Audio Recording
-    /// allowed in System Settings, reopening AutoHush.
-    func requestPermission(_ permission: Permission) {
-        Task { [weak self] in
-            guard let self else { return }
-            await self.refreshPermissions()
-            let state = self.settingsModel.permissions
-            let access: PermissionAccess = switch permission {
-            case .systemAudioRecording: state.audio
-            case _ where permission == state.control: state.controlAccess
-            case .accessibility: state.accessibility ? .allowed : .denied
-            case .automation: .denied
-            }
-            guard let request = PermissionCenter.request(for: permission, access: access) else { return }
-            switch request {
-            case .openPlayer:
-                if let url = self.status.chosenPlayer?.appURL { await self.openApp(url) }
-            case .reopen:
-                self.reopen()
-            case .openSettings, .askMacOS:
-                await self.permissionCenter.perform(request, player: self.player)
-                // macOS applies Audio Recording switched on there only from the next launch.
-                if request == .openSettings(.audioCapture) { self.status.awaitsReopenForAudioRecording = true }
-            }
-            await self.refreshPermissions()
-        }
+    /// The info button after the card's line: why the player couldn't be
+    /// controlled (also in Settings → Diagnostics, as "Last error").
+    private func showControlError() {
+        guard let alert = status.controlErrorAlert else { return }
+        InfoAlert.show(alert.title, alert.message)
     }
 
     /// ⌥-click on Settings in the menu: Settings, on the Diagnostics tab.
     private func showDiagnostics() {
         openSettings(tab: .diagnostics)
     }
-
-    /// Brings Settings → Diagnostics up to date with what AutoHush sees.
-    func refreshDiagnostics() {
-        // Only apps with a known path: the others are looked up.
-        let known = Dictionary(
-            settingsModel.apps.compactMap { app in app.source.bundlePath.map { (app.id, $0) } },
-            uniquingKeysWith: { first, _ in first }
-        )
-        let snapshot = DiagnosticsReport.snapshot(
-            activeAudio: pipeline?.activeAudioReport() ?? [], status: status, facts: diagnosticsFacts(),
-            bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path }
-        )
-        if settingsModel.diagnostics != snapshot { settingsModel.diagnostics = snapshot }
-    }
-
-    /// What Diagnostics shows besides the apps with sound.
-    private func diagnosticsFacts() -> DiagnosticsFacts {
-        let permission = player?.controlPermission
-        // Accessibility can be read; Automation only shows when AutoHush uses it.
-        let granted: Bool? = switch permission {
-        case .accessibility?: AXIsProcessTrusted()
-        case let permission?: status.health == .needsPermission(permission) ? false : (status.isReady ? true : nil)
-        case nil: nil
-        }
-        return DiagnosticsFacts(
-            playerVersion: status.chosenPlayer?.appURL.flatMap {
-                Bundle(url: $0)?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            },
-            playerCanFade: settingsModel.playerCanFade,
-            playerPermission: permission,
-            playerPermissionGranted: granted,
-            playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus == .learned },
-            reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
-            audioRecording: TCCAudioCapturePermission().status(),
-            notificationsOff: settingsModel.notificationsOff,
-            detectionMethod: preferences.detectionMethod,
-            timings: preferences.timings,
-            appVersion: settingsModel.fullVersion ?? "",
-            launchAtLogin: settingsModel.launchAtLoginEnabled,
-            checksForUpdates: settingsModel.checksForUpdatesAutomatically,
-            automaticUpdates: settingsModel.automaticUpdates,
-            lastUpdateCheck: settingsModel.lastUpdateCheck,
-            macOS: Self.macOSVersion,
-            processor: Self.processor
-        )
-    }
-
-    /// E.g. "27.0.1 (26A434)".
-    private static let macOSVersion: String = {
-        let version = ProcessInfo.processInfo.operatingSystemVersion
-        let number = [version.majorVersion, version.minorVersion, version.patchVersion]
-            .enumerated().filter { $0.offset < 2 || $0.element > 0 }.map { String($0.element) }.joined(separator: ".")
-        var size = 0
-        guard sysctlbyname("kern.osversion", nil, &size, nil, 0) == 0, size > 0 else { return number }
-        var build = [UInt8](repeating: 0, count: size)
-        guard sysctlbyname("kern.osversion", &build, &size, nil, 0) == 0 else { return number }
-        return "\(number) (\(String(decoding: build.prefix { $0 != 0 }, as: UTF8.self)))"
-    }()
-
-    /// "Apple silicon", also for an Intel build running under Rosetta, or "Intel".
-    private static let processor: String = {
-        var arm64: Int32 = 0
-        var size = MemoryLayout<Int32>.size
-        return sysctlbyname("hw.optional.arm64", &arm64, &size, nil, 0) == 0 && arm64 == 1 ? "Apple silicon" : "Intel"
-    }()
 
     /// Retry, on the menu's card after a failed start: starts over at once,
     /// with the waits between automatic tries back to the shortest.

@@ -12,12 +12,6 @@ import AutoHushKit
 struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
-    /// The app clicked in the list, which Remove takes off it.
-    @State private var selectedAppID: String?
-    /// A turned-off app the user asked to remove, while that's confirmed.
-    @State private var confirmingRemoval: SettingsModel.AppRow?
-    /// Its name, kept while the confirmation closes (its title shows it).
-    @State private var removalName = ""
     /// The heights of the list (with its note) and of the parts above and
     /// below it, which don't scroll.
     @State private var listHeight: CGFloat = 0
@@ -71,10 +65,10 @@ struct AppsSettingsView: View {
                 }
                     .buttonStyle(.chip)
                     .fixedSize()
-                Button { if let selectedRow { remove(selectedRow) } } label: { Text(verbatim: Self.removeTitle) }
+                Button { if let selected = model.selectedApp { model.remove(selected) } } label: { Text(verbatim: Self.removeTitle) }
                     .buttonStyle(.chip)
                     .fixedSize()
-                    .disabled(selectedRow == nil)
+                    .disabled(model.selectedApp == nil)
                 Spacer(minLength: 0)
                 Button(role: .destructive) { confirmingReset = true } label: {
                     Text("Reset List…", comment: "Settings → Apps: button that asks to forget every app in the list")
@@ -94,11 +88,11 @@ struct AppsSettingsView: View {
             Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.",
                  comment: "Settings → Apps: what Reset List does, in its confirmation")
         }
-        .confirmationDialog(Text(verbatim: String(localized: "Remove \(removalName) from the list?",
+        .confirmationDialog(Text(verbatim: String(localized: "Remove \(model.removalName) from the list?",
                                                   comment: "Settings → Apps: title of the confirmation for removing an app that's turned off; %@ is the app")),
-                            isPresented: Binding(get: { confirmingRemoval != nil }, set: { if !$0 { confirmingRemoval = nil } }),
-                            presenting: confirmingRemoval) { row in
-            Button(role: .destructive) { forget(row) } label: { Text(verbatim: Self.removeTitle) }
+                            isPresented: Binding(get: { model.appAwaitingRemoval != nil }, set: { if !$0 { model.cancelRemoval() } }),
+                            presenting: model.appAwaitingRemoval) { _ in
+            Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: Self.removeTitle) }
         } message: { row in
             Text(verbatim: String(localized: "\(row.source.name) is turned off now. Removed from the list, it pauses your music again when it plays.",
                                   comment: "Settings → Apps: what removing an app that's turned off does, in its confirmation; %@ is the app"))
@@ -108,32 +102,11 @@ struct AppsSettingsView: View {
             heightWhileSearching = searching ? height : nil
         }
         // Settings' window is kept when closed: a selection doesn't outlive it.
-        .onDisappear { selectedAppID = nil }
+        .onDisappear { model.clearSelection() }
     }
 
     private static var removeTitle: String {
         String(localized: "Remove", comment: "Settings → Apps: the button under the list that removes the selected app, and the one confirming it for an app that's turned off")
-    }
-
-    /// The selected app, while the list shows it.
-    private var selectedRow: SettingsModel.AppRow? {
-        model.shownApps.first { $0.id == selectedAppID }
-    }
-
-    /// Takes the app off the list; one that's turned off would pause the
-    /// music again, so that's asked first.
-    private func remove(_ row: SettingsModel.AppRow) {
-        if row.isIgnored {
-            removalName = row.source.name
-            confirmingRemoval = row
-        } else {
-            forget(row)
-        }
-    }
-
-    private func forget(_ row: SettingsModel.AppRow) {
-        model.forget(row.source)
-        if selectedAppID == row.id { selectedAppID = nil }
     }
 
     /// The list is longer than the room it has, so it scrolls under the
@@ -220,7 +193,7 @@ struct AppsSettingsView: View {
                 Spacer(minLength: 8)
             }
             .contentShape(Rectangle())
-            .onTapGesture { selectedAppID = selectedAppID == row.id ? nil : row.id }
+            .onTapGesture { model.toggleSelection(of: row.id) }
             Toggle(isOn: Binding(
                 get: { !row.isIgnored },
                 set: { model.setPausesMusic($0, for: row.source) }
@@ -230,15 +203,15 @@ struct AppsSettingsView: View {
             .toggleStyle(PillToggleStyle(width: 30, height: 18))
         }
         .background {
-            if row.id == selectedAppID {
+            if row.id == model.selectedAppID {
                 RoundedRectangle(cornerRadius: 6).fill(.selectedRowFill).padding(.horizontal, -6).padding(.vertical, -4)
             }
         }
         .contentShape(Rectangle())
-        .accessibilityAddTraits(row.id == selectedAppID ? .isSelected : [])
-        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Apps: item of an app's contextual menu that forgets it")) { remove(row) }
+        .accessibilityAddTraits(row.id == model.selectedAppID ? .isSelected : [])
+        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Apps: item of an app's contextual menu that forgets it")) { model.remove(row) }
         .contextMenu {
-            Button { remove(row) } label: {
+            Button { model.remove(row) } label: {
                 Text("Remove from List", comment: "Settings → Apps: item of an app's contextual menu that forgets it")
             }
         }

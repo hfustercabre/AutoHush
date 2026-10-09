@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import AutoHushKit
 
 /// The Play/Pause item of an app's playback menu: "Pause" while it plays,
 /// "Play" while it's paused, in the app's language. Disabled while there's
@@ -42,7 +43,7 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
     package init() {}
 
     package func isTrusted(prompt: Bool) -> Bool {
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": prompt] as CFDictionary)
+        AccessibilityPermission.isTrusted(prompt: prompt)
     }
 
     package func toggle(pid: pid_t) -> MenuToggle? {

@@ -210,7 +210,7 @@ struct PlayerChooserView: View {
                 Spacer(minLength: 8)
                 Image(systemName: isPicked ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
-                    .foregroundStyle(isPicked ? AnyShapeStyle(.white) : AnyShapeStyle(.tertiary),
+                    .foregroundStyle(isPicked ? AnyShapeStyle(.onColorSymbol) : AnyShapeStyle(.tertiary),
                                      isPicked ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.tertiary))
                     .opacity(option.webAddress == nil ? 1 : 0) // a suggestion isn't picked
                     .accessibilityHidden(true)

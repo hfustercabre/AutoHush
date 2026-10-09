@@ -85,7 +85,7 @@ package struct AccessibilityWebPage: WebPage {
     package init() {}
 
     package func isTrusted(prompt: Bool) -> Bool {
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": prompt] as CFDictionary)
+        AccessibilityPermission.isTrusted(prompt: prompt)
     }
 
     package func hasWindow(pid: pid_t) -> Bool {

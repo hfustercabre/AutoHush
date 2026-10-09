@@ -18,6 +18,9 @@ struct DiagnosticsFacts: Equatable {
     /// Whether the chosen player's windows on other Spaces can be reached
     /// (a private function); `nil` for a player that has no need to.
     var reachesOtherSpaces: Bool?
+    /// Whether the chosen player's own words for Play and Pause could be
+    /// read from its app; `nil` for a player that doesn't need them.
+    var playerWordsRead: Bool?
     /// `nil` when macOS can't be asked.
     var audioRecording: AudioCapturePermission?
     var notificationsOff = false
@@ -139,6 +142,16 @@ enum DiagnosticsReport {
             rows.append(Row(label: String(localized: "Reaches windows on other Spaces",
                                           comment: "Diagnostics: whether AutoHush can control the web app while its window is on another desktop"),
                             value: reaches ? yes : no, mark: reaches ? .ok : .problem))
+        }
+        if let read = facts.playerWordsRead {
+            rows.append(Row(label: String(localized: "Play/Pause words read",
+                                          comment: "Diagnostics: whether AutoHush could read, from the music player's app, its own words for Play and Pause (TIDAL, Apple Podcasts), which tell its state apart"),
+                            value: read ? yes : no, mark: read ? .ok : .problem))
+        }
+        if let error = status.controlError {
+            // In the user's language, then as the log has it, for a bug report.
+            rows.append(Row(label: String(localized: "Last error", comment: "Diagnostics: why the music player couldn't be controlled, the last time it couldn't"),
+                            value: "\(error.text)\n\(error.detail)", mark: .problem))
         }
         return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: rows)
     }
@@ -283,7 +296,7 @@ enum DiagnosticsReport {
     private static var off: String { String(localized: "Off", comment: "Diagnostics: a setting that is off") }
     private static var yes: String { String(localized: "Yes", comment: "Diagnostics: yes") }
     private static var no: String { String(localized: "No", comment: "Diagnostics: no") }
-    private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics: a permission that is granted") }
+    private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics and the welcome window: a permission that is granted") }
     private static var notAllowed: String { String(localized: "Not allowed", comment: "Diagnostics: a permission that isn't granted") }
     private static var unknown: String { String(localized: "Unknown", comment: "Diagnostics: something AutoHush can't tell") }
 
@@ -304,6 +317,7 @@ enum DiagnosticsReport {
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the music player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the music player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
+        case .pauseFailed:      return String(localized: "Playing: couldn't pause it", comment: "Diagnostics: the music player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }
     }

@@ -31,6 +31,7 @@ struct StatusMenuControllerTests {
             showAvailableUpdate: { log.calls.append("update") },
             checkForUpdates: { log.calls.append("checkUpdates") },
             showAbout: { log.calls.append("about") },
+            showControlError: { log.calls.append("why") },
             quit: { log.calls.append("quit") }
         ))
     }
@@ -70,7 +71,7 @@ struct StatusMenuControllerTests {
     /// Waits until `log` has `count` calls: some commands run once the menu
     /// has closed.
     private func wait(for count: Int, in log: ActionLog) async {
-        for _ in 0..<200 where log.calls.count < count { try? await Task.sleep(for: .milliseconds(5)) }
+        await TestWait.until { log.calls.count >= count }
     }
 
     // MARK: - Layout
@@ -342,11 +343,12 @@ struct StatusMenuControllerTests {
         let log = ActionLog()
         let sut = makeController(log)
         defer { sut.remove() }
-        let commands: [StatusMenuCommand] = [.snooze(.oneHour), .openSettings, .showDiagnostics, .updates, .showAbout, .quit]
+        let commands: [StatusMenuCommand] = [.snooze(.oneHour), .openSettings, .showDiagnostics, .updates, .showAbout,
+                                             .showControlError, .quit]
         commands.forEach(sut.perform)
         #expect(log.calls.isEmpty) // not yet: the menu closes first
         await wait(for: commands.count, in: log)
-        #expect(log.calls == ["snooze 1 Hour", "settings", "diagnostics", "checkUpdates", "about", "quit"])
+        #expect(log.calls == ["snooze 1 Hour", "settings", "diagnostics", "checkUpdates", "about", "why", "quit"])
     }
 
     @Test("once an update is found, Updates shows it instead of checking again")

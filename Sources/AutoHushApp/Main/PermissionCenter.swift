@@ -1,5 +1,4 @@
 import AppKit
-import ApplicationServices
 import AutoHushKit
 
 /// Where a permission stands, read without asking for it.
@@ -54,19 +53,15 @@ enum PermissionRequest: Equatable, Sendable {
 final class PermissionCenter {
     /// The system calls, which tests replace.
     struct System {
-        var isTrusted: @MainActor () -> Bool = { AXIsProcessTrusted() }
+        var isTrusted: @MainActor () -> Bool = { AccessibilityPermission.isTrusted() }
         /// Prompts for Accessibility (once per launch, macOS decides), which also
         /// lists AutoHush in System Settings.
-        var promptAccessibility: @MainActor () -> Void = {
-            _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        }
-        /// `AEDeterminePermissionToAutomateTarget` for the app running as the pid;
-        /// `ask` shows macOS's prompt when it hasn't asked yet, and waits for it.
+        var promptAccessibility: @MainActor () -> Void = { _ = AccessibilityPermission.isTrusted(prompt: true) }
+        /// `AutomationPermission.check` for the app running as the pid; `ask`
+        /// shows macOS's prompt when it hasn't asked yet, and waits for it, on
+        /// a queue of its own.
         var automation: @Sendable (pid_t, _ ask: Bool) async -> OSStatus = { pid, ask in
-            await Task.detached {
-                let target = NSAppleEventDescriptor(processIdentifier: pid)
-                return AEDeterminePermissionToAutomateTarget(target.aeDesc, AEEventClass(kAECoreSuite), AEEventID(kAEGetData), ask)
-            }.value
+            await PermissionCenter.queue.run { AutomationPermission.check(pid: pid, ask: ask) }
         }
         var runningPID: @MainActor (String) -> pid_t? = { bundleID in
             NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first { !$0.isTerminated }?.processIdentifier
@@ -77,6 +72,8 @@ final class PermissionCenter {
     }
 
     private let system: System
+    /// Reading and asking for Automation block: it's done here.
+    nonisolated static let queue = DispatchQueue(label: "AutoHush.Permissions", qos: .userInitiated)
 
     init(system: System = System()) {
         self.system = system
@@ -111,11 +108,11 @@ final class PermissionCenter {
 
     /// `AEDeterminePermissionToAutomateTarget`'s answer.
     nonisolated static func access(automationStatus status: OSStatus) -> PermissionAccess {
-        switch status {
-        case noErr: .allowed
-        case OSStatus(errAEEventNotPermitted): .denied
-        case OSStatus(errAEEventWouldRequireUserConsent): .notAsked
-        default: .playerNotRunning // procNotFound: it quit meanwhile
+        switch AutomationPermission(status: status) {
+        case .allowed: .allowed
+        case .denied: .denied
+        case .notAsked: .notAsked
+        case .notRunning: .playerNotRunning
         }
     }
 

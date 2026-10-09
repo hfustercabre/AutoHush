@@ -24,7 +24,7 @@ fi
 command -v openssl >/dev/null || fail "openssl not found"
 
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rm -rf "${WORK:?}"' EXIT
 cat > "$WORK/cert.cnf" <<CNF
 [req]
 distinguished_name = dn

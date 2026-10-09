@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 @Suite("FolderWatch")
 @MainActor
@@ -22,9 +23,9 @@ struct FolderWatchTests {
             try? FileManager.default.removeItem(at: elsewhere)
         }
 
-        /// Waits until a change beyond `count` is reported, or a second passes.
+        /// Waits until a change beyond `count` is reported.
         func waitForChange(after count: Int) async {
-            for _ in 0..<100 where changes == count { try? await Task.sleep(for: .milliseconds(10)) }
+            await TestWait.until { changes != count }
         }
     }
 

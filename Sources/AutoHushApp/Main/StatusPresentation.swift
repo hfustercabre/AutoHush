@@ -57,6 +57,13 @@ extension PlaybackState {
                 line: String(localized: "Playing on another device",
                              comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
             )
+        case .pauseFailed:
+            return StatePresentation(
+                icon: .attention,
+                label: String(localized: "AutoHush: couldn't pause the music", comment: "VoiceOver label of the menu bar icon"),
+                line: String(localized: "Couldn't pause — \(Self.describePlaying(playing))",
+                             comment: "At the top of the menu, under the music player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”")
+            )
         }
     }
 
@@ -111,6 +118,69 @@ extension AppHealthState {
                 label: String(localized: "AutoHush: failed", comment: "VoiceOver label of the menu bar icon"),
                 line: message
             )
+        }
+    }
+}
+
+/// Why a player couldn't be controlled, the last time it couldn't: in the
+/// user's language for the menu and Diagnostics, and in English (as the log
+/// has it) for a bug report.
+struct ControlError: Equatable {
+    /// E.g. "AutoHush can't find Play/Pause in TIDAL's menus."
+    let text: String
+    /// E.g. "Controlling the music player failed: its Play/Pause menu item wasn't found."
+    let detail: String
+
+    init(text: String, detail: String) {
+        self.text = text
+        self.detail = detail
+    }
+
+    init(_ error: any Error, player: String) {
+        detail = error.localizedDescription
+        switch error as? MusicPlayerError {
+        case .playerCommandFailed(let failure)?:
+            text = failure.text(player: player)
+        case .automationPermissionDenied?, .accessibilityPermissionDenied?:
+            text = String(localized: "AutoHush may no longer control \(player).",
+                          comment: "Why the music player couldn't be controlled: its permission was taken away; %@ is the player")
+        case .playerNotRunning?:
+            text = String(localized: "\(player) isn't running.",
+                          comment: "Why the music player couldn't be controlled: it quit; %@ is the player")
+        case .playerNotResponding?:
+            text = String(localized: "\(player) isn't responding.",
+                          comment: "Why the music player couldn't be controlled; %@ is the player")
+        case .stillLearning?, nil:
+            text = error.localizedDescription
+        }
+    }
+}
+
+extension ControlFailure {
+    /// The failure as the user reads it, about `player`.
+    func text(player: String) -> String {
+        switch self {
+        case .menuItemNotFound:
+            String(localized: "AutoHush can't find Play/Pause in \(player)'s menus.",
+                   comment: "Why the music player couldn't be controlled: an update may have changed its menus; %@ is the player, e.g. TIDAL")
+        case .stateUnknown:
+            String(localized: "\(player) doesn't say whether it's playing.",
+                   comment: "Why the music player couldn't be controlled: its state can't be read; %@ is the player")
+        case .nothingToPlay:
+            String(localized: "\(player) has nothing to play.",
+                   comment: "Why the music player couldn't be controlled: its Play is disabled; %@ is the player")
+        case .buttonDisabled:
+            String(localized: "\(player)'s Play/Pause button is disabled, as during an ad.",
+                   comment: "Why a web app couldn't be paused: the site disabled its button; %@ is the web app")
+        case .pressFailed:
+            String(localized: "AutoHush couldn't press \(player)'s Play/Pause.",
+                   comment: "Why the music player couldn't be controlled; %@ is the player")
+        case .pressIgnored:
+            String(localized: "\(player) didn't respond to its Play/Pause.",
+                   comment: "Why the music player couldn't be controlled: a press didn't change it; %@ is the player")
+        case .appleEventError(let number, _):
+            String(localized: "\(player) answered with an error (\(String(number))).",
+                   comment: "Why the music player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")
         }
     }
 }

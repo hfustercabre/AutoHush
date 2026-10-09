@@ -178,7 +178,7 @@ struct ScriptablePlayerTests {
     func replyWithError() {
         #expect(ScriptablePlayer.replyError(reply(errorNumber: -1743)) == .automationPermissionDenied)
         #expect(ScriptablePlayer.replyError(reply(errorNumber: -1708, errorString: "Not understood"))
-                == .playerCommandFailed("Not understood (OSStatus -1708)"))
+                == .playerCommandFailed(.appleEventError(-1708, message: "Not understood")))
     }
 
     // MARK: - Error mapping
@@ -208,12 +208,12 @@ struct ScriptablePlayerTests {
 
         #expect(ScriptablePlayer.mapError(timeout) == .playerNotResponding)
         #expect(ScriptablePlayer.mapError(number: -1708, message: "The app got an error")
-                == .playerCommandFailed("The app got an error (OSStatus -1708)"))
+                == .playerCommandFailed(.appleEventError(-1708, message: "The app got an error")))
     }
 
     @Test("empty message falls back to the bare OSStatus")
     func emptyMessage() {
-        #expect(ScriptablePlayer.mapError(number: -50, message: "") == .playerCommandFailed("OSStatus -50"))
+        #expect(ScriptablePlayer.mapError(number: -50, message: "") == .playerCommandFailed(.appleEventError(-50, message: nil)))
     }
 
     @Test("MusicPlayerError passes through unchanged")

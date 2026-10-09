@@ -49,14 +49,17 @@ extension AppHealthState {
         case .playerNotResponding:
             self = .retrying(String(localized: "\(playerName) is not responding",
                                     comment: "Status line; %@ is the music player, e.g. Spotify"))
-        case .playerCommandFailed(let message):
-            self = .retrying(String(localized: "\(playerName) control error: \(message)",
-                                    comment: "Status line; the music player, then the error it reported"))
-        case .stillLearning: // never at startup: learning happens while the player runs
-            self = .retrying(String(localized: "\(playerName) control error: \(error.localizedDescription)",
-                                    comment: "Status line; the music player, then the error it reported"))
+        case .playerCommandFailed, .stillLearning: // stillLearning: never at startup, learning happens while it runs
+            self = .retrying(Self.cantControl(playerName))
         case nil:
-            self = .failed(error.localizedDescription)
+            self = .failed(Self.cantControl(playerName))
         }
+    }
+
+    /// The status line when the player answered with an error: the menu
+    /// shows why under it (`AppStatus.controlError`).
+    static func cantControl(_ playerName: String) -> String {
+        String(localized: "Can't control \(playerName) right now",
+               comment: "Status line when the music player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the music player, e.g. TIDAL")
     }
 }

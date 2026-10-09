@@ -7,6 +7,12 @@ package struct AudioProcessInfo: Equatable, Sendable {
     package let objectID: AudioObjectID
     package let bundleID: String
     package let pid: pid_t
+
+    package init(objectID: AudioObjectID, bundleID: String, pid: pid_t) {
+        self.objectID = objectID
+        self.bundleID = bundleID
+        self.pid = pid
+    }
 }
 
 /// Source of CoreAudio process information. All methods are called on the

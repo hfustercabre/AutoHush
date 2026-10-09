@@ -3,6 +3,7 @@ import Foundation
 import Testing
 @testable import ScriptablePlayers
 import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("PlayerStateObserver")
 struct PlayerStateObserverTests {
@@ -40,7 +41,7 @@ struct PlayerStateObserverTests {
         postTermination(of: "com.apple.Safari", on: workspaceCenter)
         postTermination(of: Self.bundleID, on: workspaceCenter)
         // The workspace observer delivers on the main queue.
-        for _ in 0..<50 where received.isEmpty { try? await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { !received.isEmpty }
 
         #expect(received == [.notRunning])
         observer.stop()

@@ -108,8 +108,6 @@ package final class Preferences {
         }
     }
 
-    /// The bundle ID of the music player AutoHush controls; `nil` until the
-    /// user chooses one.
     /// Forgets the learned buttons of web apps for which `isGone` is true
     /// (deleted: adding a site again makes a new app, with a new ID).
     package func forgetWebAppButtons(where isGone: (String) -> Bool) {
@@ -120,6 +118,8 @@ package final class Preferences {
         }
     }
 
+    /// The bundle ID of the music player AutoHush controls; `nil` until the
+    /// user chooses one.
     package var musicPlayer: String? {
         get { defaults.object(forKey: Key.musicPlayer) as? String }
         set { defaults.set(newValue, forKey: Key.musicPlayer) }

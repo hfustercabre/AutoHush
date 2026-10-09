@@ -18,7 +18,7 @@ import AutoHushKit
 ///   ⊕ Add a Web App…                                 (makes a website one)
 /// ╭────────────────────────────────────────────╮
 /// │ Learning YT Music's Controls                │  (until AutoHush has learned
-/// │ ✓ Play something in YT Music  ○ Pause it    │  the chosen web app's button)
+/// │ ✓ Play a song in YT Music      ○ Pause it    │  the chosen web app's button)
 /// ╰────────────────────────────────────────────╯
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///   Turn off for
@@ -67,6 +67,8 @@ final class StatusMenuController: NSObject {
         var showAvailableUpdate: @MainActor () -> Void
         var checkForUpdates: @MainActor () -> Void
         var showAbout: @MainActor () -> Void
+        /// Shows why the music player couldn't be controlled, in an alert.
+        var showControlError: @MainActor () -> Void = {}
         var quit: @MainActor () -> Void
     }
 
@@ -362,7 +364,7 @@ final class StatusMenuController: NSObject {
             actions.retry() // the card shows how it goes
         case .learningStep(let button):
             actions.learningStep(button) // the card ticks the step
-        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .quit:
+        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
             RunLoop.main.perform(inModes: [.default]) { [weak self] in
@@ -378,6 +380,7 @@ final class StatusMenuController: NSObject {
         case .showDiagnostics:    actions.showDiagnostics()
         case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
         case .showAbout:          actions.showAbout()
+        case .showControlError:   actions.showControlError()
         case .quit:               actions.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .learningStep: break // they act in perform(_:)
         }

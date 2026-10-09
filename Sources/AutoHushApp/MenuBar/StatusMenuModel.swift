@@ -24,6 +24,9 @@ enum StatusMenuCommand: Equatable, Sendable {
     /// Checks for updates, or shows the update found.
     case updates
     case showAbout
+    /// Shows why the music player couldn't be controlled (the info button
+    /// after the card's line).
+    case showControlError
     case quit
 }
 

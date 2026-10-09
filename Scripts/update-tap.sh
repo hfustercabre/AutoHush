@@ -24,7 +24,7 @@ DMG_URL="https://github.com/$GITHUB_REPO/releases/download/v$VERSION/$DMG_NAME"
 [[ -f "$DMG_PATH" ]] || fail "$DMG_PATH not found: run Scripts/release.sh $VERSION first"
 
 WORK_DIR="$(mktemp -d)"
-trap 'rm -rf "$WORK_DIR"' EXIT
+trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
 # 1. Published disk image ----------------------------------------------------
 step "Checking the published $DMG_NAME"

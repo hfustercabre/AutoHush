@@ -172,7 +172,7 @@ struct VolumeFaderTests {
         }
 
         try await fader.playAndFadeIn()
-        for _ in 0..<1000 where await !paused.value { try await Task.sleep(for: .milliseconds(1)) }
+        await TestWait.until { await paused.value }
 
         #expect(await paused.value)
         #expect(await player.volumeLevel == 70)

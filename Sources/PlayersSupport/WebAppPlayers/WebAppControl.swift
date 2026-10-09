@@ -11,9 +11,11 @@ import AutoHushKit
 /// observer's reads, about once a second, ask it less while the web app is
 /// silent (`polledState`). After a reload every element is new, so the
 /// button is looked for again. While it doesn't know
-/// the button, it learns it from the user saying when the music plays and
-/// when they've paused it (`PlayPauseLearner`), and meanwhile reports the
-/// music as playing while the app's sound is on.
+/// the button, it learns it from the user saying when the music plays, and
+/// the page once paused: AutoHush pauses it itself with the keyboard's
+/// Play/Pause key, or, when that doesn't take, the user does and says so
+/// (`PlayPauseLearner`). Meanwhile it reports the music as playing while
+/// the app's sound is on.
 ///
 /// When the web app is heard but the button can't be found for a minute
 /// (the site changed), it learns again, keeping what it knew: if the button
@@ -53,6 +55,13 @@ final class WebAppControl: @unchecked Sendable {
     /// While the button says the music isn't playing, how often the other
     /// windows are checked for one that plays.
     static let otherWindowsInterval: TimeInterval = 2
+    /// After the Play/Pause key, how long the page gets to change its
+    /// button's words (YouTube Music in the VM: within 3 s), how often it's
+    /// read meanwhile, and how long a change gets to settle: a song's own
+    /// button can change before the player bar's.
+    static let keyWait: TimeInterval = 3
+    static let keyCheckInterval: TimeInterval = 0.5
+    static let keySettle: TimeInterval = 0.5
 
     private let name: String
     private let bundleID: String
@@ -65,6 +74,8 @@ final class WebAppControl: @unchecked Sendable {
     private let levelProbe: any AudioLevelProbing
     /// Whether muting may stand in for a pause now (not in AntiDot mode).
     private let mayMute: @Sendable () -> Bool
+    /// Presses the keyboard's Play/Pause key (`PlayPauseKey`).
+    private let pressKey: @Sendable () -> Void
     private let logger = Logger(category: "WebAppPlayer")
 
     private var recipe: PlayPauseRecipe?
@@ -113,6 +124,7 @@ final class WebAppControl: @unchecked Sendable {
         muter: any AudioMuting,
         levelProbe: any AudioLevelProbing,
         mayMute: @escaping @Sendable () -> Bool = { true },
+        pressKey: @escaping @Sendable () -> Void = {},
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
     ) {
@@ -124,6 +136,7 @@ final class WebAppControl: @unchecked Sendable {
         self.muter = muter
         self.levelProbe = levelProbe
         self.mayMute = mayMute
+        self.pressKey = pressKey
         self.clock = clock
         self.sleep = sleep
         recipe = store.recipe(for: bundleID)
@@ -199,9 +212,8 @@ final class WebAppControl: @unchecked Sendable {
         }
         let current = self.state(pid: pid)
         guard current == state else {
-            if current == .unknown || current == .stopped {
-                throw MusicPlayerError.playerCommandFailed("\(name)'s state is \(current.rawValue)")
-            }
+            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
+            if current == .stopped { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
             return
         }
         guard learner == nil, let recipe, let button else { throw MusicPlayerError.stillLearning }
@@ -209,16 +221,16 @@ final class WebAppControl: @unchecked Sendable {
         guard page.button(button)?.isEnabled == true else {
             logger.notice("\(self.name, privacy: .public)'s Play/Pause is disabled: not pressed")
             if state == .playing, mute(pid: pid, reason: .buttonDisabled) { return }
-            throw MusicPlayerError.playerCommandFailed("\(name)'s Play/Pause button is disabled")
+            throw MusicPlayerError.playerCommandFailed(.buttonDisabled)
         }
         guard page.press(button) else {
             logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
-            throw MusicPlayerError.playerCommandFailed("\(name)'s Play/Pause couldn't be pressed")
+            throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
         if follows(button, recipe: recipe, from: state) { return }
         logger.error("\(self.name, privacy: .public)'s Play/Pause didn't change after a press")
         if state == .playing, mute(pid: pid, reason: .pressIgnored) { return }
-        throw MusicPlayerError.playerCommandFailed("\(name) didn't respond to its Play/Pause button")
+        throw MusicPlayerError.playerCommandFailed(.pressIgnored)
     }
 
     /// The button says the music is paused (or can't play) while the web app
@@ -278,6 +290,36 @@ final class WebAppControl: @unchecked Sendable {
         return .noted
     }
 
+    /// Right after the user said it plays: AutoHush pauses it itself, with
+    /// the keyboard's Play/Pause key, learns the button whose words changed,
+    /// and plays it again with that button. macOS sends the key to the app it
+    /// counts as playing now: the web app, while its song plays, but it can
+    /// be another (one that played last), or the site can ignore it. With no
+    /// change within `keyWait` the key is pressed again, to undo whatever it
+    /// did, and `false` says the user pauses it and says so (`notePaused`).
+    func pauseByItself(pid: pid_t?) -> Bool {
+        guard let learner, learner.hasPlayed, let pid else { return false }
+        pressKey()
+        let deadline = clock().addingTimeInterval(Self.keyWait)
+        repeat {
+            sleep(Self.keyCheckInterval)
+            guard let buttons = readablePage(pid: pid), !learner.candidates(paused: buttons).isEmpty else { continue }
+            sleep(Self.keySettle)
+            guard let settled = readablePage(pid: pid), learn(from: settled) else { continue }
+            logger.notice("\(self.name, privacy: .public) paused for the Play/Pause key: playing it again")
+            do {
+                try press(from: .paused, pid: pid)
+            } catch {
+                logger.error("Playing \(self.name, privacy: .public) again failed: \(error.localizedDescription, privacy: .public)")
+                pressKey()
+            }
+            return true
+        } while clock() < deadline
+        pressKey()
+        logger.notice("\(self.name, privacy: .public)'s page didn't change for the Play/Pause key: the user pauses it")
+        return false
+    }
+
     /// The user says they paused it: the button whose words changed since
     /// it played is learned (see `PlayPauseLearner`), keeping the places
     /// learned before.
@@ -291,6 +333,16 @@ final class WebAppControl: @unchecked Sendable {
             status.send(.learning(hasPlayed: false))
             return tooLate ? .tooLate : .cantSeePage
         }
+        if learn(from: buttons) { return .noted }
+        logger.notice("\(self.name, privacy: .public) was paused, the user says, but no button changed")
+        return .nothingChanged
+    }
+
+    /// Learns the button whose words changed between the look while it
+    /// played and `buttons`, keeping the places learned before. `false` when
+    /// none did.
+    private func learn(from buttons: [PageButton]) -> Bool {
+        guard let learner, learner.hasPlayed else { return false }
         let found = learner.candidates(paused: buttons)
         let candidates = found.compactMap { candidate in page.place(of: candidate.handle).map { (candidate, $0) } }
         // Where each candidate was (none: its place couldn't be read), never its words.
@@ -298,10 +350,7 @@ final class WebAppControl: @unchecked Sendable {
             candidates.first { $0.0 == candidate }.map { "\(Int($0.1.distanceFromBottom)) pt" } ?? "none"
         }
         logger.debug("Learning: \(found.count, privacy: .public) buttons changed, at \(places.joined(separator: ", "), privacy: .public)")
-        guard let (learned, handle) = PlayPauseLearner.recipe(from: candidates) else {
-            logger.notice("\(self.name, privacy: .public) was paused, the user says, but no button changed")
-            return .nothingChanged
-        }
+        guard let (learned, handle) = PlayPauseLearner.recipe(from: candidates) else { return false }
         let merged = recipe?.merging(learned) ?? learned
         recipe = merged
         button = handle
@@ -311,7 +360,7 @@ final class WebAppControl: @unchecked Sendable {
         store.save(merged, for: bundleID)
         logger.notice("Learned \(self.name, privacy: .public)'s Play/Pause button")
         status.send(.learned)
-        return .noted
+        return true
     }
 
     /// The page's buttons, unless it has no window or none of its buttons
@@ -510,25 +559,24 @@ final class LearningStatusBroadcast: Sendable {
 
     var current: LearningStatus { state.withLock { $0.current } }
 
-    /// Tells the listeners, if it changed.
+    /// Tells the listeners, if it changed. They're told under the lock, so
+    /// a listener added meanwhile can't get an older status after this one.
     func send(_ status: LearningStatus) {
-        let listeners = state.withLock { state -> [AsyncStream<LearningStatus>.Continuation] in
-            guard state.current != status else { return [] }
+        state.withLock { state in
+            guard state.current != status else { return }
             state.current = status
-            return Array(state.listeners.values)
+            state.listeners.values.forEach { $0.yield(status) }
         }
-        listeners.forEach { $0.yield(status) }
     }
 
     /// The status now, then each change.
     func updates() -> AsyncStream<LearningStatus> {
         let (stream, continuation) = AsyncStream.makeStream(of: LearningStatus.self, bufferingPolicy: .bufferingNewest(1))
         let id = UUID()
-        let current = state.withLock { state in
+        state.withLock { state in
             state.listeners[id] = continuation
-            return state.current
+            continuation.yield(state.current)
         }
-        continuation.yield(current)
         continuation.onTermination = { [weak self] _ in
             _ = self?.state.withLock { $0.listeners.removeValue(forKey: id) }
         }

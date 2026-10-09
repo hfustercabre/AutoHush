@@ -16,6 +16,8 @@ final class MonitoringPipeline {
         case detection(DetectionMode)
         /// AntiDot mode learned how an app tells macOS it plays.
         case learnedAssertions(String, AnnouncedAssertions)
+        /// Why the music couldn't be paused, then `nil` once that's over.
+        case pauseFailure(MusicPlayerError?)
     }
 
     /// What the app tells the arbiter.
@@ -23,7 +25,8 @@ final class MonitoringPipeline {
         case playerState(PlayerState)
         case autoPause(Bool)
         case configuration(AppConfiguration)
-        case asleep(Bool)
+        /// With its number (see `PlaybackArbiter.setAsleep`).
+        case asleep(Bool, change: Int)
     }
 
     private let arbiter: PlaybackArbiter
@@ -36,7 +39,18 @@ final class MonitoringPipeline {
     private let forwarders: [Task<Void, Never>]
     /// Started by `stop()`: the arbiter stopping, which sets back a faded volume.
     private var shutdown: Task<Void, Never>?
+    /// Numbers each sleep and wake told to the arbiter, which reach it by two
+    /// ways (directly from `start`, and through the commands).
+    private var sleepChanges = 0
     private var isStopped: Bool { shutdown != nil }
+
+    /// What the audio monitor reads from macOS; tests stand in for it.
+    struct Readers {
+        var processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider()
+        var levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter()
+        var audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission()
+        var powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
+    }
 
     /// `hostedApp` names a process's app when its program doesn't (see
     /// `ProcessAudioSourceIdentifier`).
@@ -48,6 +62,7 @@ final class MonitoringPipeline {
         ignoredSourceIDs: Set<String>,
         detectionMethod: DetectionMethod,
         learnedAssertions: [String: AnnouncedAssertions],
+        readers: Readers = Readers(),
         onStatusUpdate: @escaping @MainActor (StatusUpdate) -> Void
     ) {
         let (statusStream, statusUpdates) = AsyncStream.makeStream(of: StatusUpdate.self)
@@ -61,15 +76,18 @@ final class MonitoringPipeline {
             configuration: configuration,
             autoPauseEnabled: autoPauseEnabled,
             onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
-            onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) }
+            onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) },
+            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
         )
         let monitor = AudioMonitor(
             configuration: configuration,
             arbiter: arbiter,
-            audioCapturePermission: TCCAudioCapturePermission(),
+            snapshotProvider: readers.processes,
+            levelMeter: readers.levelMeter,
+            audioCapturePermission: readers.audioCapturePermission,
             sourceIdentifier: ProcessAudioSourceIdentifier(hostedApp: hostedApp),
             ignoredSourceIDs: ignoredSourceIDs,
-            powerAssertions: IOKitPowerAssertionReader(),
+            powerAssertions: readers.powerAssertions,
             learnedAssertions: learnedAssertions,
             onAssertionsLearned: { statusUpdates.yield(.learnedAssertions($0, $1)) },
             detectionMethod: detectionMethod,
@@ -95,7 +113,7 @@ final class MonitoringPipeline {
                     case .playerState(let state): await arbiter.handlePlayerStateChange(state)
                     case .autoPause(let enabled):  await arbiter.setAutoPauseEnabled(enabled)
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
-                    case .asleep(let asleep): await arbiter.setAsleep(asleep)
+                    case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     }
                 }
             },
@@ -110,10 +128,14 @@ final class MonitoringPipeline {
     /// Observes the player, seeds the arbiter with its live state, takes over
     /// a pause handed over by the AutoHush before this one when asked to, then
     /// starts audio monitoring — unless `stop()` was called in the meantime.
-    /// Started while the Mac sleeps (`asleep`), the arbiter knows it from the
-    /// start.
+    /// Started while the Mac sleeps (`asleep`), the arbiter knows it before
+    /// any app reaches it; a wake told meanwhile wins, though it may reach
+    /// the arbiter first (the changes are numbered).
     func start(takingOverPause: Bool = false, asleep: Bool = false) async {
-        if asleep { await arbiter.setAsleep(true) }
+        if asleep {
+            sleepChanges += 1
+            await arbiter.setAsleep(true, change: sleepChanges)
+        }
         // Observe before seeding so no state change can slip in between.
         playerObserver.start()
         let initialState = await arbiter.refreshPlaybackState()
@@ -148,7 +170,8 @@ final class MonitoringPipeline {
 
     /// The Mac goes to sleep, or woke up: see `PlaybackArbiter.setAsleep`.
     func setAsleep(_ asleep: Bool) {
-        arbiterCommands.yield(.asleep(asleep))
+        sleepChanges += 1
+        arbiterCommands.yield(.asleep(asleep, change: sleepChanges))
     }
 
     /// Applies new timings and thresholds live.

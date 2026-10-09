@@ -78,7 +78,7 @@ final class PlayerPopUpButton: NSPopUpButton {
         removeAllItems()
         if selection == nil {
             let placeholder = NSMenuItem(
-                title: String(localized: "Choose…", comment: "Settings: the music player pop-up while none is chosen"),
+                title: String(localized: "Choose…", comment: "The menu's card and Settings' music player pop-up, while no music player is chosen"),
                 action: nil, keyEquivalent: ""
             )
             placeholder.isEnabled = false

@@ -83,6 +83,23 @@ extension ShapeStyle where Self == AppearanceStyle {
     static var selectedRowFill: AppearanceStyle {
         AppearanceStyle(light: Color.accentColor.opacity(0.14), dark: Color.accentColor.opacity(0.18))
     }
+
+    /// The square behind the music player's permission symbol (the welcome
+    /// window's "Control …").
+    static var controlPermissionTile: AppearanceStyle {
+        AppearanceStyle(light: Color.green, dark: Color.green)
+    }
+
+    /// The square behind Audio Recording's symbol (the welcome window).
+    static var audioPermissionTile: AppearanceStyle {
+        AppearanceStyle(light: Color.purple, dark: Color.purple)
+    }
+
+    /// A symbol on a colored square or on the accent color: a permission's
+    /// tile, the welcome window's pick circle.
+    static var onColorSymbol: AppearanceStyle {
+        AppearanceStyle(light: Color.white, dark: Color.white)
+    }
 }
 
 /// A switch drawn in the accent color, the same in the menu and in Settings.

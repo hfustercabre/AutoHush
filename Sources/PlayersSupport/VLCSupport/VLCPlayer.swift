@@ -117,7 +117,7 @@ package actor VLCPlayer: MusicPlayer {
         let current = await playerState()
         guard current == state else {
             if current == .notRunning { throw MusicPlayerError.playerNotRunning }
-            if current == .unknown { throw MusicPlayerError.playerCommandFailed("VLC's state is unknown") }
+            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
             return
         }
         let pid = try channel.runningProcessIdentifier()

@@ -154,8 +154,7 @@ extension ScriptablePlayer {
         case -1712: // errAETimeout: the app is busy or still starting up
             return .playerNotResponding
         default:
-            let detail = message.flatMap { $0.isEmpty ? nil : $0 }
-            return .playerCommandFailed(detail.map { "\($0) (OSStatus \(number))" } ?? "OSStatus \(number)")
+            return .playerCommandFailed(.appleEventError(number, message: message.flatMap { $0.isEmpty ? nil : $0 }))
         }
     }
 }

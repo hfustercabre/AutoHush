@@ -190,12 +190,15 @@ package struct SafariUI: SafariDriving {
     static let timeout: Float = 1
     /// How far up from the focused field the dialog is looked for.
     static let parentDepth = 30
+    /// Accessibility calls block: they run here, one at a time, as the
+    /// players' do.
+    private static let queue = DispatchQueue(label: "AutoHush.SafariUI", qos: .userInitiated)
     private let logger = Logger(category: "WebAppPlayer")
 
     package init() {}
 
     package func isTrusted(prompt: Bool) async -> Bool {
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": prompt] as CFDictionary)
+        await Self.queue.run { AccessibilityPermission.isTrusted(prompt: prompt) }
     }
 
     package func open(_ url: URL) async -> Bool {
@@ -214,69 +217,82 @@ package struct SafariUI: SafariDriving {
         try? await Task.sleep(for: .seconds(Self.settleTime))
         let deadline = Date().addingTimeInterval(Self.pageTimeout)
         while Date() < deadline, !Task.isCancelled {
-            if let app = Self.safariElement(), Self.pageLoaded(in: app),
-               let item = Self.menuItem("AddToDock", in: app), item.value(kAXEnabledAttribute) as? Bool == true,
-               let page = Self.frontPage(in: app) {
+            let tab = await Self.queue.run { () -> SafariTab? in
+                guard let app = Self.safariElement(), Self.pageLoaded(in: app),
+                      let item = Self.menuItem("AddToDock", in: app), item.value(kAXEnabledAttribute) as? Bool == true,
+                      let page = Self.frontPage(in: app)
+                else { return nil }
                 return SafariTab(page: page)
             }
+            if let tab { return tab }
             try? await Task.sleep(for: .milliseconds(300))
         }
         return nil
     }
 
     package func frontTab() async -> SafariTab? {
-        guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
-        return SafariTab(page: page)
+        await Self.queue.run {
+            guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
+            return SafariTab(page: page)
+        }
     }
 
     package func frontPageURL() async -> URL? {
-        guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
-        return page.value(kAXURLAttribute) as? URL
+        await Self.queue.run {
+            guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
+            return page.value(kAXURLAttribute) as? URL
+        }
     }
 
     package func addToDock(_ url: URL) async -> String? {
-        guard let app = Self.safariElement() else {
+        guard NSRunningApplication.running(Self.bundleID) != nil else {
             logger.error("Add to Dock: Safari isn't running")
             return nil
         }
         // The user's click on Add to Dock put AutoHush in front: Safari shows
         // its dialog only while it's the active app, and its menu is looked
         // up afresh once it is.
-        if let safari = NSRunningApplication.running(Self.bundleID), !safari.isActive {
-            safari.activate()
-            let deadline = Date().addingTimeInterval(2)
-            while !safari.isActive, Date() < deadline { try? await Task.sleep(for: .milliseconds(100)) }
-            try? await Task.sleep(for: .milliseconds(300))
+        await Self.bringSafariToFront()
+        let pressed = await Self.queue.run { () -> AXError? in
+            guard let app = Self.safariElement(), let item = Self.menuItem("AddToDock", in: app) else { return nil }
+            return AXUIElementPerformAction(item, kAXPressAction as CFString)
         }
-        guard let item = Self.menuItem("AddToDock", in: app) else {
+        guard let pressed else {
             logger.error("Add to Dock: Safari's menu item wasn't found")
             return nil
         }
-        let pressed = AXUIElementPerformAction(item, kAXPressAction as CFString)
         guard pressed == .success else {
             logger.error("Add to Dock: pressing Safari's menu item failed (\(pressed.rawValue, privacy: .public))")
             return nil
         }
         let deadline = Date().addingTimeInterval(Self.dialogTimeout)
         while Date() < deadline {
-            if let add = Self.find("AddToDockFormAddButton", in: app) {
-                let name = Self.find("AddToDockFormNameTextField", in: app)?.string(kAXValueAttribute) ?? ""
+            // The dialog's suggested name, once it shows, with its address
+            // set back to the one typed if the page moved.
+            let suggested = await Self.queue.run { () -> String? in
+                guard let app = Self.safariElement(), Self.find("AddToDockFormAddButton", in: app) != nil else { return nil }
                 if let field = Self.find("AddToDockFormURLTextField", in: app) {
                     let shown = field.string(kAXValueAttribute).flatMap(URL.init(string:))
                     if shown.flatMap({ $0.host() }).map(WebAddress.siteHost) != url.host().map(WebAddress.siteHost) {
                         AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, url.absoluteString as CFString)
                     }
                 }
+                return Self.find("AddToDockFormNameTextField", in: app)?.string(kAXValueAttribute) ?? ""
+            }
+            if let suggested {
                 try? await Task.sleep(for: .seconds(Self.iconTime))
-                guard !Task.isCancelled else {
-                    if let cancel = Self.find("AddToDockFormCancelButton", in: app) {
-                        AXUIElementPerformAction(cancel, kAXPressAction as CFString)
-                    }
+                let cancelled = Task.isCancelled
+                let pressed = await Self.queue.run {
+                    guard let app = Self.safariElement(),
+                          let button = Self.find(cancelled ? "AddToDockFormCancelButton" : "AddToDockFormAddButton", in: app)
+                    else { return false }
+                    return AXUIElementPerformAction(button, kAXPressAction as CFString) == .success
+                }
+                if cancelled {
                     logger.notice("Add to Dock cancelled")
                     return nil
                 }
-                guard AXUIElementPerformAction(add, kAXPressAction as CFString) == .success else { return nil }
-                return name
+                return pressed ? suggested : nil
             }
             try? await Task.sleep(for: .milliseconds(200))
         }
@@ -285,19 +301,33 @@ package struct SafariUI: SafariDriving {
     }
 
     package func closeTab(_ tab: SafariTab) async {
-        guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page else {
-            logger.notice("The tab Add a Web App opened isn't in front any more: left open")
-            return
+        let closed = await Self.queue.run { () -> Bool? in
+            guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page else {
+                return nil
+            }
+            // Safari disables Close Tab for a window's only tab (measured on
+            // macOS 27): its window is closed instead.
+            let closeTab = Self.menuItem("CloseTab", in: app)
+            let isOnlyTab = closeTab?.value(kAXEnabledAttribute) as? Bool == false
+            guard let item = isOnlyTab ? Self.menuItem("CloseWindow", in: app) : closeTab else { return false }
+            AXUIElementPerformAction(item, kAXPressAction as CFString)
+            return true
         }
-        // Safari disables Close Tab for a window's only tab (measured on
-        // macOS 27): its window is closed instead.
-        let closeTab = Self.menuItem("CloseTab", in: app)
-        let isOnlyTab = closeTab?.value(kAXEnabledAttribute) as? Bool == false
-        guard let item = isOnlyTab ? Self.menuItem("CloseWindow", in: app) : closeTab else {
-            logger.error("Safari's Close Tab wasn't found: the tab Add a Web App opened was left open")
-            return
+        switch closed {
+        case nil: logger.notice("The tab Add a Web App opened isn't in front any more: left open")
+        case false?: logger.error("Safari's Close Tab wasn't found: the tab Add a Web App opened was left open")
+        case true?: break
         }
-        AXUIElementPerformAction(item, kAXPressAction as CFString)
+    }
+
+    /// Makes Safari the active app, and waits a moment for it to be.
+    @MainActor
+    private static func bringSafariToFront() async {
+        guard let safari = NSRunningApplication.running(bundleID), !safari.isActive else { return }
+        safari.activate()
+        let deadline = Date().addingTimeInterval(2)
+        while !safari.isActive, Date() < deadline { try? await Task.sleep(for: .milliseconds(100)) }
+        try? await Task.sleep(for: .milliseconds(300))
     }
 
     // MARK: - Accessibility

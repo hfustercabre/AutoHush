@@ -1020,102 +1020,16 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
     }
 
     func waitForPlayerLocal(count: Int) async {
-        let deadline = Date().addingTimeInterval(2)
+        let deadline = TestWait.deadline
         while playerLocal.count < count, Date() < deadline {
             try? await Task.sleep(for: .milliseconds(5))
         }
     }
 
     func waitForEvents(count: Int) async {
-        let deadline = Date().addingTimeInterval(2)
+        let deadline = TestWait.deadline
         while events.count < count, Date() < deadline {
             try? await Task.sleep(for: .milliseconds(5))
-        }
-    }
-}
-
-private final class MockAudioProcessSnapshotProvider: AudioProcessSnapshotProviding, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _processes: [AudioProcessInfo] = []
-    private var queue: DispatchQueue?
-    private var onChange: (@Sendable () -> Void)?
-
-    var processes: [AudioProcessInfo] {
-        get { lock.withLock { _processes } }
-        set { lock.withLock { _processes = newValue } }
-    }
-
-    var isObserving: Bool { lock.withLock { onChange != nil } }
-
-    func activeProcesses() -> [AudioProcessInfo] { processes }
-
-    func startObserving(on queue: DispatchQueue, onChange: @escaping @Sendable () -> Void) {
-        lock.withLock {
-            self.queue = queue
-            self.onChange = onChange
-        }
-    }
-
-    func stopObserving() {
-        lock.withLock { onChange = nil }
-    }
-
-    func waitUntilObserving() {
-        let deadline = Date().addingTimeInterval(2)
-        while !isObserving, Date() < deadline { usleep(1000) }
-    }
-
-    /// Simulates a HAL change callback and waits until the monitor handled it.
-    func triggerChange() {
-        let (queue, onChange) = lock.withLock { (self.queue, self.onChange) }
-        guard let queue else { return }
-        queue.sync { onChange?() }
-    }
-
-    /// Waits until all work already queued on the monitor has run.
-    func flush() {
-        let queue = lock.withLock { self.queue }
-        queue?.sync {}
-    }
-}
-
-private final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _peaks: [AudioObjectID: Float] = [:]
-    private var _metered: Set<AudioObjectID> = []
-    private var _stopAllCount = 0
-
-    /// Peaks reported for every metered process (missing entries read as 0).
-    var peaks: [AudioObjectID: Float] {
-        get { lock.withLock { _peaks } }
-        set { lock.withLock { _peaks = newValue } }
-    }
-
-    var lastMetered: Set<AudioObjectID> { lock.withLock { _metered } }
-    var stopAllCount: Int { lock.withLock { _stopAllCount } }
-
-    /// Waits until exactly these processes are metered, e.g. after a delayed release.
-    func waitUntilMetered(_ objectIDs: Set<AudioObjectID>) async {
-        let deadline = Date().addingTimeInterval(2)
-        while lastMetered != objectIDs, Date() < deadline {
-            try? await Task.sleep(for: .milliseconds(5))
-        }
-    }
-
-    func setMeteredProcesses(_ objectIDs: Set<AudioObjectID>) {
-        lock.withLock { _metered = objectIDs }
-    }
-
-    func drainPeaks() -> [AudioObjectID: Float] {
-        lock.withLock {
-            Dictionary(uniqueKeysWithValues: _metered.map { ($0, _peaks[$0] ?? 0) })
-        }
-    }
-
-    func stopAll() {
-        lock.withLock {
-            _metered = []
-            _stopAllCount += 1
         }
     }
 }
@@ -1137,53 +1051,6 @@ private struct StubSourceIdentifier: AudioSourceIdentifying {
     }
 
     func sourceID(forPID pid: pid_t) -> String? { owners[pid] }
-}
-
-private final class MockPowerAssertions: PowerAssertionReading, @unchecked Sendable {
-    /// An app saying it plays, keeping the Mac awake.
-    static let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
-
-    private let lock = NSLock()
-    private var _held: [pid_t: Set<PowerAssertion>] = [:]
-    var held: [pid_t: Set<PowerAssertion>] {
-        get { lock.withLock { _held } }
-        set { lock.withLock { _held = newValue } }
-    }
-    func assertionsByProcess() -> [pid_t: Set<PowerAssertion>] { held }
-}
-
-private final class MockAudioCapturePermission: AudioCapturePermissionChecking, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _current: AudioCapturePermission?
-    private var _requestCount = 0
-    private var pending: (@Sendable (Bool) -> Void)?
-
-    init(_ status: AudioCapturePermission?) { _current = status }
-
-    var current: AudioCapturePermission? {
-        get { lock.withLock { _current } }
-        set { lock.withLock { _current = newValue } }
-    }
-
-    var requestCount: Int { lock.withLock { _requestCount } }
-
-    func status() -> AudioCapturePermission? { current }
-
-    func request(completion: @escaping @Sendable (Bool) -> Void) {
-        lock.withLock {
-            _requestCount += 1
-            pending = completion
-        }
-    }
-
-    /// Simulates the user answering the system prompt.
-    func complete(granted: Bool) {
-        let completion = lock.withLock {
-            _current = granted ? .granted : .denied
-            return pending
-        }
-        completion?(granted)
-    }
 }
 
 private final class ManualClock: @unchecked Sendable {

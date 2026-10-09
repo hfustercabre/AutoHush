@@ -57,6 +57,9 @@ struct AppStatus: Equatable {
     var learningPauseDeadline: Date?
     /// Why the user's last learning click didn't move it on.
     var learningNote: LearningNote?
+    /// Once the user said it plays: AutoHush pauses it itself, to learn
+    /// which button changes, or, when it couldn't, the user does.
+    var learningPauseMode = LearningPauseMode.automatic
     /// Whether the user has still to play the chosen player (`false`) or to
     /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
     /// to learn, or while the chosen player isn't offered (deleted).
@@ -83,6 +86,20 @@ struct AppStatus: Equatable {
     var ignoredApps: [AudioSource] = []
     /// A newer release found by the update check, and how far along it is.
     var updateOffer: UpdateOffer?
+    /// Why the player couldn't be controlled, while that's what the menu
+    /// says: a start that failed with an error, or a pause that failed.
+    var controlError: ControlError?
+    /// The alert the info button after the card's line opens: what failed
+    /// as its title, the cause in words, then as the log has it.
+    var controlErrorAlert: (title: String, message: String)? {
+        guard let controlError else { return nil }
+        let title = playback == .pauseFailed && isReady
+            ? String(localized: "Couldn't Pause \(playerName)",
+                     comment: "Title of the alert that says why the music player refused to pause or failed to; %@ is the player")
+            : String(localized: "Can't Control \(playerName)",
+                     comment: "Title of the alert that says why the music player can't be controlled; %@ is the player")
+        return (title, "\(controlError.text)\n\n\(controlError.detail)")
+    }
     /// The user went to allow System Audio Recording during this launch.
     /// macOS applies it only from the next launch, so the menu then offers to
     /// reopen AutoHush instead of asking again.
@@ -124,7 +141,8 @@ struct AppStatus: Equatable {
     /// what, and the card shows it.
     var needsAttention: Bool {
         switch health {
-        case .starting, .ready:                                  return false
+        case .starting:                                          return false
+        case .ready:                                             return playback == .pauseFailed && autoPause == .on
         case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
         }
     }

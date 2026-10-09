@@ -3,6 +3,7 @@ import Foundation
 import Testing
 import AutoHushKit
 @testable import MenuPlayers
+import AutoHushTestSupport
 
 /// Stands in for an app's playback menu: its Play/Pause item toggles when pressed.
 private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
@@ -78,6 +79,9 @@ struct MenuPlayerTests {
         #expect(jukebox.volumeCurve == .linear)
         #expect(!jukebox.canFade)
         #expect(await jukebox.volume() == nil)
+        #expect(jukebox.ownWordsRead == true)
+        let wordless = MenuPlayer(profile: Self.profile, menu: FakeMenu(), processIdentifier: { 4242 }, words: { nil })
+        #expect(wordless.ownWordsRead == false) // Diagnostics says so
     }
 
     @Test("its state comes from the menu: not running, no access, nothing to play, playing, paused")
@@ -122,7 +126,7 @@ struct MenuPlayerTests {
 
         let noMenu = FakeMenu()
         noMenu.found = false
-        await #expect(throws: MusicPlayerError.playerCommandFailed("Jukebox's Playback menu wasn't found")) {
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.menuItemNotFound)) {
             try await player(noMenu).verifyControlAccess()
         }
         await #expect(throws: Never.self) { try await player(FakeMenu()).verifyControlAccess() }
@@ -136,7 +140,7 @@ struct MenuPlayerTests {
         let observer = player(menu).makeStateObserver { states.append($0) }
         observer.start()
         defer { observer.stop() }
-        for _ in 0..<200 where states.isEmpty { try await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { !states.isEmpty }
         #expect(states == [.playing])
     }
 

@@ -94,7 +94,7 @@ let package = Package(
         .testTarget(name: "AutoHushKitTests", dependencies: ["AutoHushKit", "AutoHushTestSupport"]),
         .testTarget(
             name: "ScriptablePlayersTests",
-            dependencies: ["ScriptablePlayers", "AutoHushKit"],
+            dependencies: ["ScriptablePlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayersSupport/ScriptablePlayersTests"
         ),
         .testTarget(
@@ -109,12 +109,12 @@ let package = Package(
         ),
         .testTarget(
             name: "MenuPlayersTests",
-            dependencies: ["MenuPlayers", "AutoHushKit"],
+            dependencies: ["MenuPlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayersSupport/MenuPlayersTests"
         ),
         .testTarget(
             name: "WebAppPlayersTests",
-            dependencies: ["WebAppPlayers", "AutoHushKit"],
+            dependencies: ["WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayersSupport/WebAppPlayersTests"
         ),
         .testTarget(

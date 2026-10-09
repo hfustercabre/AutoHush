@@ -259,6 +259,64 @@ struct SettingsModelTests {
         #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
     }
 
+    @Test("Remove takes an app that pauses the music off the list at once, and its selection with it")
+    func removeAppThatPauses() {
+        let log = ActionLog()
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        model.setApps(seen: [chrome], ignored: [])
+        model.toggleSelection(of: chrome.id)
+        #expect(model.selectedApp?.id == chrome.id)
+
+        model.remove(model.selectedApp!)
+        #expect(log.calls == ["forget com.google.Chrome"])
+        #expect(model.selectedApp == nil)
+        #expect(model.appAwaitingRemoval == nil)
+    }
+
+    @Test("Remove asks first for an app that's turned off: confirming forgets it, cancelling keeps it")
+    func removeTurnedOffApp() {
+        let log = ActionLog()
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
+        model.setApps(seen: [zoom], ignored: [zoom])
+        let row = model.apps[0]
+
+        model.remove(row)
+        #expect(log.calls.isEmpty)
+        #expect(model.appAwaitingRemoval?.id == zoom.id)
+        #expect(model.removalName == "zoom.us")
+        model.cancelRemoval()
+        #expect(model.appAwaitingRemoval == nil)
+        #expect(log.calls.isEmpty)
+
+        model.remove(row)
+        model.confirmRemoval()
+        #expect(log.calls == ["forget us.zoom.xos"])
+        #expect(model.appAwaitingRemoval == nil)
+        model.confirmRemoval() // nothing waits any more
+        #expect(log.calls == ["forget us.zoom.xos"])
+    }
+
+    @Test("a click selects an app and a second one unselects it; an app the search hides can't be removed")
+    func selection() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        model.setApps(seen: [safari, vlc], ignored: [])
+        model.toggleSelection(of: vlc.id)
+        model.toggleSelection(of: vlc.id)
+        #expect(model.selectedApp == nil)
+
+        model.toggleSelection(of: vlc.id)
+        model.appSearch = "saf"
+        #expect(model.selectedApp == nil) // hidden: Remove is unavailable
+        model.appSearch = nil
+        #expect(model.selectedApp?.id == vlc.id)
+        model.clearSelection()
+        #expect(model.selectedApp == nil)
+    }
+
     @Test("the notifications note blinks for a while, longer when asked again")
     func noteBlinks() async throws {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

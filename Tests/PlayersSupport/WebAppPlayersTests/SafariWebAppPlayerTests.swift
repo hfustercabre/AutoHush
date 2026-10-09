@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import AutoHushKit
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 @Suite("SafariWebAppPlayer", .timeLimit(.minutes(1)))
 struct SafariWebAppPlayerTests {
@@ -16,6 +17,7 @@ struct SafariWebAppPlayerTests {
         let muter = FakeMuter()
         let probe = FakeLevelProbe()
         let pid = PIDBox(4242)
+        let key = PlayPauseKeyBox()
         let player: SafariWebAppPlayer
 
         init(recipe: PlayPauseRecipe? = nil, running: Bool = true) {
@@ -24,7 +26,8 @@ struct SafariWebAppPlayerTests {
                 app: SafariWebAppPlayerTests.app, page: page, store: store, muter: muter, levelProbe: probe,
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
-                sleep: { [clock] in clock.advance($0) }
+                sleep: { [clock] in clock.advance($0) },
+                pressKey: { [key] in key.press() }
             )
         }
 
@@ -92,6 +95,49 @@ struct SafariWebAppPlayerTests {
 
         setup.page.set(1, label: "Pause")
         #expect(await setup.player.playerState() == .playing)
+    }
+
+    @Test("after It's Playing it pauses itself with the Play/Pause key, learns the button that changed, and plays again with it")
+    func pausesByItself() async {
+        let setup = Setup()
+        setup.showPage()
+        #expect(await setup.player.pauseByItself() == false) // It's Playing comes first
+        #expect(setup.key.count == 0)
+
+        setup.page.set(1, label: "Pause")
+        setup.page.set(2, label: "Pause")
+        setup.page.sound = true
+        #expect(await setup.player.markPlaying() == .noted)
+        // The key reaches the web app: the bar's button and the playlist's change.
+        setup.key.onPress = { [page = setup.page] in
+            page.set(1, label: "Play")
+            page.set(2, label: "Play")
+        }
+        #expect(await setup.player.pauseByItself())
+        #expect(setup.key.count == 1)
+        #expect(setup.player.learningStatus == .learned)
+        #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
+        #expect(setup.page.presses == [1]) // played again with the learned button
+        #expect(setup.page.buttonsByNumber[1]?.label == "Pause")
+    }
+
+    @Test("when the Play/Pause key changes nothing on the page, it's pressed again to undo it, and the user pauses it")
+    func keyDoesNothing() async {
+        let setup = Setup()
+        setup.showPage()
+        setup.page.set(1, label: "Pause")
+        setup.page.sound = true
+        #expect(await setup.player.markPlaying() == .noted)
+        let started = setup.clock.now
+        #expect(await setup.player.pauseByItself() == false)
+        #expect(setup.key.count == 2) // the second undoes the first, wherever it went
+        #expect(setup.clock.now.timeIntervalSince(started) >= 3)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: true))
+        #expect(setup.page.presses.isEmpty)
+
+        setup.page.set(1, label: "Play")
+        #expect(await setup.player.markPaused() == .noted)
+        #expect(setup.player.learningStatus == .learned)
     }
 
     @Test("learning is reported as it goes, starting with where it stands")
@@ -479,7 +525,7 @@ struct SafariWebAppPlayerTests {
         let observer = setup.player.makeStateObserver { _ in }
         observer.start()
         observer.stop()
-        for _ in 0..<100 where !setup.muter.muted.isEmpty { try? await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { setup.muter.muted.isEmpty }
         #expect(setup.muter.muted.isEmpty)
         #expect(setup.page.presses.isEmpty)
     }
@@ -790,5 +836,27 @@ final class PIDBox: @unchecked Sendable {
     var value: pid_t {
         get { lock.withLock { _value } }
         set { lock.withLock { _value = newValue } }
+    }
+}
+
+/// The keyboard's Play/Pause key in tests: counts its presses, and does
+/// what a test says (by default, nothing: it reached another app).
+final class PlayPauseKeyBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var presses = 0
+    private var action: (@Sendable () -> Void)?
+
+    var count: Int { lock.withLock { presses } }
+    var onPress: (@Sendable () -> Void)? {
+        get { lock.withLock { action } }
+        set { lock.withLock { action = newValue } }
+    }
+
+    func press() {
+        let action = lock.withLock {
+            presses += 1
+            return self.action
+        }
+        action?()
     }
 }

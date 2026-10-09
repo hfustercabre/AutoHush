@@ -16,10 +16,17 @@ struct StatusCardView: View {
                     Text(verbatim: status.cardTitle)
                         .font(.appHeadline)
                         .lineLimit(1)
-                    Text(verbatim: status.statusLine)
-                        .font(.appSubheadline)
-                        .foregroundStyle(status.needsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
-                        .fixedSize(horizontal: false, vertical: true)
+                    // What's happening. When the player couldn't be controlled,
+                    // an info symbol ends it, and a click on it tells why.
+                    if status.controlError != nil {
+                        Button { model.perform(.showControlError) } label: { statusLine(withInfo: true) }
+                            .buttonStyle(.plain)
+                            .help(Self.whyLabel)
+                            .accessibilityLabel(Text(verbatim: status.statusLine))
+                            .accessibilityHint(Text(verbatim: Self.whyLabel))
+                    } else {
+                        statusLine(withInfo: false)
+                    }
                     if status.canRetry { retryButton }
                 }
                 Spacer(minLength: 8)
@@ -48,6 +55,23 @@ struct StatusCardView: View {
         .frame(width: menuContentWidth)
     }
 
+    /// The status line, in orange when something needs the user; with an
+    /// info symbol after its last word (the line then opens the alert that
+    /// says why the player couldn't be controlled; the menu closes first).
+    private func statusLine(withInfo: Bool) -> some View {
+        let line = Text(verbatim: status.statusLine)
+            .foregroundStyle(status.needsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
+        let info = Text(Image(systemName: "info.circle")).foregroundStyle(.appSecondary)
+        // A no-break space: the symbol never ends up alone on a line.
+        return (withInfo ? line + Text(verbatim: "\u{00A0}") + info : line)
+            .font(.appSubheadline)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private static var whyLabel: String {
+        String(localized: "Why?", comment: "Tooltip and VoiceOver hint of the menu's status line when the music player couldn't be controlled: a click shows why")
+    }
+
     /// Tries starting again; the menu stays open and the card shows how it went.
     private var retryButton: some View {
         Button { model.perform(.retry) } label: {
@@ -69,7 +93,7 @@ struct StatusCardView: View {
         Button { model.perform(.togglePlayerList) } label: {
             HStack(spacing: 6) {
                 if status.chosenPlayer != nil { playerIcon(size: 16) }
-                Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…"))
+                Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu's card and Settings' music player pop-up, while no music player is chosen"))
                     .font(.appCallout)
                 Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))

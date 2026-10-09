@@ -59,6 +59,13 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private let debounceScheduler: PlaybackArbiterDebounceScheduling
     private let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
     private let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
+    /// Why the music couldn't be paused, then `nil` once that's over.
+    private let onPauseFailure: @Sendable (MusicPlayerError?) -> Void
+    /// The last pause failed, while other apps play: the music plays on.
+    /// Over once they stop, a pause works, or the player stops playing.
+    private var pauseFailure: MusicPlayerError? {
+        didSet { if pauseFailure != oldValue { onPauseFailure(pauseFailure) } }
+    }
     private var publishedAudioLevelsNeeded: Bool?
     private let logger = Logger(category: "PlaybackArbiter")
 
@@ -69,6 +76,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// A pause held when the Mac went to sleep, forgotten: the player is
     /// told once the Mac is awake.
     private var forgotPauseInSleep = false
+    /// The number of the latest sleep or wake applied (see `setAsleep`).
+    private var sleepChange = 0
     private var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     private var playsLocally = true
@@ -103,7 +112,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
         fadeSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
         autoPauseEnabled: Bool = true,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
-        onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in }
+        onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
     ) {
         self.player = player
         self.fader = VolumeFader(
@@ -117,6 +127,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         self.autoPauseEnabled = autoPauseEnabled
         self.onPlaybackStateChange = onPlaybackStateChange
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
+        self.onPauseFailure = onPauseFailure
     }
 
     /// Records that a source started or stopped. Returns without waiting for
@@ -144,6 +155,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             if isAsleep {
                 publishPlaybackState()
             } else if activeSources.isEmpty {
+                pauseFailure = nil // nothing to pause for any more
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
                 scheduleResume(after: nil)
@@ -177,6 +189,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
                 schedulePause(after: configuration.sourceStopGrace + Self.remeasureMargin)
             }
         } else {
+            pauseFailure = nil
             cancelPendingPause()
             cancelPendingResume()
             if isFadingOut { await fader.cancel() }
@@ -192,10 +205,19 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// after waking, as music players keep it after a sleep. While asleep
     /// nothing is paused or resumed (a web page can't be pressed then); once
     /// awake, apps playing pause the music as usual.
-    package func setAsleep(_ asleep: Bool) async {
+    ///
+    /// `change` numbers the changes as they happened, when they can arrive
+    /// by more than one way: one older than the latest applied comes late,
+    /// and is ignored.
+    package func setAsleep(_ asleep: Bool, change: Int? = nil) async {
+        if let change {
+            guard change > sleepChange else { return }
+            sleepChange = change
+        }
         guard !isShutDown, asleep != isAsleep else { return }
         isAsleep = asleep
         if asleep {
+            pauseFailure = nil
             cancelPendingPause()
             cancelPendingResume()
             if pausedByUs {
@@ -243,6 +265,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     package func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        if state != .playing { pauseFailure = nil } // the user paused or stopped it
         guard pausedByUs, state != .paused else {
             playerState = state
             publishPlaybackState()
@@ -265,6 +288,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     package func handleLocalPlaybackChange(_ isLocal: Bool) {
         guard !isShutDown, isLocal != playsLocally else { return }
         playsLocally = isLocal
+        if !isLocal { pauseFailure = nil } // it isn't heard here any more
         publishPlaybackState()
     }
 
@@ -370,19 +394,24 @@ package actor PlaybackArbiter: PlaybackArbiting {
             return
         } catch {
             isFadingOut = false
-            logger.error("[arbiter] pause failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+            // Unless every app stopped meanwhile: then there's nothing to say.
+            if !activeSources.isEmpty, autoPauseEnabled, !isAsleep {
+                pauseFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)
+            }
             return
         }
         isFadingOut = false
+        if paused { pauseFailure = nil }
         guard paused else {
             logger.debug("[arbiter] pause called off during the fade-out")
             // Another app may have started while the music came back up.
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
             return
         }
-        pausedByUs = true
         playerState = .paused
         logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
+        guard holdPause() else { return }
         if !autoPauseEnabled {
             // Auto-pause was turned off while we were pausing: undo it.
             scheduleResume(after: nil)
@@ -398,12 +427,26 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private func muteIfPlayingAnyway(saying state: PlayerState) async -> Bool {
         guard state == .paused || state == .stopped, let muting = player as? any MutingMusicPlayer,
               await muting.muteIfPlayingAnyway() else { return false }
-        pausedByUs = true
+        pauseFailure = nil
         playerState = .paused
         logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted")
         // Things may have changed while it was measured.
-        if !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
+        if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
         return true
+    }
+
+    /// The music is paused, or muted, by us now. When the Mac went to sleep
+    /// while that was under way (the fade-out or the listening took that
+    /// long), the pause is forgotten at once, as any pause held then (see
+    /// `setAsleep`): `false`.
+    private func holdPause() -> Bool {
+        guard isAsleep else {
+            pausedByUs = true
+            return true
+        }
+        forgotPauseInSleep = true
+        logger.debug("[arbiter] paused as the Mac went to sleep: \(self.player.name, privacy: .public) stays paused")
+        return false
     }
 
     /// Resumes the music in a task of its own: after `delay`, or right away
@@ -490,6 +533,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     private func mapPlaybackState() -> PlaybackState {
         if pausedByUs, !activeSources.isEmpty { return .pausedByMonitor }
+        if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
         if playerState == .playing, !playsLocally { return .playingElsewhere }
 
         switch playerState {

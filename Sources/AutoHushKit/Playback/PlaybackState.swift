@@ -16,4 +16,7 @@ package enum PlaybackState: Equatable, Sendable {
     case musicIdle
     /// The music plays on another device (e.g. Spotify Connect); it is never paused.
     case playingElsewhere
+    /// Another app plays, but the music player refused to pause or failed
+    /// to (the arbiter says why); it plays on.
+    case pauseFailed
 }
