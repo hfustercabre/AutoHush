@@ -16,6 +16,8 @@ struct AppsSettingsView: View {
     @State private var selectedAppID: String?
     /// A turned-off app the user asked to remove, while that's confirmed.
     @State private var confirmingRemoval: SettingsModel.AppRow?
+    /// Its name, kept while the confirmation closes (its title shows it).
+    @State private var removalName = ""
     /// The heights of the list (with its note) and of the parts above and
     /// below it, which don't scroll.
     @State private var listHeight: CGFloat = 0
@@ -92,7 +94,7 @@ struct AppsSettingsView: View {
             Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.",
                  comment: "Settings → Apps: what Reset List does, in its confirmation")
         }
-        .confirmationDialog(Text(verbatim: String(localized: "Remove \(confirmingRemoval?.source.name ?? "") from the list?",
+        .confirmationDialog(Text(verbatim: String(localized: "Remove \(removalName) from the list?",
                                                   comment: "Settings → Apps: title of the confirmation for removing an app that's turned off; %@ is the app")),
                             isPresented: Binding(get: { confirmingRemoval != nil }, set: { if !$0 { confirmingRemoval = nil } }),
                             presenting: confirmingRemoval) { row in
@@ -105,6 +107,8 @@ struct AppsSettingsView: View {
         .onChange(of: model.appSearch != nil) { _, searching in
             heightWhileSearching = searching ? height : nil
         }
+        // Settings' window is kept when closed: a selection doesn't outlive it.
+        .onDisappear { selectedAppID = nil }
     }
 
     private static var removeTitle: String {
@@ -119,7 +123,12 @@ struct AppsSettingsView: View {
     /// Takes the app off the list; one that's turned off would pause the
     /// music again, so that's asked first.
     private func remove(_ row: SettingsModel.AppRow) {
-        if row.isIgnored { confirmingRemoval = row } else { forget(row) }
+        if row.isIgnored {
+            removalName = row.source.name
+            confirmingRemoval = row
+        } else {
+            forget(row)
+        }
     }
 
     private func forget(_ row: SettingsModel.AppRow) {

@@ -96,8 +96,8 @@ extension AppDelegate {
     }
 
     /// Makes the address a web app, then opens it, chooses it, and lets the
-    /// window show the learning (or, added from the welcome window, closes:
-    /// the welcome window goes on). Closing the window cancels it until the
+    /// window show the learning (or, added while the welcome window shows,
+    /// closes: the welcome window goes on). Closing the window cancels it until the
     /// web app is made.
     func addWebApp(from address: String) {
         guard addingWebApp == nil else { return }
@@ -124,9 +124,10 @@ extension AppDelegate {
                 self.logger.notice("Web app ready: \(made.name, privacy: .public)\(made.alreadyThere ? " (already there)" : "", privacy: .public)")
                 // Opened first, so it's running by the time it's chosen.
                 await self.openApp(made.url)
-                // Added from the welcome window: that one asks for what the
-                // web app needs, and the learning window follows its Done, as
-                // for a web app picked there; this window's work is done.
+                // Added while the welcome window shows (from it, or from the
+                // menu meanwhile): that one asks for what the web app needs,
+                // and the learning window follows its Done, as for a web app
+                // picked there; this window's work is done.
                 let fromWelcome = self.isShowingPlayerChooser
                 self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
                 guard self.player?.bundleID == made.bundleID else {
