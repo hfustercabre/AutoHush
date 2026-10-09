@@ -378,13 +378,14 @@ final class WebAppControl: @unchecked Sendable {
         return buttons
     }
 
-    /// The pause didn't come in time: back to waiting for the user to say it
-    /// plays. `false` when it wasn't waiting for the pause.
+    /// The pause didn't come in time, or the look while it plays couldn't be
+    /// taken again (Try Again, Pause It Manually): back to waiting for the
+    /// user to say it plays. `false` when it wasn't waiting for the pause.
     func restartLearning() -> Bool {
         guard var learner, learner.hasPlayed else { return false }
         learner.forgetPlaying()
         self.learner = learner
-        logger.notice("\(self.name, privacy: .public) wasn't paused within a minute: learning starts over")
+        logger.notice("\(self.name, privacy: .public)'s learning goes back to It's Playing")
         status.send(.learning(hasPlayed: false))
         return true
     }

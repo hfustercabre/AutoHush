@@ -170,6 +170,7 @@ struct MenuPlayerTests {
         #expect(PlayPauseWords.words(ofAppAt: other, read: read)?.play == ["Other.app"])
         #expect(PlayPauseWords.words(ofAppAt: running, read: read)?.play == ["Running.app"])
         #expect(PlayPauseWords.words(ofAppAt: broken, read: read) == nil) // no words for Play
+        #expect(PlayPauseWords.words(ofAppAt: broken, read: read) == nil) // not read again: Diagnostics asks often
         #expect(reads == ["Running.app", "Other.app", "Broken.app"])
     }
 }

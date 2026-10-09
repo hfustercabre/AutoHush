@@ -33,6 +33,8 @@ package struct PlayPauseWords: Equatable, Sendable {
         let version = Bundle(url: appURL)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let key = "\(appURL.path)#\(version)"
         if let cached = cache.withLock({ $0[key] }) { return cached }
+        // Not read again for the same copy and version: Diagnostics asks often.
+        if failed.withLock({ $0.contains(key) }) { return nil }
         guard let words = read(appURL), !words.play.isEmpty, !words.pause.isEmpty else {
             if failed.withLock({ $0.insert(key).inserted }) {
                 logger.error("Couldn't read the words for Play and Pause of \(appURL.lastPathComponent, privacy: .public) \(version, privacy: .public)")
@@ -44,7 +46,7 @@ package struct PlayPauseWords: Equatable, Sendable {
     }
 
     private static let cache = OSAllocatedUnfairLock<[String: PlayPauseWords]>(initialState: [:])
-    /// The copies and versions whose words couldn't be read, already logged.
+    /// The copies and versions whose words couldn't be read, logged once.
     private static let failed = OSAllocatedUnfairLock<Set<String>>(initialState: [])
     private static let logger = Logger(category: "MenuPlayer")
 }

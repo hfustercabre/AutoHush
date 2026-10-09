@@ -18,7 +18,8 @@ import AutoHushKit
 ///   ⊕ Add a Web App…                                 (makes a website one)
 /// ╭────────────────────────────────────────────╮
 /// │ Learning YT Music's Controls                │  (until AutoHush has learned
-/// │ ✓ Play a song in YT Music      ○ Pause it    │  the chosen web app's button)
+/// │ ✓ Play a song in YT Music                   │  the chosen web app's button)
+/// │ ◌ Let AutoHush pause it                     │
 /// ╰────────────────────────────────────────────╯
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///   Turn off for

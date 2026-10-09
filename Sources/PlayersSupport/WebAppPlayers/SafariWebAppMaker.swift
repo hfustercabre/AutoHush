@@ -21,9 +21,10 @@ import AutoHushKit
 /// cancelled too); after that, the web app exists and is left as it is.
 package final class SafariWebAppMaker: WebAppMaking {
     /// Once Safari's dialog closes, how long the new web app may take to
-    /// appear; none by then, the dialog was closed with Cancel. One that
-    /// comes later still is taken at the next Add to Dock.
-    static let appearTimeout: TimeInterval = 10
+    /// appear (as long as after AutoHush's own Add before); none by then,
+    /// the dialog was closed with Cancel. One that comes later still is
+    /// taken at the next Add to Dock.
+    static let appearTimeout: TimeInterval = 20
     static let pollInterval: TimeInterval = 0.25
     /// While another site asks something first, how often Safari's page is
     /// looked at again.
@@ -392,7 +393,8 @@ package struct SafariUI: SafariDriving {
     }
 
     /// An element of the dialog, by identifier: in the front window's sheet,
-    /// else around the focused field.
+    /// else around the focused field, else in any window's sheet (the user
+    /// may have gone to another Safari window, or another app, meanwhile).
     private static func find(_ identifier: String, in app: AXUIElement) -> AXUIElement? {
         let matches: (AXUIElement) -> Bool = { $0.string("AXIdentifier") == identifier }
         var roots: [AXUIElement] = []
@@ -405,7 +407,7 @@ package struct SafariUI: SafariDriving {
                 node = parent
             }
         }
-        for root in roots {
+        for root in roots + app.elements(kAXWindowsAttribute) {
             for sheet in [root] + root.children where sheet.string(kAXRoleAttribute) == "AXSheet" {
                 if let found = first(in: sheet, depth: 4, where: matches) { return found }
             }

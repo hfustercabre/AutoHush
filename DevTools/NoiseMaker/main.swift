@@ -64,7 +64,7 @@ final class Noise {
             return noErr
         }
         engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: format)
+        try engine.connectNode(source, to: engine.mainMixerNode, format: format)
         try engine.start()
         return "tone \(frequency) Hz"
     }

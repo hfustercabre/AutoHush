@@ -6,7 +6,7 @@ import CoreAudio
 typealias Responsible = @convention(c) (pid_t) -> pid_t
 let responsible = unsafeBitCast(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid")!, to: Responsible.self)
 
-func get<T>(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, _ initial: T) -> T {
+func get<T: BitwiseCopyable>(_ object: AudioObjectID, _ selector: AudioObjectPropertySelector, _ initial: T) -> T {
     var address = AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
     var value = initial
     var size = UInt32(MemoryLayout<T>.size)
