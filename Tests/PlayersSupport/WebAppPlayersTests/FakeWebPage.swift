@@ -10,6 +10,9 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
         var label: String
         var isEnabled = true
         var place: ButtonPlace
+        /// Scrolled out of sight; among a player's controls (a slider).
+        var outOfSight = false
+        var withControls = false
     }
 
     private let lock = NSLock()
@@ -88,6 +91,13 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
 
     func place(of handle: ButtonHandle) -> ButtonPlace? {
         lock.withLock { (handle.element.base as? Int).flatMap { _buttons[$0]?.place } }
+    }
+
+    func standing(of handle: ButtonHandle) -> ButtonStanding? {
+        lock.withLock {
+            (handle.element.base as? Int).flatMap { _buttons[$0] }
+                .map { ButtonStanding(isInWindow: !$0.outOfSight, isWithPlayerControls: $0.withControls) }
+        }
     }
 
     func press(_ handle: ButtonHandle) -> Bool {

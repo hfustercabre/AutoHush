@@ -25,6 +25,7 @@ final class LearningWindowController: HostedWindowController, LearningWindowPres
         // Later closes the window, which exists only once this has run.
         let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}))
         super.init(content: hosting, title: "AutoHush")
+        floatsInCorner = true // the web app comes in front while it's played and paused
         hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }
     }
 

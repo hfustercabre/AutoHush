@@ -121,6 +121,28 @@ struct SafariWebAppPlayerTests {
         #expect(setup.page.buttonsByNumber[1]?.label == "Pause")
     }
 
+    @Test("SoundCloud: learned is its bar's Play current, among the player's controls, not a song's tile scrolled out of sight")
+    func soundCloudsBar() async {
+        let setup = Setup()
+        let bar = ButtonPlace(path: ["AXGroup:AXLandmarkContentInfo"], distanceFromBottom: 24)
+        var buttons: [Int: FakeWebPage.Button] = [
+            1: .init(label: "Pause current", place: bar, withControls: true),
+            2: .init(label: "Pause", place: ButtonPlace(path: ["AXGroup"], distanceFromBottom: -77), outOfSight: true),
+        ]
+        for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
+        setup.page.buttonsByNumber = buttons
+        setup.page.sound = true
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.key.onPress = { [page = setup.page] in
+            page.set(1, label: "Play current")
+            page.set(2, label: "Play")
+        }
+        #expect(await setup.player.pauseByItself())
+        #expect(setup.store.recipe(for: Self.app.bundleID)
+            == PlayPauseRecipe(playLabel: "Play current", pauseLabel: "Pause current", places: [bar]))
+        #expect(setup.page.presses == [1]) // played again with the bar's button
+    }
+
     @Test("when the Play/Pause key changes nothing on the page, it's pressed again to undo it, and the user pauses it")
     func keyDoesNothing() async {
         let setup = Setup()

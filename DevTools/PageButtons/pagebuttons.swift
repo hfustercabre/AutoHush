@@ -2,7 +2,8 @@
 // Lists or presses the buttons of the web pages in an app's windows (Safari,
 // a Safari web app), through Accessibility, the way AutoHush reads them.
 // <app> is a name, a bundle ID or a process ID. With --links, links count
-// as buttons too. See README.md.
+// as buttons too; with --path, each listed button shows what surrounds it.
+// See README.md.
 // Build: swiftc -O -o pagebuttons pagebuttons.swift
 import AppKit
 import ApplicationServices
@@ -55,6 +56,30 @@ func windows(of pid: pid_t) -> [AXUIElement] {
     return found
 }
 
+/// What surrounds a button, its parent first, up to the page: each
+/// element's role (and subrole), its first CSS class, and "slider" when a
+/// slider or progress bar is inside it, as a player's controls have.
+func surroundings(of element: AXUIElement) -> String {
+    var parts: [String] = []
+    var current = value(kAXParentAttribute, element).map { $0 as! AXUIElement }
+    while let parent = current, parts.count < 10 {
+        let role = string(kAXRoleAttribute, parent)
+        if role == "AXWebArea" { break }
+        let subrole = string(kAXSubroleAttribute, parent)
+        let firstClass = (value("AXDOMClassList", parent) as? [String])?.first.map { " ." + $0 } ?? ""
+        let slider = holdsSlider(parent) ? " [slider]" : ""
+        parts.append(role + (subrole.isEmpty ? "" : "(\(subrole))") + firstClass + slider)
+        current = value(kAXParentAttribute, parent).map { $0 as! AXUIElement }
+    }
+    return parts.joined(separator: " < ")
+}
+
+func holdsSlider(_ element: AXUIElement, depth: Int = 0) -> Bool {
+    let role = string(kAXRoleAttribute, element)
+    if role == "AXSlider" || role == "AXProgressIndicator" { return true }
+    return depth < 6 && children(element).contains { holdsSlider($0, depth: depth + 1) }
+}
+
 func webAreas(in element: AXUIElement, depth: Int = 0) -> [AXUIElement] {
     if string(kAXRoleAttribute, element) == "AXWebArea" { return [element] }
     return depth < 16 ? children(element).flatMap { webAreas(in: $0, depth: depth + 1) } : []
@@ -73,6 +98,7 @@ struct Button {
 
 let arguments = CommandLine.arguments
 let withLinks = arguments.contains("--links")
+let withPath = arguments.contains("--path")
 let lowest = arguments.contains("--lowest")
 let plain = arguments.filter { !$0.hasPrefix("--") }
 guard plain.count >= 3 else {
@@ -129,6 +155,7 @@ case "list":
     for button in buttons where prefixes.isEmpty || prefixes.contains(where: { button.label.hasPrefix($0) }) {
         let notes = (button.enabled ? "" : " | disabled") + (button.isTextInside ? " | text inside: AutoHush sees no name" : "")
         print("  \(button.label) | \(button.place)\(notes)")
+        if withPath { print("      < " + surroundings(of: button.element)) }
     }
 case "press":
     guard plain.count > 3, let button = pick(buttons.filter({ $0.label == plain[3] }), lowest: true) else {

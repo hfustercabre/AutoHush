@@ -46,6 +46,7 @@ The shared files are in `Sources/AutoHushApp/General/`: `CardStyles.swift`
 | Scrolling tabs | The heading and its controls stay at the top, and the buttons stay at the bottom in a [`BottomBar`](#components); only the list between them scrolls. |
 | Welcome window | **420 pt** wide, with **24 pt** margins. With eight players or more, the list scrolls at a fixed height (about six rows), so the window doesn't change size. |
 | Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font. |
+| Guiding windows | A window that walks the user through other apps (Add a Web App, learning a web app: Safari and the web app come in front meanwhile) floats above every app (`floatsInCorner`), in the top-right corner of the screen the pointer is on, **16 pt** from its edges, keeping its top edge as its steps come and go. Other windows open centered, at the normal level. |
 | About | Centered. Every gap between its parts shows **24 pt**. |
 | Section headings | **4 pt** in from the card's edge, in line with its text, with **6 pt** above (none for the first one on a tab). |
 

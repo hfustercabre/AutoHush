@@ -3,8 +3,9 @@ import SwiftUI
 
 /// A window around SwiftUI content, sized to it: titled and closable, and
 /// kept when closed, so it shows again at once. It's shown in front, and
-/// centered when it comes on screen. The welcome, learning and "Add a Web
-/// App" windows are these.
+/// centered when it comes on screen, or, floating above other apps, in the
+/// top-right corner (`floatsInCorner`). The welcome, learning and "Add a
+/// Web App" windows are these; the last two float.
 @MainActor
 class HostedWindowController: NSWindowController {
     init(content: NSViewController, title: String) {
@@ -17,6 +18,25 @@ class HostedWindowController: NSWindowController {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    /// Above every app's windows, in the top-right corner of the screen: for
+    /// a window that guides the user through other apps (Safari, a web app),
+    /// which come in front and would hide it, since AutoHush has no Dock
+    /// icon to bring it back. The corner keeps it off Safari's dialog and a
+    /// web app's player bar. It keeps its top edge as its steps come and go.
+    var floatsInCorner = false {
+        didSet {
+            guard let window else { return }
+            window.level = floatsInCorner ? .floating : .normal
+            if floatsInCorner { window.collectionBehavior.insert(.fullScreenAuxiliary) }
+            watchTopEdge(floatsInCorner)
+        }
+    }
+
+    /// The top edge kept while it floats; the user moving it moves it.
+    private var pinnedTop: CGFloat?
+    private var edgeObservers: [NSObjectProtocol] = []
+    static let cornerMargin: CGFloat = 16
 
     /// A hosting controller for `view` that sizes the window to it.
     static func sizedToFit<Content: View>(_ view: Content) -> NSHostingController<Content> {
@@ -35,9 +55,42 @@ class HostedWindowController: NSWindowController {
             if let fitting = window.contentView?.fittingSize, fitting.width > 0, fitting.height > 0 {
                 window.setContentSize(fitting)
             }
-            window.center()
+            if floatsInCorner {
+                // On the screen the user is on: the one with the pointer.
+                let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
+                if let area = screen?.visibleFrame {
+                    window.setFrameTopLeftPoint(NSPoint(x: area.maxX - window.frame.width - Self.cornerMargin,
+                                                        y: area.maxY - Self.cornerMargin))
+                }
+                pinnedTop = window.frame.maxY
+            } else {
+                window.center()
+            }
         }
         window.showInFront()
+    }
+
+    /// While it floats, a change of size keeps its top edge where it was, so
+    /// it never grows off the top of the screen; a move by the user is kept.
+    private func watchTopEdge(_ watch: Bool) {
+        edgeObservers.forEach(NotificationCenter.default.removeObserver)
+        edgeObservers = []
+        guard watch, let window else { return }
+        let center = NotificationCenter.default
+        edgeObservers = [
+            center.addObserver(forName: NSWindow.didResizeNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let window = self.window, let top = self.pinnedTop, window.frame.maxY != top else { return }
+                    window.setFrameTopLeftPoint(NSPoint(x: window.frame.minX, y: top))
+                }
+            },
+            center.addObserver(forName: NSWindow.didMoveNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let window = self.window, window.isVisible else { return }
+                    self.pinnedTop = window.frame.maxY
+                }
+            },
+        ]
     }
 
     /// Brings it in front of other apps' windows, on the desktop the user is

@@ -37049,6 +37049,215 @@
         }
       }
     },
+    "In Safari’s Add to Dock window, change the name if you like, then click Add." : {
+      "comment" : "Add a Web App window, under the step “Add it to the Dock”, while Safari's own Add to Dock window is open: the user may rename the web app there, then clicks its Add button",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في نافذة «إضافة إلى شريط الأيقونات» في Safari، غيّر الاسم إذا أردت، ثم انقر على «إضافة»."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A la finestra «Afegeix al Dock» del Safari, canvia el nom si vols i fes clic a «Afegeix»."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V okně „Přidat do Docku“ v Safari případně změňte název a pak klikněte na „Přidat“."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I Safaris vindue ”Føj til Dock” kan du ændre navnet, hvis du vil, og derefter klikke på ”Tilføj”."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändere im Safari-Fenster „Zum Dock hinzufügen“ den Namen, wenn du möchtest, und klicke dann auf „Hinzufügen“."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Στο παράθυρο «Προσθήκη στο Dock» του Safari, αλλάξτε το όνομα αν θέλετε και μετά κάντε κλικ στο «Προσθήκη»."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En la ventana «Añadir al Dock» de Safari, cambia el nombre si quieres y haz clic en «Añadir»."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En la ventana «Agregar al Dock» de Safari, cambia el nombre si quieres y haz clic en «Agregar»."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta Safarin ”Lisää Dockiin” -ikkunassa nimeä halutessasi ja osoita sitten ”Lisää”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans la fenêtre « Ajouter au Dock » de Safari, modifiez le nom si vous le souhaitez, puis cliquez sur « Ajouter »."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans la fenêtre « Ajouter au Dock » de Safari, modifiez le nom si vous le souhaitez, puis cliquez sur « Ajouter »."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari की “Dock में जोड़ें” विंडो में, चाहें तो नाम बदलें, फिर “जोड़ें” पर क्लिक करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U Safarijevu prozoru „Dodaj u Dock” po želji promijenite naziv, a zatim kliknite „Dodaj”."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Safari „Hozzáadás a Dockhoz” ablakában módosítsa a nevet, ha szeretné, majd kattintson a „Hozzáadás” gombra."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di jendela “Tambahkan ke Dock” Safari, ubah namanya jika mau, lalu klik “Tambahkan”."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nella finestra «Aggiungi al Dock» di Safari, cambia il nome se vuoi, poi fai clic su «Aggiungi»."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safariの「Dockに追加」ウインドウで、必要なら名前を変更してから「追加」をクリックします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari의 'Dock에 추가' 윈도우에서 원하면 이름을 변경한 다음 '추가'를 클릭하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I Safari-vinduet «Legg til i Dock» kan du endre navnet om du vil, og deretter klikke på «Legg til»."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig in het Safari-venster ‘Voeg toe aan Dock’ eventueel de naam en klik dan op ‘Voeg toe’."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "W oknie „Dodaj do Docka” w Safari zmień nazwę, jeśli chcesz, a potem kliknij „Dodaj”."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na janela “Adicionar ao Dock” do Safari, altere o nome se quiser e clique em “Adicionar”."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na janela “Adicionar à Dock” do Safari, altere o nome se quiser e clique em “Adicionar”."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "În fereastra „Adăugați în Dock” din Safari, schimbați numele dacă doriți, apoi faceți clic pe „Adăugați”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В окне «Добавить в Dock» в Safari при желании измените название, затем нажмите «Добавить»."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V okne „Pridať do Docku“ v Safari prípadne zmeňte názov a potom kliknite na „Pridať“."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V oknu »Dodaj v Dock« v Safariju po želji spremenite ime, nato kliknite »Dodaj«."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I Safaris fönster ”Lägg till i Dock” kan du ändra namnet om du vill och sedan klicka på ”Lägg till”."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari'nin “Dock'a ekle” penceresinde isterseniz adı değiştirin, sonra “Ekle” düğmesine tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вікні «Додати в Dock» у Safari за бажання змініть назву, а потім натисніть «Додати»."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trong cửa sổ “Thêm vào Dock” của Safari, đổi tên nếu muốn, rồi bấm “Thêm”."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Safari 的「加入 Dock」視窗中，可視需要更改名稱，然後按一下「加入」。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Safari 的“添加到程序坞”窗口中，可按需更改名称，然后点按“添加”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Safari 的「加入 Dock」視窗中，可視需要更改名稱，然後按一下「加入」。"
+          }
+        }
+      }
+    },
     "In progress" : {
       "comment" : "VoiceOver, after a step of a checklist (adding a web app, learning its controls): the step to do now",
       "localizations" : {
@@ -60035,6 +60244,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Safari 網頁 App"
+          }
+        }
+      }
+    },
+    "Safari’s window was closed without adding it. Click Add to Dock to open it again." : {
+      "comment" : "Add a Web App window, under the step “Add it to the Dock”, after the user closed Safari's Add to Dock window with Cancel; “Add to Dock” is the button under it",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُغلقت نافذة Safari دون إضافة شيء. انقر على «إضافة إلى شريط الأيقونات» لفتحها مجددًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La finestra del Safari s'ha tancat sense afegir res. Fes clic a «Afegeix al Dock» per tornar-la a obrir."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno Safari se zavřelo, aniž by se něco přidalo. Znovu ho otevřete kliknutím na „Přidat do Docku“."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safaris vindue blev lukket, uden at noget blev tilføjet. Klik på ”Føj til Dock” for at åbne det igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Safari-Fenster wurde geschlossen, ohne etwas hinzuzufügen. Klicke auf „Zum Dock hinzufügen“, um es erneut zu öffnen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το παράθυρο του Safari έκλεισε χωρίς να προστεθεί τίποτα. Κάντε κλικ στο «Προσθήκη στο Dock» για να το ανοίξετε ξανά."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana de Safari se ha cerrado sin añadir nada. Haz clic en «Añadir al Dock» para volver a abrirla."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana de Safari se cerró sin agregar nada. Haz clic en «Agregar al Dock» para volver a abrirla."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safarin ikkuna suljettiin lisäämättä mitään. Avaa se uudelleen osoittamalla ”Lisää Dockiin”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre de Safari a été fermée sans rien ajouter. Cliquez sur « Ajouter au Dock » pour la rouvrir."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre de Safari a été fermée sans rien ajouter. Cliquez sur « Ajouter au Dock » pour la rouvrir."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari की विंडो बिना कुछ जोड़े बंद हो गई। उसे फिर से खोलने के लिए “Dock में जोड़ें” पर क्लिक करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safarijev prozor zatvoren je bez dodavanja. Kliknite „Dodaj u Dock” da ga ponovno otvorite."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Safari ablaka hozzáadás nélkül bezárult. Az újbóli megnyitáshoz kattintson a „Hozzáadás a Dockhoz” gombra."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela Safari ditutup tanpa menambahkan apa pun. Klik “Tambahkan ke Dock” untuk membukanya lagi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La finestra di Safari è stata chiusa senza aggiungere nulla. Fai clic su «Aggiungi al Dock» per riaprirla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safariのウインドウが追加されずに閉じられました。もう一度開くには「Dockに追加」をクリックします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 윈도우가 추가되지 않고 닫혔습니다. 다시 열려면 'Dock에 추가'를 클릭하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-vinduet ble lukket uten at noe ble lagt til. Klikk på «Legg til i Dock» for å åpne det igjen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het Safari-venster is gesloten zonder iets toe te voegen. Klik op ‘Voeg toe aan Dock’ om het opnieuw te openen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno Safari zostało zamknięte bez dodania aplikacji. Kliknij „Dodaj do Docka”, aby otworzyć je ponownie."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela do Safari foi fechada sem adicionar nada. Clique em “Adicionar ao Dock” para abri-la de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela do Safari foi fechada sem adicionar nada. Clique em “Adicionar à Dock” para a abrir novamente."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastra Safari a fost închisă fără a adăuga nimic. Faceți clic pe „Adăugați în Dock” pentru a o redeschide."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Окно Safari закрыто без добавления. Нажмите «Добавить в Dock», чтобы открыть его снова."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno Safari sa zavrelo bez pridania. Znova ho otvoríte kliknutím na „Pridať do Docku“."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno Safarija se je zaprlo brez dodajanja. Kliknite »Dodaj v Dock«, da ga znova odprete."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safaris fönster stängdes utan att något lades till. Klicka på ”Lägg till i Dock” för att öppna det igen."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari penceresi hiçbir şey eklenmeden kapatıldı. Yeniden açmak için “Dock'a ekle” düğmesine tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вікно Safari закрито без додавання. Натисніть «Додати в Dock», щоб відкрити його знову."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ Safari đã đóng mà không thêm gì. Bấm “Thêm vào Dock” để mở lại."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 的視窗已關閉，未加入任何項目。按一下「加入 Dock」即可再次打開。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 的窗口已关闭，未添加任何内容。点按“添加到程序坞”可再次打开它。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 的視窗已關閉，未加入任何項目。按一下「加入 Dock」即可再次打開。"
           }
         }
       }

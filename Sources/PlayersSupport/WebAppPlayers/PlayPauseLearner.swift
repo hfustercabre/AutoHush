@@ -13,10 +13,12 @@ import AutoHushKit
 /// to read the page.
 ///
 /// Other buttons can change along: the playing song's own ("Pause <song>"
-/// becomes "Play <song>"), a playlist's. So among the candidates it keeps
-/// those with the barest words (dropping "Play X" when there's a "Play"),
-/// then the lowest in the window: players keep their controls at the bottom
-/// (measured on YouTube Music, Amazon Music and Spotify).
+/// becomes "Play <song>"), a playlist's, a song's tile. So among the
+/// candidates it keeps those in sight, then those with a player's controls
+/// around them (a slider or progress bar), then those with the barest words
+/// (dropping "Play X" when there's a "Play"), then the lowest in the window:
+/// players keep their controls at the bottom (measured on YouTube Music,
+/// Amazon Music, Spotify and SoundCloud).
 package struct PlayPauseLearner {
     /// A button whose words changed between the two looks.
     package struct Candidate: Equatable, Sendable {
@@ -62,9 +64,22 @@ package struct PlayPauseLearner {
         }
     }
 
-    /// The candidate to keep, as a recipe: the barest words, then the lowest
-    /// in the window. `nil` without one.
-    package static func recipe(from candidates: [(Candidate, ButtonPlace)]) -> (PlayPauseRecipe, ButtonHandle)? {
+    /// The candidate to keep, as a recipe. Those in sight (all, when none
+    /// is), then among them those with a player's controls around them (all,
+    /// when none has): SoundCloud's bar says "Play current" among its
+    /// controls while its songs' tiles, some scrolled out of sight, say
+    /// "Play". Then the barest words, then the lowest in the window. `nil`
+    /// without one.
+    package static func recipe(from candidates: [(Candidate, ButtonPlace, ButtonStanding)]) -> (PlayPauseRecipe, ButtonHandle)? {
+        let inSight = candidates.filter { $0.2.isInWindow }
+        let shown = inSight.isEmpty ? candidates : inSight
+        let withControls = shown.filter { $0.2.isWithPlayerControls }
+        return recipe(amongAlike: (withControls.isEmpty ? shown : withControls).map { ($0.0, $0.1) })
+    }
+
+    /// Among candidates alike in sight and controls: the barest words, then
+    /// the lowest in the window. `nil` without one.
+    package static func recipe(amongAlike candidates: [(Candidate, ButtonPlace)]) -> (PlayPauseRecipe, ButtonHandle)? {
         let bare = candidates.filter { candidate, _ in
             !candidates.contains { other, _ in
                 other.playLabel != candidate.playLabel && candidate.playLabel.hasPrefix(other.playLabel)

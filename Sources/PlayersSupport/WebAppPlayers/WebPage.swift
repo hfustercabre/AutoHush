@@ -26,6 +26,23 @@ package struct PageButton: Equatable, Sendable {
     }
 }
 
+/// What learning weighs about a button whose words changed, besides its
+/// place. A player's bar is in sight, among the player's other controls; a
+/// song's own button (a tile, a row) can be scrolled out of sight and has
+/// none around it (measured on SoundCloud and YouTube Music).
+package struct ButtonStanding: Equatable, Sendable {
+    /// Inside its window: not scrolled below or above it.
+    package let isInWindow: Bool
+    /// Something just around it holds a slider or a progress bar, as a
+    /// player's bar does (its progress, its volume).
+    package let isWithPlayerControls: Bool
+
+    package init(isInWindow: Bool = true, isWithPlayerControls: Bool = false) {
+        self.isInWindow = isInWindow
+        self.isWithPlayerControls = isWithPlayerControls
+    }
+}
+
 /// Where a button is on its page, to find it again after a reload, when
 /// every element is new.
 package struct ButtonPlace: Equatable, Sendable {
@@ -59,6 +76,9 @@ package protocol WebPage: Sendable {
     func button(_ handle: ButtonHandle) -> PageButton?
     /// Where the button is; `nil` once it's gone.
     func place(of handle: ButtonHandle) -> ButtonPlace?
+    /// Whether it's in sight and among a player's controls, for learning;
+    /// `nil` once it's gone.
+    func standing(of handle: ButtonHandle) -> ButtonStanding?
     /// Presses it; `false` when that wasn't possible.
     func press(_ handle: ButtonHandle) -> Bool
     /// Whether the app's sound is on: a process it's responsible for (its
@@ -79,6 +99,13 @@ package struct AccessibilityWebPage: WebPage {
     private static let webAreaDepth = 16
     /// A button is this deep in its page at most.
     private static let pathDepth = 60
+    /// A player's controls are looked for in this many elements around a
+    /// button (its parent first), each this deep, with at most this many
+    /// elements read in all: a player bar's slider is in its button's
+    /// parent on SoundCloud and YouTube Music.
+    private static let controlsLevels = 3
+    private static let controlsDepth = 6
+    private static let controlsReadLimit = 500
     /// The web app's own audio processes, kept between checks of its sound.
     private let audioProcesses = OwnedAudioProcesses()
 
@@ -146,6 +173,42 @@ package struct AccessibilityWebPage: WebPage {
         }
         guard let window, let windowFrame = Self.frame(of: window) else { return nil }
         return ButtonPlace(path: path, distanceFromBottom: windowFrame.maxY - frame.midY)
+    }
+
+    package func standing(of handle: ButtonHandle) -> ButtonStanding? {
+        guard let element = Self.element(of: handle), let frame = Self.frame(of: element) else { return nil }
+        var around: [AXUIElement] = []
+        var node = element
+        var window: AXUIElement?
+        var inPage = true
+        for _ in 0..<Self.pathDepth {
+            guard let parent = node.element(kAXParentAttribute) else { break }
+            node = parent
+            let role = node.string(kAXRoleAttribute) ?? ""
+            if role == kAXWindowRole {
+                window = node
+                break
+            }
+            if role == "AXWebArea" { inPage = false }
+            if inPage, around.count < Self.controlsLevels { around.append(node) }
+        }
+        guard let window, let windowFrame = Self.frame(of: window) else { return nil }
+        var reads = Self.controlsReadLimit
+        let withControls = around.contains { Self.holdsSlider($0, depth: 0, reads: &reads) }
+        return ButtonStanding(isInWindow: (windowFrame.minY...windowFrame.maxY).contains(frame.midY),
+                              isWithPlayerControls: withControls)
+    }
+
+    /// Whether a slider or a progress bar is in `element`, as a player's
+    /// controls have; `reads` counts the elements it may still read.
+    private static func holdsSlider(_ element: AXUIElement, depth: Int, reads: inout Int) -> Bool {
+        guard reads > 0 else { return false }
+        reads -= 1
+        let role = element.string(kAXRoleAttribute)
+        if role == kAXSliderRole || role == kAXProgressIndicatorRole { return true }
+        guard depth < controlsDepth else { return false }
+        for child in element.children where holdsSlider(child, depth: depth + 1, reads: &reads) { return true }
+        return false
     }
 
     package func press(_ handle: ButtonHandle) -> Bool {

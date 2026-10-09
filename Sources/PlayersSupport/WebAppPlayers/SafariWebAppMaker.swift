@@ -4,9 +4,10 @@ import OSLog
 import AutoHushKit
 
 /// Makes a Safari web app from an address, the way a person does: it opens
-/// the website in Safari and, once the user says to add it, uses Safari's
-/// own File → Add to Dock, then clicks Add (keeping the name Safari
-/// suggests) and closes the tab it opened. Nothing else is created or
+/// the website in Safari and, once the user says to add it, opens Safari's
+/// own File → Add to Dock, where the user can rename the web app and clicks
+/// Add (or Cancel: then it waits for Add to Dock again), and closes the tab
+/// it opened. Nothing else is created or
 /// changed; macOS has no other way to make one.
 ///
 /// Safari makes the web app from the page it shows, so the site itself must
@@ -19,8 +20,10 @@ import AutoHushKit
 /// used. Cancelling stops it before Add is clicked (Safari's dialog is
 /// cancelled too); after that, the web app exists and is left as it is.
 package final class SafariWebAppMaker: WebAppMaking {
-    /// How long the new web app may take to appear after Add.
-    static let appearTimeout: TimeInterval = 20
+    /// Once Safari's dialog closes, how long the new web app may take to
+    /// appear; none by then, the dialog was closed with Cancel. One that
+    /// comes later still is taken at the next Add to Dock.
+    static let appearTimeout: TimeInterval = 10
     static let pollInterval: TimeInterval = 0.25
     /// While another site asks something first, how often Safari's page is
     /// looked at again.
@@ -105,33 +108,57 @@ package final class SafariWebAppMaker: WebAppMaking {
             onStep(.readyToAdd(site: site))
             guard await confirmAdd() else { throw CancellationError() }
             try Task.checkCancellation()
+            // Added after all, later than AutoHush waited for it.
+            if let made = await newWebApp(since: before, tab: addedTab, onStep: onStep) { return made }
             // The user may have gone elsewhere since.
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
-            break
-        }
-        onStep(.adding)
-
-        guard let suggested = await safari.addToDock(url) else {
-            try Task.checkCancellation() // the dialog was cancelled instead of added
-            throw WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")
-        }
-        logger.notice("Added a web app in Safari (suggested name: \(suggested, privacy: .private))")
-        let deadline = clock().addingTimeInterval(Self.appearTimeout)
-        while clock() < deadline {
-            // Safari seals the new app last: it can't be opened before.
-            if let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) {
-                // Launch Services learns of it only later: opening it by
-                // its bundle ID needs it.
-                LSRegisterURL(app.url as CFURL, true)
-                await safari.closeTab(addedTab)
-                let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
-                onStep(.made(made))
-                return made
+            onStep(.adding)
+            switch await safari.addToDock(url) {
+            case .unavailable:
+                try Task.checkCancellation()
+                throw WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")
+            case .cancelled:
+                throw CancellationError()
+            case .closed:
+                break
             }
-            await sleep(Self.pollInterval)
+            // Added, the new web app comes; closed with Cancel, none does.
+            let deadline = clock().addingTimeInterval(Self.appearTimeout)
+            while clock() < deadline {
+                if let made = await newWebApp(since: before, tab: addedTab, onStep: onStep) { return made }
+                await sleep(Self.pollInterval)
+                try Task.checkCancellation()
+            }
+            logger.notice("Safari's Add to Dock closed without a new web app: waiting for Add to Dock again")
+            onStep(.notAdded)
         }
-        throw WebAppMakingError.browserFailed("no complete web app appeared after Add")
     }
+
+    /// The web app Safari made since `before`, once it's complete: Safari
+    /// seals it last, and it can't be opened before. Then it's registered
+    /// (Launch Services learns of it only later, and opening it by its
+    /// bundle ID needs it) and AutoHush's Safari tab closed.
+    private func newWebApp(since before: Set<String>, tab: SafariTab,
+                           onStep: @Sendable (WebAppMakingStep) -> Void) async -> MadeWebApp? {
+        guard let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) else { return nil }
+        LSRegisterURL(app.url as CFURL, true)
+        await safari.closeTab(tab)
+        logger.notice("Added a web app in Safari")
+        let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
+        onStep(.made(made))
+        return made
+    }
+}
+
+/// How Safari's Add to Dock dialog ended.
+package enum AddToDockResult: Equatable, Sendable {
+    /// It didn't open: Safari's menu item or its dialog wasn't there.
+    case unavailable
+    /// The user closed it, with Add or with Cancel: the new web app, or none,
+    /// tells which.
+    case closed
+    /// The add was cancelled in AutoHush meanwhile: the dialog was cancelled.
+    case cancelled
 }
 
 /// The tab `SafariDriving` opened a website in, to close it afterwards.
@@ -159,10 +186,10 @@ package protocol SafariDriving: Sendable {
     /// there's none.
     func frontTab() async -> SafariTab?
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
-    /// may have moved), and clicks Add, unless the task is cancelled
-    /// meanwhile: then it clicks the dialog's Cancel. Returns the name
-    /// Safari suggested; `nil` when the dialog didn't come or was cancelled.
-    func addToDock(_ url: URL) async -> String?
+    /// may have moved), and waits while the user names the web app and
+    /// clicks Add (or Cancel) there. If the task is cancelled meanwhile, it
+    /// clicks the dialog's Cancel.
+    func addToDock(_ url: URL) async -> AddToDockResult
     /// Closes `tab` (its window, when it's the window's only tab), if it's
     /// still the one in front showing the same page: never a tab the user
     /// moved to since.
@@ -182,11 +209,9 @@ package struct SafariUI: SafariDriving {
     /// A heavy page can keep Safari from showing the dialog for several
     /// seconds (a first try on Deezer gave up after 5).
     static let dialogTimeout: TimeInterval = 15
-    /// How long the dialog is left open before Add: it shows a letter for an
-    /// icon at first and fetches the site's own, which took 0.5 to 1 s
-    /// (YouTube Music, Spotify, Deezer). Nothing tells when it's there, and
-    /// Add keeps what's shown.
-    static let iconTime: TimeInterval = 3
+    /// While the dialog is open, how often it's looked at: still there, or
+    /// closed by the user.
+    static let dialogCheckInterval: TimeInterval = 0.3
     static let timeout: Float = 1
     /// How far up from the focused field the dialog is looked for.
     static let parentDepth = 30
@@ -244,10 +269,10 @@ package struct SafariUI: SafariDriving {
         }
     }
 
-    package func addToDock(_ url: URL) async -> String? {
+    package func addToDock(_ url: URL) async -> AddToDockResult {
         guard NSRunningApplication.running(Self.bundleID) != nil else {
             logger.error("Add to Dock: Safari isn't running")
-            return nil
+            return .unavailable
         }
         // The user's click on Add to Dock put AutoHush in front: Safari shows
         // its dialog only while it's the active app, and its menu is looked
@@ -259,45 +284,48 @@ package struct SafariUI: SafariDriving {
         }
         guard let pressed else {
             logger.error("Add to Dock: Safari's menu item wasn't found")
-            return nil
+            return .unavailable
         }
         guard pressed == .success else {
             logger.error("Add to Dock: pressing Safari's menu item failed (\(pressed.rawValue, privacy: .public))")
-            return nil
+            return .unavailable
         }
+        // The dialog, once it shows, with its address set back to the one
+        // typed if the page moved.
         let deadline = Date().addingTimeInterval(Self.dialogTimeout)
-        while Date() < deadline {
-            // The dialog's suggested name, once it shows, with its address
-            // set back to the one typed if the page moved.
-            let suggested = await Self.queue.run { () -> String? in
-                guard let app = Self.safariElement(), Self.find("AddToDockFormAddButton", in: app) != nil else { return nil }
+        var shows = false
+        while !shows, Date() < deadline {
+            shows = await Self.queue.run { () -> Bool in
+                guard let app = Self.safariElement(), Self.find("AddToDockFormAddButton", in: app) != nil else { return false }
                 if let field = Self.find("AddToDockFormURLTextField", in: app) {
                     let shown = field.string(kAXValueAttribute).flatMap(URL.init(string:))
                     if shown.flatMap({ $0.host() }).map(WebAddress.siteHost) != url.host().map(WebAddress.siteHost) {
                         AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, url.absoluteString as CFString)
                     }
                 }
-                return Self.find("AddToDockFormNameTextField", in: app)?.string(kAXValueAttribute) ?? ""
+                return true
             }
-            if let suggested {
-                try? await Task.sleep(for: .seconds(Self.iconTime))
-                let cancelled = Task.isCancelled
-                let pressed = await Self.queue.run {
-                    guard let app = Self.safariElement(),
-                          let button = Self.find(cancelled ? "AddToDockFormCancelButton" : "AddToDockFormAddButton", in: app)
-                    else { return false }
-                    return AXUIElementPerformAction(button, kAXPressAction as CFString) == .success
-                }
-                if cancelled {
-                    logger.notice("Add to Dock cancelled")
-                    return nil
-                }
-                return pressed ? suggested : nil
-            }
-            try? await Task.sleep(for: .milliseconds(200))
+            if !shows { try? await Task.sleep(for: .milliseconds(200)) }
         }
-        logger.error("Add to Dock: Safari's dialog didn't come within \(Int(Self.dialogTimeout), privacy: .public) s")
-        return nil
+        guard shows else {
+            logger.error("Add to Dock: Safari's dialog didn't come within \(Int(Self.dialogTimeout), privacy: .public) s")
+            return .unavailable
+        }
+        // The user names the web app and clicks Add (or Cancel) there.
+        while !Task.isCancelled {
+            let open = await Self.queue.run { () -> Bool in
+                guard let app = Self.safariElement() else { return false }
+                return Self.find("AddToDockFormAddButton", in: app) != nil
+            }
+            guard open else { return .closed }
+            try? await Task.sleep(for: .seconds(Self.dialogCheckInterval))
+        }
+        await Self.queue.run {
+            guard let app = Self.safariElement(), let button = Self.find("AddToDockFormCancelButton", in: app) else { return }
+            AXUIElementPerformAction(button, kAXPressAction as CFString)
+        }
+        logger.notice("Add to Dock cancelled")
+        return .cancelled
     }
 
     package func closeTab(_ tab: SafariTab) async {

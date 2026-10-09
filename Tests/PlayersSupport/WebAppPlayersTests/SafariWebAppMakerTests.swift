@@ -82,11 +82,15 @@ struct SafariWebAppMakerTests {
         /// Whether the user clicks Add to Dock (`false`: they cancel instead).
         let clicksAdd = Locked(true)
         let clicks = Locked(0)
+        /// What happens as the user clicks Add to Dock, by the click's number.
+        let onClick = Locked<(@Sendable (Int) -> Void)?>(nil)
 
         func make(_ address: String) async throws -> MadeWebApp {
-            try await maker.makeWebApp(from: address, onStep: { [steps] in steps.append($0) }, confirmAdd: { [clicksAdd, clicks, safari] in
-                clicks.withLock { $0 += 1 }
+            try await maker.makeWebApp(from: address, onStep: { [steps] in steps.append($0) },
+                                       confirmAdd: { [clicksAdd, clicks, safari, onClick] in
+                let click = clicks.withLock { $0 += 1; return $0 }
                 safari.log.append("click Add to Dock")
+                onClick.value?(click)
                 return clicksAdd.value
             })
         }
@@ -256,16 +260,39 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value == ["trusted"])
     }
 
-    @Test("Safari not loading the page, or no web app appearing after Add, is an error")
+    @Test("Safari not loading the page is an error")
     func safariFails() async {
         let notLoading = Setup()
         notLoading.safari.loads = false
         await #expect(throws: WebAppMakingError.self) { try await notLoading.make("play.qobuz.com") }
         #expect(notLoading.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait"])
+    }
 
-        let nothingMade = Setup()
-        await #expect(throws: WebAppMakingError.self) { try await nothingMade.make("play.qobuz.com") }
-        #expect(nothingMade.clock.now.timeIntervalSince(TestClock().now) >= SafariWebAppMaker.appearTimeout)
+    @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
+    func closedWithoutAdding() async throws {
+        let setup = Setup()
+        setup.safari.adds.withLock { $0 = [false, true] }
+        setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        let start = setup.clock.now
+        let made = try await setup.make("play.qobuz.com")
+        #expect(setup.clicks.value == 2)
+        #expect(setup.safari.log.value.filter { $0.hasPrefix("add ") }.count == 2)
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .notAdded,
+                                      .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+        #expect(setup.clock.now.timeIntervalSince(start) >= SafariWebAppMaker.appearTimeout)
+    }
+
+    @Test("a web app that comes after AutoHush stopped waiting is taken at the next Add to Dock: the dialog isn't opened again")
+    func comesLate() async throws {
+        let setup = Setup()
+        setup.safari.adds.withLock { $0 = [false] }
+        setup.onClick.withLock { onClick in
+            onClick = { [installed = setup.installed] click in if click == 2 { installed.append(Self.made) } }
+        }
+        let made = try await setup.make("play.qobuz.com")
+        #expect(made.bundleID == Self.made.bundleID)
+        #expect(setup.safari.log.value.filter { $0.hasPrefix("add ") }.count == 1)
+        #expect(setup.steps.value.suffix(3) == [.notAdded, .readyToAdd(site: "play.qobuz.com"), .made(made)])
     }
 
     @Test("a web app knows the website it opens, with or without www")
@@ -304,15 +331,23 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
             return pages.first
         }
     }
-    func addToDock(_ url: URL) async -> String? {
+    /// Whether each time the dialog opens the user clicks Add (`true`) or
+    /// Cancel there; the last one stays.
+    let adds = Locked<[Bool]>([true])
+
+    func addToDock(_ url: URL) async -> AddToDockResult {
         log.append("add \(url.absoluteString)")
         while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
         guard !Task.isCancelled else {
             log.append("cancel dialog")
-            return nil
+            return .cancelled
         }
-        onAdd?()
-        return "Qobuz"
+        let added = adds.withLock { adds in
+            defer { if adds.count > 1 { adds.removeFirst() } }
+            return adds.first ?? true
+        }
+        if added { onAdd?() }
+        return .closed
     }
     func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
 }

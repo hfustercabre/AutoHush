@@ -37,6 +37,9 @@ final class AddWebAppModel {
     /// The site asked something first, on this try: the step that said so
     /// stays, ticked.
     private(set) var siteAsked = false
+    /// Safari's Add to Dock dialog was closed without adding: the Add to
+    /// Dock step says so, until it's opened again.
+    private(set) var closedWithoutAdding = false
     /// Resumed by Add to Dock (`true`), or once the add is cancelled.
     @ObservationIgnored private var addConfirmation: CheckedContinuation<Bool, Never>?
     /// The `attempt` of the add waiting in `addConfirmation`.
@@ -69,6 +72,7 @@ final class AddWebAppModel {
         phase = .entering
         problem = nil
         siteAsked = false
+        closedWithoutAdding = false
         resumeAdd(false)
     }
 
@@ -76,6 +80,7 @@ final class AddWebAppModel {
         guard canContinue else { return }
         problem = nil
         siteAsked = false
+        closedWithoutAdding = false
         phase = .checking
         start(address)
     }
@@ -134,8 +139,13 @@ final class AddWebAppModel {
             siteAsked = true
             phase = .siteAsks(shown: shown, site: site)
         case .readyToAdd(let site):     phase = .readyToAdd(site: site)
-        case .adding:                   phase = .adding
-        case .made(let app):            phase = .learning(name: app.name, alreadyThere: app.alreadyThere)
+        case .adding:
+            closedWithoutAdding = false
+            phase = .adding
+        case .notAdded:                 closedWithoutAdding = true
+        case .made(let app):
+            closedWithoutAdding = false
+            phase = .learning(name: app.name, alreadyThere: app.alreadyThere)
         }
     }
 
@@ -190,6 +200,7 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
         super.init(content: hosting,
                    title: String(localized: "Add a Web App", comment: "Title and heading of the window that makes a website a Safari web app"))
         window?.delegate = self
+        floatsInCorner = true // Safari, then the web app, come in front meanwhile
         hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
     }
 
@@ -307,7 +318,8 @@ struct AddWebAppView: View {
 
     private func stepList(remaining: TimeInterval?) -> some View {
         let locked = learningLocked
-        let steps = Self.steps(for: model.phase, siteAsked: model.siteAsked, learning: settings.learning,
+        let steps = Self.steps(for: model.phase, siteAsked: model.siteAsked, closedWithoutAdding: model.closedWithoutAdding,
+                               learning: settings.learning,
                                remaining: remaining, note: settings.learningNote, pauseMode: settings.learningPauseMode,
                                locked: locked)
         // Locked, the permission comes right above the two learning steps it
@@ -336,7 +348,8 @@ struct AddWebAppView: View {
     /// stands: “Answer the site in Safari” only once the site asked
     /// something first (`siteAsked`); `learning` is the chosen player's
     /// learning, once it's made, with the countdown and note of its steps.
-    static func steps(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, learning: LearningStatus?,
+    static func steps(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, closedWithoutAdding: Bool = false,
+                      learning: LearningStatus?,
                       remaining: TimeInterval? = nil, note: LearningNote? = nil,
                       pauseMode: LearningPauseMode = .automatic, locked: Bool = false) -> [ChecklistStep] {
         let check = ChecklistStep(title: String(localized: "Check the address", comment: "Add a Web App window: a step"),
@@ -369,10 +382,19 @@ struct AddWebAppView: View {
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "Once \(site) shows in Safari (answer anything it asks first), click Add to Dock.",
                                                 comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.youtube.com")],
-                                 state: .current, button: .addToDock),
+                                 state: .current, button: .addToDock,
+                                 warning: closedWithoutAdding
+                                    ? String(localized: "Safari’s window was closed without adding it. Click Add to Dock to open it again.",
+                                             comment: "Add a Web App window, under the step “Add it to the Dock”, after the user closed Safari's Add to Dock window with Cancel; “Add to Dock” is the button under it")
+                                    : nil),
                    learnLater]
         case .adding:
-            return [check, opened] + answered + [ChecklistStep(title: addStep, state: .current), learnLater]
+            return [check, opened] + answered
+                + [ChecklistStep(title: addStep,
+                                 notes: [String(localized: "In Safari’s Add to Dock window, change the name if you like, then click Add.",
+                                                comment: "Add a Web App window, under the step “Add it to the Dock”, while Safari's own Add to Dock window is open: the user may rename the web app there, then clicks its Add button")],
+                                 state: .current),
+                   learnLater]
         case .entering, .checking, .opening:
             return [check,
                     ChecklistStep(title: openStep, notes: phase == .opening ? [extensionTip] : [],

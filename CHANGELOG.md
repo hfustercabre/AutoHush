@@ -20,6 +20,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   waking.** When another app started playing as the Mac fell asleep, the
   pause finished after it, and the music was resumed once awake. Now it
   stays paused, as after any sleep.
+- **SoundCloud could learn a song's Play button instead of the player's.**
+  Its player bar says "Play current", and the songs' own buttons, some
+  scrolled out of sight, just "Play". Learning now prefers the button in
+  sight that sits with the player's other controls.
 - **A web app just added could be reported as not installed** while macOS
   hadn't caught up with it yet.
 - Smaller fixes: adding a web app no longer holds AutoHush up while Safari is
@@ -28,6 +32,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **You name the web app yourself.** Add to Dock opens Safari's Add to Dock
+  window and leaves it to you: change the name if you like, then click Add.
+  If you cancel it, Add to Dock opens it again.
+- **The Add a Web App and learning windows stay in sight.** They float above
+  other apps, in the top-right corner of the screen, while Safari and the
+  web app come in front.
 - **Learning a web app's controls takes one click.** Once the song plays and
   you click It's Playing, AutoHush pauses the web app itself with the
   keyboard's Play/Pause key, learns which button changed, and plays it

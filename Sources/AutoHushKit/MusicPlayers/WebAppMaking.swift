@@ -37,8 +37,12 @@ package enum WebAppMakingStep: Equatable, Sendable {
     case siteAsks(shown: String, site: String)
     /// `site` shows in the browser: it waits for the user to add it.
     case readyToAdd(site: String)
-    /// Adding it with the browser.
+    /// Adding it with the browser: its Add to Dock dialog is open, for the
+    /// user to name the web app and click Add.
     case adding
+    /// The user closed the browser's dialog without adding it: it waits for
+    /// Add to Dock again.
+    case notAdded
     /// The web app exists, made now or already there.
     case made(MadeWebApp)
 }

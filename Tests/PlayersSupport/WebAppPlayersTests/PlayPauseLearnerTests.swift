@@ -39,7 +39,7 @@ struct PlayPauseLearnerTests {
         learner.notePlaying(look([1: "Pause", 2: "Pause Song"]), at: start)
         let candidates = learner.candidates(paused: look([1: "Play", 2: "Play Song"]))
         let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 407)]
-        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: candidates.map {
+        let (recipe, handle) = try #require(PlayPauseLearner.recipe(amongAlike: candidates.map {
             ($0, places[$0.handle.element.base as! Int]!)
         }))
         #expect(handle == ButtonHandle(1))
@@ -63,11 +63,48 @@ struct PlayPauseLearnerTests {
         let page = PlayPauseLearner.Candidate(handle: ButtonHandle(2), playLabel: "Play", pauseLabel: "Pause")
         let song = PlayPauseLearner.Candidate(handle: ButtonHandle(3), playLabel: "Play Mix", pauseLabel: "Pause Mix")
         let lowSong = ButtonPlace(path: ["AXRow"], distanceFromBottom: 5)
-        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: [
+        let (recipe, handle) = try #require(PlayPauseLearner.recipe(amongAlike: [
             (page, Places.main), (song, lowSong), (bar, Places.playerBar),
         ]))
         #expect(handle == ButtonHandle(1))
         #expect(recipe == PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar]))
-        #expect(PlayPauseLearner.recipe(from: []) == nil)
+        #expect(PlayPauseLearner.recipe(amongAlike: []) == nil)
+    }
+
+    @Test("SoundCloud: its bar says Play current among the player's controls; its songs' tiles say Play, some out of sight: the bar wins")
+    func soundCloud() throws {
+        let bar = PlayPauseLearner.Candidate(handle: ButtonHandle(1), playLabel: "Play current", pauseLabel: "Pause current")
+        let likedTile = PlayPauseLearner.Candidate(handle: ButtonHandle(2), playLabel: "Play", pauseLabel: "Pause")
+        let historyTile = PlayPauseLearner.Candidate(handle: ButtonHandle(3), playLabel: "Play", pauseLabel: "Pause")
+        let shownTile = PlayPauseLearner.Candidate(handle: ButtonHandle(4), playLabel: "Play", pauseLabel: "Pause")
+        let barPlace = ButtonPlace(path: ["AXGroup:AXLandmarkContentInfo"], distanceFromBottom: 24)
+        let sidebar = ButtonPlace(path: ["AXGroup", "AXGroup:AXApplicationGroup"], distanceFromBottom: -77)
+        let history = ButtonPlace(path: ["AXGroup", "AXGroup:AXApplicationGroup"], distanceFromBottom: -209)
+        let higher = ButtonPlace(path: ["AXGroup", "AXGroup:AXApplicationGroup"], distanceFromBottom: 300)
+        let (recipe, handle) = try #require(PlayPauseLearner.recipe(from: [
+            (likedTile, sidebar, ButtonStanding(isInWindow: false)),
+            (historyTile, history, ButtonStanding(isInWindow: false)),
+            (shownTile, higher, ButtonStanding()),
+            (bar, barPlace, ButtonStanding(isWithPlayerControls: true)),
+        ]))
+        #expect(handle == ButtonHandle(1))
+        #expect(recipe == PlayPauseRecipe(playLabel: "Play current", pauseLabel: "Pause current", places: [barPlace]))
+    }
+
+    @Test("with no candidate in sight or among a player's controls, the barest words and the lowest decide, as before")
+    func withoutControls() throws {
+        let bar = PlayPauseLearner.Candidate(handle: ButtonHandle(1), playLabel: "Play", pauseLabel: "Pause")
+        let song = PlayPauseLearner.Candidate(handle: ButtonHandle(2), playLabel: "Play Mix", pauseLabel: "Pause Mix")
+        let outOfSight = ButtonStanding(isInWindow: false)
+        let (_, handle) = try #require(PlayPauseLearner.recipe(from: [
+            (song, ButtonPlace(path: ["AXRow"], distanceFromBottom: -5), outOfSight),
+            (bar, Places.playerBar, outOfSight),
+        ]))
+        #expect(handle == ButtonHandle(1))
+        // In sight beats out of sight even with the barer words out of sight.
+        let (_, shown) = try #require(PlayPauseLearner.recipe(from: [
+            (song, Places.main, ButtonStanding()), (bar, Places.playerBar, outOfSight),
+        ]))
+        #expect(shown == ButtonHandle(2))
     }
 }

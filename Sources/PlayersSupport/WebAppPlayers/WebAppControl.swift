@@ -344,10 +344,16 @@ final class WebAppControl: @unchecked Sendable {
     private func learn(from buttons: [PageButton]) -> Bool {
         guard let learner, learner.hasPlayed else { return false }
         let found = learner.candidates(paused: buttons)
-        let candidates = found.compactMap { candidate in page.place(of: candidate.handle).map { (candidate, $0) } }
+        let candidates = found.compactMap { candidate -> (PlayPauseLearner.Candidate, ButtonPlace, ButtonStanding)? in
+            guard let place = page.place(of: candidate.handle) else { return nil }
+            return (candidate, place, page.standing(of: candidate.handle) ?? ButtonStanding())
+        }
         // Where each candidate was (none: its place couldn't be read), never its words.
         let places = found.map { candidate in
-            candidates.first { $0.0 == candidate }.map { "\(Int($0.1.distanceFromBottom)) pt" } ?? "none"
+            candidates.first { $0.0 == candidate }.map { _, place, standing in
+                "\(Int(place.distanceFromBottom)) pt" + (standing.isInWindow ? "" : " out of sight")
+                    + (standing.isWithPlayerControls ? " with controls" : "")
+            } ?? "none"
         }
         logger.debug("Learning: \(found.count, privacy: .public) buttons changed, at \(places.joined(separator: ", "), privacy: .public)")
         guard let (learned, handle) = PlayPauseLearner.recipe(from: candidates) else { return false }

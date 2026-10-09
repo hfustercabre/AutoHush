@@ -30,6 +30,24 @@ struct AddWebAppModelTests {
         #expect(await reset.value == false)
     }
 
+    @Test("Safari's dialog closed without adding is said under Add to Dock until it's opened again")
+    func closedWithoutAdding() {
+        let model = readyModel(attempt: 1)
+        model.apply(.adding)
+        model.apply(.notAdded)
+        model.apply(.readyToAdd(site: "play.qobuz.com"))
+        #expect(model.closedWithoutAdding)
+        let ready = AddWebAppView.steps(for: model.phase, closedWithoutAdding: model.closedWithoutAdding, learning: nil)
+        #expect(ready.last { $0.button == .addToDock }?.warning != nil)
+        model.apply(.adding)
+        #expect(!model.closedWithoutAdding)
+        let adding = AddWebAppView.steps(for: model.phase, learning: nil)
+        #expect(adding.first { $0.state == .current }?.notes.count == 1) // rename it there, then Add
+        model.apply(.notAdded)
+        model.reset()
+        #expect(!model.closedWithoutAdding)
+    }
+
     @Test("a cancelled add's late cancel doesn't end a newer add's wait")
     func lateCancelSparesNewerAdd() async {
         let model = readyModel(attempt: 1)
