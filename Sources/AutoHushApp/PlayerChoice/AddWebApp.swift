@@ -31,6 +31,14 @@ final class AddWebAppModel {
     var address = ""
     /// A music website's address, shown as an example (the player catalog's).
     var exampleAddress: String?
+    /// The services with their own site in some countries (the player
+    /// catalog's): for one of their sites, the window offers the others by
+    /// country.
+    var countrySites: [CountrySites] = []
+    /// The Mac's region, the country chosen until another is.
+    var region: String? = Locale.current.region?.identifier
+    /// The country picked for the address, while it's that country's site.
+    private(set) var pickedCountry: String?
     private(set) var phase = Phase.entering
     /// Why the last try failed; shown under the field.
     private(set) var problem: WebAppMakingError?
@@ -66,9 +74,30 @@ final class AddWebAppModel {
         phase == .entering && !address.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// The sites of the service whose site the address is, to choose one by
+    /// country; `nil` for any other address.
+    var addressSites: CountrySites? {
+        countrySites.first { $0.covers(address: address) }
+    }
+
+    /// The country whose site the address is, as `sites` lists it ("" for
+    /// every other country): the one picked, else the Mac's region.
+    func country(in sites: CountrySites) -> String {
+        sites.country(of: address, preferring: [pickedCountry, region].compactMap { $0 })
+    }
+
+    /// Puts `country`'s site (`sites` lists it; "" for every other country)
+    /// in the address.
+    func chooseCountry(_ country: String, in sites: CountrySites) {
+        guard phase == .entering else { return }
+        pickedCountry = country
+        address = sites.site(region: country)
+    }
+
     /// Ready for an address: `address`, or none.
     func reset(address: String = "") {
         self.address = address
+        pickedCountry = nil
         phase = .entering
         problem = nil
         siteAsked = false
@@ -241,7 +270,20 @@ struct AddWebAppView: View {
                 }
                 SectionHeading(Text("Address", comment: "Add a Web App window: the heading over the field for the website's address"))
                     .padding(.top, 8)
-                Card { addressField }
+                if let sites = model.addressSites {
+                    Card {
+                        addressField
+                        CardDivider()
+                        countryRow(sites)
+                    }
+                    if model.phase == .entering {
+                        Text("\(sites.name) has its own site in some countries, and you can sign in only on your account’s.",
+                             comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Amazon Music")
+                            .captionStyle()
+                    }
+                } else {
+                    Card { addressField }
+                }
                 if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
                     NoteLabel(problem)
                     if model.problem == .accessibilityDenied {
@@ -309,6 +351,39 @@ struct AddWebAppView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background(RoundedRectangle(cornerRadius: 8).fill(.chipFill))
+    }
+
+    /// The countries of `sites`, each opening its site: the Mac's region
+    /// chosen at first, and "Other Countries" for the rest of the world.
+    private func countryRow(_ sites: CountrySites) -> some View {
+        HStack(spacing: 10) {
+            Self.countryLabel
+            Spacer(minLength: 8)
+            Picker(selection: Binding(get: { model.country(in: sites) }, set: { model.chooseCountry($0, in: sites) })) {
+                ForEach(Self.countries(of: sites), id: \.code) { Text(verbatim: $0.name).tag($0.code) }
+                Divider()
+                Text("Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries (Amazon Music): every country without a site of its own")
+                    .tag("")
+            } label: {
+                Self.countryLabel
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .buttonStyle(.borderless)
+            .fixedSize()
+            .disabled(model.phase != .entering)
+        }
+    }
+
+    private static var countryLabel: Text {
+        Text("Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries (Amazon Music), before the pop-up of countries; the site changes with the country")
+    }
+
+    /// The countries with a site of their own, by name in the Mac's language.
+    static func countries(of sites: CountrySites) -> [(code: String, name: String)] {
+        sites.byRegion.keys
+            .map { ($0, Locale.current.localizedString(forRegionCode: $0) ?? $0) }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     // MARK: - The steps

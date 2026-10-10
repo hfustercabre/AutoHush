@@ -12,11 +12,21 @@ package struct TestedWebApp: Equatable, Sendable {
     /// The other hosts its web app may open, e.g. the service's sites for
     /// other countries.
     package let otherHosts: [String]
+    /// Its sites by country, when it has its own in some (Amazon Music).
+    package let countrySites: CountrySites?
 
-    package init(name: String, address: String, otherHosts: [String] = []) {
+    package init(name: String, address: String, otherHosts: [String] = [], countrySites: CountrySites? = nil) {
         self.name = name
         self.address = address
         self.otherHosts = otherHosts
+        self.countrySites = countrySites
+    }
+
+    /// A service with its own site in some countries: suggested on the site
+    /// for `region` (the Mac's), and any of its sites counts as it.
+    package init(countrySites: CountrySites, region: String?) {
+        self.init(name: countrySites.name, address: countrySites.site(region: region),
+                  otherHosts: countrySites.hosts, countrySites: countrySites)
     }
 
     /// Its address's host, then the others.

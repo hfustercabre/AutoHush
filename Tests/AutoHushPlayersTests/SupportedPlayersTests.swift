@@ -42,15 +42,24 @@ struct SupportedPlayersTests {
     func suggestedWebApps() {
         #expect(SupportedPlayers.testedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer", "SoundCloud"])
         #expect(SupportedPlayers.testedWebApps.map(\.address).allSatisfy { WebAddress.url(from: $0) != nil })
-        #expect(SupportedPlayers.amazonMusicSite(region: "ES") == "music.amazon.es")
-        #expect(SupportedPlayers.amazonMusicSite(region: "GB") == "music.amazon.co.uk")
-        #expect(SupportedPlayers.amazonMusicSite(region: "US") == "music.amazon.com")
-        #expect(SupportedPlayers.amazonMusicSite(region: "NL") == "music.amazon.com")
-        #expect(SupportedPlayers.amazonMusicSite(region: nil) == "music.amazon.com")
+        let sites = SupportedPlayers.amazonMusicSites
+        #expect(sites.site(region: "ES") == "music.amazon.es")
+        #expect(sites.site(region: "GB") == "music.amazon.co.uk")
+        #expect(sites.site(region: "IE") == "music.amazon.co.uk")
+        #expect(sites.site(region: "AT") == "music.amazon.de")
+        #expect(sites.site(region: "US") == "music.amazon.com")
+        #expect(sites.site(region: "NL") == "music.amazon.com")
+        #expect(sites.site(region: nil) == "music.amazon.com")
         let amazon = SupportedPlayers.testedWebApps[2]
+        #expect(amazon.countrySites == sites)
+        #expect(SupportedPlayers.testedWebApps.filter { $0.countrySites != nil }.map(\.name) == ["Amazon Music"])
+        #expect(SupportedPlayers.catalog.countrySites == [sites]) // offered by country in Add a Web App
         let made = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "A", name: "Amazon Music",
                                 url: URL(fileURLWithPath: "/Applications/A.app"), startURL: URL(string: "https://music.amazon.de/"))
         #expect(amazon.isAdded(as: made)) // whatever site the Mac's country gets
+        let irish = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "B", name: "Amazon Music",
+                                 url: URL(fileURLWithPath: "/Applications/B.app"), startURL: URL(string: "https://music.amazon.co.uk/"))
+        #expect(amazon.isAdded(as: irish))
     }
 
     @Test("people updating from before the choice keep Spotify")

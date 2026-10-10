@@ -11,6 +11,9 @@ package struct MusicPlayerCatalog: Sendable {
     /// A music website's address, shown as an example where one is typed
     /// ("Add a Web App"); `nil` for none.
     package let exampleWebAddress: String?
+    /// The web players with their own site in some countries, so Add a Web
+    /// App offers their sites by country.
+    package let countrySites: [CountrySites]
     /// Players found on this Mac besides those (its Safari web apps), looked
     /// up afresh each time; each app keeps its instance.
     private let found: @Sendable () -> [any MusicPlayer]
@@ -22,12 +25,14 @@ package struct MusicPlayerCatalog: Sendable {
         players: [any MusicPlayer],
         formerDefault: String? = nil,
         exampleWebAddress: String? = nil,
+        countrySites: [CountrySites] = [],
         found: @escaping @Sendable () -> [any MusicPlayer] = { [] },
         suggested: @escaping @Sendable () -> [WebAppSuggestion] = { [] }
     ) {
         self.players = players
         self.formerDefault = formerDefault
         self.exampleWebAddress = exampleWebAddress
+        self.countrySites = countrySites
         self.found = found
         self.suggested = suggested
     }

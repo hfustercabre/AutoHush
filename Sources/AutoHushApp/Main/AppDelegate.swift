@@ -234,6 +234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyAutoPause()
         watchLearning()
         addWebAppModel.exampleAddress = players.exampleWebAddress
+        addWebAppModel.countrySites = players.countrySites
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
         addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
         addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(.accessibility(player: "Safari")) }

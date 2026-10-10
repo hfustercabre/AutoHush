@@ -12,6 +12,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **SoundCloud is a tested web app:** it's listed with Spotify, YouTube
   Music, Amazon Music and Deezer, suggested until you add it, and no longer
   marked Untested.
+- **Adding Amazon Music asks for your account's country.** Amazon Music has
+  its own site in some countries, and you can sign in only on your
+  account's: Add a Web App still opens the one for your Mac's region, and a
+  new row under the address lets you choose another country. Ireland now
+  gets the United Kingdom's site, as Irish accounts use.
 
 ### Fixed
 

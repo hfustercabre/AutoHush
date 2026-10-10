@@ -30,6 +30,7 @@ package enum SupportedPlayers {
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
         // Shown in Add a Web App's address field and its "not a web address" note.
         exampleWebAddress: "music.youtube.com",
+        countrySites: testedWebApps.compactMap(\.countrySites),
         found: { webApps.current() },
         suggested: { webApps.suggestions() }
     )
@@ -44,8 +45,7 @@ package enum SupportedPlayers {
     package static let testedWebApps: [TestedWebApp] = [
         TestedWebApp(name: "Spotify", address: "open.spotify.com"),
         TestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
-        TestedWebApp(name: "Amazon Music", address: amazonMusicSite(region: Locale.current.region?.identifier),
-                     otherHosts: ["music.amazon.com"] + amazonMusicSites.values),
+        TestedWebApp(countrySites: amazonMusicSites, region: Locale.current.region?.identifier),
         TestedWebApp(name: "Deezer", address: "deezer.com"),
         TestedWebApp(name: "SoundCloud", address: "soundcloud.com"),
     ]
@@ -58,19 +58,22 @@ package enum SupportedPlayers {
     /// player…) can be chosen: AutoHush learns its Play/Pause button.
     private static let webApps = SafariWebAppPlayers(finder: webAppFinder, tested: testedWebApps)
 
-    /// Amazon Music's site for each country that has its own; the others
-    /// use music.amazon.com. A sign-in on another country's site doesn't
-    /// carry over, so the web app opens the Mac's own.
-    package static let amazonMusicSites: [String: String] = [
-        "GB": "music.amazon.co.uk", "DE": "music.amazon.de", "AT": "music.amazon.de",
-        "FR": "music.amazon.fr", "IT": "music.amazon.it", "ES": "music.amazon.es",
-        "JP": "music.amazon.co.jp", "CA": "music.amazon.ca", "BR": "music.amazon.com.br",
-        "MX": "music.amazon.com.mx", "IN": "music.amazon.in", "AU": "music.amazon.com.au",
-    ]
-
-    package static func amazonMusicSite(region: String?) -> String {
-        region.flatMap { amazonMusicSites[$0] } ?? "music.amazon.com"
-    }
+    /// Amazon Music's site for each country that has its own (Austria uses
+    /// Germany's, Ireland the United Kingdom's); the others use
+    /// music.amazon.com. A sign-in on another country's site doesn't carry
+    /// over, so the web app opens the Mac's own, and Add a Web App offers the
+    /// others. Checked 2026-10-10: music.amazon.ae, .sa and .eg answer with
+    /// an empty page (Amazon Music isn't offered there).
+    package static let amazonMusicSites = CountrySites(
+        name: "Amazon Music",
+        byRegion: [
+            "US": "music.amazon.com", "GB": "music.amazon.co.uk", "IE": "music.amazon.co.uk",
+            "DE": "music.amazon.de", "AT": "music.amazon.de", "FR": "music.amazon.fr", "IT": "music.amazon.it",
+            "ES": "music.amazon.es", "JP": "music.amazon.co.jp", "CA": "music.amazon.ca", "BR": "music.amazon.com.br",
+            "MX": "music.amazon.com.mx", "IN": "music.amazon.in", "AU": "music.amazon.com.au",
+        ],
+        elsewhere: "music.amazon.com"
+    )
 
     /// Makes a Safari web app from an address the user typed.
     package static let webAppMaker: any WebAppMaking = SafariWebAppMaker(

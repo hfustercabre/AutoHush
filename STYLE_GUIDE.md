@@ -206,6 +206,14 @@ where they appear:
     installed" in menus ("Click to add" on a tile), like a missing app but
     not dimmed, with the `arrow.down.circle` symbol for an icon: a click
     opens "Add a Web App" filled in with the address.
+  - **A service with its own site in some countries** (Amazon Music,
+    `CountrySites`) is suggested on the site for the Mac's region. While
+    the address is one of its sites, Add a Web App's address card adds a
+    row under the field, "Your account's country", with a borderless
+    pop-up of the countries with their own site, by name, then a divider
+    and "Other Countries"; choosing one puts its site in the field. A
+    caption under the card says why (a sign-in works only on the
+    account's country's site).
   - **Add a Web App…** (with `plus.circle`) comes last: the menu's last
     row, and the last tile (as "Add…") among `PlayerTiles`.
   - The Add a Web App and learning windows show the heading's warning as a

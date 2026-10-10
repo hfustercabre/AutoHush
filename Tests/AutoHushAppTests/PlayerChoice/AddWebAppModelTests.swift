@@ -1,3 +1,4 @@
+import AutoHushKit
 import Foundation
 import Testing
 @testable import AutoHushApp
@@ -81,5 +82,35 @@ struct AddWebAppModelTests {
         #expect(model.problemText == "That isn't a web address.")
         model.exampleAddress = "music.example.com"
         #expect(model.problemText == "That isn't a web address. Try one like music.example.com.")
+    }
+
+    @Test("a service with a site per country: the Mac's country at first, a pick puts its site in the address")
+    func countrySites() {
+        let sites = CountrySites(name: "Some Music",
+                                 byRegion: ["ES": "music.some.es", "GB": "music.some.co.uk", "IE": "music.some.co.uk",
+                                            "US": "music.some.com"],
+                                 elsewhere: "music.some.com")
+        let model = AddWebAppModel()
+        model.countrySites = [sites]
+        model.region = "ES"
+        model.reset(address: "music.some.es")
+        #expect(model.addressSites == sites)
+        #expect(model.country(in: sites) == "ES")
+        model.chooseCountry("IE", in: sites)
+        #expect(model.address == "music.some.co.uk")
+        #expect(model.country(in: sites) == "IE") // not the United Kingdom, which shares it
+        model.chooseCountry("", in: sites)
+        #expect(model.address == "music.some.com")
+        #expect(model.country(in: sites) == "") // Other Countries, not the United States
+        model.address = "play.qobuz.com"
+        #expect(model.addressSites == nil) // no countries for another site
+        model.reset(address: "music.some.co.uk")
+        #expect(model.country(in: sites) == "GB") // the pick is forgotten
+        // Once it's being added, the country stays.
+        model.continueTapped()
+        model.chooseCountry("ES", in: sites)
+        #expect(model.address == "music.some.co.uk")
+        // Every country with its own site is offered, once.
+        #expect(AddWebAppView.countries(of: sites).map(\.code).sorted() == ["ES", "GB", "IE", "US"])
     }
 }
