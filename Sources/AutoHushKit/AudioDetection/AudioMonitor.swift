@@ -46,7 +46,8 @@ import os
 package final class AudioMonitor: @unchecked Sendable {
     /// What the monitor tells the arbiter, in order.
     private enum ArbiterEvent: Sendable {
-        case source(id: String, isPlaying: Bool)
+        /// `heardSince`: for a start, when the app was first heard, if known.
+        case source(id: String, isPlaying: Bool, heardSince: Date?)
         case localPlayback(Bool)
     }
 
@@ -160,8 +161,8 @@ package final class AudioMonitor: @unchecked Sendable {
         self.forwardingTask = Task {
             for await event in stream {
                 switch event {
-                case .source(let id, let isPlaying):
-                    await arbiter.handleSourceChange(sourceID: id, isPlaying: isPlaying)
+                case .source(let id, let isPlaying, let heardSince):
+                    await arbiter.handleSourceChange(sourceID: id, isPlaying: isPlaying, heardSince: heardSince)
                 case .localPlayback(let isLocal):
                     await arbiter.handleLocalPlaybackChange(isLocal)
                 }
@@ -245,13 +246,15 @@ package final class AudioMonitor: @unchecked Sendable {
     }
 
     /// Replaces the sources that must never pause the music. Playing sources
-    /// that become ignored stop for the arbiter at once, and vice versa.
+    /// that become ignored stop for the arbiter at once, and vice versa. One
+    /// no longer ignored starts without saying when it was first heard: it
+    /// was playing all along, so nothing that happened meanwhile is its doing.
     package func setIgnoredSources(_ ids: Set<String>) {
         queue.async {
             let previous = self.ignoredSourceIDs
             self.ignoredSourceIDs = ids
             for id in self.tracker.activeSources.sorted() where previous.contains(id) != ids.contains(id) {
-                self.events.yield(.source(id: id, isPlaying: previous.contains(id)))
+                self.events.yield(.source(id: id, isPlaying: previous.contains(id), heardSince: nil))
             }
         }
     }
@@ -450,10 +453,10 @@ package final class AudioMonitor: @unchecked Sendable {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
         }
         for id in started.sorted() where !ignoredSourceIDs.contains(id) {
-            events.yield(.source(id: id, isPlaying: true))
+            events.yield(.source(id: id, isPlaying: true, heardSince: tracker.firstHeard(id)))
         }
         for id in stopped.sorted() where !ignoredSourceIDs.contains(id) {
-            events.yield(.source(id: id, isPlaying: false))
+            events.yield(.source(id: id, isPlaying: false, heardSince: nil))
         }
 
         // Forget sources that are neither tracked nor currently present.

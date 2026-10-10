@@ -100,6 +100,21 @@ struct SourceActivityTrackerTests {
         #expect(tracker.activeSources == ["a", "b"])
     }
 
+    @Test("remembers when a source was first heard, through its start, until it's forgotten")
+    func remembersFirstHeard() {
+        var tracker = makeTracker()
+        #expect(tracker.firstHeard("a") == nil)
+        _ = step(&tracker, audible: ["a"], at: t0)
+        _ = step(&tracker, audible: [], at: t0 + 0.75) // a gap past the tolerance: forgotten
+        #expect(tracker.firstHeard("a") == nil)
+        _ = step(&tracker, audible: ["a"], at: t0 + 1)
+        #expect(step(&tracker, audible: ["a"], at: t0 + 2).started == ["a"])
+        #expect(tracker.firstHeard("a") == t0 + 1)
+        _ = step(&tracker, audible: [], at: t0 + 3)
+        #expect(step(&tracker, audible: [], at: t0 + 4).stopped == ["a"])
+        #expect(tracker.firstHeard("a") == nil)
+    }
+
     @Test("a source can be given its own start confirmation, e.g. a longer one")
     func ownStartConfirmation() {
         var tracker = makeTracker()

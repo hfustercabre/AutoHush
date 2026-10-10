@@ -111,6 +111,8 @@ package actor VLCPlayer: MusicPlayer {
         PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange)
     }
 
+    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
+
     /// Sends Play/Pause if VLC is in `state`; does nothing if it's already in
     /// the other one.
     private func toggle(from state: PlayerState) async throws {

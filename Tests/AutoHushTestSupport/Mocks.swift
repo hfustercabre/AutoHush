@@ -12,6 +12,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package nonisolated let volumeCurve: VolumeCurve
     package nonisolated let canFade: Bool
     package nonisolated let iconPlaceholder: PlayerIconPlaceholder?
+    package nonisolated let stateReportDelay: TimeInterval
     package var state: PlayerState
     package var pauseCallCount = 0
     package var playCallCount = 0
@@ -34,6 +35,7 @@ package actor MockMusicPlayer: MusicPlayer {
         volumeCurve: VolumeCurve = .linear,
         canFade: Bool = true,
         iconPlaceholder: PlayerIconPlaceholder? = nil,
+        stateReportDelay: TimeInterval = 0,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
@@ -44,6 +46,7 @@ package actor MockMusicPlayer: MusicPlayer {
         self.volumeCurve = volumeCurve
         self.canFade = canFade
         self.iconPlaceholder = iconPlaceholder
+        self.stateReportDelay = stateReportDelay
         self.failPauseWith = failPauseWith
         self.failPlayWith = failPlayWith
         self.failVerifyWith = failVerifyWith
@@ -151,6 +154,7 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
 
     package nonisolated var bundleID: String { mock.bundleID }
     package nonisolated var name: String { mock.name }
+    package nonisolated var stateReportDelay: TimeInterval { mock.stateReportDelay }
     package nonisolated var tapsAreAllowed: Bool { tapsAllowed.withLock { $0 } }
 
     package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.withLock { $0 = allowed } }

@@ -182,6 +182,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         )
     }
 
+    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
+
     /// Lifts a mute in place of a pause, without playing anything.
     package func releaseMute() async {
         let control = control

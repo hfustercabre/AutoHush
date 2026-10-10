@@ -121,6 +121,8 @@ package actor MenuPlayer: MusicPlayer {
         PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange)
     }
 
+    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
+
     /// What the Play/Pause item says: "Pause" while the app plays, "Play"
     /// while it's paused. A title in both lists, or neither, says nothing.
     package static func state(of toggle: MenuToggle, words: PlayPauseWords) -> PlayerState {

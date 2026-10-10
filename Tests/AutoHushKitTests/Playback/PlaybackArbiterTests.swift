@@ -1063,18 +1063,18 @@ struct PlaybackArbiterTests {
 
     // MARK: - When audio levels are needed (recording indicator)
 
-    private final class NeedsLog: @unchecked Sendable {
+    private final class ValuesLog<Value: Sendable>: @unchecked Sendable {
         private let lock = NSLock()
-        private var _values: [Bool] = []
-        var values: [Bool] { lock.withLock { _values } }
-        func record(_ value: Bool) { lock.withLock { _values.append(value) } }
+        private var _values: [Value] = []
+        var values: [Value] { lock.withLock { _values } }
+        func record(_ value: Value) { lock.withLock { _values.append(value) } }
     }
 
     @Test("levels are needed only while the player plays here or is paused by us, with auto-pause on")
     func audioLevelsNeeded() async {
         let player = MockMusicPlayer(state: .paused)
         let scheduler = ManualDebounceScheduler()
-        let log = NeedsLog()
+        let log = ValuesLog<Bool>()
         let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(), debounceScheduler: scheduler,
             onAudioLevelsNeededChange: { log.record($0) }
         )
@@ -1094,7 +1094,7 @@ struct PlaybackArbiterTests {
 
     @Test("levels are not needed while the player plays on another device")
     func audioLevelsNotNeededElsewhere() async {
-        let log = NeedsLog()
+        let log = ValuesLog<Bool>()
         let arbiter = PlaybackArbiter(player: MockMusicPlayer(state: .playing), configuration: AppConfiguration(),
             onAudioLevelsNeededChange: { log.record($0) }
         )
@@ -1190,13 +1190,293 @@ struct PlaybackArbiterTests {
         await settle()
         #expect(await player.playCallCount == 1)
     }
+
+    // MARK: - A pause made by an app as it starts (VLC pauses Spotify and Music)
+
+    /// An arbiter on the test's clock, knowing its player plays.
+    private func makeClockedArbiter(
+        player: MockMusicPlayer,
+        clock: ManualClock,
+        configuration: AppConfiguration = .testing,
+        scheduler: ManualDebounceScheduler = ManualDebounceScheduler(),
+        autoPauseEnabled: Bool = true,
+        fadeSleep: @escaping VolumeFader.Sleep = { _ in },
+        onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
+        onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in }
+    ) async -> PlaybackArbiter {
+        let arbiter = PlaybackArbiter(
+            player: player, configuration: configuration, debounceScheduler: scheduler, fadeSleep: fadeSleep,
+            clock: { clock.now }, autoPauseEnabled: autoPauseEnabled,
+            onPlaybackStateChange: onPlaybackStateChange, onAudioLevelsNeededChange: onAudioLevelsNeededChange
+        )
+        await arbiter.refreshPlaybackState()
+        return arbiter
+    }
+
+    /// Something other than AutoHush pauses the player, and its observer says so.
+    private func pausedElsewhere(_ player: MockMusicPlayer, _ arbiter: PlaybackArbiter) async {
+        await player.overrideState(.paused)
+        await arbiter.handlePlayerStateChange(.paused)
+    }
+
+    @Test("music another app pauses as it starts comes back when that app stops, with no pause of ours")
+    func takesOverPauseOfStartingApp() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let states = ValuesLog<PlaybackState>()
+        let needs = ValuesLog<Bool>()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock,
+                                               onPlaybackStateChange: { states.record($0) },
+                                               onAudioLevelsNeededChange: { needs.record($0) })
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter) // VLC pauses it
+        clock.advance(by: 0.2)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+
+        #expect(await player.pauseCallCount == 0)
+        #expect(states.values.last == .pausedByMonitor)
+        #expect(needs.values == [true, false, true]) // levels kept to hear VLC stop
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        await settle()
+        #expect(await player.commandLog == ["play"])
+        #expect(await player.state == .playing)
+    }
+
+    @Test("a pause seen just before the app was first heard counts too: the monitor hears an app a tick late")
+    func takesOverPauseJustBeforeHeard() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        await pausedElsewhere(player, arbiter)
+        clock.advance(by: PlaybackArbiter.hearingDelay)
+        let heard = clock.now
+        clock.advance(by: 0.5)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.playCallCount == 1)
+    }
+
+    @Test("music the user paused before the app was heard stays paused afterwards", arguments: [0.6, 2.0, 60.0])
+    func leavesUsersEarlierPause(secondsBefore: TimeInterval) async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        await pausedElsewhere(player, arbiter) // the user
+        clock.advance(by: secondsBefore)
+        let heard = clock.now
+        clock.advance(by: 0.5)
+        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("a pause the check finds before the player has reported it is taken over too")
+    func takesOverPauseFoundByCheck() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await player.overrideState(.paused) // no report yet
+        clock.advance(by: 0.2)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await arbiter.handlePlayerStateChange(.paused) // the report, late
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.playCallCount == 1)
+    }
+
+    @Test("a player whose reports come late: only a pause surely after the app was heard is taken over",
+          arguments: [(0.3, false), (0.7, true)])
+    func allowsForLateReports(reportedAfterHeard: TimeInterval, isTakenOver: Bool) async {
+        let player = MockMusicPlayer(stateReportDelay: 1) // read once a second
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: reportedAfterHeard) // it may have paused up to a second before
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        if isTakenOver { await waitUntil { await player.playCallCount == 1 } } else { await settle() }
+
+        #expect(await player.playCallCount == (isTakenOver ? 1 : 0))
+    }
+
+    @Test("an app that starts without a known first sound (no longer ignored) takes over no pause")
+    func noTakeOverWithoutFirstHeard() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        await pausedElsewhere(player, arbiter)
+        clock.advance(by: 0.1)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("a player stopped, rather than paused, as an app starts isn't taken over")
+    func noTakeOverOfStoppedPlayer() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await player.overrideState(.stopped)
+        await arbiter.handlePlayerStateChange(.stopped)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("the user playing the music again while the app plays ends the taken-over pause")
+    func userEndsTakenOverPause() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await player.overrideState(.playing)
+        await arbiter.handlePlayerStateChange(.playing) // the user
+        await player.overrideState(.paused)
+        await arbiter.handlePlayerStateChange(.paused) // and the user again, long after VLC started
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("a check long after the app started (auto-pause turned back on) takes over nothing")
+    func noTakeOverInLateCheck() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock, scheduler: scheduler,
+                                               autoPauseEnabled: false)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        clock.advance(by: 10)
+        await arbiter.setAutoPauseEnabled(true)
+        clock.advance(by: AppConfiguration.testing.sourceStopGrace + PlaybackArbiter.remeasureMargin)
+        await scheduler.completeNext() // the pause check, once VLC is measured again
+        await waitUntil { await player.stateQueryCount == 2 } // after the one at start-up
+        await arbiter.waitForPause()
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("music the user pauses during the fade-out stays theirs, even right after the app was heard")
+    func userPauseDuringFadeOutIsNotTakenOver() async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock, configuration: AppConfiguration(),
+                                               fadeSleep: { _ in try? await Task.sleep(for: .milliseconds(5)) })
+        let heard = clock.now
+        clock.advance(by: 0.5)
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true, heardSince: heard)
+        await waitUntil { await !player.volumeHistory.isEmpty } // the fade-out has begun
+        clock.advance(by: 0.2)
+        await pausedElsewhere(player, arbiter) // the user
+        await arbiter.waitForPause()
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.pauseCallCount == 0)
+        #expect(await player.playCallCount == 0)
+        #expect(await player.volumeLevel == 60)
+    }
+
+    @Test("an app that stops while the player is checked: the pause taken over ends at once")
+    func takenOverPauseEndsWhenAppStoppedDuringCheck() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await player.setBeforeStateAnswer { [arbiter, player] in // once
+            await player.setBeforeStateAnswer(nil)
+            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        }
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.playCallCount == 1)
+    }
+
+    @Test("a player paused here is taken over even once its output has closed (an app counted after 3 s)")
+    func takesOverPauseAfterOutputClosed() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        clock.advance(by: 2.5)
+        await arbiter.handleLocalPlaybackChange(false) // its output closes
+        clock.advance(by: 0.2)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.playCallCount == 1)
+    }
+
+    @Test("a pause on another device (Spotify Connect) is never taken over")
+    func noTakeOverOfRemotePause() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        await arbiter.handleLocalPlaybackChange(false) // it plays on another device
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("with auto-pause off, an app's pause is never taken over")
+    func noTakeOverWithAutoPauseOff() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock, autoPauseEnabled: false)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
 }
 
 private extension PlaybackArbiter {
     /// Reports a source change, then waits for the pause it may start, so a
     /// test sees its outcome.
-    func sourceChanged(_ sourceID: String, playing: Bool) async {
-        await handleSourceChange(sourceID: sourceID, isPlaying: playing)
+    func sourceChanged(_ sourceID: String, playing: Bool, heardSince: Date? = nil) async {
+        await handleSourceChange(sourceID: sourceID, isPlaying: playing, heardSince: heardSince)
         await waitForPause()
     }
 }

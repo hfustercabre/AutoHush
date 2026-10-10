@@ -12,6 +12,8 @@ import Foundation
 package struct SourceActivityTracker {
     /// What is known about one source.
     private struct Entry {
+        /// When it was first heard, kept while it's tracked.
+        let firstHeard: Date
         var pendingSince: Date?
         var lastAudible: Date
         var isActive: Bool
@@ -52,6 +54,10 @@ package struct SourceActivityTracker {
     /// True when the source is active or awaiting confirmation.
     package func isTracking(_ id: String) -> Bool { entries[id] != nil }
 
+    /// When a tracked source was first heard, before it counted as started;
+    /// `nil` once it's forgotten.
+    package func firstHeard(_ id: String) -> Date? { entries[id]?.firstHeard }
+
     /// True when no source is active or awaiting confirmation.
     package var isIdle: Bool { entries.isEmpty }
 
@@ -66,7 +72,7 @@ package struct SourceActivityTracker {
         for bundleID in audible {
             // Only *observed* silence (second loop below) restarts a pending
             // confirmation; a delayed evaluation must not.
-            var entry = entries[bundleID] ?? Entry(pendingSince: now, lastAudible: now, isActive: false)
+            var entry = entries[bundleID] ?? Entry(firstHeard: now, pendingSince: now, lastAudible: now, isActive: false)
             entry.lastAudible = now
             let confirmation = startConfirmations[bundleID] ?? startConfirmation
             if !entry.isActive, now.timeIntervalSince(entry.pendingSince ?? now) >= confirmation {

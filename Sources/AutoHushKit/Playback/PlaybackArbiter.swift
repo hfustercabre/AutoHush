@@ -23,7 +23,9 @@ package struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
 /// to (a pause with its fade-out) runs on its own, so the next event is never
 /// held up by it.
 package protocol PlaybackArbiting: Actor {
-    func handleSourceChange(sourceID: String, isPlaying: Bool) async
+    /// `heardSince`: for a start, when the app was first heard (before it
+    /// counted as playing); `nil` when that isn't known.
+    func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date?) async
     /// Whether the player's audio currently comes out of this Mac (as opposed
     /// to another device, e.g. through Spotify Connect).
     func handleLocalPlaybackChange(_ isLocal: Bool) async
@@ -34,7 +36,8 @@ package protocol PlaybackArbiting: Actor {
 /// Decides when to pause and resume the music player. Rule: pause when any
 /// foreign source starts; resume when ALL foreign sources have stopped (each
 /// counts as stopped once silent for its stop grace), but only music it
-/// paused itself.
+/// paused itself, or found paused just as an app started (see
+/// `takeOverPauseOfStartingApp`).
 ///
 /// The player's state is pushed in through `handlePlayerStateChange` (from its
 /// state observer) and cached for status display. The player is only queried
@@ -70,6 +73,13 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private let logger = Logger(category: "PlaybackArbiter")
 
     private var pausedByUs = false
+    /// When the player was seen to stop playing here, as far as the arbiter
+    /// knows: it went from playing on this Mac to paused. `nil` while it plays.
+    private var stoppedPlayingAt: Date?
+    /// The latest app to start playing: when it was first heard, and when it
+    /// counted as playing.
+    private var latestStart: (heard: Date, counted: Date)?
+    private let clock: @Sendable () -> Date
     private var isShutDown = false
     /// While the Mac sleeps, nothing is paused or resumed (see `setAsleep`).
     private var isAsleep = false
@@ -104,12 +114,21 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// After taking over a pause, how long beyond the start confirmation the
     /// monitor, starting afresh, gets to find an app still playing.
     package static let takeOverMargin: TimeInterval = 1.5
+    /// The monitor hears an app up to a couple of its ticks after the app's
+    /// sound starts (a new app's levels come from the next tick): a pause seen
+    /// up to this long before the app was first heard may still be its doing.
+    package static let hearingDelay: TimeInterval = 0.5
+    /// A check of the player this long at most after an app counted as
+    /// playing is the one that app's start called for, and may find a pause
+    /// it made (`takeOverPauseOfStartingApp`).
+    package static let startCheckWindow: TimeInterval = 2
 
     package init(
         player: any MusicPlayer,
         configuration: AppConfiguration,
         debounceScheduler: PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
         fadeSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
+        clock: @escaping @Sendable () -> Date = { Date() },
         autoPauseEnabled: Bool = true,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
@@ -124,6 +143,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         )
         self.configuration = configuration
         self.debounceScheduler = debounceScheduler
+        self.clock = clock
         self.autoPauseEnabled = autoPauseEnabled
         self.onPlaybackStateChange = onPlaybackStateChange
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
@@ -132,10 +152,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     /// Records that a source started or stopped. Returns without waiting for
     /// the pause it may start (`waitForPause()` does).
-    package func handleSourceChange(sourceID: String, isPlaying: Bool) async {
+    package func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date? = nil) async {
         guard !isShutDown, configuration.isMediaSource(sourceID) else { return }
 
         if isPlaying {
+            if let heardSince { latestStart = (heardSince, clock()) }
             // With auto-pause off, music we paused comes back regardless.
             if autoPauseEnabled { cancelPendingResume() }
             cancelPendingPause() // this app pauses the music now
@@ -268,6 +289,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     package func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
         guard pausedByUs, state != .paused else {
             playerState = state
@@ -321,8 +343,25 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     private func livePlayerState() async -> PlayerState {
         let state = await player.playerState()
-        if state != .unknown { playerState = state }
+        if state != .unknown {
+            noteStoppedPlaying(state)
+            playerState = state
+        }
         return state
+    }
+
+    /// Notes when the player stops playing here (`stoppedPlayingAt`), from a
+    /// state just learned and the one known until then. A pause on another
+    /// device (through Spotify Connect) isn't noted: it's no concern here.
+    private func noteStoppedPlaying(_ state: PlayerState) {
+        switch state {
+        case .paused:
+            if playerState == .playing { stoppedPlayingAt = playsLocally ? clock() : nil }
+        case .playing, .stopped, .notRunning:
+            stoppedPlayingAt = nil
+        case .unknown:
+            break
+        }
     }
 
     /// Pauses the music in a task of its own, unless a pause is already
@@ -375,16 +414,26 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     private func pauseMusicIfNeeded() async {
         guard autoPauseEnabled, !isAsleep else { return }
+        let checked = clock()
         guard playsLocally else {
+            // A player paused here closes its output a few seconds later,
+            // maybe before the app that paused it counts as playing.
+            if stoppedPlayingAt != nil, takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
+                return
+            }
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
             return
         }
         let state = await livePlayerState()
         guard state == .playing else {
             if await muteIfPlayingAnyway(saying: state) { return }
+            if takeOverPauseOfStartingApp(state, checkedAt: checked) { return }
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
+        // Found playing: a pause from now on (the user's, during the fade-out)
+        // is no app's doing.
+        latestStart = nil
         // Things may have changed while the player answered.
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
@@ -435,6 +484,27 @@ package actor PlaybackArbiter: PlaybackArbiting {
         logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted")
         // Things may have changed while it was measured.
         if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
+        return true
+    }
+
+    /// The player was found paused by the check an app's start called for,
+    /// having stopped playing after that app was first heard: the app paused
+    /// it as it started (VLC does, by default, with Spotify and Music). That
+    /// pause counts as ours, so the music comes back once the apps stop, as
+    /// if AutoHush had paused it. A pause from before the app was heard is
+    /// the user's, and stays. The player's reports may come late
+    /// (`MusicPlayer.stateReportDelay`): a pause is only taken when it surely
+    /// came after the app was heard, give or take the monitor's own delay.
+    private func takeOverPauseOfStartingApp(_ state: PlayerState, checkedAt checked: Date) -> Bool {
+        guard state == .paused, !pausedByUs, !isShutDown, autoPauseEnabled,
+              let start = latestStart, let stopped = stoppedPlayingAt,
+              checked.timeIntervalSince(start.counted) <= Self.startCheckWindow,
+              stopped.timeIntervalSince(start.heard) - player.stateReportDelay >= -Self.hearingDelay
+        else { return false }
+        pauseFailure = nil
+        logger.debug("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop")
+        // Things may have changed while the player answered.
+        if holdPause(), !isShutDown, activeSources.isEmpty { scheduleResume(after: nil) }
         return true
     }
 

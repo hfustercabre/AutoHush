@@ -101,6 +101,29 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
+    @Test("a start says when the app was first heard, before it counted; a stop says nothing")
+    func startSaysWhenFirstHeard() async {
+        let h = Harness(meter: false)
+        h.start()
+        h.step(after: 2, [Self.process(1, "org.videolan.vlc")]) // first heard
+        let heard = h.clock.now
+        h.step(after: 0.5)
+        h.step(after: 0.5) // counts as playing
+        await h.recorder.waitForEvents(count: 1)
+        h.step(after: 0.25, [])
+        h.step(after: 2)
+        await h.recorder.waitForEvents(count: 2)
+        // Heard again: a new start, from then.
+        h.step(after: 1, [Self.process(1, "org.videolan.vlc")])
+        let heardAgain = h.clock.now
+        h.step(after: 1)
+        await h.recorder.waitForEvents(count: 3)
+
+        #expect(await h.recorder.events.map(\.isPlaying) == [true, false, true])
+        #expect(await h.recorder.heardSince == [heard, nil, heardAgain])
+        h.monitor.stop()
+    }
+
     @Test("a notification-length blip never reaches the arbiter")
     func shortBlipIsIgnored() async {
         let h = Harness(meter: false)
@@ -826,6 +849,8 @@ struct AudioMonitorTests {
             .init(bundleID: "org.videolan.vlc", isPlaying: false),
             .init(bundleID: "org.videolan.vlc", isPlaying: true),
         ])
+        // It played all along: not heard just now, so its start says nothing of when.
+        #expect(Array(await h.recorder.heardSince.suffix(2)) == [nil, nil])
         h.monitor.stop()
     }
 
@@ -1005,12 +1030,15 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
     }
 
     private(set) var events: [Event] = []
+    /// When each event's app was first heard, as the monitor said, in order.
+    private(set) var heardSince: [Date?] = []
     private(set) var playerLocal: [Bool] = []
     /// Every call in arrival order.
     private(set) var log: [String] = []
 
-    func handleSourceChange(sourceID: String, isPlaying: Bool) async {
+    func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date?) async {
         events.append(.init(bundleID: sourceID, isPlaying: isPlaying))
+        self.heardSince.append(heardSince)
         log.append("\(isPlaying ? "+" : "-")\(sourceID)")
     }
 
@@ -1051,17 +1079,6 @@ private struct StubSourceIdentifier: AudioSourceIdentifying {
     }
 
     func sourceID(forPID pid: pid_t) -> String? { owners[pid] }
-}
-
-private final class ManualClock: @unchecked Sendable {
-    private let lock = NSLock()
-    private var current = Date(timeIntervalSinceReferenceDate: 0)
-
-    var now: Date { lock.withLock { current } }
-
-    func advance(by seconds: TimeInterval) {
-        lock.withLock { current += seconds }
-    }
 }
 
 private final class ValueRecorder<Value: Sendable>: @unchecked Sendable {

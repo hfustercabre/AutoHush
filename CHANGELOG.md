@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Music another app paused as it started didn't come back.** VLC, for
+  one, pauses Spotify and Apple Music itself when it starts playing, before
+  AutoHush pauses them, so AutoHush found them paused and left them alone
+  once VLC stopped. AutoHush now resumes a pause like that as its own, when
+  your player stopped after the other app's sound began. One you made
+  before stays yours.
+
 ## [0.12.0] — 2026-10-10
 
 ### Changed
