@@ -131,7 +131,10 @@ final class MonitoringPipeline {
     /// Started while the Mac sleeps (`asleep`), the arbiter knows it before
     /// any app reaches it; a wake told meanwhile wins, though it may reach
     /// the arbiter first (the changes are numbered).
-    func start(takingOverPause: Bool = false, asleep: Bool = false) async {
+    /// Starts monitoring; `true` when it took a pause over (`takingOverPause`
+    /// and the player is paused).
+    @discardableResult
+    func start(takingOverPause: Bool = false, asleep: Bool = false) async -> Bool {
         if asleep {
             sleepChanges += 1
             await arbiter.setAsleep(true, change: sleepChanges)
@@ -139,12 +142,13 @@ final class MonitoringPipeline {
         // Observe before seeding so no state change can slip in between.
         playerObserver.start()
         let initialState = await arbiter.refreshPlaybackState()
-        guard !isStopped else { return }
+        guard !isStopped else { return false }
         // Before monitoring starts, so the apps it finds see the pause as ours.
-        if takingOverPause { await arbiter.takeOverPause() }
-        guard !isStopped else { return }
+        let tookOver = takingOverPause ? await arbiter.takeOverPause() : false
+        guard !isStopped else { return tookOver }
         monitor.setPlayerPlaying(initialState == .playing)
         monitor.start()
+        return tookOver
     }
 
     func stop() {

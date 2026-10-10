@@ -239,18 +239,21 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// player is still paused, it counts as paused by this arbiter, so the
     /// music comes back once no other app plays. Apps still playing are found
     /// again first; when none is, the music resumes after the start
-    /// confirmation plus `takeOverMargin`.
-    package func takeOverPause() async {
+    /// confirmation plus `takeOverMargin`. `false` when there was no pause to
+    /// take over: the player isn't paused.
+    @discardableResult
+    package func takeOverPause() async -> Bool {
         // Handed over while the Mac sleeps: forgotten, as any pause then.
-        guard !isShutDown, !isAsleep else { return }
+        guard !isShutDown, !isAsleep else { return false }
         let state = await livePlayerState()
-        guard !isShutDown, state == .paused else { return }
+        guard !isShutDown, state == .paused else { return false }
         pausedByUs = true
         logger.debug("[arbiter] took over the pause of the previous AutoHush")
         publishPlaybackState()
         if activeSources.isEmpty {
             scheduleResume(after: autoPauseEnabled ? configuration.sourceStartConfirmation + Self.takeOverMargin : nil)
         }
+        return true
     }
 
     /// Called whenever the player reports a new state. If the user resumed,

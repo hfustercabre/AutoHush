@@ -1527,6 +1527,47 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("quitting with players held paused hands those over too, with or without the chosen one's pause")
+    func heldPausesHandedOverOnQuit() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.second)
+        sut.heldPauses.keep(FakeMonitoring(), token: UUID(), bundleID: Players.first)
+        sut.handOverPauses()
+        #expect(scratch.preferences.pauseHandover?.held == [Players.first])
+        #expect(scratch.preferences.pauseHandover?.holdsChosen == false)
+
+        sut.apply(.playback(.pausedByMonitor)) // the chosen one paused too
+        sut.handOverPauses()
+        #expect(scratch.preferences.pauseHandover?.player == Players.second)
+        #expect(scratch.preferences.pauseHandover?.holdsChosen == true)
+    }
+
+    @MainActor
+    @Test("players held paused when the AutoHush before quit are handed over: the others' monitoring starts at launch, the chosen one takes its own back")
+    func heldPausesHandedOverOnLaunch() {
+        let now = Date()
+        let scratch = Scratch()
+        scratch.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil,
+                                                          holdsChosen: false, held: [Players.second])
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.first)
+        #expect(sut.handedOverHeldPlayers(now: now) == [Players.second])
+        #expect(sut.handedOverHeldPlayers(now: now).isEmpty) // read once
+        #expect(!sut.takesOverPause(now: now)) // the chosen player wasn't paused
+
+        let back = Scratch()
+        back.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil,
+                                                       holdsChosen: false, held: [Players.first, Players.second])
+        let (chosen, _) = makeSUT(back, chosenPlayer: Players.first)
+        #expect(chosen.handedOverHeldPlayers(now: now) == [Players.second])
+        #expect(chosen.takesOverPause(now: now)) // chosen again since: its own pause back
+
+        let stale = Scratch()
+        stale.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1)),
+                                                        player: nil, holdsChosen: false, held: [Players.second])
+        #expect(makeSUT(stale, chosenPlayer: Players.first).0.handedOverHeldPlayers(now: now).isEmpty)
+    }
+
+    @MainActor
     @Test("the update choice is saved and shown in Settings; it starts at installing")
     func automaticUpdatesSetting() {
         let scratch = Scratch()

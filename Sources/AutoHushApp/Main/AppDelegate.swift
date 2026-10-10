@@ -78,9 +78,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The monitoring of players AutoHush held paused when the user chose
     /// another, running on to end those pauses (`HeldPauses`).
     let heldPauses = HeldPauses()
-    /// The player chosen was held paused: its new monitoring takes the pause
-    /// back over.
-    private var takesBackHeldPause = false
     /// Which monitoring an update comes from: the current one has this.
     private var pipelineToken = UUID()
     /// A restart for an update or by another copy takes seconds: an older
@@ -281,6 +278,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             let others = await otherInstances.quitAll()
             if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
+            startHeldPauses(handedOverHeldPlayers())
             if player == nil {
                 showPlayerChooser()
             } else {
@@ -298,10 +296,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // (an update, another copy, a quick reopen) resumes the music once the
         // other apps stop. Later than `pauseHandoverMaxAge`, it's ignored,
         // and so is one for another player than the one chosen by then.
-        if status.playback == .pausedByMonitor {
-            preferences.pauseHandover = PauseHandover(at: Date(), player: player?.bundleID)
-        }
-        guard let pipeline else { return .terminateNow }
+        handOverPauses()
+        let pipeline = self.pipeline
+        guard pipeline != nil || !heldPauses.isEmpty else { return .terminateNow }
         self.pipeline = nil
         var replied = false
         let reply: @MainActor () -> Void = {
@@ -310,7 +307,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sender.reply(toApplicationShouldTerminate: true)
         }
         Task { @MainActor in
-            await pipeline.stopAndRestoreVolume()
+            await pipeline?.stopAndRestoreVolume()
+            await heldPauses.stopAndRestoreAll()
             reply()
         }
         // Never hang the quit. A timer, not the main queue: it also fires when
@@ -406,11 +404,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// for it (`heldPauses`). A player held paused that is chosen again is
     /// taken back by its new monitoring.
     private func holdPause(for bundleID: String) {
-        if status.playback == .pausedByMonitor, let pipeline, let leaving = player {
-            heldPauses.keep(pipeline, token: pipelineToken, bundleID: leaving.bundleID)
-            self.pipeline = nil // left running by the next start
+        if heldPauses.choose(bundleID, leaving: player?.bundleID, current: pipeline, token: pipelineToken,
+                             holdsPause: status.playback == .pausedByMonitor) {
+            pipeline = nil // left running by the next start
         }
-        if heldPauses.takeBack(bundleID) { takesBackHeldPause = true }
+    }
+
+    /// Hands the pauses AutoHush holds over to the AutoHush opened next: the
+    /// chosen player's, and those of players held paused when another was
+    /// chosen.
+    func handOverPauses(now: Date = Date()) {
+        let holdsChosen = status.playback == .pausedByMonitor
+        guard holdsChosen || !heldPauses.isEmpty else { return }
+        preferences.pauseHandover = PauseHandover(at: now, player: holdsChosen ? player?.bundleID : nil,
+                                                  holdsChosen: holdsChosen, held: heldPauses.bundleIDs)
+    }
+
+    /// At launch: the players held paused when the AutoHush before this one
+    /// quit, recently, other than the chosen one, whose own monitoring takes
+    /// its pause back (`takesOverPause`); read once.
+    func handedOverHeldPlayers(now: Date = Date()) -> [String] {
+        guard let handover = preferences.pauseHandover, !handover.held.isEmpty,
+              (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at)) else { return [] }
+        let chosen = player?.bundleID
+        preferences.pauseHandover = PauseHandover(at: handover.at, player: handover.player, holdsChosen: handover.holdsChosen,
+                                                  held: handover.held.filter { $0 == chosen })
+        return handover.held.filter { $0 != chosen }
+    }
+
+    /// Players held paused get their monitoring again, whatever the chosen
+    /// player's does: it takes their pause over and ends it as it would have.
+    private func startHeldPauses(_ bundleIDs: [String]) {
+        for bundleID in bundleIDs {
+            guard let held = players.player(bundleID: bundleID) else { continue }
+            let token = UUID()
+            let monitoring = makePipeline(for: held, token: token)
+            heldPauses.keep(monitoring, token: token, bundleID: bundleID, awaitingTakeOver: true)
+            Task { [weak self, macIsAsleep] in
+                // Played or quit by the user meanwhile: nothing to end.
+                if await !monitoring.start(takingOverPause: true, asleep: macIsAsleep) { self?.heldPauses.drop(token) }
+            }
+        }
     }
 
     // MARK: - Auto-pause and ignored apps
@@ -499,6 +533,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func applyIgnoredApps(_ apps: [AudioSource]) {
         preferences.ignoredApps = apps
         pipeline?.setIgnoredSources(Set(apps.map(\.id)))
+        heldPauses.setIgnoredSources(Set(apps.map(\.id)))
         showApps()
     }
 
@@ -533,6 +568,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil
         scheduleAutoPauseUpdate(at: snoozeEnd.map { AppStatus.AutoPause.nextChange(snoozedUntil: $0, now: now) })
         pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
+        heldPauses.setAutoPauseEnabled(setting.isActive(at: now))
     }
 
     /// Applies auto-pause again at `date`: when the snooze ends, or at midnight
@@ -814,10 +850,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard asleep != macIsAsleep else { return }
         macIsAsleep = asleep
         // As any pause: after sleeping it's the user's (decision S2).
-        if asleep {
-            heldPauses.stopAll()
-            takesBackHeldPause = false
-        }
+        if asleep { heldPauses.stopAll() }
         logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
         pipeline?.setAsleep(asleep)
     }
@@ -898,28 +931,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let token = UUID()
         pipelineToken = token
-        let pipeline = MonitoringPipeline(
-            player: player,
-            hostedApp: hostedApp,
-            configuration: currentConfiguration,
-            autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
-            ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
-            detectionMethod: preferences.detectionMethod,
-            learnedAssertions: preferences.playbackAssertions
-        ) { [weak self, token] update in
-            // A held pause's monitoring reports to `heldPauses` only.
-            guard let self, !self.heldPauses.follow(update, from: token) else { return }
-            self.apply(update)
-        }
+        let pipeline = makePipeline(for: player, token: token)
         self.pipeline = pipeline
-        let takesBack = takesBackHeldPause
-        takesBackHeldPause = false
-        await pipeline.start(takingOverPause: takesOverPause() || takesBack, asleep: macIsAsleep)
+        // Both asked every time: each answers once.
+        let takesBack = heldPauses.takesBack(player.bundleID)
+        let takesOver = takesOverPause()
+        await pipeline.start(takingOverPause: takesOver || takesBack, asleep: macIsAsleep)
         guard generation == bootstrapGeneration else { return }
         failedStarts = 0
         loggedStartupProblem = nil
         status.controlError = nil
         setHealth(.ready)
+    }
+
+    /// Monitoring for `player`, whose updates come with `token`: the current
+    /// one's are applied; a held pause's stay with `heldPauses`.
+    private func makePipeline(for player: any MusicPlayer, token: UUID) -> MonitoringPipeline {
+        var configuration = currentConfiguration
+        configuration.musicPlayerBundleID = player.bundleID
+        return MonitoringPipeline(
+            player: player,
+            hostedApp: hostedApp,
+            configuration: configuration,
+            autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
+            ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
+            detectionMethod: preferences.detectionMethod,
+            learnedAssertions: preferences.playbackAssertions
+        ) { [weak self, token] update in
+            guard let self, !self.heldPauses.takes(update, from: token) else { return }
+            self.apply(update)
+        }
     }
 
     /// Checks again that AutoHush may still control the player, when it
@@ -1080,8 +1121,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pauseHandoverChecked = true
         guard let handover = preferences.pauseHandover else { return false }
         preferences.pauseHandover = nil
+        guard (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at)) else { return false }
+        // Held paused then, and chosen now: its own pause, back.
+        if let chosen = player?.bundleID, handover.held.contains(chosen) { return true }
+        guard handover.holdsChosen else { return false }
         if let paused = handover.player, paused != player?.bundleID { return false }
-        return (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at))
+        return true
     }
 
     /// A moment when AutoHush can restart for an update unnoticed: it isn't

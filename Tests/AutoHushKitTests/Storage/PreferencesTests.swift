@@ -144,6 +144,14 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).pauseHandover == PauseHandover(at: date, player: nil))
         preferences.pauseHandover = nil
         #expect(Preferences(store: scratch.defaults).pauseHandover == nil)
+
+        // Only players held paused when another was chosen.
+        let held = PauseHandover(at: date, player: nil, holdsChosen: false, held: ["org.videolan.vlc", "com.example.jukebox"])
+        preferences.pauseHandover = held
+        #expect(Preferences(store: scratch.defaults).pauseHandover == held)
+        let both = PauseHandover(at: date, player: "com.spotify.client", held: ["org.videolan.vlc"])
+        preferences.pauseHandover = both
+        #expect(Preferences(store: scratch.defaults).pauseHandover == both)
     }
 
     @Test("a handover from AutoHush 0.8.2 or earlier names no player, even with one left from before")

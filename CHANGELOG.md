@@ -16,7 +16,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   different player meanwhile.** Choosing one ended the pause AutoHush was
   holding without resuming it. The player you left now plays again once
   the other apps stop, as it would have, unless you played or quit it
-  yourself; choose it again and AutoHush takes the pause back.
+  yourself, and even if AutoHush is reopened meanwhile; choose it again and
+  AutoHush takes the pause back.
 - **Learn Controls didn't open the web app.** With it closed, It's Playing
   could only say AutoHush couldn't see its page. Now the web app opens with
   the learning window, as after adding it.

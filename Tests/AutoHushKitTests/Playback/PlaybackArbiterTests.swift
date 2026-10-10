@@ -1005,7 +1005,7 @@ struct PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.takeOverPause()
+        #expect(await arbiter.takeOverPause()) // it was paused: taken over
         #expect(scheduler.scheduledDelays == [AppConfiguration.testing.sourceStartConfirmation + PlaybackArbiter.takeOverMargin])
         #expect(await player.playCallCount == 0)
 
@@ -1042,7 +1042,7 @@ struct PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.takeOverPause()
+        #expect(await !arbiter.takeOverPause()) // no pause to take over
         await settle()
         #expect(scheduler.scheduledDelays.isEmpty)
         #expect(await player.playCallCount == 0)

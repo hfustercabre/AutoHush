@@ -99,7 +99,7 @@ struct MonitoringPipelineTests {
         let starting = Task { await setup.pipeline.start(asleep: true) }
         await Task.yield() // it has begun
         setup.pipeline.setAsleep(false)
-        await starting.value
+        _ = await starting.value
         await setup.otherAppPlays()
         await waitUntil { await player.pauseCallCount == 1 }
         #expect(await player.pauseCallCount == 1)

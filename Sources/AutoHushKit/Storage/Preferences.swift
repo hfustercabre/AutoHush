@@ -238,12 +238,18 @@ package final class Preferences {
             let named = defaults.object(forKey: Key.pauseHandedOverPlayer) as? [String: Any]
             let namedAt = named?["at"] as? Date
             let isThisPause = namedAt.map { abs($0.timeIntervalSince(at)) < 1 } ?? false
-            return PauseHandover(at: at, player: isThisPause ? named?["player"] as? String : nil)
+            guard isThisPause, let named else { return PauseHandover(at: at, player: nil) }
+            // Before 0.11.1 there was only the chosen player's pause.
+            return PauseHandover(at: at, player: named["player"] as? String,
+                                 holdsChosen: named["chosen"] as? Bool ?? true, held: named["held"] as? [String] ?? [])
         }
         set {
             defaults.set(newValue?.at, forKey: Key.pauseHandedOver)
             let named: [String: Any]? = newValue.flatMap { handover in
-                handover.player.map { ["at": handover.at, "player": $0] }
+                guard handover.player != nil || !handover.holdsChosen || !handover.held.isEmpty else { return nil }
+                var named: [String: Any] = ["at": handover.at, "chosen": handover.holdsChosen, "held": handover.held]
+                if let player = handover.player { named["player"] = player }
+                return named
             }
             defaults.set(named, forKey: Key.pauseHandedOverPlayer)
         }
