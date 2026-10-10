@@ -18,6 +18,7 @@ struct SafariWebAppPlayerTests {
         let probe = FakeLevelProbe()
         let pid = PIDBox(4242)
         let key = PlayPauseKeyBox()
+        let nowPlaying = NowPlayingBox()
         let player: SafariWebAppPlayer
 
         init(recipe: PlayPauseRecipe? = nil, running: Bool = true) {
@@ -27,7 +28,8 @@ struct SafariWebAppPlayerTests {
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
                 sleep: { [clock] in clock.advance($0) },
-                pressKey: { [key] in key.press() }
+                pressKey: { [key] in key.press() },
+                nowPlaying: { [nowPlaying] in nowPlaying.answer }
             )
         }
 
@@ -101,7 +103,7 @@ struct SafariWebAppPlayerTests {
     func pausesByItself() async {
         let setup = Setup()
         setup.showPage()
-        #expect(await setup.player.pauseByItself() == false) // It's Playing comes first
+        #expect(await setup.player.pauseByItself() == .didntTake) // It's Playing comes first
         #expect(setup.key.count == 0)
 
         setup.page.set(1, label: "Pause")
@@ -113,7 +115,7 @@ struct SafariWebAppPlayerTests {
             page.set(1, label: "Play")
             page.set(2, label: "Play")
         }
-        #expect(await setup.player.pauseByItself())
+        #expect(await setup.player.pauseByItself() == .paused)
         #expect(setup.key.count == 1)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
@@ -137,7 +139,7 @@ struct SafariWebAppPlayerTests {
             page.set(1, label: "Play current")
             page.set(2, label: "Play")
         }
-        #expect(await setup.player.pauseByItself())
+        #expect(await setup.player.pauseByItself() == .paused)
         #expect(setup.store.recipe(for: Self.app.bundleID)
             == PlayPauseRecipe(playLabel: "Play current", pauseLabel: "Pause current", places: [bar]))
         #expect(setup.page.presses == [1]) // played again with the bar's button
@@ -151,7 +153,7 @@ struct SafariWebAppPlayerTests {
         setup.page.sound = true
         #expect(await setup.player.markPlaying() == .noted)
         let started = setup.clock.now
-        #expect(await setup.player.pauseByItself() == false)
+        #expect(await setup.player.pauseByItself() == .didntTake)
         #expect(setup.key.count == 2) // the second undoes the first, wherever it went
         #expect(setup.clock.now.timeIntervalSince(started) >= 3)
         #expect(setup.player.learningStatus == .learning(hasPlayed: true))
@@ -159,6 +161,41 @@ struct SafariWebAppPlayerTests {
 
         setup.page.set(1, label: "Play")
         #expect(await setup.player.markPaused() == .noted)
+        #expect(setup.player.learningStatus == .learned)
+    }
+
+    @Test("when another app is Now Playing, or none is, the Play/Pause key isn't pressed: the user pauses it")
+    func keyWouldGoElsewhere() async {
+        // A pid that can't be the web app's, nor one of its helpers.
+        for answer in [NowPlayingApp.Answer.process(pid_t.max - 1), .none] {
+            let setup = Setup()
+            setup.showPage()
+            setup.page.set(1, label: "Pause")
+            setup.page.sound = true
+            setup.nowPlaying.answer = answer
+            #expect(await setup.player.markPlaying() == .noted)
+            #expect(await setup.player.pauseByItself() == .keyGoesElsewhere)
+            #expect(setup.key.count == 0)
+            #expect(setup.page.presses.isEmpty)
+            #expect(setup.player.learningStatus == .learning(hasPlayed: true))
+
+            setup.page.set(1, label: "Play") // the user paused it
+            #expect(await setup.player.markPaused() == .noted)
+            #expect(setup.player.learningStatus == .learned)
+        }
+    }
+
+    @Test("when the web app itself is Now Playing, the Play/Pause key is pressed")
+    func keyReachesTheWebApp() async {
+        let setup = Setup()
+        setup.showPage()
+        setup.page.set(1, label: "Pause")
+        setup.page.sound = true
+        setup.nowPlaying.answer = .process(setup.pid.value)
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.key.onPress = { [page = setup.page] in page.set(1, label: "Play") }
+        #expect(await setup.player.pauseByItself() == .paused)
+        #expect(setup.key.count == 1)
         #expect(setup.player.learningStatus == .learned)
     }
 
@@ -172,7 +209,7 @@ struct SafariWebAppPlayerTests {
         setup.page.blankLooks = 100 // its words gone meanwhile (a window restored at login)
         let started = setup.clock.now
         let looksBefore = setup.page.looks
-        #expect(await setup.player.pauseByItself() == false)
+        #expect(await setup.player.pauseByItself() == .didntTake)
         let checks = Int(WebAppControl.keyWait / WebAppControl.keyCheckInterval)
         #expect(setup.page.looks - looksBefore == checks) // one look a check
         #expect(setup.clock.now.timeIntervalSince(started) < WebAppControl.keyWait + WebAppControl.firstLookWait)
@@ -934,6 +971,17 @@ final class PIDBox: @unchecked Sendable {
     var value: pid_t {
         get { lock.withLock { _value } }
         set { lock.withLock { _value = newValue } }
+    }
+}
+
+/// The Now Playing app in tests: unknown (the key is pressed, as ever)
+/// unless a test sets it.
+final class NowPlayingBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _answer = NowPlayingApp.Answer.unknown
+    var answer: NowPlayingApp.Answer {
+        get { lock.withLock { _answer } }
+        set { lock.withLock { _answer = newValue } }
     }
 }
 

@@ -35,16 +35,19 @@ package enum SupportedPlayers {
     )
 
     /// The music services' web players AutoHush has been tested with (live,
-    /// 2026-10-06), the most used first: Spotify, YouTube Music (125 million
-    /// subscribers), Amazon Music, then Deezer (about 10 million). Their web
-    /// apps are offered first, and suggested until added; any other web app
-    /// is offered after them, marked untested.
+    /// 2026-10-06; SoundCloud 2026-10-09, and taking Now Playing as it plays
+    /// 2026-10-10), the most subscribed first: Spotify, YouTube Music (125
+    /// million subscribers), Amazon Music, Deezer (about 10 million), then
+    /// SoundCloud, most of whose listeners don't subscribe. Their web apps
+    /// are offered first, and suggested until added; any other web app is
+    /// offered after them, marked untested.
     package static let testedWebApps: [TestedWebApp] = [
         TestedWebApp(name: "Spotify", address: "open.spotify.com"),
         TestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
         TestedWebApp(name: "Amazon Music", address: amazonMusicSite(region: Locale.current.region?.identifier),
                      otherHosts: ["music.amazon.com"] + amazonMusicSites.values),
         TestedWebApp(name: "Deezer", address: "deezer.com"),
+        TestedWebApp(name: "SoundCloud", address: "soundcloud.com"),
     ]
 
     /// The Safari web apps in the Applications folders, looked for once for

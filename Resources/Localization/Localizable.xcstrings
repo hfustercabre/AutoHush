@@ -18657,6 +18657,215 @@
         }
       }
     },
+    "AutoHush didn’t pause %@: the Play/Pause key would have reached another app." : {
+      "comment" : "Under the step “Let AutoHush pause it”, marked failed, when AutoHush didn't press the keyboard's Play/Pause key because macOS would have sent it to another app (the one in Now Playing); the step “Pause it yourself” follows; %@ is the web app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يوقف AutoHush %@ مؤقتًا: كان مفتاح التشغيل/الإيقاف المؤقت سيصل إلى تطبيق آخر."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'AutoHush no ha posat en pausa %@: la tecla Reproduir/Pausa hauria arribat a una altra app."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nepozastavil aplikaci %@: klávesa Přehrát/Pozastavit by se dostala k jiné aplikaci."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush satte ikke %@ på pause: Afspil/Pause-tasten ville have ramt en anden app."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush hat %@ nicht pausiert: Die Wiedergabe/Pause-Taste hätte eine andere App erreicht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush δεν έθεσε σε παύση την εφαρμογή %@: το πλήκτρο Αναπαραγωγή/Παύση θα έφτανε σε άλλη εφαρμογή."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no ha pausado %@: la tecla Reproducir/Pausa habría llegado a otra app."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no pausó %@: la tecla Reproducir/Pausa habría llegado a otra app."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ei keskeyttänyt appia %@: Toista/Tauko-näppäin olisi päätynyt toiseen appiin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush n'a pas mis %@ en pause : la touche Lecture/Pause aurait atteint une autre app."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush n'a pas mis %@ en pause : la touche Lecture/Pause aurait atteint une autre app."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ने %@ को पॉज़ नहीं किया: प्ले/पॉज़ कुंजी किसी दूसरे ऐप तक पहुँच जाती।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nije pauzirao aplikaciju %@: tipka Reproduciraj/Pauziraj stigla bi do druge aplikacije."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush nem szüneteltette a(z) %@ appot: a Lejátszás/Szünet billentyű egy másik appot ért volna el."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tidak menjeda %@: tombol Putar/Jeda akan sampai ke app lain."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush non ha messo in pausa %@: il tasto Riproduci/Pausa avrebbe raggiunto un'altra app."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushは%@を一時停止しませんでした。再生/一時停止キーがほかのAppに届いてしまうためです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 %@ 앱을 일시 정지하지 않았습니다. 재생/일시 정지 키가 다른 앱에 전달되었을 것입니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush satte ikke %@ på pause: Spill av/Pause-tasten ville ha nådd en annen app."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush heeft %@ niet gepauzeerd: de Afspelen/Pauzeren-toets zou een andere app hebben bereikt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nie wstrzymał aplikacji %@: klawisz Odtwórz/Wstrzymaj trafiłby do innej aplikacji."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não pausou %@: a tecla Reproduzir/Pausar teria chegado a outro app."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não pôs %@ em pausa: a tecla Reproduzir/Pausa teria chegado a outra app."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nu a pus pe pauză aplicația %@: tasta Redare/Pauză ar fi ajuns la altă aplicație."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не поставил приложение %@ на паузу: клавиша «Воспроизвести/Пауза» попала бы в другое приложение."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nepozastavil apku %@: kláves Prehrať/Pozastaviť by sa dostal k inej apke."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ni zaustavil aplikacije %@: tipka Predvajaj/Premor bi dosegla drugo aplikacijo."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausade inte %@: tangenten Spela upp/Pausa skulle ha nått en annan app."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %@ uygulamasını duraklatmadı: Oynat/Duraklat tuşu başka bir uygulamaya gidecekti."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не призупинив програму %@: клавіша «Відтворити/Пауза» потрапила б до іншої програми."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush không tạm dừng %@: phím Phát/Tạm dừng sẽ đến một ứng dụng khác."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 未暫停 %@：「播放/暫停」鍵會傳到其他 App。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 未暂停 %@：“播放/暂停”键会传到其他 App。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 未暫停 %@：「播放/暫停」鍵會傳到其他 App。"
+          }
+        }
+      }
+    },
     "AutoHush downloads it and lets you know. It keeps the download for 7 days." : {
       "comment" : "Settings, under the update choice Download it and notify me",
       "localizations" : {

@@ -38,9 +38,9 @@ struct SupportedPlayersTests {
         }
     }
 
-    @Test("Spotify, YouTube Music, Amazon Music and Deezer are the tested web apps; Amazon Music on the Mac's country's site")
+    @Test("Spotify, YouTube Music, Amazon Music, Deezer and SoundCloud are the tested web apps; Amazon Music on the Mac's country's site")
     func suggestedWebApps() {
-        #expect(SupportedPlayers.testedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer"])
+        #expect(SupportedPlayers.testedWebApps.map(\.name) == ["Spotify", "YouTube Music", "Amazon Music", "Deezer", "SoundCloud"])
         #expect(SupportedPlayers.testedWebApps.map(\.address).allSatisfy { WebAddress.url(from: $0) != nil })
         #expect(SupportedPlayers.amazonMusicSite(region: "ES") == "music.amazon.es")
         #expect(SupportedPlayers.amazonMusicSite(region: "GB") == "music.amazon.co.uk")

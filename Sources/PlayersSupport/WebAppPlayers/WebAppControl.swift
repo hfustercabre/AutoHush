@@ -81,6 +81,8 @@ final class WebAppControl: @unchecked Sendable {
     private let mayMute: @Sendable () -> Bool
     /// Presses the keyboard's Play/Pause key (`PlayPauseKey`).
     private let pressKey: @Sendable () -> Void
+    /// The app the key would reach (`NowPlayingApp`).
+    private let nowPlaying: @Sendable () -> NowPlayingApp.Answer
     private let logger = Logger(category: "WebAppPlayer")
 
     private var recipe: PlayPauseRecipe?
@@ -133,6 +135,7 @@ final class WebAppControl: @unchecked Sendable {
         levelProbe: any AudioLevelProbing,
         mayMute: @escaping @Sendable () -> Bool = { true },
         pressKey: @escaping @Sendable () -> Void = {},
+        nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { .unknown },
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
     ) {
@@ -145,6 +148,7 @@ final class WebAppControl: @unchecked Sendable {
         self.levelProbe = levelProbe
         self.mayMute = mayMute
         self.pressKey = pressKey
+        self.nowPlaying = nowPlaying
         self.clock = clock
         self.sleep = sleep
         recipe = store.recipe(for: bundleID)
@@ -336,12 +340,24 @@ final class WebAppControl: @unchecked Sendable {
     /// Right after the user said it plays: AutoHush pauses it itself, with
     /// the keyboard's Play/Pause key, learns the button whose words changed,
     /// and plays it again with that button. macOS sends the key to the app it
-    /// counts as playing now: the web app, while its song plays, but it can
-    /// be another (one that played last), or the site can ignore it. With no
-    /// change within `keyWait` the key is pressed again, to undo whatever it
-    /// did, and `false` says the user pauses it and says so (`notePaused`).
-    func pauseByItself(pid: pid_t?) -> Bool {
-        guard let learner, learner.hasPlayed, let pid else { return false }
+    /// counts as playing now ("Now Playing"): the web app, once it plays. If
+    /// another app holds it (or none does), the key isn't pressed at all:
+    /// `.keyGoesElsewhere`; when that can't be told, the key is pressed as
+    /// ever. The site can still ignore it: with no change within `keyWait`
+    /// the key is pressed again, to undo whatever it did (`.didntTake`).
+    /// Either way the user pauses it and says so (`notePaused`).
+    func pauseByItself(pid: pid_t?) -> SelfPause {
+        guard let learner, learner.hasPlayed, let pid else { return .didntTake }
+        switch nowPlaying() {
+        case .process(let holder) where !ProcessResponsibility.isOwned(holder, by: pid):
+            logger.notice("Another app is Now Playing (pid \(holder, privacy: .public)): \(self.name, privacy: .public) is paused by the user, not the Play/Pause key")
+            return .keyGoesElsewhere
+        case .none:
+            logger.notice("No app is Now Playing: \(self.name, privacy: .public) is paused by the user, not the Play/Pause key")
+            return .keyGoesElsewhere
+        case .process, .unknown:
+            break
+        }
         pressKey()
         let deadline = clock().addingTimeInterval(Self.keyWait)
         repeat {
@@ -358,11 +374,11 @@ final class WebAppControl: @unchecked Sendable {
                 logger.error("Playing \(self.name, privacy: .public) again failed: \(error.localizedDescription, privacy: .public)")
                 pressKey()
             }
-            return true
+            return .paused
         } while clock() < deadline
         pressKey()
         logger.notice("\(self.name, privacy: .public)'s page didn't change for the Play/Pause key: the user pauses it")
-        return false
+        return .didntTake
     }
 
     /// The user says they paused it: the button whose words changed since

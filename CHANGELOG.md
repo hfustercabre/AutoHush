@@ -5,6 +5,23 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **SoundCloud is a tested web app:** it's listed with Spotify, YouTube
+  Music, Amazon Music and Deezer, suggested until you add it, and no longer
+  marked Untested.
+
+### Fixed
+
+- **Learning a web app's controls could pause another app for a moment.**
+  AutoHush pauses the web app with the keyboard's Play/Pause key, which
+  macOS sends to its "Now Playing" app: the one that started playing last.
+  When that's another app (one that started after the web app, say),
+  AutoHush no longer presses the key: it asks you to pause the web app
+  yourself right away.
+
 ## [0.11.3] — 2026-10-10
 
 ### Fixed

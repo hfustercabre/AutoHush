@@ -52,7 +52,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         processIdentifier: (@Sendable () -> pid_t?)? = nil,
         clock: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },
-        pressKey: @escaping @Sendable () -> Void = { DispatchQueue.main.async { PlayPauseKey.press() } }
+        pressKey: @escaping @Sendable () -> Void = { DispatchQueue.main.async { PlayPauseKey.press() } },
+        nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() }
     ) {
         self.app = app
         self.isUntested = isUntested
@@ -63,7 +64,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
                                 muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
-                                pressKey: pressKey, clock: clock, sleep: sleep)
+                                pressKey: pressKey, nowPlaying: nowPlaying, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
     }
 
@@ -87,7 +88,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         return await queue.run { control.notePlaying(pid: pid) }
     }
 
-    package func pauseByItself() async -> Bool {
+    package func pauseByItself() async -> SelfPause {
         let pid = processIdentifier()
         let control = control
         return await queue.run { control.pauseByItself(pid: pid) }

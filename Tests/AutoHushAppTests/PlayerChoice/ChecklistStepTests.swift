@@ -79,6 +79,23 @@ struct ChecklistStepTests {
         #expect(learnedByHand.allSatisfy { $0.button == nil && $0.countdown == nil })
     }
 
+    @Test("the key would have reached another app: AutoHush's step failed, saying so, and the user's pause comes at once, counting down")
+    func learningKeyElsewhere() {
+        let steps = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 59,
+                                        pauseMode: .keyElsewhere)
+        #expect(steps.map(\.state) == [.done, .failed, .current])
+        #expect(steps[1].notes == [LearningText.keyElsewhere("YT Music")])
+        #expect(steps[1].button == nil && steps[1].secondaryButton == nil) // no Try Again: it would go elsewhere again
+        #expect(steps[2].button == .itsPaused)
+        #expect(steps[2].countdown == "You have 0:59 to pause it and click It’s Paused.")
+        #expect(steps.currentAnnouncement == "Pause it yourself")
+
+        let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false, pauseMode: .keyElsewhere)
+        #expect(learned.map(\.state) == [.done, .failed, .done])
+        #expect(LearningPauseMode.keyElsewhere.pausesByHand && LearningPauseMode.byHand.pausesByHand)
+        #expect(!LearningPauseMode.failed.pausesByHand)
+    }
+
     @Test("adding a web app: each phase has its step to do, and VoiceOver hears it")
     func adding() {
         #expect(AddWebAppView.steps(for: .checking, learning: nil).map(\.state) == [.current, .todo, .todo, .todo])

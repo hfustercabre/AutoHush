@@ -72,17 +72,25 @@ extension AppDelegate {
 
     /// It plays (It's Playing, or Try Again): a fresh look at its page, then
     /// AutoHush pauses it itself and learns. When that doesn't take, its
-    /// step is marked failed, offering Try Again and Pause It Manually.
+    /// step is marked failed, offering Try Again and Pause It Manually; when
+    /// another app would get the Play/Pause key, the user pauses it at once,
+    /// as with Pause It Manually.
     private func pauseByItself(_ learner: any LearningMusicPlayer) {
         setLearningPause(deadline: nil, note: nil, mode: .trying)
         Task { [weak self] in
             let mark = await learner.markPlaying()
             guard let self, self.player?.bundleID == learner.bundleID else { return }
             guard mark == .noted else { return await self.backToPlaying(learner, after: mark) }
-            let paused = await learner.pauseByItself()
-            guard self.player?.bundleID == learner.bundleID else { return }
-            if !paused, learner.learningStatus == .learning(hasPlayed: true) {
+            let pause = await learner.pauseByItself()
+            guard self.player?.bundleID == learner.bundleID, learner.learningStatus == .learning(hasPlayed: true) else { return }
+            switch pause {
+            case .paused:
+                break
+            case .didntTake:
                 self.setLearningPause(deadline: nil, note: nil, mode: .failed)
+            case .keyGoesElsewhere:
+                self.setLearningPause(deadline: nil, note: nil, mode: .keyElsewhere)
+                self.startLearningPause()
             }
         }
     }

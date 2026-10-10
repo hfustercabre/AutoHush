@@ -555,6 +555,24 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("It's Playing while another app is Now Playing: no key, the user pauses it at once, with the minute to count")
+    func learningKeyWouldGoElsewhere() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch, learningPauseWait: .seconds(60))
+        sut.chooseMusicPlayer(webApp.bundleID)
+        webApp.keyGoesElsewhere()
+        sut.learningStep(.itsPlaying)
+        await waitFor { sut.settingsModel.learningPauseMode == .keyElsewhere }
+        await waitFor { sut.settingsModel.learningPauseDeadline != nil } // its minute counts down
+        #expect(sut.settingsModel.learningNote == nil)
+        #expect(sut.status.learning == .learning(hasPlayed: true))
+    }
+
+    @MainActor
     @Test("It's Paused as the minute ends: learned, and nothing says the minute went by")
     func learningPausedAtTheLastMoment() async {
         let scratch = Scratch()

@@ -79,6 +79,17 @@ package enum MusicPlayerKind: Sendable {
 /// the user play and pause it once (a web app: which of the page's buttons
 /// plays and pauses it). Until then it reports what it can, but can't be
 /// paused; it learns while its state is read.
+/// How a learning player's own pause went (`pauseByItself`).
+package enum SelfPause: Equatable, Sendable {
+    /// It paused, learned what changed, and plays again.
+    case paused
+    /// The pause didn't take: nothing changed (what was pressed is undone).
+    case didntTake
+    /// Another app is Now Playing, so the Play/Pause key would reach that
+    /// one: nothing was pressed.
+    case keyGoesElsewhere
+}
+
 package protocol LearningMusicPlayer: MusicPlayer {
     /// Where learning stands now.
     var learningStatus: LearningStatus { get }
@@ -97,8 +108,8 @@ package protocol LearningMusicPlayer: MusicPlayer {
     func markPlaying() async -> LearningMark
     /// Right after `markPlaying` noted it: it pauses itself, without the
     /// user (the keyboard's Play/Pause key), learns what changed, and plays
-    /// again. `false` when it couldn't: the user pauses it, then says so.
-    func pauseByItself() async -> Bool
+    /// again. Unless it's `.paused`, the user pauses it, then says so.
+    func pauseByItself() async -> SelfPause
     /// The user says they paused it ("It's Paused"): it learns what changed
     /// since it played.
     func markPaused() async -> LearningMark

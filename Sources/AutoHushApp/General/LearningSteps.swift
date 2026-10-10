@@ -53,6 +53,13 @@ enum LearningText {
                comment: "Under the step “Let AutoHush pause it”, marked failed, when AutoHush couldn't pause the web app itself; “Try Again” and “Pause It Manually” follow; %@ is the web app")
     }
 
+    /// Under AutoHush's pause step when it didn't press the key: another app
+    /// is Now Playing.
+    static func keyElsewhere(_ name: String) -> String {
+        String(localized: "AutoHush didn’t pause \(name): the Play/Pause key would have reached another app.",
+               comment: "Under the step “Let AutoHush pause it”, marked failed, when AutoHush didn't press the keyboard's Play/Pause key because macOS would have sent it to another app (the one in Now Playing); the step “Pause it yourself” follows; %@ is the web app")
+    }
+
     /// Under the user's pause step until it's done.
     static var pauseTip: String {
         String(localized: "Then click It’s Paused. AutoHush sees which button changed.",
@@ -166,6 +173,12 @@ enum LearningPauseMode: Equatable, Sendable {
     case failed
     /// The user pauses it and says so, within the minute.
     case byHand
+    /// The same, at once: another app is Now Playing, so the Play/Pause key
+    /// would have reached that one, and AutoHush didn't press it.
+    case keyElsewhere
+
+    /// The user pauses it (`byHand`, `keyElsewhere`).
+    var pausesByHand: Bool { self == .byHand || self == .keyElsewhere }
 }
 
 /// What the user does while AutoHush learns, and what AutoHush does, each
@@ -186,7 +199,7 @@ struct LearningSteps: View {
 
     var body: some View {
         Group {
-            if let deadline, hasPlayed, !hasPaused, !locked, pauseMode == .byHand {
+            if let deadline, hasPlayed, !hasPaused, !locked, pauseMode.pausesByHand {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     list(remaining: max(0, deadline.timeIntervalSince(context.date)))
                 }
@@ -209,7 +222,9 @@ struct LearningSteps: View {
     /// button, and the note about the last click. While AutoHush pauses it,
     /// its step spins; when it couldn't, the step is marked failed, with Try
     /// Again and Pause It Manually, and the latter adds the user's pause
-    /// step, which counts down. Locked, none is to do yet.
+    /// step, which counts down. When the key would have reached another app,
+    /// the user's pause step comes at once, saying so. Locked, none is to
+    /// do yet.
     static func steps(name: String, hasPlayed: Bool, hasPaused: Bool, locked: Bool,
                       remaining: TimeInterval? = nil, note: LearningNote? = nil,
                       pauseMode: LearningPauseMode = .automatic) -> [ChecklistStep] {
@@ -230,8 +245,10 @@ struct LearningSteps: View {
                                       secondaryButton: .pauseManually, warning: LearningText.autoPauseFailed(name))
         case .byHand:
             autoPause = ChecklistStep(title: LearningText.autoPauseStep, notes: [LearningText.autoPauseFailed(name)], state: .failed)
+        case .keyElsewhere:
+            autoPause = ChecklistStep(title: LearningText.autoPauseStep, notes: [LearningText.keyElsewhere(name)], state: .failed)
         }
-        guard mode == .byHand else { return [playStep, autoPause] }
+        guard mode.pausesByHand else { return [playStep, autoPause] }
         let handPause = ChecklistStep(title: LearningText.handPauseStep, notes: hasPaused ? [] : [LearningText.pauseTip],
                                       state: hasPaused ? .done : .current, button: hasPaused ? nil : .itsPaused,
                                       warning: !hasPaused && note == .nothingChanged ? note?.text(name) : nil,
