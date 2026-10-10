@@ -6,10 +6,10 @@ can hear exactly what would have reached the speakers, silently, and
 [ListenToFades](../ListenToFades) can record and measure it.
 
 ```bash
-bash DevTools/LoopbackDriver/build.sh       # into .build/loopback/AutoHushLoopback.driver
-bash DevTools/LoopbackDriver/install.sh     # asks for an administrator's password
+bash Tools/LoopbackDriver/build.sh       # into .build/loopback/AutoHushLoopback.driver
+bash Tools/LoopbackDriver/install.sh     # asks for an administrator's password
 SwitchAudioSource -t output -u AutoHushLoopback_UID   # play everything through it
-bash DevTools/LoopbackDriver/uninstall.sh   # when testing is over (to the Trash)
+bash Tools/LoopbackDriver/uninstall.sh   # when testing is over (to the Trash)
 ```
 
 `SwitchAudioSource` is Homebrew's `switchaudio-osx`; switch the output back

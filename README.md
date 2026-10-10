@@ -340,8 +340,8 @@ AutoHush (executable: the entry point only)
        │    ├─ MenuPlayers         shared by the players controlled through their playback menu
        │    └─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
        └─ AutoHushKit       the engine: no user interface, no specific player
-measure-volume-curve (developer tool, in DevTools/) → AutoHushPlayers, AutoHushKit
-listen-to-fades (developer tool, in DevTools/): records a loopback device, measures fades
+measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
+listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
 ```
 
 ```text
@@ -392,22 +392,12 @@ Sources/
                          their button, controlling them)
 Tests/                   a test module per module, mirroring its folders (only the player modules' tests
                          name a player), plus AutoHushTestSupport (shared fakes)
-DevTools/                tools for developing AutoHush, never part of the app or its disk image; each has
-                         a README.md saying what it does and how (DevTools/README.md lists them)
+Tools/                   tools for measuring the fades, never part of the app or its disk image; each has
+                         a README.md saying what it does and how (Tools/README.md lists them)
   MeasureVolumeCurve/    measures a player's volume curve
   ListenToFades/         records a loopback device and measures the fades in it
   LoopbackDriver/        AutoHush Loopback, a test-only virtual audio device, with build, install and
                          uninstall scripts
-  TestVM/                runs builds, tests and apps in a macOS VM, so live tests don't disturb the Mac
-  OldMacVM/              runs an app in a VM of an older macOS (15.0), started by a double-click in it
-  NoiseMaker/            a test app that plays a tone or a file, as "another app playing"
-  PauseCheck/            in the VM, times AutoHush's pause and resume around a Noise Maker sound
-  PageButtons/           lists or presses a web page's buttons by name (to drive a web app in tests)
-  SoundNow/              lists the apps playing sound right now, the way AutoHush counts them
-  MediaKey/              presses the keyboard's Play/Pause key, and tries it on a web app with a person
-  UIInput/               clicks, drags and scrolls in the desktop session (prompts, SwiftUI buttons)
-  WindowList/            lists an app's windows with their place, to check or capture one
-  MemWatch/              samples a process's memory over hours (leak checks)
 Resources/               Info.plist, entitlements, AutoHush.icon (the app icon), and Localization/ with the
                          String Catalogs, assembled into the .app by Scripts/build-app.sh
 ```
@@ -427,7 +417,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. If it can't be scripted but has a playback menu with Play/Pause first and ⌘← and ⌘→ items, as TIDAL and Podcasts do, it's a `MenuPlayerProfile`: its bundle ID, name, menu name and how to read its own words for Play and Pause from its bundle. Otherwise it's a type implementing `MusicPlayer`, as `VLCPlayer` does;
 2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;
 3. its placeholder icon, a `PlayerIconPlaceholder` in its module (as `SpotifyIcon.swift`): its tile's colors and its mark drawn as a path on a 1000-point tile, shown while the app isn't installed. The catalog's tests check that every player has one;
-4. its volume curve, measured with `swift run measure-volume-curve <bundle-id>`.
+4. its volume curve: linear until it's measured. The maintainer measures it before the player ships.
 
 A website needs none of this: added to the Dock from Safari, it's offered as a player, and AutoHush learns its Play/Pause button. `MusicPlayerCatalog` takes such players besides the built-in ones (`found`) and the sites it suggests adding (`suggested`); a player that has to learn implements `LearningMusicPlayer`, whose status the app shows, and one that may mute itself implements `MutingMusicPlayer`. Once a website has been tested live, add it to `SupportedPlayers.testedWebApps`: its web app is then offered first and suggested until added, instead of being marked untested.
 
@@ -436,17 +426,12 @@ Defaults that aren't in Settings, such as tick rates, the gap tolerance and the 
 ### Build and test
 
 ```bash
-swift build      # build every module and the developer tools
+swift build      # build every module and the tools
 swift test       # run the tests of every module
 bash Scripts/build-app.sh release   # build and sign AutoHush.app
-swift run measure-volume-curve      # measure the first player's volume curve (or pass a bundle ID)
 ```
 
 The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts.
-
-`measure-volume-curve [bundle-id] [volume …]` measures how a supported player's volume number maps to loudness, for its `VolumeCurve`, using the engine's own tap meter. It plays the music for about 50 seconds at changing volumes, prints a table in decibels and the best-fitting curve, then puts the volume and play state back. It needs permission to record system audio.
-
-`listen-to-fades` hears the fades the way you do. Build and install the test-only loopback device (`bash DevTools/LoopbackDriver/build.sh`, then `install.sh`, which asks for an administrator's password and restarts Core Audio; `uninstall.sh` moves it to the Trash), set the Mac's sound output to "AutoHush Loopback", and record while the music fades: `swift run listen-to-fades record 90 fades.wav`. Capture AutoHush's log meanwhile (`log stream --level debug --style compact --predicate 'subsystem == "com.autohush.AutoHush"' > fades.log`: its fade lines are debug-level, which `log show` doesn't keep), then `swift run listen-to-fades analyze fades.wav --log fades.log` prints the music's level through each fade next to an ideal one, and any dropout or jump. Recording a device needs the Microphone permission; only that device is read. While "AutoHush Loopback" is the sound output, everything the Mac plays can be recorded from it like a microphone, by any app allowed to use one: switch the output back when you're done, and uninstall it once you no longer test.
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 

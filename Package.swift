@@ -18,8 +18,8 @@ import PackageDescription
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
 //
-//   measure-volume-curve (developer tool, in DevTools/) → AutoHushPlayers, AutoHushKit
-//   listen-to-fades (developer tool, in DevTools/): records a loopback device
+//   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
+//   listen-to-fades (developer tool, in Tools/): records a loopback device
 //                               and measures AutoHush's fades in it
 //
 // Code inside a module is grouped by domain. Types shared between modules use
@@ -77,7 +77,7 @@ let package = Package(
         .executableTarget(
             name: "MeasureVolumeCurve",
             dependencies: ["AutoHushKit", "AutoHushPlayers"],
-            path: "DevTools/MeasureVolumeCurve",
+            path: "Tools/MeasureVolumeCurve",
             exclude: ["README.md"]
         ),
 
@@ -85,7 +85,7 @@ let package = Package(
         // as you hear them. A developer tool: never part of AutoHush.app.
         .executableTarget(
             name: "ListenToFades",
-            path: "DevTools/ListenToFades",
+            path: "Tools/ListenToFades",
             exclude: ["README.md"]
         ),
 
