@@ -135,4 +135,17 @@ struct ChecklistStepTests {
         #expect(already.map(\.title)[1] == "Already in your Dock as “YT Music”")
         #expect(already.map(\.state) == [.done, .done, .current, .todo])
     }
+
+    @Test("the Add window's steps come in two groups, adding then learning, whatever the number of learning steps")
+    func addAndLearnGroups() {
+        let made = AddWebAppModel.Phase.learning(name: "YT Music", alreadyThere: false)
+        let byHand = AddWebAppView.stepGroups(for: made, learning: .learning(hasPlayed: true), pauseMode: .byHand)
+        #expect(byHand.adding.last?.title == "Add it to the Dock as “YT Music”")
+        #expect(byHand.learning.count == 3) // paused by hand: a step more
+        #expect(byHand.learning.first?.title == "Play a song in YT Music")
+
+        let adding = AddWebAppView.stepGroups(for: .adding, learning: nil)
+        #expect(adding.learning.isEmpty) // nothing to learn before it's made
+        #expect(adding.adding.last?.title == "Learn its controls")
+    }
 }

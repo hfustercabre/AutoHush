@@ -90,6 +90,10 @@ final class SettingsWindowController: NSWindowController {
         window.toolbar = toolbar
         window.toolbarStyle = .unified
         window.titlebarSeparatorStyle = .none
+        // Before Liquid Glass, the toolbar draws a lighter band of its own
+        // over the page, under its name: see-through, the page runs up to
+        // the top (checked on macOS 15.0.1).
+        if #unavailable(macOS 26) { window.titlebarAppearsTransparent = true }
         window.contentMinSize = Self.minimumSize
         window.contentMaxSize = Self.maximumSize
         window.setContentSize(Self.initialSize)

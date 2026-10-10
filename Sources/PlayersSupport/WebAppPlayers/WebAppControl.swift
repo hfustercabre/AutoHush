@@ -320,8 +320,10 @@ final class WebAppControl: @unchecked Sendable {
     /// again, what it learned is forgotten once this is taken.
     func notePlaying(pid: pid_t?) -> LearningMark {
         guard learner != nil || relearning else { return .notLearning }
-        guard let pid, let buttons = readablePage(pid: pid) else { return .cantSeePage }
+        guard let pid else { return .cantSeePage }
+        // Heard first: a click while it's silent costs no read of the page.
         guard page.isPlayingSound(pid: pid) else { return .notHeard }
+        guard let buttons = readablePage(pid: pid) else { return .cantSeePage }
         if relearning { forgetLearned() }
         var learner = self.learner ?? PlayPauseLearner()
         learner.notePlaying(buttons, at: clock())

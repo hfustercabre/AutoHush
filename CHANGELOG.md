@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Settings → Apps' buttons didn't fit the narrowest window** in Czech,
+  German, Greek, Hungarian, Slovenian and Ukrainian on macOS 26 and later,
+  whose buttons are wider: in Ukrainian the page spread past the window.
+  Those translations are shorter now.
+- **On macOS 15, a lighter band ran under Settings' page name.** The page
+  now runs up to the top, as on later versions.
+
 ## [0.11.1] — 2026-10-10
 
 ### Fixed

@@ -38739,7 +38739,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ignorovat jinou aplikaci…"
+            "value" : "Ignorovat aplikaci…"
           }
         },
         "da" : {
@@ -38751,7 +38751,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Andere App ignorieren …"
+            "value" : "App ignorieren …"
           }
         },
         "el" : {
@@ -38883,7 +38883,7 @@
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prezri drugo aplikacijo …"
+            "value" : "Prezri aplikacijo …"
           }
         },
         "sv" : {
@@ -38901,7 +38901,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ігнорувати іншу програму…"
+            "value" : "Ігнорувати програму…"
           }
         },
         "vi" : {
@@ -61747,7 +61747,7 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Επαναφορά λίστας…"
+            "value" : "Επαναφορά…"
           }
         },
         "es" : {
@@ -61795,7 +61795,7 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lista visszaállítása…"
+            "value" : "Visszaállítás…"
           }
         },
         "id" : {
@@ -61891,7 +61891,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Скинути список…"
+            "value" : "Скинути…"
           }
         },
         "vi" : {

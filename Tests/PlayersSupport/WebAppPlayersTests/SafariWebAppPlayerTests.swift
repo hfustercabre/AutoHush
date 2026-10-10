@@ -193,12 +193,14 @@ struct SafariWebAppPlayerTests {
         #expect(await updates.next() == .learned)
     }
 
-    @Test("It's Playing while it can't be heard, or It's Paused with nothing changed, doesn't move it on")
+    @Test("It's Playing while it can't be heard (its page then unread), or It's Paused with nothing changed, doesn't move it on")
     func refusedClicks() async {
         let setup = Setup()
         setup.showPage()
         #expect(await setup.player.markPaused() == .notLearning) // It's Playing comes first
+        let looks = setup.page.looks
         #expect(await setup.player.markPlaying() == .notHeard)
+        #expect(setup.page.looks == looks) // silent: its page isn't read
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
 
         setup.page.set(1, label: "Pause")

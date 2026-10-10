@@ -325,14 +325,15 @@ struct AddWebAppView: View {
 
     private func stepList(remaining: TimeInterval?) -> some View {
         let locked = learningLocked
-        let steps = Self.steps(for: model.phase, siteAsked: model.siteAsked, closedWithoutAdding: model.closedWithoutAdding,
-                               learning: settings.learning,
-                               remaining: remaining, note: settings.learningNote, pauseMode: settings.learningPauseMode,
-                               locked: locked)
-        // Locked, the permission comes right above the two learning steps it
+        let groups = Self.stepGroups(for: model.phase, siteAsked: model.siteAsked, closedWithoutAdding: model.closedWithoutAdding,
+                                     learning: settings.learning,
+                                     remaining: remaining, note: settings.learningNote, pauseMode: settings.learningPauseMode,
+                                     locked: locked)
+        let steps = groups.adding + groups.learning
+        // Locked, the permission comes right above the learning steps it
         // unlocks.
-        let before = locked ? Array(steps.dropLast(2)) : steps
-        let after = locked ? Array(steps.suffix(2)) : []
+        let before = locked ? groups.adding : steps
+        let after = locked ? groups.learning : []
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(before, id: \.title) { step($0, locked: false) }
             if locked, let control = settings.permissions.control, case .learning(let name, _) = model.phase {
@@ -359,6 +360,19 @@ struct AddWebAppView: View {
                       learning: LearningStatus?,
                       remaining: TimeInterval? = nil, note: LearningNote? = nil,
                       pauseMode: LearningPauseMode = .automatic, locked: Bool = false) -> [ChecklistStep] {
+        let groups = stepGroups(for: phase, siteAsked: siteAsked, closedWithoutAdding: closedWithoutAdding, learning: learning,
+                                remaining: remaining, note: note, pauseMode: pauseMode, locked: locked)
+        return groups.adding + groups.learning
+    }
+
+    /// `steps(for:…)` in two: adding the web app, then learning it, once
+    /// it's made (none before): a missing permission locks the learning
+    /// ones, however many there are (pausing it by hand adds one).
+    static func stepGroups(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, closedWithoutAdding: Bool = false,
+                           learning: LearningStatus?,
+                           remaining: TimeInterval? = nil, note: LearningNote? = nil,
+                           pauseMode: LearningPauseMode = .automatic, locked: Bool = false)
+        -> (adding: [ChecklistStep], learning: [ChecklistStep]) {
         let check = ChecklistStep(title: String(localized: "Check the address", comment: "Add a Web App window: a step"),
                                   state: phase == .checking ? .current : .done)
         let opened = ChecklistStep(title: openStep, state: .done)
@@ -366,26 +380,26 @@ struct AddWebAppView: View {
         let learnLater = ChecklistStep(title: learnStepTitle, state: .todo)
         switch phase {
         case .learning(let name, true):
-            return [check,
-                    ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
-                                                comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
-                                  state: .done)]
-                + learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked)
+            return ([check,
+                     ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
+                                                 comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
+                                   state: .done)],
+                    learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked))
         case .learning(let name, false):
-            return [check, opened] + answered
-                + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
-                                               comment: "Add a Web App window: a step done; %@ is the web app's name"),
-                                 state: .done)]
-                + learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked)
+            return ([check, opened] + answered
+                        + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
+                                                       comment: "Add a Web App window: a step done; %@ is the web app's name"),
+                                         state: .done)],
+                    learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked))
         case .siteAsks(let shown, let site):
-            return [check, opened,
+            return ([check, opened,
                     ChecklistStep(title: answerStep,
                                   notes: [String(localized: "\(shown) asks something before showing \(site) (cookies, signing in…). AutoHush goes on once it shows.",
                                                  comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.youtube.com), the second the one typed (e.g. music.youtube.com)")],
                                   state: .current),
-                    ChecklistStep(title: addStep, state: .todo), learnLater]
+                    ChecklistStep(title: addStep, state: .todo), learnLater], [])
         case .readyToAdd(let site):
-            return [check, opened] + answered
+            return ([check, opened] + answered
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "Once \(site) shows in Safari (answer anything it asks first), click Add to Dock.",
                                                 comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.youtube.com")],
@@ -394,19 +408,19 @@ struct AddWebAppView: View {
                                     ? String(localized: "Safari’s window was closed without adding it. Click Add to Dock to open it again.",
                                              comment: "Add a Web App window, under the step “Add it to the Dock”, after the user closed Safari's Add to Dock window with Cancel; “Add to Dock” is the button under it")
                                     : nil),
-                   learnLater]
+                   learnLater], [])
         case .adding:
-            return [check, opened] + answered
+            return ([check, opened] + answered
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "In Safari’s Add to Dock window, change the name if you like, then click Add.",
                                                 comment: "Add a Web App window, under the step “Add it to the Dock”, while Safari's own Add to Dock window is open: the user may rename the web app there, then clicks its Add button")],
                                  state: .current),
-                   learnLater]
+                   learnLater], [])
         case .entering, .checking, .opening:
-            return [check,
-                    ChecklistStep(title: openStep, notes: phase == .opening ? [extensionTip] : [],
-                                  state: phase == .opening ? .current : phase == .checking ? .todo : .done),
-                    ChecklistStep(title: addStep, state: .todo), learnLater]
+            return ([check,
+                     ChecklistStep(title: openStep, notes: phase == .opening ? [extensionTip] : [],
+                                   state: phase == .opening ? .current : phase == .checking ? .todo : .done),
+                     ChecklistStep(title: addStep, state: .todo), learnLater], [])
         }
     }
 

@@ -32,7 +32,10 @@ macOS's own conventions ([Apple's Human Interface Guidelines](https://developer.
   as they always have. Glass only ever goes behind `if #available(macOS
   26, *)`, with today's look as the fallback: AutoHush still runs on macOS
   15. `Scripts/build-app.sh` records the SDK the app was built with, or
-  macOS 26 and later would draw all of it the old way.
+  macOS 26 and later would draw all of it the old way. Before macOS 26,
+  Settings' title bar is see-through (the toolbar would draw a lighter
+  band of its own over the page); the thin line beside its sidebar is
+  macOS 15's own, as in Finder and System Settings, and stays.
 - **One way to do each thing.** Use the shared components below rather than
   styling a screen by hand. A new pattern goes into the shared files, and
   into this guide, before it's used.
@@ -312,10 +315,12 @@ AutoHush is translated into 34 languages besides English. The README's
 - **A changed English string is a new key.** Carry its translations over,
   update them, and delete the old key.
 - **A bottom bar's buttons stay on one line** (`.fixedSize()`). When a
-  translation makes them wider than the window, that translation is
-  shortened, keeping its meaning (in Settings → Apps: Russian "Сбросить…",
-  Greek "Παράβλεψη εφαρμογής…", Hungarian "Lista visszaállítása…"). Check
-  by rendering the window in every language.
+  translation makes them wider than the window at its narrowest, that
+  translation is shortened, keeping its meaning (in Settings → Apps:
+  Russian "Сбросить…", Greek "Επαναφορά…", German "App ignorieren …").
+  `BottomBarFitTests` measures every bar in every language, with Liquid
+  Glass's wider chip padding, and fails when one doesn't fit; a new bottom
+  bar gets a row there.
 - **Short slots stay short.** Measured at the windows' sizes: a Settings
   page's name in the sidebar has about 134 pt at 16 pt (about 16
   characters: German "Ein-/Ausblenden", not "Ein- und Ausblenden"), and the
