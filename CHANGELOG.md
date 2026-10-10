@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **The learning window marked the step to do now with a grey circle,**
+  while Add a Web App, showing the same steps, used a blue arrow: both use
+  the arrow now.
+
 ## [0.11.2] — 2026-10-10
 
 ### Fixed

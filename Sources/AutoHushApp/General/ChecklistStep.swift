@@ -148,15 +148,12 @@ struct CountdownBanner: View {
 }
 
 /// The symbol beside a checklist step: a check once done, a cross once
-/// failed, a spinner while AutoHush does it, else `current` for the step to
-/// do now and a circle (a lock while it waits on a permission) for the rest.
+/// failed, a spinner while AutoHush does it, an arrow in the accent color for
+/// the step to do now, and a circle (a lock while it waits on a permission)
+/// for the rest. The same in every window that shows steps.
 struct StepSymbol: View {
     let step: ChecklistStep
     var locked = false
-    /// The current step's symbol: a circle in lists, an arrow in the Add a
-    /// Web App window, which marks it.
-    var current = Image(systemName: "circle")
-    var currentStyle: AnyShapeStyle = AnyShapeStyle(.appSecondary)
 
     var body: some View {
         if step.isBusy {
@@ -166,7 +163,7 @@ struct StepSymbol: View {
             switch step.state {
             case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
             case .failed: Image(systemName: "xmark.circle.fill").foregroundStyle(.appWarning)
-            case .current: current.foregroundStyle(currentStyle)
+            case .current: Image(systemName: "arrow.right.circle.fill").foregroundStyle(Color.accentColor)
             case .todo: Image(systemName: locked ? "lock.circle" : "circle").foregroundStyle(.appSecondary)
             }
         }

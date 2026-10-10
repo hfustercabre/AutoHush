@@ -465,8 +465,7 @@ struct AddWebAppView: View {
         ChecklistStepRow(step: step, dimmed: step.state == .done || locked, bold: [.current, .failed].contains(step.state), action: { button in
             if button == .addToDock { model.addTapped() } else { settings.learningStep(button) }
         }) {
-            StepSymbol(step: step, locked: locked, current: Image(systemName: "arrow.right.circle.fill"),
-                       currentStyle: AnyShapeStyle(Color.accentColor))
+            StepSymbol(step: step, locked: locked)
         }
     }
 
