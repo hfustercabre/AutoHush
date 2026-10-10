@@ -5,11 +5,9 @@ import SwiftUI
 extension Font {
     /// The app's name in Settings → About.
     static let appLargeTitle = Font.system(size: 24, weight: .bold)
-    /// A window's title in its content, e.g. "Choose Your Music Player".
-    static let appTitle = Font.system(size: 18, weight: .bold)
     /// Plain text and rows' titles.
     static let appBody = Font.system(size: 14)
-    /// A card's title, e.g. the music player's name.
+    /// A card's title, e.g. the media player's name.
     static let appHeadline = Font.system(size: 14, weight: .bold)
     /// Buttons, values and notes.
     static let appCallout = Font.system(size: 13)
@@ -17,6 +15,10 @@ extension Font {
     static let appSubheadline = Font.system(size: 12)
     /// Descriptions under rows, section labels and captions.
     static let appCaption = Font.system(size: 11)
+    /// A page's name in Settings' sidebar.
+    static let appSidebarRow = Font.system(size: 16)
+    /// AutoHush's name at the foot of Settings' sidebar.
+    static let appSidebarName = Font.system(size: 15, weight: .semibold)
 }
 
 /// A style with one value in light mode and another in dark mode. The
@@ -84,21 +86,21 @@ extension ShapeStyle where Self == AppearanceStyle {
         AppearanceStyle(light: Color.accentColor.opacity(0.14), dark: Color.accentColor.opacity(0.18))
     }
 
-    /// The square behind the music player's permission symbol (the welcome
-    /// window's "Control …").
-    static var controlPermissionTile: AppearanceStyle {
-        AppearanceStyle(light: Color.green, dark: Color.green)
+    /// Behind the chosen player's tile (`PlayerTiles`).
+    static var selectedTileFill: AppearanceStyle {
+        AppearanceStyle(light: Color.accentColor.opacity(0.18), dark: Color.accentColor.opacity(0.22))
     }
 
-    /// The square behind Audio Recording's symbol (the welcome window).
-    static var audioPermissionTile: AppearanceStyle {
-        AppearanceStyle(light: Color.purple, dark: Color.purple)
+    /// Behind the page shown, in Settings' sidebar.
+    static var sidebarSelectionFill: AppearanceStyle {
+        AppearanceStyle(light: Color.black.opacity(0.1), dark: .quaternary)
     }
 
-    /// A symbol on a colored square or on the accent color: a permission's
-    /// tile, the welcome window's pick circle.
-    static var onColorSymbol: AppearanceStyle {
-        AppearanceStyle(light: Color.white, dark: Color.white)
+    /// The square behind a `SymbolTile`'s symbol (Settings' sidebar, the
+    /// welcome window's permissions): the accent color the user picked,
+    /// faint.
+    static var symbolTileFill: AppearanceStyle {
+        AppearanceStyle(light: Color.accentColor.opacity(0.16), dark: Color.accentColor.opacity(0.2))
     }
 }
 
@@ -129,7 +131,9 @@ struct PillToggleStyle: ToggleStyle {
 
 /// A rounded button that lights up under the pointer, like the menu's rows.
 /// Filled, it's a chip, as for the menu's duration buttons and Settings'
-/// buttons; selected, it's filled with the accent color.
+/// buttons; selected, it's filled with the accent color. On macOS 26 and
+/// later a filled chip is Liquid Glass (tinted with the accent color when
+/// selected); a button's chip (`padded`) is then a capsule.
 struct ChipButtonStyle: ButtonStyle {
     var filled = false
     var isSelected = false
@@ -138,11 +142,37 @@ struct ChipButtonStyle: ButtonStyle {
     /// labels that make their own.
     var padded = false
 
-    func makeBody(configuration: Configuration) -> some View {
-        HoverHighlight(isPressed: configuration.isPressed, filled: filled, isSelected: isSelected, cornerRadius: cornerRadius) {
-            configuration.label
-                .padding(.horizontal, padded ? 12 : 0)
-                .padding(.vertical, padded ? 5 : 0)
+    @ViewBuilder func makeBody(configuration: Configuration) -> some View {
+        if #available(macOS 26, *), filled {
+            GlassChip(isSelected: isSelected, shape: padded ? AnyShape(Capsule()) : AnyShape(RoundedRectangle(cornerRadius: 12, style: .continuous))) {
+                configuration.label
+                    .padding(.horizontal, padded ? 14 : 0)
+                    .padding(.vertical, padded ? 6 : 0)
+            }
+        } else {
+            HoverHighlight(isPressed: configuration.isPressed, filled: filled, isSelected: isSelected, cornerRadius: cornerRadius) {
+                configuration.label
+                    .padding(.horizontal, padded ? 12 : 0)
+                    .padding(.vertical, padded ? 5 : 0)
+            }
+        }
+    }
+
+    /// A filled chip as Liquid Glass, which lights up under the pointer and
+    /// when pressed by itself (`interactive`).
+    @available(macOS 26, *)
+    private struct GlassChip<Label: View>: View {
+        let isSelected: Bool
+        let shape: AnyShape
+        @ViewBuilder let label: Label
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            label
+                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                .glassEffect(isSelected ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: shape)
+                .contentShape(shape)
+                .opacity(isEnabled ? 1 : 0.45)
         }
     }
 
@@ -207,7 +237,7 @@ struct HeadingBadge: View {
     }
 }
 
-/// The heading over a card in Settings, e.g. "Music": a section label in
+/// The heading over a card in Settings, e.g. "Timing": a section label in
 /// line with the card's text, with room above it unless it's the first
 /// thing on its tab.
 struct SectionHeading: View {
@@ -257,18 +287,44 @@ struct IconChipButton: View {
     }
 }
 
+/// A symbol on a square tinted with the accent color: Settings' sidebar
+/// shows its pages this way, the welcome window its permissions.
+struct SymbolTile: View {
+    let symbol: String
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(.symbolTileFill)
+            .frame(width: 32, height: 32)
+            .overlay {
+                Image(systemName: symbol)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.tint)
+            }
+            .accessibilityHidden(true)
+    }
+}
+
 /// A group of controls on a rounded, tinted background: the menu's card,
-/// and each group in Settings.
+/// and each group in Settings. On macOS 26 and later it's a Liquid Glass
+/// panel, a little rounder and roomier.
 struct Card<Content: View>: View {
     var padding: CGFloat = 12
     @ViewBuilder let content: Content
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) { content }
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12).fill(.cardFill))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.cardBorder, lineWidth: 1))
+    @ViewBuilder var body: some View {
+        if #available(macOS 26, *) {
+            VStack(alignment: .leading, spacing: 10) { content }
+                .padding(padding + 2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        } else {
+            VStack(alignment: .leading, spacing: 10) { content }
+                .padding(padding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 12).fill(.cardFill))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.cardBorder, lineWidth: 1))
+        }
     }
 }
 
@@ -305,25 +361,15 @@ struct SwitchRow: View {
 struct RowTitle: View {
     let title: Text
     var subtitle: Text?
-    /// After the title, as a `HeadingBadge`, e.g. "Untested".
-    var badge: String?
 
-    init(_ title: Text, subtitle: Text? = nil, badge: String? = nil) {
+    init(_ title: Text, subtitle: Text? = nil) {
         self.title = title
         self.subtitle = subtitle
-        self.badge = badge
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            if let badge {
-                HStack(spacing: 6) {
-                    title
-                    HeadingBadge(text: badge)
-                }
-            } else {
-                title
-            }
+            title
             if let subtitle {
                 subtitle
                     .font(.appCaption)
@@ -375,17 +421,20 @@ struct ChoiceChips<Value: Hashable>: View {
     }
 }
 
-/// A tab's buttons at its foot, under content that scrolls (Settings → Apps
-/// and Diagnostics): a line above them while the content runs under them.
+/// The buttons at the foot of a Settings page whose list scrolls (Apps,
+/// Diagnostics) or of a window (welcome, Add a Web App, learning): a line
+/// above them while the content runs under them. `margin`: the page's or
+/// window's side margin, which the buttons line up with.
 struct BottomBar<Content: View>: View {
     var showsDivider = true
+    var margin: CGFloat = 16
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(spacing: 0) {
             if showsDivider { Divider() }
             HStack { content }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, margin)
                 .padding(.top, 12)
                 .padding(.bottom, 16)
         }

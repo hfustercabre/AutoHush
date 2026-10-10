@@ -22,10 +22,10 @@ struct MusicPlayerErrorTests {
     @Test("playerCommandFailed describes its failure, in English for the log")
     func playerCommandFailedDescription() {
         let error = MusicPlayerError.playerCommandFailed(.appleEventError(-1712, message: nil))
-        #expect(error.errorDescription == "Controlling the music player failed: OSStatus -1712.")
+        #expect(error.errorDescription == "Controlling the media player failed: OSStatus -1712.")
         #expect(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")).errorDescription
-                == "Controlling the music player failed: Not understood (OSStatus -1708).")
+                == "Controlling the media player failed: Not understood (OSStatus -1708).")
         #expect(MusicPlayerError.playerCommandFailed(.menuItemNotFound).errorDescription
-                == "Controlling the music player failed: its Play/Pause menu item wasn't found.")
+                == "Controlling the media player failed: its Play/Pause menu item wasn't found.")
     }
 }

@@ -33,36 +33,36 @@ extension PlaybackState {
         case .musicPlaying:
             return StatePresentation(
                 icon: .playing,
-                label: String(localized: "AutoHush: music is playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Playing", comment: "At the top of the menu, under the music player: it's playing")
+                label: String(localized: "AutoHush: your player is playing", comment: "VoiceOver label of the menu bar icon"),
+                line: String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing")
             )
         case .pausedByMonitor:
             return StatePresentation(
                 icon: .pausedForApp,
-                label: String(localized: "AutoHush: music paused", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: playback paused", comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Paused — \(Self.describePlaying(playing))",
-                             comment: "At the top of the menu, under the music player; %@ says which apps play, e.g. “Safari is playing”")
+                             comment: "At the top of the menu, under the media player; %@ says which apps play, e.g. “Safari is playing”")
             )
         case .musicIdle:
             return StatePresentation(
                 icon: .noMusic,
-                label: String(localized: "AutoHush: no music playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Not playing", comment: "At the top of the menu, under the music player: nothing plays")
+                label: String(localized: "AutoHush: nothing is playing", comment: "VoiceOver label of the menu bar icon"),
+                line: String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
             )
         case .playingElsewhere:
             return StatePresentation(
                 icon: .elsewhere,
-                label: String(localized: "AutoHush: music is playing on another device",
+                label: String(localized: "AutoHush: your player is playing on another device",
                               comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Playing on another device",
-                             comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
+                             comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
             )
         case .pauseFailed:
             return StatePresentation(
                 icon: .attention,
-                label: String(localized: "AutoHush: couldn't pause the music", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: couldn't pause your player", comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Couldn't pause — \(Self.describePlaying(playing))",
-                             comment: "At the top of the menu, under the music player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”")
+                             comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”")
             )
         }
     }
@@ -96,7 +96,7 @@ extension AppHealthState {
         case .needsPlayer(let message):
             return StatePresentation(
                 icon: .attention,
-                label: String(localized: "AutoHush: no music player chosen", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: no media player chosen", comment: "VoiceOver label of the menu bar icon"),
                 line: message
             )
         case .degraded(let message), .retrying(let message):
@@ -143,13 +143,13 @@ struct ControlError: Equatable {
             text = failure.text(player: player)
         case .automationPermissionDenied?, .accessibilityPermissionDenied?:
             text = String(localized: "AutoHush may no longer control \(player).",
-                          comment: "Why the music player couldn't be controlled: its permission was taken away; %@ is the player")
+                          comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")
         case .playerNotRunning?:
             text = String(localized: "\(player) isn't running.",
-                          comment: "Why the music player couldn't be controlled: it quit; %@ is the player")
+                          comment: "Why the media player couldn't be controlled: it quit; %@ is the player")
         case .playerNotResponding?:
             text = String(localized: "\(player) isn't responding.",
-                          comment: "Why the music player couldn't be controlled; %@ is the player")
+                          comment: "Why the media player couldn't be controlled; %@ is the player")
         case .stillLearning?, nil:
             text = error.localizedDescription
         }
@@ -162,25 +162,25 @@ extension ControlFailure {
         switch self {
         case .menuItemNotFound:
             String(localized: "AutoHush can't find Play/Pause in \(player)'s menus.",
-                   comment: "Why the music player couldn't be controlled: an update may have changed its menus; %@ is the player, e.g. TIDAL")
+                   comment: "Why the media player couldn't be controlled: an update may have changed its menus; %@ is the player, e.g. TIDAL")
         case .stateUnknown:
             String(localized: "\(player) doesn't say whether it's playing.",
-                   comment: "Why the music player couldn't be controlled: its state can't be read; %@ is the player")
+                   comment: "Why the media player couldn't be controlled: its state can't be read; %@ is the player")
         case .nothingToPlay:
             String(localized: "\(player) has nothing to play.",
-                   comment: "Why the music player couldn't be controlled: its Play is disabled; %@ is the player")
+                   comment: "Why the media player couldn't be controlled: its Play is disabled; %@ is the player")
         case .buttonDisabled:
             String(localized: "\(player)'s Play/Pause button is disabled, as during an ad.",
                    comment: "Why a web app couldn't be paused: the site disabled its button; %@ is the web app")
         case .pressFailed:
             String(localized: "AutoHush couldn't press \(player)'s Play/Pause.",
-                   comment: "Why the music player couldn't be controlled; %@ is the player")
+                   comment: "Why the media player couldn't be controlled; %@ is the player")
         case .pressIgnored:
             String(localized: "\(player) didn't respond to its Play/Pause.",
-                   comment: "Why the music player couldn't be controlled: a press didn't change it; %@ is the player")
+                   comment: "Why the media player couldn't be controlled: a press didn't change it; %@ is the player")
         case .appleEventError(let number, _):
             String(localized: "\(player) answered with an error (\(String(number))).",
-                   comment: "Why the music player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")
+                   comment: "Why the media player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")
         }
     }
 }
@@ -191,10 +191,10 @@ extension Permission {
         switch self {
         case .automation(let player):
             return String(localized: "Allow \(player) Automation Access…",
-                          comment: "Menu item; %@ is the music player, e.g. Spotify")
+                          comment: "Menu item; %@ is the media player, e.g. Spotify")
         case .accessibility:
             return String(localized: "Allow Accessibility Access…",
-                          comment: "Menu item: lets AutoHush control a music player through its menu, e.g. TIDAL")
+                          comment: "Menu item: lets AutoHush control a media player through its menu, e.g. TIDAL")
         case .systemAudioRecording:
             return String(localized: "Allow Audio Recording Access…", comment: "Menu item")
         }
@@ -205,10 +205,10 @@ extension Permission {
         switch self {
         case .automation(let player):
             return String(localized: "Allow Automation access to control \(player)",
-                          comment: "Status line; %@ is the music player, e.g. Spotify")
+                          comment: "Status line; %@ is the media player, e.g. Spotify")
         case .accessibility(let player):
             return String(localized: "Allow Accessibility access to control \(player)",
-                          comment: "Status line; %@ is the music player, e.g. TIDAL")
+                          comment: "Status line; %@ is the media player, e.g. TIDAL")
         case .systemAudioRecording:
             return String(localized: "Allow Audio Recording access", comment: "Status line")
         }

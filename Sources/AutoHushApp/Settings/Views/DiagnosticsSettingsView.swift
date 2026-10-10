@@ -4,8 +4,8 @@ import SwiftUI
 /// Settings → Diagnostics: how AutoHush is doing, every app with its sound
 /// on and how AutoHush judges it, then the music player, the detection, the
 /// permissions, AutoHush and the Mac, kept up to date while shown. Each part
-/// folds away under its heading, leaving a one-line summary; it scrolls, and
-/// Copy Report stays below.
+/// folds away under its heading, leaving a one-line summary; the page
+/// scrolls, and Copy Report stays at the window's foot.
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
     @State private var copied = false
@@ -28,11 +28,11 @@ struct DiagnosticsSettingsView: View {
                     }
                 }
                 .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(height: 560)
             footer
         }
-        .frame(width: 480)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { model.refreshDiagnostics() }
     }
 
@@ -111,7 +111,7 @@ struct DiagnosticsSettingsView: View {
             ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
                 if index > 0 { CardDivider() }
                 HStack(spacing: 8) {
-                    Image(nsImage: AppIcon.image(bundlePath: app.bundlePath, size: 24))
+                    Image(nsImage: AppIcon.image(bundlePath: app.bundlePath, id: app.id, players: model.playerOptions, size: 24))
                         .resizable()
                         .frame(width: 24, height: 24)
                         .accessibilityHidden(true)

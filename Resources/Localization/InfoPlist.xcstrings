@@ -2,217 +2,217 @@
   "sourceLanguage" : "en",
   "strings" : {
     "NSAppleEventsUsageDescription" : {
-      "comment" : "Shown when macOS asks whether AutoHush may control the music player",
+      "comment" : "Shown when macOS asks whether AutoHush may control the media player",
       "extractionState" : "manual",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يوقف AutoHush مشغّل الموسيقى لديك مؤقتًا ثم يستأنفه."
+            "value" : "يوقف AutoHush مشغّل الوسائط لديك مؤقتًا ثم يستأنفه."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'AutoHush posa en pausa i reprèn el teu reproductor de música."
+            "value" : "L'AutoHush posa en pausa i reprèn el teu reproductor multimèdia."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pozastavuje a obnovuje váš hudební přehrávač."
+            "value" : "AutoHush pozastavuje a obnovuje váš přehrávač médií."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush sætter din musikafspiller på pause og genoptager den."
+            "value" : "AutoHush sætter din medieafspiller på pause og genoptager den."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausiert deinen Musikplayer und setzt die Wiedergabe fort."
+            "value" : "AutoHush pausiert deinen Medienplayer und setzt die Wiedergabe fort."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Το AutoHush θέτει σε παύση και συνεχίζει την εφαρμογή μουσικής σας."
+            "value" : "Το AutoHush θέτει σε παύση και συνεχίζει την εφαρμογή πολυμέσων σας."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "AutoHush pauses and resumes your music player."
+            "value" : "AutoHush pauses and resumes your media player."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausa y reanuda tu reproductor de música."
+            "value" : "AutoHush pausa y reanuda tu reproductor multimedia."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausa y reanuda tu reproductor de música."
+            "value" : "AutoHush pausa y reanuda tu reproductor multimedia."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush keskeyttää musiikkisoittimesi ja jatkaa sen toistoa."
+            "value" : "AutoHush keskeyttää mediasoittimesi ja jatkaa sen toistoa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush met votre lecteur de musique en pause et relance la lecture."
+            "value" : "AutoHush met votre lecteur multimédia en pause et relance la lecture."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush met votre lecteur de musique en pause et relance la lecture."
+            "value" : "AutoHush met votre lecteur multimédia en pause et relance la lecture."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush आपके म्यूज़िक प्लेयर को पॉज़ करता है और फिर से शुरू करता है।"
+            "value" : "AutoHush आपके मीडिया प्लेयर को पॉज़ करता है और फिर से शुरू करता है।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pauzira i nastavlja vaš glazbeni reproduktor."
+            "value" : "AutoHush pauzira i nastavlja vaš medijski reproduktor."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az AutoHush szünetelteti és folytatja a zenelejátszóját."
+            "value" : "Az AutoHush szünetelteti és folytatja a médialejátszóját."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush menjeda dan melanjutkan pemutar musik Anda."
+            "value" : "AutoHush menjeda dan melanjutkan pemutar media Anda."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mette in pausa e riprende il tuo lettore musicale."
+            "value" : "AutoHush mette in pausa e riprende il tuo lettore multimediale."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHushは音楽プレーヤーを一時停止して再開します。"
+            "value" : "AutoHushはメディアプレーヤーを一時停止して再開します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush가 음악 플레이어를 일시 정지하고 다시 재생합니다."
+            "value" : "AutoHush가 미디어 플레이어를 일시 정지하고 다시 재생합니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush setter musikkspilleren din på pause og gjenopptar den."
+            "value" : "AutoHush setter mediespilleren din på pause og gjenopptar den."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pauzeert en hervat je muziekspeler."
+            "value" : "AutoHush pauzeert en hervat je mediaspeler."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush wstrzymuje i wznawia Twój odtwarzacz muzyki."
+            "value" : "AutoHush wstrzymuje i wznawia Twój odtwarzacz multimediów."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush pausa e retoma seu player de música."
+            "value" : "O AutoHush pausa e retoma seu player de mídia."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush pausa e retoma o seu leitor de música."
+            "value" : "O AutoHush pausa e retoma o seu leitor multimédia."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pune pe pauză și reia playerul dvs. de muzică."
+            "value" : "AutoHush pune pe pauză și reia playerul dvs. media."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ставит ваш музыкальный плеер на паузу и возобновляет воспроизведение."
+            "value" : "AutoHush ставит ваш медиаплеер на паузу и возобновляет воспроизведение."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pozastavuje a obnovuje váš hudobný prehrávač."
+            "value" : "AutoHush pozastavuje a obnovuje váš prehrávač médií."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush zaustavi in nadaljuje vaš glasbeni predvajalnik."
+            "value" : "AutoHush zaustavi in nadaljuje vaš predvajalnik predstavnosti."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausar och återupptar din musikspelare."
+            "value" : "AutoHush pausar och återupptar din mediaspelare."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush müzik oynatıcınızı duraklatır ve sürdürür."
+            "value" : "AutoHush medya oynatıcınızı duraklatır ve sürdürür."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush призупиняє й відновлює ваш музичний програвач."
+            "value" : "AutoHush призупиняє й відновлює ваш медіапрогравач."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush tạm dừng và tiếp tục trình phát nhạc của bạn."
+            "value" : "AutoHush tạm dừng và tiếp tục trình phát đa phương tiện của bạn."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 會暫停並恢復你的音樂播放器。"
+            "value" : "AutoHush 會暫停並恢復你的媒體播放器。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 会暂停并恢复你的音乐播放器。"
+            "value" : "AutoHush 会暂停并恢复你的媒体播放器。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 會暫停並恢復你的音樂播放器。"
+            "value" : "AutoHush 會暫停並恢復你的媒體播放器。"
           }
         }
       }
@@ -224,211 +224,211 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يقيس AutoHush ارتفاع صوت التطبيقات الأخرى، حتى لا يوقف موسيقاك مؤقتًا إلا عند وجود صوت مسموع. لا يُسجَّل الصوت أو يُخزَّن أو يُرسَل إلى أي مكان أبدًا."
+            "value" : "يقيس AutoHush ارتفاع صوت التطبيقات الأخرى، حتى لا يوقف مشغّلك مؤقتًا إلا عند وجود صوت مسموع. لا يُسجَّل الصوت أو يُخزَّن أو يُرسَل إلى أي مكان أبدًا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'AutoHush mesura el volum de les altres apps per posar la música en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
+            "value" : "L'AutoHush mesura el volum de les altres apps per posar el reproductor en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush měří, jak hlasitě hrají jiné aplikace, aby vaši hudbu pozastavil jen při slyšitelném zvuku. Zvuk se nikdy nenahrává, neukládá ani nikam neposílá."
+            "value" : "AutoHush měří, jak hlasitě hrají jiné aplikace, aby váš přehrávač pozastavil jen při slyšitelném zvuku. Zvuk se nikdy nenahrává, neukládá ani nikam neposílá."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush måler, hvor høje andre apps er, så den kun sætter din musik på pause ved hørbar lyd. Lyd bliver aldrig optaget, gemt eller sendt nogen steder hen."
+            "value" : "AutoHush måler, hvor høje andre apps er, så den kun sætter din afspiller på pause ved hørbar lyd. Lyd bliver aldrig optaget, gemt eller sendt nogen steder hen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush misst, wie laut andere Apps sind, damit deine Musik nur bei hörbarem Ton pausiert. Audio wird nie aufgenommen, gespeichert oder irgendwohin gesendet."
+            "value" : "AutoHush misst, wie laut andere Apps sind, damit dein Player nur bei hörbarem Ton pausiert. Audio wird nie aufgenommen, gespeichert oder irgendwohin gesendet."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Το AutoHush μετρά πόσο δυνατά ακούγονται άλλες εφαρμογές, ώστε να θέτει τη μουσική σας σε παύση μόνο όταν ακούγεται ήχος. Ο ήχος δεν εγγράφεται, δεν αποθηκεύεται και δεν αποστέλλεται ποτέ πουθενά."
+            "value" : "Το AutoHush μετρά πόσο δυνατά ακούγονται άλλες εφαρμογές, ώστε να θέτει την εφαρμογή αναπαραγωγής σας σε παύση μόνο όταν ακούγεται ήχος. Ο ήχος δεν εγγράφεται, δεν αποθηκεύεται και δεν αποστέλλεται ποτέ πουθενά."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "AutoHush measures how loud other apps are, so it only pauses your music for audible sound. Audio is never recorded, stored or sent anywhere."
+            "value" : "AutoHush measures how loud other apps are, so it only pauses your player for audible sound. Audio is never recorded, stored or sent anywhere."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ningún sitio."
+            "value" : "AutoHush mide el volumen de las demás apps para pausar tu reproductor solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ningún sitio."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mide el volumen de las demás apps para pausar tu música solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ninguna parte."
+            "value" : "AutoHush mide el volumen de las demás apps para pausar tu reproductor solo cuando suenan de verdad. El audio nunca se graba, se guarda ni se envía a ninguna parte."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mittaa, kuinka kovaa muut apit soivat, jotta se keskeyttää musiikkisi vain kuuluvan äänen ajaksi. Ääntä ei koskaan tallenneta, säilytetä eikä lähetetä minnekään."
+            "value" : "AutoHush mittaa, kuinka kovaa muut apit soivat, jotta se keskeyttää soittimesi vain kuuluvan äänen ajaksi. Ääntä ei koskaan tallenneta, säilytetä eikä lähetetä minnekään."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre musique en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre musique en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush मापता है कि दूसरे ऐप्स कितनी तेज़ आवाज़ में हैं, ताकि वह आपका संगीत सिर्फ़ सुनाई देने वाली आवाज़ पर ही पॉज़ करे। ऑडियो कभी रिकॉर्ड, संग्रहीत या कहीं भेजा नहीं जाता।"
+            "value" : "AutoHush मापता है कि दूसरे ऐप्स कितनी तेज़ आवाज़ में हैं, ताकि वह आपका प्लेयर सिर्फ़ सुनाई देने वाली आवाज़ पर ही पॉज़ करे। ऑडियो कभी रिकॉर्ड, संग्रहीत या कहीं भेजा नहीं जाता।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mjeri koliko su glasne druge aplikacije, kako bi vašu glazbu pauzirao samo kad se zvuk čuje. Zvuk se nikad ne snima, ne pohranjuje i nikamo ne šalje."
+            "value" : "AutoHush mjeri koliko su glasne druge aplikacije, kako bi vaš reproduktor pauzirao samo kad se zvuk čuje. Zvuk se nikad ne snima, ne pohranjuje i nikamo ne šalje."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az AutoHush méri, milyen hangosak más appok, hogy csak hallható hang esetén szüneteltesse a zenéjét. A hang soha nem kerül rögzítésre, tárolásra vagy továbbításra."
+            "value" : "Az AutoHush méri, milyen hangosak más appok, hogy csak hallható hang esetén szüneteltesse a lejátszóját. A hang soha nem kerül rögzítésre, tárolásra vagy továbbításra."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mengukur seberapa keras app lain, sehingga hanya menjeda musik Anda saat ada suara yang terdengar. Audio tidak pernah direkam, disimpan, atau dikirim ke mana pun."
+            "value" : "AutoHush mengukur seberapa keras app lain, sehingga hanya menjeda pemutar Anda saat ada suara yang terdengar. Audio tidak pernah direkam, disimpan, atau dikirim ke mana pun."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush misura il volume delle altre app per mettere in pausa la musica solo quando c'è un suono udibile. L'audio non viene mai registrato, salvato né inviato altrove."
+            "value" : "AutoHush misura il volume delle altre app per mettere in pausa il lettore solo quando c'è un suono udibile. L'audio non viene mai registrato, salvato né inviato altrove."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHushはほかのAppの音量を測定し、実際に音が聞こえるときだけ音楽を一時停止します。オーディオが録音、保存、送信されることはありません。"
+            "value" : "AutoHushはほかのAppの音量を測定し、実際に音が聞こえるときだけプレーヤーを一時停止します。オーディオが録音、保存、送信されることはありません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush는 다른 앱의 소리 크기를 측정하여 실제로 소리가 들릴 때만 음악을 일시 정지합니다. 오디오는 녹음되거나 저장되거나 어디로도 전송되지 않습니다."
+            "value" : "AutoHush는 다른 앱의 소리 크기를 측정하여 실제로 소리가 들릴 때만 플레이어를 일시 정지합니다. 오디오는 녹음되거나 저장되거나 어디로도 전송되지 않습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush måler hvor høye andre apper er, slik at den bare setter musikken din på pause ved hørbar lyd. Lyd blir aldri tatt opp, lagret eller sendt noe sted."
+            "value" : "AutoHush måler hvor høye andre apper er, slik at den bare setter spilleren din på pause ved hørbar lyd. Lyd blir aldri tatt opp, lagret eller sendt noe sted."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush meet hoe luid andere apps zijn, zodat het je muziek alleen pauzeert bij hoorbaar geluid. Audio wordt nooit opgenomen, bewaard of ergens naartoe gestuurd."
+            "value" : "AutoHush meet hoe luid andere apps zijn, zodat het je speler alleen pauzeert bij hoorbaar geluid. Audio wordt nooit opgenomen, bewaard of ergens naartoe gestuurd."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mierzy głośność innych aplikacji, aby wstrzymywać muzykę tylko przy słyszalnym dźwięku. Dźwięk nigdy nie jest nagrywany, przechowywany ani nigdzie wysyłany."
+            "value" : "AutoHush mierzy głośność innych aplikacji, aby wstrzymywać Twój odtwarzacz tylko przy słyszalnym dźwięku. Dźwięk nigdy nie jest nagrywany, przechowywany ani nigdzie wysyłany."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush mede o volume dos outros apps para só pausar sua música quando há som audível. O áudio nunca é gravado, armazenado nem enviado a lugar algum."
+            "value" : "O AutoHush mede o volume dos outros apps para só pausar seu player quando há som audível. O áudio nunca é gravado, armazenado nem enviado a lugar algum."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush mede o volume das outras apps para só pausar a sua música quando há som audível. O áudio nunca é gravado, guardado nem enviado para lado nenhum."
+            "value" : "O AutoHush mede o volume das outras apps para só pausar o seu leitor quando há som audível. O áudio nunca é gravado, guardado nem enviado para lado nenhum."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush măsoară cât de tare sunt alte aplicații, ca să vă pună muzica pe pauză doar la un sunet audibil. Sunetul nu este niciodată înregistrat, stocat sau trimis nicăieri."
+            "value" : "AutoHush măsoară cât de tare sunt alte aplicații, ca să vă pună playerul pe pauză doar la un sunet audibil. Sunetul nu este niciodată înregistrat, stocat sau trimis nicăieri."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush измеряет громкость других приложений, чтобы ставить музыку на паузу только при слышимом звуке. Звук никогда не записывается, не сохраняется и никуда не отправляется."
+            "value" : "AutoHush измеряет громкость других приложений, чтобы ставить ваш плеер на паузу только при слышимом звуке. Звук никогда не записывается, не сохраняется и никуда не отправляется."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush meria, ako nahlas hrajú iné apky, aby vašu hudbu pozastavil len pri počuteľnom zvuku. Zvuk sa nikdy nenahráva, neukladá ani nikam neposiela."
+            "value" : "AutoHush meria, ako nahlas hrajú iné apky, aby váš prehrávač pozastavil len pri počuteľnom zvuku. Zvuk sa nikdy nenahráva, neukladá ani nikam neposiela."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush meri, kako glasne so druge aplikacije, da vašo glasbo zaustavi samo ob slišnem zvoku. Zvok se nikoli ne snema, shranjuje ali kam pošilja."
+            "value" : "AutoHush meri, kako glasne so druge aplikacije, da vaš predvajalnik zaustavi samo ob slišnem zvoku. Zvok se nikoli ne snema, shranjuje ali kam pošilja."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mäter hur höga andra appar är, så att den bara pausar din musik vid hörbart ljud. Ljud spelas aldrig in, sparas eller skickas någonstans."
+            "value" : "AutoHush mäter hur höga andra appar är, så att den bara pausar din spelare vid hörbart ljud. Ljud spelas aldrig in, sparas eller skickas någonstans."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush, müziğinizi yalnızca duyulabilir bir ses olduğunda duraklatmak için diğer uygulamaların ses yüksekliğini ölçer. Ses hiçbir zaman kaydedilmez, saklanmaz veya bir yere gönderilmez."
+            "value" : "AutoHush, oynatıcınızı yalnızca duyulabilir bir ses olduğunda duraklatmak için diğer uygulamaların ses yüksekliğini ölçer. Ses hiçbir zaman kaydedilmez, saklanmaz veya bir yere gönderilmez."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush вимірює, наскільки гучні інші програми, щоб призупиняти вашу музику лише за чутного звуку. Звук ніколи не записується, не зберігається й нікуди не надсилається."
+            "value" : "AutoHush вимірює, наскільки гучні інші програми, щоб призупиняти ваш програвач лише за чутного звуку. Звук ніколи не записується, не зберігається й нікуди не надсилається."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush đo độ lớn âm thanh của các ứng dụng khác để chỉ tạm dừng nhạc của bạn khi có âm thanh nghe được. Âm thanh không bao giờ bị ghi lại, lưu trữ hay gửi đi bất cứ đâu."
+            "value" : "AutoHush đo độ lớn âm thanh của các ứng dụng khác để chỉ tạm dừng trình phát của bạn khi có âm thanh nghe được. Âm thanh không bao giờ bị ghi lại, lưu trữ hay gửi đi bất cứ đâu."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 會測量其他 App 的音量，只在確實聽得到聲音時才暫停你的音樂。音訊絕不會被錄製、儲存或傳送到任何地方。"
+            "value" : "AutoHush 會測量其他 App 的音量，只在確實聽得到聲音時才暫停你的播放器。音訊絕不會被錄製、儲存或傳送到任何地方。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 会测量其他 App 的音量，只在确实听得到声音时才暂停你的音乐。音频绝不会被录制、存储或发送到任何地方。"
+            "value" : "AutoHush 会测量其他 App 的音量，只在确实听得到声音时才暂停你的播放器。音频绝不会被录制、存储或发送到任何地方。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 會測量其他 App 的音量，只在確實聽得到聲音時才暫停你的音樂。音訊絕不會被錄製、儲存或傳送到任何地方。"
+            "value" : "AutoHush 會測量其他 App 的音量，只在確實聽得到聲音時才暫停你的播放器。音訊絕不會被錄製、儲存或傳送到任何地方。"
           }
         }
       }

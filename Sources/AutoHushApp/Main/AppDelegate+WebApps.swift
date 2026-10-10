@@ -28,13 +28,24 @@ extension AppDelegate {
         }
     }
 
-    /// Forgets the chosen player's learned controls and learns them again,
-    /// as the user asked (they may have been learned wrong): the learning
-    /// window shows the steps, as the first time. Nothing while it's
-    /// learning already.
+    /// Learns the chosen player's controls afresh, as the user asked: once
+    /// learned (they may have been learned wrong), or before (the learning
+    /// window was closed halfway). A window showing the steps closes, and a
+    /// new learning window starts from the first step. What the player
+    /// learned stays until the user says it plays there; closing the window
+    /// before that keeps it (`learningWindowClosed`).
     func learnControlsAgain() {
-        guard let learner = player as? any LearningMusicPlayer, learner.learningStatus == .learned else { return }
+        guard let learner = player as? any LearningMusicPlayer else { return }
         logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
+        if let window = learningWindow, window.isVisible {
+            window.onClose = nil // replaced, not left: nothing to keep
+            window.close()
+        }
+        learningWindow = nil // a new one, not the old one's last state
+        if let window = addWebAppWindow, window.isVisible, case .learning = addWebAppModel.phase { window.close() }
+        learningTimer?.cancel()
+        learningTimer = nil
+        setLearningPause(deadline: nil, note: nil, mode: .automatic)
         Task { [weak self] in
             await learner.learnAgain()
             guard let self, self.player?.bundleID == learner.bundleID else { return }
@@ -91,7 +102,7 @@ extension AppDelegate {
             let mark = await learner.markPaused()
             guard let self, self.player?.bundleID == learner.bundleID else { return }
             switch mark {
-            case .nothingChanged: self.setLearningPause(deadline: self.status.learningPauseDeadline, note: .nothingChanged)
+            case .nothingChanged: self.setLearningPause(deadline: self.settingsModel.learningPauseDeadline, note: .nothingChanged)
             case .tooLate:        self.setLearningPause(deadline: nil, note: .timedOut, mode: .automatic)
             case .cantSeePage:    self.setLearningPause(deadline: nil, note: .cantSeePage, mode: .automatic)
             case .noted, .notLearning, .notHeard: break
@@ -112,6 +123,14 @@ extension AppDelegate {
         setLearningPause(deadline: nil, note: note, mode: .automatic)
     }
 
+    /// The learning window closed (Later, its close button, or learned):
+    /// learning again, before the user said it plays, what the player
+    /// learned stays.
+    private func learningWindowClosed() {
+        guard let learner = player as? any LearningMusicPlayer, learner.learningStatus == .relearning else { return }
+        Task { await learner.keepLearned() }
+    }
+
     /// Follows learning as the player reports it. Once it plays, AutoHush
     /// pauses it, or the user does (their minute starts at Pause It
     /// Manually). Back at the first step, the note that says why stays (set
@@ -122,10 +141,10 @@ extension AppDelegate {
         learningTimer?.cancel()
         learningTimer = nil
         switch learning {
-        case .learning?:
-            setLearningPause(deadline: nil, note: status.learningNote, mode: .automatic)
+        case .learning?, .relearning?:
+            setLearningPause(deadline: nil, note: settingsModel.learningNote, mode: .automatic)
         case .learned?:
-            setLearningPause(deadline: nil, note: nil, mode: status.learningPauseMode == .failed ? .automatic : nil)
+            setLearningPause(deadline: nil, note: nil, mode: settingsModel.learningPauseMode == .failed ? .automatic : nil)
         case nil:
             setLearningPause(deadline: nil, note: nil, mode: .automatic)
         }
@@ -229,6 +248,7 @@ extension AppDelegate {
     /// The window that asks to play and pause the chosen player once.
     func showLearningWindow() {
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
+        learningWindow?.onClose = { [weak self] in self?.learningWindowClosed() }
         learningWindow?.show()
         watchWindows() // follows the permission it may wait for
     }

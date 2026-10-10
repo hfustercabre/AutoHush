@@ -9,25 +9,23 @@ import AutoHushKit
 /// │ [icon] Spotify                         (●) │  the card: the player, what's
 /// │        Paused — Safari is playing Auto-Pause │  happening, the Auto-Pause switch
 /// │ ────────────────────────────────────────── │
-/// │ Music player              [icon] Spotify ⌄ │  unfolds the players under it
+/// │ Media player              [icon] Spotify ⌄ │  unfolds the players under it
+/// │ ────────────────────────────────────────── │
+/// │ Controls                  [Learn Controls] │  (a web app: whether its
+/// │ Not learned yet: …                         │  controls are learned)
 /// ╰────────────────────────────────────────────╯
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
-/// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)   (while unfolded)
+///   Supported Apps                                   (while unfolded)
+/// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)
 ///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
-///   ↻ Learn Controls Again… / YT Music               (once the chosen one's are learned)
 ///   ⊕ Add a Web App…                                 (makes a website one)
-/// ╭────────────────────────────────────────────╮
-/// │ Learning YT Music's Controls                │  (until AutoHush has learned
-/// │ ✓ Play a song in YT Music                   │  the chosen web app's button)
-/// │ ◌ Let AutoHush pause it                     │
-/// ╰────────────────────────────────────────────╯
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///   Turn off for
 ///   [5 min] [15 min] [30 min] [1 hr] [24 hr]
 /// ─────────
-///   Playing now
-///   [icon] Safari   Pauses your music                  (●)
-///   [icon] VLC      Ignored — music keeps playing      ( )
+///   Playing Now
+///   [icon] Safari   Pauses your player                 (●)
+///   [icon] VLC      Ignored — your player keeps playing ( )
 /// ─────────
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
@@ -37,8 +35,9 @@ import AutoHushKit
 ///
 /// The card, the duration buttons, the playing apps and the toolbar are
 /// SwiftUI views; they follow `status` even while the menu is open. The
-/// rows around them are rebuilt each time it opens. AutoHush has no keyboard
-/// shortcuts, standard ones included, unless the user asks for one.
+/// rows around them are rebuilt each time it opens. Its rows have no keyboard
+/// shortcuts: AutoHush has none of its own (its menu bar, while a window is
+/// open, has the Mac's standard ones: `MainMenu`).
 @MainActor
 final class StatusMenuController: NSObject {
     /// What the menu's items do; `AppDelegate` provides them.
@@ -48,10 +47,9 @@ final class StatusMenuController: NSObject {
         var chooseMusicPlayer: @MainActor (String) -> Void
         /// Opens the "Add a Web App" window.
         var addWebApp: @MainActor () -> Void = {}
-        /// Forgets the chosen player's learned controls and learns them again.
+        /// Learns the chosen player's controls afresh, in a new learning
+        /// window (whether they were learned or not).
         var learnControlsAgain: @MainActor () -> Void = {}
-        /// While AutoHush learns the player: it plays, or it's paused.
-        var learningStep: @MainActor (StepButton) -> Void = { _ in }
         /// The menu is about to open: a last chance to bring `status` up to
         /// date (e.g. which players are installed) before it is built.
         var menuWillOpen: @MainActor () -> Void
@@ -95,8 +93,7 @@ final class StatusMenuController: NSObject {
     /// The card at the top, and the players unfolded under it, with their
     /// search when there are enough of them.
     private var cardItem: NSMenuItem?
-    /// Under the card while AutoHush learns the chosen player's controls.
-    private var learningItem: NSMenuItem?
+    /// The search over the unfolded players, while it shows.
     private var playerSearchItem: NSMenuItem?
     private var playerRows: [NSMenuItem] = []
 
@@ -131,7 +128,6 @@ final class StatusMenuController: NSObject {
         guard isMenuOpen else { return }
         model.status = status
         if let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
-        if let learningItem { fit(learningItem, changed: true) } // a step ticked, or learning done
     }
 
     private func renderIcon() {
@@ -155,14 +151,12 @@ final class StatusMenuController: NSObject {
         let card = hostedItem("card", StatusCardView(model: model))
         cardItem = card
         menu.addItem(card)
-        learningItem = status.learningHasPlayed == nil ? nil : hostedItem("learning", LearningCardView(model: model))
-        if let learningItem { menu.addItem(learningItem) }
         if let warning = status.warning {
             menu.addItem(warningItem(for: warning))
             if warning == .systemAudioRecording {
                 // Its title lines up with the warning's, after its symbol.
                 let antiDot = item(PermissionText.useAntiDot, #selector(useAntiDotMode))
-                antiDot.image = NSImage(size: menu.items.last?.image?.size ?? .zero)
+                antiDot.shownImage = NSImage(size: menu.items.last?.image?.size ?? .zero)
                 menu.addItem(antiDot)
             }
         }
@@ -208,10 +202,9 @@ final class StatusMenuController: NSObject {
             ? item(PermissionText.reopen, #selector(reopen))
             : item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
         let description = String(localized: "Warning", comment: "VoiceOver label: this menu item needs attention")
-        item.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
+        item.shownImage = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
         return item
     }
-
 
     /// "Install AutoHush 0.3.8…", which shows the update found; while it
     /// installs, a greyed-out "Installing…".
@@ -228,13 +221,13 @@ final class StatusMenuController: NSObject {
                            comment: "Menu item: shows the update found; %@ is its version")
         let item = item(title, #selector(showAvailableUpdate))
         let description = String(localized: "Update", comment: "VoiceOver label of the update icon")
-        item.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: description)
+        item.shownImage = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: description)
         return item
     }
 
     private func ignoredAppsItem() -> NSMenuItem {
         let row = NSMenuItem(title: String(localized: "Ignored Apps", comment: "Menu item"), action: nil, keyEquivalent: "")
-        row.image = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
+        row.shownImage = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         submenu.font = Self.rowFont
@@ -289,25 +282,20 @@ final class StatusMenuController: NSObject {
     }
 
     /// Inserts a row for each of `options` at `index`, with a heading over
-    /// the Safari web apps, and "Add a Web App…" last; a note when there's
-    /// none, because the search matched none. Before "Add a Web App…", once
-    /// the chosen player's controls are learned (and nothing is searched
-    /// for), the row that learns them again.
+    /// the apps and one over the Safari web apps, and "Add a Web App…" last;
+    /// a note when there's none, because the search matched none.
     private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
         playerRows = options.map(playerRow)
         if let start = options.webAppsStart {
             playerRows.insert(.webAppsHeading(width: menuContentWidth), at: start)
         }
+        if options.first?.kind == .app {
+            playerRows.insert(.supportedAppsHeading(width: menuContentWidth), at: 0)
+        }
         if playerRows.isEmpty {
             let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
             note.isEnabled = false
             playerRows = [note]
-        }
-        if status.canLearnControlsAgain, model.playerSearch.isEmpty {
-            let again = item(LearningText.learnAgainItem, #selector(learnControlsAgain))
-            again.image = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: nil)
-            again.subtitle = status.playerName
-            playerRows.append(again)
         }
         playerRows.append(addWebAppRow())
         for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
@@ -316,7 +304,7 @@ final class StatusMenuController: NSObject {
     /// Last under the players: makes a website a Safari web app.
     private func addWebAppRow() -> NSMenuItem {
         let row = item(PlayerOption.addWebAppTitle, #selector(addWebApp))
-        row.image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil)
+        row.shownImage = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil)
         return row
     }
 
@@ -325,7 +313,7 @@ final class StatusMenuController: NSObject {
     /// "Add a Web App" filled in.
     private func playerRow(for option: PlayerOption) -> NSMenuItem {
         let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
-        row.image = option.icon(size: 16)
+        row.shownImage = option.icon(size: 16)
         row.state = option.bundleID == status.chosenPlayerID ? .on : .off
         if option.isUntested {
             // The row's title starts about 37 pt in and ends 16 pt short of
@@ -363,9 +351,7 @@ final class StatusMenuController: NSObject {
             searchPlayers(search)
         case .retry:
             actions.retry() // the card shows how it goes
-        case .learningStep(let button):
-            actions.learningStep(button) // the card ticks the step
-        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .quit:
+        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
             RunLoop.main.perform(inModes: [.default]) { [weak self] in
@@ -382,16 +368,15 @@ final class StatusMenuController: NSObject {
         case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
         case .showAbout:          actions.showAbout()
         case .showControlError:   actions.showControlError()
+        case .learnControls:      actions.learnControlsAgain()
         case .quit:               actions.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .learningStep: break // they act in perform(_:)
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
         }
     }
 
     @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
 
     @objc private func addWebApp() { actions.addWebApp() }
-
-    @objc private func learnControlsAgain() { actions.learnControlsAgain() }
 
     @objc private func reopen() { actions.reopen() }
 
@@ -455,4 +440,16 @@ private final class KeyboardTakingHostingView<Content: View>: NSHostingView<Cont
 private func editableTextField(in view: NSView) -> NSTextField? {
     if let field = view as? NSTextField, field.isEditable { return field }
     return view.subviews.lazy.compactMap(editableTextField).first
+}
+
+private extension NSMenuItem {
+    /// Its image, always shown: from macOS 27, AppKit hides menu items'
+    /// images in apps built with its SDK unless an item asks to show its own.
+    var shownImage: NSImage? {
+        get { image }
+        set {
+            image = newValue
+            if #available(macOS 27, *) { preferredImageVisibility = .visible }
+        }
+    }
 }

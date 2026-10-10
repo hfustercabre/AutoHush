@@ -16,6 +16,15 @@ struct AboutSettingsView: View {
     private static let gap: CGFloat = 24
 
     var body: some View {
+        ScrollView {
+            content
+                .padding(.bottom, 8)
+                .padding(16)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
@@ -25,16 +34,16 @@ struct AboutSettingsView: View {
                 .font(.appLargeTitle)
                 .padding(.top, Self.gap - 13)
             if let version = model.fullVersion {
-                Text("Version \(version)", comment: "Settings → About and Diagnostics; %@ is AutoHush's version")
+                Text("Version \(version)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version")
                     .foregroundStyle(.appSecondary)
                     .textSelection(.enabled)
                     .padding(.top, Self.gap - 7.5)
             }
             VStack(spacing: 6) {
-                Text("Pauses your music while other apps play audio, and resumes it afterwards.",
+                Text("Pauses what's playing (music, podcasts or videos) while other apps play audio, and resumes it afterwards.",
                      comment: "Settings → About: what AutoHush does")
                 Text("Works with \(players).",
-                     comment: "Settings → About; %@ lists the music players it works with, e.g. “Spotify, Apple Music and TIDAL”")
+                     comment: "Settings → About; %@ lists the media players it works with, e.g. “Spotify, Apple Music and TIDAL”")
                     .foregroundStyle(.appSecondary)
             }
             .multilineTextAlignment(.center)
@@ -58,10 +67,6 @@ struct AboutSettingsView: View {
                     .padding(.top, Self.gap - 3)
             }
         }
-        .padding(.bottom, 8)
-        .padding(16)
-        .frame(width: 480)
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// Every player AutoHush works with, e.g. "Spotify, Apple Music, TIDAL

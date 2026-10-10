@@ -98,8 +98,7 @@ extension View {
     }
 
     /// Announces the step to do now whenever it changes, so VoiceOver users
-    /// hear the checklist move on. Only a window's checklist announces: the
-    /// menu and Settings show the same steps.
+    /// hear the checklist move on. The windows' checklists announce.
     func announcesCurrentStep(_ announcement: String?) -> some View {
         onChange(of: announcement) { _, announcement in
             guard let announcement else { return }

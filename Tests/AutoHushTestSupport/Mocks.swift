@@ -80,7 +80,16 @@ package actor MockMusicPlayer: MusicPlayer {
 
     package func setVolumeLevel(_ level: Int?) { volumeLevel = level }
 
-    package func volume() async -> Int? { volumeLevel }
+    /// Runs inside every volume read before it answers, so a test can hold a
+    /// read while it changes something.
+    package var beforeVolumeAnswer: (@Sendable () async -> Void)?
+
+    package func setBeforeVolumeAnswer(_ hook: (@Sendable () async -> Void)?) { beforeVolumeAnswer = hook }
+
+    package func volume() async -> Int? {
+        if let beforeVolumeAnswer { await beforeVolumeAnswer() }
+        return volumeLevel
+    }
 
     package func setVolume(_ volume: Int) async throws {
         volumeLevel = volume

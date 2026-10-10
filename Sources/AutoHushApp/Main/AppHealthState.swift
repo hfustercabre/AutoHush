@@ -24,16 +24,16 @@ extension AppHealthState {
     /// be installed.
     static func waitingForPlayer(among options: [PlayerOption]) -> AppHealthState {
         guard !options.noneInstalled else {
-            return .needsPlayer(String(localized: "No supported music player is installed",
-                                       comment: "Status line: none of the music players AutoHush works with is installed"))
+            return .needsPlayer(String(localized: "No supported media player is installed",
+                                       comment: "Status line: none of the media players AutoHush works with is installed"))
         }
-        return .needsPlayer(String(localized: "Choose a music player", comment: "Status line: no music player chosen yet"))
+        return .needsPlayer(String(localized: "Choose a media player", comment: "Status line: no media player chosen yet"))
     }
 
     /// The chosen music player is no longer installed.
     static func playerNotInstalled(_ playerName: String) -> AppHealthState {
         .degraded(String(localized: "\(playerName) is not installed",
-                         comment: "Status line; %@ is the music player, e.g. Spotify"))
+                         comment: "Status line; %@ is the media player, e.g. Spotify"))
     }
 
     /// The health shown when the startup check against the music player fails.
@@ -45,10 +45,10 @@ extension AppHealthState {
             self = .needsPermission(.accessibility(player: playerName))
         case .playerNotRunning:
             self = .degraded(String(localized: "\(playerName) is not running",
-                                    comment: "Status line; %@ is the music player, e.g. Spotify"))
+                                    comment: "Status line; %@ is the media player, e.g. Spotify"))
         case .playerNotResponding:
             self = .retrying(String(localized: "\(playerName) is not responding",
-                                    comment: "Status line; %@ is the music player, e.g. Spotify"))
+                                    comment: "Status line; %@ is the media player, e.g. Spotify"))
         case .playerCommandFailed, .stillLearning: // stillLearning: never at startup, learning happens while it runs
             self = .retrying(Self.cantControl(playerName))
         case nil:
@@ -60,6 +60,6 @@ extension AppHealthState {
     /// shows why under it (`AppStatus.controlError`).
     static func cantControl(_ playerName: String) -> String {
         String(localized: "Can't control \(playerName) right now",
-               comment: "Status line when the music player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the music player, e.g. TIDAL")
+               comment: "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player, e.g. TIDAL")
     }
 }

@@ -1,13 +1,12 @@
+import AppKit
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General, in cards like the menu's: launch at login, then Music
-/// (auto-pause, the player), Privacy (AntiDot mode) and Updates (checks,
-/// what they lead to, Check Now), and a way to support AutoHush.
+/// Settings → General, in cards like the menu's: the media player, with the
+/// Auto-Pause switch; every player as tiles, to choose another; then launch
+/// at login.
 struct GeneralSettingsView: View {
     let model: SettingsModel
-    /// The players' search is open, beside their pop-up.
-    @State private var searchingPlayers = false
 
     private static var approvalNote: String {
         String(localized: "macOS is waiting for you to allow AutoHush in Login Items.",
@@ -21,30 +20,21 @@ struct GeneralSettingsView: View {
             return PermissionText.controlNote(name, .playerNotRunning)
         case (.automation, _):
             return String(localized: "AutoHush can’t control \(name) without Automation access.",
-                          comment: "Settings → General, under the music player, while Automation isn't allowed; %@ is the player")
+                          comment: "Settings → General, under the media player, while Automation isn't allowed; %@ is the player")
         default:
             return String(localized: "AutoHush can’t control \(name) without Accessibility access.",
-                          comment: "Settings → General, under the music player, while Accessibility isn't allowed; %@ is the player")
+                          comment: "Settings → General, under the media player, while Accessibility isn't allowed; %@ is the player")
         }
     }
 
-    @ViewBuilder private var audioButtons: some View {
-        PermissionButton(model: model, permission: .systemAudioRecording, access: model.permissions.audio, long: true)
-            .fixedSize()
-        Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
-            .buttonStyle(.chip)
-            .fixedSize()
-    }
-
-    private var audioNote: String {
-        model.permissions.audio == .needsReopen
-            ? PermissionText.audioNote(.needsReopen)
-            : String(localized: "Without Audio Recording access, a silent app with its sound open keeps your music paused.",
-                     comment: "Settings → General, under AntiDot mode, while Audio Recording isn't allowed")
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        SettingsPageScroll {
+            playerCard
+            PlayerTiles(options: model.playerOptions.offered, selection: model.chosenPlayerID,
+                        onSelect: { model.chooseMusicPlayer($0.bundleID) }, onAddWebApp: { model.addWebApp() })
+            if model.playerOptions.noneInstalled {
+                NoteLabel(PlayerOption.noneInstalledWarning)
+            }
             Card {
                 SwitchRow(Text("Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
@@ -58,212 +48,100 @@ struct GeneralSettingsView: View {
                         .buttonStyle(.chip)
                 }
             }
+        }
+    }
 
-            SectionHeading(Text("Music", comment: "Settings → General: heading of the music settings"))
-            Card {
-                SwitchRow(
-                    Text("Auto-Pause Music"),
-                    subtitle: Text("Choose which apps pause your music in the Apps tab.",
-                                   comment: "Settings → General, under the Auto-Pause Music switch"),
-                    isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
-                )
-                if let note = model.autoPauseNote {
-                    Text(note).captionStyle()
-                }
-                CardDivider()
-                HStack {
-                    RowTitle(Text("Music player", comment: "The menu's card and Settings → General: label of the chosen music player"),
-                             subtitle: Text("AutoHush pauses and resumes this app.", comment: "Settings → General, under “Music player”"))
-                    Spacer(minLength: 8)
-                    PlayerPopUp(options: model.playerOptions.offered, selection: model.chosenPlayerID,
-                                onSelect: { model.chooseMusicPlayer($0) }, onAddWebApp: { model.addWebApp() },
-                                learnAgainName: model.canLearnControlsAgain ? model.chosenPlayerName : nil,
-                                onLearnAgain: { model.learnControlsAgain() })
-                    if model.playerOptions.isSearchable { playerSearchButton }
-                }
-                if model.playerOptions.noneInstalled {
-                    NoteLabel(PlayerOption.noneInstalledWarning)
-                }
-                // What the chosen player needs and lacks, and the way to allow it.
-                if let control = model.permissions.control, !model.permissions.controlAccess.isSatisfied {
-                    NoteLabel(controlNote(control, access: model.permissions.controlAccess))
-                    PermissionButton(model: model, permission: control, access: model.permissions.controlAccess, long: true)
-                }
-                // Until AutoHush has learned the chosen web app's controls.
-                if let name = model.chosenPlayerName, let hasPlayed = model.learningHasPlayed {
-                    CardDivider()
-                    LearningSummary(name: name, hasPlayed: hasPlayed, deadline: model.learningPauseDeadline,
-                                    note: model.learningNote, pauseMode: model.learningPauseMode,
-                                    action: { model.learningStep($0) })
-                }
-                // Once learned: the way to learn them again, as they may have been learned wrong.
-                if let name = model.chosenPlayerName, model.canLearnControlsAgain {
-                    CardDivider()
-                    HStack {
-                        RowTitle(Text(verbatim: LearningText.controlsTitle), subtitle: Text(verbatim: LearningText.controlsNote(name)))
-                        Spacer(minLength: 8)
-                        Button { model.learnControlsAgain() } label: {
-                            Text(verbatim: LearningText.learnAgainButton)
-                        }
-                            .buttonStyle(.chip)
-                    }
-                }
-            }
-
-            SectionHeading(Text("Privacy", comment: "Settings → General: heading of the AntiDot mode setting"))
-            Card {
-                SwitchRow(
-                    Text("AntiDot mode", comment: "Settings → General and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"),
-                    subtitle: Text("Hides the purple recording indicator. Detection is less precise.",
-                                   comment: "Settings, under AntiDot mode"),
-                    isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
-                )
-                // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
-                if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {
-                    NoteLabel(audioNote)
-                    // Side by side when they fit, else one under the other.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { audioButtons }
-                        VStack(alignment: .leading, spacing: 6) { audioButtons }
-                    }
-                }
-                if model.isAntiDotMode {
-                    CardDivider()
-                    SectionLabel(Text("Detect playing apps by", comment: "Settings → General, AntiDot mode: lead-in to the ways of detecting playing apps"))
-                    ChoiceChips(
-                        options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
-                        selection: model.detectionMethod,
-                        onSelect: { model.setDetectionMethod($0) }
-                    )
-                    Text(model.detectionMethod.summary).captionStyle()
-                }
-            }
-
-            SectionHeading(Text("Updates", comment: "Menu toolbar button, Settings → General heading and Diagnostics row: AutoHush's updates"))
-            Card {
-                SwitchRow(Text("Check for updates automatically", comment: "Settings → General: switch for the daily update check"), isOn: Binding(
-                    get: { model.checksForUpdatesAutomatically },
-                    set: { model.setChecksForUpdates($0) }
-                ))
-                // What checks lead to only matters while they run.
-                if model.checksForUpdatesAutomatically {
-                    CardDivider()
-                    SectionLabel(Text("When an update is found", comment: "Settings → General: lead-in to what happens when an update is found"))
-                    ChoiceChips(
-                        options: [AutomaticUpdates.notify, .download, .install].map {
-                            .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
-                        },
-                        // A copy that can't install itself can only notify.
-                        selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                        onSelect: { model.setAutomaticUpdates($0) },
-                        onUnavailableClick: { model.flashNotificationsNote() }
-                    )
-                    .disabled(model.updateInstallNote != nil)
-                    Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
-                }
-                // Shown even with checks off: AutoHush turns them off when notifications go off.
-                if model.notificationsOff {
-                    // Blinks bright after a click on a choice that needs notifications.
-                    Text("Notifications are off for AutoHush, so it can't tell you about updates.",
-                         comment: "Settings → General, under the update choices, while notifications are off for AutoHush")
-                        .font(.appCaption)
-                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
+    /// The chosen player with what it's doing and what works; what it lacks
+    /// and the way to allow it; a web app's controls; then the Auto-Pause
+    /// switch.
+    private var playerCard: some View {
+        Card {
+            HStack(alignment: .center, spacing: 12) {
+                playerIcon
+                VStack(alignment: .leading, spacing: 2) {
+                    SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
+                    Text(verbatim: model.chosenPlayerName ?? "AutoHush")
+                        .font(.appHeadline)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button { model.openNotificationSettings() } label: {
-                        Text("Open Notifications Settings…", comment: "Settings → General: button that opens System Settings → Notifications")
-                    }
-                        .buttonStyle(.chip)
+                    Text(verbatim: model.statusLine)
+                        .font(.appSubheadline)
+                        .foregroundStyle(model.statusNeedsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
+                        .fixedSize(horizontal: false, vertical: true)
+                    checks.padding(.top, 2)
                 }
+                Spacer(minLength: 0)
+            }
+            // What the chosen player needs and lacks, and the way to allow it.
+            if let control = model.permissions.control, !model.permissions.controlAccess.isSatisfied {
+                NoteLabel(controlNote(control, access: model.permissions.controlAccess))
+                PermissionButton(model: model, permission: control, access: model.permissions.controlAccess, long: true)
+            }
+            // A web app's controls: learned or not, and the way to learn them
+            // afresh in the learning window (the steps show only there).
+            if let name = model.chosenPlayerName, model.canLearnControlsAgain {
                 CardDivider()
-                HStack {
-                    RowTitle(Text(model.updateTitle), subtitle: model.lastCheckedNote().map { Text($0) })
-                    Spacer(minLength: 8)
-                    Button { model.checkForUpdates() } label: {
-                        Text("Check Now", comment: "Settings → General: checks for an update now")
-                    }
-                        .buttonStyle(.chip)
+                ControlsRow(name: name, isLearned: model.learning?.isLearned == true) { model.learnControlsAgain() }
+            }
+            CardDivider()
+            SwitchRow(
+                Text("Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row"),
+                subtitle: Text("Choose which apps pause your player on the Apps page.",
+                               comment: "Settings → General, under the Auto-Pause switch; Apps is the Settings page that lists them"),
+                isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
+            )
+            if let note = model.autoPauseNote {
+                Text(note).captionStyle()
+            }
+        }
+    }
+
+    /// The chosen player's icon (its placeholder while it isn't installed,
+    /// faded), or AutoHush's while none is chosen.
+    private var playerIcon: some View {
+        let image = model.chosenPlayer?.icon(size: 56) ?? NSApp.applicationIconImage ?? NSImage()
+        return Image(nsImage: image)
+            .resizable()
+            .frame(width: 56, height: 56)
+            .opacity(model.chosenPlayer?.isInstalled == false ? 0.5 : 1)
+            .accessibilityHidden(true)
+    }
+
+    /// Under the status line: the permission the player needs, once allowed,
+    /// and whether the music fades.
+    @ViewBuilder private var checks: some View {
+        if model.chosenPlayer != nil {
+            HStack(spacing: 12) {
+                if let control = model.permissions.control, model.permissions.controlAccess.isSatisfied {
+                    check(Self.allowedTitle(control), done: true)
+                }
+                if !model.playerCanFade {
+                    check(String(localized: "No fades", comment: "Settings → General, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)"), done: false)
+                } else if model.timings.fadesEnabled {
+                    check(String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player"), done: true)
+                } else {
+                    check(String(localized: "Fades off", comment: "Settings → General, under the media player: fades are turned off on the Fades page"), done: false)
                 }
             }
-
-            SupportLine()
-                .frame(maxWidth: .infinity)
-                .padding(.top, 8)
-        }
-        .padding(16)
-        .frame(width: 480)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    /// From `PlayerOption.searchThreshold` players on: a magnifier that opens
-    /// a search over them, where a click on one chooses it.
-    private var playerSearchButton: some View {
-        IconChipButton(symbol: "magnifyingglass",
-                       label: Text("Search by name", comment: "The magnifier that opens a search")) {
-            searchingPlayers = true
-        }
-        .popover(isPresented: $searchingPlayers, arrowEdge: .bottom) {
-            PlayerSearchPopover(options: model.playerOptions.offered, chosen: model.chosenPlayerID) {
-                model.chooseMusicPlayer($0)
-                searchingPlayers = false
-            }
-        }
-    }
-}
-
-/// The detection choices as Settings and Diagnostics describe them.
-extension DetectionMethod {
-    var title: String {
-        switch self {
-        case .audioLevels:
-            return String(localized: "Measure audio levels", comment: "Settings: a way to detect playing apps")
-        case .playbackSignals:
-            return String(localized: "What apps tell macOS", comment: "Settings, AntiDot mode: a way to detect playing apps")
-        case .openStreams:
-            return String(localized: "Open audio streams only",
-                          comment: "Settings, AntiDot mode: a way to detect playing apps")
         }
     }
 
-    var summary: String {
-        switch self {
-        case .audioLevels:
-            return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.",
-                          comment: "Settings → General, under the ways of detecting playing apps: what measuring audio levels does")
-        case .playbackSignals:
-            return String(localized: "An app counts as playing while it tells macOS it's playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your music pauses, so notification sounds don't interrupt it.",
-                          comment: "Settings → General, under the ways of detecting playing apps: how “What apps tell macOS” works")
-        case .openStreams:
-            return String(localized: "Any app with its audio open counts as playing, even when paused.",
-                          comment: "Settings → General, under the ways of detecting playing apps: how “Open audio streams only” works")
+    private func check(_ text: String, done: Bool) -> some View {
+        Label {
+            Text(verbatim: text)
+        } icon: {
+            Image(systemName: done ? "checkmark.circle.fill" : "minus.circle")
+                .foregroundStyle(done ? AnyShapeStyle(.appSuccess) : AnyShapeStyle(.appSecondary))
         }
-    }
-}
-
-/// Each update choice as Settings and Diagnostics show it.
-extension AutomaticUpdates {
-    var title: String {
-        switch self {
-        case .notify:
-            return String(localized: "Notify me", comment: "Settings: an update choice")
-        case .download:
-            return String(localized: "Download it and notify me", comment: "Settings: an update choice")
-        case .install:
-            return String(localized: "Install it automatically", comment: "Settings: an update choice")
-        }
+        .font(.appCaption)
+        .foregroundStyle(.appSecondary)
     }
 
-    /// What the choice means, under the choices.
-    var explanation: String {
-        switch self {
-        case .notify:
-            return String(localized: "AutoHush lets you know. Install the update from its menu whenever you like.",
-                          comment: "Settings, under the update choice Notify me")
-        case .download:
-            return String(localized: "AutoHush downloads it and lets you know. It keeps the download for 7 days.",
-                          comment: "Settings, under the update choice Download it and notify me")
-        case .install:
-            return String(localized: "AutoHush installs it when it isn't holding your music paused, and lets you know afterwards.",
-                          comment: "Settings, under the update choice Install it automatically")
+    private static func allowedTitle(_ permission: Permission) -> String {
+        switch permission {
+        case .automation:
+            String(localized: "Automation allowed", comment: "Settings → General, under the media player, with a check: AutoHush may control it through Automation")
+        default:
+            String(localized: "Accessibility allowed", comment: "Settings → General, under the media player, with a check: AutoHush may control it through Accessibility")
         }
     }
 }

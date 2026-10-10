@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 
-// "Add a Web App…", in the menu's players, Settings → General (the player
-// pop-up's last item) and the welcome window: the user pastes a
+// "Add a Web App…", in the menu's players, Settings → General and the
+// welcome window (the last tile, "Add…"): the user pastes a
 // website's address, AutoHush opens it in Safari and, once the site shows
 // and the user clicks Add to Dock, makes it a Safari web app (Safari's own
 // Add to Dock), chooses it, opens it and learns its controls, ticking each
@@ -122,8 +122,9 @@ final class AddWebAppModel {
     }
 
     /// The window closed: an add under way stops (Safari's dialog is
-    /// cancelled, nothing is added). Once the web app is made, learning goes
-    /// on in the menu and Settings.
+    /// cancelled, nothing is added). Once the web app is made, its controls
+    /// can be learned later, from the Controls row of the menu's card and
+    /// of Settings.
     func windowClosed() {
         guard isAdding else { return }
         cancel()
@@ -198,7 +199,7 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
         self.model = model
         let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: {}))
         super.init(content: hosting,
-                   title: String(localized: "Add a Web App", comment: "Title and heading of the window that makes a website a Safari web app"))
+                   title: String(localized: "Add a Web App", comment: "Title of the window that makes a website a Safari web app, in its title bar"))
         window?.delegate = self
         floatsInCorner = true // Safari, then the web app, come in front meanwhile
         hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
@@ -213,7 +214,8 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
 
-/// The window's content: what it's for, the address, then each step.
+/// The window's content: what it's for, the address, then each step, and
+/// its buttons at the foot.
 struct AddWebAppView: View {
     let model: AddWebAppModel
     /// For the learning that follows (the chosen player's status).
@@ -221,63 +223,68 @@ struct AddWebAppView: View {
     let close: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 14) {
-                Image(nsImage: Self.safariIcon)
-                    .resizable()
-                    .frame(width: 56, height: 56)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Add a Web App", comment: "Title and heading of the window that makes a website a Safari web app")
-                        .font(.appTitle)
-                    Text("Paste the address of a music website. AutoHush opens it in Safari, adds it to your Dock as an app, and learns its controls.",
-                         comment: "Add a Web App window, under its heading")
-                        .captionStyle()
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                WindowHeader(icon: Self.safariIcon,
+                             description: Text("Paste the address of a website that plays music, podcasts or videos. AutoHush opens it in Safari, adds it to your Dock as an app, and learns its controls.",
+                                               comment: "Add a Web App window, at its top beside Safari's icon"))
+                NoteLabel(PlayerOption.webAppsWarning)
+                    .padding(.top, 8)
+                // Adding drives Safari through Accessibility: without it, the
+                // window says so first, and Continue waits until it's allowed.
+                if needsAccessibility {
+                    VStack(alignment: .leading, spacing: 8) {
+                        NoteLabel(String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
+                                         comment: "Add a Web App window, while the Accessibility permission is missing"))
+                        PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
+                    }
+                }
+                SectionHeading(Text("Address", comment: "Add a Web App window: the heading over the field for the website's address"))
+                    .padding(.top, 8)
+                Card { addressField }
+                if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
+                    NoteLabel(problem)
+                    if model.problem == .accessibilityDenied {
+                        Button(Self.safariAccess.grantTitle) { model.openAccessibilitySettings() }
+                            .buttonStyle(.chip)
+                    }
+                }
+                if model.phase != .entering {
+                    SectionHeading(Self.stepsHeading).padding(.top, 8)
+                    Card { steps }
                 }
             }
-            NoteLabel(PlayerOption.webAppsWarning)
-            // Adding drives Safari through Accessibility: without it, the
-            // window says so first, and Continue waits until it's allowed.
-            if needsAccessibility {
-                VStack(alignment: .leading, spacing: 8) {
-                    NoteLabel(String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
-                                     comment: "Add a Web App window, while the Accessibility permission is missing"))
-                    PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
-                }
-            }
-            addressField
-            if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
-                NoteLabel(problem)
-                if model.problem == .accessibilityDenied {
-                    Button(Self.safariAccess.grantTitle) { model.openAccessibilitySettings() }
-                        .buttonStyle(.chip)
-                }
-            }
-            if model.phase != .entering { Card { steps } }
-            HStack(spacing: 8) {
+            .windowMargins()
+            BottomBar(margin: HostedWindowController.margin) {
                 Spacer()
                 Button { close() } label: {
                     if case .learning = model.phase {
-                        // The web app is added: learning goes on in the menu.
+                        // The web app is added: its controls can be learned
+                        // later, from the menu's or Settings' Controls row.
                         Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
                     } else {
                         Text("Cancel", comment: "Add a Web App window: stops adding the website and closes the window")
                     }
                 }
                 .buttonStyle(.chip)
+                .keyboardShortcut(.cancelAction)
                 if model.phase == .entering {
                     Button { model.continueTapped() } label: {
                         Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                     }
-                    // Blue, without Return: AutoHush has no keyboard shortcuts.
                     .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                    .keyboardShortcut(.defaultAction)
                     .disabled(!model.canContinue || needsAccessibility)
                 }
             }
         }
-        .padding(20)
         .frame(width: 440)
         .font(.appBody)
+    }
+
+    /// Over the card of steps, here and in the learning window.
+    static var stepsHeading: Text {
+        Text("Steps", comment: "Add a Web App and learning windows: the heading over the steps of adding a web app and learning its controls")
     }
 
     /// Accessibility, which adding needs, is missing while an address is typed.
@@ -297,7 +304,7 @@ struct AddWebAppView: View {
             }
             .textFieldStyle(.plain)
             .disabled(model.phase != .entering)
-            .onSubmit {} // no Return shortcut: Continue is clicked
+            .onSubmit { if !needsAccessibility { model.continueTapped() } } // Return, as Continue
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)

@@ -8,7 +8,6 @@ struct WebAppsHeading: View {
     /// The heading's own font: menus draw theirs a little larger than
     /// `SectionLabel`.
     var font: Font = .appCaption
-    var showsNote = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -20,23 +19,44 @@ struct WebAppsHeading: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
-            if showsNote {
-                Text(verbatim: PlayerOption.webAppsNote)
-                    .captionStyle()
-            }
+            Text(verbatim: PlayerOption.webAppsNote)
+                .captionStyle()
         }
     }
 }
 
 extension NSMenuItem {
-    /// The web apps' heading and note as a menu row (the menu's and the
-    /// player pop-up's): a native section header can't show a badge.
+    /// The web apps' heading and note as a row of the menu's players: a
+    /// native section header can't show a badge.
     @MainActor
     static func webAppsHeading(width: CGFloat?) -> NSMenuItem {
-        let item = NSMenuItem(title: PlayerOption.webAppsHeading, action: nil, keyEquivalent: "")
-        item.identifier = NSUserInterfaceItemIdentifier("webAppsHeading")
+        headingRow("webAppsHeading", title: PlayerOption.webAppsHeading, width: width,
+                   WebAppsHeading(font: menuHeadingFont))
+    }
+
+    /// "Supported Apps" over the apps among the menu's players, drawn as the
+    /// web apps' heading is, so the two match.
+    @MainActor
+    static func supportedAppsHeading(width: CGFloat?) -> NSMenuItem {
+        headingRow("supportedAppsHeading", title: PlayerOption.supportedAppsHeading, width: width,
+                   Text(verbatim: PlayerOption.supportedAppsHeading)
+                       .font(menuHeadingFont)
+                       .foregroundStyle(.appSecondary)
+                       .accessibilityAddTraits(.isHeader))
+    }
+
+    /// A heading's font among the menu's rows: a section header's.
+    private static var menuHeadingFont: Font {
+        .system(size: NSFont.systemFontSize(for: .small), weight: .semibold)
+    }
+
+    /// A heading among the menu's players, disabled, showing `content`.
+    @MainActor
+    private static func headingRow(_ identifier: String, title: String, width: CGFloat?, _ content: some View) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.identifier = NSUserInterfaceItemIdentifier(identifier)
         item.isEnabled = false
-        let heading = WebAppsHeading(font: .system(size: NSFont.systemFontSize(for: .small), weight: .semibold))
+        let heading = content
             // In line with the rows' icons, as a section header's title is.
             .padding(.leading, menuRowLeading)
             .padding(.trailing, 14)

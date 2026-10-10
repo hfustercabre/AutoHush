@@ -64,4 +64,22 @@ struct AppIconTests {
         #expect(AppIcon.usesDarkIcons(style: "ClearAutomatic", darkAppearance: true))
         #expect(!AppIcon.usesDarkIcons(style: "ClearAutomatic", darkAppearance: false))
     }
+
+    @Test("a supported player that's no longer where it was found shows its placeholder; another app what macOS gives it")
+    func missingApp() {
+        let gone = "/Applications/No Such Player.app"
+        let player = PlayerOption(bundleID: "com.example.gone", name: "Gone", appURL: nil, iconPlaceholder: placeholder)
+        let placeholderIcon = AppIcon.image(placeholder: placeholder, id: player.bundleID, size: 20)
+        let source = AudioSource(id: player.bundleID, name: "Gone", bundlePath: gone)
+        #expect(AppIcon.image(for: source, players: [player], size: 20) === placeholderIcon)
+
+        // Another app, not a player: as before, macOS's icon for its path.
+        let other = AudioSource(id: "com.example.other", name: "Other", bundlePath: gone)
+        #expect(AppIcon.image(for: other, players: [player], size: 20) === AppIcon.image(bundlePath: gone, size: 20))
+        #expect(AppIcon.image(for: other, players: [player], size: 20) !== placeholderIcon)
+
+        // An app that's there keeps its own icon, even when it's a player.
+        let safari = AudioSource(id: player.bundleID, name: "Safari", bundlePath: "/Applications/Safari.app")
+        #expect(AppIcon.image(for: safari, players: [player], size: 20) !== placeholderIcon)
+    }
 }

@@ -11,6 +11,7 @@ builds only the AutoHush product, and what the build itself needs lives in
 | [ListenToFades](ListenToFades) | Records the Mac's sound through AutoHush Loopback and measures each fade (`swift run listen-to-fades`). |
 | [LoopbackDriver](LoopbackDriver) | AutoHush Loopback, a virtual audio device whose output comes back on its input, for silent, measurable tests. |
 | [TestVM](TestVM) | Runs builds, tests and apps in a macOS virtual machine, so live tests don't disturb the Mac you work on. |
+| [OldMacVM](OldMacVM) | Runs an app in a VM of an older macOS (15.0, the first AutoHush supports), too old for `tart exec`: one double-click inside the VM starts it. |
 | [NoiseMaker](NoiseMaker) | A test app that plays a tone or a file, standing in for "another app playing sound". |
 | [PauseCheck](PauseCheck) | In the test VM, times AutoHush's pause and resume around a Noise Maker sound. |
 | [PageButtons](PageButtons) | Lists or presses a web page's buttons by name, the way AutoHush reads them, to drive a web app in tests. |

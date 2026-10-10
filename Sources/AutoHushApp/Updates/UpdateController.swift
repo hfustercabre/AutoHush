@@ -437,10 +437,14 @@ final class UpdateController {
         let alert = NSAlert()
         alert.messageText = prompt.title
         alert.informativeText = prompt.message
-        for button in prompt.buttons { alert.addButton(withTitle: button.title) }
+        for button in prompt.buttons {
+            let added = alert.addButton(withTitle: button.title)
+            // Return presses the first button, as AppKit sets it; Escape, Later.
+            if button.choice == .later { added.keyEquivalent = "\u{1b}" }
+        }
         if let notes = release.notes { alert.accessoryView = Self.notesView(notes) }
         NSApp.activate()
-        let index = alert.runModalWithoutShortcuts().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        let index = alert.runModal().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
         guard prompt.buttons.indices.contains(index) else { return }
         switch prompt.buttons[index].choice {
         case .install: Task { await install(release, userInitiated: true) }
@@ -487,8 +491,9 @@ final class UpdateController {
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
         alert.addButton(withTitle: String(localized: "Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)"))
+            .keyEquivalent = "\u{1b}" // Escape; Return opens the page
         NSApp.activate()
-        if alert.runModalWithoutShortcuts() == .alertFirstButtonReturn {
+        if alert.runModal() == .alertFirstButtonReturn {
             openURL(release.pageURL)
         }
     }

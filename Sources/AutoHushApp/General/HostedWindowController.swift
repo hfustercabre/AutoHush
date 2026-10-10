@@ -1,19 +1,55 @@
 import AppKit
+import Observation
 import SwiftUI
 
-/// A window around SwiftUI content, sized to it: titled and closable, and
-/// kept when closed, so it shows again at once. It's shown in front, and
-/// centered when it comes on screen, or, floating above other apps, in the
-/// top-right corner (`floatsInCorner`). The welcome, learning and "Add a
-/// Web App" windows are these; the last two float.
+/// A window around SwiftUI content, sized to it: closable, and kept when
+/// closed, so it shows again at once. Its title bar is part of it, as in
+/// Settings (no band, no line), with the title in bold as a Settings page's
+/// name. It's shown in front, and centered when it comes on screen, or,
+/// floating above other apps, in the top-right corner (`floatsInCorner`).
+/// The welcome, learning and "Add a Web App" windows are these; the last
+/// two float.
 @MainActor
 class HostedWindowController: NSWindowController {
+    /// The content's side and bottom margins (`windowMargins`).
+    static let margin: CGFloat = 20
+
     init(content: NSViewController, title: String) {
         let window = NSWindow(contentViewController: content)
         window.title = title
-        window.styleMask = [.titled, .closable]
+        Self.styleTitleBar(of: window)
         window.isReleasedWhenClosed = false
         super.init(window: window)
+    }
+
+    /// Settings' title bar: the content runs under it, without its band or
+    /// line, and an empty toolbar shows the title in bold.
+    private static func styleTitleBar(of window: NSWindow) {
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        let toolbar = NSToolbar(identifier: "AutoHushWindow")
+        toolbar.displayMode = .iconOnly
+        window.toolbar = toolbar
+        window.toolbarStyle = .unified
+    }
+
+    /// How much of the window's height the title bar takes (its toolbar's
+    /// room included): the content gets the rest.
+    static let titleBarHeight: CGFloat = {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 400), styleMask: [.titled],
+                              backing: .buffered, defer: true)
+        styleTitleBar(of: window)
+        return window.frame.height - window.contentLayoutRect.height
+    }()
+
+    /// Keeps the window's title as `title` says while what it reads changes
+    /// (the page shown, the player's name).
+    func followTitle(_ title: @escaping @MainActor @Sendable () -> String) {
+        window?.title = title()
+        withObservationTracking { _ = title() } onChange: { [weak self] in
+            Task { @MainActor in self?.followTitle(title) }
+        }
     }
 
     @available(*, unavailable)
@@ -21,9 +57,9 @@ class HostedWindowController: NSWindowController {
 
     /// Above every app's windows, in the top-right corner of the screen: for
     /// a window that guides the user through other apps (Safari, a web app),
-    /// which come in front and would hide it, since AutoHush has no Dock
-    /// icon to bring it back. The corner keeps it off Safari's dialog and a
-    /// web app's player bar. It keeps its top edge as its steps come and go.
+    /// which come in front and would hide it while the user works there. The
+    /// corner keeps it off Safari's dialog and a web app's player bar. It
+    /// keeps its top edge as its steps come and go.
     var floatsInCorner = false {
         didSet {
             guard let window else { return }

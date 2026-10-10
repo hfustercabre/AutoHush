@@ -76,6 +76,11 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         await queue.run { control.learnAgain() }
     }
 
+    package func keepLearned() async {
+        let control = control
+        await queue.run { control.keepLearned() }
+    }
+
     package func markPlaying() async -> LearningMark {
         let pid = processIdentifier()
         let control = control

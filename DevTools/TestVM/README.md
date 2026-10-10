@@ -31,7 +31,7 @@ bash DevTools/TestVM/vm.sh --gui 'open -n AutoHush.app'
   In the VM they're `/Volumes/My Shared Files/project` and `…/transfer`.
 - Each run mirrors the share into `~/Documents/Projects/AutoHush` in the VM
   with `rsync --delete`, keeping `.build`, `AutoHush.app` and the harness's
-  work folder, so builds use the VM's own disk and stay incremental.
+  work folder and app, so builds use the VM's own disk and stay incremental.
 - It then builds the test tools into `~/vmtools` when their source changed:
   [SoundNow](../SoundNow), [WindowList](../WindowList),
   [PageButtons](../PageButtons) and the [NoiseMaker](../NoiseMaker) app. It

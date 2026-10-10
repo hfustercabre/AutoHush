@@ -34,11 +34,11 @@ struct AppStatus: Equatable {
         var settingsNote: String? {
             guard case .snoozed(let until) = self else { return nil }
             return String(localized: "Turned off \(until).",
-                          comment: "Settings, under Auto-Pause Music; %@ says until when, e.g. “until 15:30”")
+                          comment: "Settings → General, under the Auto-Pause switch; %@ says until when, e.g. “until 15:30”")
         }
     }
 
-    /// The players to choose from, for the menu's Music Player submenu.
+    /// The players to choose from, for the menu's players under its card.
     var playerOptions: [PlayerOption] = []
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String?
@@ -50,29 +50,14 @@ struct AppStatus: Equatable {
     /// is chosen.
     var playerName: String { chosenPlayer?.name ?? "" }
     /// How far AutoHush has come learning to control the chosen player;
-    /// `nil` for a player it controls without learning.
+    /// `nil` for a player it controls without learning. The menu's card
+    /// says whether it's learned; the steps show only in a window.
     var learning: LearningStatus?
-    /// Once the user said the chosen player plays: when learning starts
-    /// over without the pause.
-    var learningPauseDeadline: Date?
-    /// Why the user's last learning click didn't move it on.
-    var learningNote: LearningNote?
-    /// Once the user said it plays: AutoHush pauses it itself, to learn
-    /// which button changes, or, when it couldn't, the user does.
-    var learningPauseMode = LearningPauseMode.automatic
-    /// Whether the user has still to play the chosen player (`false`) or to
-    /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
-    /// to learn, or while the chosen player isn't offered (deleted).
-    var learningHasPlayed: Bool? {
-        guard chosenPlayer != nil, !needsPermission, case .learning(let hasPlayed) = learning else { return nil }
-        return hasPlayed
-    }
-    /// The chosen player's controls are learned, so they can be learned
-    /// again (they may have been learned wrong).
-    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning == .learned }
-    /// A permission the chosen player needs is missing: the menu asks for it,
-    /// and shows the learning steps only once it's allowed, since AutoHush
-    /// can't watch the player before.
+    /// The chosen player learns its controls (a web app): they can be learned
+    /// afresh, once learned (they may have been learned wrong) or before
+    /// (the learning window was closed halfway).
+    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning != nil }
+    /// A permission the chosen player needs is missing: the menu asks for it.
     var needsPermission: Bool {
         if case .needsPermission = health { return true }
         return false
@@ -95,9 +80,9 @@ struct AppStatus: Equatable {
         guard let controlError else { return nil }
         let title = playback == .pauseFailed && isReady
             ? String(localized: "Couldn't Pause \(playerName)",
-                     comment: "Title of the alert that says why the music player refused to pause or failed to; %@ is the player")
+                     comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
             : String(localized: "Can't Control \(playerName)",
-                     comment: "Title of the alert that says why the music player can't be controlled; %@ is the player")
+                     comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
         return (title, "\(controlError.text)\n\n\(controlError.detail)")
     }
     /// The user went to allow System Audio Recording during this launch.

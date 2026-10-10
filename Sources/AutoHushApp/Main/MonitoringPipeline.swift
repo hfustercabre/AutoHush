@@ -185,13 +185,15 @@ final class MonitoringPipeline {
         Self.allowTaps(for: tappingPlayer, in: method)
     }
 
-    /// AntiDot mode promises no audio taps: a player that mutes itself
-    /// through one (a web app that refuses to pause) doesn't then.
+    /// AntiDot mode promises no audio taps, with either of its ways of
+    /// detecting: a player that mutes itself through one (a web app that
+    /// refuses to pause) doesn't then, nor listens to itself first.
     private static func allowTaps(for player: (any TappingMusicPlayer)?, in method: DetectionMethod) {
         player?.allowTaps(Self.allowsTaps(method))
     }
 
-    static func allowsTaps(_ method: DetectionMethod) -> Bool { method != .playbackSignals }
+    /// Only while audio levels are measured: AntiDot mode is off.
+    static func allowsTaps(_ method: DetectionMethod) -> Bool { method == .audioLevels }
 
     func setIgnoredSources(_ ids: Set<String>) {
         monitor.setIgnoredSources(ids)

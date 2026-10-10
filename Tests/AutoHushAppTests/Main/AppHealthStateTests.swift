@@ -36,7 +36,7 @@ struct AppHealthStateTests {
     func controlErrorWords() {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
         #expect(menu.text == "AutoHush can't find Play/Pause in TIDAL's menus.")
-        #expect(menu.detail == "Controlling the music player failed: its Play/Pause menu item wasn't found.")
+        #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn't found.")
         #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")), player: "Spotify").text
                 == "Spotify answered with an error (-1708).")
         #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn't responding.")
@@ -56,9 +56,9 @@ struct AppHealthStateTests {
     func waitingForPlayer() {
         let installed = PlayerOption(bundleID: "com.example.a", name: "A", appURL: URL(fileURLWithPath: "/Applications/A.app"))
         let missing = PlayerOption(bundleID: "com.example.b", name: "B", appURL: nil)
-        #expect(AppHealthState.waitingForPlayer(among: [missing, installed]) == .needsPlayer("Choose a music player"))
+        #expect(AppHealthState.waitingForPlayer(among: [missing, installed]) == .needsPlayer("Choose a media player"))
         #expect(AppHealthState.waitingForPlayer(among: [missing])
-            == .needsPlayer("No supported music player is installed"))
+            == .needsPlayer("No supported media player is installed"))
     }
 
     @Test("a chosen player that isn't installed is degraded")

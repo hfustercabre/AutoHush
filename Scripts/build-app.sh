@@ -12,9 +12,11 @@ set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
 BUILD_CONFIG="${1:-release}"
+# A release runs on Apple silicon and Intel Macs alike (macOS 15 and 26 still
+# run on Intel); a debug build only on this Mac's kind.
 case "$BUILD_CONFIG" in
-    release) PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Release" ;;
-    debug)   PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Debug" ;;
+    release) PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Release"; ARCH_FLAGS=(--arch arm64 --arch x86_64) ;;
+    debug)   PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Debug"; ARCH_FLAGS=() ;;
     *)       fail "unknown configuration '$BUILD_CONFIG' (use release or debug)" ;;
 esac
 # Where the compiler lists each source file's localizable strings.
@@ -23,13 +25,27 @@ STRINGS_DIR="$PROJECT_DIR/.build/localized-strings/$BUILD_CONFIG"
 step "Building $BUILD_CONFIG"
 cd "$PROJECT_DIR"
 HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
-    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME" \
+    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME" ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} \
         -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$STRINGS_DIR"
 
 step "Assembling $APP_NAME.app"
 rm -rf "${APP_BUNDLE:?}"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 cp "$PRODUCTS_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+if [[ "$BUILD_CONFIG" == release ]]; then
+    ARCHS=" $(lipo -archs "$APP_BUNDLE/Contents/MacOS/$APP_NAME") "
+    [[ "$ARCHS" == *" arm64 "* && "$ARCHS" == *" x86_64 "* ]] \
+        || fail "the release build isn't for both Apple silicon and Intel (it's for:$ARCHS)"
+fi
+# SwiftPM's build system records the oldest macOS the app runs on as the SDK
+# it was built with, and macOS 26 and later then draw it the old way, without
+# Liquid Glass. Record the SDK it was really built with; older systems ignore
+# it. Signing comes after.
+MIN_MACOS="$(plist_value "$INFO_PLIST" LSMinimumSystemVersion)"
+SDK_VERSION="$(xcrun --show-sdk-version)"
+xcrun vtool -set-build-version macos "$MIN_MACOS" "$SDK_VERSION" -replace \
+    -output "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+note "for macOS $MIN_MACOS and later, built with the macOS $SDK_VERSION SDK"
 cp "$INFO_PLIST" "$APP_BUNDLE/Contents/Info.plist"
 if [[ -n "${VERSION:-}" ]]; then
     /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_BUNDLE/Contents/Info.plist"

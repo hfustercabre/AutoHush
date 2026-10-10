@@ -1,7 +1,7 @@
 import Foundation
 
 /// How AutoHush decides whether another app is playing: audio levels,
-/// or one of AntiDot mode's choices (Settings → General, which has their text).
+/// or one of AntiDot mode's choices (Settings → Detection; the app has their text).
 package enum DetectionMethod: String, Sendable {
     /// Measures the other apps' audio levels. The most accurate; macOS shows
     /// its recording indicator while measuring.

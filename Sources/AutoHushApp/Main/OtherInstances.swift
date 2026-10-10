@@ -8,7 +8,8 @@ struct OtherInstances: Sendable {
     let list: @Sendable () -> [pid_t]
     /// Sends a signal to a process.
     let send: @Sendable (_ pid: pid_t, _ signal: Int32) -> Void
-    /// Whether a process is still running.
+    /// Whether a copy is still running: not once its process ID belongs to
+    /// another process, so nothing else is ever sent a signal.
     let isRunning: @Sendable (pid_t) -> Bool
 
     /// The running apps with `bundleIdentifier` opened before this process.
@@ -24,7 +25,13 @@ struct OtherInstances: Sendable {
                     .map(\.processIdentifier)
             },
             send: { pid, signal in _ = kill(pid, signal) },
-            isRunning: { pid in kill(pid, 0) == 0 || errno == EPERM }
+            isRunning: { pid in
+                // A copy that quit can have its process ID taken by another
+                // process within seconds: that one isn't AutoHush.
+                guard kill(pid, 0) == 0 || errno == EPERM,
+                      let app = NSRunningApplication(processIdentifier: pid) else { return false }
+                return app.bundleIdentifier == bundleIdentifier && !app.isTerminated
+            }
         )
     }
 

@@ -19,17 +19,17 @@ package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
     package var errorDescription: String? {
         switch self {
         case .automationPermissionDenied:
-            return "Automation permission to control the music player is not granted."
+            return "Automation permission to control the media player is not granted."
         case .accessibilityPermissionDenied:
-            return "Accessibility permission to control the music player is not granted."
+            return "Accessibility permission to control the media player is not granted."
         case .playerNotRunning:
-            return "The music player is not running or is unavailable."
+            return "The media player is not running or is unavailable."
         case .playerNotResponding:
-            return "The music player is not responding."
+            return "The media player is not responding."
         case .playerCommandFailed(let failure):
-            return "Controlling the music player failed: \(failure)."
+            return "Controlling the media player failed: \(failure)."
         case .stillLearning:
-            return "AutoHush is still learning how to control the music player."
+            return "AutoHush is still learning how to control the media player."
         }
     }
 }

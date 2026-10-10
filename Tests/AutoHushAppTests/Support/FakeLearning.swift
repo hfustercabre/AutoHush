@@ -9,11 +9,17 @@ import AutoHushTestSupport
 final class FakeLearningWindow: LearningWindowPresenting {
     private(set) var isVisible = false
     private(set) var shownCount = 0
+    var onClose: (@MainActor () -> Void)?
     func show() {
         isVisible = true
         shownCount += 1
     }
-    func close() { isVisible = false }
+    /// As Later or the close button: the window says it closed.
+    func close() {
+        guard isVisible else { return }
+        isVisible = false
+        onClose?()
+    }
 }
 
 /// A player that must learn, whose learning the test moves along; it never
@@ -31,6 +37,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
         var status: LearningStatus
         var listeners: [AsyncStream<LearningStatus>.Continuation] = []
         var learnAgainCount = 0
+        var keepLearnedCount = 0
         var restartCount = 0
         /// It's Paused comes as the minute ends: learned instead of restarted.
         var learnedAtTheLastMoment = false
@@ -73,9 +80,24 @@ actor MockLearningPlayer: LearningMusicPlayer {
     /// How many times it was asked to learn again.
     nonisolated var learnAgainCount: Int { state.withLock { $0.learnAgainCount } }
 
+    /// Learned, it keeps what it learned until It's Playing (`.relearning`).
     func learnAgain() async {
-        state.withLock { $0.learnAgainCount += 1 }
-        set(.learning(hasPlayed: false))
+        let learned = state.withLock { state in
+            state.learnAgainCount += 1
+            return state.status.isLearned
+        }
+        set(learned ? .relearning : .learning(hasPlayed: false))
+    }
+
+    /// How many times it was told to keep what it learned.
+    nonisolated var keepLearnedCount: Int { state.withLock { $0.keepLearnedCount } }
+
+    func keepLearned() async {
+        let relearning = state.withLock { state in
+            state.keepLearnedCount += 1
+            return state.status == .relearning
+        }
+        if relearning { set(.learned) }
     }
 
     /// What It's Playing and It's Paused answer from now on.

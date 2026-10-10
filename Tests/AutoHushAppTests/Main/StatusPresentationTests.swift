@@ -10,10 +10,10 @@ struct StatusPresentationTests {
     // MARK: - States
 
     @Test("each playback state has its icon, label and status line", arguments: [
-        (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: music is playing", "Playing"),
-        (.pausedByMonitor, .pausedForApp, "AutoHush: music paused", "Paused — another app is playing"),
-        (.musicIdle, .noMusic, "AutoHush: no music playing", "Not playing"),
-        (.playingElsewhere, .elsewhere, "AutoHush: music is playing on another device", "Playing on another device"),
+        (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: your player is playing", "Playing"),
+        (.pausedByMonitor, .pausedForApp, "AutoHush: playback paused", "Paused — another app is playing"),
+        (.musicIdle, .noMusic, "AutoHush: nothing is playing", "Not playing"),
+        (.playingElsewhere, .elsewhere, "AutoHush: your player is playing on another device", "Playing on another device"),
     ])
     func playbackState(state: PlaybackState, icon: MenuBarIcon, label: String, line: String) {
         #expect(state.presentation() == StatePresentation(icon: icon, label: label, line: line))
@@ -43,7 +43,7 @@ struct StatusPresentationTests {
 
     @Test("each health state has its icon, label and status line; problems show their message", arguments: [
         (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
-        (.needsPlayer("Choose a music player"), .attention, "AutoHush: no music player chosen", "Choose a music player"),
+        (.needsPlayer("Choose a media player"), .attention, "AutoHush: no media player chosen", "Choose a media player"),
         (.degraded("Jukebox is not running"), .attention, "AutoHush: degraded", "Jukebox is not running"),
         (.needsPermission(.automation(player: "Jukebox")), .attention,
          "AutoHush: needs permission", "Allow Automation access to control Jukebox"),

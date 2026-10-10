@@ -117,6 +117,28 @@ struct VolumeFaderTests {
         #expect(await player.volumeLevel == 80)
     }
 
+    @Test("an app starting while a called-off fade-out reads the volume stops its comeback: it never goes back up")
+    func comebackStoppedWhileReadingVolume() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(80)
+        let gate = StepGate()
+        let fader = makeFader(player, gate: gate)
+        // Called off halfway; the next volume read is the comeback's, and
+        // another app starts during it.
+        await gate.at(step: 8) {
+            await fader.cancel()
+            await player.setBeforeVolumeAnswer {
+                await player.setBeforeVolumeAnswer(nil)
+                await fader.stopComeback()
+            }
+        }
+
+        #expect(try await !fader.fadeOutAndPause())
+        let history = await player.volumeHistory
+        #expect(history == history.sorted(by: >)) // only ever down: the next fade-out starts from there
+        #expect(await player.pauseCallCount == 0)
+    }
+
     @Test("a cancel that comes once the music is paused still sets the user's volume back")
     func cancelAfterPause() async throws {
         let player = MockMusicPlayer(state: .playing, volumeCurve: .cubic)

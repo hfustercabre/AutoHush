@@ -20,7 +20,7 @@ struct PlayingAppsView: View {
 
     private func row(_ source: AudioSource, pausesMusic: Bool) -> some View {
         HStack(spacing: 8) {
-            Image(nsImage: AppIcon.image(for: source, size: 20))
+            Image(nsImage: AppIcon.image(for: source, players: model.status.playerOptions, size: 20))
                 .resizable()
                 .frame(width: 20, height: 20)
                 .accessibilityHidden(true)
@@ -28,9 +28,9 @@ struct PlayingAppsView: View {
                 Text(verbatim: source.name).lineLimit(1)
                 Group {
                     if pausesMusic {
-                        Text("Pauses your music", comment: "Menu: under an app that pauses the music while it plays")
+                        Text("Pauses your player", comment: "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays")
                     } else {
-                        Text("Ignored — music keeps playing")
+                        Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Apps: under an app that is ignored, so your player keeps playing while it plays")
                     }
                 }
                 .font(.appCaption)

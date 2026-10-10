@@ -7,30 +7,33 @@ import AutoHushKit
 /// "Playing Now", each with its switch, in the order the user chose; a
 /// magnifier opens a search by name in place of the heading. A click selects
 /// an app, which Remove takes off the list (asking first for one that's
-/// turned off, which then pauses the music again). The tab grows with the
-/// list up to Advanced's height; a longer list scrolls under the heading.
+/// turned off, which then pauses the music again). The page fills the
+/// window: the list scrolls between the heading and the buttons.
 struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
-    /// The heights of the list (with its note) and of the parts above and
-    /// below it, which don't scroll.
+    /// The height of the list (with its note), and of the room it has.
     @State private var listHeight: CGFloat = 0
-    @State private var headerHeight: CGFloat = 0
-    @State private var barHeight: CGFloat = 0
-    /// The height when the search opened, kept while it's open so the window
-    /// doesn't shrink as the list narrows down.
-    @State private var heightWhileSearching: CGFloat?
-
-    /// The tab's height with a short list.
-    static let minimumHeight: CGFloat = 440
+    @State private var roomHeight: CGFloat = 0
 
     var body: some View {
+        // In a scroll view that doesn't scroll, as tall as the page: the
+        // toolbar above then looks as on the other pages, which scroll.
+        ScrollView {
+            page.containerRelativeFrame([.horizontal, .vertical])
+        }
+        .scrollDisabled(true)
+        // Settings' window is kept when closed: a selection doesn't outlive it.
+        .onDisappear { model.clearSelection() }
+    }
+
+    /// The heading, the list that scrolls, and the buttons.
+    private var page: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
-                .onGeometryChange(for: CGFloat.self, of: \.size.height) { headerHeight = $0 }
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
                     Card {
@@ -48,7 +51,7 @@ struct AppsSettingsView: View {
                         }
                     }
                     .animation(.default, value: model.apps)
-                    Text("Turn an app off to keep your music playing while it makes sound. Select an app to remove it from the list.",
+                    Text("Turn an app off to keep your player playing while it makes sound. Select an app to remove it from the list.",
                  comment: "Settings → Apps, under the list; “Select” as in clicking an app in the list")
                         .captionStyle()
                         .padding(.horizontal, 4)
@@ -57,11 +60,12 @@ struct AppsSettingsView: View {
                 .padding(.bottom, 8)
                 .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 }
             }
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { roomHeight = $0 }
             // Each button on one line, in every language: three of them leave
             // little room.
-            BottomBar(showsDivider: listScrolls) {
+            BottomBar(showsDivider: listHeight > roomHeight + 1) {
                 Button { chooseAppToIgnore() } label: {
-                    Text("Ignore Another App…", comment: "Settings → Apps: button that opens a panel to pick an app that never pauses the music")
+                    Text("Ignore Another App…", comment: "Settings → Apps: button that opens a panel to pick an app that never pauses your player")
                 }
                     .buttonStyle(.chip)
                     .fixedSize()
@@ -77,7 +81,6 @@ struct AppsSettingsView: View {
                     .fixedSize()
                     .disabled(model.apps.isEmpty)
             }
-            .onGeometryChange(for: CGFloat.self, of: \.size.height) { barHeight = $0 }
         }
         .confirmationDialog(Text("Reset the list of apps?", comment: "Settings → Apps: title of the confirmation for Reset List"),
                             isPresented: $confirmingReset) {
@@ -85,7 +88,7 @@ struct AppsSettingsView: View {
                 Text("Reset List", comment: "Settings → Apps: confirms forgetting every app in the list")
             }
         } message: {
-            Text("Every app is removed, and apps you turned off will pause your music again. Apps reappear as they play audio.",
+            Text("Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
                  comment: "Settings → Apps: what Reset List does, in its confirmation")
         }
         .confirmationDialog(Text(verbatim: String(localized: "Remove \(model.removalName) from the list?",
@@ -94,32 +97,13 @@ struct AppsSettingsView: View {
                             presenting: model.appAwaitingRemoval) { _ in
             Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: Self.removeTitle) }
         } message: { row in
-            Text(verbatim: String(localized: "\(row.source.name) is turned off now. Removed from the list, it pauses your music again when it plays.",
+            Text(verbatim: String(localized: "\(row.source.name) is turned off now. Removed from the list, it pauses your player again when it plays.",
                                   comment: "Settings → Apps: what removing an app that's turned off does, in its confirmation; %@ is the app"))
         }
-        .frame(width: 480, height: heightWhileSearching ?? height)
-        .onChange(of: model.appSearch != nil) { _, searching in
-            heightWhileSearching = searching ? height : nil
-        }
-        // Settings' window is kept when closed: a selection doesn't outlive it.
-        .onDisappear { model.clearSelection() }
     }
 
     private static var removeTitle: String {
         String(localized: "Remove", comment: "Settings → Apps: the button under the list that removes the selected app, and the one confirming it for an app that's turned off")
-    }
-
-    /// The list is longer than the room it has, so it scrolls under the
-    /// buttons.
-    private var listScrolls: Bool {
-        headerHeight + listHeight + barHeight > (heightWhileSearching ?? height) + 1
-    }
-
-    /// As tall as the whole list, at least `minimumHeight` and at most
-    /// Advanced's height.
-    private var height: CGFloat {
-        let whole = headerHeight + listHeight + barHeight
-        return min(max(whole, Self.minimumHeight), max(model.appsMaximumHeight, Self.minimumHeight))
     }
 
     /// The heading, or the search while it's open, then "Sort by" with the
@@ -138,7 +122,7 @@ struct AppsSettingsView: View {
                 }
                 .padding(.trailing, 10)
             } else {
-                SectionHeading(Text("Pauses Music", comment: "Settings → Apps: heading of the list of apps that pause the music"), isFirst: true)
+                SectionHeading(Text("Pauses Playback", comment: "Settings → Apps: heading of the list of apps that pause your player while they play"), isFirst: true)
                 Spacer()
             }
             Text("Sort by", comment: "Settings → Apps, before the pop-up that orders the apps")
@@ -182,13 +166,14 @@ struct AppsSettingsView: View {
     private func appRow(_ row: SettingsModel.AppRow) -> some View {
         HStack(spacing: 8) {
             HStack(spacing: 8) {
-                Image(nsImage: AppIcon.image(for: row.source, size: 24))
+                Image(nsImage: AppIcon.image(for: row.source, players: model.playerOptions, size: 24))
                     .resizable()
                     .frame(width: 24, height: 24)
                     .accessibilityHidden(true)
                 RowTitle(
                     Text(verbatim: row.source.name),
-                    subtitle: row.isIgnored ? Text("Ignored — music keeps playing") : Text("Pauses your music")
+                    subtitle: row.isIgnored ? Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Apps: under an app that is ignored, so your player keeps playing while it plays")
+                        : Text("Pauses your player", comment: "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays")
                 )
                 Spacer(minLength: 8)
             }
@@ -237,7 +222,7 @@ extension AppListOrder.Criterion {
         switch self {
         case .lastPlayed: String(localized: "Last Played", comment: "Settings → Apps, Sort by: the app that played most recently first")
         case .name:       String(localized: "Name", comment: "Settings → Apps, Sort by: alphabetically")
-        case .state:      String(localized: "On/Off", comment: "Settings → Apps, Sort by: apps that pause the music first, then the ignored ones")
+        case .state:      String(localized: "On/Off", comment: "Settings → Apps, Sort by: apps that pause your player first, then the ignored ones")
         }
     }
 }
@@ -250,7 +235,7 @@ extension AppListOrder {
         case (.lastPlayed, true):  String(localized: "Oldest first", comment: "Settings → Apps: the order, the app that played longest ago first")
         case (.name, false):       String(localized: "A to Z", comment: "Settings → Apps: the order, alphabetical")
         case (.name, true):        String(localized: "Z to A", comment: "Settings → Apps: the order, reverse alphabetical")
-        case (.state, false):      String(localized: "Apps that pause the music first", comment: "Settings → Apps: the order, switched-on apps first")
+        case (.state, false):      String(localized: "Apps that pause playback first", comment: "Settings → Apps: the order, switched-on apps first")
         case (.state, true):       String(localized: "Ignored apps first", comment: "Settings → Apps: the order, switched-off apps first")
         }
     }

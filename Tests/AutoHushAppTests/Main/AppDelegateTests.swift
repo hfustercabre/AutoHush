@@ -31,6 +31,8 @@ struct AppDelegateTests {
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
         let learningWindow = FakeLearningWindow()
+        /// How many learning windows AutoHush made (each Learn Again makes a new one).
+        var learningWindowsMade = 0
         let addWindow = FakeAddWebAppWindow()
         var maker = FakeWebAppMaker(.failure(.notAWebAddress))
         var opened: [URL] = []
@@ -108,7 +110,10 @@ struct AppDelegateTests {
             players: scratch.players,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
-            makeLearningWindow: { _ in scratch.learningWindow },
+            makeLearningWindow: { _ in
+                scratch.learningWindowsMade += 1
+                return scratch.learningWindow
+            },
             webAppMaker: scratch.maker,
             makeAddWebAppWindow: { _, _ in scratch.addWindow },
             openApp: { scratch.opened.append($0) },
@@ -133,7 +138,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("choosing a web app AutoHush must learn asks for it in a window, shows the steps, and closes it once learned")
+    @Test("choosing a web app AutoHush must learn asks for it in a window, which shows the steps and closes once learned")
     func learningWindow() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
@@ -146,18 +151,18 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(webApp.bundleID)
         #expect(scratch.learningWindow.isVisible)
-        #expect(sut.status.learningHasPlayed == false)
-        #expect(sut.settingsModel.learningHasPlayed == false)
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
 
         webApp.set(.learning(hasPlayed: true))
-        await waitFor { sut.status.learningHasPlayed == true }
-        #expect(sut.settingsModel.learningHasPlayed == true)
+        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
 
         webApp.set(.learned)
         await waitFor { !scratch.learningWindow.isVisible }
         #expect(!scratch.learningWindow.isVisible)
         #expect(sut.status.learning == .learned)
-        #expect(sut.status.learningHasPlayed == nil)
+        #expect(!scratch.learningWindow.isVisible && sut.status.canLearnControlsAgain)
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.status.learning == nil)
@@ -166,7 +171,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("a web app's learned controls can be learned again: the player forgets them and the learning window opens")
+    @Test("a web app's controls are learned afresh in a new window, which replaces an open one; closed before It's Playing, what it learned stays")
     func learnControlsAgain() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
@@ -180,16 +185,31 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.canLearnControlsAgain)
 
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isVisible && sut.status.learningHasPlayed != nil }
-        #expect(scratch.learningWindow.isVisible)
+        await waitFor { scratch.learningWindow.isVisible && sut.status.learning == .relearning }
         #expect(webApp.learnAgainCount == 1)
-        #expect(sut.status.learningHasPlayed == false)
-        #expect(!sut.status.canLearnControlsAgain) // until they're learned
-        #expect(!sut.settingsModel.canLearnControlsAgain)
+        #expect(scratch.learningWindowsMade == 1)
+        #expect(sut.status.canLearnControlsAgain)
+        #expect(sut.settingsModel.learning == .relearning) // still learned: the Controls row says so
 
-        sut.learnControlsAgain() // learning already: nothing to forget
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(webApp.learnAgainCount == 1)
+        // Later, or the close button, before It's Playing: what it learned stays.
+        scratch.learningWindow.close()
+        await waitFor { sut.status.learning == .learned }
+        #expect(webApp.keepLearnedCount == 1)
+
+        // Again, and It's Playing taken (the player forgets then); then again
+        // while the window is open: it closes, a new one starts over, and
+        // closing the old one keeps nothing.
+        sut.learnControlsAgain()
+        await waitFor { scratch.learningWindow.isVisible && sut.status.learning == .relearning }
+        webApp.set(.learning(hasPlayed: true))
+        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
+        sut.learnControlsAgain()
+        #expect(!scratch.learningWindow.isVisible) // the old one, closed at once
+        await waitFor { scratch.learningWindow.isVisible }
+        #expect(webApp.learnAgainCount == 3)
+        #expect(scratch.learningWindowsMade == 3)
+        #expect(webApp.keepLearnedCount == 1)
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
 
         sut.chooseMusicPlayer(Players.first) // a player that learns nothing
         #expect(!sut.status.canLearnControlsAgain)
@@ -197,7 +217,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("while a permission is missing, the learning window asks for it first; the menu and Settings show no steps")
+    @Test("while a permission is missing, the learning window asks for it first, and the card's Controls row stays")
     func learningWaitsForPermission() {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
@@ -209,14 +229,12 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.setHealth(.needsPermission(.accessibility(player: "YT Music")))
         #expect(scratch.learningWindow.isVisible) // with the permission as its first step
-        #expect(sut.settingsModel.playerNeedsPermission)
-        #expect(sut.status.learningHasPlayed == nil) // the menu asks for the permission instead
-        #expect(sut.settingsModel.learningHasPlayed == nil)
+        #expect(sut.status.needsPermission)
+        #expect(sut.status.canLearnControlsAgain) // the card's Controls row stays
 
         sut.setHealth(.ready) // allowed: the retry started monitoring
-        #expect(!sut.settingsModel.playerNeedsPermission)
-        #expect(sut.status.learningHasPlayed == false)
-        #expect(sut.settingsModel.learningHasPlayed == false)
+        #expect(!sut.status.needsPermission)
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(scratch.learningWindow.shownCount == 1)
     }
 
@@ -376,49 +394,46 @@ struct AppDelegateTests {
 
         webApp.answer(playing: .notHeard)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningNote == .notHeard }
-        #expect(sut.settingsModel.learningNote == .notHeard)
-        #expect(sut.status.learningPauseDeadline == nil)
+        await waitFor { sut.settingsModel.learningNote == .notHeard }
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
 
         webApp.answer(playing: .noted, paused: .nothingChanged)
         sut.learningStep(.itsPlaying)
         // AutoHush's own pause didn't take: its step failed, and no minute counts yet.
-        await waitFor { sut.status.learningPauseMode == .failed }
-        #expect(sut.settingsModel.learningPauseMode == .failed)
-        #expect(sut.status.learningHasPlayed == true)
-        #expect(sut.status.learningNote == nil)
-        #expect(sut.status.learningPauseDeadline == nil)
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
+        #expect(sut.settingsModel.learningNote == nil)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
 
         // Pause It Manually: the user has a minute to pause it.
         sut.learningStep(.pauseManually)
-        await waitFor { sut.status.learningPauseDeadline != nil }
-        #expect(sut.status.learningPauseMode == .byHand)
-        let deadline = sut.status.learningPauseDeadline
+        await waitFor { sut.settingsModel.learningPauseDeadline != nil }
+        #expect(sut.settingsModel.learningPauseMode == .byHand)
+        let deadline = sut.settingsModel.learningPauseDeadline
         #expect(deadline.map { abs($0.timeIntervalSinceNow - 60) < 2 } == true)
-        #expect(sut.settingsModel.learningPauseDeadline == deadline)
 
         sut.learningStep(.itsPaused)
-        await waitFor { sut.status.learningNote == .nothingChanged }
-        #expect(sut.status.learningPauseDeadline == deadline) // the minute goes on
+        await waitFor { sut.settingsModel.learningNote == .nothingChanged }
+        #expect(sut.settingsModel.learningPauseDeadline == deadline) // the minute goes on
 
         // The page went before It's Paused: back to the first step, saying why.
         webApp.answer(paused: .cantSeePage)
         sut.learningStep(.itsPaused)
-        await waitFor { sut.status.learningHasPlayed == false && sut.status.learningNote == .cantSeePage }
-        #expect(sut.status.learningNote == .cantSeePage)
-        #expect(sut.status.learningPauseDeadline == nil)
-        #expect(sut.status.learningPauseMode == .automatic)
+        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) && sut.settingsModel.learningNote == .cantSeePage }
+        #expect(sut.settingsModel.learningNote == .cantSeePage)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningPauseMode == .automatic)
 
         webApp.answer(playing: .noted, paused: .noted)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningPauseMode == .failed }
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
         sut.learningStep(.pauseManually)
-        await waitFor { sut.status.learningPauseMode == .byHand }
+        await waitFor { sut.settingsModel.learningPauseMode == .byHand }
         sut.learningStep(.itsPaused)
         await waitFor { sut.status.learning == .learned }
-        #expect(sut.status.learningNote == nil)
-        #expect(sut.status.learningPauseDeadline == nil)
-        #expect(sut.status.learningPauseMode == .byHand) // the steps show the user paused it
+        #expect(sut.settingsModel.learningNote == nil)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningPauseMode == .byHand) // the steps show the user paused it
     }
 
     @MainActor
@@ -432,26 +447,26 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningPauseMode == .failed }
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
 
         // The song stopped meanwhile: back to the first step, saying why.
         webApp.answer(playing: .notHeard)
         sut.learningStep(.pauseManually)
-        await waitFor { sut.status.learningHasPlayed == false }
+        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) }
         #expect(webApp.restartCount == 1)
-        #expect(sut.status.learningNote == .notHeard)
-        #expect(sut.status.learningPauseMode == .automatic)
-        #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningNote == .notHeard)
+        #expect(sut.settingsModel.learningPauseMode == .automatic)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
 
         webApp.answer(playing: .noted)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningPauseMode == .failed }
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
         webApp.pausesByItself(true)
         sut.learningStep(.tryAgain)
-        #expect(sut.status.learningPauseMode == .trying)
+        #expect(sut.settingsModel.learningPauseMode == .trying)
         await waitFor { sut.status.learning == .learned }
-        #expect(sut.status.learningPauseDeadline == nil)
-        #expect(sut.status.learningNote == nil)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningNote == nil)
     }
 
     @MainActor
@@ -466,13 +481,13 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(webApp.bundleID)
         webApp.pausesByItself(true)
         sut.learningStep(.itsPlaying)
-        #expect(sut.status.learningPauseMode == .trying)
+        #expect(sut.settingsModel.learningPauseMode == .trying)
         #expect(sut.settingsModel.learningPauseMode == .trying)
         await waitFor { sut.status.learning == .learned }
         try? await Task.sleep(for: .milliseconds(150))
-        #expect(sut.status.learningPauseMode != .failed)
-        #expect(sut.status.learningPauseDeadline == nil)
-        #expect(sut.status.learningNote == nil)
+        #expect(sut.settingsModel.learningPauseMode != .failed)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningNote == nil)
         #expect(webApp.restartCount == 0)
     }
 
@@ -488,12 +503,12 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(webApp.bundleID)
         webApp.learnAtTheLastMoment()
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningPauseMode == .failed }
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
         sut.learningStep(.pauseManually)
         await waitFor { sut.status.learning == .learned }
         try? await Task.sleep(for: .milliseconds(150))
         #expect(webApp.restartCount == 0)
-        #expect(sut.status.learningNote == nil)
+        #expect(sut.settingsModel.learningNote == nil)
     }
 
     @MainActor
@@ -507,20 +522,20 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.learningStep(.itsPlaying)
-        await waitFor { sut.status.learningPauseMode == .failed }
+        await waitFor { sut.settingsModel.learningPauseMode == .failed }
         try? await Task.sleep(for: .milliseconds(150))
-        #expect(sut.status.learningHasPlayed == true) // no minute counts until Pause It Manually
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: true)) // no minute counts until Pause It Manually
         sut.learningStep(.pauseManually)
-        await waitFor { sut.status.learningHasPlayed == false }
+        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) }
         #expect(webApp.restartCount == 1)
-        #expect(sut.status.learningNote == .timedOut)
-        #expect(sut.status.learningPauseMode == .automatic)
-        #expect(sut.status.learningPauseDeadline == nil)
+        #expect(sut.settingsModel.learningNote == .timedOut)
+        #expect(sut.settingsModel.learningPauseMode == .automatic)
+        #expect(sut.settingsModel.learningPauseDeadline == nil)
         #expect(scratch.learningWindow.isVisible) // still learning
 
         // Choosing another player forgets it all.
         sut.chooseMusicPlayer(Players.first)
-        #expect(sut.status.learningNote == nil)
+        #expect(sut.settingsModel.learningNote == nil)
     }
 
     @MainActor
@@ -607,7 +622,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("a chosen web app that's deleted is no longer chosen: no learning card, and the status line asks for a player")
+    @Test("a chosen web app that's deleted is no longer chosen: no Controls row, and the status line asks for a player")
     func chosenWebAppDeleted() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.DELETED-\(UUID())", name: "Spotify",
@@ -618,20 +633,20 @@ struct AppDelegateTests {
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
-        #expect(sut.status.learningHasPlayed == false)
+        #expect(sut.status.canLearnControlsAgain)
 
         found.players = [] // moved to the Trash, or deleted
         scratch.changeFolder()
         await waitFor { sut.status.chosenPlayerID == nil }
         #expect(sut.status.chosenPlayerID == nil)
-        #expect(sut.status.learningHasPlayed == nil)
-        #expect(sut.settingsModel.learningHasPlayed == nil)
+        #expect(!sut.status.canLearnControlsAgain)
+        #expect(sut.settingsModel.chosenPlayer == nil)
         #expect(scratch.preferences.musicPlayer == nil)
         #expect(sut.status.health == .waitingForPlayer(among: sut.status.playerOptions))
     }
 
     @MainActor
-    @Test("a web app chosen earlier shows its steps at launch, without the window")
+    @Test("a web app chosen earlier and not learned yet is offered to learn at launch, without opening the window")
     func learningAtLaunch() {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
@@ -639,7 +654,7 @@ struct AppDelegateTests {
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
         scratch.installed.insert(webApp.bundleID)
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
-        #expect(sut.status.learningHasPlayed == false)
+        #expect(sut.status.canLearnControlsAgain && sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(!scratch.learningWindow.isVisible)
     }
 
@@ -685,8 +700,8 @@ struct AppDelegateTests {
     func waitsForPlayer() {
         let (sut, _) = makeSUT(chosenPlayer: nil)
         #expect(sut.player == nil)
-        #expect(sut.status.health == .needsPlayer("Choose a music player"))
-        #expect(sut.status.statusLine == "Choose a music player")
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
+        #expect(sut.status.statusLine == "Choose a media player")
         #expect(sut.status.playerOptions.map(\.name) == ["First", "Second"])
         #expect(sut.settingsModel.playerOptions == sut.status.playerOptions)
         #expect(sut.settingsModel.chosenPlayerID == nil)
@@ -699,7 +714,7 @@ struct AppDelegateTests {
         let scratch = Scratch()
         scratch.installed = []
         let (sut, bootstraps) = makeSUT(scratch, chosenPlayer: nil)
-        #expect(sut.status.health == .needsPlayer("No supported music player is installed"))
+        #expect(sut.status.health == .needsPlayer("No supported media player is installed"))
         #expect(sut.status.playerOptions.allSatisfy { !$0.isInstalled })
 
         sut.chooseMusicPlayer(Players.first)
@@ -710,7 +725,7 @@ struct AppDelegateTests {
         // Installed later: it can be chosen.
         scratch.installed = [Players.first]
         sut.refreshPlayerOptions()
-        #expect(sut.status.health == .needsPlayer("Choose a music player"))
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.player?.bundleID == Players.first)
     }
@@ -849,7 +864,7 @@ struct AppDelegateTests {
     func unknownStoredPlayer() {
         let (sut, _) = makeSUT(chosenPlayer: "com.example.gone")
         #expect(sut.player == nil)
-        #expect(sut.status.health == .needsPlayer("Choose a music player"))
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
     }
 
     @MainActor

@@ -72,6 +72,12 @@ struct OtherInstancesTests {
         // The test runner isn't an app, so only check this process is never listed.
         let instances = OtherInstances.live(bundleIdentifier: "com.autohush.AutoHush.not-running")
         #expect(instances.list().isEmpty)
-        #expect(instances.isRunning(getpid()))
+    }
+
+    @Test("a process ID taken by another process since isn't a copy still running, so it's never forced to quit")
+    func reusedProcessID() {
+        let instances = OtherInstances.live(bundleIdentifier: "com.autohush.AutoHush.not-running")
+        #expect(!instances.isRunning(getpid())) // running, but not that app
+        #expect(!instances.isRunning(99_999))   // no such process
     }
 }

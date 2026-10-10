@@ -62,6 +62,11 @@ final class WebAppControl: @unchecked Sendable {
     static let keyWait: TimeInterval = 3
     static let keyCheckInterval: TimeInterval = 0.5
     static let keySettle: TimeInterval = 0.5
+    /// How long a page that answered a look with nothing gets before it's
+    /// looked at again: WebKit builds a page for Accessibility at the first
+    /// question about it, and answers that one with no buttons (measured on
+    /// a web app just opened: the next look, 0.1 s later, finds them all).
+    static let firstLookWait: TimeInterval = 0.3
 
     private let name: String
     private let bundleID: String
@@ -83,6 +88,9 @@ final class WebAppControl: @unchecked Sendable {
     private var button: ButtonHandle?
     /// Learning, when there's no recipe or the button went missing.
     private var learner: PlayPauseLearner?
+    /// The user asked to learn it again: the recipe stays, and controls it,
+    /// until they say it plays (`notePlaying`); it's forgotten only then.
+    private var relearning = false
     /// Since when the web app is heard without the learned button.
     private var missingSince: Date?
     private var noWindowUntil: Date?
@@ -183,7 +191,7 @@ final class WebAppControl: @unchecked Sendable {
                 if learner != nil {
                     learner = nil
                     logger.notice("\(self.name, privacy: .public)'s Play/Pause button is back")
-                    status.send(.learned)
+                    status.send(relearning ? .relearning : .learned)
                 }
                 return Self.state(of: found, recipe: recipe)
             case .noWindow:
@@ -258,31 +266,64 @@ final class WebAppControl: @unchecked Sendable {
         self.muted = (muted.pid, .forgotten)
     }
 
-    /// Forgets the learned button, and learns it afresh from the user playing
-    /// and pausing the web app once: the user asked, as it may have been
-    /// learned wrong. Nothing is pressed until then, so a mute in place of a
-    /// pause is lifted.
+    /// Learns the button afresh from the user playing and pausing the web
+    /// app once: the user asked, as it may have been learned wrong. What it
+    /// learned stays, and is pressed, until they say it plays (a click by
+    /// mistake costs nothing); it's forgotten then (`forgetLearned`). Never
+    /// learned, learning starts over.
     func learnAgain() {
+        lastRead = nil
+        guard recipe != nil else {
+            learner = PlayPauseLearner()
+            logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button from the start, as asked")
+            status.send(.learning(hasPlayed: false))
+            return
+        }
+        relearning = true
+        logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button again, as asked: kept until it plays")
+        if learner != nil { // the button had gone missing: that learning starts over
+            learner = PlayPauseLearner()
+            status.send(.learning(hasPlayed: false))
+        } else {
+            status.send(.relearning)
+        }
+    }
+
+    /// The user left learning again before saying it plays (the learning
+    /// window was closed): what it learned stays.
+    func keepLearned() {
+        guard relearning else { return }
+        relearning = false
+        logger.notice("\(self.name, privacy: .public) keeps the Play/Pause button it learned")
+        if learner == nil { status.send(.learned) }
+    }
+
+    /// Learning again, the user says it plays: what it learned goes, so
+    /// nothing of a wrong one is kept, and a mute standing in for a pause is
+    /// lifted (nothing is pressed until it's learned).
+    private func forgetLearned() {
+        relearning = false
         releaseMute()
         recipe = nil
         button = nil
         missingSince = nil
         lastRead = nil
         store.forget(for: bundleID)
-        learner = PlayPauseLearner()
-        logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button again, as asked")
-        status.send(.learning(hasPlayed: false))
+        logger.notice("\(self.name, privacy: .public)'s learned Play/Pause button is forgotten: learning it again")
     }
 
     // MARK: - Learning, as the user says
 
     /// The user says the music itself plays: the page is looked at, to
     /// compare once they've paused it. Only while the web app can be heard,
-    /// and its page read (`pid` is `nil` while it isn't running).
+    /// and its page read (`pid` is `nil` while it isn't running). Learning
+    /// again, what it learned is forgotten once this is taken.
     func notePlaying(pid: pid_t?) -> LearningMark {
-        guard var learner else { return .notLearning }
+        guard learner != nil || relearning else { return .notLearning }
         guard let pid, let buttons = readablePage(pid: pid) else { return .cantSeePage }
         guard page.isPlayingSound(pid: pid) else { return .notHeard }
+        if relearning { forgetLearned() }
+        var learner = self.learner ?? PlayPauseLearner()
         learner.notePlaying(buttons, at: clock())
         self.learner = learner
         logger.notice("\(self.name, privacy: .public) plays, the user says: its page is noted (\(buttons.count, privacy: .public) buttons)")
@@ -374,8 +415,15 @@ final class WebAppControl: @unchecked Sendable {
     /// without their words (measured in the VM). A small page with a few
     /// named buttons is read.
     private func readablePage(pid: pid_t) -> [PageButton]? {
-        guard let buttons = page.buttons(pid: pid), buttons.contains(where: { !$0.label.isEmpty }) else { return nil }
-        return buttons
+        func look() -> [PageButton]? {
+            guard let buttons = page.buttons(pid: pid), buttons.contains(where: { !$0.label.isEmpty }) else { return nil }
+            return buttons
+        }
+        if let buttons = look() { return buttons }
+        // Maybe the page's first look ever (see `firstLookWait`): once more.
+        guard page.hasWindow(pid: pid) else { return nil }
+        sleep(Self.firstLookWait)
+        return look()
     }
 
     /// The pause didn't come in time, or the look while it plays couldn't be

@@ -24,6 +24,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     private var _looks = 0
     private var _windowLooks = 0
     private var _buttonReads = 0
+    private var _blankLooks = 0
     /// What a press does; by default it swaps the button's words.
     var onPress: (@Sendable (FakeWebPage, Int) -> Void)?
 
@@ -42,6 +43,12 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     var trusted: Bool {
         get { lock.withLock { _trusted } }
         set { lock.withLock { _trusted = newValue } }
+    }
+    /// The next looks that find no buttons, as WebKit answers the first
+    /// question about a page it hasn't built for Accessibility yet.
+    var blankLooks: Int {
+        get { lock.withLock { _blankLooks } }
+        set { lock.withLock { _blankLooks = newValue } }
     }
     var presses: [Int] { lock.withLock { _presses } }
     /// How many times every button was looked for.
@@ -75,6 +82,10 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
         lock.withLock {
             _looks += 1
             guard _hasWindow else { return nil }
+            if _blankLooks > 0 {
+                _blankLooks -= 1
+                return []
+            }
             return _buttons.keys.sorted().map {
                 PageButton(handle: ButtonHandle($0), label: _buttons[$0]!.label, isEnabled: _buttons[$0]!.isEnabled)
             }

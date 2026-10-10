@@ -7,21 +7,15 @@ import AutoHushKit
 // step is marked failed, with Try Again and Pause It Manually; the latter
 // adds a step where the user pauses it and says so (It's Paused), within a
 // minute.
-// A window asks when it's chosen; until it has learned, the menu and
-// Settings → General show the same steps, in case the window was closed.
+// The steps show only in a window: the learning window, which asks when the
+// player is chosen, or Add a Web App, once it has made the web app. The
+// menu's card and Settings → General have a Controls row saying whether
+// they're learned, with Learn Controls (or Learn Again once learned): a new
+// learning window that starts over (the user may have closed the last one
+// halfway).
 
 /// What learning a player's controls says.
 enum LearningText {
-    static func title(_ name: String) -> String {
-        String(localized: "Learning \(name)’s Controls",
-               comment: "Menu and Settings, while AutoHush learns which button plays and pauses a web app; %@ is its name")
-    }
-
-    static func explanation(_ name: String) -> String {
-        String(localized: "AutoHush learns which button plays and pauses \(name): tell it when the song plays, and it pauses the song to see which button changes.",
-               comment: "Menu and Settings, under “Learning %@’s Controls”; %@ is the web app")
-    }
-
     static func playStep(_ name: String) -> String {
         String(localized: "Play a song in \(name)",
                comment: "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; %@ is the web app")
@@ -73,32 +67,61 @@ enum LearningText {
                       comment: "Under the step “Pause it yourself” while AutoHush learns a web app's controls, on a tinted line: a countdown, after which learning starts over; %@ is the time left, e.g. 0:45; “It’s Paused” is the button under it")
     }
 
-    // Learning them again, once learned (they may have been learned wrong).
+    // The Controls row (the menu's card, Settings → General): whether
+    // they're learned, and the way to learn them in a new learning window.
 
-    /// In the menu's player list and Settings' player pop-up, with the web
-    /// app's name under it: the menu's width can't take the name in the
-    /// title in most languages.
-    static var learnAgainItem: String {
-        String(localized: "Learn Controls Again…",
-               comment: "The menu's player list and Settings' player pop-up: forgets the chosen web app's learned controls (its Play/Pause button) and learns them again; the web app's name shows under it")
-    }
-
-    /// Settings → General: the row's title.
+    /// The row's title.
     static var controlsTitle: String {
         String(localized: "Controls",
-               comment: "Settings → General: title of the row about the chosen web app's learned controls (its Play/Pause button), under “Music player”")
+               comment: "The menu's card and Settings → General: title of the row about the chosen web app's controls (its Play/Pause button), under the media player")
     }
 
-    /// Settings → General: under the row's title.
-    static func controlsNote(_ name: String) -> String {
-        String(localized: "Learned from \(name) playing and pausing. If AutoHush gets them wrong, learn them again.",
-               comment: "Settings → General, under “Controls”: how the web app's controls were learned, and what to do if AutoHush gets them wrong; %@ is the web app's name")
+    /// Under the row's title, until they're learned.
+    static func notLearnedNote(_ name: String) -> String {
+        String(localized: "Not learned yet: AutoHush can’t pause \(name) until it has.",
+               comment: "The menu's card and Settings → General, under “Controls”, while AutoHush hasn't learned the web app's Play/Pause button (the learning window was closed); “Learn Controls” follows; %@ is the web app's name")
     }
 
-    /// Settings → General: the row's button.
+    /// Under the row's title, once they're learned.
+    static var learnedNote: String {
+        String(localized: "Learned. Learn them again if AutoHush gets them wrong.",
+               comment: "The menu's card and Settings → General, under “Controls”: the web app's controls (its Play/Pause button) are learned, and what to do if AutoHush gets them wrong; “Learn Again” follows")
+    }
+
+    /// The row's button, until they're learned.
+    static var learnButton: String {
+        String(localized: "Learn Controls",
+               comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
+    }
+
+    /// The row's button, once they're learned.
     static var learnAgainButton: String {
         String(localized: "Learn Again",
-               comment: "Settings → General, in the “Controls” row: button that forgets the web app's learned controls and learns them again")
+               comment: "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window; what was learned keeps working until the user clicks “It’s Playing” there")
+    }
+}
+
+/// A web app's controls, in the menu's card and Settings → General: whether
+/// they're learned, and Learn Controls (Learn Again once learned), which
+/// opens a new learning window from the first step.
+struct ControlsRow: View {
+    let name: String
+    let isLearned: Bool
+    /// The button's text: the menu's are a step smaller than Settings'.
+    var buttonFont: Font = .appBody
+    let learn: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            RowTitle(Text(verbatim: LearningText.controlsTitle),
+                     subtitle: Text(verbatim: isLearned ? LearningText.learnedNote : LearningText.notLearnedNote(name)))
+            Spacer(minLength: 8)
+            Button(action: learn) {
+                Text(verbatim: isLearned ? LearningText.learnAgainButton : LearningText.learnButton).font(buttonFont)
+            }
+            .buttonStyle(.chip)
+            .fixedSize()
+        }
     }
 }
 
@@ -153,8 +176,7 @@ struct LearningSteps: View {
     let hasPaused: Bool
     /// A permission is missing: the steps wait, locked, without tips.
     var locked = false
-    /// Tells VoiceOver when the next step comes (in the learning window,
-    /// not the menu or Settings).
+    /// Tells VoiceOver when the next step comes (in the learning window).
     var announces = false
     /// Once it plays: when learning starts over without the pause.
     var deadline: Date?
@@ -221,26 +243,6 @@ struct LearningSteps: View {
         ChecklistStepRow(step: step, dimmed: step.state == .done || (locked && step.state == .todo),
                          bold: [.current, .failed].contains(step.state), action: action) {
             StepSymbol(step: step, locked: locked)
-        }
-    }
-}
-
-/// The steps with what they're for: in the menu, under the card, and in
-/// Settings → General, under the player.
-struct LearningSummary: View {
-    let name: String
-    let hasPlayed: Bool
-    var deadline: Date?
-    var note: LearningNote?
-    var pauseMode = LearningPauseMode.automatic
-    var action: @MainActor (StepButton) -> Void = { _ in }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(verbatim: LearningText.title(name)).font(.appHeadline)
-            Text(verbatim: LearningText.explanation(name)).captionStyle()
-            LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: false, deadline: deadline, note: note,
-                          pauseMode: pauseMode, action: action)
         }
     }
 }

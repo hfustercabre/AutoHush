@@ -42,7 +42,7 @@ fi
 # The project, from the VM's read-only share of the working copy; builds stay
 # on the VM's own disk.
 tart exec "$VM" rsync -a --delete \
-    --exclude .build --exclude AutoHush.app --exclude Harness/.work \
+    --exclude .build --exclude AutoHush.app --exclude Harness/.work --exclude Harness/Harness.app \
     "/Volumes/My Shared Files/project/" "$MIRROR/"
 
 # The test tools, built in the VM outside the mirror, into ~/vmtools: a

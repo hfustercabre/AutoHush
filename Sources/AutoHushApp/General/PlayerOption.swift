@@ -109,38 +109,46 @@ struct PlayerOption: Equatable, Identifiable {
         return image
     }
 
-    /// From this many players on, every place that offers them has a search.
+    /// From this many players on, the menu and the welcome window offer a
+    /// search over them (Settings shows every tile on a page that scrolls).
     static let searchThreshold = 8
+
+    /// Over the players that are apps, before the Safari web apps, wherever
+    /// players are offered.
+    static var supportedAppsHeading: String {
+        String(localized: "Supported Apps",
+               comment: "Where media players are offered (the menu, Settings → General, the welcome window): heading over the players that are apps, before the “Safari Web Apps”")
+    }
 
     /// Over the Safari web apps, after the apps, wherever players are offered.
     static var webAppsHeading: String {
         String(localized: "Safari Web Apps",
-               comment: "Where music players are offered: heading over the websites added to the Dock from Safari")
+               comment: "Where media players are offered: heading over the websites added to the Dock from Safari")
     }
 
     /// Where players are offered: the entry that adds a Safari web app.
     static var addWebAppTitle: String {
         String(localized: "Add a Web App…",
-               comment: "Menu item and button where music players are offered: makes a website a Safari web app")
+               comment: "Menu item and button where media players are offered: makes a website a Safari web app")
     }
 
     /// After the name of a web app whose site AutoHush hasn't been tested
     /// with, as a `HeadingBadge`.
     static var untestedBadge: String {
         String(localized: "Untested",
-               comment: "Badge after the name of a Safari web app whose site AutoHush hasn't been tested with, where music players are offered")
+               comment: "Badge after the name of a Safari web app whose site AutoHush hasn't been tested with, where media players are offered")
     }
 
     /// After `webAppsHeading`, as a `HeadingBadge`.
     static var experimentalBadge: String {
         String(localized: "Experimental",
-               comment: "Badge after the “Safari Web Apps” heading where music players are offered: web apps may not work as expected")
+               comment: "Badge after the “Safari Web Apps” heading where media players are offered: web apps may not work as expected")
     }
 
     /// Under `webAppsHeading` wherever players are offered.
     static var webAppsNote: String {
         String(localized: "Every website works differently, so a web app may not pause or resume as expected.",
-               comment: "Where music players are offered, under the “Safari Web Apps” heading and its “Experimental” badge")
+               comment: "Where media players are offered, under the “Safari Web Apps” heading and its “Experimental” badge")
     }
 
     /// In the "Add a Web App" and learning windows.
@@ -152,31 +160,31 @@ struct PlayerOption: Equatable, Identifiable {
     /// Instead of the players when none matches the search.
     static func noMatchNote(_ search: String) -> String {
         String(localized: "No players match “\(search)”.",
-               comment: "Where music players are offered, when the search finds none; %@ is what was typed")
+               comment: "Where media players are offered, when the search finds none; %@ is what was typed")
     }
 
     /// Under a player that isn't installed, wherever players are offered.
     static var notInstalledLabel: String {
-        String(localized: "Not installed", comment: "Under a music player that isn't on this Mac")
+        String(localized: "Not installed", comment: "Under a media player that isn't on this Mac")
     }
 
     /// Shown in Settings and the welcome window while no supported player is
     /// installed.
     static var noneInstalledWarning: String {
-        String(localized: "No supported music player is installed. Install one of these, and choose it here.",
-               comment: "Settings and the welcome window, while none of the music players is installed")
+        String(localized: "No supported media player is installed. Install one of these, and choose it here.",
+               comment: "Settings and the welcome window, while none of the media players is installed")
     }
 
     /// In the welcome window when one player is installed and others could
-    /// be, e.g. "Spotify is the only supported music player on this Mac.
+    /// be, e.g. "Spotify is the only supported media player on this Mac.
     /// AutoHush also works with Apple Music and VLC."; `nil` otherwise.
     static func onlyInstalledNote(among options: [PlayerOption]) -> String? {
         guard let only = options.onlyInstalled else { return nil }
         let others = options.filter { !$0.isInstalled && $0.kind == .app }.map(\.name)
         guard !others.isEmpty else { return nil }
         let list = others.formatted(.list(type: .and))
-        return String(localized: "\(only.name) is the only supported music player on this Mac. AutoHush also works with \(list).",
-                      comment: "Welcome window; the installed music player, then the other supported ones, e.g. “Apple Music and VLC”")
+        return String(localized: "\(only.name) is the only supported media player on this Mac. AutoHush also works with \(list).",
+                      comment: "Welcome window; the installed media player, then the other supported ones, e.g. “Apple Music and VLC”")
     }
 }
 

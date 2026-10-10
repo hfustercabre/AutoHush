@@ -218,6 +218,16 @@ struct SafariWebAppPlayerTests {
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
     }
 
+    @Test("a page never read before answers its first look with nothing: It's Playing looks again, and takes it")
+    func firstLookAtAPage() async {
+        let setup = Setup()
+        setup.page.sound = true
+        setup.showPage("Pause")
+        setup.page.blankLooks = 1 // the web app just opened: WebKit builds the page for Accessibility at the first look
+        #expect(await setup.player.markPlaying() == .noted)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: true))
+    }
+
     @Test("a small page, with only a few buttons that have words, can be learned")
     func smallPage() async {
         let setup = Setup()
@@ -334,7 +344,7 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
-    @Test("learning again forgets the button, lifts a mute, presses nothing, and learns it afresh from the user's two clicks")
+    @Test("learning again keeps the button until It's Playing is taken: then it's forgotten, a mute lifted, and it's learned afresh from the user's clicks")
     func learnAgain() async throws {
         let setup = Setup(recipe: Self.learned)
         setup.showPage("Pause")
@@ -343,22 +353,50 @@ struct SafariWebAppPlayerTests {
         #expect(setup.muter.muted == [4242])
 
         await setup.player.learnAgain()
-        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
-        #expect(setup.store.recipe(for: Self.app.bundleID) == nil)
-        #expect(setup.muter.muted.isEmpty)
-        await #expect(throws: MusicPlayerError.stillLearning) { try await setup.player.play() }
-        #expect(setup.page.presses.isEmpty)
+        #expect(setup.player.learningStatus == .relearning)
+        #expect(setup.player.learningStatus.isLearned)
+        #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
+        #expect(setup.muter.muted == [4242]) // still standing in for the pause
 
-        // Learned again, its words the other way round from before.
+        // It's Playing while it can't be heard isn't taken: nothing is forgotten.
+        #expect(await setup.player.markPlaying() == .notHeard)
+        #expect(setup.player.learningStatus == .relearning)
+        #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
+
+        // Taken: what it learned goes. Learned again, its words the other way round.
         setup.page.buttonsByNumber[1]?.isEnabled = true
         setup.page.set(1, label: "Pausar")
         setup.page.sound = true
         #expect(await setup.player.markPlaying() == .noted)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: true))
+        #expect(setup.store.recipe(for: Self.app.bundleID) == nil)
+        #expect(setup.muter.muted.isEmpty)
         setup.page.set(1, label: "Reproducir")
         #expect(await setup.player.markPaused() == .noted)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID)?.playLabel == "Reproducir")
         #expect(setup.store.recipe(for: Self.app.bundleID)?.pauseLabel == "Pausar")
+    }
+
+    @Test("asked to learn again, it's still controlled with what it learned; kept, it's learned as before")
+    func keepLearned() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        await setup.player.learnAgain()
+        try await setup.player.pause() // the learned button, still
+        #expect(setup.page.presses == [1])
+
+        await setup.player.keepLearned() // the learning window closed before It's Playing
+        #expect(setup.player.learningStatus == .learned)
+        #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
+        #expect(await setup.player.markPlaying() == .notLearning)
+
+        // Never learned: learning again just starts over.
+        let fresh = Setup()
+        await fresh.player.learnAgain()
+        #expect(fresh.player.learningStatus == .learning(hasPlayed: false))
+        await fresh.player.keepLearned()
+        #expect(fresh.player.learningStatus == .learning(hasPlayed: false))
     }
 
     @Test("a disabled Pause (an ad) is never pressed: muted instead, and only unmuted after")

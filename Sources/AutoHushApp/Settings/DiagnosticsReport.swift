@@ -116,9 +116,9 @@ enum DiagnosticsReport {
     }
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
-        let title = String(localized: "Music Player", comment: "Settings → Diagnostics: heading")
+        let title = String(localized: "Media Player", comment: "Settings → Diagnostics: heading")
         guard let player = status.chosenPlayer else {
-            let none = String(localized: "None chosen", comment: "Diagnostics: no music player chosen")
+            let none = String(localized: "None chosen", comment: "Diagnostics: no media player chosen")
             return .init(kind: .player, title: title, summary: none,
                          rows: [Row(label: playerLabel, value: none, mark: .problem)])
         }
@@ -128,9 +128,9 @@ enum DiagnosticsReport {
         let state = describe(status.playback)
         var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
-            Row(label: String(localized: "State", comment: "Diagnostics: the music player's state"), value: state),
-            // Yes, Off (turned off in Settings → Advanced), or No (the player can't fade).
-            Row(label: String(localized: "Fades", comment: "Diagnostics: whether AutoHush can fade the music player"),
+            Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
+            // Yes, Off (turned off in Settings → Fades), or No (the player can't fade).
+            Row(label: String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player"),
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
         if let learned = facts.playerLearned {
@@ -145,19 +145,19 @@ enum DiagnosticsReport {
         }
         if let read = facts.playerWordsRead {
             rows.append(Row(label: String(localized: "Play/Pause words read",
-                                          comment: "Diagnostics: whether AutoHush could read, from the music player's app, its own words for Play and Pause (TIDAL, Apple Podcasts), which tell its state apart"),
+                                          comment: "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause (TIDAL, Apple Podcasts), which tell its state apart"),
                             value: read ? yes : no, mark: read ? .ok : .problem))
         }
         if let error = status.controlError {
             // In the user's language, then as the log has it, for a bug report.
-            rows.append(Row(label: String(localized: "Last error", comment: "Diagnostics: why the music player couldn't be controlled, the last time it couldn't"),
+            rows.append(Row(label: String(localized: "Last error", comment: "Diagnostics: why the media player couldn't be controlled, the last time it couldn't"),
                             value: "\(error.text)\n\(error.detail)", mark: .problem))
         }
         return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: rows)
     }
 
     private static var playerLabel: String {
-        String(localized: "Player", comment: "Diagnostics: the music player's name and version")
+        String(localized: "Player", comment: "Diagnostics: the media player's name and version")
     }
 
     private static func detection(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
@@ -165,20 +165,20 @@ enum DiagnosticsReport {
         let antiDot = facts.detectionMethod != .audioLevels
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
-            Row(label: String(localized: "AntiDot mode", comment: "Settings → General and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
-            Row(label: String(localized: "Pause music after", comment: "Settings → Advanced and Diagnostics: how long another app must play before the music pauses"), value: seconds(facts.timings.startConfirmation)),
+            Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
+            Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"), value: seconds(facts.timings.startConfirmation)),
         ]
         if facts.detectionMethod == .playbackSignals {
-            rows.append(Row(label: String(localized: "Pause music after, without video",
-                                          comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before the music pauses"),
+            rows.append(Row(label: String(localized: "Pause playback after, without video",
+                                          comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
                             value: seconds(AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo)))
         }
-        rows.append(Row(label: String(localized: "Resume music after", comment: "Settings → Advanced and Diagnostics: how long other apps must be quiet before the music resumes"), value: seconds(facts.timings.stopGrace)))
+        rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes"), value: seconds(facts.timings.stopGrace)))
         if !antiDot {
-            rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Advanced and Diagnostics: the sound level below which an app counts as silent"),
+            rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
         }
-        return .init(kind: .detection, title: String(localized: "Detection", comment: "Settings → Advanced: heading of when other apps count as playing or stopped"), summary: method, rows: rows)
+        return .init(kind: .detection, title: String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped"), summary: method, rows: rows)
     }
 
     private static func permissions(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
@@ -203,9 +203,9 @@ enum DiagnosticsReport {
         if let permission = facts.playerPermission {
             let label = switch permission {
             case .automation(let player):
-                String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the music player, e.g. “Automation for Spotify”")
+                String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Spotify”")
             case .accessibility(let player):
-                String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the music player, e.g. “Accessibility for TIDAL”")
+                String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”")
             case .systemAudioRecording:
                 audio
             }
@@ -223,7 +223,7 @@ enum DiagnosticsReport {
         let summary = rows.contains { $0.mark == .problem }
             ? String(localized: "Something's missing", comment: "Diagnostics: a permission isn't granted")
             : String(localized: "All allowed", comment: "Diagnostics: every permission AutoHush needs is granted")
-        return .init(kind: .permissions, title: String(localized: "Permissions", comment: "Settings → Diagnostics: heading"),
+        return .init(kind: .permissions, title: String(localized: "Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"),
                      summary: summary, rows: rows)
     }
 
@@ -246,13 +246,13 @@ enum DiagnosticsReport {
             return formatter.localizedString(for: $0, relativeTo: facts.now)
         } ?? String(localized: "Never", comment: "Diagnostics: updates were never checked")
         return .init(kind: .autoHush, title: "AutoHush",
-                     summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About and Diagnostics; %@ is AutoHush's version"),
+                     summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version"),
                      rows: [
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
-                        Row(label: String(localized: "Auto-Pause", comment: "Diagnostics: whether Auto-Pause is on"), value: autoPause),
-                        Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause the music"), value: ignored),
+                        Row(label: String(localized: "Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row"), value: autoPause),
+                        Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
-                        Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings → General heading and Diagnostics row: AutoHush's updates"), value: updates),
+                        Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"), value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])
     }
@@ -313,11 +313,11 @@ enum DiagnosticsReport {
     /// The music player's state, as Diagnostics shows it.
     private static func describe(_ playback: PlaybackState) -> String {
         switch playback {
-        case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the music player: it's playing")
-        case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the music player's state")
-        case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the music player: nothing plays")
-        case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the music player, e.g. through Spotify Connect")
-        case .pauseFailed:      return String(localized: "Playing: couldn't pause it", comment: "Diagnostics: the music player's state when it refused to pause or failed to, while another app plays")
+        case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing")
+        case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
+        case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
+        case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
+        case .pauseFailed:      return String(localized: "Playing: couldn't pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }
     }

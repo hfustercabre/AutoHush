@@ -11,22 +11,40 @@ import AutoHushKit
 @MainActor
 protocol LearningWindowPresenting: AnyObject {
     var isVisible: Bool { get }
+    /// When it closes: Later, its close button, or once learned.
+    var onClose: (@MainActor () -> Void)? { get set }
     func show()
     func close()
 }
 
 /// Opens when a player that must learn is chosen: it asks the user to play
 /// and pause it once, ticks each step as it's seen, and closes by itself
-/// once AutoHush has learned. "Later" closes it; the menu and Settings keep
-/// showing the steps.
+/// once AutoHush has learned. "Later" closes it; the Controls row of the
+/// menu's card and of Settings opens a new one (`ControlsRow`). Its title
+/// names the player.
 @MainActor
-final class LearningWindowController: HostedWindowController, LearningWindowPresenting {
+final class LearningWindowController: HostedWindowController, LearningWindowPresenting, NSWindowDelegate {
+    var onClose: (@MainActor () -> Void)?
+
     init(model: SettingsModel) {
         // Later closes the window, which exists only once this has run.
         let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}))
-        super.init(content: hosting, title: "AutoHush")
+        super.init(content: hosting, title: Self.title(model.chosenPlayer?.name))
         floatsInCorner = true // the web app comes in front while it's played and paused
         hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }
+        followTitle { Self.title(model.chosenPlayer?.name) }
+        window?.delegate = self
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose?()
+    }
+
+    /// In the title bar: what it learns, of which player.
+    static func title(_ name: String?) -> String {
+        guard let name else { return "AutoHush" }
+        return String(localized: "Learn \(name)’s Controls",
+                      comment: "Title of the window that asks to play and pause a web app once, in its title bar; %@ is its name")
     }
 
     @available(*, unavailable)
@@ -34,7 +52,7 @@ final class LearningWindowController: HostedWindowController, LearningWindowPres
 }
 
 /// The learning window's content: the player, why AutoHush learns, the
-/// steps, and Later.
+/// steps, and Later at the foot.
 struct LearningWindowView: View {
     let model: SettingsModel
     let later: () -> Void
@@ -42,44 +60,40 @@ struct LearningWindowView: View {
     var body: some View {
         let player = model.chosenPlayer
         let name = player?.name ?? ""
+        // Learning again (`.relearning`), it starts from the first step.
         let learned = model.learning == .learned
         let hasPlayed = learned || model.learning == .learning(hasPlayed: true)
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 14) {
-                if let player {
-                    Image(nsImage: player.icon(size: 56))
-                        .resizable()
-                        .frame(width: 56, height: 56)
-                        .accessibilityHidden(true)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "Learn \(name)’s Controls",
-                                comment: "Title of the window that asks to play and pause a web app once; %@ is its name"))
-                        .font(.appTitle)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(String(localized: "Web apps have no controls AutoHush can use directly, so it learns which of \(name)’s buttons plays and pauses it.",
-                                comment: "The learning window, under its title; %@ is the web app"))
-                        .captionStyle()
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                WindowHeader(icon: player?.icon(size: 56),
+                             description: Text(String(localized: "Web apps have no controls AutoHush can use directly, so it learns which of \(name)’s buttons plays and pauses it.",
+                                                      comment: "The learning window, at its top beside the web app's icon; %@ is the web app")))
+                NoteLabel(PlayerOption.webAppsWarning)
+                    .padding(.top, 8)
+                SectionHeading(AddWebAppView.stepsHeading).padding(.top, 8)
+                Card {
+                    // Without the permission AutoHush can't watch the player:
+                    // asking for it comes first, and the steps unlock once it's allowed.
+                    let state = model.permissions
+                    if let control = state.control, !state.controlAccess.isSatisfied {
+                        LearningPermissionStep(model: model, permission: control, access: state.controlAccess, name: name)
+                    }
+                    LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
+                                  locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
+                                  deadline: model.learningPauseDeadline, note: model.learningNote,
+                                  pauseMode: model.learningPauseMode, action: { model.learningStep($0) })
+                    // Learning again, the controls it learned still work
+                    // until It's Playing: the line would be untrue then.
+                    if model.learning != .relearning {
+                        CardDivider()
+                        Text("Until it has learned, AutoHush presses nothing on the page.",
+                             comment: "The learning window, under the steps: until AutoHush has learned a web app's Play/Pause button, it presses none of the page's buttons (it pauses the web app once with the keyboard's Play/Pause key)")
+                            .captionStyle()
+                    }
                 }
             }
-            NoteLabel(PlayerOption.webAppsWarning)
-            Card {
-                // Without the permission AutoHush can't watch the player:
-                // asking for it comes first, and the steps unlock once it's allowed.
-                let state = model.permissions
-                if let control = state.control, !state.controlAccess.isSatisfied {
-                    LearningPermissionStep(model: model, permission: control, access: state.controlAccess, name: name)
-                }
-                LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
-                              locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
-                              deadline: model.learningPauseDeadline, note: model.learningNote,
-                              pauseMode: model.learningPauseMode, action: { model.learningStep($0) })
-                CardDivider()
-                Text("Until it has learned, AutoHush presses nothing on the page.",
-                     comment: "The learning window, under the steps: until AutoHush has learned a web app's Play/Pause button, it presses none of the page's buttons (it pauses the web app once with the keyboard's Play/Pause key)")
-                    .captionStyle()
-            }
-            HStack {
+            .windowMargins()
+            BottomBar(margin: HostedWindowController.margin) {
                 Spacer()
                 Button {
                     later()
@@ -87,9 +101,9 @@ struct LearningWindowView: View {
                     Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
                 }
                 .buttonStyle(.chip)
+                .keyboardShortcut(.cancelAction)
             }
         }
-        .padding(20)
         .frame(width: 440)
         .font(.appBody)
     }

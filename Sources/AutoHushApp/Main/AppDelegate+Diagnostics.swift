@@ -34,7 +34,7 @@ extension AppDelegate {
             playerCanFade: settingsModel.playerCanFade,
             playerPermission: permission,
             playerPermissionGranted: granted,
-            playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus == .learned },
+            playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus.isLearned },
             reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
             playerWordsRead: player?.ownWordsRead,
             audioRecording: TCCAudioCapturePermission().status(),

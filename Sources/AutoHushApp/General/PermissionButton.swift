@@ -10,7 +10,7 @@ import AutoHushKit
 enum PermissionText {
     static func controlTitle(_ player: String) -> String {
         String(localized: "Control \(player)",
-               comment: "Welcome window, the permission AutoHush needs to pause and resume the music player; %@ is the player")
+               comment: "Welcome window, the permission AutoHush needs to pause and resume the media player; %@ is the player")
     }
 
     static var audioTitle: String {
@@ -91,7 +91,7 @@ struct PermissionButton: View {
         switch access {
         case .allowed, .notNeeded: nil
         case .playerNotRunning:
-            String(localized: "Open \(model.chosenPlayerName ?? "")", comment: "Button that opens the music player, so macOS can ask for Automation; %@ is the player")
+            String(localized: "Open \(model.chosenPlayerName ?? "")", comment: "Button that opens the media player, so macOS can ask for Automation; %@ is the player")
         case .needsReopen:
             PermissionText.reopen
         case .notAsked, .denied:

@@ -131,7 +131,7 @@ struct PlayerOptionTests {
         let options = [option("First", installed: true), option("Second", installed: false), option("Third", installed: false)]
         #expect(options.onlyInstalled?.name == "First")
         #expect(PlayerOption.onlyInstalledNote(among: options)
-            == "First is the only supported music player on this Mac. AutoHush also works with Second and Third.")
+            == "First is the only supported media player on this Mac. AutoHush also works with Second and Third.")
     }
 
     @Test("with the only supported player installed, it's picked but there's nothing to add")

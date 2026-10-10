@@ -84,9 +84,14 @@ package protocol LearningMusicPlayer: MusicPlayer {
     var learningStatus: LearningStatus { get }
     /// The status now, then every change.
     func learningUpdates() -> AsyncStream<LearningStatus>
-    /// Forgets what it learned and learns it again from the user, who asked
-    /// (it may have been learned wrong). It can't be controlled meanwhile.
+    /// Learns it again from the user, who asked (it may have been learned
+    /// wrong). What it learned is kept, and controls it, until the user says
+    /// it plays (`markPlaying`, taken): it's forgotten only then
+    /// (`.relearning` meanwhile). Never learned, learning starts over.
     func learnAgain() async
+    /// The user left learning again before saying it plays (the learning
+    /// window was closed): what it learned stays, as before.
+    func keepLearned() async
     /// The user says the music itself plays now ("It's Playing"): it notes
     /// how the player looks, and waits to be told it's paused.
     func markPlaying() async -> LearningMark
@@ -98,8 +103,9 @@ package protocol LearningMusicPlayer: MusicPlayer {
     /// since it played.
     func markPaused() async -> LearningMark
     /// The pause didn't come within `LearningStatus.pauseWait`, or it plays
-    /// no more when asked to try again: it waits to be told it plays again. `false` when it wasn't waiting for the pause any
-    /// more (It's Paused came at the last moment).
+    /// no more when asked to try again: it waits to be told it plays again.
+    /// `false` when it wasn't waiting for the pause any more (It's Paused
+    /// came at the last moment).
     @discardableResult
     func restartLearning() async -> Bool
 }
@@ -150,6 +156,16 @@ package enum LearningStatus: Equatable, Sendable {
     /// It waits for the user to say it plays (`hasPlayed` once they have),
     /// then that they paused it: then it has learned.
     case learning(hasPlayed: Bool)
+    /// Learned, and still controlled with it, while the user learns it again
+    /// (they asked): it waits for them to say it plays, and forgets what it
+    /// learned only then.
+    case relearning
+
+    /// It can be controlled with what it learned.
+    package var isLearned: Bool {
+        if case .learning = self { return false }
+        return true
+    }
 
     /// How long the user has to pause it and say so, once they said it
     /// plays; then it starts over.

@@ -138,7 +138,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - The music player
 
-    @Test("the player button unfolds the players under the card; one that isn't installed comes last and can't be chosen")
+    @Test("the player button unfolds the players under the card, under “Supported Apps”; one that isn't installed comes last and can't be chosen; every icon shows")
     func playerList() throws {
         let log = ActionLog()
         let sut = makeController(log)
@@ -155,12 +155,19 @@ struct StatusMenuControllerTests {
 
         sut.perform(.togglePlayerList)
         #expect(sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(6) == ["card", "First", "Third", "Second", "Add a Web App…", "snooze"])
-        let players = Array(sut.menu.items[1...3])
+        #expect(rows(sut.menu).prefix(7) == ["card", "supportedAppsHeading", "First", "Third", "Second", "Add a Web App…", "snooze"])
+        let heading = sut.menu.items[1]
+        #expect(heading.title == "Supported Apps")
+        #expect(!heading.isEnabled)
+        let players = Array(sut.menu.items[2...4])
         #expect(players.map(\.state) == [.on, .off, .off])
         #expect(players.map(\.isEnabled) == [true, true, false])
         #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
         #expect(players.allSatisfy { $0.image != nil })
+        if #available(macOS 27, *) {
+            // macOS 27 hides menu items' images unless they ask to show them.
+            #expect((players + [try item("Add a Web App…", in: sut.menu)]).allSatisfy { $0.preferredImageVisibility == .visible })
+        }
         try perform(players[1])
         #expect(log.calls == ["menuWillOpen", "player com.example.third"])
 
@@ -185,12 +192,12 @@ struct StatusMenuControllerTests {
         prepareToOpen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(5) == ["card", "First", "webAppsHeading", "Deezer", "Add a Web App…"])
-        let heading = sut.menu.items[2] // drawn: a section header can't show the "Experimental" badge
+        #expect(rows(sut.menu).prefix(6) == ["card", "supportedAppsHeading", "First", "webAppsHeading", "Deezer", "Add a Web App…"])
+        let heading = sut.menu.items[3] // drawn: a section header can't show the "Experimental" badge
         #expect(heading.title == "Safari Web Apps")
         #expect(!heading.isEnabled)
         #expect((heading.view?.frame.height ?? 0) > 20) // the note under it too
-        let row = sut.menu.items[3]
+        let row = sut.menu.items[4]
         #expect(row.isEnabled)
         #expect(row.subtitle == "Not installed")
         #expect(row.image?.isTemplate == true)
@@ -198,8 +205,8 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
     }
 
-    @Test("once the chosen web app's controls are learned, the players end with learning them again, before Add a Web App")
-    func learnControlsAgain() async throws {
+    @Test("a web app's controls are learned from the card's Controls row, learned or not; no other row offers it, and no steps show")
+    func learnControls() async throws {
         let log = ActionLog()
         let sut = makeController(log)
         defer { sut.remove() }
@@ -211,25 +218,27 @@ struct StatusMenuControllerTests {
             webApp,
         ]
         status.chosenPlayerID = webApp.bundleID
-        status.learning = .learned
-        sut.status = status
-        prepareToOpen(sut)
+        for learning in [LearningStatus.learned, .learning(hasPlayed: false), .learning(hasPlayed: true)] {
+            status.learning = learning
+            sut.status = status
+            prepareToOpen(sut)
+            #expect(sut.status.canLearnControlsAgain) // the card shows its Controls row
+            #expect(rows(sut.menu).prefix(2) == ["card", "snooze"]) // nothing else about learning
+            sut.perform(.togglePlayerList)
+            #expect(rows(sut.menu).prefix(6) == ["card", "supportedAppsHeading", "First", "webAppsHeading", "YT Music", "Add a Web App…"])
+            sut.perform(.togglePlayerList)
+        }
 
-        sut.perform(.togglePlayerList)
-        let again = "Learn Controls Again…"
-        #expect(rows(sut.menu).prefix(6) == ["card", "First", "webAppsHeading", "YT Music", again, "Add a Web App…"])
-        #expect(try item(again, in: sut.menu).subtitle == "YT Music") // the menu is too narrow for the name in the title
-        try perform(try item(again, in: sut.menu))
-        await wait(for: 2, in: log)
-        #expect(log.calls == ["menuWillOpen", "learnAgain"])
+        // Its button: the menu closes, and a new learning window opens.
+        sut.perform(.learnControls)
+        await wait(for: 4, in: log)
+        #expect(log.calls.suffix(1) == ["learnAgain"])
 
-        // Still learning them: nothing to learn again.
-        status.learning = .learning(hasPlayed: false)
+        // A player that learns nothing has no Controls row.
+        status.chosenPlayerID = "com.example.first"
+        status.learning = nil
         sut.status = status
-        prepareToOpen(sut)
-        sut.perform(.togglePlayerList)
-        #expect(!rows(sut.menu).contains(again))
-        #expect(rows(sut.menu).contains("Add a Web App…"))
+        #expect(!sut.status.canLearnControlsAgain)
     }
 
     @Test("an untested web app comes last, its name followed by an “Untested” badge")
@@ -248,12 +257,12 @@ struct StatusMenuControllerTests {
         sut.status = status
         prepareToOpen(sut)
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(5) == ["card", "First", "webAppsHeading", "Deezer", "SoundCloud"])
-        let row = sut.menu.items[4]
+        #expect(rows(sut.menu).prefix(6) == ["card", "supportedAppsHeading", "First", "webAppsHeading", "Deezer", "SoundCloud"])
+        let row = sut.menu.items[5]
         #expect(row.title == "SoundCloud")
         #expect(row.attributedTitle?.string.hasPrefix("SoundCloud") == true)
         #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
-        #expect(sut.menu.items[3].attributedTitle == nil) // a tested one has no badge
+        #expect(sut.menu.items[4].attributedTitle == nil) // a tested one has no badge
     }
 
     @Test("a long untested name is cut short with “…”, so its badge still shows; its plain title stays whole")
@@ -290,11 +299,11 @@ struct StatusMenuControllerTests {
         prepareToOpen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(10) == ["card", "playerSearch", "Spotify", "Apple Music", "VLC", "Apple Podcasts",
-                                              "TIDAL", "Qobuz", "Música", "Deezer"])
+        #expect(rows(sut.menu).prefix(11) == ["card", "playerSearch", "supportedAppsHeading", "Spotify", "Apple Music", "VLC",
+                                              "Apple Podcasts", "TIDAL", "Qobuz", "Música", "Deezer"])
         sut.perform(.searchPlayers("MUSI"))
         #expect(sut.model.playerSearch == "MUSI")
-        #expect(rows(sut.menu).prefix(6) == ["card", "playerSearch", "Apple Music", "Música", "Add a Web App…", "snooze"])
+        #expect(rows(sut.menu).prefix(7) == ["card", "playerSearch", "supportedAppsHeading", "Apple Music", "Música", "Add a Web App…", "snooze"])
         sut.perform(.searchPlayers("zz"))
         #expect(rows(sut.menu).prefix(5) == ["card", "playerSearch", "No players match “zz”.", "Add a Web App…", "snooze"])
         #expect(sut.menu.items[2].isEnabled == false)
@@ -311,7 +320,7 @@ struct StatusMenuControllerTests {
         sut.status = status
         prepareToOpen(sut)
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(2) == ["card", "Spotify"]) // seven: no search
+        #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
     @Test("the players are folded again each time the menu opens")

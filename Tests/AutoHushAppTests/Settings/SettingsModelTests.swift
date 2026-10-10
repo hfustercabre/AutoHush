@@ -221,12 +221,24 @@ struct SettingsModelTests {
         #expect(log.calls == ["method askApps", "method openStreams", "method audioLevels"])
     }
 
-    @Test("restoring defaults applies the default timings")
+    @Test("each page's Restore Defaults restores its own settings only: Detection's timings, or the fades")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        model.setTimings(TimingSettings(stopGrace: 7))
-        model.restoreDefaultTimings()
-        #expect(model.timings == .defaults)
+        let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                     fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false)
+        model.setTimings(changed)
+        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults)
+
+        model.restoreDefaultDetectionTimings()
+        #expect(model.detectionTimingsAreDefaults)
+        #expect(!model.fadesAreDefaults) // the other page keeps its own
+        #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false))
+
+        model.setTimings(changed)
+        model.restoreDefaultFades()
+        #expect(model.fadesAreDefaults)
+        #expect(!model.detectionTimingsAreDefaults)
+        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40))
     }
 
     // MARK: - Notifications
@@ -320,36 +332,45 @@ struct SettingsModelTests {
     @Test("the notifications note blinks for a while, longer when asked again")
     func noteBlinks() async throws {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        model.noteFlashDuration = .milliseconds(600)
         model.noteFlashInterval = .milliseconds(20)
+        let clock = ContinuousClock()
 
+        // Asked for 300 ms, then at once (so surely while it blinks) for a
+        // minute: the second ask moves the end. A busy test run, whose sleeps
+        // run late, can't reach that end.
+        model.noteFlashDuration = .milliseconds(300)
         model.flashNotificationsNote()
+        let firstEnd = clock.now + .milliseconds(300)
         #expect(model.notificationsNoteIsLit) // lit at once
-        try await Task.sleep(for: .milliseconds(300))
-        model.flashNotificationsNote() // from now, another 600 ms
+        model.noteFlashDuration = .seconds(60)
+        model.flashNotificationsNote()
 
-        // Past the first 600 ms (with room for a busy test run), it still blinks.
-        try await Task.sleep(for: .milliseconds(400))
+        // Past the first end it still blinks: it changes again.
+        try await Task.sleep(until: firstEnd + .milliseconds(100), clock: clock)
         let before = model.notificationsNoteIsLit
-        var toggled = false
-        for _ in 0..<20 where !toggled {
-            try await Task.sleep(for: .milliseconds(10))
-            toggled = model.notificationsNoteIsLit != before
-        }
-        #expect(toggled)
+        await TestWait.until { model.notificationsNoteIsLit != before }
+        #expect(model.notificationsNoteIsLit != before)
 
-        try await Task.sleep(for: .milliseconds(800))
-        #expect(!model.notificationsNoteIsLit)
+        // Asked again for 200 ms, it stops then, unlit, and stays so.
+        model.noteFlashDuration = .milliseconds(200)
+        model.flashNotificationsNote()
+        try await Task.sleep(for: .milliseconds(300))
+        await TestWait.until { !model.notificationsNoteIsLit }
+        for _ in 0..<10 {
+            try await Task.sleep(for: .milliseconds(20))
+            #expect(!model.notificationsNoteIsLit)
+        }
     }
 
 }
 
-@Suite("SettingsWindowController")
+/// One at a time: each window takes the name its place is kept under, which
+/// a second window can't have while the first exists.
+@Suite("SettingsWindowController", .serialized)
 @MainActor
 struct SettingsWindowControllerTests {
-    @Test("has General, Apps, Advanced, Diagnostics and About tabs in a toolbar, and opens on the one asked for")
-    func tabs() throws {
-        let model = SettingsModel(
+    private func makeModel() -> SettingsModel {
+        SettingsModel(
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
             actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
                            forgetApp: { _ in }, forgetAllApps: {},
@@ -357,97 +378,91 @@ struct SettingsWindowControllerTests {
                            setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
                            openNotificationSettings: {})
         )
-        let sut = SettingsWindowController(model: model)
-        let tabController = try #require(sut.window?.contentViewController as? NSTabViewController)
-        #expect(tabController.tabStyle == .toolbar)
-        #expect(tabController.tabViewItems.map(\.label) == ["General", "Apps", "Advanced", "Diagnostics", "About"])
-        #expect(tabController.tabViewItems.allSatisfy { $0.image != nil })
-        #expect(sut.shownTab == nil) // not on screen
-
-        sut.show(tab: .diagnostics)
-        defer { sut.close() }
-        #expect(sut.shownTab == .diagnostics)
-        #expect(tabController.selectedTabViewItemIndex == 3)
-        sut.show(tab: .about) // the menu's About button
-        #expect(tabController.selectedTabViewItemIndex == 4)
     }
 
-    @Test("closed and opened again, Settings is back on General; while open, it keeps its tab")
-    func reopensOnGeneral() throws {
-        let model = SettingsModel(
-            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
-                           forgetApp: { _ in }, forgetAllApps: {},
-                           setTimings: { _ in }, setDetectionMethod: { _ in },
-                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
-                           openNotificationSettings: {})
-        )
-        let sut = SettingsWindowController(model: model)
+    @Test("has a sidebar of pages in three groups beside the page, and opens on the one asked for, named in the title")
+    func pages() throws {
+        let sut = SettingsWindowController(model: makeModel())
+        let split = try #require(sut.window?.contentViewController as? NSSplitViewController)
+        #expect(split.splitViewItems.count == 2)
+        #expect(split.splitViewItems.first?.behavior == .sidebar)
+        #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
+                == [["General", "Apps"], ["Detection", "Fades"], ["Diagnostics", "Updates", "About"]])
+        #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
+        #expect(sut.shownPage == nil) // not on screen
+
+        sut.show(page: .diagnostics)
+        defer { sut.close() }
+        #expect(sut.shownPage == .diagnostics)
+        #expect(sut.window?.title == "Diagnostics")
+        sut.show(page: .about) // the menu's About button
+        #expect(sut.shownPage == .about)
+        #expect(sut.window?.title == "About")
+    }
+
+    @Test("the window resizes between its limits; the sidebar keeps its width")
+    func limits() throws {
+        let sut = SettingsWindowController(model: makeModel())
+        let window = try #require(sut.window)
+        #expect(window.styleMask.contains(.resizable))
+        #expect(window.contentMinSize == NSSize(width: 715, height: 560))
+        #expect(window.contentMaxSize == NSSize(width: 875, height: 900))
+        let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)
+        #expect(sidebar.minimumThickness == SettingsWindowController.sidebarWidth)
+        #expect(sidebar.maximumThickness == SettingsWindowController.sidebarWidth)
+        #expect(!sidebar.canCollapse)
+        #expect(window.frameAutosaveName == SettingsWindowController.frameName) // kept between launches
+    }
+
+    @Test("closed and opened again, Settings is back on General; while open, it keeps its page")
+    func reopensOnGeneral() {
+        let sut = SettingsWindowController(model: makeModel())
         defer { sut.close() }
         sut.show()
-        #expect(sut.shownTab == .general)
-        sut.show(tab: .advanced)
+        #expect(sut.shownPage == .general)
+        sut.show(page: .detection)
         sut.show() // Settings in the menu while the window is open
-        #expect(sut.shownTab == .advanced)
+        #expect(sut.shownPage == .detection)
 
         sut.close()
         sut.show()
-        #expect(sut.shownTab == .general)
+        #expect(sut.shownPage == .general)
     }
 
-    @Test("reopened, Apps' search is closed; Apps may grow as tall as Advanced is, measured as it shows")
-    func appsSearchAndHeight() throws {
-        let model = SettingsModel(
-            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
-                           forgetApp: { _ in }, forgetAllApps: {},
-                           setTimings: { _ in }, setDetectionMethod: { _ in },
-                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
-                           openNotificationSettings: {})
-        )
+    @Test("minimized, Settings is still open: it keeps its page, and shows again as it was")
+    func minimizedIsOpen() async throws {
+        let model = makeModel()
         let sut = SettingsWindowController(model: model)
         defer { sut.close() }
-        model.appsMaximumHeight = 0
-        sut.show(tab: .apps)
-        let advanced = model.appsMaximumHeight
-        #expect(advanced > AppsSettingsView.minimumHeight)
+        sut.show(page: .detection)
+        model.foldedDiagnostics = [.apps]
+        let window = try #require(sut.window)
+        window.miniaturize(nil)
+        await TestWait.until { window.isMiniaturized }
+        #expect(!window.isVisible && window.isOpen) // macOS counts it as not visible
+        #expect(sut.shownPage == .detection)
 
+        sut.show() // Settings in the menu
+        await TestWait.until { !window.isMiniaturized }
+        #expect(sut.shownPage == .detection)
+        #expect(model.foldedDiagnostics == [.apps]) // not reopened
+    }
+
+    @Test("reopened, Apps' search is closed and every part of Diagnostics open")
+    func reopensFresh() {
+        let model = makeModel()
+        let sut = SettingsWindowController(model: model)
+        defer { sut.close() }
+        sut.show(page: .apps)
         model.appSearch = "chr"
-        model.appsMaximumHeight = 0
-        sut.show(tab: .general)
-        sut.show(tab: .apps)
-        #expect(model.appsMaximumHeight == advanced) // measured again as Apps shows
+        model.foldedDiagnostics = [.apps]
+        sut.show(page: .diagnostics)
         #expect(model.appSearch == "chr") // still open while the window is
+        #expect(model.foldedDiagnostics == [.apps])
 
         sut.close()
         sut.show()
         #expect(model.appSearch == nil)
-    }
-
-    @Test("when the shown tab's content changes height, the window follows at once and keeps its top")
-    func fitsShownTab() async throws {
-        let tabs = SettingsTabViewController()
-        tabs.tabStyle = .toolbar
-        let content = NSViewController()
-        content.view = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 300))
-        content.preferredContentSize = NSSize(width: 480, height: 300)
-        tabs.addTabViewItem(NSTabViewItem(viewController: content))
-        let window = NSWindow(contentViewController: tabs)
-        window.setFrameOrigin(NSPoint(x: 100, y: 300))
-        let top = window.frame.maxY
-        let chrome = window.frame.height - (window.contentView?.frame.height ?? 0)
-
-        content.preferredContentSize = NSSize(width: 480, height: 200)
-        tabs.contentHeightDidChange()
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(window.frame.height == 200 + chrome)
-        #expect(window.frame.maxY == top)
-
-        content.preferredContentSize = NSSize(width: 480, height: 360)
-        tabs.contentHeightDidChange()
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(window.frame.height == 360 + chrome)
-        #expect(window.frame.maxY == top)
-        window.close()
+        #expect(model.foldedDiagnostics.isEmpty)
     }
 }

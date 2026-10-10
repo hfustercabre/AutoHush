@@ -44,7 +44,7 @@ struct DiagnosticsReportTests {
             Apps with Sound
             Google Chrome (com.google.Chrome) — playing (-20 dBFS)
 
-            Music Player
+            Media Player
             Player: Jukebox 2.1
             State: Paused by AutoHush
             Fades: Yes
@@ -52,8 +52,8 @@ struct DiagnosticsReportTests {
             Detection
             Detecting by: Audio levels
             AntiDot mode: Off
-            Pause music after: \(half) s
-            Resume music after: 2 s
+            Pause playback after: \(half) s
+            Resume playback after: 2 s
             Silence threshold: -60 dB
 
             Permissions
@@ -120,7 +120,7 @@ struct DiagnosticsReportTests {
         #expect(rows.contains(DiagnosticsSnapshot.Row(label: "Play/Pause words read", value: "No", mark: .problem)))
         #expect(rows.contains(DiagnosticsSnapshot.Row(
             label: "Last error",
-            value: "AutoHush can't find Play/Pause in Jukebox's menus.\nControlling the music player failed: its Play/Pause menu item wasn't found.",
+            value: "AutoHush can't find Play/Pause in Jukebox's menus.\nControlling the media player failed: its Play/Pause menu item wasn't found.",
             mark: .problem)))
 
         let plain = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts())
@@ -177,7 +177,7 @@ struct DiagnosticsReportTests {
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
-        #expect(snapshot.text.contains("Pause music after: \(half) s\nPause music after, without video: 3 s\nResume music after: 2 s"))
+        #expect(snapshot.text.contains("Pause playback after: \(half) s\nPause playback after, without video: 3 s\nResume playback after: 2 s"))
         #expect(snapshot.text.contains("Ignored apps: None"))
         #expect(snapshot.text.contains("Updates: Automatic checks off\nLast checked: Never"))
     }

@@ -26,7 +26,8 @@ final class SettingsModel {
         var refreshDiagnostics: @MainActor () -> Void = {}
         /// Opens the "Add a Web App" window.
         var addWebApp: @MainActor () -> Void = {}
-        /// Forgets the chosen player's learned controls and learns them again.
+        /// Learns the chosen player's controls in a new learning window: what
+        /// it learned keeps working until the user says it plays there.
         var learnControlsAgain: @MainActor () -> Void = {}
         /// The user says, while AutoHush learns the player, that it plays
         /// (It's Playing) or that it's paused (It's Paused).
@@ -72,9 +73,6 @@ final class SettingsModel {
     /// Once the user said it plays: AutoHush pauses it itself, to learn
     /// which button changes, or, when it couldn't, the user does.
     var learningPauseMode = LearningPauseMode.automatic
-    /// A permission the chosen player needs is missing: its learning steps
-    /// wait until it's allowed (the menu asks for it).
-    var playerNeedsPermission = false
     /// What AutoHush needs for the chosen player, as it stands; followed
     /// about once a second while a window that waits for it shows.
     var permissions = PermissionsState()
@@ -88,17 +86,16 @@ final class SettingsModel {
 
     /// The chosen player's name, e.g. "Spotify".
     var chosenPlayerName: String? { chosenPlayer?.name }
+    /// What the music player is doing, as the menu's card says it, e.g.
+    /// "Paused — Safari is playing"; orange (`statusNeedsAttention`) when
+    /// something needs the user.
+    var statusLine = ""
+    var statusNeedsAttention = false
 
-    /// Whether the user has still to play the chosen player (`false`) or to
-    /// pause it (`true`) so AutoHush learns it; `nil` once there's nothing
-    /// to learn, or while the chosen player isn't offered (deleted).
-    var learningHasPlayed: Bool? {
-        guard chosenPlayer != nil, !playerNeedsPermission, case .learning(let hasPlayed) = learning else { return nil }
-        return hasPlayed
-    }
-    /// The chosen player's controls are learned, so they can be learned
-    /// again (they may have been learned wrong).
-    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning == .learned }
+    /// The chosen player learns its controls (a web app): they can be learned
+    /// afresh, once learned (they may have been learned wrong) or before
+    /// (the learning window was closed halfway).
+    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning != nil }
     var isAutoPauseOn = true
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String?
@@ -150,9 +147,6 @@ final class SettingsModel {
         guard !query.isEmpty else { return apps }
         return apps.filter { $0.source.name.localizedStandardContains(query) }
     }
-    /// The tallest Settings → Apps may grow while its list is long: the
-    /// height of Advanced, so switching between them keeps the window still.
-    var appsMaximumHeight: CGFloat = 585
     /// The app clicked in Settings → Apps, which Remove takes off the list.
     private(set) var selectedAppID: String?
     /// The selected app, while the list shows it (the search may hide it).
@@ -169,8 +163,14 @@ final class SettingsModel {
     /// time Settings opens.
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
-    // Advanced
+    // Detection and Fades
     var timings = TimingSettings.defaults
+
+    /// Detection's timings (pause after, resume after, silence threshold)
+    /// are their defaults, so its Restore Defaults has nothing to do.
+    var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection == timings }
+    /// The fades (the switch and both lengths) are their defaults.
+    var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
     /// is up to date.", "Checking…"), or this version before any check.
@@ -332,8 +332,15 @@ final class SettingsModel {
         setDetectionMethod(on ? .playbackSignals : .audioLevels)
     }
 
-    func restoreDefaultTimings() {
-        setTimings(.defaults)
+    /// Settings → Detection's Restore Defaults: its timings only, not the
+    /// fades on the other page.
+    func restoreDefaultDetectionTimings() {
+        setTimings(timings.withDefaultDetection)
+    }
+
+    /// Settings → Fades' Restore Defaults: the fades only.
+    func restoreDefaultFades() {
+        setTimings(timings.withDefaultFades)
     }
 
     // MARK: - Updates from the app
@@ -368,5 +375,25 @@ final class SettingsModel {
             let group = { (row: AppRow) in row.isIgnored != order.isReversed ? 1 : 0 }
             return rows.sorted { (group($0), name($0), $0.id) < (group($1), name($1), $1.id) }
         }
+    }
+}
+
+private extension TimingSettings {
+    /// These timings with Detection's back to their defaults.
+    var withDefaultDetection: TimingSettings {
+        var timings = self
+        timings.startConfirmation = TimingSettings.defaults.startConfirmation
+        timings.stopGrace = TimingSettings.defaults.stopGrace
+        timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        return timings
+    }
+
+    /// These timings with the fades back to their defaults.
+    var withDefaultFades: TimingSettings {
+        var timings = self
+        timings.fadesEnabled = TimingSettings.defaults.fadesEnabled
+        timings.fadeOutDuration = TimingSettings.defaults.fadeOutDuration
+        timings.fadeInDuration = TimingSettings.defaults.fadeInDuration
+        return timings
     }
 }

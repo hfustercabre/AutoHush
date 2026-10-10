@@ -117,15 +117,16 @@ struct MonitoringPipelineTests {
         #expect(setup.meter.stopAllCount >= 1)
     }
 
-    @Test("AntiDot mode turns a player's own taps off, and measuring turns them back on")
-    func antiDotModeTurnsTapsOff() async {
+    @Test("AntiDot mode turns a player's own taps off, with either way of detecting, and measuring turns them back on",
+          arguments: [DetectionMethod.playbackSignals, .openStreams])
+    func antiDotModeTurnsTapsOff(antiDot: DetectionMethod) async {
         let player = MockMutingMusicPlayer(MockMusicPlayer())
-        let setup = Setup(player: player, detectionMethod: .playbackSignals)
+        let setup = Setup(player: player, detectionMethod: antiDot)
         #expect(!player.tapsAreAllowed)
         setup.pipeline.setDetectionMethod(.audioLevels)
         #expect(player.tapsAreAllowed)
-        setup.pipeline.setDetectionMethod(.openStreams)
-        #expect(player.tapsAreAllowed) // only "What apps tell macOS" promises no taps
+        setup.pipeline.setDetectionMethod(antiDot)
+        #expect(!player.tapsAreAllowed) // AntiDot mode promises no taps, whichever way it detects
         setup.pipeline.stop()
     }
 }

@@ -7,12 +7,22 @@ import AutoHushKit
 enum AppIcon {
     private static var cache: [String: NSImage] = [:]
 
-    static func image(for source: AudioSource, size: CGFloat = 16) -> NSImage {
-        image(bundlePath: source.bundlePath, size: size)
+    /// An app that played audio, as the lists show it: its icon, or, once a
+    /// supported player is no longer where it was found, its placeholder
+    /// (`players`).
+    static func image(for source: AudioSource, players: [PlayerOption] = [], size: CGFloat = 16) -> NSImage {
+        image(bundlePath: source.bundlePath, id: source.id, players: players, size: size)
     }
 
     /// The icon of the app at `bundlePath`; the generic app icon without one.
-    static func image(bundlePath: String?, size: CGFloat = 16) -> NSImage {
+    /// When the app is a supported player (its bundle ID `id` is among
+    /// `players`) that isn't there, its placeholder, as wherever players are
+    /// offered. Another app that was deleted shows what macOS gives it.
+    static func image(bundlePath: String?, id: String? = nil, players: [PlayerOption] = [], size: CGFloat = 16) -> NSImage {
+        if let id, let placeholder = players.first(where: { $0.bundleID == id })?.iconPlaceholder,
+           !(bundlePath.map { FileManager.default.fileExists(atPath: $0) } ?? false) {
+            return image(placeholder: placeholder, id: id, size: size)
+        }
         let key = "\(bundlePath ?? "")#\(size)"
         if let cached = cache[key] { return cached }
         let image = (bundlePath.map { NSWorkspace.shared.icon(forFile: $0) }

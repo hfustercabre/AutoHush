@@ -7,7 +7,12 @@ import AutoHushPlayers
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// What the menu bar shows; rendered by `statusMenu` once it exists.
     private(set) var status = AppStatus() {
-        didSet { statusMenu?.status = status }
+        didSet {
+            statusMenu?.status = status
+            // Settings → General says it too.
+            if settingsModel?.statusLine != status.statusLine { settingsModel?.statusLine = status.statusLine }
+            if settingsModel?.statusNeedsAttention != status.needsAttention { settingsModel?.statusNeedsAttention = status.needsAttention }
+        }
     }
 
     private var statusMenu: StatusMenuController?
@@ -216,6 +221,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         settingsModel.currentVersion = currentVersion?.description
         settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
+        settingsModel.statusLine = status.statusLine
+        settingsModel.statusNeedsAttention = status.needsAttention
         showChosenPlayer()
         refreshPlayerOptions()
         showApps()
@@ -230,6 +237,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - NSApplicationDelegate
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Shown while a window is open: the Mac's standard menus and keys.
+        NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
+                                       settings: { [weak self] in self?.openSettings() })
         statusMenu = StatusMenuController(
             status: status,
             actions: .init(
@@ -238,7 +248,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
                 addWebApp: { [weak self] in self?.showAddWebApp() },
                 learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
-                learningStep: { [weak self] in self?.learningStep($0) },
                 menuWillOpen: { [weak self] in self?.menuWillOpen() },
                 setIgnored: { [weak self] in self?.setIgnored($0, $1) },
                 resolveWarning: { [weak self] in self?.requestPermission($0) },
@@ -249,7 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showDiagnostics: { [weak self] in self?.showDiagnostics() },
                 showAvailableUpdate: { [weak self] in self?.updates.presentAvailableUpdate() },
                 checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
-                showAbout: { [weak self] in self?.openSettings(tab: .about) },
+                showAbout: { [weak self] in self?.openSettings(page: .about) },
                 showControlError: { [weak self] in self?.showControlError() },
                 quit: { NSApp.terminate(nil) }
             )
@@ -314,9 +323,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setHealth(_ health: AppHealthState) {
         status.setHealth(health)
-        if settingsModel.playerNeedsPermission != status.needsPermission {
-            settingsModel.playerNeedsPermission = status.needsPermission
-        }
     }
 
     /// Tries starting again after `error`, unless an event will: see
@@ -570,8 +576,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if case .learning = status.learning { showLearningWindow() }
     }
 
-    /// Shows how learning goes in the menu and Settings; once learned, or
-    /// with nothing to learn, the windows that show the steps close.
+    /// Shows how learning goes: whether it's learned in the menu and
+    /// Settings, the steps in their windows; once learned, or with nothing
+    /// to learn, the windows that show the steps close.
     func showLearning(_ learning: LearningStatus?) {
         if status.learning != learning { status.learning = learning }
         if settingsModel.learning != learning { settingsModel.learning = learning }
@@ -596,14 +603,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Shows the countdown, the note, and how the pause goes (`mode`; `nil`
-    /// keeps it) in the menu, Settings and the windows.
+    /// keeps it) in the windows that show the learning steps.
     func setLearningPause(deadline: Date?, note: LearningNote?, mode: LearningPauseMode? = nil) {
-        if status.learningPauseDeadline != deadline { status.learningPauseDeadline = deadline }
         if settingsModel.learningPauseDeadline != deadline { settingsModel.learningPauseDeadline = deadline }
-        if status.learningNote != note { status.learningNote = note }
         if settingsModel.learningNote != note { settingsModel.learningNote = note }
         guard let mode else { return }
-        if status.learningPauseMode != mode { status.learningPauseMode = mode }
         if settingsModel.learningPauseMode != mode { settingsModel.learningPauseMode = mode }
     }
 
@@ -723,7 +727,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The menu opens: what it lists is brought up to date. The welcome
     /// window, still open, comes forward to the desktop the user is on:
     /// another app may have covered it, or taken the user to another desktop,
-    /// since it opened, and AutoHush has no Dock icon to bring it back.
+    /// since it opened.
     func menuWillOpen() {
         refreshPlayerOptions()
         checkControlAccess()
@@ -922,11 +926,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu actions
 
-    private func openSettings(tab: SettingsWindowController.Tab? = nil) {
+    private func openSettings(page: SettingsWindowController.Page? = nil) {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
-        settingsWindowController?.show(tab: tab)
+        settingsWindowController?.show(page: page)
         refreshPlayerOptions()
         watchWindows()
     }
@@ -935,7 +939,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// whether the user turned AutoHush's notifications on or off, or reset
     /// them, in System Settings, and which music players are installed, so
     /// the windows follow at once and a reset is asked about again. macOS
-    /// doesn't announce these changes. While the Diagnostics tab shows, it
+    /// doesn't announce these changes. While the Diagnostics page shows, it
     /// follows what AutoHush sees, too.
     ///
     /// The learning and Add a Web App windows are followed too: while any of
@@ -945,10 +949,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowsWatch?.cancel()
         windowsWatch = Task { [weak self] in
             while !Task.isCancelled, let self, self.isShowingWatchedWindow {
-                let settingsShown = self.settingsWindowController?.window?.isVisible == true
+                // Minimized, Settings is still open: it's up to date once it's back.
+                let settingsShown = self.settingsWindowController?.window?.isOpen == true
                 if settingsShown || self.isShowingPlayerChooser {
                     self.refreshPlayerOptions()
-                    if settingsShown, self.settingsWindowController?.shownTab == .diagnostics { self.refreshDiagnostics() }
+                    if settingsShown, self.settingsWindowController?.shownPage == .diagnostics { self.refreshDiagnostics() }
                     let off = await self.updates.followNotificationPermission() == .off
                     if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
                 }
@@ -961,9 +966,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Settings, the welcome, learning or Add a Web App window is on screen.
+    /// Settings (on screen or minimized), the welcome, learning or Add a Web
+    /// App window is open.
     private var isShowingWatchedWindow: Bool {
-        settingsWindowController?.window?.isVisible == true || isShowingPlayerChooser
+        settingsWindowController?.window?.isOpen == true || isShowingPlayerChooser
             || learningWindow?.isVisible == true || addWebAppWindow?.isVisible == true
     }
 
@@ -990,7 +996,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// ⌥-click on Settings in the menu: Settings, on the Diagnostics tab.
     private func showDiagnostics() {
-        openSettings(tab: .diagnostics)
+        openSettings(page: .diagnostics)
     }
 
     /// Retry, on the menu's card after a failed start: starts over at once,
@@ -1051,6 +1057,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isQuietMoment: Bool {
         status.playback != .pausedByMonitor
             && statusMenu?.isMenuOpen != true
-            && !NSApplication.shared.windows.contains { $0.isVisible && $0.canBecomeKey }
+            && !NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey }
     }
 }

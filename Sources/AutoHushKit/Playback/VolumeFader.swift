@@ -81,11 +81,15 @@ package actor VolumeFader {
         guard await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade) else {
             guard !isAbandoned else { return false } // `abandon()` set the volume back
             // Cancelled: bring the music back up from wherever the fade got to.
-            let reached = level(of: await player.volume() ?? 0, floor: bottom)
+            // It comes back from before the volume is read, so an app that
+            // starts meanwhile stops it (`stopComeback()`) there already.
             generation += 1
+            let comeback = generation
             isComingBack = true
             defer { isComingBack = false }
-            if await ramp(from: reached, to: top, fullTime: fadeIn, fade: generation) {
+            let reached = level(of: await player.volume() ?? 0, floor: bottom)
+            guard generation == comeback else { return false }
+            if await ramp(from: reached, to: top, fullTime: fadeIn, fade: comeback) {
                 userVolume = nil
             }
             return false

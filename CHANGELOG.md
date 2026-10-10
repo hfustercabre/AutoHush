@@ -5,6 +5,74 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Settings has a sidebar, like System Settings.** Its pages are General,
+  Apps, Detection, Fades, Diagnostics, Updates and About; the sidebar also
+  shows AutoHush's version and a link to support it. The window no longer
+  changes height from tab to tab: you resize it, and it opens where and as
+  big as you left it.
+- **Settings → General shows your media player** with what it's doing,
+  whether AutoHush may control it and whether it fades, and Auto-Pause
+  under it. Every player is a tile under it, three a row: click one to
+  choose it. The welcome window shows the same tiles, and scrolls past five
+  rows of them.
+- **AutoHush is in the Dock while one of its windows is open.**
+- **The menu's players come under "Supported Apps"**, as in Settings, then
+  the Safari web apps under their own heading.
+- **Learning a web app's controls happens in its window only.** The menu
+  and Settings no longer show the steps. Instead, a **Controls** row in the
+  menu's card and in Settings says whether they're learned, with **Learn
+  Controls** (or **Learn Again** once learned): a new learning window that
+  starts over, closing one still open. **Learn Controls Again…** is gone
+  from the menu's players.
+- **Learn Again keeps what AutoHush learned until you click It's Playing.**
+  Until then the web app is still paused and resumed as before, so a click
+  by mistake costs nothing: closing the window, or Later, keeps it.
+- **The Mac's standard menus and keyboard shortcuts.** While one of its
+  windows is open, AutoHush has the usual menu bar: ⌘V pastes a web
+  address, ⌘W closes the window, ⌘Q quits and ⌘, opens Settings. Return
+  presses a window's main button and Escape its Cancel. AutoHush still
+  adds no shortcuts of its own.
+- **The welcome, Add a Web App and learning windows look like Settings.**
+  Their title sits in the title bar, as a Settings page's name; under it,
+  the icon and what the window is for, then headed cards, and the buttons
+  in a bar along the foot. The welcome window keeps one width for both its
+  pages, and its permissions show on squares in your accent color.
+- **AntiDot mode is on the Detection page**, with the timings. While it's on,
+  the silence threshold, which only measuring uses, is hidden. **Updates**
+  has a page of its own.
+- **Restore Defaults sets back only its own page:** Detection's timings, or
+  the fades.
+- **Media, not just music.** AutoHush pauses music, podcasts and videos, and
+  now says so: you choose your *media player*, the switch is just
+  **Auto-Pause**, and the timings and fades talk about *playback*.
+- **Liquid Glass on macOS 26 and later.** The menu's card, Settings' cards
+  and AutoHush's buttons are glass, and macOS draws its own controls in
+  AutoHush with it too. On macOS 15 AutoHush looks as it always has.
+
+### Fixed
+
+- **AutoHush didn't open on Intel Macs.** It was built for Apple silicon
+  only; it now runs on both.
+- **AntiDot mode could show the purple dot.** With "Open audio streams
+  only", a web app that wouldn't pause (during an ad) was still muted, and
+  listened to first, through an audio tap. AntiDot mode now never taps, as
+  it promises.
+- **A fade-out called off at the wrong moment came back up fully,** then
+  faded out again, when another app started just then. It now fades out
+  again from where it was.
+- **AutoHush's windows fell behind other apps' after a desktop switch.**
+  Going to another desktop and back brought the app you'd used before in
+  front of Settings or the welcome window. Now AutoHush's window stays in
+  front.
+- **The first It's Playing after opening a web app didn't take.** It said
+  AutoHush couldn't see the web app's page, and a second click worked:
+  Safari prepares a page for AutoHush only when it's first asked, and
+  answers that first question with nothing. Now AutoHush asks again.
+
 ## [0.10.0] — 2026-10-09
 
 ### Fixed

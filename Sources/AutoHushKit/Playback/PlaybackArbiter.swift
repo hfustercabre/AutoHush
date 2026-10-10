@@ -171,7 +171,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
     }
 
-    /// Turns automatic pausing on or off (the menu's "Auto-Pause Music").
+    /// Turns automatic pausing on or off (the menu's "Auto-Pause" switch).
     ///
     /// Off: a pending resume is cancelled and the player, if we paused it, resumes
     /// right away — the user wants it playing alongside the other audio.

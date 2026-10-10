@@ -32,10 +32,10 @@ struct StatusCardView: View {
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 3) {
                     Toggle(isOn: Binding(get: { status.autoPause == .on }, set: { _ in model.perform(.toggleAutoPause) })) {
-                        Text("Auto-Pause", comment: "Under the switch at the top of the menu that turns auto-pause on and off")
+                        Text("Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row")
                     }
                     .toggleStyle(PillToggleStyle())
-                    Text("Auto-Pause", comment: "Under the switch at the top of the menu that turns auto-pause on and off")
+                    Text("Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row")
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
                         .fixedSize() // whole, in every language: the status line wraps instead
@@ -44,9 +44,17 @@ struct StatusCardView: View {
             }
             CardDivider()
             HStack(spacing: 6) {
-                SectionLabel(Text("Music player", comment: "The menu's card and Settings → General: label of the chosen music player"))
+                SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
                 Spacer(minLength: 4)
                 playerButton
+            }
+            // A web app's controls: learned or not, and the way to learn
+            // them in the learning window (the steps show only there).
+            if status.canLearnControlsAgain {
+                CardDivider()
+                ControlsRow(name: status.playerName, isLearned: status.learning?.isLearned == true, buttonFont: .appCallout) {
+                    model.perform(.learnControls)
+                }
             }
         }
         .padding(.horizontal, 8)
@@ -69,7 +77,7 @@ struct StatusCardView: View {
     }
 
     private static var whyLabel: String {
-        String(localized: "Why?", comment: "Tooltip and VoiceOver hint of the menu's status line when the music player couldn't be controlled: a click shows why")
+        String(localized: "Why?", comment: "Tooltip and VoiceOver hint of the menu's status line when the media player couldn't be controlled: a click shows why")
     }
 
     /// Tries starting again; the menu stays open and the card shows how it went.
@@ -93,7 +101,7 @@ struct StatusCardView: View {
         Button { model.perform(.togglePlayerList) } label: {
             HStack(spacing: 6) {
                 if status.chosenPlayer != nil { playerIcon(size: 16) }
-                Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu's card and Settings' music player pop-up, while no music player is chosen"))
+                Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu's card, on the button that unfolds the media players, while none is chosen"))
                     .font(.appCallout)
                 Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))

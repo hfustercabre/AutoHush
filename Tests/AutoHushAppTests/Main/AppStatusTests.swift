@@ -70,7 +70,7 @@ struct AppStatusTests {
     }
 
     @Test("only a problem needs attention", arguments: [
-        (AppHealthState.starting, false), (.ready, false), (.needsPlayer("Choose a music player"), true),
+        (AppHealthState.starting, false), (.ready, false), (.needsPlayer("Choose a media player"), true),
         (.degraded("Jukebox is not running"), true), (.needsPermission(.automation(player: "Jukebox")), true),
         (.failed("Monitor failed hard"), true),
     ])
@@ -162,9 +162,9 @@ struct AppStatusTests {
     @Test("waiting for a music player to be chosen needs attention, but no Retry or warning")
     func waitingForPlayer() {
         var status = AppStatus()
-        status.setHealth(.needsPlayer("Choose a music player"))
+        status.setHealth(.needsPlayer("Choose a media player"))
         #expect(status.icon == .attention)
-        #expect(status.statusLine == "Choose a music player")
+        #expect(status.statusLine == "Choose a media player")
         #expect(!status.canRetry)
         #expect(status.warning == nil)
     }
@@ -190,15 +190,18 @@ struct AppStatusTests {
         #expect(status.warning == .automation(player: "Jukebox") && !status.offersReopen)
     }
 
-    @Test("no learning steps show while a permission is missing")
-    func learningHiddenWhilePermissionMissing() {
+    @Test("the card's Controls row shows for a chosen player that learns, learned or not, permission or not")
+    func controlsRow() {
         var status = ready()
-        status.learning = .learning(hasPlayed: false)
-        #expect(status.learningHasPlayed == false)
+        #expect(!status.canLearnControlsAgain) // a player that learns nothing
+        for learning in [LearningStatus.learning(hasPlayed: false), .learning(hasPlayed: true), .relearning, .learned] {
+            status.learning = learning
+            #expect(status.canLearnControlsAgain)
+        }
         status.setHealth(.needsPermission(.accessibility(player: "Jukebox")))
-        #expect(status.needsPermission && status.learningHasPlayed == nil)
-        status.setHealth(.ready)
-        #expect(!status.needsPermission && status.learningHasPlayed == false)
+        #expect(status.needsPermission && status.canLearnControlsAgain)
+        status.chosenPlayerID = nil // deleted: nothing to learn
+        #expect(!status.canLearnControlsAgain)
     }
 
     @Test("missing audio access warns only when ready")

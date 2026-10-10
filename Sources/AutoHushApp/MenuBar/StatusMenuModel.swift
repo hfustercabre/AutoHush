@@ -17,8 +17,8 @@ enum StatusMenuCommand: Equatable, Sendable {
     case searchPlayers(String)
     /// Tries starting again after a failed start.
     case retry
-    /// While AutoHush learns the player: it plays, or it's paused.
-    case learningStep(StepButton)
+    /// Learns the chosen web app's controls in a new learning window.
+    case learnControls
     case openSettings
     case showDiagnostics
     /// Checks for updates, or shows the update found.
