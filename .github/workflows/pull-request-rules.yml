@@ -1,0 +1,40 @@
+# Checks that a pull request follows CONTRIBUTING.md: it goes into wip, from
+# a branch named fix-…, feature-… or change-…. Runs again when the pull
+# request is edited (a new target), so fixing it clears the check.
+name: Pull request rules
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+# Reads nothing and writes nothing: the branch names come with the event.
+permissions: {}
+
+jobs:
+  branches:
+    name: Branch name and target
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the branches
+        # Through the environment, never written into the script: a branch
+        # name is chosen by whoever opens the pull request.
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: |
+          problems=0
+          if [ "$BASE_BRANCH" != "wip" ]; then
+            echo "::error title=Target::Open the pull request into wip (see CONTRIBUTING.md)."
+            problems=1
+          fi
+          case "$HEAD_BRANCH" in
+            fix-?* | feature-?* | change-?*) ;;
+            *)
+              echo "::error title=Branch name::Name the branch fix-…, feature-… or change-… (see CONTRIBUTING.md)."
+              problems=1
+              ;;
+          esac
+          if [ "$problems" = 0 ]; then
+            echo "Into wip, from a branch named as CONTRIBUTING.md asks."
+          fi
+          exit "$problems"
