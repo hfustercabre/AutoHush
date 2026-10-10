@@ -1,8 +1,8 @@
 import Foundation
-import AutoHushKit
 
 /// What the user typed as a website's address, made into one, and the site
-/// asked whether it answers.
+/// asked whether it answers: for making a web app (`WebAppMaking`) and for
+/// a service's sites by country (`CountrySites`).
 package enum WebAddress {
     /// The web address in `text`: http or https, with a host that has a dot
     /// (or is localhost), and no spaces. Without a scheme, "https://" is
@@ -21,7 +21,7 @@ package enum WebAddress {
     }
 
     /// The host without a leading "www.", to compare sites.
-    static func siteHost(_ host: String) -> String {
+    package static func siteHost(_ host: String) -> String {
         let lower = host.lowercased()
         return lower.hasPrefix("www.") ? String(lower.dropFirst(4)) : lower
     }

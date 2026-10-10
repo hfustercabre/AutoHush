@@ -52,6 +52,7 @@ struct SupportedPlayersTests {
         #expect(sites.site(region: nil) == "music.amazon.com")
         let amazon = SupportedPlayers.testedWebApps[2]
         #expect(amazon.countrySites == sites)
+        #expect(!amazon.otherHosts.contains(amazon.address)) // its address once among its hosts
         #expect(SupportedPlayers.testedWebApps.filter { $0.countrySites != nil }.map(\.name) == ["Amazon Music"])
         #expect(SupportedPlayers.catalog.countrySites == [sites]) // offered by country in Add a Web App
         let made = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "A", name: "Amazon Music",

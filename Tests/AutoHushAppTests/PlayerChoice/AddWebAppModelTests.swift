@@ -111,6 +111,9 @@ struct AddWebAppModelTests {
         model.chooseCountry("ES", in: sites)
         #expect(model.address == "music.some.co.uk")
         // Every country with its own site is offered, once.
-        #expect(AddWebAppView.countries(of: sites).map(\.code).sorted() == ["ES", "GB", "IE", "US"])
+        let countries = model.countries(of: sites)
+        #expect(countries.map(\.code).sorted() == ["ES", "GB", "IE", "US"])
+        #expect(countries.map(\.name) == countries.map(\.name).sorted { $0.localizedStandardCompare($1) == .orderedAscending })
+        #expect(model.countries(of: sites) == countries) // worked out once
     }
 }

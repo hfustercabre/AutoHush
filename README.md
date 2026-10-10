@@ -407,8 +407,9 @@ Sources/
     Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (the setting and snoozes)
     MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
                          PolledStateObserver (for players that announce nothing), WebAppMaking (making a
-                         web app from an address, and the suggested ones),
-                         PlayerIconPlaceholder (a player's icon while it isn't installed)
+                         web app from an address, and the suggested ones), WebAddress (an address as
+                         typed, and whether a page is its site), CountrySites (a service's site by
+                         country), PlayerIconPlaceholder (a player's icon while it isn't installed)
     Permissions/         what's needed and where to grant it
     PrivateAPI/          TCC, ProcessResponsibility, AccessibilityWindows, NowPlayingApp: undocumented macOS
                          functions, resolved at runtime with fallbacks; check them after every major macOS

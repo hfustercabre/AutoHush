@@ -25,8 +25,9 @@ package struct TestedWebApp: Equatable, Sendable {
     /// A service with its own site in some countries: suggested on the site
     /// for `region` (the Mac's), and any of its sites counts as it.
     package init(countrySites: CountrySites, region: String?) {
-        self.init(name: countrySites.name, address: countrySites.site(region: region),
-                  otherHosts: countrySites.hosts, countrySites: countrySites)
+        let address = countrySites.site(region: region)
+        self.init(name: countrySites.name, address: address,
+                  otherHosts: countrySites.hosts.filter { $0 != address }, countrySites: countrySites)
     }
 
     /// Its address's host, then the others.

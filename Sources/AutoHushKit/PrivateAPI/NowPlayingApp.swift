@@ -53,10 +53,15 @@ package enum NowPlayingApp {
 
     /// In the fresh copy: MediaRemote's answer, as `current()` reads it.
     package static func printAnswer() {
-        switch resolve() {
-        case .process(let pid): print("process \(pid)")
-        case .none: print("none")
-        case .unknown: print("unknown")
+        print(line(for: resolve()))
+    }
+
+    /// An answer as the copy prints it, and `answer(from:)` reads it.
+    static func line(for answer: Answer) -> String {
+        switch answer {
+        case .process(let pid): "process \(pid)"
+        case .none: "none"
+        case .unknown: "unknown"
         }
     }
 
@@ -117,7 +122,8 @@ package enum NowPlayingApp {
         let queue = DispatchQueue(label: "AutoHush.NowPlayingApp")
         functions.resolvePath(path, UnsafeRawPointer(Unmanaged.passUnretained(queue).toOpaque())) { resolved, error in
             defer { answered.signal() }
-            guard error == nil else { return }
+            // Without a path, there's no client to read: unknown.
+            guard error == nil, let resolved else { return }
             let pid = functions.pathClient(resolved).map(functions.clientPID) ?? 0
             answer.withLock { $0 = pid > 0 ? .process(pid) : .none }
         }

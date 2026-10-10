@@ -174,8 +174,11 @@ struct SafariWebAppPlayerTests {
             setup.page.sound = true
             setup.nowPlaying.answer = answer
             #expect(await setup.player.markPlaying() == .noted)
+            let started = setup.clock.now
             #expect(await setup.player.pauseByItself() == .keyGoesElsewhere)
             #expect(setup.key.count == 0)
+            #expect(setup.nowPlaying.asked == 2) // asked again a moment later
+            #expect(setup.clock.now.timeIntervalSince(started) >= WebAppControl.nowPlayingRecheck)
             #expect(setup.page.presses.isEmpty)
             #expect(setup.player.learningStatus == .learning(hasPlayed: true))
 
@@ -197,6 +200,36 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.pauseByItself() == .paused)
         #expect(setup.key.count == 1)
         #expect(setup.player.learningStatus == .learned)
+    }
+
+    @Test("another app still Now Playing as the web app starts: asked again a moment later, the web app holds it and the key is pressed")
+    func nowPlayingTakenLate() async {
+        let setup = Setup()
+        setup.showPage()
+        setup.page.set(1, label: "Pause")
+        setup.page.sound = true
+        setup.nowPlaying.answers = [.process(pid_t.max - 1), .process(setup.pid.value)]
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.key.onPress = { [page = setup.page] in page.set(1, label: "Play") }
+        #expect(await setup.player.pauseByItself() == .paused)
+        #expect(setup.nowPlaying.asked == 2)
+        #expect(setup.key.count == 1)
+        #expect(setup.player.learningStatus == .learned)
+    }
+
+    @Test("with the web app Now Playing, or no answer, Now Playing is asked once")
+    func nowPlayingAskedOnce() async {
+        for answer in [NowPlayingApp.Answer.process(4242), .unknown] {
+            let setup = Setup()
+            setup.showPage()
+            setup.page.set(1, label: "Pause")
+            setup.page.sound = true
+            setup.nowPlaying.answer = answer
+            #expect(await setup.player.markPlaying() == .noted)
+            setup.key.onPress = { [page = setup.page] in page.set(1, label: "Play") }
+            #expect(await setup.player.pauseByItself() == .paused)
+            #expect(setup.nowPlaying.asked == 1)
+        }
     }
 
     @Test("waiting for the page to change after the Play/Pause key, a page without words isn't looked at twice: the wait stays the key's")
@@ -975,14 +1008,26 @@ final class PIDBox: @unchecked Sendable {
 }
 
 /// The Now Playing app in tests: unknown (the key is pressed, as ever)
-/// unless a test sets it.
+/// unless a test sets it. `answers` come one per question, the last one
+/// for every question after; `asked` counts the questions.
 final class NowPlayingBox: @unchecked Sendable {
     private let lock = NSLock()
-    private var _answer = NowPlayingApp.Answer.unknown
+    private var _answers = [NowPlayingApp.Answer.unknown]
+    private var _asked = 0
     var answer: NowPlayingApp.Answer {
-        get { lock.withLock { _answer } }
-        set { lock.withLock { _answer = newValue } }
+        get {
+            lock.withLock {
+                _asked += 1
+                return _answers.count > 1 ? _answers.removeFirst() : _answers[0]
+            }
+        }
+        set { lock.withLock { _answers = [newValue] } }
     }
+    var answers: [NowPlayingApp.Answer] {
+        get { lock.withLock { _answers } }
+        set { lock.withLock { _answers = newValue } }
+    }
+    var asked: Int { lock.withLock { _asked } }
 }
 
 /// The keyboard's Play/Pause key in tests: counts its presses, and does

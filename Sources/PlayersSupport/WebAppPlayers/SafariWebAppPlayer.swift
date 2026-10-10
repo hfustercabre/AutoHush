@@ -41,6 +41,12 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     private var hasAskedForAccess = false
     /// Accessibility calls block: they run here, one at a time.
     private let queue: DispatchQueue
+    /// Which app is Now Playing (`NowPlayingApp`), and the wait before asking
+    /// again: asked off `queue`, since a fresh process answers.
+    private let nowPlaying: @Sendable () -> NowPlayingApp.Answer
+    private let sleep: @Sendable (TimeInterval) -> Void
+    /// Where Now Playing is asked, so the page's polls don't wait for it.
+    private static let nowPlayingQueue = DispatchQueue(label: "AutoHush.WebApp.NowPlaying", qos: .userInitiated)
 
     package init(
         app: SafariWebApp,
@@ -64,8 +70,10 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
                                 muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
-                                pressKey: pressKey, nowPlaying: nowPlaying, clock: clock, sleep: sleep)
+                                pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
+        self.nowPlaying = nowPlaying
+        self.sleep = sleep
     }
 
     package nonisolated var learningStatus: LearningStatus { status.current }
@@ -91,7 +99,10 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package func pauseByItself() async -> SelfPause {
         let pid = processIdentifier()
         let control = control
-        return await queue.run { control.pauseByItself(pid: pid) }
+        let keyReaches = await Self.nowPlayingQueue.run { [nowPlaying, sleep] in
+            WebAppControl.keyReaches(pid: pid, nowPlaying: nowPlaying, sleep: sleep)
+        }
+        return await queue.run { control.pauseByItself(pid: pid, keyReaches: keyReaches) }
     }
 
     package func markPaused() async -> LearningMark {

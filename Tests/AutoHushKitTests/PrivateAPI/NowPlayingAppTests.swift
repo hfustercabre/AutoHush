@@ -16,6 +16,13 @@ struct NowPlayingAppTests {
         #expect(NowPlayingApp.answer(from: "process 12 34") == .unknown)
     }
 
+    @Test("what the copy prints is read back as the same answer")
+    func lineRoundTrip() {
+        for answer in [NowPlayingApp.Answer.process(2437), .none, .unknown] {
+            #expect(NowPlayingApp.answer(from: NowPlayingApp.line(for: answer) + "\n") == answer)
+        }
+    }
+
     @Test("a copy that can't be started, or doesn't answer in time, gives unknown: the key is pressed as ever")
     func noAnswer() {
         #expect(NowPlayingApp.current(executable: nil) == .unknown)

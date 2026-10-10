@@ -75,10 +75,6 @@ package enum MusicPlayerKind: Sendable {
     case safariWebApp
 }
 
-/// A player AutoHush can only control once it has learned how, by watching
-/// the user play and pause it once (a web app: which of the page's buttons
-/// plays and pauses it). Until then it reports what it can, but can't be
-/// paused; it learns while its state is read.
 /// How a learning player's own pause went (`pauseByItself`).
 package enum SelfPause: Equatable, Sendable {
     /// It paused, learned what changed, and plays again.
@@ -90,6 +86,10 @@ package enum SelfPause: Equatable, Sendable {
     case keyGoesElsewhere
 }
 
+/// A player AutoHush can only control once it has learned how, by watching
+/// the user play and pause it once (a web app: which of the page's buttons
+/// plays and pauses it). Until then it reports what it can, but can't be
+/// paused; it learns while its state is read.
 package protocol LearningMusicPlayer: MusicPlayer {
     /// Where learning stands now.
     var learningStatus: LearningStatus { get }

@@ -49,11 +49,9 @@ package struct CountrySites: Equatable, Sendable {
         return byRegion.keys.sorted().first { byRegion[$0] == host } ?? ""
     }
 
-    /// The host of an address as typed, lowercased, without "www.".
+    /// The host of an address as typed, lowercased, without "www.": as Add
+    /// a Web App reads it (`WebAddress`).
     static func host(of address: String) -> String? {
-        let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        let url = trimmed.contains("://") ? trimmed : "https://" + trimmed
-        guard let host = URLComponents(string: url)?.host?.lowercased(), !host.isEmpty else { return nil }
-        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        WebAddress.url(from: address)?.host().map(WebAddress.siteHost)
     }
 }
