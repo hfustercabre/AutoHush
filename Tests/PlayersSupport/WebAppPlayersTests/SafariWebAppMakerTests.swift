@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import AutoHushKit
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 @Suite("Adding a web app", .serialized)
 struct SafariWebAppMakerTests {
@@ -61,7 +62,7 @@ struct SafariWebAppMakerTests {
         var sameSite: @Sendable (SafariWebApp, URL) -> Bool = { $0.opens($1) }
         /// How many more looks a new app takes to be sealed.
         let unsealedLooks = Locked(0)
-        let clock = TestClock()
+        let clock = ManualClock.webAppTests()
         var maker: SafariWebAppMaker {
             SafariWebAppMaker(
                 safari: safari,
@@ -74,7 +75,7 @@ struct SafariWebAppMakerTests {
                     }
                 },
                 checkAnswers: { [checked] in checked.append($0) },
-                sleep: { [clock] in clock.advance($0) },
+                sleep: { [clock] in clock.advance(by: $0) },
                 clock: { [clock] in clock.now }
             )
         }

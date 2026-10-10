@@ -53,8 +53,9 @@ package protocol MusicPlayer: Sendable {
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving
     /// How late its observer can report a change, in seconds: 0 for a player
-    /// that announces each one, about the reading interval for one whose
-    /// state is read now and then (`PolledStateObserver.reportDelay`).
+    /// that announces each one, `PolledStateObserver.reportDelay` for one
+    /// whose state is read now and then. No default: a wrong 0 would make
+    /// late reports look prompt.
     var stateReportDelay: TimeInterval { get }
 }
 
@@ -67,8 +68,6 @@ extension MusicPlayer {
     package var installedURL: URL? { nil }
     package var isUntested: Bool { false }
     package var ownWordsRead: Bool? { nil }
-    /// Most players announce their changes.
-    package var stateReportDelay: TimeInterval { 0 }
     /// Most players are scripted with Apple events.
     package var controlPermission: Permission { .automation(player: name) }
 }

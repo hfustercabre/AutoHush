@@ -13,7 +13,7 @@ struct SafariWebAppPlayerTests {
     private struct Setup {
         let page = FakeWebPage()
         let store: MemoryRecipeStore
-        let clock = TestClock()
+        let clock = ManualClock.webAppTests()
         let muter = FakeMuter()
         let probe = FakeLevelProbe()
         let pid = PIDBox(4242)
@@ -27,7 +27,7 @@ struct SafariWebAppPlayerTests {
                 app: SafariWebAppPlayerTests.app, page: page, store: store, muter: muter, levelProbe: probe,
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
-                sleep: { [clock] in clock.advance($0) },
+                sleep: { [clock] in clock.advance(by: $0) },
                 pressKey: { [key] in key.press() },
                 nowPlaying: { [nowPlaying] in nowPlaying.answer }
             )
@@ -74,7 +74,7 @@ struct SafariWebAppPlayerTests {
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
         #expect(await setup.player.playerState() == .paused) // its sound is off
         let looks = setup.page.looks
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         _ = await setup.player.playerState()
         #expect(setup.page.looks == looks) // the page is looked at only when the user says so
 
@@ -89,7 +89,7 @@ struct SafariWebAppPlayerTests {
         // The user pauses; It's Paused: the bar's button is the one, at the bottom.
         setup.page.set(1, label: "Play")
         setup.page.set(2, label: "Play")
-        setup.clock.advance(5)
+        setup.clock.advance(by: 5)
         #expect(await setup.player.markPaused() == .noted)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
@@ -334,7 +334,7 @@ struct SafariWebAppPlayerTests {
         let setup = Setup()
         #expect(await setup.player.polledPlayerState() == .paused)
         let looks = setup.page.windowLooks
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         #expect(await setup.player.polledPlayerState() == .paused)
         #expect(setup.page.windowLooks == looks) // silent: the last state
         setup.page.sound = true
@@ -349,11 +349,11 @@ struct SafariWebAppPlayerTests {
         setup.page.hasWindow = false
         #expect(await setup.player.playerState() == .stopped)
         let looks = setup.page.windowLooks
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         #expect(await setup.player.playerState() == .stopped)
         #expect(setup.page.windowLooks == looks) // waits before looking again
         setup.page.hasWindow = true
-        setup.clock.advance(WebAppControl.noWindowPause)
+        setup.clock.advance(by: WebAppControl.noWindowPause)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.page.looks == 0) // the page itself is never read while learning
     }
@@ -365,7 +365,7 @@ struct SafariWebAppPlayerTests {
         setup.page.sound = true
         _ = await setup.player.markPlaying()
         setup.page.set(1, label: "Play")
-        setup.clock.advance(LearningStatus.pauseWait + 1)
+        setup.clock.advance(by: LearningStatus.pauseWait + 1)
         #expect(await setup.player.markPaused() == .tooLate)
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
         #expect(setup.store.recipe(for: Self.app.bundleID) == nil)
@@ -769,12 +769,12 @@ struct SafariWebAppPlayerTests {
         #expect(setup.page.looks == looks) // silent: nothing else plays
 
         setup.page.sound = true // a pause's silent tail, or an ad
-        setup.clock.advance(WebAppControl.otherWindowsInterval)
+        setup.clock.advance(by: WebAppControl.otherWindowsInterval)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.page.looks == looks + 1)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.page.looks == looks + 1)
-        setup.clock.advance(WebAppControl.otherWindowsInterval)
+        setup.clock.advance(by: WebAppControl.otherWindowsInterval)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.page.looks == looks + 2)
     }
@@ -786,11 +786,11 @@ struct SafariWebAppPlayerTests {
         setup.page.hasWindow = false
         #expect(await setup.player.playerState() == .stopped)
         let looks = setup.page.looks
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         #expect(await setup.player.playerState() == .stopped)
         #expect(setup.page.looks == looks)
         setup.page.hasWindow = true
-        setup.clock.advance(WebAppControl.noWindowPause)
+        setup.clock.advance(by: WebAppControl.noWindowPause)
         #expect(await setup.player.playerState() == .paused)
     }
 
@@ -800,18 +800,18 @@ struct SafariWebAppPlayerTests {
         setup.showPage()
         setup.page.hasWindow = false
         #expect(await setup.player.playerState() == .stopped)
-        setup.clock.advance(WebAppControl.noWindowPause)
+        setup.clock.advance(by: WebAppControl.noWindowPause)
         _ = await setup.player.playerState() // the second look
         let looks = setup.page.looks
-        setup.clock.advance(WebAppControl.noWindowPause)
+        setup.clock.advance(by: WebAppControl.noWindowPause)
         _ = await setup.player.playerState()
         #expect(setup.page.looks == looks) // it waits 10 s now
-        setup.clock.advance(WebAppControl.noWindowPause)
+        setup.clock.advance(by: WebAppControl.noWindowPause)
         _ = await setup.player.playerState()
         #expect(setup.page.looks == looks + 1)
 
         for _ in 0..<8 { // it never waits more than a minute
-            setup.clock.advance(WebAppControl.noWindowPauseLimit)
+            setup.clock.advance(by: WebAppControl.noWindowPauseLimit)
             _ = await setup.player.playerState()
         }
         #expect(setup.page.looks == looks + 9)
@@ -827,7 +827,7 @@ struct SafariWebAppPlayerTests {
         setup.showPage("Play")
         #expect(await setup.player.polledPlayerState() == .paused)
         let reads = setup.page.buttonReads
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         #expect(await setup.player.polledPlayerState() == .paused)
         #expect(setup.page.buttonReads == reads) // silent and paused: the last state
 
@@ -836,7 +836,7 @@ struct SafariWebAppPlayerTests {
         setup.page.set(1, label: "Play")
         _ = await setup.player.playerState()
 
-        setup.clock.advance(WebAppControl.quietReadInterval)
+        setup.clock.advance(by: WebAppControl.quietReadInterval)
         let before = setup.page.buttonReads
         _ = await setup.player.polledPlayerState()
         #expect(setup.page.buttonReads > before) // read again after a while
@@ -854,7 +854,7 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
         setup.page.sound = true
         #expect(await setup.player.playerState() == .unknown)
-        setup.clock.advance(WebAppControl.missingBeforeLearning)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
 
@@ -874,7 +874,7 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
         setup.page.sound = true
         _ = await setup.player.playerState()
-        setup.clock.advance(WebAppControl.missingBeforeLearning)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
         setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
@@ -891,7 +891,7 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
         setup.page.sound = true
         _ = await setup.player.playerState()
-        setup.clock.advance(WebAppControl.missingBeforeLearning)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
 
@@ -908,24 +908,24 @@ struct SafariWebAppPlayerTests {
         setup.showPage()
         setup.page.buttonsByNumber[1] = nil // a fresh YouTube Music window: no player bar until something plays
         #expect(await setup.player.playerState() == .unknown)
-        setup.clock.advance(WebAppControl.missingBeforeLearning * 2)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning * 2)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learned)
 
         // Heard, but its button is nowhere: half a minute, a silence, half a minute.
         setup.page.sound = true
         _ = await setup.player.playerState()
-        setup.clock.advance(WebAppControl.missingBeforeLearning / 2)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning / 2)
         _ = await setup.player.playerState()
         setup.page.sound = false
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         _ = await setup.player.playerState()
         setup.page.sound = true
         _ = await setup.player.playerState()
-        setup.clock.advance(WebAppControl.missingBeforeLearning / 2)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning / 2)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learned)
-        setup.clock.advance(WebAppControl.missingBeforeLearning / 2)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning / 2)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
     }
@@ -937,10 +937,10 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1] = nil
         #expect(await setup.player.polledPlayerState() == .unknown)
         let looks = setup.page.looks
-        setup.clock.advance(1)
+        setup.clock.advance(by: 1)
         #expect(await setup.player.polledPlayerState() == .unknown)
         #expect(setup.page.looks == looks)
-        setup.clock.advance(WebAppControl.quietReadInterval)
+        setup.clock.advance(by: WebAppControl.quietReadInterval)
         _ = await setup.player.polledPlayerState()
         #expect(setup.page.looks > looks)
 
@@ -954,7 +954,7 @@ struct SafariWebAppPlayerTests {
         let setup = Setup(recipe: Self.learned)
         setup.page.buttonsByNumber = [1: .init(label: "Sign In", place: Places.main)]
         _ = await setup.player.playerState()
-        setup.clock.advance(WebAppControl.missingBeforeLearning * 2)
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning * 2)
         #expect(await setup.player.playerState() == .unknown)
         #expect(setup.player.learningStatus == .learned)
     }

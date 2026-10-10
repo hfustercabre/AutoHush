@@ -8,11 +8,15 @@ import Foundation
 package final class PolledStateObserver: PlayerStateObserving {
     /// How often the state is read.
     package nonisolated static let interval: Duration = .seconds(1)
-    /// How late a change can be reported: a read's interval, in seconds, as
-    /// the players read this way declare it (`MusicPlayer.stateReportDelay`).
+    /// What a read itself may take on top of the interval: reading a menu
+    /// through Accessibility waits up to 0.5 s for the app.
+    package nonisolated static let readAllowance: TimeInterval = 0.5
+    /// How late a change can be reported, in seconds: the interval and a
+    /// read's time, as the players read this way declare it
+    /// (`MusicPlayer.stateReportDelay`).
     package nonisolated static var reportDelay: TimeInterval {
         let (seconds, attoseconds) = interval.components
-        return TimeInterval(seconds) + TimeInterval(attoseconds) / 1e18
+        return TimeInterval(seconds) + TimeInterval(attoseconds) / 1e18 + readAllowance
     }
 
     private let read: @Sendable () async -> PlayerState

@@ -502,6 +502,7 @@ struct AudioMonitorTests {
         let video: Set<PowerAssertion> = [PowerAssertion(.system, "Playing"), PowerAssertion(.display, "Video")]
         // A short sound: the chat app says it plays for 2.5 s.
         assertions.held = [1001: video, 1002: MockPowerAssertions.playing, 1003: MockPowerAssertions.playing]
+        let heard = h.clock.now
         h.step(processes)
         h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 1)
@@ -516,6 +517,8 @@ struct AudioMonitorTests {
             .init(bundleID: "com.example.video", isPlaying: true),
             .init(bundleID: "com.example.audio", isPlaying: true),
         ])
+        // Each start says when its app was first heard: the audio app's 3 s before it counted.
+        #expect(await h.recorder.heardSince == [heard, heard])
         h.step(after: 5)
         #expect(!h.monitor.activeAudioReport().contains { $0.id == "com.example.chat" && $0.state == .playing })
         h.monitor.stop()

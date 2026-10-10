@@ -2,6 +2,7 @@ import Foundation
 import os
 import AutoHushKit
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 /// A web app's page in memory: buttons by number, each with its words and
 /// place; a press runs `onPress`.
@@ -150,12 +151,9 @@ final class MemoryRecipeStore: PlayPauseRecipeStore, @unchecked Sendable {
     func forget(for bundleID: String) { lock.withLock { recipes[bundleID] = nil } }
 }
 
-/// A clock the tests move by hand.
-final class TestClock: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _now = Date(timeIntervalSinceReferenceDate: 800_000_000)
-    var now: Date { lock.withLock { _now } }
-    func advance(_ seconds: TimeInterval) { lock.withLock { _now += seconds } }
+extension ManualClock {
+    /// The web app tests' clock, from a date in 2026.
+    static func webAppTests() -> ManualClock { ManualClock(start: Date(timeIntervalSinceReferenceDate: 800_000_000)) }
 }
 
 /// Records mutes; `canMute` false stands for a missing permission.

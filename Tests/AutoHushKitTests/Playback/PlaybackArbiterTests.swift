@@ -1277,6 +1277,23 @@ struct PlaybackArbiterTests {
         #expect(await player.commandLog.isEmpty)
     }
 
+    @Test("a pause well after the app was first heard, while it isn't counted yet, is the user's (AntiDot's 3 s)",
+          arguments: [1.5, 2.5])
+    func leavesUsersPauseWhileAppIsConfirmed(secondsAfterHeard: TimeInterval) async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: secondsAfterHeard)
+        await pausedElsewhere(player, arbiter) // the user, as the other app waits to count
+        clock.advance(by: 3 - secondsAfterHeard)
+        await arbiter.sourceChanged("com.apple.podcasts", playing: true, heardSince: heard)
+        await arbiter.sourceChanged("com.apple.podcasts", playing: false)
+        await settle()
+
+        #expect(await player.commandLog.isEmpty)
+    }
+
     @Test("a pause the check finds before the player has reported it is taken over too")
     func takesOverPauseFoundByCheck() async {
         let player = MockMusicPlayer()
@@ -1501,6 +1518,7 @@ private actor SlowMutingPlayer: MutingMusicPlayer {
 
     nonisolated var bundleID: String { wrapped.bundleID }
     nonisolated var name: String { wrapped.name }
+    nonisolated var stateReportDelay: TimeInterval { wrapped.stateReportDelay }
     nonisolated func allowTaps(_ allowed: Bool) { wrapped.allowTaps(allowed) }
     func muteIfPlayingAnyway() async -> Bool {
         await started.open()

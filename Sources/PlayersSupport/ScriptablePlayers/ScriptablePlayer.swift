@@ -106,6 +106,9 @@ package actor ScriptablePlayer: MusicPlayer {
         PlayerStateObserver(notification: profile.stateNotification, bundleID: profile.bundleID, onChange: onChange)
     }
 
+    /// Its notification announces each change at once.
+    package nonisolated var stateReportDelay: TimeInterval { 0 }
+
     /// Sends a parameterless command of the app's suite, such as pause or play.
     private func sendCommand(_ eventID: AEEventID) async throws {
         let pid = try channel.runningProcessIdentifier()

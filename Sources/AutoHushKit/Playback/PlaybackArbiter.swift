@@ -118,6 +118,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// sound starts (a new app's levels come from the next tick): a pause seen
     /// up to this long before the app was first heard may still be its doing.
     package static let hearingDelay: TimeInterval = 0.5
+    /// An app that pauses other players does it as it starts (VLC, 0.3 s
+    /// after, measured): a pause up to this long after the app was first
+    /// heard may be its doing. A later one, while the app isn't counted as
+    /// playing yet (3 s for sound without video in AntiDot mode), is the user's.
+    package static let startPauseWindow: TimeInterval = 1
     /// A check of the player this long at most after an app counted as
     /// playing is the one that app's start called for, and may find a pause
     /// it made (`takeOverPauseOfStartingApp`).
@@ -418,7 +423,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
         guard playsLocally else {
             // A player paused here closes its output a few seconds later,
             // maybe before the app that paused it counts as playing.
-            if stoppedPlayingAt != nil, takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
+            if mayBeStartingAppsPause(checkedAt: checked),
+               takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
                 return
             }
             logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
@@ -488,24 +494,35 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// The player was found paused by the check an app's start called for,
-    /// having stopped playing after that app was first heard: the app paused
-    /// it as it started (VLC does, by default, with Spotify and Music). That
-    /// pause counts as ours, so the music comes back once the apps stop, as
-    /// if AutoHush had paused it. A pause from before the app was heard is
-    /// the user's, and stays. The player's reports may come late
-    /// (`MusicPlayer.stateReportDelay`): a pause is only taken when it surely
-    /// came after the app was heard, give or take the monitor's own delay.
+    /// having stopped playing as that app started: the app paused it (VLC
+    /// does, by default, with Spotify and Music). That pause counts as ours,
+    /// so the music comes back once the apps stop, as if AutoHush had paused
+    /// it. A pause from before the app was heard, or more than
+    /// `startPauseWindow` after, is the user's, and stays.
     private func takeOverPauseOfStartingApp(_ state: PlayerState, checkedAt checked: Date) -> Bool {
-        guard state == .paused, !pausedByUs, !isShutDown, autoPauseEnabled,
-              let start = latestStart, let stopped = stoppedPlayingAt,
-              checked.timeIntervalSince(start.counted) <= Self.startCheckWindow,
-              stopped.timeIntervalSince(start.heard) - player.stateReportDelay >= -Self.hearingDelay
-        else { return false }
+        guard state == .paused, !isShutDown, autoPauseEnabled, mayBeStartingAppsPause(checkedAt: checked) else {
+            return false
+        }
         pauseFailure = nil
         logger.debug("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop")
         // Things may have changed while the player answered.
         if holdPause(), !isShutDown, activeSources.isEmpty { scheduleResume(after: nil) }
         return true
+    }
+
+    /// Whether, by timing alone, the player's stop could be the doing of the
+    /// latest app to start, in a check `checked` at most `startCheckWindow`
+    /// after it counted as playing: the stop came surely after the app was
+    /// first heard (give or take `hearingDelay`) and at most
+    /// `startPauseWindow` after. Its report may come late
+    /// (`MusicPlayer.stateReportDelay`), so a stop reported by a player read
+    /// once a second can't be placed that precisely, and never counts.
+    private func mayBeStartingAppsPause(checkedAt checked: Date) -> Bool {
+        guard !pausedByUs, let start = latestStart, let stopped = stoppedPlayingAt,
+              checked.timeIntervalSince(start.counted) <= Self.startCheckWindow else { return false }
+        let earliest = stopped.addingTimeInterval(-player.stateReportDelay)
+        return earliest.timeIntervalSince(start.heard) >= -Self.hearingDelay
+            && stopped.timeIntervalSince(start.heard) <= Self.startPauseWindow
     }
 
     /// The music is paused, or muted, by us now. When the Mac went to sleep

@@ -4,9 +4,11 @@ import Foundation
 /// time from a `() -> Date`.
 package final class ManualClock: @unchecked Sendable {
     private let lock = NSLock()
-    private var current = Date(timeIntervalSinceReferenceDate: 0)
+    private var current: Date
 
-    package init() {}
+    package init(start: Date = Date(timeIntervalSinceReferenceDate: 0)) {
+        current = start
+    }
 
     package var now: Date { lock.withLock { current } }
 

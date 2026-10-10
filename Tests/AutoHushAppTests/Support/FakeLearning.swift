@@ -32,6 +32,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
     nonisolated var kind: MusicPlayerKind { .safariWebApp }
     nonisolated var controlPermission: Permission { .accessibility(player: name) }
     nonisolated var canFade: Bool { false }
+    nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     private struct State {
         var status: LearningStatus
