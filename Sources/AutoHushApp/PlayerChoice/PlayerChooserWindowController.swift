@@ -5,7 +5,7 @@ import SwiftUI
 /// they never put a window on screen.
 @MainActor
 protocol PlayerChooserPresenting: AnyObject {
-    var isVisible: Bool { get }
+    var isOpen: Bool { get }
     func show()
     func bringForward()
     func close()
@@ -96,15 +96,13 @@ struct PlayerChooserView: View {
             .windowMargins()
             BottomBar(margin: HostedWindowController.margin) {
                 Spacer()
-                Button {
-                    if let picked { model.chooseMusicPlayer(picked) }
-                } label: {
+                Button { continueTapped() } label: {
                     Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed")
                         .font(.appBody.weight(.semibold))
                         .padding(.horizontal, 6)
                 }
                 .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
-                .keyboardShortcut(.defaultAction)
+                .keyboardShortcut(.defaultAction) // the search, when it shows, keeps Return: `returnInSearch`
                 .disabled(!canContinue)
             }
         }
@@ -114,13 +112,10 @@ struct PlayerChooserView: View {
     /// The search, the tiles and the note about what's installed.
     @ViewBuilder private var players: some View {
         if model.playerOptions.isSearchable {
-            SearchField(text: $search)
+            SearchField(text: $search, onSubmit: returnInSearch)
         }
         PlayerTiles(options: model.playerOptions.offered.matching(search), selection: picked,
-                    onSelect: { option in
-                        // A suggested web app opens "Add a Web App" filled in; a player is picked.
-                        if option.webAddress != nil { model.chooseMusicPlayer(option.bundleID) } else { clicked = option.bundleID }
-                    },
+                    onSelect: select,
                     onAddWebApp: { model.addWebApp() },
                     maxVisibleRows: Self.visibleTileRows,
                     holdsHeight: !search.isEmpty, // typing doesn't shrink the window
@@ -153,6 +148,37 @@ struct PlayerChooserView: View {
             guard let limit, ideal.height > limit else { return ProposedViewSize(width: width, height: nil) }
             return ProposedViewSize(width: width, height: limit)
         }
+    }
+
+    /// A click on a tile: a suggested web app opens "Add a Web App" filled
+    /// in; a player is picked.
+    private func select(_ option: PlayerOption) {
+        if option.webAddress != nil { model.chooseMusicPlayer(option.bundleID) } else { clicked = option.bundleID }
+    }
+
+    private func continueTapped() {
+        if let picked { model.chooseMusicPlayer(picked) }
+    }
+
+    /// Return in the search, which has the keyboard from the start and keeps
+    /// Return from Continue: with nothing typed, it's Continue; with a
+    /// search, it picks the one player the search narrowed down to, as a
+    /// click on its tile would, and nothing while more match, or none.
+    private func returnInSearch() {
+        if search.trimmingCharacters(in: .whitespaces).isEmpty {
+            if canContinue { continueTapped() }
+        } else if let only = Self.onlyMatch(of: model.playerOptions.offered, search: search) {
+            select(only)
+        }
+    }
+
+    /// The one player `search` narrows `options` down to, when it can be
+    /// picked (installed, or a suggested web app); `nil` otherwise.
+    static func onlyMatch(of options: [PlayerOption], search: String) -> PlayerOption? {
+        let matches = options.matching(search)
+        guard !search.trimmingCharacters(in: .whitespaces).isEmpty, matches.count == 1,
+              let only = matches.first, only.isClickable else { return nil }
+        return only
     }
 
     /// A player is picked, and is still installed.

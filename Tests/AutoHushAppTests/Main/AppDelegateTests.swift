@@ -150,7 +150,7 @@ struct AppDelegateTests {
         #expect(sut.status.playerOptions.map(\.kind) == [.app, .safariWebApp])
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        #expect(scratch.learningWindow.isVisible)
+        #expect(scratch.learningWindow.isOpen)
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
 
@@ -159,10 +159,10 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
 
         webApp.set(.learned)
-        await waitFor { !scratch.learningWindow.isVisible }
-        #expect(!scratch.learningWindow.isVisible)
+        await waitFor { !scratch.learningWindow.isOpen }
+        #expect(!scratch.learningWindow.isOpen)
         #expect(sut.status.learning == .learned)
-        #expect(!scratch.learningWindow.isVisible && sut.status.canLearnControlsAgain)
+        #expect(!scratch.learningWindow.isOpen && sut.status.canLearnControlsAgain)
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.status.learning == nil)
@@ -180,12 +180,12 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
         await waitFor { sut.status.learning == .learned }
-        #expect(!scratch.learningWindow.isVisible)
+        #expect(!scratch.learningWindow.isOpen)
         #expect(sut.status.canLearnControlsAgain)
         #expect(sut.settingsModel.canLearnControlsAgain)
 
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isVisible && sut.status.learning == .relearning }
+        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
         #expect(webApp.learnAgainCount == 1)
         #expect(scratch.learningWindowsMade == 1)
         #expect(sut.status.canLearnControlsAgain)
@@ -200,12 +200,12 @@ struct AppDelegateTests {
         // while the window is open: it closes, a new one starts over, and
         // closing the old one keeps nothing.
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isVisible && sut.status.learning == .relearning }
+        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
         webApp.set(.learning(hasPlayed: true))
         await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
         sut.learnControlsAgain()
-        #expect(!scratch.learningWindow.isVisible) // the old one, closed at once
-        await waitFor { scratch.learningWindow.isVisible }
+        #expect(!scratch.learningWindow.isOpen) // the old one, closed at once
+        await waitFor { scratch.learningWindow.isOpen }
         #expect(webApp.learnAgainCount == 3)
         #expect(scratch.learningWindowsMade == 3)
         #expect(webApp.keepLearnedCount == 1)
@@ -214,6 +214,26 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(Players.first) // a player that learns nothing
         #expect(!sut.status.canLearnControlsAgain)
         #expect(!sut.settingsModel.canLearnControlsAgain)
+    }
+
+    @MainActor
+    @Test("learning again, the window closed while the web app's button was missing still keeps what it learned")
+    func keepLearnedWhileButtonMissing() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        await waitFor { sut.status.learning == .learned }
+        sut.learnControlsAgain()
+        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
+
+        webApp.set(.learning(hasPlayed: false)) // its button went missing meanwhile
+        await waitFor { sut.status.learning == .learning(hasPlayed: false) }
+        scratch.learningWindow.close() // Later
+        await waitFor { webApp.keepLearnedCount == 1 }
+        #expect(webApp.keepLearnedCount == 1) // the player decides: it was learning again
     }
 
     @MainActor
@@ -228,7 +248,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.setHealth(.needsPermission(.accessibility(player: "YT Music")))
-        #expect(scratch.learningWindow.isVisible) // with the permission as its first step
+        #expect(scratch.learningWindow.isOpen) // with the permission as its first step
         #expect(sut.status.needsPermission)
         #expect(sut.status.canLearnControlsAgain) // the card's Controls row stays
 
@@ -250,7 +270,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.setHealth(.degraded("YT Music is not running"))
-        #expect(scratch.learningWindow.isVisible)
+        #expect(scratch.learningWindow.isOpen)
     }
 
     @MainActor
@@ -267,7 +287,7 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
 
         sut.showAddWebApp()
-        #expect(scratch.addWindow.isVisible)
+        #expect(scratch.addWindow.isOpen)
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
         await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
@@ -277,11 +297,11 @@ struct AppDelegateTests {
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
         #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: false))
         #expect(scratch.opened == [appURL])
-        #expect(!scratch.learningWindow.isVisible) // the add window shows the steps
+        #expect(!scratch.learningWindow.isOpen) // the add window shows the steps
 
         webApp.set(.learned)
-        await waitFor { !scratch.addWindow.isVisible }
-        #expect(!scratch.addWindow.isVisible)
+        await waitFor { !scratch.addWindow.isOpen }
+        #expect(!scratch.addWindow.isOpen)
     }
 
     @MainActor
@@ -304,14 +324,14 @@ struct AppDelegateTests {
         sut.addWebAppModel.continueTapped()
         await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
-        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isVisible }
-        #expect(!scratch.addWindow.isVisible) // one window asks: the welcome window
+        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isOpen }
+        #expect(!scratch.addWindow.isOpen) // one window asks: the welcome window
         #expect(sut.isShowingPlayerChooser)
         #expect(sut.settingsModel.welcomeAsksPermissions)
-        #expect(!scratch.learningWindow.isVisible)
+        #expect(!scratch.learningWindow.isOpen)
 
         sut.finishWelcome()
-        #expect(scratch.learningWindow.isVisible)
+        #expect(scratch.learningWindow.isOpen)
     }
 
     @MainActor
@@ -326,7 +346,7 @@ struct AppDelegateTests {
         #expect(sut.status.playerOptions.contains { $0.bundleID == suggestion && $0.webAddress == "deezer.com" })
 
         sut.chooseMusicPlayer(suggestion)
-        #expect(scratch.addWindow.isVisible)
+        #expect(scratch.addWindow.isOpen)
         #expect(sut.addWebAppModel.address == "deezer.com")
         #expect(sut.addWebAppModel.phase == .entering)
         #expect(sut.status.chosenPlayerID == Players.first)
@@ -531,7 +551,7 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.learningNote == .timedOut)
         #expect(sut.settingsModel.learningPauseMode == .automatic)
         #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(scratch.learningWindow.isVisible) // still learning
+        #expect(scratch.learningWindow.isOpen) // still learning
 
         // Choosing another player forgets it all.
         sut.chooseMusicPlayer(Players.first)
@@ -583,8 +603,8 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { !scratch.addWindow.isVisible }
-        #expect(!scratch.addWindow.isVisible)
+        await waitFor { !scratch.addWindow.isOpen }
+        #expect(!scratch.addWindow.isOpen)
     }
 
     @MainActor
@@ -655,7 +675,7 @@ struct AppDelegateTests {
         scratch.installed.insert(webApp.bundleID)
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.canLearnControlsAgain && sut.settingsModel.learning == .learning(hasPlayed: false))
-        #expect(!scratch.learningWindow.isVisible)
+        #expect(!scratch.learningWindow.isOpen)
     }
 
     @MainActor
@@ -1096,12 +1116,12 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(webApp.bundleID)
         #expect(sut.settingsModel.welcomeAsksPermissions)
-        #expect(!scratch.learningWindow.isVisible) // waits for the welcome window
+        #expect(!scratch.learningWindow.isOpen) // waits for the welcome window
 
         scratch.chooser.close() // closed instead of Done: the same
         sut.followWelcomeClosed()
         #expect(!sut.settingsModel.welcomeAsksPermissions)
-        #expect(scratch.learningWindow.isVisible)
+        #expect(scratch.learningWindow.isOpen)
     }
 
     @MainActor

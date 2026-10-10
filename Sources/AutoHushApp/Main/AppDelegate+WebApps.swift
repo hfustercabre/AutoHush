@@ -37,12 +37,12 @@ extension AppDelegate {
     func learnControlsAgain() {
         guard let learner = player as? any LearningMusicPlayer else { return }
         logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
-        if let window = learningWindow, window.isVisible {
+        if let window = learningWindow, window.isOpen {
             window.onClose = nil // replaced, not left: nothing to keep
             window.close()
         }
         learningWindow = nil // a new one, not the old one's last state
-        if let window = addWebAppWindow, window.isVisible, case .learning = addWebAppModel.phase { window.close() }
+        if let window = addWebAppWindow, window.isOpen, case .learning = addWebAppModel.phase { window.close() }
         learningTimer?.cancel()
         learningTimer = nil
         setLearningPause(deadline: nil, note: nil, mode: .automatic)
@@ -125,9 +125,10 @@ extension AppDelegate {
 
     /// The learning window closed (Later, its close button, or learned):
     /// learning again, before the user said it plays, what the player
-    /// learned stays.
+    /// learned stays. The player knows whether it was learning again: its
+    /// status may say it learns meanwhile (its button went missing).
     private func learningWindowClosed() {
-        guard let learner = player as? any LearningMusicPlayer, learner.learningStatus == .relearning else { return }
+        guard let learner = player as? any LearningMusicPlayer else { return }
         Task { await learner.keepLearned() }
     }
 
@@ -170,7 +171,7 @@ extension AppDelegate {
     /// `address` if there's one (or showing the one being added).
     func showAddWebApp(address: String? = nil) {
         if addWebAppWindow == nil { addWebAppWindow = makeAddWebAppWindow(addWebAppModel, settingsModel) }
-        if addingWebApp == nil, address != nil || addWebAppWindow?.isVisible != true {
+        if addingWebApp == nil, address != nil || addWebAppWindow?.isOpen != true {
             addWebAppModel.reset(address: address ?? "")
         }
         addWebAppWindow?.show()

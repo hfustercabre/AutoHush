@@ -17,6 +17,30 @@ private actor StepGate {
     }
 }
 
+/// Holds back whoever waits until it's opened.
+private actor Latch {
+    private var isOpen = false
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        guard !isOpen else { return }
+        await withCheckedContinuation { waiting.append($0) }
+    }
+
+    func open() {
+        isOpen = true
+        waiting.forEach { $0.resume() }
+        waiting = []
+    }
+}
+
+/// A fade started from inside a test's hook, for the test to await.
+private actor FadeBox {
+    private var task: Task<Bool, any Error>?
+    func set(_ task: Task<Bool, any Error>) { self.task = task }
+    func value() async throws -> Bool { try await task?.value ?? true }
+}
+
 @Suite("VolumeFader")
 struct VolumeFaderTests {
     private func makeFader(
@@ -136,6 +160,41 @@ struct VolumeFaderTests {
         #expect(try await !fader.fadeOutAndPause())
         let history = await player.volumeHistory
         #expect(history == history.sorted(by: >)) // only ever down: the next fade-out starts from there
+        #expect(await player.pauseCallCount == 0)
+    }
+
+    @Test("a comeback that gives up once a newer one has started leaves that one stoppable")
+    func olderComebackLeavesNewerStoppable() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(80)
+        let gate = StepGate()
+        let fader = makeFader(player, gate: gate)
+        let newerComesBack = Latch()
+        let proceed = Latch()
+        let second = FadeBox()
+        // The first fade-out is called off. While its comeback reads the
+        // volume, another app starts (that comeback is stopped), a second
+        // fade-out starts, is called off in turn, and comes back up.
+        await gate.at(step: 8) {
+            await fader.cancel()
+            await player.setBeforeVolumeAnswer {
+                await player.setBeforeVolumeAnswer(nil)
+                await fader.stopComeback()
+                await second.set(Task { try await fader.fadeOutAndPause() })
+                await newerComesBack.wait()
+            }
+        }
+        await gate.at(step: 12) { await fader.cancel() }
+        await gate.at(step: 14) {
+            await newerComesBack.open()
+            await proceed.wait()
+        }
+
+        #expect(try await !fader.fadeOutAndPause()) // the first gave up
+        await fader.stopComeback() // yet another app starts: the second comeback stops there
+        await proceed.open()
+        #expect(try await !second.value())
+        #expect(try #require(await player.volumeLevel) < 80) // not back up to the user's volume
         #expect(await player.pauseCallCount == 0)
     }
 

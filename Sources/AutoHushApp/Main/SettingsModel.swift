@@ -166,9 +166,10 @@ final class SettingsModel {
     // Detection and Fades
     var timings = TimingSettings.defaults
 
-    /// Detection's timings (pause after, resume after, silence threshold)
-    /// are their defaults, so its Restore Defaults has nothing to do.
-    var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection == timings }
+    /// Detection's timings shown (pause after, resume after, and the
+    /// silence threshold while AntiDot mode is off) are their defaults, so
+    /// its Restore Defaults has nothing to do.
+    var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection(threshold: !isAntiDotMode) == timings }
     /// The fades (the switch and both lengths) are their defaults.
     var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
 
@@ -332,10 +333,11 @@ final class SettingsModel {
         setDetectionMethod(on ? .playbackSignals : .audioLevels)
     }
 
-    /// Settings → Detection's Restore Defaults: its timings only, not the
-    /// fades on the other page.
+    /// Settings → Detection's Restore Defaults: the timings it shows only,
+    /// not the silence threshold hidden in AntiDot mode, nor the fades on
+    /// the other page.
     func restoreDefaultDetectionTimings() {
-        setTimings(timings.withDefaultDetection)
+        setTimings(timings.withDefaultDetection(threshold: !isAntiDotMode))
     }
 
     /// Settings → Fades' Restore Defaults: the fades only.
@@ -379,12 +381,13 @@ final class SettingsModel {
 }
 
 private extension TimingSettings {
-    /// These timings with Detection's back to their defaults.
-    var withDefaultDetection: TimingSettings {
+    /// These timings with Detection's back to their defaults, the silence
+    /// threshold too when `threshold`.
+    func withDefaultDetection(threshold: Bool) -> TimingSettings {
         var timings = self
         timings.startConfirmation = TimingSettings.defaults.startConfirmation
         timings.stopGrace = TimingSettings.defaults.stopGrace
-        timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        if threshold { timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB }
         return timings
     }
 

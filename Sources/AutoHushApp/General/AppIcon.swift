@@ -16,10 +16,12 @@ enum AppIcon {
 
     /// The icon of the app at `bundlePath`; the generic app icon without one.
     /// When the app is a supported player (its bundle ID `id` is among
-    /// `players`) that isn't there, its placeholder, as wherever players are
-    /// offered. Another app that was deleted shows what macOS gives it.
+    /// `players`) that isn't installed and isn't there, its placeholder, as
+    /// wherever players are offered: the disk is looked at only then. Another
+    /// app that was deleted shows what macOS gives it.
     static func image(bundlePath: String?, id: String? = nil, players: [PlayerOption] = [], size: CGFloat = 16) -> NSImage {
-        if let id, let placeholder = players.first(where: { $0.bundleID == id })?.iconPlaceholder,
+        if let id, let player = players.first(where: { $0.bundleID == id }), !player.isInstalled,
+           let placeholder = player.iconPlaceholder,
            !(bundlePath.map { FileManager.default.fileExists(atPath: $0) } ?? false) {
             return image(placeholder: placeholder, id: id, size: size)
         }

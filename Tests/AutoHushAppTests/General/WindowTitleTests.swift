@@ -57,4 +57,34 @@ struct WindowTitleTests {
         #expect(!DockPresence.isAppWindow(panel)) // alerts, file panels
         #expect(!DockPresence.isAppWindow(borderless)) // the menu's
     }
+
+    @Test("Return in the welcome window's search picks the one player it narrowed down to, if it can be picked")
+    func returnPicksOnlyMatch() {
+        let url = URL(fileURLWithPath: "/Applications/Safari.app")
+        let options = [
+            PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: url),
+            PlayerOption(bundleID: "com.example.music", name: "Music", appURL: url),
+            PlayerOption(bundleID: "com.example.vlc", name: "VLC", appURL: nil), // not installed
+        ]
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "spo")?.bundleID == "com.example.spotify")
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "i") == nil) // Spotify and Music
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "vlc") == nil) // can't be picked
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "xyz") == nil)
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "") == nil) // nothing typed: Return is Continue
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "  ") == nil)
+    }
+
+    @Test("a window shown stays open while macOS counts it as not visible (AutoHush hidden with ⌘H), until it closes")
+    func shownIsOpenUntilClosed() async {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 100), styleMask: [.titled, .closable],
+                              backing: .buffered, defer: true)
+        window.isReleasedWhenClosed = false
+        #expect(!window.isOpen)
+        window.showInFront()
+        window.orderOut(nil) // as AutoHush hidden leaves it: not visible
+        #expect(!window.isVisible && window.isOpen)
+        window.close()
+        await TestWait.until { !window.isOpen }
+        #expect(!window.isOpen)
+    }
 }

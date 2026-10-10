@@ -344,9 +344,11 @@ final class WebAppControl: @unchecked Sendable {
         let deadline = clock().addingTimeInterval(Self.keyWait)
         repeat {
             sleep(Self.keyCheckInterval)
-            guard let buttons = readablePage(pid: pid), !learner.candidates(paused: buttons).isEmpty else { continue }
+            // The page was read at It's Playing: no first look to wait for.
+            guard let buttons = readablePage(pid: pid, looksAgain: false),
+                  !learner.candidates(paused: buttons).isEmpty else { continue }
             sleep(Self.keySettle)
-            guard let settled = readablePage(pid: pid), learn(from: settled) else { continue }
+            guard let settled = readablePage(pid: pid, looksAgain: false), learn(from: settled) else { continue }
             logger.notice("\(self.name, privacy: .public) paused for the Play/Pause key: playing it again")
             do {
                 try press(from: .paused, pid: pid)
@@ -413,15 +415,16 @@ final class WebAppControl: @unchecked Sendable {
     /// The page's buttons, unless it has no window or none of its buttons
     /// has words: a window macOS restores at login can show its buttons
     /// without their words (measured in the VM). A small page with a few
-    /// named buttons is read.
-    private func readablePage(pid: pid_t) -> [PageButton]? {
+    /// named buttons is read. Seen without words, it's looked at once more
+    /// after `firstLookWait` (`looksAgain`), in case that was its first look.
+    private func readablePage(pid: pid_t, looksAgain: Bool = true) -> [PageButton]? {
         func look() -> [PageButton]? {
             guard let buttons = page.buttons(pid: pid), buttons.contains(where: { !$0.label.isEmpty }) else { return nil }
             return buttons
         }
         if let buttons = look() { return buttons }
         // Maybe the page's first look ever (see `firstLookWait`): once more.
-        guard page.hasWindow(pid: pid) else { return nil }
+        guard looksAgain, page.hasWindow(pid: pid) else { return nil }
         sleep(Self.firstLookWait)
         return look()
     }

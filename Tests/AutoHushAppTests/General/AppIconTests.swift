@@ -81,5 +81,10 @@ struct AppIconTests {
         // An app that's there keeps its own icon, even when it's a player.
         let safari = AudioSource(id: player.bundleID, name: "Safari", bundlePath: "/Applications/Safari.app")
         #expect(AppIcon.image(for: safari, players: [player], size: 20) !== placeholderIcon)
+
+        // An installed player isn't looked for on the disk: no placeholder.
+        let installed = PlayerOption(bundleID: player.bundleID, name: "Gone", appURL: URL(fileURLWithPath: "/Applications/Safari.app"),
+                                     iconPlaceholder: placeholder)
+        #expect(AppIcon.image(for: source, players: [installed], size: 20) !== placeholderIcon)
     }
 }

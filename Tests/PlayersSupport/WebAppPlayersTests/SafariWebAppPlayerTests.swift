@@ -162,6 +162,22 @@ struct SafariWebAppPlayerTests {
         #expect(setup.player.learningStatus == .learned)
     }
 
+    @Test("waiting for the page to change after the Play/Pause key, a page without words isn't looked at twice: the wait stays the key's")
+    func keyWaitLooksOnce() async {
+        let setup = Setup()
+        setup.showPage()
+        setup.page.set(1, label: "Pause")
+        setup.page.sound = true
+        #expect(await setup.player.markPlaying() == .noted)
+        setup.page.blankLooks = 100 // its words gone meanwhile (a window restored at login)
+        let started = setup.clock.now
+        let looksBefore = setup.page.looks
+        #expect(await setup.player.pauseByItself() == false)
+        let checks = Int(WebAppControl.keyWait / WebAppControl.keyCheckInterval)
+        #expect(setup.page.looks - looksBefore == checks) // one look a check
+        #expect(setup.clock.now.timeIntervalSince(started) < WebAppControl.keyWait + WebAppControl.firstLookWait)
+    }
+
     @Test("learning is reported as it goes, starting with where it stands")
     func updates() async {
         let setup = Setup()
@@ -792,6 +808,26 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
         #expect(await setup.player.playerState() == .playing)
         #expect(setup.player.learningStatus == .learned)
+    }
+
+    @Test("learning again while the button is missing, then kept (the window closed): once it's back, it's learned, not learning again")
+    func keptWhileMissing() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage()
+        await setup.player.learnAgain()
+        #expect(setup.player.learningStatus == .relearning)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
+        setup.page.sound = true
+        _ = await setup.player.playerState()
+        setup.clock.advance(WebAppControl.missingBeforeLearning)
+        _ = await setup.player.playerState()
+        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
+
+        await setup.player.keepLearned()
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
+        #expect(await setup.player.playerState() == .playing)
+        #expect(setup.player.learningStatus == .learned)
+        #expect(await setup.player.markPlaying() == .notLearning) // nothing asked any more
     }
 
     @Test("the button counts as missing only while the web app is heard: a fresh page without its player bar stays learned, and a silence starts the minute again")

@@ -186,7 +186,7 @@ final class AddWebAppModel {
 /// What `AppDelegate` needs of the window; tests stand in for it.
 @MainActor
 protocol AddWebAppPresenting: AnyObject {
-    var isVisible: Bool { get }
+    var isOpen: Bool { get }
     func show()
     func close()
 }

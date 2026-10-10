@@ -81,11 +81,12 @@ class HostedWindowController: NSWindowController {
         return hosting
     }
 
-    var isVisible: Bool { window?.isVisible == true }
+    /// Shown and not closed since: on screen, or hidden with AutoHush (⌘H).
+    var isOpen: Bool { window?.isOpen == true }
 
     func show() {
         guard let window else { return }
-        if !window.isVisible {
+        if !window.isOpen {
             // Sized to its content first: centered at its first, empty size,
             // it would grow from the middle of the screen, partly off it.
             if let fitting = window.contentView?.fittingSize, fitting.width > 0, fitting.height > 0 {
@@ -132,7 +133,7 @@ class HostedWindowController: NSWindowController {
     /// Brings it in front of other apps' windows, on the desktop the user is
     /// on, without making it key: for while AutoHush's menu opens.
     func bringForward() {
-        guard isVisible else { return }
+        guard window?.isVisible == true else { return }
         window?.bringForward()
     }
 }

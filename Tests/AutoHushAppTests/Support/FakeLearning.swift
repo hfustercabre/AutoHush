@@ -7,17 +7,17 @@ import AutoHushTestSupport
 /// Stands in for the learning window, so tests never put one on screen.
 @MainActor
 final class FakeLearningWindow: LearningWindowPresenting {
-    private(set) var isVisible = false
+    private(set) var isOpen = false
     private(set) var shownCount = 0
     var onClose: (@MainActor () -> Void)?
     func show() {
-        isVisible = true
+        isOpen = true
         shownCount += 1
     }
     /// As Later or the close button: the window says it closed.
     func close() {
-        guard isVisible else { return }
-        isVisible = false
+        guard isOpen else { return }
+        isOpen = false
         onClose?()
     }
 }
@@ -167,9 +167,9 @@ actor MockLearningPlayer: LearningMusicPlayer {
 /// Stands in for the "Add a Web App" window.
 @MainActor
 final class FakeAddWebAppWindow: AddWebAppPresenting {
-    private(set) var isVisible = false
-    func show() { isVisible = true }
-    func close() { isVisible = false }
+    private(set) var isOpen = false
+    func show() { isOpen = true }
+    func close() { isOpen = false }
 }
 
 /// Makes a web app in memory: reports the steps, then `onMake` puts it in place.

@@ -10,7 +10,7 @@ import AutoHushKit
 /// so they never put a window on screen.
 @MainActor
 protocol LearningWindowPresenting: AnyObject {
-    var isVisible: Bool { get }
+    var isOpen: Bool { get }
     /// When it closes: Later, its close button, or once learned.
     var onClose: (@MainActor () -> Void)? { get set }
     func show()

@@ -42,8 +42,10 @@ package actor VolumeFader {
     /// The `generation` the latest fade started with. Unlike `generation` it
     /// ignores `cancel()`, so a pause still gets its volume back.
     private var latestFade = 0
-    /// True while a cancelled fade-out brings the music back up.
-    private var isComingBack = false
+    /// The `generation` of the cancelled fade-out bringing the music back
+    /// up, while one does: an older comeback that gives up later leaves a
+    /// newer one's alone.
+    private var comingBack: Int?
     /// Set by `abandon()`: fades stop where they are, without coming back.
     private var isAbandoned = false
 
@@ -85,8 +87,8 @@ package actor VolumeFader {
             // starts meanwhile stops it (`stopComeback()`) there already.
             generation += 1
             let comeback = generation
-            isComingBack = true
-            defer { isComingBack = false }
+            comingBack = comeback
+            defer { if comingBack == comeback { comingBack = nil } }
             let reached = level(of: await player.volume() ?? 0, floor: bottom)
             guard generation == comeback else { return false }
             if await ramp(from: reached, to: top, fullTime: fadeIn, fade: comeback) {
@@ -151,7 +153,9 @@ package actor VolumeFader {
     /// Stops a cancelled fade-out from coming back up, so a new fade-out can
     /// start from where it is. Does nothing otherwise.
     package func stopComeback() {
-        if isComingBack { generation += 1 }
+        guard comingBack != nil else { return }
+        comingBack = nil
+        generation += 1
     }
 
     /// Stops any fade for good and sets the user's volume back at once, e.g.

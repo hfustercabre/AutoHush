@@ -34,7 +34,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The Mac's standard menus and keyboard shortcuts.** While one of its
   windows is open, AutoHush has the usual menu bar: ⌘V pastes a web
   address, ⌘W closes the window, ⌘Q quits and ⌘, opens Settings. Return
-  presses a window's main button and Escape its Cancel. AutoHush still
+  presses a window's main button, or, in the welcome window's search, picks
+  the player it narrowed down to; Escape presses Cancel. AutoHush still
   adds no shortcuts of its own.
 - **The welcome, Add a Web App and learning windows look like Settings.**
   Their title sits in the title bar, as a Settings page's name; under it,
@@ -44,8 +45,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **AntiDot mode is on the Detection page**, with the timings. While it's on,
   the silence threshold, which only measuring uses, is hidden. **Updates**
   has a page of its own.
-- **Restore Defaults sets back only its own page:** Detection's timings, or
-  the fades.
+- **Restore Defaults sets back only what its page shows:** Detection's
+  timings (not the silence threshold while AntiDot mode hides it), or the
+  fades.
 - **Media, not just music.** AutoHush pauses music, podcasts and videos, and
   now says so: you choose your *media player*, the switch is just
   **Auto-Pause**, and the timings and fades talk about *playback*.

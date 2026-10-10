@@ -17,7 +17,7 @@ extension NSWindow {
     /// windows over AutoHush's. Taken off another desktop before it shows
     /// is enough to open it on the user's.
     func showInFront() {
-        DockPresence.windowWillShow()
+        DockPresence.windowWillShow(self)
         if isMiniaturized { deminiaturize(nil) }
         comeToActiveSpace()
         makeKeyAndOrderFront(nil)
@@ -25,9 +25,9 @@ extension NSWindow {
         NSApp.activate()
     }
 
-    /// On screen, or minimized in the Dock: open either way. macOS counts
-    /// a minimized window as not visible.
-    var isOpen: Bool { isVisible || isMiniaturized }
+    /// On screen, minimized in the Dock, or hidden with AutoHush (⌘H): open
+    /// either way. macOS counts the last two as not visible.
+    var isOpen: Bool { isVisible || isMiniaturized || DockPresence.isShown(self) }
 
     /// Brings it in front of other apps' windows, on the desktop the user is
     /// on, without making it key or AutoHush active.

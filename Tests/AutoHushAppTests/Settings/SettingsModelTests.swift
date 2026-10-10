@@ -221,7 +221,7 @@ struct SettingsModelTests {
         #expect(log.calls == ["method askApps", "method openStreams", "method audioLevels"])
     }
 
-    @Test("each page's Restore Defaults restores its own settings only: Detection's timings, or the fades")
+    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, or the fades")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
@@ -239,6 +239,16 @@ struct SettingsModelTests {
         #expect(model.fadesAreDefaults)
         #expect(!model.detectionTimingsAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40))
+
+        // In AntiDot mode the silence threshold is hidden: it neither lights
+        // Restore Defaults nor is restored.
+        model.setTimings(TimingSettings(silenceThresholdDB: -40))
+        #expect(!model.detectionTimingsAreDefaults)
+        model.setAntiDotMode(true)
+        #expect(model.detectionTimingsAreDefaults)
+        model.setTimings(TimingSettings(startConfirmation: 2, silenceThresholdDB: -40))
+        model.restoreDefaultDetectionTimings()
+        #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
     }
 
     // MARK: - Notifications

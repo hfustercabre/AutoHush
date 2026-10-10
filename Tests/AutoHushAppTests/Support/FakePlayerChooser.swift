@@ -4,12 +4,12 @@ import Foundation
 /// Stands in for the welcome window, so tests never put one on screen.
 @MainActor
 final class FakePlayerChooser: PlayerChooserPresenting {
-    private(set) var isVisible = false
+    private(set) var isOpen = false
     /// How many times it was brought forward while open.
     private(set) var broughtForward = 0
-    func show() { isVisible = true }
-    func bringForward() { if isVisible { broughtForward += 1 } }
-    func close() { isVisible = false }
+    func show() { isOpen = true }
+    func bringForward() { if isOpen { broughtForward += 1 } }
+    func close() { isOpen = false }
 }
 
 extension AppStatus {

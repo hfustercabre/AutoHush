@@ -2,13 +2,15 @@ import SwiftUI
 
 /// A search field in the style of the chips: a magnifier, the text, and a ✕
 /// that closes the search (`onClose`) or, without one, clears what was typed.
-/// Settings → Apps and the places that offer the music players use it.
+/// Settings → Apps and the places that offer the media players use it.
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:
     /// `StatusMenuController` gives it the keyboard there).
     var focusesOnAppear = false
     var onClose: (() -> Void)?
+    /// Return in it (which a window's main button then doesn't get).
+    var onSubmit: (() -> Void)?
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -21,6 +23,7 @@ struct SearchField: View {
             }
             .textFieldStyle(.plain)
             .focused($isFocused)
+            .onSubmit { onSubmit?() }
             if let onClose {
                 clearButton(Text("Close search", comment: "The button that closes a search"), action: onClose)
             } else if !text.isEmpty {

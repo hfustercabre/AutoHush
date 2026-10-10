@@ -586,14 +586,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if learning != nil, learning != .learned { return }
         // Learned (both steps ticked), or nothing to learn: the windows go.
         let delay = learning == .learned ? learnedWindowDelay : .zero
-        if let window = learningWindow, window.isVisible {
+        if let window = learningWindow, window.isOpen {
             Task { [weak self] in
                 try? await Task.sleep(for: delay)
                 guard let self, self.status.learning == learning else { return }
                 window.close()
             }
         }
-        if let window = addWebAppWindow, window.isVisible, case .learning = addWebAppModel.phase {
+        if let window = addWebAppWindow, window.isOpen, case .learning = addWebAppModel.phase {
             Task { [weak self] in
                 try? await Task.sleep(for: delay)
                 guard let self, self.status.learning == learning else { return }
@@ -722,7 +722,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Whether the welcome window is on screen.
-    var isShowingPlayerChooser: Bool { playerChooser?.isVisible == true }
+    var isShowingPlayerChooser: Bool { playerChooser?.isOpen == true }
 
     /// The menu opens: what it lists is brought up to date. The welcome
     /// window, still open, comes forward to the desktop the user is on:
@@ -970,7 +970,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// App window is open.
     private var isShowingWatchedWindow: Bool {
         settingsWindowController?.window?.isOpen == true || isShowingPlayerChooser
-            || learningWindow?.isVisible == true || addWebAppWindow?.isVisible == true
+            || learningWindow?.isOpen == true || addWebAppWindow?.isOpen == true
     }
 
     /// The welcome window closed while it asked for the permissions: done,
