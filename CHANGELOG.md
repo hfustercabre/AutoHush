@@ -12,6 +12,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The learning window marked the step to do now with a grey circle,**
   while Add a Web App, showing the same steps, used a blue arrow: both use
   the arrow now.
+- **In Arabic, that arrow pointed right,** away from its step, in a window
+  that reads right to left: it points forward now, as the text runs.
 
 ## [0.11.2] — 2026-10-10
 
