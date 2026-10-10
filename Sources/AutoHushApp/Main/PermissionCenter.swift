@@ -141,6 +141,11 @@ final class PermissionCenter {
     /// Carries out `request`. Asking for Accessibility shows macOS's prompt
     /// and opens System Settings, where it's switched on; asking for
     /// Automation waits for the user's answer to macOS's prompt.
+    /// The app with `bundleID` is running.
+    func isRunning(_ bundleID: String) -> Bool {
+        system.runningPID(bundleID) != nil
+    }
+
     func perform(_ request: PermissionRequest, player: (any MusicPlayer)?) async {
         switch request {
         case .askMacOS(.accessibility):

@@ -312,7 +312,7 @@ AppDelegate ── lifecycle, bootstrap (launch, automatic retries, player relau
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
-  └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit
+  └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes its player
         PlayerStateObserving ── the player's state (distributed notification, quit) ─┐
         AudioMonitor                                                                 │
           ├── HALAudioProcessSnapshotProvider: process list + is-running listeners   │
@@ -354,7 +354,8 @@ Sources/
                          UpdateOffer) and SettingsModel (what Settings and the other windows show), then
                          StatusPresentation (the status's icons and text), AppHealthState, PermissionCenter
                          (reads and asks for the permissions), OtherInstances (quits the copies opened before it),
-                         MainMenu (the Mac's standard menu bar, while a window is open)
+                         MainMenu (the Mac's standard menu bar, while a window is open), HeldPauses (a player
+                         left mid-pause keeps its monitoring until that pause ends)
     MenuBar/             StatusMenuController, StatusMenuModel and Views/ (the menu), MenuBarIcon (drawn in code)
     PlayerChoice/        the welcome window, Learning (the window for a player AutoHush learns, a Safari
                          web app) and AddWebApp (the Add a Web App window)

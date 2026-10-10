@@ -74,6 +74,31 @@ struct WindowTitleTests {
         #expect(PlayerChooserView.onlyMatch(of: options, search: "  ") == nil)
     }
 
+    @Test("tiles that share a name count as one for Return: the app first, then an added web app, then a suggested one")
+    func returnPicksAmongSameName() {
+        let url = URL(fileURLWithPath: "/Applications/Safari.app")
+        let app = PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: url)
+        var suggested = PlayerOption(bundleID: "com.example.webapp.spotify", name: "Spotify", appURL: nil)
+        suggested.kind = .safariWebApp
+        suggested.webAddress = "open.spotify.com"
+        #expect(PlayerChooserView.onlyMatch(of: [app, suggested], search: "spo")?.bundleID == app.bundleID)
+
+        // Without the app, the suggestion is the one that can be picked.
+        let missing = PlayerOption(bundleID: app.bundleID, name: "Spotify", appURL: nil)
+        #expect(PlayerChooserView.onlyMatch(of: [missing, suggested], search: "spotify")?.bundleID == suggested.bundleID)
+
+        // An app and an added web app of the same name: the app.
+        let music = PlayerOption(bundleID: "com.example.music", name: "Apple Music", appURL: url)
+        var added = PlayerOption(bundleID: "com.example.webapp.music", name: "Apple Music", appURL: url)
+        added.kind = .safariWebApp
+        #expect(PlayerChooserView.onlyMatch(of: [added, music], search: "apple music")?.bundleID == music.bundleID)
+
+        // Different names still need a closer search.
+        var ytMusic = PlayerOption(bundleID: "com.example.webapp.yt", name: "YT Music", appURL: url)
+        ytMusic.kind = .safariWebApp
+        #expect(PlayerChooserView.onlyMatch(of: [music, ytMusic], search: "music") == nil)
+    }
+
     @Test("a window shown stays open while macOS counts it as not visible (AutoHush hidden with ⌘H), until it closes")
     func shownIsOpenUntilClosed() async {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 100), styleMask: [.titled, .closable],

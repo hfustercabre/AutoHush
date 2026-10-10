@@ -173,12 +173,20 @@ struct PlayerChooserView: View {
     }
 
     /// The one player `search` narrows `options` down to, when it can be
-    /// picked (installed, or a suggested web app); `nil` otherwise.
+    /// picked (installed, or a suggested web app); `nil` otherwise. Tiles
+    /// that share a name, as the Spotify app and the suggested Spotify web
+    /// app do, count as one: the app first, then an added web app, then a
+    /// suggested one.
     static func onlyMatch(of options: [PlayerOption], search: String) -> PlayerOption? {
+        guard !search.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
         let matches = options.matching(search)
-        guard !search.trimmingCharacters(in: .whitespaces).isEmpty, matches.count == 1,
-              let only = matches.first, only.isClickable else { return nil }
-        return only
+        guard Set(matches.map { $0.name.lowercased() }).count == 1 else { return nil }
+        return matches.filter(\.isClickable).min { pickOrder($0) < pickOrder($1) }
+    }
+
+    /// Among tiles of one name: the app, an added web app, a suggested one.
+    private static func pickOrder(_ option: PlayerOption) -> Int {
+        option.kind == .app ? 0 : option.isInstalled ? 1 : 2
     }
 
     /// A player is picked, and is still installed.

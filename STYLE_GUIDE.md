@@ -406,7 +406,9 @@ standard ones**:
   field it's Continue. A search field keeps Return from the window's
   button (SwiftUI gives it to the focused field): with nothing typed it's
   the main button (Continue); with a search, it picks the one item the
-  search narrowed down to (the welcome window's players), if just one.
+  search narrowed down to (the welcome window's players), if just one;
+  items that share a name count as one (the Spotify app and the suggested
+  Spotify web app: the app).
   **Escape** presses Cancel or Later
   (`.cancelAction`, or `keyEquivalent = "\u{1b}"` on an alert's Later).
 - **Never a shortcut Apple doesn't define**, and none on the status menu's

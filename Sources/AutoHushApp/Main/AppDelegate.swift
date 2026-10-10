@@ -75,6 +75,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The first monitoring that starts may take over a pause handed over by
     /// the AutoHush before this one; later ones don't.
     private var pauseHandoverChecked = false
+    /// The monitoring of players AutoHush held paused when the user chose
+    /// another, running on to end those pauses (`HeldPauses`).
+    let heldPauses = HeldPauses()
+    /// The player chosen was held paused: its new monitoring takes the pause
+    /// back over.
+    private var takesBackHeldPause = false
+    /// Which monitoring an update comes from: the current one has this.
+    private var pipelineToken = UUID()
     /// A restart for an update or by another copy takes seconds: an older
     /// handover is stale.
     static let pauseHandoverMaxAge: TimeInterval = 60
@@ -391,6 +399,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         terminate()
     }
 
+    // MARK: - A pause held while choosing another player
+
+    /// The user chooses `bundleID`: a pause AutoHush holds on the player it
+    /// leaves is still its own to end, so that player's monitoring runs on
+    /// for it (`heldPauses`). A player held paused that is chosen again is
+    /// taken back by its new monitoring.
+    private func holdPause(for bundleID: String) {
+        if status.playback == .pausedByMonitor, let pipeline, let leaving = player {
+            heldPauses.keep(pipeline, token: pipelineToken, bundleID: leaving.bundleID)
+            self.pipeline = nil // left running by the next start
+        }
+        if heldPauses.takeBack(bundleID) { takesBackHeldPause = true }
+    }
+
     // MARK: - Auto-pause and ignored apps
 
     func toggleAutoPause(now: Date = Date()) {
@@ -545,6 +567,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
         else { return }
         logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
+        holdPause(for: bundleID)
         preferences.musicPlayer = bundleID
         player = chosen
         failedStarts = 0
@@ -790,6 +813,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setMacAsleep(_ asleep: Bool) {
         guard asleep != macIsAsleep else { return }
         macIsAsleep = asleep
+        // As any pause: after sleeping it's the user's (decision S2).
+        if asleep {
+            heldPauses.stopAll()
+            takesBackHeldPause = false
+        }
         logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
         pipeline?.setAsleep(asleep)
     }
@@ -868,6 +896,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // A newer bootstrap (Retry, player relaunch) started while we awaited.
         guard generation == bootstrapGeneration else { return }
 
+        let token = UUID()
+        pipelineToken = token
         let pipeline = MonitoringPipeline(
             player: player,
             hostedApp: hostedApp,
@@ -876,11 +906,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
             detectionMethod: preferences.detectionMethod,
             learnedAssertions: preferences.playbackAssertions
-        ) { [weak self] update in
-            self?.apply(update)
+        ) { [weak self, token] update in
+            // A held pause's monitoring reports to `heldPauses` only.
+            guard let self, !self.heldPauses.follow(update, from: token) else { return }
+            self.apply(update)
         }
         self.pipeline = pipeline
-        await pipeline.start(takingOverPause: takesOverPause(), asleep: macIsAsleep)
+        let takesBack = takesBackHeldPause
+        takesBackHeldPause = false
+        await pipeline.start(takingOverPause: takesOverPause() || takesBack, asleep: macIsAsleep)
         guard generation == bootstrapGeneration else { return }
         failedStarts = 0
         loggedStartupProblem = nil
@@ -1055,7 +1089,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// but there is no need to rely on it), and none of its menus, windows or
     /// alerts is open.
     private var isQuietMoment: Bool {
-        status.playback != .pausedByMonitor
+        status.playback != .pausedByMonitor && heldPauses.isEmpty
             && statusMenu?.isMenuOpen != true
             && !NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey }
     }

@@ -1710,6 +1710,215 @@
         }
       }
     },
+    "%@ doesn't identify itself as Mac apps do, so AutoHush can't tell when it plays." : {
+      "comment" : "Settings → Apps: the alert after Ignore Another App…, when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يعرّف %@ نفسه كما تفعل تطبيقات Mac، لذا لا يستطيع AutoHush معرفة متى يشغّل الصوت."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no s'identifica com ho fan les apps del Mac, així que l'AutoHush no pot saber quan sona."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ se neidentifikuje jako aplikace pro Mac, takže AutoHush nepozná, kdy přehrává zvuk."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ identificerer sig ikke, som Mac-apps gør, så AutoHush kan ikke se, hvornår den afspiller lyd."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ weist sich nicht wie Mac-Apps aus, daher kann AutoHush nicht erkennen, wann die App etwas wiedergibt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το %@ δεν ταυτοποιείται όπως οι εφαρμογές Mac, οπότε το AutoHush δεν μπορεί να καταλάβει πότε αναπαράγει ήχο."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se identifica como lo hacen las apps del Mac, así que AutoHush no puede saber cuándo suena."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se identifica como lo hacen las apps de Mac, así que AutoHush no puede saber cuándo suena."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohjelma %@ ei tunnistaudu kuten Mac-apit, joten AutoHush ei tiedä, milloin se toistaa ääntä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne s'identifie pas comme le font les apps Mac, AutoHush ne peut donc pas savoir quand elle émet du son."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne s'identifie pas comme le font les apps Mac, AutoHush ne peut donc pas savoir quand elle émet du son."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Mac ऐप्स की तरह अपनी पहचान नहीं बताता, इसलिए AutoHush यह नहीं जान सकता कि वह कब आवाज़ चलाता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ ne identificira se kao aplikacije za Mac, pa AutoHush ne može prepoznati kada reproducira zvuk."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ nem azonosítja magát úgy, ahogy a Mac-appok, ezért az AutoHush nem tudja megállapítani, mikor játszik le hangot."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tidak mengidentifikasi diri seperti app Mac, jadi AutoHush tidak dapat mengetahui kapan app ini memutar suara."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non si identifica come fanno le app per Mac, quindi AutoHush non può sapere quando riproduce audio."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はMacのAppのように自身を識別しないため、AutoHushはいつ音を再生しているかを判断できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 앱은 Mac 앱처럼 자신을 식별하지 않기 때문에 AutoHush가 언제 소리를 재생하는지 알 수 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ identifiserer seg ikke slik Mac-apper gjør, så AutoHush kan ikke se når den spiller av lyd."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ identificeert zich niet zoals Mac-apps, dus AutoHush kan niet zien wanneer het geluid afspeelt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ nie identyfikuje się tak jak aplikacje na Maca, więc AutoHush nie może rozpoznać, kiedy odtwarza dźwięk."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não se identifica como os apps para Mac, então o AutoHush não consegue saber quando ele toca."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não se identifica como as apps para Mac, por isso o AutoHush não consegue saber quando reproduz som."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicația %@ nu se identifică așa cum o fac aplicațiile Mac, așa că AutoHush nu poate ști când redă sunet."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Программа %@ не идентифицирует себя так, как приложения для Mac, поэтому AutoHush не может определить, когда она воспроизводит звук."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ sa neidentifikuje ako apky pre Mac, takže AutoHush nevie rozpoznať, kedy prehráva zvuk."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ se ne predstavi tako kot aplikacije za Mac, zato AutoHush ne more ugotoviti, kdaj predvaja zvok."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ identifierar sig inte som Mac-appar gör, så AutoHush kan inte avgöra när den spelar upp ljud."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, Mac uygulamaları gibi kendini tanıtmıyor; bu yüzden AutoHush ne zaman ses çaldığını anlayamıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програма %@ не ідентифікує себе так, як програми для Mac, тому AutoHush не може визначити, коли вона відтворює звук."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ không tự nhận dạng như các ứng dụng Mac, nên AutoHush không thể biết khi nào ứng dụng này phát âm thanh."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 不像 Mac App 那樣識別自身，因此 AutoHush 無法判斷它何時在播放聲音。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 不像 Mac App 那样标识自身，因此 AutoHush 无法判断它何时在播放声音。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 不像 Mac App 那樣識別自身，因此 AutoHush 無法判斷它何時在播放聲音。"
+          }
+        }
+      }
+    },
     "%@ doesn't say whether it's playing." : {
       "comment" : "Why the media player couldn't be controlled: its state can't be read; %@ is the player",
       "localizations" : {
@@ -29939,6 +30148,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法檢查更新項目"
+          }
+        }
+      }
+    },
+    "Couldn't Ignore %@" : {
+      "comment" : "Settings → Apps: title of the alert after Ignore Another App… when the chosen app can't be ignored; %@ is the app's name",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر تجاهل %@"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No s'ha pogut ignorar %@"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikaci %@ nelze ignorovat"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kunne ikke ignoreres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ konnte nicht ignoriert werden"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν ήταν δυνατή η παράβλεψη του %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se ha podido ignorar %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo ignorar %@"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohjelman %@ ohittaminen epäonnistui"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'ignorer %@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'ignorer %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ को अनदेखा नहीं किया जा सका"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije moguće zanemariti aplikaciju %@"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ mellőzése nem sikerült"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak Dapat Mengabaikan %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile ignorare %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を無視できませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 앱을 무시할 수 없음"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke ignorere %@"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kan %@ niet negeren"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie można ignorować aplikacji %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não Foi Possível Ignorar %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ignorar %@"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu s-a putut ignora %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось игнорировать программу %@"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apku %@ nie je možné ignorovať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacije %@ ni bilo mogoče prezreti"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunde inte ignorera %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Yok Sayılamadı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося ігнорувати програму %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không thể bỏ qua %@"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法忽略 %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法忽略 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法忽略 %@"
           }
         }
       }

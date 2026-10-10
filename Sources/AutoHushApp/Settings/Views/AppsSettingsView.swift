@@ -208,11 +208,23 @@ struct AppsSettingsView: View {
         panel.prompt = String(localized: "Ignore", comment: "Button of the panel that picks an app to ignore")
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        guard panel.runModal() == .OK,
-              let url = panel.url,
-              let source = ProcessAudioSourceIdentifier.source(forBundleAt: url)
-        else { return }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let source = ProcessAudioSourceIdentifier.source(forBundleAt: url) else {
+            let alert = Self.unidentifiedAppAlert(url: url)
+            InfoAlert.show(alert.title, alert.message)
+            return
+        }
         model.setPausesMusic(false, for: source)
+    }
+
+    /// The app chosen to ignore has no bundle identifier, which is how
+    /// AutoHush tells apps' sound apart: it can't be ignored.
+    static func unidentifiedAppAlert(url: URL) -> (title: String, message: String) {
+        let name = (FileManager.default.displayName(atPath: url.path) as NSString).deletingPathExtension
+        return (String(localized: "Couldn't Ignore \(name)",
+                       comment: "Settings → Apps: title of the alert after Ignore Another App… when the chosen app can't be ignored; %@ is the app's name"),
+                String(localized: "\(name) doesn't identify itself as Mac apps do, so AutoHush can't tell when it plays.",
+                       comment: "Settings → Apps: the alert after Ignore Another App…, when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name"))
     }
 }
 

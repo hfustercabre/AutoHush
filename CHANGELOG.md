@@ -5,6 +5,26 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Return in the welcome window's search did nothing when two players
+  shared a name,** as the Spotify app and the suggested Spotify web app
+  do. It now picks the app, or, without it, the web app.
+- **A player paused for another app stayed paused when you chose a
+  different player meanwhile.** Choosing one ended the pause AutoHush was
+  holding without resuming it. The player you left now plays again once
+  the other apps stop, as it would have, unless you played or quit it
+  yourself; choose it again and AutoHush takes the pause back.
+- **Learn Controls didn't open the web app.** With it closed, It's Playing
+  could only say AutoHush couldn't see its page. Now the web app opens with
+  the learning window, as after adding it.
+- **Ignore Another App… did nothing for an app that doesn't identify
+  itself** as Mac apps do. An alert now says why it can't be ignored.
+- **Learn Controls opened its window over Add a Web App,** in the same
+  corner, while you typed an address. Add a Web App now closes first.
+
 ## [0.11.0] — 2026-10-10
 
 ### Changed

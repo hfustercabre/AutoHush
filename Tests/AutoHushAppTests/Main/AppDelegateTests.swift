@@ -217,6 +217,49 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("learning a web app's controls opens it when it isn't running, as adding it does; a running one is left as it is")
+    func learningOpensWebApp() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        await waitFor { sut.status.learning == .learned }
+        #expect(scratch.opened.isEmpty)
+
+        sut.learnControlsAgain()
+        await waitFor { scratch.learningWindow.isOpen && scratch.opened.count == 1 }
+        #expect(scratch.opened.count == 1)
+
+        scratch.learningWindow.close()
+        scratch.running.insert(webApp.bundleID)
+        sut.learnControlsAgain()
+        await waitFor { scratch.learningWindow.isOpen }
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(scratch.opened.count == 1) // running: not opened again
+    }
+
+    @MainActor
+    @Test("learning again closes Add a Web App, which floats in the same corner, whatever its step")
+    func learnAgainClosesAdd() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        await waitFor { sut.status.learning == .learned }
+        sut.showAddWebApp() // another site's address being typed
+        #expect(scratch.addWindow.isOpen)
+
+        sut.learnControlsAgain()
+        #expect(!scratch.addWindow.isOpen)
+        await waitFor { scratch.learningWindow.isOpen }
+        #expect(scratch.learningWindow.isOpen)
+    }
+
+    @MainActor
     @Test("learning again, the window closed while the web app's button was missing still keeps what it learned")
     func keepLearnedWhileButtonMissing() async {
         let scratch = Scratch()

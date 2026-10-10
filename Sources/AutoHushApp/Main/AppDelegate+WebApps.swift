@@ -30,8 +30,9 @@ extension AppDelegate {
 
     /// Learns the chosen player's controls afresh, as the user asked: once
     /// learned (they may have been learned wrong), or before (the learning
-    /// window was closed halfway). A window showing the steps closes, and a
-    /// new learning window starts from the first step. What the player
+    /// window was closed halfway). A window showing the steps closes, and so
+    /// does Add a Web App, and a new learning window starts from the first
+    /// step. What the player
     /// learned stays until the user says it plays there; closing the window
     /// before that keeps it (`learningWindowClosed`).
     func learnControlsAgain() {
@@ -42,7 +43,9 @@ extension AppDelegate {
             window.close()
         }
         learningWindow = nil // a new one, not the old one's last state
-        if let window = addWebAppWindow, window.isOpen, case .learning = addWebAppModel.phase { window.close() }
+        // Add a Web App floats in the same corner: it goes, an add under way
+        // with it (cancelled, as its Cancel does).
+        if let window = addWebAppWindow, window.isOpen { window.close() }
         learningTimer?.cancel()
         learningTimer = nil
         setLearningPause(deadline: nil, note: nil, mode: .automatic)
@@ -246,12 +249,18 @@ extension AppDelegate {
         addWebAppModel.attempt += 1
     }
 
-    /// The window that asks to play and pause the chosen player once.
+    /// The window that asks to play and pause the chosen player once. As it
+    /// opens, the player is opened too when it isn't running, as after adding
+    /// it: the first step is to play a song there.
     func showLearningWindow() {
+        let opening = learningWindow?.isOpen != true
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
         learningWindow?.onClose = { [weak self] in self?.learningWindowClosed() }
         learningWindow?.show()
         watchWindows() // follows the permission it may wait for
+        if opening, let player, let url = status.chosenPlayer?.appURL, !permissionCenter.isRunning(player.bundleID) {
+            Task { await openApp(url) }
+        }
     }
 }
 
