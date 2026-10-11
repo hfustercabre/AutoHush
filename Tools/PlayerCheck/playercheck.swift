@@ -17,8 +17,8 @@
 //                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>",
 //                                                      then "#active\t<pid>"
 //   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
-//   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing: "<path>\t<reason>"
-//                                                      (empty when nothing shows it can), as Player Check lists them
+//   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing, as Player Check lists them:
+//                                                      "<path>\t<reason>\t<framework>\t<switches>" (each empty when none)
 // Each check or press is also logged in ~/Library/Logs/PlayerCheck (the last 50).
 // Build: swiftc -O -o playercheck playercheck.swift
 import AppKit
@@ -242,11 +242,15 @@ func printNowPlayingList() -> Never {
 if CommandLine.arguments.dropFirst().first == "--now-playing-list" { printNowPlayingList() }
 
 /// --now-playing-reasons <app path>…: for the Player Check app's list, a
-/// line per app, "<path>\t<why it can be in Now Playing, or nothing>".
+/// line per app, "<path>\t<why it can be in Now Playing, or nothing>\t<the
+/// framework that hides its interface, or nothing>\t<the switches a check
+/// turns on for it, in order>", so the window shows this tool's own rule.
 if CommandLine.arguments.dropFirst().first == "--now-playing-reasons" {
     for path in CommandLine.arguments.dropFirst(2) {
         let url = URL(fileURLWithPath: path)
-        print(path + "\t" + (nowPlayingReason(of: url, bundleID: Bundle(url: url)?.bundleIdentifier) ?? ""))
+        let hidden = HiddenInterface.of(url)
+        print([path, nowPlayingReason(of: url, bundleID: Bundle(url: url)?.bundleIdentifier) ?? "", hidden?.name ?? "",
+               hidden?.switches.map(switchName).joined(separator: ", else ") ?? ""].joined(separator: "\t"))
     }
     exit(0)
 }
@@ -617,8 +621,10 @@ if action != nil {
 /// The switches for assistive tools: attributes set on an app to have it
 /// show its interface to Accessibility. Electron's is documented
 /// (electronjs.org, Accessibility); VoiceOver's is the one VoiceOver sets.
-let manualAccessibility = "AXManualAccessibility"
-let enhancedUserInterface = "AXEnhancedUserInterface"
+/// Computed, so `--now-playing-reasons`, which runs before this line, can
+/// name them.
+var manualAccessibility: String { "AXManualAccessibility" }
+var enhancedUserInterface: String { "AXEnhancedUserInterface" }
 func switchName(_ attribute: String) -> String {
     attribute == manualAccessibility ? "Electron's switch" : "VoiceOver's switch"
 }
@@ -650,20 +656,22 @@ enum HiddenInterface {
         case .flutter: [enhancedUserInterface]
         }
     }
+    /// The app's, by the frameworks in its bundle.
+    static func of(_ appURL: URL) -> HiddenInterface? {
+        let frameworks = appURL.appendingPathComponent("Contents/Frameworks")
+        func framework(_ name: String) -> URL? {
+            let url = frameworks.appendingPathComponent("\(name).framework")
+            return FileManager.default.fileExists(atPath: url.path) ? url : nil
+        }
+        if let electron = framework("Electron Framework") {
+            return .electron(version: Bundle(url: electron)?.infoDictionary?["CFBundleVersion"] as? String ?? "?")
+        }
+        if framework("Chromium Embedded Framework") != nil { return .cef }
+        if framework("FlutterMacOS") != nil { return .flutter }
+        return nil
+    }
 }
-let hiddenInterface: HiddenInterface? = {
-    let frameworks = appURL.appendingPathComponent("Contents/Frameworks")
-    func framework(_ name: String) -> URL? {
-        let url = frameworks.appendingPathComponent("\(name).framework")
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
-    }
-    if let electron = framework("Electron Framework") {
-        return .electron(version: Bundle(url: electron)?.infoDictionary?["CFBundleVersion"] as? String ?? "?")
-    }
-    if framework("Chromium Embedded Framework") != nil { return .cef }
-    if framework("FlutterMacOS") != nil { return .flutter }
-    return nil
-}()
+let hiddenInterface = HiddenInterface.of(appURL)
 var isFlutter: Bool { if case .flutter? = hiddenInterface { true } else { false } }
 
 /// Play and Pause as players' pages name their buttons (any case), in
@@ -988,6 +996,22 @@ let stopSources = [SIGINT, SIGTERM].map { stop in
     source.resume()
     return source
 }
+/// Whoever ran it may go without a word: Player Check's window closed, or
+/// the app quit by force or crashed. Its output then goes nowhere (and
+/// SIGPIPE is ignored), so it stops as for Ctrl-C when its parent ends,
+/// rather than going on with the check unwatched.
+let parentPID = getppid()
+let parentSource: DispatchSourceProcess? = parentPID > 1 ? {
+    let source = DispatchSource.makeProcessSource(identifier: parentPID, eventMask: .exit, queue: .global())
+    source.setEventHandler {
+        if stopState.request() { return }
+        stopNow(143)
+    }
+    source.resume()
+    return source
+}() : nil
+// Gone already, before the watch began: this process went to launchd.
+if parentSource != nil, getppid() != parentPID, !stopState.request() { stopNow(143) }
 /// Turns a switch on; whether the app took it. One this tool turned on is
 /// turned back off at the end, unless it may have been on before: VoiceOver's
 /// reads back, so one already on is left alone; Electron's reads back off

@@ -46,7 +46,9 @@ to it and loses its permissions; one signed with a certificate keeps them.
   orange request asks you to start it, and the test goes on by itself as
   soon as it plays (up to 2 minutes). **Stop** ends a check (if a test had
   paused the app, it's played again first). A check stopped or failed
-  leaves the last finished one shown, with a note.
+  leaves the last finished one shown, with a note. Quitting Player Check,
+  or closing its window, stops a check or Play/Pause that's running; one
+  whose window went by force (or a crash) stops by itself.
 - **The results:** "Ways to control it" as a checklist (✓ worked in the
   test, ✗ not there or didn't work, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
@@ -57,7 +59,9 @@ to it and loses its permissions; one signed with a certificate keeps them.
   or when no way worked, there are none. Each way found in the checklist
   (✓, or ? not tried) has its own two buttons, which use that way alone.
   The result shows under Play and Pause ("Paused it with its page's 'Pause
-  current' button."). The app must be running.
+  current' button."). While one runs, **Stop** ends it (it may be waiting
+  on the app, or on macOS's Automation prompt); the buttons are off until
+  it ends. The app must be running.
 - **Logs:** every check and Play/Pause is also logged, whole and with each
   line's time, in `~/Library/Logs/PlayerCheck/` (the last 50 runs): when a
   result looks wrong, the run that gave it can be read there, though a
@@ -68,8 +72,11 @@ to it and loses its permissions; one signed with a certificate keeps them.
 - **Accessibility**, for Player Check: reading menus and pages, pressing
   them, and the switches that show an Electron, CEF or Flutter app's
   interface (Electron's `AXManualAccessibility`, VoiceOver's
-  `AXEnhancedUserInterface`; turned back off after). The app's detail shows
-  its framework as a tag. PlayerCheck runs inside it and shares it.
+  `AXEnhancedUserInterface`; turned back off after, unless one may have
+  been on already). The app's detail shows its framework as a tag, and the
+  check's confirmation says which switch it turns on and that the app may
+  be brought forward a moment while its window is out of sight (both as
+  playercheck's `--now-playing-reasons` tells them). PlayerCheck runs inside it and shares it.
   Without it, a note links to System Settings. Signed ad hoc, a rebuilt
   one needs it again; signed with a certificate (`SIGNING_IDENTITY`, above),
   it keeps it.

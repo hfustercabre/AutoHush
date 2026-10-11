@@ -23,7 +23,7 @@ swiftc -O -o playercheck Tools/PlayerCheck/playercheck.swift
 ./playercheck Deezer --play --via page   # by that way only: script, menu, page or panel
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now
 ./playercheck --now-playing-list --since 1760180000   # only what changed since then (apps gone: Removed)
-./playercheck --now-playing-reasons /Applications/Spotify.app   # why each app can be in Now Playing (Player Check's list)
+./playercheck --now-playing-reasons /Applications/Spotify.app   # why each app can be in Now Playing, its framework and switches (Player Check's list)
 ```
 
 Whatever runs it (Terminal, say) needs the **Accessibility** permission
@@ -271,7 +271,10 @@ AppleScript) is named as such, not as the app ignoring the way.
 Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, it
 plays the app again first, then stops; otherwise it stops at once. Either
 way it turns the switches it turned on back off, and brings back the app
-that was in front if it had brought the checked one forward.
+that was in front if it had brought the checked one forward. It stops the
+same way when whoever ran it ends without a word (Player Check's window
+closed, or the app quit by force or crashed): its output would go nowhere,
+and a check left running would go on pausing and playing the app unwatched.
 
 Each pause is judged by the surest sign the app has: its AppleScript
 state, else what it reports to Now Playing, else its page's button (Play
@@ -394,7 +397,16 @@ Playing app), and its name; then `#active` and the Now Playing process. A number
 after it reads only the last hours of log. With `--since <unix time>` it
 lists only the apps whose entries changed since then, those gone as
 `Removed`: a caller that read the whole list once keeps it up to date that
-way, without reading days of log again (Player Check does).
+way, without reading days of log again (Player Check does). An app seen
+then with no state change reads `Registered`; for the same process, the
+state known before still holds (Player Check keeps it).
+
+`--now-playing-reasons <app path>…` prints a line per app for Player
+Check's list: `<path>\t<why it can be in Now Playing>\t<the framework that
+hides its interface>\t<the switches a check turns on, in order>`, each
+empty when there's none (for example `/Applications/Spotify.app\tMediaPlayer\tChromium
+(CEF)\tElectron's switch, else VoiceOver's switch`), so the window shows
+this tool's own rules.
 
 Since macOS 15.4, MediaRemote won't list Now Playing's apps for an app
 without Apple's entitlement, so this reads what MediaRemote's daemon writes
