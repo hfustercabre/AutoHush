@@ -201,10 +201,19 @@ way it sets Electron's switch back and brings back the app that was in
 front if it had brought the checked one forward.
 
 Each pause is judged by the surest sign the app has: its AppleScript
-state, else its page's button (Play while paused), else its menu's word or
-its sound. (Electron apps keep their sound on a few seconds after a pause,
-and Deezer's menu word changes late by itself: it said Play while playing,
-then Pause, with nothing pressed.) A pause that didn't show isn't undone:
+state, else what it reports to Now Playing, else its page's button (Play
+while paused), else its menu's word or its sound. (Electron apps keep their
+sound on a few seconds after a pause, and Deezer's menu word changes late
+by itself: it said Play while playing, then Pause, with nothing pressed.)
+What it reports is each "PlaybackState changed from … to …" MediaRemote's
+daemon writes in macOS's log, read as `--now-playing-list` reads it: the
+past once (a log store opened is a snapshot that later lines don't reach,
+and opening one takes about 0.6 s), back to when the app opened (an hour at
+most), and what follows live from `log stream`, started first and ended
+with the tool. It needs an administrator. It holds wherever the app's window is:
+an Electron app's page on another desktop keeps the word it had (Deezer's
+said Play while it played), so there the page's button is pressed whatever
+it says, since it toggles. A pause that didn't show isn't undone:
 nothing may have happened (Deezer's app ignores menu presses), or the app
 may have paused without showing it, so check by ear.
 
