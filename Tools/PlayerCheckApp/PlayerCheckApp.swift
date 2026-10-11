@@ -5,9 +5,9 @@
 // --now-playing-list, from macOS's log). Once an app is chosen and the check
 // confirmed, it runs playercheck on it (opening it first when needed) and
 // shows the ways it could be controlled, the verdict and the full report;
-// checks are kept between launches. An app with a known way to control it
-// (from its check, else from its bundle) gets Play and Pause buttons, and
-// each way found gets its own (playercheck --play/--pause --via …).
+// checks are kept between launches. An app whose check found a way that
+// works gets Play and Pause buttons, by the first such way, and each way
+// found gets its own (playercheck --play/--pause --via …).
 // Build: sh Tools/PlayerCheckApp/build.sh [folder]
 import AppKit
 import SwiftUI
@@ -49,19 +49,7 @@ struct InstalledApp: Identifiable, Hashable {
     /// Why it can be in Now Playing, from what it's built with; nil when
     /// nothing shows it can (playercheck --now-playing-reasons).
     let nowPlayingReason: String?
-    /// Its scripting dictionary has play and pause commands.
-    let scriptsPlayAndPause: Bool
     var id: String { url.path }
-
-    /// How it could be played and paused before any check, from its bundle:
-    /// AppleScript, or a page's button (a Safari web app; an Electron, CEF
-    /// or Flutter app's once a switch is on).
-    var controlHint: String? {
-        if scriptsPlayAndPause { return "its scripting dictionary has play and pause" }
-        if isSafariWebApp { return "a Safari web app: its page's buttons" }
-        if let hiddenInterface { return "built with \(hiddenInterface): its buttons, with an accessibility switch on" }
-        return nil
-    }
 
     /// The switches playercheck turns on to read its interface: Electron's
     /// (AXManualAccessibility), VoiceOver's (AXEnhancedUserInterface) or
@@ -115,8 +103,7 @@ struct InstalledApp: Identifiable, Hashable {
                 found.append(InstalledApp(url: url, name: name, bundleID: bundleID, root: root, subfolder: subfolder,
                                           isSafariWebApp: bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
                                           isChromeWebApp: bundleID?.hasPrefix("com.google.Chrome.app.") == true,
-                                          hiddenInterface: hiddenInterface(url), nowPlayingReason: nil,
-                                          scriptsPlayAndPause: scriptsPlayAndPause(url)))
+                                          hiddenInterface: hiddenInterface(url), nowPlayingReason: nil))
             }
         }
         var reasons: [String: String] = [:]
@@ -132,22 +119,8 @@ struct InstalledApp: Identifiable, Hashable {
         return found.map { app in
             InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
                          isSafariWebApp: app.isSafariWebApp, isChromeWebApp: app.isChromeWebApp,
-                         hiddenInterface: app.hiddenInterface, nowPlayingReason: reasons[app.url.path],
-                         scriptsPlayAndPause: app.scriptsPlayAndPause)
+                         hiddenInterface: app.hiddenInterface, nowPlayingReason: reasons[app.url.path])
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-    }
-
-    /// Whether its scripting dictionary (the .sdef its Info.plist names, read
-    /// without running it) has commands called play and pause.
-    static func scriptsPlayAndPause(_ url: URL) -> Bool {
-        guard let bundle = Bundle(url: url),
-              let name = bundle.object(forInfoDictionaryKey: "OSAScriptingDefinition") as? String,
-              let file = bundle.url(forResource: name, withExtension: nil)
-                ?? bundle.url(forResource: (name as NSString).deletingPathExtension, withExtension: "sdef"),
-              let document = try? XMLDocument(contentsOf: file, options: [.nodeLoadExternalEntitiesNever])
-        else { return false }
-        let names = Set(((try? document.nodes(forXPath: "//command/@name")) ?? []).compactMap { $0.stringValue?.lowercased() })
-        return names.contains("play") && names.contains("pause")
     }
 }
 
@@ -329,28 +302,20 @@ final class Checker {
 
     // MARK: Playing and pausing
 
-    /// Whether a way to play and pause it is known: from its finished check,
-    /// else from its bundle.
-    func canControl(_ app: InstalledApp) -> Bool {
-        if let report = finished[app.id] { return report.ways.contains(where: \.canControl) }
-        return app.controlHint != nil
-    }
-
-    /// The way its Play and Pause buttons use: the first that worked in its
-    /// check. Nil when none did: playercheck then tries AppleScript, the
-    /// page's button and the menu in turn (a menu found may be ignored, as
-    /// Deezer's is: picking it alone would fail where the page works).
+    /// The way its Play and Pause buttons use: the first in the list that
+    /// worked (✓) in its last finished check. Nil before a check, or when none
+    /// worked: then there are no such buttons.
     func preferredWay(_ app: InstalledApp) -> Way? {
         finished[app.id]?.ways.first { $0.canControl && $0.mark == .works }
     }
 
-    /// Plays or pauses it: playercheck --play or --pause, by `via` or the
-    /// first way that works.
-    func control(_ app: InstalledApp, _ action: String, via: String?) {
+    /// Plays or pauses it by that one way: playercheck --play or --pause
+    /// --via `via` tries no other.
+    func control(_ app: InstalledApp, _ action: String, via: String) {
         guard !isBusy, let tool else { return }
         controllingID = app.id
         controls[app.id] = ((action == "play" ? "Playing" : "Pausing") + "…", nil)
-        let arguments = [app.url.path, "--" + action] + (via.map { ["--via", $0] } ?? [])
+        let arguments = [app.url.path, "--" + action, "--via", via]
         Task {
             let (status, output) = await Task.detached { Checker.runAndWait(tool, arguments) }.value
             controls[app.id] = (output.trimmingCharacters(in: .whitespacesAndNewlines), status == 0)
@@ -710,7 +675,7 @@ struct AppDetail: View {
                 header
                 if !checker.isTrusted { permissionNote }
                 controls
-                if checker.canControl(app) { playAndPause }
+                if let way = checker.preferredWay(app), let via = way.via { playAndPause(via: via) }
                 if let report { results(report) }
             }
             .padding(20)
@@ -790,23 +755,19 @@ struct AppDetail: View {
         }
     }
 
-    /// Play and Pause, by the way its check found (or each in turn).
-    private var playAndPause: some View {
-        let way = checker.preferredWay(app)
+    /// Play and Pause, by the first way that worked in its check, alone.
+    private func playAndPause(via: String) -> some View {
         let running = checker.isRunning(app)
         return VStack(alignment: .leading, spacing: 8) {
             Text("Play and Pause").font(.headline)
             HStack {
-                Button { checker.control(app, "play", via: way?.via) } label: { Label("Play", systemImage: "play.fill") }
-                Button { checker.control(app, "pause", via: way?.via) } label: { Label("Pause", systemImage: "pause.fill") }
+                Button { checker.control(app, "play", via: via) } label: { Label("Play", systemImage: "play.fill") }
+                Button { checker.control(app, "pause", via: via) } label: { Label("Pause", systemImage: "pause.fill") }
                 if checker.controllingID == app.id { ProgressView().controlSize(.small) }
             }
             .disabled(checker.isBusy || !running || checker.tool == nil)
             Text(!running ? "Open it first: it isn't running."
-                 : way.map { "By \(Self.wayName($0.via)), which worked in its check." }
-                    ?? (checker.finished[app.id] != nil
-                        ? "None worked in its check yet (found, not tried): it tries AppleScript, its page's button, then its menu."
-                        : "Not checked yet (\(app.controlHint ?? "")): it tries AppleScript, its page's button, then its menu."))
+                 : "By \(Self.wayName(via)), the first way that worked in its check.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let result = checker.controls[app.id], let worked = result.worked {
@@ -818,13 +779,12 @@ struct AppDetail: View {
         }
     }
 
-    static func wayName(_ via: String?) -> String {
+    static func wayName(_ via: String) -> String {
         switch via {
         case "script": "AppleScript"
         case "menu": "its playback menu"
         case "page": "its page's button"
-        case "panel": "its row in the Now Playing panel"
-        default: "the first way that works"
+        default: "its row in the Now Playing panel"
         }
     }
 
@@ -851,8 +811,9 @@ struct AppDetail: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Ways to control it").font(.headline)
                 ForEach(ways) { way in
-                    WayRow(way: way, control: way.canControl && checker.isRunning(app) && report.state == .finished
-                        ? { checker.control(app, $0, via: way.via) } : nil,
+                    // Each way's own buttons use that way alone.
+                    let usable = way.canControl && checker.isRunning(app) && report.state == .finished
+                    WayRow(way: way, control: usable ? way.via.map { via in { checker.control(app, $0, via: via) } } : nil,
                            isBusy: checker.isBusy)
                 }
                 Text("✓ worked in the test  ·  ✗ not there or didn't work  ·  ? not tried  ·  – not checked")
@@ -908,8 +869,8 @@ struct WayRow: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("\(label): \(way.title). \(way.detail)")
             Spacer(minLength: 8)
-            if let control {
-                let name = AppDetail.wayName(way.via)
+            if let control, let via = way.via {
+                let name = AppDetail.wayName(via)
                 Button { control("play") } label: { Image(systemName: "play.fill") }
                     .help("Play by \(name)").accessibilityLabel("Play by \(name)")
                 Button { control("pause") } label: { Image(systemName: "pause.fill") }

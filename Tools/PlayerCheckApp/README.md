@@ -51,14 +51,13 @@ to it and loses its permissions; one signed with a certificate keeps them.
   test, ✗ not there or didn't work, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
   **Copy Report** copies.
-- **Play and Pause:** an app with a known way to control it gets **Play**
-  and **Pause** buttons: once its check found a way, or before any check
-  when the app shows one (a scripting dictionary with play and pause, a
-  Safari web app, an Electron, CEF or Flutter app). They use the first way that worked in
-  its check; otherwise they try AppleScript, the page's button, then the
-  menu, in turn. Each way in the checklist that worked has its own two
-  buttons, to use that one alone. The result shows under the buttons ("Paused it with its
-  page's 'Pause current' button."). The app must be running.
+- **Play and Pause:** once a check found a way that works (✓), the app
+  gets **Play** and **Pause** buttons above its results. They use only the
+  first such way in the checklist, and never try another. Before a check,
+  or when no way worked, there are none. Each way found in the checklist
+  (✓, or ? not tried) has its own two buttons, which use that way alone.
+  The result shows under Play and Pause ("Paused it with its page's 'Pause
+  current' button."). The app must be running.
 
 ## Permissions
 
