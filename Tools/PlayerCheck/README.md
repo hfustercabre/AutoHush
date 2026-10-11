@@ -130,8 +130,14 @@ Everything is read from outside the app, as AutoHush itself would:
   `ScriptablePlayers` need pause and play in the app's own suite
   (`<suite>Paus`, `<suite>Play`), the `player state` property (`pPlS`) with
   stopped, playing and paused (`kPSS`, `kPSP`, `kPSp`), and `sound volume`
-  (`pVol`) for fades. An app whose dictionary has a true/false `playing`
-  property instead (VLC's) has its state read from that.
+  (`pVol`) for fades, all read from the application's own properties. An
+  app whose application has a true/false `playing` property instead (VLC's)
+  has its state read from that. One whose play and pause act on a document
+  (QuickTime Player's: "pause document 1"), each with its own `playing`, is
+  read and controlled through its documents: it plays while one does, a
+  pause pauses every one playing, a play plays those the test paused, else
+  the front one (a press). Asked of the app, its `playing` doesn't exist
+  (-1728), and play or pause with no document fails (-1701).
 - **Playback menu:** through Accessibility, the menu whose items include ⌘←
   and ⌘→, with Play/Pause first, as `AccessibilityPlaybackMenu` finds it
   whatever the app's language. Failing that, a menu whose first item is on
@@ -239,7 +245,8 @@ and goes on by itself as soon as it plays, up to 2 minutes; it asks again
 if a way leaves it stopped. Each way pauses the app, then plays it again:
 
 1. AppleScript: its pause and play commands (as Spotify's), else commands
-   named so, else one that toggles (playpause, or VLC's play).
+   named so, else one that toggles (playpause, or VLC's play); to its
+   documents when they act on one (QuickTime Player's).
 2. Its playback menu's first item.
 3. Its page's Pause, then Play.
 4. Its row in the menu bar's Now Playing panel (Control Center's): the

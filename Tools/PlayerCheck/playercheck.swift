@@ -313,8 +313,17 @@ say("  " + (running.map { "running, pid \($0.processIdentifier)" } ?? "not runni
 /// for fades.
 struct Scripting {
     var commands: [String: String] = [:]   // code → name
+    /// The application's own properties: an app's state is read there only
+    /// (QuickTime Player's `playing` is each document's, not the app's).
     var properties: [String: String] = [:]
     var enumerators: Set<String> = []
+    /// The commands that must be told which document to act on (QuickTime
+    /// Player's play and pause: "play document 1"), by code.
+    var documentCommands: Set<String> = []
+    /// The document class's code, and its `playing` property's (QuickTime
+    /// Player: "docu", "play").
+    var documentClass: String?
+    var documentPlaying: String?
 
     var suite: String? {
         let pauses = Set(commands.keys.filter { $0.hasSuffix("Paus") }.map { String($0.prefix(4)) })
@@ -325,6 +334,15 @@ struct Scripting {
     /// A true/false `playing` property instead (VLC's): its state too.
     var hasPlayingFlag: Bool { properties.values.contains("playing") }
     var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
+    /// Played and paused through its documents, each with its own `playing`
+    /// (QuickTime Player): it plays while one does.
+    var playsDocuments: Bool {
+        documentClass != nil && documentPlaying != nil
+            && ["pause", "play"].allSatisfy { commandCode($0).map(documentCommands.contains) == true }
+    }
+    /// Whether its state can be read by script: `player state`, a `playing`
+    /// flag, or its documents'.
+    var hasState: Bool { hasPlayerState || hasPlayingFlag || playsDocuments }
     var hasVolume: Bool { properties["pVol"] != nil }
     /// A `current track` (pTrk) with a name: what it plays, by script.
     var hasCurrentTrack: Bool { properties["pTrk"] != nil }
@@ -372,8 +390,25 @@ func parseDictionary(_ document: XMLDocument) -> Scripting? {
         }
     }
     for (code, name) in attributes("//command") { scripting.commands[code] = name }
-    for (code, name) in attributes("//property") { scripting.properties[code] = name }
+    for (code, name) in attributes("//class[@name='application']/property | //class-extension[@extends='application']/property") {
+        scripting.properties[code] = name
+    }
     scripting.enumerators = Set(attributes("//enumerator").map(\.code))
+    // A command whose direct parameter, not optional, is a document.
+    for node in (try? document.nodes(forXPath: "//command[direct-parameter]")) ?? [] {
+        guard let command = node as? XMLElement, let code = command.attribute(forName: "code")?.stringValue,
+              let parameter = command.elements(forName: "direct-parameter").first,
+              parameter.attribute(forName: "optional")?.stringValue != "yes" else { continue }
+        let types = [parameter.attribute(forName: "type")?.stringValue]
+            + parameter.elements(forName: "type").map { $0.attribute(forName: "type")?.stringValue }
+        if types.contains("document") { scripting.documentCommands.insert(code) }
+    }
+    // An .sdef read as it is may only extend `document` (QuickTime Player's):
+    // the class comes from Cocoa's standard suite, which it includes, as "docu".
+    scripting.documentClass = attributes("//class[@name='document']").first?.code
+        ?? (((try? document.nodes(forXPath: "//class-extension[@extends='document']")) ?? []).isEmpty ? nil : "docu")
+    scripting.documentPlaying = attributes("//class[@name='document']/property[@name='playing']"
+        + " | //class-extension[@extends='document']/property[@name='playing']").first?.code
     return scripting.commands.isEmpty && scripting.properties.isEmpty ? nil : scripting
 }
 
@@ -398,6 +433,10 @@ if let scripting {
     say("  player state (pPlS): \(scripting.hasPlayerState ? "yes" : "no")"
         + (scripting.hasPlayerState ? ", values stopped/playing/paused: \(scripting.hasStateValues ? "yes" : "no")" : ""))
     say("  sound volume (pVol): \(scripting.hasVolume ? "yes, so it can fade" : "no, so no fades")")
+    if scripting.playsDocuments {
+        say("  its documents: pause and play act on one (\"pause document 1\"), and each says whether it's playing:"
+            + " it plays while one does, a pause pauses those playing, a play plays the front one (or those a test paused)")
+    }
     if let suite = scripting.suite { say("  pause and play share suite '\(suite)'") }
 } else {
     say("  none: it can't be scripted")
@@ -526,8 +565,7 @@ say("Playback menu")
 var menu: PlaybackMenu?
 /// Whether something surer than its menu's or page's word shows whether it
 /// plays: its scripted state, or what it reports to Now Playing.
-let hasSurerSign = scripting?.hasPlayerState == true || scripting?.hasPlayingFlag == true
-    || nowPlayingReason(of: appURL, bundleID: bundleID) != nil
+let hasSurerSign = scripting?.hasState == true || nowPlayingReason(of: appURL, bundleID: bundleID) != nil
 /// A press by one way reads the menu and the page for their own way (the
 /// panel needs the page's player bar, which names the song), or when nothing
 /// surer shows whether the app plays.
@@ -1399,19 +1437,65 @@ func sendAppleEvent(_ code: String, directObject: NSAppleEventDescriptor? = nil)
     }
 }
 
+/// The object specifier for the app's documents: every one, or one by name
+/// or by index (1: the front one), as AppleScript builds "document 1".
+func documentSpecifier(named name: String? = nil, index: Int? = nil) -> NSAppleEventDescriptor {
+    let specifier = NSAppleEventDescriptor.record().coerce(toDescriptorType: fourCharCode("obj "))!
+    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: fourCharCode(scripting?.documentClass ?? "docu")), forKeyword: fourCharCode("want"))
+    specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: fourCharCode("from"))
+    if let name {
+        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: fourCharCode("name")), forKeyword: fourCharCode("form"))
+        specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: fourCharCode("seld"))
+    } else {
+        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: fourCharCode("indx")), forKeyword: fourCharCode("form"))
+        if let index {
+            specifier.setDescriptor(NSAppleEventDescriptor(int32: Int32(index)), forKeyword: fourCharCode("seld"))
+        } else {
+            var all = fourCharCode("all ")
+            specifier.setDescriptor(NSAppleEventDescriptor(descriptorType: fourCharCode("abso"), bytes: &all, length: 4)!,
+                                    forKeyword: fourCharCode("seld"))
+        }
+    }
+    return specifier
+}
+
+/// A reply's items: a list's, else the one value.
+func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
+    guard let descriptor else { return [] }
+    guard descriptor.descriptorType == fourCharCode("list") else { return [descriptor] }
+    return descriptor.numberOfItems > 0 ? (1...descriptor.numberOfItems).compactMap { descriptor.atIndex($0) } : []
+}
+
+/// Its open documents by script (QuickTime Player's), front first: each
+/// one's name and whether it's playing.
+func scriptedDocuments() -> Result<[(name: String, playing: Bool)], NSError> {
+    guard let playing = scripting?.documentPlaying else { return .success([]) }
+    let every = documentSpecifier()
+    switch (sendAppleEvent("coregetd", directObject: propertySpecifier("pnam", of: every)),
+            sendAppleEvent("coregetd", directObject: propertySpecifier(playing, of: every))) {
+    case (.failure(let error), _), (_, .failure(let error)):
+        return .failure(error)
+    case (.success(let names), .success(let flags)):
+        return .success(zip(items(names), items(flags)).map { ($0.stringValue ?? "", $1.booleanValue) })
+    }
+}
+
+/// The documents a test's pause paused, by name: its play plays them again.
+var pausedDocuments: [String] = []
+
 /// The app's state by script, when its dictionary has it and it answers:
 /// its `player state` (stopped, playing, paused, as Spotify's), else its
-/// `playing` flag (VLC's: playing or paused), asked by Apple event. Only
-/// macOS refusing it (-1743: no Automation permission for whatever runs
-/// this tool) stops the asking; another error (a timeout, -1712, from a
-/// busy VLC) counts for that look only. Each kind of error is said once.
+/// `playing` flag (VLC's: playing or paused), else its documents' (QuickTime
+/// Player's: playing while one is, stopped with none open), asked by Apple
+/// event. Only macOS refusing it (-1743: no Automation permission for
+/// whatever runs this tool) stops the asking; another error (a timeout,
+/// -1712, from a busy VLC) counts for that look only. Each kind of error is
+/// said once.
 var scriptError: Any?
 var scriptErrorsSaid: Set<String> = []
 func scriptedState() -> String? {
-    guard let scripting, scripting.hasPlayerState || scripting.hasPlayingFlag, scriptError == nil else { return nil }
-    let property = scripting.hasPlayerState ? "pPlS" : scripting.properties.first { $0.value == "playing" }!.key
-    switch sendAppleEvent("coregetd", directObject: propertySpecifier(property)) {
-    case .failure(let error):
+    guard let scripting, scripting.hasState, scriptError == nil else { return nil }
+    func failed(_ error: NSError) -> String? {
         noteScriptError(error.code)
         let refused = error.code == -1743
         if refused { scriptError = error.code }
@@ -1419,6 +1503,17 @@ func scriptedState() -> String? {
             say("  its state can't be read by script: error \(error.code)" + (refused ? "" : " (asked again at the next look)"))
         }
         return nil
+    }
+    if !scripting.hasPlayerState, !scripting.hasPlayingFlag {
+        switch scriptedDocuments() {
+        case .failure(let error): return failed(error)
+        case .success(let documents): return documents.isEmpty ? "stopped" : documents.contains(where: \.playing) ? "playing" : "paused"
+        }
+    }
+    let property = scripting.hasPlayerState ? "pPlS" : scripting.properties.first { $0.value == "playing" }!.key
+    switch sendAppleEvent("coregetd", directObject: propertySpecifier(property)) {
+    case .failure(let error):
+        return failed(error)
     case .success(let result):
         guard let result else { return nil }
         guard scripting.hasPlayerState else { return result.booleanValue ? "playing" : "paused" }
@@ -1446,16 +1541,46 @@ func scriptedSong() -> String? {
 }
 
 /// Sends the app one of its dictionary's commands (by name: "pause", "play",
-/// "playpause"), as an Apple event; false (and why) when it fails.
+/// "playpause"), as an Apple event; false (and why) when it fails. One that
+/// acts on a document (QuickTime Player's) goes to each playing one for a
+/// pause or stop, and for a play to those a test paused, else the front one.
 func sendScript(_ command: String) -> Bool {
     guard let code = scripting?.commandCode(command) else {
         say("    \(command): not in its dictionary")
         return false
     }
-    if case .failure(let error) = sendAppleEvent(code) {
+    func failed(_ error: NSError) -> Bool {
         noteScriptError(error.code)
         say("    \(command): error \(error.code)")
         return false
+    }
+    guard scripting?.documentCommands.contains(code) == true else {
+        if case .failure(let error) = sendAppleEvent(code) { return failed(error) }
+        return true
+    }
+    let documents: [(name: String, playing: Bool)]
+    switch scriptedDocuments() {
+    case .failure(let error): return failed(error)
+    case .success(let found): documents = found
+    }
+    let stopping = ["pause", "stop"].contains(command.lowercased())
+    var targets: [NSAppleEventDescriptor]
+    if stopping {
+        let playing = documents.filter(\.playing).map(\.name)
+        if command.lowercased() == "pause" { pausedDocuments = playing }
+        targets = playing.map { documentSpecifier(named: $0) }
+    } else {
+        let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
+        targets = paused.map { documentSpecifier(named: $0) }
+        if targets.isEmpty, !documents.isEmpty { targets = [documentSpecifier(index: 1)] }
+        pausedDocuments = []
+    }
+    guard !targets.isEmpty else {
+        say("    \(command): no document \(stopping ? "playing" : "open")")
+        return false
+    }
+    for target in targets {
+        if case .failure(let error) = sendAppleEvent(code, directObject: target) { return failed(error) }
     }
     return true
 }
@@ -2420,7 +2545,8 @@ say()
 say("Ways to control it")
 if let script = scriptControls() {
     let fits = scripting?.fitsScriptablePlayer == true
-    let kind = fits ? ", as Spotify and Apple Music" : " (its own kind, as VLC: not the way ScriptablePlayers expects)"
+    let kind = fits ? ", as Spotify and Apple Music"
+        : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")its own kind, as VLC: not the way ScriptablePlayers expects)"
     switch scriptResult {
     case .worked?: way("✓", "AppleScript: '\(script.pause)' and '\(script.play)' paused and played it\(kind)")
     case .pausedOnly?: way("✗", "AppleScript: '\(script.pause)' paused it, but '\(script.play)' didn't play it again")
@@ -2531,7 +2657,8 @@ if isWebApp {
         say("  It's scriptable too, but not the way ScriptablePlayers expects (see above): maybe a player type of its own, as VLC.")
     }
 } else if let scripting, scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
-    say("  Scriptable, but not the way ScriptablePlayers expects: a player type of its own, as VLC (VLCSupport).")
+    say("  Scriptable" + (scripting.playsDocuments ? " through its documents (its play and pause act on one)" : "")
+        + ", but not the way ScriptablePlayers expects: a player type of its own, as VLC (VLCSupport).")
 } else if running == nil {
     say("  No usable scripting; open it and run again to look for a playback menu and a page.")
 } else if page?.toggle != nil {
