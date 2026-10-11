@@ -241,6 +241,8 @@ struct Scripting {
     var hasPlayingFlag: Bool { properties.values.contains("playing") }
     var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
     var hasVolume: Bool { properties["pVol"] != nil }
+    /// A `current track` (pTrk) with a name: what it plays, by script.
+    var hasCurrentTrack: Bool { properties["pTrk"] != nil }
     var fitsScriptablePlayer: Bool { suite != nil && hasPlayerState && hasStateValues }
 }
 
@@ -520,11 +522,11 @@ func pageButtons(pid: pid_t) -> [PageButton]? {
     }
 }
 
-/// Whether a slider or a progress bar is just around the button (its
-/// parents, three levels up within the page, each read six deep, 500
-/// elements at most), as a player's bar has: what AutoHush's learning
-/// weighs (`ButtonStanding.isWithPlayerControls`).
-func isWithPlayerControls(_ element: AXUIElement) -> Bool {
+/// The player's bar around the button: its nearest parent (three levels up
+/// within the page, each read six deep, 500 elements at most) holding a
+/// slider or a progress bar, as a player's bar has. Having one is what
+/// AutoHush's learning weighs (`ButtonStanding.isWithPlayerControls`).
+func playerBar(of element: AXUIElement) -> AXUIElement? {
     var reads = 500
     func holdsSlider(_ element: AXUIElement, depth: Int) -> Bool {
         guard reads > 0 else { return false }
@@ -535,12 +537,12 @@ func isWithPlayerControls(_ element: AXUIElement) -> Bool {
     }
     var node = element
     for _ in 0..<3 {
-        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return false }
+        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
         node = parent as! AXUIElement
-        if node.text(kAXRoleAttribute) == "AXWebArea" { return false }
-        if holdsSlider(node, depth: 0) { return true }
+        if node.text(kAXRoleAttribute) == "AXWebArea" { return nil }
+        if holdsSlider(node, depth: 0) { return node }
     }
-    return false
+    return nil
 }
 
 /// Whether nothing on its page sits over the button's middle: macOS's hit
@@ -571,7 +573,7 @@ func playerButton(pid: pid_t, named words: Set<String>) -> (button: PageButton, 
     // Hit tests and slider searches only until the player's button is found.
     var lowest: PageButton?
     for candidate in candidates where isUncovered(candidate, pid: pid) {
-        if isWithPlayerControls(candidate.element) { return (candidate, true) }
+        if playerBar(of: candidate.element) != nil { return (candidate, true) }
         if lowest == nil { lowest = candidate }
     }
     return lowest.map { ($0, false) }
@@ -794,6 +796,21 @@ func scriptedState() -> String? {
     }
     guard let result else { return nil }
     return scripting.hasPlayerState ? result.stringValue : (result.booleanValue ? "playing" : "paused")
+}
+
+/// The name of what it plays, by script, when its dictionary has a
+/// `current track` (Spotify's, Music's, TV's). It stays while paused, where
+/// a window's title may not (a paused Spotify's says "Spotify Premium").
+/// Nil without one, or when it doesn't answer (nothing loaded).
+func scriptedSong() -> String? {
+    guard let scripting, scripting.hasCurrentTrack, scriptError == nil else { return nil }
+    var error: NSDictionary?
+    let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to get name of current track")?.executeAndReturnError(&error)
+    if let error {
+        noteScriptError(error[NSAppleScript.errorNumber])
+        return nil
+    }
+    return result?.stringValue
 }
 
 /// Sends an AppleScript command to the app; false (and why) when it fails.
@@ -1132,22 +1149,78 @@ func panelRows() -> [PanelRow] {
     return found
 }
 
-/// A text's words of three letters or more, in lowercase.
-func words(_ text: String) -> Set<String> {
-    Set(text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { $0.count >= 3 })
+/// A text in lowercase, its letters and digits only, one space between
+/// words: so "Song (Edit) - Artist" and "song edit artist" compare.
+func normalized(_ text: String) -> String {
+    text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
+}
+
+/// A row's song: its text before ", <artist> – <album>" ("TIDAL,  – " for
+/// a session with no song, which shows its app's name).
+func song(ofRow text: String) -> String {
+    guard let dash = text.range(of: " –", options: .backwards),
+          let comma = text.range(of: ", ", options: .backwards, range: text.startIndex..<dash.lowerBound) else { return text }
+    return String(text[..<comma.lowerBound])
+}
+
+/// The texts of the page's player bar (the song and the artist, where
+/// SoundCloud's window keeps a generic title); none without a page or a bar.
+func playerBarTexts(_ pid: pid_t) -> [String] {
+    guard page?.toggle != nil, pageToggleLabel(pid) != nil, let toggle = barToggle, let bar = playerBar(of: toggle) else { return [] }
+    var texts: [String] = [], reads = 500
+    func read(_ element: AXUIElement, depth: Int) {
+        guard reads > 0 else { return }
+        reads -= 1
+        texts += [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute].map { element.text($0) }.filter { !$0.isEmpty }
+        if depth < 8 { element.children.forEach { read($0, depth: depth + 1) } }
+    }
+    read(bar, depth: 0)
+    return texts
+}
+
+/// The rows that show what the app plays: their song found whole in
+/// `texts` (its windows' titles, its player bar, its current track), or,
+/// with no song, its name. A row isn't taken for a word in common: a paused
+/// Deezer's "Another One Bites The Dust" was pressed for SoundCloud for its
+/// "the".
+func appRows(_ rows: [PanelRow], texts: [String]) -> [PanelRow] {
+    let own = normalized(appName)
+    // A session with no song shows its app's name: another app's.
+    let others = Set(NSWorkspace.shared.runningApplications.compactMap { $0.localizedName.map(normalized) }).subtracting([own])
+    let haystack = texts.map { " \(normalized($0)) " }
+    return rows.filter { row in
+        let shown = normalized(song(ofRow: row.text))
+        if shown == own { return true }
+        guard shown.count >= 3, !others.contains(shown) else { return false }
+        return haystack.contains { $0.contains(" \(shown) ") }
+    }
 }
 
 /// The row pressed last, to find it again; why the panel couldn't be used.
 var panelRowText: String?
 var panelProblem: String?
 
-/// Opens the panel, presses the Play/Pause of this app's row (the row shows
-/// Pause when `pausing`, Play otherwise) and closes it; true once pressed.
-/// The rows don't name their apps, so its row is the one pressed before
-/// (`sameRow`), else the one sharing most words with its windows' titles
-/// (the song) or its name, else the only one. The panel shows under the
-/// menu bar for about half a second, and takes the keyboard meanwhile.
-func pressInPanel(pid: pid_t, pausing: Bool, sameRow: Bool = false) -> Bool {
+/// Which row to press: the app's; the one pressed last, else the app's; or
+/// only the one pressed last (to put back a press that changed it).
+enum PanelRowChoice { case app, lastElseApp, lastOnly }
+
+/// Opens the panel, presses the Play/Pause of a row (the row shows Pause
+/// when `pausing`, Play otherwise) and closes it; true once pressed. The
+/// rows don't name their apps (only an icon shows it), so the app's row is
+/// the one showing its song (`appRows`: by its windows' titles, its page's
+/// player bar or its AppleScript current track); while pausing, else the
+/// only row playing when the app is the Now Playing one. Nothing is pressed
+/// when that's not one row. The panel shows under the menu bar for about
+/// half a second, and takes the keyboard meanwhile.
+func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> Bool {
+    // Read before the panel opens: a page takes a moment.
+    var texts: [String] = []
+    if choice != .lastOnly {
+        texts = (AXUIElementCreateApplication(pid).value(kAXWindowsAttribute) as? [AXUIElement] ?? []).map(\.title)
+        if isWebApp || electronVersion != nil { texts += playerBarTexts(pid) }
+        if let song = scriptedSong() { texts.append(song) }
+    }
+    let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
         panelProblem = "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
         return false
@@ -1168,15 +1241,21 @@ func pressInPanel(pid: pid_t, pausing: Bool, sameRow: Bool = false) -> Bool {
         while !panelRows().isEmpty, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
     }
     let candidates = rows.filter { $0.playing == pausing }
-    let titles = (AXUIElementCreateApplication(pid).value(kAXWindowsAttribute) as? [AXUIElement] ?? []).map(\.title)
-    let known = words(titles.joined(separator: " ") + " " + appName)
-    let best = candidates.map { ($0, words($0.text).intersection(known).count) }.max { $0.1 < $1.1 }
-    let row = (sameRow ? candidates.first { $0.text == panelRowText } : nil)
-        ?? (best.flatMap { $0.1 > 0 ? $0.0 : nil })
-        ?? (candidates.count == 1 ? candidates[0] : nil)
+    var row = choice == .app ? nil : candidates.first { $0.text == panelRowText }
+    var mine: [PanelRow] = []
+    if row == nil, choice != .lastOnly {
+        mine = appRows(candidates, texts: texts)
+        row = mine.count == 1 ? mine[0] : mine.isEmpty && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil
+    }
     guard let row else {
+        let state = pausing ? "Pause" : "Play"
         panelProblem = rows.isEmpty ? "the panel showed no rows"
-            : "none of its \(rows.count) rows shows this app's song or name with \(pausing ? "Pause" : "Play")"
+            : choice == .lastOnly ? "the row pressed before ('\(panelRowText ?? "")') no longer shows \(state)"
+            : mine.count > 1 ? "\(mine.count) of the panel's rows with \(state) show \(appName)'s song: which is its own can't be told"
+            : "none of the panel's \(candidates.count) rows with \(state) shows \(appName)'s song (read from "
+                + (["its windows' titles"] + (isWebApp || electronVersion != nil ? ["its player bar"] : [])
+                    + (scripting?.hasCurrentTrack == true ? ["its current track by AppleScript"] : [])).joined(separator: " or ")
+                + ") or its name; the rows don't name their apps"
         close()
         return false
     }
@@ -1287,10 +1366,10 @@ if testing {
             }
             if ready() {
                 panelResult = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
-                                    play: { pressInPanel(pid: pid, pausing: false, sameRow: true) },
+                                    play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
                                     undo: {
                                         // The row pressed may have been another app's: pressed again, that app plays on.
-                                        if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, sameRow: true) }
+                                        if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
                                     })
                 if let panelProblem { say("    \(panelProblem)") }
                 stopIfRequested()
@@ -1439,7 +1518,11 @@ if let action {
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
                 finish(0)
             }
-            tried.append("pressed a row in the Now Playing panel ('\(panelRowText ?? "")'), but it didn't change in 6 s")
+            // That row changed and this app didn't: another app's after all, put back as it was.
+            let pressedRow = panelRowText ?? ""
+            let putBack = pressInPanel(pid: pid, pausing: !pausing, choice: .lastOnly)
+            tried.append("pressed a row in the Now Playing panel ('\(pressedRow)'), but it didn't change in 6 s"
+                + (putBack ? "; that row had changed, so it was pressed again to put it back" : ""))
         default:
             tried.append("no way called '\(way)' (script, menu, page, key or panel)")
         }

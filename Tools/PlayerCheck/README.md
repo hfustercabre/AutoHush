@@ -173,10 +173,15 @@ if a way leaves it stopped. Each way pauses the app, then plays it again:
    meanwhile, as one resuming its music when this one pauses).
 5. Its row in the menu bar's Now Playing panel (Control Center's): the
    panel opens for about half a second, and takes the keyboard meanwhile.
-   Its rows don't name their apps, so the app's row is the one sharing
-   most words with its windows' titles (the song) or its name, else the
-   only one showing Pause; a wrong row pressed is pressed again, so that
-   app plays on.
+   Its rows don't name their apps (the panel shows only their icons), so
+   the app's row is the one whose song its windows' titles, its page's
+   player bar or its AppleScript `current track` show whole (SoundCloud's
+   window keeps a generic title, and so does a paused Spotify's; its bar,
+   and Spotify's current track, name the song), or that shows only its
+   name. While pausing, it can also be the only row playing when the app
+   is the Now Playing one. Nothing is pressed when that isn't exactly one
+   row. Play presses the row that was paused. A row pressed that changed
+   when the app didn't is pressed again, so that app is left as it was.
 
 A way gets ✓ only when the app both paused and played again. An app with
 nothing to press and nothing that reports to Now Playing isn't tested (no
