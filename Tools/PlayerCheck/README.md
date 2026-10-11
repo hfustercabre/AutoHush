@@ -113,7 +113,12 @@ as neither.
 
 Everything is read from outside the app, as AutoHush itself would:
 
-- **Scripting:** `/usr/bin/sdef` prints the app's dictionary. AutoHush's
+- **Scripting:** the `.sdef` file the app's Info.plist names, read as it
+  is; else `/usr/bin/sdef` prints the dictionary (from an aete, or the old
+  `.scriptSuite` files, VLC's). The app is asked its state, the name of its
+  current track and its commands by Apple events, as AppleScript sends
+  them, without loading AppleScript (a fresh process's first script costs
+  about 0.2 s). AutoHush's
   `ScriptablePlayers` need pause and play in the app's own suite
   (`<suite>Paus`, `<suite>Play`), the `player state` property (`pPlS`) with
   stopped, playing and paused (`kPSS`, `kPSP`, `kPSp`), and `sound volume`
@@ -177,7 +182,9 @@ Everything is read from outside the app, as AutoHush itself would:
   player bars sit lower than the bar's button, but under it). Chromium
   answers a hit test from its last one at first, then precisely a moment
   later (Spotify's bar button, behind other windows: a group elsewhere,
-  then the button), so a miss is asked again after 0.2 s. A window that
+  then the button), so the misses are asked again together, once, 0.2 s
+  later, and only when one of them could change which button wins (being
+  lower than the first uncovered one with a player bar). A window that
   isn't on screen (on another desktop, minimised, or its app hidden) isn't
   hit-tested.
 - **The switches, set back:** a page readable already (an assistive tool
@@ -283,8 +290,14 @@ when it's played or paused, 1 when not. AppleScript and the page's buttons
 say play or pause; the menu's first item toggles, so it's pressed only when
 the sound says the app is the other way (an Electron app's sound stays on
 a few seconds after a pause: that's why the page comes first). Each way is
-confirmed within 6 s: the scripted state, what the app reports to Now
-Playing, the page's button's word, or the menu's word or the sound.
+confirmed within 6 s, looking every 0.05 s: the scripted state, what the
+app reports to Now Playing, the page's button's word, or the menu's word or
+the sound. While the page's player bar is on screen, its word is trusted
+and macOS's log isn't read (opening it and reading back to when the app
+opened takes 1.4–2 s); on another desktop an Electron page's word goes
+stale, so there the log is read. The page way presses the player bar's
+button its page check found, read again by its word, without searching the
+page again.
 
 With `--via`, it reads only what that way needs, so a press starts sooner:
 the scripting dictionary when the bundle has one (for the script way, and
@@ -292,12 +305,13 @@ its state shows quickest whether the app plays), the menu for the menu way,
 the page for the page way and the panel (whose row is found by the page's
 player bar), and the menu and the page for any way when nothing surer than
 their words shows whether the app plays. "Sound and Now Playing" is only
-shown, so a press never reads it. From the press to the app's change,
-measured on macOS 27 (2026-10-11), before and after: Spotify by AppleScript
-1.0–1.2 s → 0.4–0.7 s, Pake's YouTube Music by its page 1.8–2.2 s →
-1.1–1.5 s, Deezer by its page 6.8–9.6 s → 5.8–7.4 s (most of it its
-switch: turned off at the end, Deezer drops its page, and the next press
-waits for it to be built again).
+shown, so a press never reads it. A whole press (the process from start
+to end), measured on macOS 27 (2026-10-11): Spotify by AppleScript 0.1–0.5 s
+(0.8 s before these changes), Pake's YouTube Music by its page 0.7–0.9 s
+(2.2–3.1 s), SoundCloud's web app by its page 0.15–0.2 s, Music by
+AppleScript 0.1–0.3 s, Deezer by its page 3.7–4.0 s (6.8–8.3 s; most of it
+its switch: turned off at the end, Deezer drops its page, and the next
+press waits for it to be built again).
 
 Tested on macOS 27 (2026-10-11): Spotify by AppleScript (1–2 s), Deezer by
 its page's buttons (its window covered by others), SoundCloud's web app by

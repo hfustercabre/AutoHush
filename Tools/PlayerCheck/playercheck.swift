@@ -279,11 +279,25 @@ struct Scripting {
     /// A `current track` (pTrk) with a name: what it plays, by script.
     var hasCurrentTrack: Bool { properties["pTrk"] != nil }
     var fitsScriptablePlayer: Bool { suite != nil && hasPlayerState && hasStateValues }
+    /// A command's code ("spfyPaus") by its name: the app's own suite's
+    /// first, as ScriptablePlayers sends it.
+    func commandCode(_ name: String) -> String? {
+        let codes = commands.filter { $0.value.lowercased() == name.lowercased() }.keys.sorted()
+        return codes.first { $0.hasPrefix(suite ?? "????") } ?? codes.first
+    }
 }
 
-/// The app's dictionary, as `sdef` prints it (from an .sdef, an aete or a
-/// script suite alike); `nil` when it has none.
+/// The app's dictionary: the .sdef its Info.plist names, read as it is
+/// (running `sdef` takes about 0.15 s); else as `sdef` prints it, from an
+/// aete or old .scriptSuite files (VLC's) too. `nil` when it has none.
 func readScripting(_ url: URL) -> Scripting? {
+    if let bundle = Bundle(url: url), let name = bundle.object(forInfoDictionaryKey: "OSAScriptingDefinition") as? String,
+       let file = bundle.url(forResource: name, withExtension: nil)
+           ?? bundle.url(forResource: (name as NSString).deletingPathExtension, withExtension: "sdef"),
+       let document = try? XMLDocument(contentsOf: file, options: [.nodeLoadExternalEntitiesNever]),
+       let found = parseDictionary(document) {
+        return found
+    }
     let sdef = Process()
     sdef.executableURL = URL(fileURLWithPath: "/usr/bin/sdef")
     sdef.arguments = [url.path]
@@ -294,6 +308,12 @@ func readScripting(_ url: URL) -> Scripting? {
     let data = output.fileHandleForReading.readDataToEndOfFile()
     sdef.waitUntilExit()
     guard sdef.terminationStatus == 0, let document = try? XMLDocument(data: data, options: [.nodeLoadExternalEntitiesNever]) else { return nil }
+    return parseDictionary(document)
+}
+
+/// The commands, properties and enumerators of a dictionary's XML; `nil`
+/// with neither commands nor properties.
+func parseDictionary(_ document: XMLDocument) -> Scripting? {
     var scripting = Scripting()
     func attributes(_ xpath: String) -> [(code: String, name: String)] {
         ((try? document.nodes(forXPath: xpath)) ?? []).compactMap { node in
@@ -741,25 +761,19 @@ func playerBar(of element: AXUIElement) -> AXUIElement? {
 /// Whether nothing on its page sits over the button's middle: macOS's hit
 /// test there (within the app) finds the button or something inside it.
 /// Song tiles scrolled under a player bar (Deezer's, SoundCloud's) are in
-/// the window, lower than the bar's own button, but covered. Chromium
-/// answers a hit test from its last one at first, then precisely a moment
-/// later (Spotify's bar button behind other windows: a group elsewhere,
-/// then the button), so a miss is asked again.
+/// the window, lower than the bar's own button, but covered. One hit test:
+/// `playerButton` asks Chromium's approximate misses again.
 func isUncovered(_ button: PageButton, pid: pid_t) -> Bool {
     // Off screen (another desktop, hidden, minimised): whatever is there would answer.
     guard button.onScreen else { return true }
     guard let frame = button.element.frame else { return false }
-    let app = AXUIElementCreateApplication(pid)
-    for attempt in 0..<2 {
-        if attempt > 0 { Thread.sleep(forTimeInterval: 0.2) }
-        var hit: AXUIElement?
-        guard AXUIElementCopyElementAtPosition(app, Float(frame.midX), Float(frame.midY), &hit) == .success,
-              var node = hit else { return true } // can't tell: keep it
-        for _ in 0..<8 {
-            if CFEqual(node, button.element) { return true }
-            guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { break }
-            node = parent as! AXUIElement
-        }
+    var hit: AXUIElement?
+    guard AXUIElementCopyElementAtPosition(AXUIElementCreateApplication(pid), Float(frame.midX), Float(frame.midY), &hit) == .success,
+          var node = hit else { return true } // can't tell: keep it
+    for _ in 0..<8 {
+        if CFEqual(node, button.element) { return true }
+        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return false }
+        node = parent as! AXUIElement
     }
     return false
 }
@@ -772,11 +786,29 @@ func playerButton(pid: pid_t, named words: Set<String>) -> (button: PageButton, 
     let candidates = (pageButtons(pid: pid) ?? [])
         .filter { $0.inSight && named($0.label, words) }
         .sorted { ($0.fromBottom ?? .infinity) < ($1.fromBottom ?? .infinity) }
-    // Hit tests and slider searches only until the player's button is found.
+    var bars: [Int: Bool] = [:]
+    func hasBar(_ index: Int) -> Bool {
+        if let known = bars[index] { return known }
+        let found = playerBar(of: candidates[index].element) != nil
+        bars[index] = found
+        return found
+    }
+    // Each is hit-tested once. Chromium answers a hit test from its last one
+    // at first, then precisely a moment later (Spotify's bar button behind
+    // other windows: a group elsewhere, then the button), so the misses are
+    // asked again together, once, 0.2 s later: only when one of them could
+    // change which button wins, being lower than the first uncovered one with
+    // a player bar (Deezer's tiles under its bar can't).
+    var open = candidates.map { isUncovered($0, pid: pid) }
+    let firstBar = candidates.indices.first { open[$0] && hasBar($0) }
+    if open.prefix(firstBar ?? candidates.count).contains(false) {
+        Thread.sleep(forTimeInterval: 0.2)
+        for index in candidates.indices where !open[index] { open[index] = isUncovered(candidates[index], pid: pid) }
+    }
     var lowest: PageButton?
-    for candidate in candidates where isUncovered(candidate, pid: pid) {
-        if playerBar(of: candidate.element) != nil { return (candidate, true) }
-        if lowest == nil { lowest = candidate }
+    for index in candidates.indices where open[index] {
+        if hasBar(index) { return (candidates[index], true) }
+        if lowest == nil { lowest = candidates[index] }
     }
     return lowest.map { ($0, false) }
 }
@@ -1073,57 +1105,103 @@ func noteScriptError(_ number: Any?) {
     }
 }
 
+/// A four-character code as a number ("spfy" → 0x73706679).
+func fourCharCode(_ text: String) -> FourCharCode {
+    text.utf8.prefix(4).reduce(0) { $0 << 8 | FourCharCode($1) }
+}
+
+/// The object specifier for the property `code` of `container` (nil: the
+/// application), as AppleScript builds one for "player state" or "name of
+/// current track".
+func propertySpecifier(_ code: String, of container: NSAppleEventDescriptor? = nil) -> NSAppleEventDescriptor {
+    let specifier = NSAppleEventDescriptor.record().coerce(toDescriptorType: fourCharCode("obj "))!
+    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: fourCharCode("prop")), forKeyword: fourCharCode("want"))
+    specifier.setDescriptor(container ?? NSAppleEventDescriptor.null(), forKeyword: fourCharCode("from"))
+    specifier.setDescriptor(NSAppleEventDescriptor(enumCode: fourCharCode("prop")), forKeyword: fourCharCode("form"))
+    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: fourCharCode(code)), forKeyword: fourCharCode("seld"))
+    return specifier
+}
+
+/// Sends the app an Apple event, as AppleScript would, without loading
+/// AppleScript (a fresh process's first script costs about 0.2 s): the
+/// reply's result, or the error number (-1743: macOS refused it, the
+/// Automation permission).
+func sendAppleEvent(_ code: String, directObject: NSAppleEventDescriptor? = nil) -> Result<NSAppleEventDescriptor?, NSError> {
+    let event = NSAppleEventDescriptor.appleEvent(withEventClass: fourCharCode(String(code.prefix(4))),
+                                                  eventID: fourCharCode(String(code.suffix(4))),
+                                                  targetDescriptor: NSAppleEventDescriptor(bundleIdentifier: bundleID),
+                                                  returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+    if let directObject { event.setParam(directObject, forKeyword: fourCharCode("----")) }
+    do {
+        let reply = try event.sendEvent(options: [.waitForReply, .canInteract], timeout: 10)
+        if let number = reply.paramDescriptor(forKeyword: fourCharCode("errn"))?.int32Value, number != 0 {
+            return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(number)))
+        }
+        return .success(reply.paramDescriptor(forKeyword: fourCharCode("----")))
+    } catch {
+        return .failure(error as NSError)
+    }
+}
+
 /// The app's state by script, when its dictionary has it and it answers:
 /// its `player state` (stopped, playing, paused, as Spotify's), else its
-/// `playing` flag (VLC's: playing or paused). Only macOS refusing it (-1743:
-/// no Automation permission for whatever runs this tool) stops the asking;
-/// another error (a timeout, -1712, from a busy VLC) counts for that look
-/// only. Each kind of error is said once.
+/// `playing` flag (VLC's: playing or paused), asked by Apple event. Only
+/// macOS refusing it (-1743: no Automation permission for whatever runs
+/// this tool) stops the asking; another error (a timeout, -1712, from a
+/// busy VLC) counts for that look only. Each kind of error is said once.
 var scriptError: Any?
 var scriptErrorsSaid: Set<String> = []
 func scriptedState() -> String? {
     guard let scripting, scripting.hasPlayerState || scripting.hasPlayingFlag, scriptError == nil else { return nil }
-    let question = scripting.hasPlayerState ? "get player state as string" : "get playing"
-    var error: NSDictionary?
-    let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(question)")?.executeAndReturnError(&error)
-    if let error {
-        let number = error[NSAppleScript.errorNumber] ?? "?"
-        noteScriptError(number)
-        let refused = (number as? Int) == -1743
-        if refused { scriptError = number }
-        if scriptErrorsSaid.insert("\(number)").inserted {
-            say("  its state can't be read by script: error \(number)" + (refused ? "" : " (asked again at the next look)"))
+    let property = scripting.hasPlayerState ? "pPlS" : scripting.properties.first { $0.value == "playing" }!.key
+    switch sendAppleEvent("coregetd", directObject: propertySpecifier(property)) {
+    case .failure(let error):
+        noteScriptError(error.code)
+        let refused = error.code == -1743
+        if refused { scriptError = error.code }
+        if scriptErrorsSaid.insert("\(error.code)").inserted {
+            say("  its state can't be read by script: error \(error.code)" + (refused ? "" : " (asked again at the next look)"))
         }
         return nil
+    case .success(let result):
+        guard let result else { return nil }
+        guard scripting.hasPlayerState else { return result.booleanValue ? "playing" : "paused" }
+        let states: [String: String] = ["kPSP": "playing", "kPSp": "paused", "kPSS": "stopped",
+                                        "kPSF": "fast forwarding", "kPSR": "rewinding"]
+        let code = result.enumCodeValue
+        let text = String(bytes: [24, 16, 8, 0].map { UInt8(truncatingIfNeeded: code >> $0) }, encoding: .macOSRoman) ?? "?"
+        return states[text] ?? text
     }
-    guard let result else { return nil }
-    return scripting.hasPlayerState ? result.stringValue : (result.booleanValue ? "playing" : "paused")
 }
 
-/// The name of what it plays, by script, when its dictionary has a
+/// The name of what it plays, by Apple event, when its dictionary has a
 /// `current track` (Spotify's, Music's, TV's). It stays while paused, where
 /// a window's title may not (a paused Spotify's says "Spotify Premium").
 /// Nil without one, or when it doesn't answer (nothing loaded).
 func scriptedSong() -> String? {
     guard let scripting, scripting.hasCurrentTrack, scriptError == nil else { return nil }
-    var error: NSDictionary?
-    let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to get name of current track")?.executeAndReturnError(&error)
-    if let error {
-        noteScriptError(error[NSAppleScript.errorNumber])
+    switch sendAppleEvent("coregetd", directObject: propertySpecifier("pnam", of: propertySpecifier("pTrk"))) {
+    case .failure(let error):
+        noteScriptError(error.code)
         return nil
+    case .success(let result):
+        return result?.stringValue
     }
-    return result?.stringValue
 }
 
-/// Sends an AppleScript command to the app; false (and why) when it fails.
+/// Sends the app one of its dictionary's commands (by name: "pause", "play",
+/// "playpause"), as an Apple event; false (and why) when it fails.
 func sendScript(_ command: String) -> Bool {
-    var error: NSDictionary?
-    _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
-    if let error {
-        noteScriptError(error[NSAppleScript.errorNumber])
-        say("    \(command): error \(error[NSAppleScript.errorNumber] ?? "?")")
+    guard let code = scripting?.commandCode(command) else {
+        say("    \(command): not in its dictionary")
+        return false
     }
-    return error == nil
+    if case .failure(let error) = sendAppleEvent(code) {
+        noteScriptError(error.code)
+        say("    \(command): error \(error.code)")
+        return false
+    }
+    return true
 }
 
 /// Its AppleScript commands to pause and play it: pause and play in its own
@@ -1204,12 +1282,21 @@ struct Look: Equatable {
 }
 
 func look(_ pid: pid_t) -> Look {
-    // The log is read only for an app with no scripted state (its own is surer).
+    // The log is read only for an app with no scripted state (its own is
+    // surer), and, for a press, only while its player bar isn't on screen.
     let state = scriptedState()
     return Look(menuTitle: menu == nil ? nil : playbackMenu(pid: pid)?.toggleTitle, state: state,
-                reported: state == nil ? reportedState() : nil, pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid),
+                reported: state == nil && !barShowsState ? reportedState() : nil,
+                pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid),
                 sounding: !soundProcesses(of: pid).isEmpty)
 }
+
+/// For a press, whether its page's player bar is on screen (this desktop,
+/// not hidden or minimised), so its button's word shows the app's state:
+/// then what it reports to Now Playing isn't read (opening macOS's log and
+/// reading back to when the app opened: 1.4–2 s). An Electron page on
+/// another desktop keeps a stale word, so there the log is read.
+var barShowsState: Bool { pressingOneWay && page?.withControls == true && page?.toggle?.onScreen == true }
 
 /// Waits up to `seconds`, running the run loop (for notifications), until
 /// `done` holds (or a stop is asked), then a second more for late
@@ -1540,6 +1627,15 @@ func reportedState() -> String? {
 /// whatever its word, since it toggles (an Electron page on another desktop
 /// keeps its word: Play while it plays); else one with that word.
 func pageButtonToPress(pid: pid_t, pausing: Bool) -> PageButton? {
+    // A press takes the player bar's button the page section found, read
+    // again by its words (no new search, no hit tests): when it says what's
+    // wanted, or toggles while the app reports how it is.
+    if pressingOneWay, page?.withControls == true, let bar = page?.toggle {
+        let words = label(of: bar.element)
+        let found = PageButton(element: bar.element, label: words, fromBottom: bar.fromBottom, inSight: bar.inSight, onScreen: bar.onScreen)
+        if named(words, pausing ? pauseWords : playWords) { return found }
+        if !barShowsState, named(words, playPauseWords), reportedState() != nil { return found }
+    }
     let wanted = playerButton(pid: pid, named: pausing ? pauseWords : playWords)
     if let wanted, wanted.withControls { return wanted.button }
     if reportedState() != nil, let bar = playerButton(pid: pid, named: playPauseWords), bar.withControls { return bar.button }
@@ -1824,12 +1920,12 @@ if let action {
     }
     let pid = running.processIdentifier
     let pausing = action == "pause"
-    /// Waits up to 6 s for `done`, looking every quarter second.
+    /// Waits up to 6 s for `done`, looking every 0.05 s.
     func within(_ done: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(6)
         while !done() {
             guard Date() < deadline else { return false }
-            RunLoop.main.run(until: Date().addingTimeInterval(0.25))
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         }
         return true
     }
