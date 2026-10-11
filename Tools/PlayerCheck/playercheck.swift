@@ -11,7 +11,8 @@
 //                                                      started first when it isn't playing)
 //   playercheck <app> --read-only                      checks it without pressing anything
 //   playercheck <app> --play|--pause [--via script|menu|page|panel]
-//                                                      just plays or pauses it, by that way or the first that works
+//                                                      just plays or pauses it, by that way (reading only what it
+//                                                      needs) or the first that works
 //   playercheck --now-playing-list [hours]             the apps macOS keeps in Now Playing, from its log
 //                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>",
 //                                                      then "#active\t<pid>"
@@ -221,6 +222,9 @@ let via = arguments.firstIndex(of: "--via").flatMap { $0 + 1 < arguments.count ?
 quiet = action != nil
 /// The test: each way to control it is tried, pausing it and playing it again.
 let testing = !readOnly && action == nil
+/// --play or --pause by one way: only what that way needs is read, and what
+/// shows whether the app plays (`isPlaying`), so a press starts sooner.
+let pressingOneWay = action != nil && via != nil
 
 /// The app's bundle: a path, a bundle ID, or a name in the Applications folders.
 func findApp(_ target: String) -> URL? {
@@ -305,7 +309,19 @@ func readScripting(_ url: URL) -> Scripting? {
 
 say()
 say("Scripting dictionary")
-let scripting = readScripting(appURL)
+/// Whether the bundle carries a dictionary: an .sdef (named by its
+/// Info.plist, or in its resources) or the older .scriptSuite files (VLC's).
+/// Without one, `sdef` has nothing to read but the running app's.
+func bundleHasDictionary(_ url: URL) -> Bool {
+    if Bundle(url: url)?.object(forInfoDictionaryKey: "OSAScriptingDefinition") != nil { return true }
+    let resources = (try? FileManager.default.contentsOfDirectory(atPath: url.appendingPathComponent("Contents/Resources").path)) ?? []
+    return resources.contains { $0.hasSuffix(".sdef") || $0.hasSuffix(".scriptSuite") }
+}
+/// A press by one way reads the dictionary when the bundle has one: for the
+/// script way, and its scripted state is the quickest sure sign of whether
+/// the app plays, for every way (what it reports to Now Playing first opens
+/// macOS's log, about 0.6 s).
+let scripting = !pressingOneWay || bundleHasDictionary(appURL) ? readScripting(appURL) : nil
 if let scripting {
     let playLike = scripting.commands.filter { ["play", "pause", "playpause", "stop"].contains($0.value.lowercased()) }
     say("  commands: " + (playLike.isEmpty ? "no play or pause" : playLike.sorted { $0.key < $1.key }.map { "\($0.value) (\($0.key))" }.joined(separator: ", ")))
@@ -438,7 +454,17 @@ func modifierSymbols(_ modifiers: Int) -> String {
 say()
 say("Playback menu")
 var menu: PlaybackMenu?
-if running == nil {
+/// Whether something surer than its menu's or page's word shows whether it
+/// plays: its scripted state, or what it reports to Now Playing.
+let hasSurerSign = scripting?.hasPlayerState == true || scripting?.hasPlayingFlag == true
+    || nowPlayingReason(of: appURL, bundleID: bundleID) != nil
+/// A press by one way reads the menu and the page for their own way (the
+/// panel needs the page's player bar, which names the song), or when nothing
+/// surer shows whether the app plays.
+func pressNeeds(_ ways: Set<String>) -> Bool { !pressingOneWay || ways.contains(via!) || !hasSurerSign }
+if !pressNeeds(["menu"]) {
+    say("  not read: --via \(via!) doesn't need it")
+} else if running == nil {
     say("  not checked: the app isn't running")
 } else if !AXIsProcessTrusted() {
     say("  not checked: this tool (or the app running it) needs the Accessibility permission")
@@ -503,7 +529,11 @@ func soundProcesses(of pid: pid_t) -> [String] {
 
 say()
 say("Sound and Now Playing")
-if let running {
+// Only shown, so not read for --play or --pause (it asks a second copy of
+// this tool who's Now Playing: about 0.3 s).
+if action != nil {
+    say("  not read: only shown in a check")
+} else if let running {
     let sound = soundProcesses(of: running.processIdentifier)
     say("  sound output running now: " + (sound.isEmpty ? "none (it isn't playing)" : sound.joined(separator: "; ")))
     let holder = nowPlayingPID()
@@ -950,7 +980,10 @@ func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: 
     return true
 }
 
-if running == nil {
+if !pressNeeds(["page", "panel"]) {
+    say("  not read: --via \(via!) doesn't need it")
+    pageNotChecked = "not needed for --via \(via!)"
+} else if running == nil {
     say("  not checked: the app isn't running")
     pageNotChecked = "it isn't running"
 } else if !AXIsProcessTrusted() {

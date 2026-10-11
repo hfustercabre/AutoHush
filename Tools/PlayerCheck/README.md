@@ -286,6 +286,19 @@ a few seconds after a pause: that's why the page comes first). Each way is
 confirmed within 6 s: the scripted state, what the app reports to Now
 Playing, the page's button's word, or the menu's word or the sound.
 
+With `--via`, it reads only what that way needs, so a press starts sooner:
+the scripting dictionary when the bundle has one (for the script way, and
+its state shows quickest whether the app plays), the menu for the menu way,
+the page for the page way and the panel (whose row is found by the page's
+player bar), and the menu and the page for any way when nothing surer than
+their words shows whether the app plays. "Sound and Now Playing" is only
+shown, so a press never reads it. From the press to the app's change,
+measured on macOS 27 (2026-10-11), before and after: Spotify by AppleScript
+1.0–1.2 s → 0.4–0.7 s, Pake's YouTube Music by its page 1.8–2.2 s →
+1.1–1.5 s, Deezer by its page 6.8–9.6 s → 5.8–7.4 s (most of it its
+switch: turned off at the end, Deezer drops its page, and the next press
+waits for it to be built again).
+
 Tested on macOS 27 (2026-10-11): Spotify by AppleScript (1–2 s), Deezer by
 its page's buttons (its window covered by others), SoundCloud's web app by
 its bar's "Play current" and "Pause current", and Deezer's menu failing as
