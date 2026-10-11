@@ -5,8 +5,10 @@
 // tools is on), then lists the ways it could be controlled and says which
 // kind of player it could be (as in the adding-a-player skill's first table).
 // Tools/PlayerCheckApp runs it from a window.
-//   playercheck <app name, bundle ID or path>          read only (Electron's switch is set back as it was)
-//   playercheck <app> --press                          also pauses and plays it once, while it plays
+//   playercheck <app name, bundle ID or path>          checks it, and tests each way to control it: pauses
+//                                                      and plays it once by each (asking for it to be
+//                                                      started first when it isn't playing)
+//   playercheck <app> --read-only                      checks it without pressing anything
 //   playercheck <app> --play|--pause [--via script|menu|page]
 //                                                      just plays or pauses it, by that way or the first that works
 //   playercheck --now-playing-list [hours]             the apps macOS keeps in Now Playing, from its log
@@ -165,14 +167,18 @@ if CommandLine.arguments.dropFirst().first == "--now-playing-list" { printNowPla
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard let target = arguments.first(where: { !$0.hasPrefix("--") }) else {
-    fail("usage: playercheck <app name, bundle ID or path> [--press | --play | --pause [--via script|menu|page]]")
+    fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|key|panel]]")
 }
-let pressing = arguments.contains("--press")
+/// --read-only: the checks without the test (--press, the old way to ask
+/// for the test, is the default now).
+let readOnly = arguments.contains("--read-only")
 /// --play or --pause: does just that, by `via` (script, menu or page), else
 /// by the first way that works: AppleScript, the page's button, the menu.
 let action = arguments.contains("--play") ? "play" : arguments.contains("--pause") ? "pause" : nil
 let via = arguments.firstIndex(of: "--via").flatMap { $0 + 1 < arguments.count ? arguments[$0 + 1] : nil }
 quiet = action != nil
+/// The test: each way to control it is tried, pausing it and playing it again.
+let testing = !readOnly && action == nil
 
 /// The app's bundle: a path, a bundle ID, or a name in the Applications folders.
 func findApp(_ target: String) -> URL? {
@@ -418,8 +424,8 @@ if let running {
         : holds ? "this app (the Play/Pause key reaches it, until another app reports playing)"
         : holder == 0 ? "no app" : "another app (\(other))"))
     keyWay = holder < 0 ? ("–", "Play/Pause key: not checked (MediaRemote didn't answer)")
-        : holds ? ("✓", "Play/Pause key: it's Now Playing, so the key reaches it (until another app reports playing)")
-        : ("?", "Play/Pause key: it isn't Now Playing (\(other) is); the key reaches it only once it reports playing")
+        : holds ? ("?", "Play/Pause key: it's Now Playing now, so the key would reach it")
+        : ("?", "Play/Pause key: it isn't Now Playing now (\(other) is); the key reaches it only once it reports playing")
 } else {
     say("  not checked: the app isn't running")
 }
@@ -768,81 +774,271 @@ func waitFor(_ seconds: Double, pid: pid_t, until done: (Look) -> Bool) -> Look 
     return current
 }
 
-/// Pauses with `pause`, sees whether it took, plays again with `play` if it did.
+/// Pauses with `pause`, sees whether it took, plays again with `play` if it
+/// did. Judged by the surest sign it has at the start: its scripted state,
+/// else its page's button (Play while paused), else its menu's word or its
+/// sound. (Deezer's menu word changes late by itself: it said Play while
+/// playing, then Pause a second later, with nothing pressed.)
 func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool) -> Bool {
     let before = look(pid)
+    let byState = before.state != nil, byPage = !byState && before.pageToggle != nil
+    func paused(_ now: Look) -> Bool {
+        if byState { return now.state != nil && now.state != "playing" }
+        if byPage { return now.pageToggle.map { named($0, playWords) } ?? false }
+        return now.menuTitle != before.menuTitle || !now.sounding
+    }
+    func playing(_ now: Look) -> Bool {
+        if byState { return now.state == "playing" }
+        if byPage { return now.pageToggle.map { named($0, pauseWords) } ?? false }
+        return now.sounding
+    }
     say("  \(label): before, \(before.line)")
     guard pause() else { say("    couldn't send it"); return false }
-    // Paused: the menu's or the page's word or the state changed, or the
-    // sound stopped. (A page's button can be missing a moment while it's redrawn.)
-    let after = waitFor(4, pid: pid) {
-        $0.menuTitle != before.menuTitle || ($0.state != before.state && $0.state != nil)
-            || ($0.pageToggle != before.pageToggle && $0.pageToggle != nil) || !$0.sounding
-    }
-    let took = after != before && (after.menuTitle != before.menuTitle || after.state != before.state
-        || (after.pageToggle != before.pageToggle && after.pageToggle != nil) || !after.sounding)
-    say("    after the pause: \(after.line) → " + (took ? "it paused" : "nothing changed in 4 s: it didn't take, or can't be seen"))
+    let after = waitFor(4, pid: pid, until: paused)
+    let took = paused(after)
+    say("    after the pause: \(after.line) → " + (took ? "it paused" : "it didn't pause in 4 s"))
     guard took else { return false }
     _ = play()
-    let back = waitFor(4, pid: pid) {
-        $0.menuTitle == before.menuTitle && $0.state == before.state && $0.pageToggle == before.pageToggle && $0.sounding
-    }
-    say("    after playing again: \(back.line)" + (back == before ? "" : " (not as before: check it)"))
+    let back = waitFor(4, pid: pid, until: playing)
+    say("    after playing again: \(back.line)" + (playing(back) ? "" : " (not playing again: check it)"))
     return true
 }
+
+/// Whether it plays, as far as can be seen: its scripted state, else its
+/// page's button (Pause while it plays), else its sound (which an Electron
+/// app or a web app keeps a few seconds after a pause).
+func isPlaying(_ pid: pid_t) -> Bool {
+    let now = look(pid)
+    if let state = now.state { return state == "playing" }
+    if let toggle = now.pageToggle { return named(toggle, pauseWords) }
+    return now.sounding
+}
+
+/// Waits until it plays, asking whoever runs the tool to start it (the
+/// Player Check app shows the "waiting:" line as a request): true once it
+/// plays, false after `seconds`.
+func waitUntilPlaying(_ pid: pid_t, seconds: Double = 120) -> Bool {
+    if isPlaying(pid) { return true }
+    say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)")
+    let deadline = Date().addingTimeInterval(seconds)
+    while Date() < deadline {
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        if isPlaying(pid) {
+            say("  it plays: testing")
+            RunLoop.main.run(until: Date().addingTimeInterval(1.5)) // it settles, and reports to Now Playing
+            return true
+        }
+    }
+    return false
+}
+
+/// The keyboard's Play/Pause key, pressed as a user would (as AutoHush's
+/// learning does): macOS sends it to the app it counts as Now Playing.
+func pressPlayPauseKey() {
+    for down in [true, false] {
+        let state = down ? 0xA : 0xB
+        // NX_KEYTYPE_PLAY (16), in IOKit's ev_keymap.h.
+        NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: NSEvent.ModifierFlags(rawValue: UInt(state) << 8),
+                           timestamp: 0, windowNumber: 0, context: nil, subtype: 8, data1: (16 << 16) | (state << 8), data2: -1)?
+            .cgEvent?.post(tap: .cghidEventTap)
+    }
+}
+
+/// Whether the app (or a helper that plays for it) is the Now Playing one;
+/// else which app is.
+func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
+    let holder = nowPlayingPID()
+    let other = holder <= 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
+    return (holder > 0 && (holder == pid || responsible(holder) == pid), other)
+}
+
+// MARK: The menu bar's Now Playing panel
+
+/// One app's row in the menu bar's Now Playing panel (Control Center's): its
+/// text ("Song, Artist – Album", or the app's name) and its Play/Pause.
+struct PanelRow {
+    let text: String
+    let button: AXUIElement
+    /// Read while the panel is open: its elements answer nothing once it closes.
+    let playing: Bool
+}
+
+/// The menu bar's Now Playing item (macOS 26 on), found by hit-testing along
+/// the menu bar: the menu bar's own list doesn't name it.
+func nowPlayingMenuItem() -> AXUIElement? {
+    let system = AXUIElementCreateSystemWide()
+    let width = Float(NSScreen.main?.frame.width ?? 1470)
+    var x = width - 20
+    while x > width / 3 {
+        var hit: AXUIElement?
+        if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit,
+           hit.text(kAXIdentifierAttribute) == "com.apple.menuextra.now-playing" { return hit }
+        x -= 6
+    }
+    return nil
+}
+
+/// The open panel's rows, from Control Center's windows; none while it's closed.
+func panelRows() -> [PanelRow] {
+    guard let center = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.controlcenter").first else { return [] }
+    var found: [PanelRow] = []
+    func walk(_ element: AXUIElement, _ depth: Int) {
+        guard depth < 20 else { return }
+        let children = element.children
+        if let button = children.first(where: { ["play.fill", "pause.fill"].contains($0.text(kAXIdentifierAttribute)) }) {
+            let text = children.map { $0.text(kAXValueAttribute) }.filter { !$0.isEmpty }.joined(separator: " ")
+            found.append(PanelRow(text: text, button: button, playing: button.text(kAXIdentifierAttribute) == "pause.fill"))
+            return
+        }
+        children.forEach { walk($0, depth + 1) }
+    }
+    for window in AXUIElementCreateApplication(center.processIdentifier).value(kAXWindowsAttribute) as? [AXUIElement] ?? [] {
+        walk(window, 0)
+    }
+    return found
+}
+
+/// A text's words of three letters or more, in lowercase.
+func words(_ text: String) -> Set<String> {
+    Set(text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { $0.count >= 3 })
+}
+
+/// The row pressed last, to find it again; why the panel couldn't be used.
+var panelRowText: String?
+var panelProblem: String?
+
+/// Opens the panel, presses the Play/Pause of this app's row (the row shows
+/// Pause when `pausing`, Play otherwise) and closes it; true once pressed.
+/// The rows don't name their apps, so its row is the one pressed before
+/// (`sameRow`), else the one sharing most words with its windows' titles
+/// (the song) or its name, else the only one. The panel shows under the
+/// menu bar for about half a second, and takes the keyboard meanwhile.
+func pressInPanel(pid: pid_t, pausing: Bool, sameRow: Bool = false) -> Bool {
+    guard let item = nowPlayingMenuItem() else {
+        panelProblem = "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        return false
+    }
+    guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else {
+        panelProblem = "the Now Playing item didn't open"
+        return false
+    }
+    var rows: [PanelRow] = []
+    let deadline = Date().addingTimeInterval(2)
+    while rows.isEmpty, Date() < deadline {
+        Thread.sleep(forTimeInterval: 0.05)
+        rows = panelRows()
+    }
+    func close() {
+        _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
+        let deadline = Date().addingTimeInterval(2)
+        while !panelRows().isEmpty, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+    }
+    let candidates = rows.filter { $0.playing == pausing }
+    let titles = (AXUIElementCreateApplication(pid).value(kAXWindowsAttribute) as? [AXUIElement] ?? []).map(\.title)
+    let known = words(titles.joined(separator: " ") + " " + appName)
+    let best = candidates.map { ($0, words($0.text).intersection(known).count) }.max { $0.1 < $1.1 }
+    let row = (sameRow ? candidates.first { $0.text == panelRowText } : nil)
+        ?? (best.flatMap { $0.1 > 0 ? $0.0 : nil })
+        ?? (candidates.count == 1 ? candidates[0] : nil)
+    guard let row else {
+        panelProblem = rows.isEmpty ? "the panel showed no rows"
+            : "none of its \(rows.count) rows shows this app's song or name with \(pausing ? "Pause" : "Play")"
+        close()
+        return false
+    }
+    panelRowText = row.text
+    let pressed = AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success
+    close()
+    return pressed
+}
+
+// MARK: The test
 
 var menuTookPress: Bool?
 var scriptTookPause: Bool?
 var pageTookPress: Bool?
+var keyTookPress: Bool?
+var panelTookPress: Bool?
+/// Why the Play/Pause key wasn't pressed, when it wasn't.
+var keyProblem: String?
+/// Why a way wasn't tried, for "Ways to control it".
+var notTried = readOnly ? "not tried: read only" : "not tried"
 var notifications: NotificationLog?
-if pressing {
+if testing {
     say()
     say("Press test")
     if let running {
         let pid = running.processIdentifier
-        let start = look(pid)
-        if start.state != nil ? start.state != "playing" : !start.sounding {
-            say("  not run: start it playing first (now \(start.line))")
-        } else {
-            notifications = NotificationLog(bundleID: bundleID)
-            if let scripting, let suite = scripting.suite, let pauseName = scripting.commands[suite + "Paus"],
-               let playName = scripting.commands[suite + "Play"] {
-                func send(_ command: String) -> Bool {
-                    var error: NSDictionary?
-                    _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
-                    if let error { say("    \(command): error \(error[NSAppleScript.errorNumber] ?? "?")") }
-                    return error == nil
-                }
-                scriptTookPause = trial("by script", pid: pid, pause: { send(pauseName) }, play: { send(playName) })
-                RunLoop.main.run(until: Date().addingTimeInterval(1))
+        notifications = NotificationLog(bundleID: bundleID)
+        // Each way needs it playing: whoever runs the tool is asked to start
+        // it before the first, and whenever a way leaves it stopped.
+        var going = true
+        func ready() -> Bool {
+            guard going else { return false }
+            going = waitUntilPlaying(pid)
+            if !going {
+                notTried = "not tried: it didn't play"
+                say("  stopped: \(appName) didn't play within 2 minutes")
             }
-            if menu != nil {
-                func press() -> Bool {
-                    guard let item = playbackMenu(pid: pid)?.toggle else { return false }
-                    return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
-                }
-                menuTookPress = trial("by its menu", pid: pid, pause: press, play: press)
-                RunLoop.main.run(until: Date().addingTimeInterval(1))
+            return going
+        }
+        if let scripting, let suite = scripting.suite, let pauseName = scripting.commands[suite + "Paus"],
+           let playName = scripting.commands[suite + "Play"], ready() {
+            func send(_ command: String) -> Bool {
+                var error: NSDictionary?
+                _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
+                if let error { say("    \(command): error \(error[NSAppleScript.errorNumber] ?? "?")") }
+                return error == nil
             }
-            if page?.toggle != nil {
-                func pressPage(_ words: Set<String>) -> Bool {
-                    guard let button = playerButton(pid: pid, named: words)?.button else {
-                        say("    no button in sight to press"); return false
-                    }
-                    return AXUIElementPerformAction(button.element, kAXPressAction as CFString) == .success
-                }
-                pageTookPress = trial("by its page's button", pid: pid, pause: { pressPage(pauseWords) }, play: { pressPage(playWords) })
+            scriptTookPause = trial("by script", pid: pid, pause: { send(pauseName) }, play: { send(playName) })
+            RunLoop.main.run(until: Date().addingTimeInterval(1))
+        }
+        if menu != nil, ready() {
+            func press() -> Bool {
+                guard let item = playbackMenu(pid: pid)?.toggle else { return false }
+                return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
             }
-            if scriptTookPause == nil, menuTookPress == nil, pageTookPress == nil {
-                say("  nothing to try: no scripted pause, no playback menu and no page button")
-            }
-            if let seen = notifications?.seen, !seen.isEmpty {
-                for (name, keys) in seen.sorted(by: { $0.key < $1.key }) {
-                    say("  notification: \(name)" + (keys.isEmpty ? "" : " [\(keys.sorted().joined(separator: ", "))]"))
+            menuTookPress = trial("by its menu", pid: pid, pause: press, play: press)
+            RunLoop.main.run(until: Date().addingTimeInterval(1))
+        }
+        if page?.toggle != nil, ready() {
+            func pressPage(_ words: Set<String>) -> Bool {
+                guard let button = playerButton(pid: pid, named: words)?.button else {
+                    say("    no button in sight to press"); return false
                 }
+                return AXUIElementPerformAction(button.element, kAXPressAction as CFString) == .success
+            }
+            pageTookPress = trial("by its page's button", pid: pid, pause: { pressPage(pauseWords) }, play: { pressPage(playWords) })
+            RunLoop.main.run(until: Date().addingTimeInterval(1))
+        }
+        if ready() {
+            // Pressed only while it's Now Playing: the key goes to that app.
+            let holder = nowPlayingHolder(pid)
+            if holder.isThisApp {
+                keyTookPress = trial("by the Play/Pause key", pid: pid, pause: { pressPlayPauseKey(); return true },
+                                     play: { pressPlayPauseKey(); return true })
             } else {
-                say("  notifications: none under the usual names (\(bundleID).\(stateNotificationSuffixes[0]), …)")
+                keyProblem = "it isn't Now Playing while it plays (\(holder.other) is), so the key goes there"
+                say("  by the Play/Pause key: not pressed: \(keyProblem!)")
+                keyTookPress = false
             }
+            RunLoop.main.run(until: Date().addingTimeInterval(1))
+        }
+        if ready() {
+            panelTookPress = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
+                                   play: { pressInPanel(pid: pid, pausing: false, sameRow: true) })
+            if panelTookPress == false, panelRowText != nil {
+                // The row pressed may have been another app's: pressed again, that app plays on.
+                _ = pressInPanel(pid: pid, pausing: false, sameRow: true)
+            }
+            if let panelProblem { say("    \(panelProblem)") }
+        }
+        if let seen = notifications?.seen, !seen.isEmpty {
+            for (name, keys) in seen.sorted(by: { $0.key < $1.key }) {
+                say("  notification: \(name)" + (keys.isEmpty ? "" : " [\(keys.sorted().joined(separator: ", "))]"))
+            }
+        } else {
+            say("  notifications: none under the usual names (\(bundleID).\(stateNotificationSuffixes[0]), …)")
         }
     } else {
         say("  not run: the app isn't running")
@@ -867,9 +1063,9 @@ if let action {
     }
     let pid = running.processIdentifier
     let pausing = action == "pause"
-    /// Waits up to 4 s for `done`, looking every quarter second.
+    /// Waits up to 6 s for `done`, looking every quarter second.
     func within(_ done: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(4)
+        let deadline = Date().addingTimeInterval(6)
         while !done() {
             guard Date() < deadline else { return false }
             RunLoop.main.run(until: Date().addingTimeInterval(0.25))
@@ -900,7 +1096,7 @@ if let action {
                 say("\(pausing ? "Paused" : "Played") it by AppleScript (\(command)): its state is \(target).")
                 finish(0)
             }
-            tried.append("AppleScript \(command) sent, but its state didn't change in 4 s")
+            tried.append("AppleScript \(command) sent, but its state didn't change in 6 s")
         case "page":
             guard page?.toggle != nil else {
                 tried.append("no Play/Pause button on its page")
@@ -924,7 +1120,7 @@ if let action {
                     + (broughtForward ? " (brought forward a moment: Electron builds its page only while its window can be seen)." : "."))
                 finish(0)
             }
-            tried.append("pressed its page's '\(button.label)', but the button didn't change in 4 s")
+            tried.append("pressed its page's '\(button.label)', but the button didn't change in 6 s")
         case "menu":
             guard let menu else {
                 tried.append("no playback menu")
@@ -948,9 +1144,40 @@ if let action {
                 say("\(pausing ? "Paused" : "Played") it with its '\(menu.title)' menu's '\(before ?? "")'.")
                 finish(0)
             }
-            tried.append("pressed its menu's '\(before ?? "")', but nothing changed in 4 s")
+            tried.append("pressed its menu's '\(before ?? "")', but nothing changed in 6 s")
+        case "key":
+            // The key goes to the Now Playing app: pressed only when it's this one.
+            let holder = nowPlayingHolder(pid)
+            guard holder.isThisApp else {
+                tried.append("it isn't Now Playing (\(holder.other) is), so the Play/Pause key would go there")
+                continue
+            }
+            if isPlaying(pid) != pausing {
+                say("It's \(pausing ? "paused" : "playing") already.")
+                finish(0)
+            }
+            pressPlayPauseKey()
+            if within({ isPlaying(pid) != pausing }) {
+                say("\(pausing ? "Paused" : "Played") it with the Play/Pause key (it's Now Playing).")
+                finish(0)
+            }
+            tried.append("pressed the Play/Pause key, but it didn't change in 6 s")
+        case "panel":
+            if isPlaying(pid) != pausing {
+                say("It's \(pausing ? "paused" : "playing") already.")
+                finish(0)
+            }
+            guard pressInPanel(pid: pid, pausing: pausing) else {
+                tried.append(panelProblem ?? "couldn't press its row in the Now Playing panel")
+                continue
+            }
+            if within({ isPlaying(pid) != pausing }) {
+                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
+                finish(0)
+            }
+            tried.append("pressed a row in the Now Playing panel ('\(panelRowText ?? "")'), but it didn't change in 6 s")
         default:
-            tried.append("no way called '\(way)' (script, menu or page)")
+            tried.append("no way called '\(way)' (script, menu, page, key or panel)")
         }
     }
     say("Couldn't \(action) it: " + tried.joined(separator: "; ") + ".")
@@ -959,10 +1186,10 @@ if let action {
 
 // MARK: - Ways to control it
 
-/// One line per way known to control an app, each with a mark: ✓ it works
-/// (tried, or the key reaches it now), ? found but not tried (--press while
-/// it plays), ✗ not there or didn't work, – not checked. The Player Check
-/// app shows this section as a checklist.
+/// One line per way known to control an app, each with a mark: ✓ it worked
+/// in the test, ✗ not there or didn't work, ? found but not tried (read
+/// only, or it didn't play), – not checked. The Player Check app shows this
+/// section as a checklist.
 func way(_ mark: String, _ text: String) { say("  \(mark) \(text)") }
 say()
 say("Ways to control it")
@@ -971,7 +1198,7 @@ if let scripting {
         switch scriptTookPause {
         case true?: way("✓", "AppleScript: pausing and playing it by script worked, as Spotify and Apple Music")
         case false?: way("✗", "AppleScript: its scripted pause didn't take")
-        case nil: way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (not tried)")
+        case nil: way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
         }
     } else if scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
         way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC)")
@@ -990,7 +1217,7 @@ if running == nil {
     switch menuTookPress {
     case true?: way("✓", "\(found): pressing it paused and played it, as TIDAL and Apple Podcasts")
     case false?: way("✗", "\(found): pressing it changed nothing")
-    case nil: way("?", "\(found): first item '\(menu.toggleTitle)' (not tried)")
+    case nil: way("?", "\(found): first item '\(menu.toggleTitle)' (\(notTried))")
     }
 } else {
     way("✗", "Playback menu: none with Play/Pause and Previous/Next")
@@ -1004,14 +1231,26 @@ if let pageNotChecked {
         switch pageTookPress {
         case true?: way("✓", "\(found): pressing it paused and played it")
         case false?: way("✗", "\(found): pressing it changed nothing")
-        case nil: way("?", "\(found) (not tried)")
+        case nil: way("?", "\(found) (\(notTried))")
         }
     } else {
         way("✗", "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
     }
 }
-way(keyWay.mark, keyWay.text)
-way("–", "Now Playing panel (menu bar): not checked here; its rows play and pause any app listed there")
+if let keyTookPress {
+    way(keyTookPress ? "✓" : "✗", "Play/Pause key: " + (keyTookPress ? "pressing it paused and played it (it reaches the Now Playing app)"
+                                                                     : keyProblem ?? "pressing it changed nothing"))
+} else {
+    way(keyWay.mark, keyWay.text + (keyWay.mark == "?" ? " (\(notTried))" : ""))
+}
+if let panelTookPress {
+    way(panelTookPress ? "✓" : "✗", "Now Playing panel: " + (panelTookPress ? "pressing its row ('\(panelRowText ?? "")') paused and played it"
+                                                                         : panelProblem ?? "pressing its row changed nothing"))
+} else if running == nil {
+    way("–", "Now Playing panel: not checked (it isn't running)")
+} else {
+    way("?", "Now Playing panel: its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
+}
 
 // MARK: - Verdict
 
@@ -1028,7 +1267,7 @@ if isWebApp {
     if !stateNotes.isEmpty {
         say("  State notification: \(stateNotes.joined(separator: ", ")).")
     } else if notifications == nil {
-        say("  Its state notification (with \"Player State\") isn't known yet: run with --press while it plays.")
+        say("  Its state notification (with \"Player State\") isn't known yet: check it again while it plays.")
     } else {
         say("  No state notification with \"Player State\" under the usual names: unless it has one under another,")
         say("  its state must be read once a second (PolledStateObserver), so the profile needs that option.")
@@ -1043,7 +1282,7 @@ if isWebApp {
     case false?:
         say("  Its menu has Play/Pause, but pressing it didn't take (as Deezer's menu): not controllable that way.")
     case nil:
-        say("  Probably a menu player, like TIDAL and Apple Podcasts (menu '\(menu!.title)'): confirm with --press while it plays.")
+        say("  Probably a menu player, like TIDAL and Apple Podcasts (menu '\(menu!.title)'): confirm by testing it while it plays.")
         if !menu!.asAutoHushFindsIt { say("  AutoHush would also have to find the menu by \(menu!.arrows), not only ⌘← ⌘→.") }
     }
     if let scripting, scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
@@ -1079,7 +1318,7 @@ if let page {
         case false?:
             say("  \(its) has Play/Pause ('\(toggle.label)'), but pressing it didn't take: check by ear.")
         case nil:
-            say("  \(its) has Play/Pause ('\(toggle.label)'): confirm with --press while it plays.")
+            say("  \(its) has Play/Pause ('\(toggle.label)'): confirm by testing it while it plays.")
         }
         if !page.withControls {
             say("  But no player's slider is around it: likely a song's own button, not a player bar (is a song loaded,")

@@ -22,24 +22,27 @@ app is signed ad hoc, for your own Mac.
   one the Play/Pause key reaches, "In Now Playing: Paused", or
   "Registered" for an app ready for it that never said it plays. A green
   dot: it's running. "checked": it has a check (they're kept between
-  launches, in `~/Library/Application Support/Player Check/`). Search by
+  launches, in `~/Library/Application Support/Player Check/`; those from
+  before every check tested every way are dropped). Search by
   name; the arrow in the toolbar looks again.
 - **Checking:** choose an app, then **Check…**, and confirm. An app that
-  isn't running is opened first, in the background. **Also pause it and
-  play it again with each way found** tries each way while the app plays
-  (start a song first). **Stop** ends a check.
-- **The results:** "Ways to control it" as a checklist (✓ works, ? found
-  but not tried, ✗ not there or didn't work, – not checked), "For
+  isn't running is opened first, in the background. The check tests each
+  way to control it (AppleScript, its playback menu, its page's button, the
+  Play/Pause key and the menu bar's Now Playing panel), pausing the app and
+  playing it again by each. It needs the app playing: if it isn't, an
+  orange request asks you to start it, and the test goes on by itself as
+  soon as it plays (up to 2 minutes). **Stop** ends a check.
+- **The results:** "Ways to control it" as a checklist (✓ worked in the
+  test, ✗ not there or didn't work, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
   **Copy Report** copies.
 - **Play and Pause:** an app with a known way to control it gets **Play**
-  and **Pause** buttons: once its check found a way (AppleScript, its
-  playback menu or its page's button), or before any check when the app
-  shows one (a scripting dictionary with play and pause, a Safari web app,
-  an Electron app). They use the way that worked in its check; otherwise
-  they try AppleScript, the page's button, then the menu, in turn. Each way
-  in the checklist that can play and pause has its own two buttons, to try
-  that one alone. The result shows under the buttons ("Paused it with its
+  and **Pause** buttons: once its check found a way, or before any check
+  when the app shows one (a scripting dictionary with play and pause, a
+  Safari web app, an Electron app). They use the first way that worked in
+  its check; otherwise they try AppleScript, the page's button, then the
+  menu, in turn. Each way in the checklist that worked has its own two
+  buttons, to use that one alone. The result shows under the buttons ("Paused it with its
   page's 'Pause current' button."). The app must be running.
 
 ## Permissions

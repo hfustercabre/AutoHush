@@ -276,11 +276,14 @@ struct Way: Identifiable {
     }
 
     /// Its playercheck --via, for the ways that can play and pause: AppleScript
-    /// (only as Spotify's: VLC-like commands aren't used), the menu, the page.
+    /// (only as Spotify's: VLC-like commands aren't used), the menu, the page,
+    /// the Play/Pause key, the Now Playing panel.
     var via: String? {
         if title == "AppleScript", !detail.contains("not as Spotify") { return "script" }
         if title.hasPrefix("Playback menu") { return "menu" }
         if title.hasPrefix("Page button") { return "page" }
+        if title == "Play/Pause key" { return "key" }
+        if title == "Now Playing panel" { return "panel" }
         return nil
     }
     /// A way to play and pause with: it worked in the check, or was found.
@@ -301,10 +304,15 @@ struct Report {
         return Array(lines[(start + 1)...].prefix { $0.hasPrefix(" ") })
     }
     var ways: [Way] { section("Ways to control it").enumerated().compactMap { Way(id: $0.offset, line: $0.element) } }
-    /// The verdict, its "--press" as this window's checkbox.
     var verdict: String {
         section("Verdict").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
-            .replacingOccurrences(of: "with --press", with: "with pausing turned on")
+    }
+    /// What playercheck asks of whoever runs it while it waits ("start
+    /// playing something in Deezer; …"): the app must play for the test.
+    var request: String? {
+        guard state == .checking, let last = lines.last, last.hasPrefix("  waiting: ") else { return nil }
+        let text = last.dropFirst("  waiting: ".count)
+        return text.prefix(1).uppercased() + text.dropFirst()
     }
     /// The whole report, with a blank line before each heading.
     var text: String {
@@ -347,13 +355,18 @@ final class Checker {
         let lines: [String]
         let pressed: Bool
         let date: Date
+        /// The checks' kind: 2 from when every check tests every way. Older
+        /// ones (nil) are dropped: their ✓ could mean "Now Playing now".
+        var version: Int? = SavedReport.currentVersion
+        static let currentVersion = 2
     }
     private static let savedReports = URL.applicationSupportDirectory.appending(path: "Player Check/reports.json")
 
     private func loadReports() {
         guard let data = try? Data(contentsOf: Self.savedReports),
               let saved = try? JSONDecoder().decode([String: SavedReport].self, from: data) else { return }
-        reports = saved.mapValues { Report(state: .finished, pressed: $0.pressed, lines: $0.lines, date: $0.date) }
+        reports = saved.filter { $0.value.version == SavedReport.currentVersion }
+            .mapValues { Report(state: .finished, pressed: $0.pressed, lines: $0.lines, date: $0.date) }
     }
 
     private func saveReports() {
@@ -467,11 +480,11 @@ final class Checker {
 
     /// Opens the app when it isn't running (and gives it time to load its
     /// window and page), then runs playercheck on it.
-    func check(_ app: InstalledApp, press: Bool) {
+    func check(_ app: InstalledApp) {
         guard !isBusy, let tool else { return }
         checkingID = app.id
         let opening = !isRunning(app)
-        reports[app.id] = Report(state: opening ? .opening : .checking, pressed: press)
+        reports[app.id] = Report(state: opening ? .opening : .checking, pressed: true)
         Task {
             if opening {
                 let configuration = NSWorkspace.OpenConfiguration()
@@ -488,14 +501,14 @@ final class Checker {
                 reports[app.id]?.state = .checking
                 refreshRunning()
             }
-            await run(tool, on: app, press: press)
+            await run(tool, on: app)
         }
     }
 
-    private func run(_ tool: URL, on app: InstalledApp, press: Bool) async {
+    private func run(_ tool: URL, on app: InstalledApp) async {
         let process = Process()
         process.executableURL = tool
-        process.arguments = [app.url.path] + (press ? ["--press"] : [])
+        process.arguments = [app.url.path]
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
@@ -672,7 +685,6 @@ struct AppRow: View {
 struct AppDetail: View {
     let app: InstalledApp
     let checker: Checker
-    @State private var press = false
     @State private var confirming = false
     @State private var showsReport = false
 
@@ -692,7 +704,7 @@ struct AppDetail: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .alert("Check “\(app.name)”?", isPresented: $confirming) {
-            Button(checker.isRunning(app) ? "Check" : "Open and Check") { checker.check(app, press: press) }
+            Button(checker.isRunning(app) ? "Check" : "Open and Check") { checker.check(app) }
                 .keyboardShortcut(.defaultAction)
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -738,10 +750,6 @@ struct AppDetail: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Toggle("Also pause it and play it again with each way found", isOn: $press)
-                .disabled(isChecking)
-            Text("Only while it's playing: start a song first. Without it, nothing is pressed.")
-                .font(.caption).foregroundStyle(.secondary)
             HStack {
                 Button(report == nil ? "Check…" : "Check Again…") { confirming = true }
                     .buttonStyle(.borderedProminent)
@@ -749,9 +757,19 @@ struct AppDetail: View {
                 if isChecking {
                     Button("Stop") { checker.stop() }
                     ProgressView().controlSize(.small)
-                    Text(report?.state == .opening ? "Opening \(app.name)…" : "Checking…")
+                    Text(report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…" : "Checking…")
                         .foregroundStyle(.secondary)
                 }
+            }
+            if isChecking, let request = report?.request {
+                // The test needs the app playing: the check asks, then goes on by itself.
+                Label(request, systemImage: "play.circle")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.orange)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if checker.tool == nil {
                 Text("playercheck is missing from this app: build it with build.sh.").foregroundStyle(.red)
@@ -792,6 +810,8 @@ struct AppDetail: View {
         case "script": "AppleScript"
         case "menu": "its playback menu"
         case "page": "its page's button"
+        case "key": "the Play/Pause key"
+        case "panel": "its row in the Now Playing panel"
         default: "the first way that works"
         }
     }
@@ -801,8 +821,8 @@ struct AppDetail: View {
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing"
             + (app.isSafariWebApp || app.electronVersion != nil ? ", and its page's buttons." : "."))
+        parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the Play/Pause key and the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
         if app.electronVersion != nil { parts.append("Electron's accessibility switch is turned on for the check, and back off after.") }
-        if press { parts.append("If it's playing, each way found pauses it and plays it again.") }
         return parts.joined(separator: " ")
     }
 
@@ -821,7 +841,7 @@ struct AppDetail: View {
                         ? { checker.control(app, $0, via: way.via) } : nil,
                            isBusy: checker.isBusy)
                 }
-                Text("✓ works  ·  ? found, not tried (turn on pausing while it plays)  ·  ✗ not there or didn't work  ·  – not checked")
+                Text("✓ worked in the test  ·  ✗ not there or didn't work  ·  ? not tried  ·  – not checked")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -849,7 +869,7 @@ struct AppDetail: View {
             }
             .padding(.top, 6)
         } label: {
-            Text("Full report" + (report.pressed ? " (with pausing)" : "")).font(.headline)
+            Text("Full report").font(.headline)
         }
     }
 }

@@ -5,19 +5,20 @@ plays, then play it again), and which kind of player it would be, so it
 could be added as the README's [Adding a media player](../../README.md#architecture)
 says. It reads the app's scripting dictionary, its playback menu, where its
 sound comes from, whether it's Now Playing and, for a Safari web app or an
-Electron app (Deezer, TIDAL), the Play/Pause button of its page. It ends
-with a checklist of the ways it could be controlled, and can also play or
-pause the app. [Player Check](../PlayerCheckApp) does all of this from a
+Electron app (Deezer, TIDAL), the Play/Pause button of its page. Then it
+tests each way to control it, pausing the app and playing it again by each
+(asking you to start it first if it isn't playing), and ends with a
+checklist of what worked. It can also just play or pause the app. [Player Check](../PlayerCheckApp) does all of this from a
 window.
 
 ## Use
 
 ```bash
 swiftc -O -o playercheck Tools/PlayerCheck/playercheck.swift
-./playercheck Spotify                    # by name, bundle ID or path; reads only
-./playercheck Spotify --press            # while it plays: also pauses and plays it once, each way it found
+./playercheck Spotify                    # by name, bundle ID or path: checks it and tests each way
+./playercheck Spotify --read-only        # checks it without pressing anything
 ./playercheck Spotify --pause            # just pauses it (--play: plays it), by the first way that works
-./playercheck Deezer --play --via page   # by that way only: script, menu or page
+./playercheck Deezer --play --via page   # by that way only: script, menu, page, key or panel
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now
 ```
 
@@ -26,7 +27,7 @@ for the menu and page checks, and macOS asks once per app for
 **Automation** the first time it reads or controls that app by AppleScript.
 The app must be running for everything but its scripting dictionary.
 
-Example, with Spotify playing:
+Example, with Spotify paused at the start:
 
 ```
 Spotify 1.3.4.258 (com.spotify.client)
@@ -40,22 +41,29 @@ Sound and Now Playing
   sound output running now: Spotify (com.spotify.client, pid 394)
   Now Playing: this app (the Play/Pause key reaches it, until another app reports playing)
 Press test
+  waiting: start playing something in Spotify; the test goes on as soon as it plays (up to 2 minutes)
+  it plays: testing
   by script: before, menu 'Pause', state playing, sound on
     after the pause: menu 'Pause', state paused, sound on → it paused
+    after playing again: menu 'Pause', state playing, sound on
   by its menu: …
+  by the Play/Pause key: …
+  by the Now Playing panel: …
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
+
 Ways to control it
   ✓ AppleScript: pausing and playing it by script worked, as Spotify and Apple Music
-  …
-  ✓ Play/Pause key: it's Now Playing, so the key reaches it (until another app reports playing)
-  …
+  ✓ Playback menu 'Playback': pressing it paused and played it, as TIDAL and Apple Podcasts
+  – Page button: not checked (neither a web app nor an Electron app)
+  ✓ Play/Pause key: pressing it paused and played it (it reaches the Now Playing app)
+  ✓ Now Playing panel: pressing its row ('Leave Forever, Hayes & Y – Departures') paused and played it
 Verdict
   Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode("spfy").
   It has a volume: measure its curve (swift run measure-volume-curve com.spotify.client).
   State notification: com.spotify.client.PlaybackStateChanged.
 ```
 
-Deezer's app (7.1.340, Electron 38.4.0) with `--press`, while it plays:
+Deezer's app (7.1.340, Electron 38.4.0), while it plays:
 
 ```
 Page buttons
@@ -65,11 +73,18 @@ Page buttons
 
 Press test
   by its menu: before, menu 'Pause', page 'Pause', sound on
-    after the pause: menu 'Pause', page 'Pause', sound on → nothing changed in 4 s: it didn't take, or can't be seen
+    after the pause: menu 'Pause', page 'Pause', sound on → it didn't pause in 4 s
   by its page's button: before, menu 'Pause', page 'Pause', sound on
     after the pause: menu 'Pause', page 'Play', sound on → it paused
     after playing again: menu 'Pause', page 'Pause', sound on
   …
+Ways to control it
+  ✗ AppleScript: no scripting dictionary
+  ✗ Playback menu 'Play' (found by ⇧← ⇧→, not ⌘← ⌘→): pressing it changed nothing
+  ✓ Page button, with Electron's switch on: 'Pause': pressing it paused and played it
+  ✓ Play/Pause key: pressing it paused and played it (it reaches the Now Playing app)
+  ✓ Now Playing panel: pressing its row ('Another One Bites The Dust, Queen – The Game') paused and played it
+
 Verdict
   Its menu has Play/Pause, but pressing it didn't take (as Deezer's menu): not controllable that way.
   With Electron's switch on, its page's Play/Pause works: it could be a player that learns that button,
@@ -141,16 +156,30 @@ Everything is read from outside the app, as AutoHush itself would:
   closed there's no page at all (Deezer plays on without one): open it and
   run again.
 
-With `--press`, and only while the app plays (its scripted state says
-playing, or its sound is on), it pauses the app once by script (when the
-dictionary fits), once with its menu's first item and once with its page's
-Pause, each time watching for 4 s whether the menu's or the page's word,
-the scripted state or the sound changed, then plays it again. A pause that
-changed nothing it can see isn't undone: nothing may have happened (Deezer's
-app ignores menu presses), or the app may have paused without showing it,
-so check by ear. Electron apps keep their sound on a few seconds after a
-pause, and Deezer's menu updates its word late, so there only the page's
-word shows it at once.
+**The test** (unless `--read-only`) tries each way while the app plays. If
+it isn't playing, it asks ("waiting: start playing something in Deezer")
+and goes on by itself as soon as it plays, up to 2 minutes; it asks again
+if a way leaves it stopped. Each way pauses the app, then plays it again:
+
+1. AppleScript: its pause and play commands (when its dictionary fits).
+2. Its playback menu's first item.
+3. Its page's Pause, then Play.
+4. The keyboard's Play/Pause key, posted as a person would press it: only
+   while the app is Now Playing, since macOS sends the key to that app.
+5. Its row in the menu bar's Now Playing panel (Control Center's): the
+   panel opens for about half a second, and takes the keyboard meanwhile.
+   Its rows don't name their apps, so the app's row is the one sharing
+   most words with its windows' titles (the song) or its name, else the
+   only one showing Pause; a wrong row pressed is pressed again, so that
+   app plays on.
+
+Each pause is judged by the surest sign the app has: its AppleScript
+state, else its page's button (Play while paused), else its menu's word or
+its sound. (Electron apps keep their sound on a few seconds after a pause,
+and Deezer's menu word changes late by itself: it said Play while playing,
+then Pause, with nothing pressed.) A pause that didn't show isn't undone:
+nothing may have happened (Deezer's app ignores menu presses), or the app
+may have paused without showing it, so check by ear.
 
 Meanwhile it listens for the app's state notification under the usual names
 (`<bundle ID>.PlaybackStateChanged`, `<bundle ID>.playerInfo` and a few
@@ -162,32 +191,34 @@ read once a second (`PolledStateObserver`).
 ## Ways to control it
 
 The report ends, before the verdict, with one line per way known to
-control an app, each with a mark: ✓ it works (tried, or the Play/Pause key
-reaches it now), ? found but not tried (`--press` while it plays), ✗ not
-there or didn't work, – not checked. The ways: AppleScript, the playback
-menu, the page's button, the Play/Pause key (it reaches only the app that's
-Now Playing), and the Now Playing panel in the menu bar (its rows play and
-pause any app listed there; not checked by this tool). Player Check shows
-that section as a checklist.
+control an app, each with a mark: ✓ it worked in the test, ✗ not there or
+didn't work, ? found but not tried (`--read-only`, or it didn't play), –
+not checked (it doesn't apply, or the app isn't running). The ways are the
+five above. Player Check shows that section as a checklist.
 
 ## Playing and pausing (`--play`, `--pause`)
 
 The checks run silently, then it plays or pauses the app by the way named
-with `--via` (`script`, `menu` or `page`), or else tries AppleScript (as
-Spotify's), the page's button, then the menu, and prints one line: what it
+with `--via` (`script`, `menu`, `page`, `key` or `panel`), or else tries
+AppleScript (as Spotify's), the page's button, then the menu (the key and
+the panel only when named: they can reach another app, and the panel shows
+on screen), and prints one line: what it
 did and what changed ("Paused it by AppleScript (pause): its state is
 paused."), that it was that way already, or why none worked. It exits 0
 when it's played or paused, 1 when not. AppleScript and the page's buttons
 say play or pause; the menu's first item toggles, so it's pressed only when
 the sound says the app is the other way (an Electron app's sound stays on
-a few seconds after a pause: that's why the page comes first). Each way is
-confirmed within 4 s: the scripted state, the page's button's word, or the
-menu's word or the sound.
+a few seconds after a pause: that's why the page comes first). The key is
+pressed only while the app is Now Playing. Each way is confirmed within
+6 s: the scripted state, the page's button's word, or the menu's word or
+the sound.
 
 Tested on macOS 27 (2026-10-11): Spotify by AppleScript (1–2 s), Deezer by
 its page's buttons (its window covered by others), SoundCloud's web app by
 its bar's "Play current" and "Pause current", and Deezer's menu failing as
-it should ("pressed its menu's 'Pause', but nothing changed in 4 s").
+it should. The full test passed every way that applies on Spotify
+(AppleScript, menu, key, panel), Deezer (page, key, panel; its menu fails)
+and SoundCloud (page, key, panel).
 
 ## The apps in Now Playing (`--now-playing-list`)
 
