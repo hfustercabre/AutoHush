@@ -44,7 +44,7 @@ struct InstalledApp: Identifiable, Hashable {
     let isChromeWebApp: Bool
     let electronVersion: String?
     /// Why it can be in Now Playing, from what it's built with; nil when
-    /// nothing shows it can.
+    /// nothing shows it can (playercheck --now-playing-reasons).
     let nowPlayingReason: String?
     /// Its scripting dictionary has play and pause commands.
     let scriptsPlayAndPause: Bool
@@ -60,8 +60,9 @@ struct InstalledApp: Identifiable, Hashable {
     }
 
     /// Every .app in the Applications folders and their subfolders (not
-    /// inside other apps), by name.
-    static func scan() -> [InstalledApp] {
+    /// inside other apps), by name. Why each can be in Now Playing comes from
+    /// `tool` (playercheck), asked once for them all.
+    static func scan(tool: URL?) -> [InstalledApp] {
         var found: [InstalledApp] = []
         for root in Root.allCases {
             let base = root.url.standardizedFileURL.path
@@ -88,12 +89,26 @@ struct InstalledApp: Identifiable, Hashable {
                 found.append(InstalledApp(url: url, name: name, bundleID: bundleID, root: root, subfolder: subfolder,
                                           isSafariWebApp: bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
                                           isChromeWebApp: bundleID?.hasPrefix("com.google.Chrome.app.") == true,
-                                          electronVersion: electronVersion,
-                                          nowPlayingReason: nowPlayingReason(of: url, bundleID: bundleID),
+                                          electronVersion: electronVersion, nowPlayingReason: nil,
                                           scriptsPlayAndPause: scriptsPlayAndPause(url)))
             }
         }
-        return found.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var reasons: [String: String] = [:]
+        if let tool, !found.isEmpty {
+            let (status, output) = Checker.runAndWait(tool, ["--now-playing-reasons"] + found.map(\.url.path))
+            if status == 0 {
+                for line in output.split(separator: "\n") {
+                    let parts = line.split(separator: "\t", maxSplits: 1).map(String.init)
+                    if parts.count == 2 { reasons[parts[0]] = parts[1] }
+                }
+            }
+        }
+        return found.map { app in
+            InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
+                         isSafariWebApp: app.isSafariWebApp, isChromeWebApp: app.isChromeWebApp,
+                         electronVersion: app.electronVersion, nowPlayingReason: reasons[app.url.path],
+                         scriptsPlayAndPause: app.scriptsPlayAndPause)
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     /// Whether its scripting dictionary (the .sdef its Info.plist names, read
@@ -107,115 +122,6 @@ struct InstalledApp: Identifiable, Hashable {
         else { return false }
         let names = Set(((try? document.nodes(forXPath: "//command/@name")) ?? []).compactMap { $0.stringValue?.lowercased() })
         return names.contains("play") && names.contains("pause")
-    }
-
-    /// An app gets into Now Playing through MediaPlayer (MPNowPlayingInfoCenter
-    /// and MPRemoteCommandCenter, the public way; Chromium and Electron use it
-    /// too), MediaRemote (Apple's apps), AVKit's player view (a video it
-    /// plays), or WebKit (Safari and its web apps, whose pages report through
-    /// WebKit's media process). So: the frameworks its binaries link, those
-    /// in Contents/MacOS (VLC's is a plugin there) and its own frameworks'.
-    static func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
-        if bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true { return "WebKit, as a Safari web app" }
-        if bundleID == "com.apple.Safari" || bundleID?.hasPrefix("com.apple.SafariTechnologyPreview") == true { return "WebKit" }
-        var binaries: [URL] = []
-        let fileManager = FileManager.default
-        if let items = fileManager.enumerator(at: url.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {
-            for case let item as URL in items where (try? item.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
-                binaries.append(item)
-            }
-        }
-        let frameworks = url.appendingPathComponent("Contents/Frameworks")
-        for framework in (try? fileManager.contentsOfDirectory(at: frameworks, includingPropertiesForKeys: nil)) ?? []
-        where framework.pathExtension == "framework" {
-            binaries.append(framework.appendingPathComponent(framework.deletingPathExtension().lastPathComponent))
-        }
-        var mediaPlayerIn: String?
-        var others = Set<String>()
-        for binary in binaries {
-            let linked = MachO.frameworks(binary)
-            if linked.contains("MediaPlayer"), mediaPlayerIn == nil { mediaPlayerIn = binary.lastPathComponent }
-            others.formUnion(linked.intersection(["MediaRemote", "AVKit"]))
-        }
-        switch mediaPlayerIn {
-        case "Electron Framework"?: return "MediaPlayer, through Electron"
-        case "Chromium Embedded Framework"?: return "MediaPlayer, through Chromium (CEF)"
-        case let name? where name.hasSuffix(" Framework"): return "MediaPlayer, through \(name)"
-        case _?: return "MediaPlayer"
-        case nil: break
-        }
-        if others.contains("MediaRemote") { return "MediaRemote" }
-        if others.contains("AVKit") { return "AVKit, for videos it plays" }
-        return nil
-    }
-}
-
-/// Reads which frameworks a Mach-O file links, from its load commands.
-enum MachO {
-    /// "MediaPlayer" for /System/Library/Frameworks/MediaPlayer.framework/…,
-    /// from the arm64 slice of a universal file (else its first); empty for
-    /// a file that isn't 64-bit Mach-O.
-    static func frameworks(_ url: URL) -> Set<String> {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return [] }
-        defer { try? handle.close() }
-        func read(_ offset: UInt64, _ count: Int) -> Data? {
-            guard (try? handle.seek(toOffset: offset)) != nil,
-                  let data = try? handle.read(upToCount: count), data.count == count else { return nil }
-            return data
-        }
-        guard let head = read(0, 8) else { return [] }
-        var slice: UInt64 = 0
-        switch head.word(0) {
-        case 0xbeba_feca, 0xbfba_feca: // a universal file (FAT_MAGIC, FAT_MAGIC_64, big-endian)
-            let wide = head.word(0) == 0xbfba_feca
-            let count = Int(head.word(4, bigEndian: true)), size = wide ? 32 : 20
-            guard (1...16).contains(count), let table = read(8, count * size) else { return [] }
-            var chosen: UInt64?
-            for index in 0..<count {
-                let base = index * size
-                let offset = wide ? UInt64(table.word(base + 8, bigEndian: true)) << 32 | UInt64(table.word(base + 12, bigEndian: true))
-                                  : UInt64(table.word(base + 8, bigEndian: true))
-                if table.word(base, bigEndian: true) == 0x0100_000c { chosen = offset; break } // arm64
-                if chosen == nil { chosen = offset }
-            }
-            slice = chosen ?? 0
-        case 0xfeed_facf: // MH_MAGIC_64
-            break
-        default:
-            return []
-        }
-        guard let header = read(slice, 32), header.word(0) == 0xfeed_facf else { return [] }
-        let commands = Int(header.word(16)), size = Int(header.word(20))
-        guard size < 1 << 22, let table = read(slice + 32, size) else { return [] }
-        // LC_LOAD_DYLIB, LC_LOAD_WEAK_DYLIB, LC_REEXPORT_DYLIB, LC_LAZY_LOAD_DYLIB, LC_LOAD_UPWARD_DYLIB
-        let linking: Set<UInt32> = [0xc, 0x8000_0018, 0x8000_001f, 0x20, 0x8000_0023]
-        var names = Set<String>()
-        var offset = 0
-        for _ in 0..<commands {
-            guard offset + 12 <= table.count else { break }
-            let length = Int(table.word(offset + 4))
-            guard length >= 12, offset + length <= table.count else { break }
-            if linking.contains(table.word(offset)) {
-                let start = offset + Int(table.word(offset + 8))
-                if start < offset + length {
-                    let path = String(decoding: table[start..<(offset + length)].prefix { $0 != 0 }, as: UTF8.self)
-                    if let end = path.range(of: ".framework/"), let name = path[..<end.lowerBound].split(separator: "/").last {
-                        names.insert(String(name))
-                    }
-                }
-            }
-            offset += length
-        }
-        return names
-    }
-}
-
-extension Data {
-    /// The 32-bit number at `offset` (Mach-O headers are little-endian, a
-    /// universal file's table big-endian).
-    func word(_ offset: Int, bigEndian: Bool = false) -> UInt32 {
-        let value = withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt32.self) }
-        return bigEndian ? UInt32(bigEndian: value) : value
     }
 }
 
@@ -278,8 +184,10 @@ struct Way: Identifiable {
     }
 
     /// Its playercheck --via, for the ways that can play and pause: AppleScript
-    /// (only as Spotify's: VLC-like commands aren't used), the menu, the page,
-    /// the Now Playing panel.
+    /// once it worked in the check, whatever its kind (`--via script` handles
+    /// VLC's toggling play too), but before that only as Spotify's (commands
+    /// of their own kind, not tried, aren't offered); the menu, the page, the
+    /// Now Playing panel.
     var via: String? {
         if title == "AppleScript", !detail.contains("not as Spotify") { return "script" }
         if title.hasPrefix("Playback menu") { return "menu" }
@@ -350,6 +258,8 @@ final class Checker {
     /// When the list was last read: the next read asks only for what changed
     /// since (the first reads macOS's log since the Mac started).
     private var clientsReadAt: Date?
+    /// A read asked for while another ran (true: a full one), done after it.
+    private var readAgain: Bool?
     /// The last Play or Pause per app: what playercheck said, and whether it
     /// worked (nil while it runs).
     var controls: [InstalledApp.ID: (text: String, worked: Bool?)] = [:]
@@ -442,8 +352,9 @@ final class Checker {
 
     func scan() {
         isScanning = true
+        let tool = self.tool
         Task {
-            let found = await Task.detached { InstalledApp.scan() }.value
+            let found = await Task.detached { InstalledApp.scan(tool: tool) }.value
             apps = found
             isScanning = false
         }
@@ -455,8 +366,12 @@ final class Checker {
     /// Mac started: seconds on a Mac up for days) at first and when asked,
     /// else only what changed since the last read.
     func readClients(full: Bool = false) {
-        guard !isReadingClients, let tool else {
-            if tool == nil { clientsProblem = "playercheck is missing from this app: build it with build.sh." }
+        guard let tool else {
+            clientsProblem = "playercheck is missing from this app: build it with build.sh."
+            return
+        }
+        guard !isReadingClients else {
+            readAgain = (readAgain ?? false) || full
             return
         }
         isReadingClients = true
@@ -496,6 +411,10 @@ final class Checker {
                     + output.trimmingCharacters(in: .whitespacesAndNewlines) + " (it needs an administrator account)."
             }
             isReadingClients = false
+            if let again = readAgain {
+                readAgain = nil
+                readClients(full: again)
+            }
         }
     }
 
@@ -561,7 +480,9 @@ final class Checker {
         } else if let report = reports[id], let previous = finished[id] {
             switch report.state {
             case .stopped: attemptNotes[id] = "The check was stopped: the last finished check is shown."
-            case .failed(let reason): attemptNotes[id] = "\(reason). The last finished check is shown."
+            case .failed(let reason):
+                // macOS's messages end with a full stop already.
+                attemptNotes[id] = (reason.hasSuffix(".") ? String(reason.dropLast()) : reason) + ". The last finished check is shown."
             default: break
             }
             reports[id] = previous
@@ -582,7 +503,7 @@ final class Checker {
             try process.run()
         } catch {
             reports[app.id]?.state = .failed("Couldn't run playercheck: \(error.localizedDescription)")
-            checkingID = nil
+            endAttempt(app.id)
             return
         }
         self.process = process

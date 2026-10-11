@@ -15,6 +15,8 @@
 //                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>",
 //                                                      then "#active\t<pid>"
 //   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
+//   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing: "<path>\t<reason>"
+//                                                      (empty when nothing shows it can), as Player Check lists them
 // Build: swiftc -O -o playercheck playercheck.swift
 import AppKit
 import ApplicationServices
@@ -31,6 +33,10 @@ func say(_ line: String = "") {
     fflush(stdout)
 }
 func fail(_ line: String) -> Never { FileHandle.standardError.write(Data("playercheck: \(line)\n".utf8)); exit(1) }
+// Whoever reads the output may go first (Player Check quitting mid-check):
+// writing then fails quietly, and a test that paused the app still plays
+// it again and puts back what it changed, instead of being killed.
+signal(SIGPIPE, SIG_IGN)
 
 // MARK: - Now Playing (MediaRemote, read only)
 
@@ -188,17 +194,27 @@ func printNowPlayingList() -> Never {
 
 if CommandLine.arguments.dropFirst().first == "--now-playing-list" { printNowPlayingList() }
 
+/// --now-playing-reasons <app path>…: for the Player Check app's list, a
+/// line per app, "<path>\t<why it can be in Now Playing, or nothing>".
+if CommandLine.arguments.dropFirst().first == "--now-playing-reasons" {
+    for path in CommandLine.arguments.dropFirst(2) {
+        let url = URL(fileURLWithPath: path)
+        print(path + "\t" + (nowPlayingReason(of: url, bundleID: Bundle(url: url)?.bundleIdentifier) ?? ""))
+    }
+    exit(0)
+}
+
 // MARK: - The app
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard let target = arguments.first(where: { !$0.hasPrefix("--") }) else {
     fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|panel]]")
 }
-/// --read-only: the checks without the test (--press, the old way to ask
-/// for the test, is the default now).
+/// --read-only: the checks without the test.
 let readOnly = arguments.contains("--read-only")
-/// --play or --pause: does just that, by `via` (script, menu or page), else
-/// by the first way that works: AppleScript, the page's button, the menu.
+/// --play or --pause: does just that, by `via` (script, menu, page or
+/// panel), else by the first way that works: AppleScript, the page's button,
+/// the menu.
 let action = arguments.contains("--play") ? "play" : arguments.contains("--pause") ? "pause" : nil
 let via = arguments.firstIndex(of: "--via").flatMap { $0 + 1 < arguments.count ? arguments[$0 + 1] : nil }
 quiet = action != nil
@@ -328,6 +344,11 @@ typealias RemoteTokenFunction = @convention(c) (CFData) -> Unmanaged<AXUIElement
 let remoteToken: RemoteTokenFunction? = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_AXUIElementCreateWithRemoteToken")
     .map { unsafeBitCast($0, to: RemoteTokenFunction.self) }
 
+/// The windows last found on other desktops: the search takes about 70 ms
+/// (up to 1 s), and pages are read every quarter second, so they're kept
+/// for 10 s while each still answers as a window.
+var otherDesktopWindows: (pid: pid_t, windows: [AXUIElement], found: Date)?
+
 /// The app's windows on this desktop, else, as AutoHush finds them, on
 /// any other (`onThisDesktop` false: not on screen, so nothing there can be
 /// hit-tested). A token names one element of a process: its pid, 0, the
@@ -338,6 +359,10 @@ func appWindows(of pid: pid_t) -> (windows: [AXUIElement], onThisDesktop: Bool) 
     AXUIElementSetMessagingTimeout(app, 1)
     let shown = app.value(kAXWindowsAttribute) as? [AXUIElement] ?? []
     guard shown.isEmpty, let remoteToken else { return (shown, true) }
+    if let kept = otherDesktopWindows, kept.pid == pid, Date().timeIntervalSince(kept.found) < 10,
+       !kept.windows.isEmpty, kept.windows.allSatisfy({ $0.text(kAXRoleAttribute) == kAXWindowRole }) {
+        return (kept.windows, false)
+    }
     let deadline = Date().addingTimeInterval(1)
     var token = Data(count: 20)
     token.replaceSubrange(0..<4, with: withUnsafeBytes(of: pid) { Data($0) })
@@ -349,6 +374,7 @@ func appWindows(of pid: pid_t) -> (windows: [AXUIElement], onThisDesktop: Bool) 
         AXUIElementSetMessagingTimeout(element, 0.3)
         if element.text(kAXRoleAttribute) == kAXWindowRole { found.append(element) }
     }
+    otherDesktopWindows = (pid, found, Date())
     return (found, false)
 }
 
@@ -742,6 +768,8 @@ if !isWebApp, electronVersion == nil {
         let pid = running!.processIdentifier
         var count = before.count
         var shownAfter: TimeInterval?
+        /// How long the page was waited for, in seconds.
+        var waitedFor = 0
         var refused = false
         if electronVersion != nil {
             // Reading the switch back answers 0 even while it's on (Deezer), so
@@ -761,7 +789,8 @@ if !isWebApp, electronVersion == nil {
             // the switch is on (Deezer: about 2 s), a web app's once something
             // first asks for it (YouTube Music, just opened: 0 buttons at the
             // first look, 36 a few seconds later).
-            var waited = waitForPage(pid, seconds: electronVersion != nil ? 4 : 8)
+            waitedFor = electronVersion != nil ? 4 : 8
+            var waited = waitForPage(pid, seconds: Double(waitedFor))
             if waited.count == 0, electronVersion != nil {
                 // Electron builds the page only while its window can be seen
                 // (Deezer's, covered by other windows: no page); once built,
@@ -772,6 +801,7 @@ if !isWebApp, electronVersion == nil {
                 bringForward(appURL)
                 broughtForward = true
                 waited = waitForPage(pid, seconds: 6)
+                waitedFor += 6
                 if let url = stopState.frontToRestore {
                     bringForward(url)
                     stopState.frontToRestore = nil
@@ -784,8 +814,8 @@ if !isWebApp, electronVersion == nil {
         if refused {
             pageNotChecked = "Electron's switch was refused"
         } else if count == 0 {
-            say(electronVersion != nil ? "  AXManualAccessibility accepted, but no page showed in 8 s: it doesn't open its page this way"
-                                       : "  its page showed no buttons in 8 s: is the site loaded?")
+            say(electronVersion != nil ? "  AXManualAccessibility accepted, but no page showed in \(waitedFor) s: it doesn't open its page this way"
+                                       : "  its page showed no buttons in \(waitedFor) s: is the site loaded?")
             page = PageCheck(buttons: 0, toggle: nil)
         } else {
             let readStart = Date()
@@ -829,18 +859,25 @@ func noteScriptError(_ number: Any?) {
 
 /// The app's state by script, when its dictionary has it and it answers:
 /// its `player state` (stopped, playing, paused, as Spotify's), else its
-/// `playing` flag (VLC's: playing or paused). The first error is said once
-/// (-1743: no Automation permission for whatever runs this tool).
+/// `playing` flag (VLC's: playing or paused). Only macOS refusing it (-1743:
+/// no Automation permission for whatever runs this tool) stops the asking;
+/// another error (a timeout, -1712, from a busy VLC) counts for that look
+/// only. Each kind of error is said once.
 var scriptError: Any?
+var scriptErrorsSaid: Set<String> = []
 func scriptedState() -> String? {
     guard let scripting, scripting.hasPlayerState || scripting.hasPlayingFlag, scriptError == nil else { return nil }
     let question = scripting.hasPlayerState ? "get player state as string" : "get playing"
     var error: NSDictionary?
     let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(question)")?.executeAndReturnError(&error)
     if let error {
-        scriptError = error[NSAppleScript.errorNumber] ?? "?"
-        noteScriptError(scriptError)
-        say("  its state can't be read by script: error \(scriptError!)")
+        let number = error[NSAppleScript.errorNumber] ?? "?"
+        noteScriptError(number)
+        let refused = (number as? Int) == -1743
+        if refused { scriptError = number }
+        if scriptErrorsSaid.insert("\(number)").inserted {
+            say("  its state can't be read by script: error \(number)" + (refused ? "" : " (asked again at the next look)"))
+        }
         return nil
     }
     guard let result else { return nil }
@@ -976,19 +1013,16 @@ func waitFor(_ seconds: Double, pid: pid_t, until done: (Look) -> Bool) -> Look 
 /// didn't pause.
 enum TrialResult { case worked, pausedOnly, didNotPause }
 
-/// Pauses with `pause`, sees whether it took, plays again with `play` if it
-/// did; `undo` runs when it didn't (a press that may have hit another app).
-/// Judged by the surest sign it has at the start: its scripted state, else
-/// what it reports to Now Playing, else its page's button (Play while
-/// paused), else its menu's word or its sound. (Deezer's menu word changes
-/// late by itself: it said Play while playing, then Pause a second later,
-/// with nothing pressed.) A stop meanwhile waits until it plays again.
-func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, undo: (() -> Void)? = nil) -> TrialResult {
-    stopState.setInTrial(true)
-    defer { stopState.setInTrial(false) }
-    let before = look(pid)
-    let byState = before.state != nil, byReport = !byState && before.reported != nil
-    let byPage = !byState && !byReport && before.pageToggle != nil
+/// Whether a press took, judged by the surest sign the app had before it:
+/// its scripted state, else what it reports to Now Playing, else its page's
+/// button (Play while paused), else its menu's word or its sound. (Deezer's
+/// menu word changes late by itself: it said Play while playing, then Pause
+/// a second later, with nothing pressed.)
+struct Sign {
+    let before: Look
+    var byState: Bool { before.state != nil }
+    var byReport: Bool { !byState && before.reported != nil }
+    var byPage: Bool { !byState && !byReport && before.pageToggle != nil }
     func paused(_ now: Look) -> Bool {
         if byState { return now.state != nil && now.state != "playing" }
         if byReport { return now.reported != nil && now.reported != "Playing" }
@@ -1001,6 +1035,17 @@ func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, und
         if byPage { return now.pageToggle.map { named($0, pauseWords) } ?? false }
         return now.sounding
     }
+}
+
+/// Pauses with `pause`, sees whether it took (`Sign`), plays again with
+/// `play` if it did; `undo` runs when it didn't (a press that may have hit
+/// another app). A stop meanwhile waits until it plays again.
+func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, undo: (() -> Void)? = nil) -> TrialResult {
+    stopState.setInTrial(true)
+    defer { stopState.setInTrial(false) }
+    let before = look(pid)
+    let sign = Sign(before: before)
+    let paused = sign.paused, playing = sign.playing
     say("  \(label): before, \(before.line)")
     guard pause() else { say("    couldn't send it"); return .didNotPause }
     let after = waitFor(4, pid: pid, until: paused)
@@ -1063,8 +1108,8 @@ func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
 
 /// The frameworks a Mach-O file links ("MediaPlayer" for
 /// /System/Library/Frameworks/MediaPlayer.framework/…), from its load
-/// commands: the arm64 slice of a universal file, else its first. As Player
-/// Check reads them to list the apps that can be in Now Playing.
+/// commands: the arm64 slice of a universal file, else its first; empty
+/// for a file that isn't 64-bit Mach-O.
 func linkedFrameworks(_ url: URL) -> Set<String> {
     guard let handle = try? FileHandle(forReadingFrom: url) else { return [] }
     defer { try? handle.close() }
@@ -1120,25 +1165,51 @@ func linkedFrameworks(_ url: URL) -> Set<String> {
     return names
 }
 
-/// Whether anything in it can report to Now Playing (so it may have a row
-/// in the Now Playing panel, and report its state): a Safari web app, an Electron
-/// app, or a binary of it (in Contents/MacOS, or its own frameworks) linking
-/// MediaPlayer, MediaRemote or AVKit.
-let canBeNowPlaying: Bool = {
-    if isWebApp || electronVersion != nil || bundleID == "com.apple.Safari" { return true }
+/// Why an app can be in Now Playing, from what it's built with; nil when
+/// nothing shows it can. An app gets in through MediaPlayer
+/// (MPNowPlayingInfoCenter and MPRemoteCommandCenter, the public way;
+/// Chromium and Electron use it too), MediaRemote (Apple's apps), AVKit's
+/// player view (a video it plays), or WebKit (Safari and its web apps, whose
+/// pages report through WebKit's media process). So: the frameworks its
+/// binaries link, those in Contents/MacOS (VLC's is a plugin there) and its
+/// own frameworks'. The Player Check app lists the apps by it
+/// (`--now-playing-reasons`).
+func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
+    if bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true { return "WebKit, as a Safari web app" }
+    if bundleID == "com.apple.Safari" || bundleID?.hasPrefix("com.apple.SafariTechnologyPreview") == true { return "WebKit" }
     var binaries: [URL] = []
-    if let items = FileManager.default.enumerator(at: appURL.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {
+    if let items = FileManager.default.enumerator(at: url.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {
         for case let item as URL in items where (try? item.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
             binaries.append(item)
         }
     }
-    for framework in (try? FileManager.default.contentsOfDirectory(at: appURL.appendingPathComponent("Contents/Frameworks"),
+    for framework in (try? FileManager.default.contentsOfDirectory(at: url.appendingPathComponent("Contents/Frameworks"),
                                                                     includingPropertiesForKeys: nil)) ?? []
     where framework.pathExtension == "framework" {
         binaries.append(framework.appendingPathComponent(framework.deletingPathExtension().lastPathComponent))
     }
-    return binaries.contains { !linkedFrameworks($0).isDisjoint(with: ["MediaPlayer", "MediaRemote", "AVKit"]) }
-}()
+    var mediaPlayerIn: String?
+    var others = Set<String>()
+    for binary in binaries {
+        let linked = linkedFrameworks(binary)
+        if linked.contains("MediaPlayer"), mediaPlayerIn == nil { mediaPlayerIn = binary.lastPathComponent }
+        others.formUnion(linked.intersection(["MediaRemote", "AVKit"]))
+    }
+    switch mediaPlayerIn {
+    case "Electron Framework"?: return "MediaPlayer, through Electron"
+    case "Chromium Embedded Framework"?: return "MediaPlayer, through Chromium (CEF)"
+    case let name? where name.hasSuffix(" Framework"): return "MediaPlayer, through \(name)"
+    case _?: return "MediaPlayer"
+    case nil: break
+    }
+    if others.contains("MediaRemote") { return "MediaRemote" }
+    if others.contains("AVKit") { return "AVKit, for videos it plays" }
+    return nil
+}
+
+/// Whether anything in it can report to Now Playing (so it may have a row
+/// in the Now Playing panel, and report its state).
+let canBeNowPlaying = nowPlayingReason(of: appURL, bundleID: bundleID) != nil
 
 // MARK: What it reports to Now Playing
 
@@ -1153,6 +1224,8 @@ final class ReportedState: @unchecked Sendable {
     private let lock = NSLock()
     private var clients: [pid_t: NowPlayingClient] = [:]
     private var buffer = Data()
+    /// The stream ended: what's known may be old, so nothing is said.
+    private var ended = false
 
     /// Nil when the log can't be read (it needs an administrator).
     init?(appID: String, since start: Date) {
@@ -1164,8 +1237,19 @@ final class ReportedState: @unchecked Sendable {
         let pipe = Pipe()
         stream.standardOutput = pipe
         stream.standardError = FileHandle.nullDevice
-        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in self?.take(handle.availableData) }
+        // At its end (the stream ended, or this tool stopped it) the handler
+        // would be called again and again with nothing: it's removed.
+        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            guard !data.isEmpty else {
+                handle.readabilityHandler = nil
+                self?.lock.withLock { self?.ended = true }
+                return
+            }
+            self?.take(data)
+        }
         guard (try? stream.run()) != nil, let store = try? OSLogStore.local() else {
+            pipe.fileHandleForReading.readabilityHandler = nil
             if stream.isRunning { stream.terminate() }
             return nil
         }
@@ -1173,8 +1257,18 @@ final class ReportedState: @unchecked Sendable {
         atexit { if stopState.streamPID > 0 { kill(stopState.streamPID, SIGTERM) } }
         var past: [pid_t: NowPlayingClient] = [:]
         _ = readNowPlayingLog(store, from: start, into: &past)
-        // What came live meanwhile is newer.
-        lock.withLock { clients.merge(past) { live, _ in live } }
+        // What came live meanwhile is newer, but only for what it says: a
+        // live line with no state (a client created again) keeps the state
+        // read from the past.
+        lock.withLock {
+            clients.merge(past) { live, old in
+                var client = live
+                if client.state == nil { client.state = old.state; client.changed = old.changed }
+                if client.name.isEmpty { client.name = old.name }
+                if old.id.count > client.id.count { client.id = old.id }
+                return client
+            }
+        }
     }
 
     /// Lines from `log stream`, one JSON object each.
@@ -1193,10 +1287,11 @@ final class ReportedState: @unchecked Sendable {
 
     /// Its latest state ("Playing", "Paused", "Stopped"…): the latest of its
     /// processes still there (a web app's is WebKit's media process); nil
-    /// while none of them reported one.
+    /// while none of them reported one, or once the stream ended.
     var state: String? {
         lock.withLock {
-            clients.values
+            guard !ended else { return nil }
+            return clients.values
                 .filter { $0.appID == appID && $0.state != nil && !$0.removed && (kill($0.pid, 0) == 0 || errno == EPERM) }
                 .max { ($0.changed ?? .distantPast) < ($1.changed ?? .distantPast) }?.state
         }
@@ -1575,24 +1670,27 @@ if let action {
                 continue
             }
             // Its first item toggles, so it's pressed only when it's the
-            // other way: as its script or its report to Now Playing says,
-            // else its page or its sound (an Electron app's sound stays on a
-            // few seconds after a pause).
-            if isPlaying(pid) != pausing {
+            // other way; judged as a test judges it (`Sign`): its menu's word
+            // counts only for an app with no surer sign, as Deezer's changes
+            // late by itself.
+            let before = look(pid)
+            let sign = Sign(before: before)
+            let done = { (now: Look) in pausing ? sign.paused(now) : sign.playing(now) }
+            if done(before) {
                 say("It's \(pausing ? "paused" : "playing") already.")
                 finish(0)
             }
-            let before = playbackMenu(pid: pid)?.toggleTitle
+            let word = before.menuTitle ?? ""
             guard let item = playbackMenu(pid: pid)?.toggle,
                   AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else {
                 tried.append("couldn't press its menu's first item")
                 continue
             }
-            if within({ isPlaying(pid) != pausing || playbackMenu(pid: pid)?.toggleTitle != before }) {
-                say("\(pausing ? "Paused" : "Played") it with its '\(menu.title)' menu's '\(before ?? "")'.")
+            if within({ done(look(pid)) }) {
+                say("\(pausing ? "Paused" : "Played") it with its '\(menu.title)' menu's '\(word)'.")
                 finish(0)
             }
-            tried.append("pressed its menu's '\(before ?? "")', but nothing changed in 6 s")
+            tried.append("pressed its menu's '\(word)', but nothing changed in 6 s")
         case "panel":
             if isPlaying(pid) != pausing {
                 say("It's \(pausing ? "paused" : "playing") already.")
@@ -1779,8 +1877,8 @@ if let page {
             say("  is someone signed in?). Run it again with a song playing.")
         }
     } else {
-        say("  \(its) shows \(page.buttons) buttons, but none in sight is named Play or Pause: see them with pagebuttons")
-        say("  (its language may not be one this tool knows, or its player may be hidden).")
+        say("  \(its) shows \(page.buttons) buttons, but none in sight is named Play or Pause: see them with Accessibility Inspector")
+        say("  (in Xcode: Open Developer Tool; its language may not be one this tool knows, or its player may be hidden).")
     }
 }
 

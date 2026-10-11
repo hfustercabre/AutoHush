@@ -84,7 +84,8 @@ and Apple's own apps carry private MediaRemote entitlements. An app joins
 Now Playing only while it runs, through its code. So Player Check reads the
 frameworks the app's binaries link (their Mach-O load commands: everything
 in `Contents/MacOS`, where VLC's is a plugin, and the app's own
-frameworks):
+frameworks), through playercheck's `--now-playing-reasons`: the same rule
+its checks use.
 
 | Reason shown | Linked | For example (macOS 27) |
 |---|---|---|

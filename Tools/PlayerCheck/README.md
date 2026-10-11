@@ -21,6 +21,7 @@ swiftc -O -o playercheck Tools/PlayerCheck/playercheck.swift
 ./playercheck Deezer --play --via page   # by that way only: script, menu, page or panel
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now
 ./playercheck --now-playing-list --since 1760180000   # only what changed since then (apps gone: Removed)
+./playercheck --now-playing-reasons /Applications/Spotify.app   # why each app can be in Now Playing (Player Check's list)
 ```
 
 Whatever runs it (Terminal, say) needs the **Accessibility** permission
