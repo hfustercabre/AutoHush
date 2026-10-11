@@ -11,7 +11,16 @@ open "Player Check.app"
 ```
 
 `build.sh` takes a folder to build into (the current one by default). The
-app is signed ad hoc, for your own Mac.
+app is signed ad hoc, for your own Mac, unless `SIGNING_IDENTITY` names a
+code signing certificate in your keychain (for example "AutoHush
+Self-Signed", made by `Scripts/create-signing-certificate.sh`):
+
+```bash
+SIGNING_IDENTITY="AutoHush Self-Signed" sh Tools/PlayerCheckApp/build.sh
+```
+
+macOS knows an ad hoc build by its content, so each rebuild is a new app
+to it and loses its permissions; one signed with a certificate keeps them.
 
 ## Using it
 
@@ -53,8 +62,9 @@ app is signed ad hoc, for your own Mac.
 
 - **Accessibility**, for Player Check: reading menus and pages, pressing
   them, and Electron's switch. PlayerCheck runs inside it and shares it.
-  Without it, a note links to System Settings. It's signed ad hoc, so after
-  rebuilding it macOS may ask for it again.
+  Without it, a note links to System Settings. Signed ad hoc, a rebuilt
+  one needs it again; signed with a certificate (`SIGNING_IDENTITY`, above),
+  it keeps it.
 - **Automation**, asked by macOS the first time it reads or controls an
   app by AppleScript.
 - **An administrator account** for the "In Now Playing Now" section: it

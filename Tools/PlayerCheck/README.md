@@ -137,7 +137,10 @@ Everything is read from outside the app, as AutoHush itself would:
   for the page (Deezer's: about 2 s), and reads the buttons as AutoHush
   reads a Safari web app's: each window's `AXWebArea`, then
   `AXUIElementsForSearchPredicate`, each button named by its description,
-  else its title.
+  else its title. The windows are those on the current desktop, else, as
+  AutoHush finds them, those on another (macOS's window list holds only the
+  current desktop's; the undocumented HIServices function
+  `_AXUIElementCreateWithRemoteToken` reaches the rest).
 - **Which button is the player's:** as AutoHush's learning ranks them:
   named Play or Pause, alone or first (SoundCloud's bar says "Pause
   current"; in English, Spanish, Catalan and a few more: the `playWords`
@@ -146,7 +149,8 @@ Everything is read from outside the app, as AutoHush itself would:
   inside the window (Electron squeezes what's scrolled out of the window to
   no height at its edge); not covered means macOS's hit test at its middle,
   within the app, finds it (song tiles under Deezer's and SoundCloud's
-  player bars sit lower than the bar's button, but under it).
+  player bars sit lower than the bar's button, but under it). A window on
+  another desktop isn't on screen, so its buttons aren't hit-tested.
 - **Electron's switch, set back:** reading it always answers 0, so it
   counts as off when the page wasn't readable before; then it's set back
   off at the end (also when the tool is stopped with Ctrl-C), and otherwise

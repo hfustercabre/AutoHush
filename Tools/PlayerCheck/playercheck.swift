@@ -306,6 +306,38 @@ extension AXUIElement {
     }
 }
 
+/// The undocumented HIServices function `_AXUIElementCreateWithRemoteToken`,
+/// as AutoHush uses it (AccessibilityWindows): an app's windows on every
+/// desktop, where `kAXWindowsAttribute` lists only those on the current one.
+/// Nil if a macOS update removes it.
+typealias RemoteTokenFunction = @convention(c) (CFData) -> Unmanaged<AXUIElement>?
+let remoteToken: RemoteTokenFunction? = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_AXUIElementCreateWithRemoteToken")
+    .map { unsafeBitCast($0, to: RemoteTokenFunction.self) }
+
+/// The app's windows on this desktop, else, as AutoHush finds them, on
+/// any other (`onThisDesktop` false: not on screen, so nothing there can be
+/// hit-tested). A token names one element of a process: its pid, 0, the
+/// magic number "coco" and the element's number; its windows have low
+/// numbers, so the first 1000 are tried (about 70 ms), for 1 s at most.
+func appWindows(of pid: pid_t) -> (windows: [AXUIElement], onThisDesktop: Bool) {
+    let app = AXUIElementCreateApplication(pid)
+    AXUIElementSetMessagingTimeout(app, 1)
+    let shown = app.value(kAXWindowsAttribute) as? [AXUIElement] ?? []
+    guard shown.isEmpty, let remoteToken else { return (shown, true) }
+    let deadline = Date().addingTimeInterval(1)
+    var token = Data(count: 20)
+    token.replaceSubrange(0..<4, with: withUnsafeBytes(of: pid) { Data($0) })
+    token.replaceSubrange(8..<12, with: withUnsafeBytes(of: Int32(0x636f_636f)) { Data($0) })
+    var found: [AXUIElement] = []
+    for number in UInt64(0)..<1000 where Date() < deadline {
+        token.replaceSubrange(12..<20, with: withUnsafeBytes(of: number) { Data($0) })
+        guard let element = remoteToken(token as CFData)?.takeRetainedValue() else { continue }
+        AXUIElementSetMessagingTimeout(element, 0.3)
+        if element.text(kAXRoleAttribute) == kAXWindowRole { found.append(element) }
+    }
+    return (found, false)
+}
+
 struct PlaybackMenu {
     let title: String
     let toggle: AXUIElement
@@ -486,15 +518,15 @@ struct PageButton {
     /// Inside its window. One scrolled out of an Electron window is squeezed
     /// to no height at the window's edge (Deezer's song tiles), so it isn't.
     let inSight: Bool
+    /// In a window on this desktop: on screen, so it can be hit-tested.
+    let onThisDesktop: Bool
 }
 
 /// The buttons of the pages in the app's windows, found as AutoHush's web
-/// app reader finds them (each window's AXWebArea, then
-/// AXUIElementsForSearchPredicate); nil when it has no window.
+/// app reader finds them (each window's AXWebArea on this desktop, else on
+/// another, then AXUIElementsForSearchPredicate); nil when it has no window.
 func pageButtons(pid: pid_t) -> [PageButton]? {
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 1)
-    let windows = app.value(kAXWindowsAttribute) as? [AXUIElement] ?? []
+    let (windows, onThisDesktop) = appWindows(of: pid)
     guard !windows.isEmpty else { return nil }
     func webAreas(in element: AXUIElement, depth: Int = 0) -> [AXUIElement] {
         if element.text(kAXRoleAttribute) == "AXWebArea" { return [element] }
@@ -516,7 +548,8 @@ func pageButtons(pid: pid_t) -> [PageButton]? {
                                   label: [element.text(kAXDescriptionAttribute), element.title].first { !$0.isEmpty } ?? "",
                                   fromBottom: frame.map { Double(windowFrame.maxY - $0.midY) },
                                   inSight: frame.map { $0.width > 0 && $0.height > 0
-                                      && (windowFrame.minY...windowFrame.maxY).contains($0.midY) } ?? false)
+                                      && (windowFrame.minY...windowFrame.maxY).contains($0.midY) } ?? false,
+                                  onThisDesktop: onThisDesktop)
             }
         }
     }
@@ -550,6 +583,8 @@ func playerBar(of element: AXUIElement) -> AXUIElement? {
 /// Song tiles scrolled under a player bar (Deezer's, SoundCloud's) are in
 /// the window, lower than the bar's own button, but covered.
 func isUncovered(_ button: PageButton, pid: pid_t) -> Bool {
+    // On another desktop it isn't on screen: whatever is there here would answer.
+    guard button.onThisDesktop else { return true }
     guard let frame = button.element.frame else { return false }
     var hit: AXUIElement?
     guard AXUIElementCopyElementAtPosition(AXUIElementCreateApplication(pid), Float(frame.midX), Float(frame.midY), &hit) == .success,
@@ -761,8 +796,8 @@ if !isWebApp, electronVersion == nil {
     } else {
         // Deezer keeps playing with its window closed, and its page can't be
         // read then, not even through windows on other desktops.
-        say("  not checked: no window open on this desktop; open it here and run again (a closed window's page can't be read)")
-        pageNotChecked = "no window open on this desktop"
+        say("  not checked: no window open on any desktop; open it and run again (a closed window's page can't be read)")
+        pageNotChecked = "no window open"
     }
 }
 
@@ -1155,12 +1190,19 @@ func normalized(_ text: String) -> String {
     text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
 }
 
-/// A row's song: its text before ", <artist> – <album>" ("TIDAL,  – " for
-/// a session with no song, which shows its app's name).
-func song(ofRow text: String) -> String {
-    guard let dash = text.range(of: " –", options: .backwards),
-          let comma = text.range(of: ", ", options: .backwards, range: text.startIndex..<dash.lowerBound) else { return text }
-    return String(text[..<comma.lowerBound])
+/// What a row's song can be: its text up to each ", " ahead of " – <album>",
+/// since the song and the artist may both hold commas ("…(JAKE DILE
+/// REWORK), Jake Dile - Mixes, Bootlegs, Mashups – "); the whole text
+/// without one ("QuickTime Player"). A session with no song shows its app's
+/// name ("TIDAL,  – ").
+func songs(ofRow text: String) -> [String] {
+    let end = text.range(of: " –", options: .backwards)?.lowerBound ?? text.endIndex
+    var songs: [String] = [], from = text.startIndex
+    while let comma = text.range(of: ", ", range: from..<end) {
+        songs.append(String(text[..<comma.lowerBound]))
+        from = comma.upperBound
+    }
+    return songs.isEmpty ? [text] : songs
 }
 
 /// The texts of the page's player bar (the song and the artist, where
@@ -1189,10 +1231,11 @@ func appRows(_ rows: [PanelRow], texts: [String]) -> [PanelRow] {
     let others = Set(NSWorkspace.shared.runningApplications.compactMap { $0.localizedName.map(normalized) }).subtracting([own])
     let haystack = texts.map { " \(normalized($0)) " }
     return rows.filter { row in
-        let shown = normalized(song(ofRow: row.text))
-        if shown == own { return true }
-        guard shown.count >= 3, !others.contains(shown) else { return false }
-        return haystack.contains { $0.contains(" \(shown) ") }
+        songs(ofRow: row.text).map(normalized).contains { shown in
+            if shown == own { return true }
+            guard shown.count >= 3, !others.contains(shown) else { return false }
+            return haystack.contains { $0.contains(" \(shown) ") }
+        }
     }
 }
 
@@ -1216,7 +1259,7 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
     // Read before the panel opens: a page takes a moment.
     var texts: [String] = []
     if choice != .lastOnly {
-        texts = (AXUIElementCreateApplication(pid).value(kAXWindowsAttribute) as? [AXUIElement] ?? []).map(\.title)
+        texts = appWindows(of: pid).windows.map(\.title)
         if isWebApp || electronVersion != nil { texts += playerBarTexts(pid) }
         if let song = scriptedSong() { texts.append(song) }
     }
