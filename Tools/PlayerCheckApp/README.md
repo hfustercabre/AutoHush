@@ -28,19 +28,21 @@ to it and loses its permissions; one signed with a certificate keeps them.
   Safari web apps are) and `/System/Applications`, subfolders included,
   that can be in Now Playing (see below). Those macOS lists in Now Playing
   right now come first, with their state: "Now Playing (Playing)" for the
-  one the Play/Pause key reaches, "In Now Playing: Paused", or
+  active one, "In Now Playing: Paused", or
   "Registered" for an app ready for it that never said it plays. A green
   dot: it's running. "checked": it has a finished check (kept between
   launches, in `~/Library/Application Support/Player Check/`; those from
-  before every check tested every way are dropped). Search by name. The
+  before the Play/Pause key stopped being a way are dropped). Search by name. The
   list of Now Playing apps is read in full when Player Check opens and when
   the arrow in the toolbar looks again; after a check or a Play/Pause, only
   what changed is read.
 - **Checking:** choose an app, then **Check…**, and confirm. An app that
   isn't running is opened first, in the background. The check tests each
-  way to control it (AppleScript, its playback menu, its page's button, the
-  Play/Pause key and the menu bar's Now Playing panel), pausing the app and
-  playing it again by each. It needs the app playing: if it isn't, an
+  way to control it (AppleScript, its playback menu, its page's button and
+  the menu bar's Now Playing panel), pausing the app and playing it again
+  by each. The keyboard's Play/Pause key isn't one: macOS sends it only to
+  the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
+  player, the app that started playing may hold Now Playing). It needs the app playing: if it isn't, an
   orange request asks you to start it, and the test goes on by itself as
   soon as it plays (up to 2 minutes). **Stop** ends a check (if a test had
   paused the app, it's played again first). A check stopped or failed

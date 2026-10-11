@@ -9,7 +9,7 @@
 //                                                      and plays it once by each (asking for it to be
 //                                                      started first when it isn't playing)
 //   playercheck <app> --read-only                      checks it without pressing anything
-//   playercheck <app> --play|--pause [--via script|menu|page]
+//   playercheck <app> --play|--pause [--via script|menu|page|panel]
 //                                                      just plays or pauses it, by that way or the first that works
 //   playercheck --now-playing-list [hours]             the apps macOS keeps in Now Playing, from its log
 //                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>",
@@ -145,7 +145,7 @@ func applyNowPlayingLine(_ message: String, at date: Date, to clients: inout [pi
 
 /// The apps macOS keeps in Now Playing, one tab-separated line each:
 /// bundle ID, process, last state (or Registered: ready for Now Playing,
-/// never said it plays), 1 for the one the Play/Pause key reaches, name.
+/// never said it plays), 1 for the active one (the Now Playing app), name.
 /// Unentitled apps can't ask MediaRemote for that list (since macOS 15.4),
 /// so it's read from what MediaRemote's daemon writes in macOS's log since
 /// the Mac started (or the last `hours`): each client it creates, each
@@ -192,7 +192,7 @@ if CommandLine.arguments.dropFirst().first == "--now-playing-list" { printNowPla
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard let target = arguments.first(where: { !$0.hasPrefix("--") }) else {
-    fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|key|panel]]")
+    fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|panel]]")
 }
 /// --read-only: the checks without the test (--press, the old way to ask
 /// for the test, is the default now).
@@ -470,10 +470,6 @@ func soundProcesses(of pid: pid_t) -> [String] {
     }.sorted()
 }
 
-/// The Play/Pause key's line in "Ways to control it": it reaches only the
-/// app macOS counts as Now Playing.
-var keyWay = (mark: "–", text: "Play/Pause key: not checked (it isn't running)")
-
 say()
 say("Sound and Now Playing")
 if let running {
@@ -483,11 +479,8 @@ if let running {
     let holds = holder > 0 && (holder == running.processIdentifier || responsible(holder) == running.processIdentifier)
     let other = holder == 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
     say("  Now Playing: " + (holder < 0 ? "MediaRemote didn't answer"
-        : holds ? "this app (the Play/Pause key reaches it, until another app reports playing)"
+        : holds ? "this app (until another app reports playing)"
         : holder == 0 ? "no app" : "another app (\(other))"))
-    keyWay = holder < 0 ? ("–", "Play/Pause key: not checked (MediaRemote didn't answer)")
-        : holds ? ("?", "Play/Pause key: it's Now Playing now, so the key would reach it")
-        : ("?", "Play/Pause key: it isn't Now Playing now (\(other) is); the key reaches it only once it reports playing")
 } else {
     say("  not checked: the app isn't running")
 }
@@ -1057,22 +1050,6 @@ func waitUntilPlaying(_ pid: pid_t, seconds: Double = 120) -> Bool {
     return false
 }
 
-/// The keyboard's Play/Pause key, pressed as a user would (as AutoHush's
-/// learning does): macOS sends it to the app it counts as Now Playing.
-func pressPlayPauseKey() {
-    for down in [true, false] {
-        let state = down ? 0xA : 0xB
-        // NX_KEYTYPE_PLAY (16), in IOKit's ev_keymap.h.
-        NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: NSEvent.ModifierFlags(rawValue: UInt(state) << 8),
-                           timestamp: 0, windowNumber: 0, context: nil, subtype: 8, data1: (16 << 16) | (state << 8), data2: -1)?
-            .cgEvent?.post(tap: .cghidEventTap)
-    }
-}
-
-/// Why the key can't be posted: macOS drops it silently without access.
-let keyPostProblem: String? = CGPreflightPostEventAccess() ? nil
-    : "macOS doesn't let this tool (or the app running it) post keys: allow it in System Settings → Privacy & Security → Accessibility"
-
 /// Whether the app (or a helper that plays for it) is the Now Playing one;
 /// else which app is (or that MediaRemote didn't answer).
 func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
@@ -1143,8 +1120,8 @@ func linkedFrameworks(_ url: URL) -> Set<String> {
     return names
 }
 
-/// Whether anything in it can report to Now Playing (so the Play/Pause key
-/// and the Now Playing panel may reach it): a Safari web app, an Electron
+/// Whether anything in it can report to Now Playing (so it may have a row
+/// in the Now Playing panel, and report its state): a Safari web app, an Electron
 /// app, or a binary of it (in Contents/MacOS, or its own frameworks) linking
 /// MediaPlayer, MediaRemote or AVKit.
 let canBeNowPlaying: Bool = {
@@ -1254,8 +1231,7 @@ func pageButtonToPress(pid: pid_t, pausing: Bool) -> PageButton? {
     if reportedState() != nil, let bar = playerButton(pid: pid, named: playPauseWords), bar.withControls { return bar.button }
     return wanted?.button
 }
-let notNowPlaying = "nothing in it reports to Now Playing, so neither the Play/Pause key nor the Now Playing panel can reach it"
-let keyNotNowPlaying = "nothing in it reports to Now Playing, so the key can't reach it"
+let notNowPlaying = "nothing in it reports to Now Playing, so the Now Playing panel can't reach it"
 let panelNotNowPlaying = "nothing in it reports to Now Playing, so it has no row in the panel"
 
 // MARK: The menu bar's Now Playing panel
@@ -1435,10 +1411,7 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
 var scriptResult: TrialResult?
 var menuResult: TrialResult?
 var pageResult: TrialResult?
-var keyResult: TrialResult?
 var panelResult: TrialResult?
-/// Why the Play/Pause key wasn't pressed (or not twice), when it wasn't.
-var keyProblem: String?
 /// Why a way wasn't tried, for "Ways to control it".
 var notTried = readOnly ? "not tried: read only" : "not tried"
 var notifications: NotificationLog?
@@ -1449,7 +1422,7 @@ if testing {
     if running == nil {
         say("  not run: the app isn't running")
     } else if script == nil, menu == nil, page?.toggle == nil, !canBeNowPlaying {
-        // Nothing to press, and nothing for the key or the panel to reach:
+        // Nothing to press, and nothing for the panel to reach:
         // asking for it to play would only wait.
         say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and \(notNowPlaying)")
         notTried = "not tried: nothing to press"
@@ -1496,39 +1469,10 @@ if testing {
             RunLoop.main.run(until: Date().addingTimeInterval(1))
         }
         if !canBeNowPlaying {
-            keyProblem = keyNotNowPlaying
             panelProblem = panelNotNowPlaying
-            say("  the Play/Pause key and the Now Playing panel: not pressed: \(notNowPlaying)")
-            keyResult = .didNotPause
+            say("  the Now Playing panel: not pressed: \(notNowPlaying)")
             panelResult = .didNotPause
         } else {
-            if let keyPostProblem {
-                keyProblem = keyPostProblem
-                say("  by the Play/Pause key: not pressed: \(keyPostProblem)")
-                keyResult = .didNotPause
-            } else if ready() {
-                // The key goes to the Now Playing app: pressed only while it's
-                // this one, both times (another may take it meanwhile, as an
-                // app resuming its music when this one pauses).
-                let holder = nowPlayingHolder(pid)
-                if holder.isThisApp {
-                    keyResult = trial("by the Play/Pause key", pid: pid, pause: { pressPlayPauseKey(); return true }, play: {
-                        let holder = nowPlayingHolder(pid)
-                        guard holder.isThisApp else {
-                            keyProblem = "it paused, but before the second press it wasn't Now Playing any more (\(holder.other)), so the key would have gone there"
-                            return false
-                        }
-                        pressPlayPauseKey()
-                        return true
-                    })
-                } else {
-                    keyProblem = "it isn't Now Playing while it plays (\(holder.other)), so the key goes there"
-                    say("  by the Play/Pause key: not pressed: \(keyProblem!)")
-                    keyResult = .didNotPause
-                }
-                stopIfRequested()
-                RunLoop.main.run(until: Date().addingTimeInterval(1))
-            }
             if ready() {
                 panelResult = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
                                     play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
@@ -1649,27 +1593,6 @@ if let action {
                 finish(0)
             }
             tried.append("pressed its menu's '\(before ?? "")', but nothing changed in 6 s")
-        case "key":
-            // The key goes to the Now Playing app: pressed only when it's this one.
-            if let keyPostProblem {
-                tried.append(keyPostProblem)
-                continue
-            }
-            let holder = nowPlayingHolder(pid)
-            guard holder.isThisApp else {
-                tried.append("it isn't Now Playing (\(holder.other)), so the Play/Pause key would go there")
-                continue
-            }
-            if isPlaying(pid) != pausing {
-                say("It's \(pausing ? "paused" : "playing") already.")
-                finish(0)
-            }
-            pressPlayPauseKey()
-            if within({ isPlaying(pid) != pausing }) {
-                say("\(pausing ? "Paused" : "Played") it with the Play/Pause key (it's Now Playing).")
-                finish(0)
-            }
-            tried.append("pressed the Play/Pause key, but it didn't change in 6 s")
         case "panel":
             if isPlaying(pid) != pausing {
                 say("It's \(pausing ? "paused" : "playing") already.")
@@ -1689,7 +1612,7 @@ if let action {
             tried.append("pressed a row in the Now Playing panel ('\(pressedRow)'), but it didn't change in 6 s"
                 + (putBack ? "; that row had changed, so it was pressed again to put it back" : ""))
         default:
-            tried.append("no way called '\(way)' (script, menu, page, key or panel)")
+            tried.append("no way called '\(way)' (script, menu, page or panel)")
         }
     }
     say("Couldn't \(action) it: " + tried.joined(separator: "; ") + ".")
@@ -1760,13 +1683,6 @@ if let pageNotChecked {
     } else {
         way("✗", "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
     }
-}
-if let keyResult {
-    resultLine("Play/Pause key", keyResult, problem: keyProblem)
-} else if running != nil, !canBeNowPlaying {
-    way("✗", "Play/Pause key: \(keyNotNowPlaying)")
-} else {
-    way(keyWay.mark, keyWay.text + (keyWay.mark == "?" ? " (\(notTried))" : ""))
 }
 if let panelResult {
     if panelResult == .worked {

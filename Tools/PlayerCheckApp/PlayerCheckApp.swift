@@ -229,7 +229,7 @@ struct NowPlayingClient {
     /// Its last state (Playing, Paused, Stopped…), or Registered: ready for
     /// Now Playing, never said it plays; Removed, gone (`--since` only).
     let state: String
-    /// The one the Play/Pause key reaches.
+    /// The active one: the Now Playing app.
     var isActive: Bool
 
     /// "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>"
@@ -279,12 +279,11 @@ struct Way: Identifiable {
 
     /// Its playercheck --via, for the ways that can play and pause: AppleScript
     /// (only as Spotify's: VLC-like commands aren't used), the menu, the page,
-    /// the Play/Pause key, the Now Playing panel.
+    /// the Now Playing panel.
     var via: String? {
         if title == "AppleScript", !detail.contains("not as Spotify") { return "script" }
         if title.hasPrefix("Playback menu") { return "menu" }
         if title.hasPrefix("Page button") { return "page" }
-        if title == "Play/Pause key" { return "key" }
         if title == "Now Playing panel" { return "panel" }
         return nil
     }
@@ -370,10 +369,11 @@ final class Checker {
         let lines: [String]
         let pressed: Bool
         let date: Date
-        /// The checks' kind: 2 from when every check tests every way. Older
-        /// ones (nil) are dropped: their ✓ could mean "Now Playing now".
+        /// The checks' kind: 3 from when the Play/Pause key stopped being a
+        /// way (it reaches only the Now Playing app, which AutoHush can't
+        /// choose). Older ones are dropped: they list it.
         var version: Int? = SavedReport.currentVersion
-        static let currentVersion = 2
+        static let currentVersion = 3
     }
     private static let savedReports = URL.applicationSupportDirectory.appending(path: "Player Check/reports.json")
 
@@ -876,7 +876,6 @@ struct AppDetail: View {
         case "script": "AppleScript"
         case "menu": "its playback menu"
         case "page": "its page's button"
-        case "key": "the Play/Pause key"
         case "panel": "its row in the Now Playing panel"
         default: "the first way that works"
         }
@@ -887,7 +886,7 @@ struct AppDetail: View {
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing"
             + (app.isSafariWebApp || app.electronVersion != nil ? ", and its page's buttons." : "."))
-        parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the Play/Pause key and the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
+        parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
         if app.electronVersion != nil { parts.append("Electron's accessibility switch is turned on for the check, and back off after.") }
         return parts.joined(separator: " ")
     }

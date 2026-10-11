@@ -18,7 +18,7 @@ swiftc -O -o playercheck Tools/PlayerCheck/playercheck.swift
 ./playercheck Spotify                    # by name, bundle ID or path: checks it and tests each way
 ./playercheck Spotify --read-only        # checks it without pressing anything
 ./playercheck Spotify --pause            # just pauses it (--play: plays it), by the first way that works
-./playercheck Deezer --play --via page   # by that way only: script, menu, page, key or panel
+./playercheck Deezer --play --via page   # by that way only: script, menu, page or panel
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now
 ./playercheck --now-playing-list --since 1760180000   # only what changed since then (apps gone: Removed)
 ```
@@ -40,7 +40,7 @@ Playback menu
   'Playback': first item 'Pause', enabled
 Sound and Now Playing
   sound output running now: Spotify (com.spotify.client, pid 394)
-  Now Playing: this app (the Play/Pause key reaches it, until another app reports playing)
+  Now Playing: this app (until another app reports playing)
 Press test
   waiting: start playing something in Spotify; the test goes on as soon as it plays (up to 2 minutes)
   it plays: testing
@@ -48,7 +48,6 @@ Press test
     after the pause: menu 'Pause', state paused, sound on → it paused
     after playing again: menu 'Pause', state playing, sound on
   by its menu: …
-  by the Play/Pause key: …
   by the Now Playing panel: …
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
 
@@ -56,7 +55,6 @@ Ways to control it
   ✓ AppleScript: pausing and playing it by script worked, as Spotify and Apple Music
   ✓ Playback menu 'Playback': pressing it paused and played it, as TIDAL and Apple Podcasts
   – Page button: not checked (neither a web app nor an Electron app)
-  ✓ Play/Pause key: pressing it paused and played it (it reaches the Now Playing app)
   ✓ Now Playing panel: pressing its row ('Leave Forever, Hayes & Y – Departures') paused and played it
 Verdict
   Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode("spfy").
@@ -83,7 +81,6 @@ Ways to control it
   ✗ AppleScript: no scripting dictionary
   ✗ Playback menu 'Play' (found by ⇧← ⇧→, not ⌘← ⌘→): pressing it changed nothing
   ✓ Page button, with Electron's switch on: 'Pause': pressing it paused and played it
-  ✓ Play/Pause key: pressing it paused and played it (it reaches the Now Playing app)
   ✓ Now Playing panel: pressing its row ('Another One Bites The Dust, Queen – The Game') paused and played it
 
 Verdict
@@ -171,11 +168,7 @@ if a way leaves it stopped. Each way pauses the app, then plays it again:
    named so, else one that toggles (playpause, or VLC's play).
 2. Its playback menu's first item.
 3. Its page's Pause, then Play.
-4. The keyboard's Play/Pause key, posted as a person would press it: only
-   while the app is Now Playing, since macOS sends the key to that app,
-   checked again before the second press (another app may take Now Playing
-   meanwhile, as one resuming its music when this one pauses).
-5. Its row in the menu bar's Now Playing panel (Control Center's): the
+4. Its row in the menu bar's Now Playing panel (Control Center's): the
    panel opens for about half a second, and takes the keyboard meanwhile.
    Its rows don't name their apps (the panel shows only their icons), so
    the app's row is the one whose song its windows' titles, its page's
@@ -187,13 +180,19 @@ if a way leaves it stopped. Each way pauses the app, then plays it again:
    row. Play presses the row that was paused. A row pressed that changed
    when the app didn't is pressed again, so that app is left as it was.
 
+The keyboard's Play/Pause key isn't tested: macOS sends it only to the
+Now Playing app, and AutoHush can't choose which app that is (when it
+pauses a player, the app that started playing may hold Now Playing, and
+keeps it while paused), so a key that worked in a test says nothing about
+AutoHush. Whether the app is Now Playing shows under "Sound and Now
+Playing".
+
 A way gets ✓ only when the app both paused and played again. An app with
 nothing to press and nothing that reports to Now Playing isn't tested (no
-waiting), and the key and the panel aren't pressed for an app that can't
-reach Now Playing (none of its binaries links MediaPlayer, MediaRemote or
-AVKit, as Player Check reads them). A permission macOS refuses (Automation
-for AppleScript, posting keys) is named as such, not as the app ignoring
-the way.
+waiting), and the panel isn't pressed for an app that can't reach Now
+Playing (none of its binaries links MediaPlayer, MediaRemote or AVKit, as
+Player Check reads them). A permission macOS refuses (Automation for
+AppleScript) is named as such, not as the app ignoring the way.
 
 Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, it
 plays the app again first, then stops; otherwise it stops at once. Either
@@ -236,35 +235,33 @@ five above. Player Check shows that section as a checklist.
 ## Playing and pausing (`--play`, `--pause`)
 
 The checks run silently, then it plays or pauses the app by the way named
-with `--via` (`script`, `menu`, `page`, `key` or `panel`), or else tries
-AppleScript (as Spotify's), the page's button, then the menu (the key and
-the panel only when named: they can reach another app, and the panel shows
-on screen), and prints one line: what it
+with `--via` (`script`, `menu`, `page` or `panel`), or else tries
+AppleScript (as Spotify's), the page's button, then the menu (the panel
+only when named: it shows on screen), and prints one line: what it
 did and what changed ("Paused it by AppleScript (pause): its state is
 paused."), that it was that way already, or why none worked. It exits 0
 when it's played or paused, 1 when not. AppleScript and the page's buttons
 say play or pause; the menu's first item toggles, so it's pressed only when
 the sound says the app is the other way (an Electron app's sound stays on
-a few seconds after a pause: that's why the page comes first). The key is
-pressed only while the app is Now Playing. Each way is confirmed within
-6 s: the scripted state, the page's button's word, or the menu's word or
-the sound.
+a few seconds after a pause: that's why the page comes first). Each way is
+confirmed within 6 s: the scripted state, what the app reports to Now
+Playing, the page's button's word, or the menu's word or the sound.
 
 Tested on macOS 27 (2026-10-11): Spotify by AppleScript (1–2 s), Deezer by
 its page's buttons (its window covered by others), SoundCloud's web app by
 its bar's "Play current" and "Pause current", and Deezer's menu failing as
 it should. The full test passed every way that applies on Spotify
-(AppleScript, menu, key, panel), Deezer (page, key, panel; its menu fails),
-SoundCloud (page, key, panel) and VLC (its toggling AppleScript `play`,
-judged by its `playing` flag; key; panel; its Playback menu's item was
-disabled there, so ✗).
+(AppleScript, menu, panel), Deezer (page, panel; its menu fails),
+SoundCloud (page, panel) and VLC (its toggling AppleScript `play`, judged
+by its `playing` flag; panel; its Playback menu's item was disabled there,
+so ✗).
 
 ## The apps in Now Playing (`--now-playing-list`)
 
 One tab-separated line per app macOS keeps in Now Playing: its bundle ID,
 its process, its last state (Playing, Paused, Stopped, or Registered: ready
-for Now Playing, never said it plays), 1 for the one the Play/Pause key
-reaches, and its name; then `#active` and the Now Playing process. A number
+for Now Playing, never said it plays), 1 for the active one (the Now
+Playing app), and its name; then `#active` and the Now Playing process. A number
 after it reads only the last hours of log. With `--since <unix time>` it
 lists only the apps whose entries changed since then, those gone as
 `Removed`: a caller that read the whole list once keeps it up to date that
