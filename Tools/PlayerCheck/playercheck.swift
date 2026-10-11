@@ -1352,10 +1352,12 @@ func linkedFrameworks(_ url: URL) -> Set<String> {
 /// nothing shows it can. An app gets in through MediaPlayer
 /// (MPNowPlayingInfoCenter and MPRemoteCommandCenter, the public way;
 /// Chromium and Electron use it too), MediaRemote (Apple's apps), AVKit's
-/// player view (a video it plays), or WebKit (Safari and its web apps, whose
-/// pages report through WebKit's media process). So: the frameworks its
-/// binaries link, those in Contents/MacOS (VLC's is a plugin there) and its
-/// own frameworks'. The Player Check app lists the apps by it
+/// player view (a video it plays), or WebKit: the pages any app shows report
+/// through WebKit's GPU process, under the app's bundle ID (Safari's web
+/// apps; Pake's YouTube Music, a Tauri app linking only WebKit, was the
+/// active Now Playing app while it played). So: the frameworks its binaries
+/// link, those in Contents/MacOS (VLC's is a plugin there) and its own
+/// frameworks'. The Player Check app lists the apps by it
 /// (`--now-playing-reasons`).
 func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
     if bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true { return "WebKit, as a Safari web app" }
@@ -1376,7 +1378,7 @@ func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
     for binary in binaries {
         let linked = linkedFrameworks(binary)
         if linked.contains("MediaPlayer"), mediaPlayerIn == nil { mediaPlayerIn = binary.lastPathComponent }
-        others.formUnion(linked.intersection(["MediaRemote", "AVKit"]))
+        others.formUnion(linked.intersection(["MediaRemote", "AVKit", "WebKit"]))
     }
     switch mediaPlayerIn {
     case "Electron Framework"?: return "MediaPlayer, through Electron"
@@ -1387,6 +1389,7 @@ func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
     }
     if others.contains("MediaRemote") { return "MediaRemote" }
     if others.contains("AVKit") { return "AVKit, for videos it plays" }
+    if others.contains("WebKit") { return "WebKit, for the pages it shows" }
     return nil
 }
 

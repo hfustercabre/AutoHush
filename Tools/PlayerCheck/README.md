@@ -135,8 +135,8 @@ Everything is read from outside the app, as AutoHush itself would:
   fresh copy of the tool, found by its own path (`proc_pidpath`).
 - **Page buttons:** a web page in the app's windows is open to
   Accessibility as it is: a Safari web app's, or any app's (a Tauri app's,
-  in Safari's WebKit, or a Qt WebEngine app's, in Chromium; not tried with
-  one yet). WebKit
+  in Safari's WebKit, as Pake's YouTube Music; a Qt WebEngine app's, in
+  Chromium, not tried yet). WebKit
   fills it in only once something first asks for it (YouTube Music, just
   opened: no buttons at the first look, 36 a few seconds later), so the
   tool waits until the count of buttons holds. The buttons are read as
@@ -229,8 +229,8 @@ Playing".
 A way gets ✓ only when the app both paused and played again. An app with
 nothing to press and nothing that reports to Now Playing isn't tested (no
 waiting), and the panel isn't pressed for an app that can't reach Now
-Playing (none of its binaries links MediaPlayer, MediaRemote or AVKit, as
-Player Check reads them). A permission macOS refuses (Automation for
+Playing (none of its binaries links MediaPlayer, MediaRemote, AVKit or
+WebKit, as Player Check reads them). A permission macOS refuses (Automation for
 AppleScript) is named as such, not as the app ignoring the way.
 
 Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, it
@@ -297,8 +297,11 @@ so ✗). Then (2026-10-11) Spotify's page with `AXEnhancedUserInterface`:
 the full test passed all four ways, its window on the current desktop and
 on another, and `--pause`/`--play --via page` worked; Spotube 5.1.2
 (Flutter) showed its interface with that switch, but its player bar's
-buttons have no names, so ✗ page button. A web page in another app (A
-Tauri app's, say) wasn't tried: none was at hand.
+buttons have no names, so ✗ page button. Pake's YouTube Music (a Tauri
+app, 3.17.3): its page's button paused and played it, with no switch. It
+reports to Now Playing through WebKit's GPU process under its own bundle
+ID, so WebKit counts as a way into Now Playing for any app: then its full
+test passed the page and the panel, judged by what it reports.
 
 ## The apps in Now Playing (`--now-playing-list`)
 

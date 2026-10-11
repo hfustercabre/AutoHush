@@ -97,6 +97,10 @@ its checks use.
 | MediaRemote | `MediaRemote.framework` (Apple's apps) | QuickTime Player, TV, Voice Memos |
 | AVKit, for videos it plays | `AVKit.framework` only (its player view updates Now Playing) | Photos, Notes, App Store |
 | WebKit | Safari, and Safari web apps by their bundle ID (their pages report through WebKit's media process) | web apps for YouTube Music, SoundCloud |
+| WebKit, for the pages it shows | `WebKit.framework` (the pages any app shows report through WebKit's GPU process, under the app's bundle ID) | Pake's YouTube Music (a Tauri app); also apps that only show pages, as Mail, Maps and Dictionary |
 
-An app macOS lists in Now Playing is shown even if none of these matched;
-TextEdit, Calculator and AutoHush itself aren't listed.
+The last row lists apps that aren't players: whether they report depends on
+the pages they show (Pake's YouTube Music was the active Now Playing app
+while it played; Mail's messages rarely play anything). An app macOS lists
+in Now Playing is shown even if none of these matched; TextEdit, Calculator
+and AutoHush itself aren't listed.
