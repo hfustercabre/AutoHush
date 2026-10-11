@@ -188,20 +188,29 @@ Everything is read from outside the app, as AutoHush itself would:
   isn't on screen (on another desktop, minimised, or its app hidden) isn't
   hit-tested.
 - **The switches, set back:** a page readable already (an assistive tool
-  asked for it before) needs none, so none is turned on. A switch the tool
-  turned on is turned back off at the end (also when the tool is stopped
-  with Ctrl-C); `AXEnhancedUserInterface` found on already (VoiceOver) is
-  left on. An app may answer an error yet take a switch (Spotify and
-  Spotube answer -25208 to `AXEnhancedUserInterface`, and read it back as
-  on), or read Electron's back as off while it's on (Deezer), so either
-  sign counts. A Chromium or Flutter app may build no page while its
+  asked for it before) still gets its switch, so the app keeps it up to
+  date. A switch the tool turned on is turned back off at the end (also
+  when the tool is stopped with Ctrl-C); `AXEnhancedUserInterface` found
+  on already (VoiceOver) is left on. Electron's reads back as off even
+  while it's on (Deezer), so with the page readable already a check leaves
+  it on, in case another tool has it on; a press always turns it off,
+  leaving the app as it found it. An app may answer an error yet take a
+  switch (Spotify and Spotube answer -25208 to `AXEnhancedUserInterface`,
+  and read it back as on), so either sign counts.
+- **Out of sight:** a Chromium or Flutter app may build no page while its
   window can't be seen (Deezer's, fully covered by others; Spotify's, on
   another desktop when the switch went on; Spotube's, behind other
   windows); once built, the page stays readable covered, hidden, minimised
-  or on another desktop. So when no page shows in 4 s, the tool brings the
-  app forward a moment, turns the switch off and on again there, waits for
-  its page, then brings back the app that was in front (and waits a
-  second: frames read while a desktop slides are off), and says so. With
+  or on another desktop, but an Electron page there lags one state behind
+  (Deezer's said Pause while paused), and after some minutes out of sight
+  it may take no presses (Deezer's didn't; brought into view, it did). So
+  when no page shows in 4 s, a check brings the app forward a moment,
+  turns the switch off and on again there, waits for its page, then brings
+  back the app that was in front (and waits a second: frames read while a
+  desktop slides are off), and says so. A press never brings anything
+  forward (Player Check should be as unintrusive as possible): when the
+  page doesn't show, or a press on a page out of sight doesn't take, it
+  says so and suggests bringing the window into view or another way. With
   its window closed there's no page at all (Deezer plays on without one):
   open it and run again.
 
@@ -305,13 +314,35 @@ its state shows quickest whether the app plays), the menu for the menu way,
 the page for the page way and the panel (whose row is found by the page's
 player bar), and the menu and the page for any way when nothing surer than
 their words shows whether the app plays. "Sound and Now Playing" is only
-shown, so a press never reads it. A whole press (the process from start
-to end), measured on macOS 27 (2026-10-11): Spotify by AppleScript 0.1–0.5 s
-(0.8 s before these changes), Pake's YouTube Music by its page 0.7–0.9 s
-(2.2–3.1 s), SoundCloud's web app by its page 0.15–0.2 s, Music by
-AppleScript 0.1–0.3 s, Deezer by its page 3.7–4.0 s (6.8–8.3 s; most of it
-its switch: turned off at the end, Deezer drops its page, and the next
-press waits for it to be built again).
+shown, so a press never reads it.
+
+**The player bar's button is remembered**, as AutoHush remembers a web
+app's learned button: each check or press that finds it saves where it sits
+(the child indices from its page, or from a Flutter app's window) in
+`~/Library/Caches/PlayerCheck/button-places.json`, per app. A press walks
+straight there instead of searching the page and hit-testing its buttons,
+when what it finds is still named Play or Pause, in sight, with a player's
+slider around it; else it searches as before and saves the new place. It
+can't help Deezer: its page doesn't exist until its switch is on and it has
+built it again (about 3.5 s; only keeping the switch on between presses
+would).
+
+**A press by the panel** finds the app's row by its song in its windows'
+titles or its current track first (Deezer's title and Spotify's track name
+it), with the remembered player bar's song when there is one, and reads the
+page only when nothing matches (SoundCloud's title doesn't name the song).
+The row's own Play/Pause, as Now Playing knows the app, says whether it's
+that way already, and shows the press take before the panel closes (2 s at
+most), so neither the page nor macOS's log is needed. A row told only by
+the app holding Now Playing is judged by the app itself, as before.
+
+A whole press (the process from start to end), measured on macOS 27
+(2026-10-11), first before these changes: Spotify by AppleScript 0.8 s →
+0.1–0.5 s; by its page, on another desktop, 1.8–2.2 s → 0.4–0.6 s; Pake's
+YouTube Music by its page 2.2–3.1 s → 0.3–0.55 s; SoundCloud's web app by
+its page about 0.9 s → 0.1–0.3 s; Deezer by its page 6.8–8.3 s →
+3.7–4.0 s (its switch); by the Now Playing panel, any of them,
+0.7–1.1 s (Deezer's 4.1–4.4 s before); Music by AppleScript 0.1–0.3 s.
 
 Tested on macOS 27 (2026-10-11): Spotify by AppleScript (1–2 s), Deezer by
 its page's buttons (its window covered by others), SoundCloud's web app by

@@ -945,7 +945,10 @@ let stopSources = [SIGINT, SIGTERM].map { stop in
 /// turned back off at the end, unless it may have been on before: VoiceOver's
 /// reads back, so one already on is left alone; Electron's reads back off
 /// even while it's on (Deezer), so with the page readable already (someone
-/// may have it on) it's left on.
+/// may have it on) a check leaves it on. A press always turns it off at the
+/// end (the user, 2026-10-11): it leaves the app as it found it, and a page
+/// kept for later goes stale out of sight (Deezer's took no presses after
+/// minutes on another desktop).
 func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
     let app = AXUIElementCreateApplication(pid)
     AXUIElementSetMessagingTimeout(app, 1)
@@ -957,7 +960,7 @@ func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
         say("  \(switchName(attribute)) (\(attribute)): not taken")
         return false
     }
-    if attribute == manualAccessibility, pageReadable {
+    if attribute == manualAccessibility, pageReadable, action == nil {
         say("  \(switchName(attribute)) on, and left on: VoiceOver or another tool may have it on")
     } else {
         stopState.switchesOn.append(attribute)
@@ -971,14 +974,16 @@ func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
 /// (Deezer's, covered: none), and once built it stays readable covered,
 /// hidden or on another desktop; Spotify, on another desktop when its
 /// switch went on, and Spotube, behind other windows, showed nothing until
-/// the switch went on again in front. So when nothing shows, the app comes
-/// forward a moment with the switch turned off and on again, then the app
-/// that was in front.
+/// the switch went on again in front. So when nothing shows, a check brings
+/// the app forward a moment with the switch turned off and on again, then
+/// the app that was in front. A press never does (the user, 2026-10-11: the
+/// tool should be as unintrusive as possible): it says why the page can't
+/// be read, and the page way isn't used.
 func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: inout TimeInterval?) -> Bool? {
     guard turnOn(attribute, pid: pid, pageReadable: false) else { return nil }
     var waited = waitForPage(pid, seconds: 4)
     var seconds = 4
-    if waited.count == 0 {
+    if waited.count == 0, action == nil {
         let front = NSWorkspace.shared.frontmostApplication
         if let front, front.processIdentifier != pid { stopState.frontToRestore = front.bundleURL }
         bringForward(appURL)
@@ -1001,6 +1006,9 @@ func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: 
     }
     guard waited.count > 0 else {
         say("  \(switchName(attribute)) (\(attribute)) on, but nothing showed in \(seconds) s")
+        if action != nil {
+            pageOutOfView = true
+        }
         if stopState.switchesOn.contains(attribute), setSwitch(attribute, false, pid: pid) {
             stopState.switchesOn.removeAll { $0 == attribute }
         }
@@ -1012,85 +1020,204 @@ func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: 
     return true
 }
 
-if !pressNeeds(["page", "panel"]) {
-    say("  not read: --via \(via!) doesn't need it")
-    pageNotChecked = "not needed for --via \(via!)"
-} else if running == nil {
-    say("  not checked: the app isn't running")
-    pageNotChecked = "it isn't running"
-} else if !AXIsProcessTrusted() {
-    say("  not checked: this tool (or the app running it) needs the Accessibility permission")
-    pageNotChecked = "no Accessibility permission"
-} else if let before = pageButtons(pid: running!.processIdentifier) {
-    let pid = running!.processIdentifier
-    if !isWebApp, hiddenInterface == nil, !hasWebPage(pid: pid) {
-        say("  none: no web page in its windows, and not built with Electron, Chromium (CEF) or Flutter")
-        pageNotChecked = "no page in its windows"
-    } else {
-        let items = isFlutter ? "pressable items" : "buttons"
-        switch hiddenInterface {
-        case let hidden?:
-            say("  built with \(hidden.name): "
-                + (isFlutter ? "its interface (not a web page) shows" : "its page shows")
-                + " once a switch for assistive tools is on (" + hidden.switches.map(switchName).joined(separator: ", else ") + ")")
-        case nil:
-            say(isWebApp ? "  a Safari web app: WebKit shows its page as it is" : "  a web page in its windows: shown as it is")
-        }
-        var count = before.count
-        var shownAfter: TimeInterval?
-        var tookNone = false
-        if count > 0, let hidden = hiddenInterface {
-            // Shown to an assistive tool before (VoiceOver, or this tool):
-            // a switch still goes on, so the app keeps the page up to date.
-            say("  readable already: an assistive tool asked for it before")
-            pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) }
-        } else if count == 0, let hidden = hiddenInterface {
-            tookNone = true
-            for attribute in hidden.switches {
-                guard let shown = showPage(with: attribute, pid: pid, count: &count, shownAfter: &shownAfter) else { continue }
-                tookNone = false
-                if shown { break }
+/// Set by a press when its page didn't show with the switch on: an
+/// Electron, CEF or Flutter app builds it only while its window can be seen,
+/// and a press doesn't bring it forward.
+var pageOutOfView = false
+
+/// Why a press by the page didn't work, and what to try instead.
+func pagePressHint() -> String {
+    "; an \(hiddenInterface.map { "app built with \($0.name)" } ?? "app") may build its page, or take presses on it, only while its"
+        + " window is in view: bring it into view and try again, or use another way (AppleScript, its menu, or the Now Playing panel"
+        + " as a last resort)"
+}
+
+// MARK: Where the player bar's button was (a press goes straight to it)
+
+/// Where a player bar's button sits: the child indices from its page (an
+/// AXWebArea) or, in a Flutter app, its window, down to it. Saved per app
+/// after each check or press that finds it, so the next press walks straight
+/// to it, as AutoHush walks to a web app's learned button, instead of
+/// searching the page and hit-testing its buttons.
+struct ButtonPlace: Codable, Equatable {
+    var root: String   // "page" or "window"
+    var path: [Int]
+}
+let placesFile = FileManager.default.homeDirectoryForCurrentUser
+    .appendingPathComponent("Library/Caches/PlayerCheck/button-places.json")
+func savedPlaces() -> [String: ButtonPlace] {
+    (try? JSONDecoder().decode([String: ButtonPlace].self, from: Data(contentsOf: placesFile))) ?? [:]
+}
+
+/// The button's place, climbing from it to its page or window.
+func placeOf(_ element: AXUIElement) -> ButtonPlace? {
+    var path: [Int] = [], node = element
+    for _ in 0..<40 {
+        let role = node.text(kAXRoleAttribute)
+        if role == "AXWebArea" { return ButtonPlace(root: "page", path: path.reversed()) }
+        if role == kAXWindowRole { return isFlutter ? ButtonPlace(root: "window", path: path.reversed()) : nil }
+        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
+        let up = parent as! AXUIElement
+        guard let index = up.children.firstIndex(where: { CFEqual($0, node) }) else { return nil }
+        path.append(index)
+        node = up
+    }
+    return nil
+}
+
+/// Remembers where the app's player bar's button is, when that changed.
+func rememberPlace(of element: AXUIElement) {
+    guard let found = placeOf(element) else { return }
+    var places = savedPlaces()
+    guard places[bundleID] != found else { return }
+    places[bundleID] = found
+    try? FileManager.default.createDirectory(at: placesFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try? JSONEncoder().encode(places).write(to: placesFile)
+}
+
+/// The player bar's button where it was last found, when it's still there:
+/// named Play or Pause, in sight, with a player's slider around it.
+func rememberedBarButton(pid: pid_t) -> PageButton? {
+    guard let saved = savedPlaces()[bundleID] else { return nil }
+    let (windows, onThisDesktop) = appWindows(of: pid)
+    let app = AXUIElementCreateApplication(pid)
+    AXUIElementSetMessagingTimeout(app, 1)
+    let hidden = app.value(kAXHiddenAttribute) as? Bool == true
+    for window in windows {
+        AXUIElementSetMessagingTimeout(window, 1)
+        guard let windowFrame = window.frame else { continue }
+        for root in saved.root == "window" ? [window] : webAreas(in: window) {
+            var node: AXUIElement? = root
+            for index in saved.path {
+                let children = node?.children ?? []
+                node = index < children.count ? children[index] : nil
             }
-        } else if count == 0 {
-            // A web page fills in once something first asks for it (YouTube
-            // Music, just opened: 0 buttons at the first look, 36 a few
-            // seconds later).
-            let waited = waitForPage(pid, seconds: 8)
-            count = waited.count
-            shownAfter = waited.after
-            if count == 0 { say("  its page showed no buttons in 8 s: is the site loaded?") }
-        }
-        if tookNone {
-            pageNotChecked = "no switch was taken"
-        } else if count == 0 {
-            if hiddenInterface != nil { say("  no switch showed it: its \(items) can't be read this way") }
-            page = PageCheck(buttons: 0, toggle: nil)
-        } else {
-            let readStart = Date()
-            let buttons = pageButtons(pid: pid) ?? []
-            let readTime = Date().timeIntervalSince(readStart)
-            let toggle = playerButton(pid: pid, named: playPauseWords)
-            page = PageCheck(buttons: buttons.count, toggle: toggle?.button, withControls: toggle?.withControls ?? false)
-            if toggle?.withControls == true { barToggle = toggle?.button.element }
-            let with = pageSwitch.map { "  \(switchName($0)) on: its " } ?? "  its "
-            say((shownAfter.map { String(format: "%@%@ showed %d %@ after %.1f s", with, isFlutter ? "interface" : "page", buttons.count, items, $0) }
-                    ?? "\(with)\(isFlutter ? "interface" : "page"): \(buttons.count) \(items)")
-                + String(format: " (one read, as AutoHush reads a web app: %.0f ms)", readTime * 1000))
-            if let (button, withControls) = toggle {
-                say(String(format: "  Play/Pause: '%@', %.0f pt from the window's bottom, ", button.label, button.fromBottom ?? 0)
-                    + (withControls ? "with a player's slider around it" : "the lowest in sight (no slider around any)"))
-            } else {
-                let near = Set(buttons.map(\.label).filter { label in playPauseWords.contains { label.lowercased().contains($0) } })
-                say("  none in sight named just Play or Pause" + (near.isEmpty ? "" : "; with those words: "
-                    + near.sorted().prefix(8).map { "'\($0)'" }.joined(separator: ", ")))
-            }
+            guard let node, let frame = node.frame else { continue }
+            let words = label(of: node)
+            guard named(words, playPauseWords), frame.width > 0, frame.height > 0,
+                  (windowFrame.minY...windowFrame.maxY).contains(frame.midY), playerBar(of: node) != nil else { continue }
+            return PageButton(element: node, label: words, fromBottom: Double(windowFrame.maxY - frame.midY), inSight: true,
+                              onScreen: onThisDesktop && !hidden && window.value(kAXMinimizedAttribute) as? Bool != true)
         }
     }
+    return nil
+}
+
+/// Whether the page was read: a press by the panel reads it only when its
+/// row can't be told otherwise (`panelPress`).
+var pageRead = false
+
+/// For a press: takes the player bar's button where it was last time as
+/// the page's Play/Pause, when it's still there (turning on the switch an
+/// Electron, CEF or Flutter app needs, so the page stays up to date).
+func useRememberedBar(pid: pid_t) -> Bool {
+    guard let found = rememberedBarButton(pid: pid) else { return false }
+    if let hidden = hiddenInterface { pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) } }
+    page = PageCheck(buttons: 1, toggle: found, withControls: true)
+    barToggle = found.element
+    pageRead = true
+    pageNotChecked = nil
+    say("  its player bar's '\(found.label)', where it was last time")
+    return true
+}
+
+/// Reads the app's page: its buttons and its player's Play/Pause, turning on
+/// the switch an Electron, CEF or Flutter app needs first. A press goes
+/// straight to the player bar's button where it was last time, when it's
+/// still there.
+func readPage() {
+    pageRead = true
+    pageNotChecked = nil
+    if running == nil {
+        say("  not checked: the app isn't running")
+        pageNotChecked = "it isn't running"
+    } else if !AXIsProcessTrusted() {
+        say("  not checked: this tool (or the app running it) needs the Accessibility permission")
+        pageNotChecked = "no Accessibility permission"
+    } else if pressingOneWay, useRememberedBar(pid: running!.processIdentifier) {
+        // A press: the player bar's button where it was last time.
+    } else if let before = pageButtons(pid: running!.processIdentifier) {
+        let pid = running!.processIdentifier
+        if !isWebApp, hiddenInterface == nil, !hasWebPage(pid: pid) {
+            say("  none: no web page in its windows, and not built with Electron, Chromium (CEF) or Flutter")
+            pageNotChecked = "no page in its windows"
+        } else {
+            let items = isFlutter ? "pressable items" : "buttons"
+            switch hiddenInterface {
+            case let hidden?:
+                say("  built with \(hidden.name): "
+                    + (isFlutter ? "its interface (not a web page) shows" : "its page shows")
+                    + " once a switch for assistive tools is on (" + hidden.switches.map(switchName).joined(separator: ", else ") + ")")
+            case nil:
+                say(isWebApp ? "  a Safari web app: WebKit shows its page as it is" : "  a web page in its windows: shown as it is")
+            }
+            var count = before.count
+            var shownAfter: TimeInterval?
+            var tookNone = false
+            if count > 0, let hidden = hiddenInterface {
+                // Shown to an assistive tool before (VoiceOver, or this tool):
+                // a switch still goes on, so the app keeps the page up to date.
+                say("  readable already: an assistive tool asked for it before")
+                pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) }
+            } else if count == 0, let hidden = hiddenInterface {
+                tookNone = true
+                for attribute in hidden.switches {
+                    guard let shown = showPage(with: attribute, pid: pid, count: &count, shownAfter: &shownAfter) else { continue }
+                    tookNone = false
+                    if shown { break }
+                }
+            } else if count == 0 {
+                // A web page fills in once something first asks for it (YouTube
+                // Music, just opened: 0 buttons at the first look, 36 a few
+                // seconds later).
+                let waited = waitForPage(pid, seconds: 8)
+                count = waited.count
+                shownAfter = waited.after
+                if count == 0 { say("  its page showed no buttons in 8 s: is the site loaded?") }
+            }
+            if tookNone {
+                pageNotChecked = "no switch was taken"
+            } else if count == 0 {
+                if hiddenInterface != nil { say("  no switch showed it: its \(items) can't be read this way") }
+                page = PageCheck(buttons: 0, toggle: nil)
+            } else {
+                let readStart = Date()
+                let buttons = pageButtons(pid: pid) ?? []
+                let readTime = Date().timeIntervalSince(readStart)
+                let toggle = playerButton(pid: pid, named: playPauseWords)
+                page = PageCheck(buttons: buttons.count, toggle: toggle?.button, withControls: toggle?.withControls ?? false)
+                if let toggle, toggle.withControls {
+                    barToggle = toggle.button.element
+                    rememberPlace(of: toggle.button.element)
+                }
+                let with = pageSwitch.map { "  \(switchName($0)) on: its " } ?? "  its "
+                say((shownAfter.map { String(format: "%@%@ showed %d %@ after %.1f s", with, isFlutter ? "interface" : "page", buttons.count, items, $0) }
+                        ?? "\(with)\(isFlutter ? "interface" : "page"): \(buttons.count) \(items)")
+                    + String(format: " (one read, as AutoHush reads a web app: %.0f ms)", readTime * 1000))
+                if let (button, withControls) = toggle {
+                    say(String(format: "  Play/Pause: '%@', %.0f pt from the window's bottom, ", button.label, button.fromBottom ?? 0)
+                        + (withControls ? "with a player's slider around it" : "the lowest in sight (no slider around any)"))
+                } else {
+                    let near = Set(buttons.map(\.label).filter { label in playPauseWords.contains { label.lowercased().contains($0) } })
+                    say("  none in sight named just Play or Pause" + (near.isEmpty ? "" : "; with those words: "
+                        + near.sorted().prefix(8).map { "'\($0)'" }.joined(separator: ", ")))
+                }
+            }
+        }
+    } else {
+        // Deezer keeps playing with its window closed, and its page can't be
+        // read then, not even through windows on other desktops.
+        say("  not checked: no window open on any desktop; open it and run again (a closed window's page can't be read)")
+        pageNotChecked = "no window open"
+    }
+}
+
+if !pressNeeds(["page"]) {
+    say(via == "panel" ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
+                       : "  not read: --via \(via!) doesn't need it")
+    pageNotChecked = "not needed for --via \(via!)"
 } else {
-    // Deezer keeps playing with its window closed, and its page can't be
-    // read then, not even through windows on other desktops.
-    say("  not checked: no window open on any desktop; open it and run again (a closed window's page can't be read)")
-    pageNotChecked = "no window open"
+    readPage()
 }
 
 // MARK: - Press test
@@ -1623,9 +1750,10 @@ func reportedState() -> String? {
 }
 
 /// The page's button to press to pause (or play): the player bar's button
-/// with that word; else, when the app reports how it is, the bar's button
-/// whatever its word, since it toggles (an Electron page on another desktop
-/// keeps its word: Play while it plays); else one with that word.
+/// with that word; else, when the app's state is known (by script, else as
+/// it reports to Now Playing), the bar's button whatever its word, since it
+/// toggles (a Chromium page on another desktop keeps its word: Play while
+/// it plays); else one with that word.
 func pageButtonToPress(pid: pid_t, pausing: Bool) -> PageButton? {
     // A press takes the player bar's button the page section found, read
     // again by its words (no new search, no hit tests): when it says what's
@@ -1634,11 +1762,13 @@ func pageButtonToPress(pid: pid_t, pausing: Bool) -> PageButton? {
         let words = label(of: bar.element)
         let found = PageButton(element: bar.element, label: words, fromBottom: bar.fromBottom, inSight: bar.inSight, onScreen: bar.onScreen)
         if named(words, pausing ? pauseWords : playWords) { return found }
-        if !barShowsState, named(words, playPauseWords), reportedState() != nil { return found }
+        if !barShowsState, named(words, playPauseWords), scriptedState() != nil || reportedState() != nil { return found }
     }
     let wanted = playerButton(pid: pid, named: pausing ? pauseWords : playWords)
     if let wanted, wanted.withControls { return wanted.button }
-    if reportedState() != nil, let bar = playerButton(pid: pid, named: playPauseWords), bar.withControls { return bar.button }
+    if scriptedState() != nil || reportedState() != nil, let bar = playerButton(pid: pid, named: playPauseWords), bar.withControls {
+        return bar.button
+    }
     return wanted?.button
 }
 let notNowPlaying = "nothing in it reports to Now Playing, so the Now Playing panel can't reach it"
@@ -1816,6 +1946,101 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
     return pressed
 }
 
+/// How a press by the panel went (`--via panel`).
+enum PanelPress { case already, changed, pressed, notPressed }
+
+/// A press by the panel (`--via panel`). The app's row is found by its song
+/// in its windows' titles or its current track (Deezer's title and
+/// Spotify's track name it); only when none matches is its page read, for
+/// its player bar's song (SoundCloud's title doesn't name it), since reading
+/// a page can take seconds (Deezer's is built anew each time). The row's own
+/// Play/Pause, as Now Playing knows the app, tells whether it's that way
+/// already, and shows the press take before the panel closes (2 s at most).
+/// A row told only by the app holding Now Playing (pausing, the only row
+/// playing) is pressed, but `.pressed`: whether it was the app's is judged
+/// by the app itself.
+func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
+    // Its one line comes after: what it reads meanwhile isn't said.
+    let wasQuiet = quiet
+    quiet = true
+    defer { quiet = wasQuiet }
+    // The remembered player bar, when it's there, costs a few reads.
+    if !pageRead { _ = useRememberedBar(pid: pid) }
+    var texts = appWindows(of: pid).windows.map(\.title) + playerBarTexts(pid)
+    if let song = scriptedSong() { texts.append(song) }
+    guard let item = nowPlayingMenuItem() else {
+        panelProblem = "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        return .notPressed
+    }
+    func open() -> [PanelRow]? {
+        guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else { return nil }
+        var rows: [PanelRow] = []
+        let deadline = Date().addingTimeInterval(2)
+        while rows.isEmpty, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.05)
+            rows = panelRows()
+        }
+        return rows
+    }
+    func close() {
+        _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
+        let deadline = Date().addingTimeInterval(2)
+        while !panelRows().isEmpty, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+    }
+    guard var rows = open() else {
+        panelProblem = "the Now Playing item didn't open"
+        return .notPressed
+    }
+    var mine = appRows(rows, texts: texts)
+    if mine.isEmpty, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
+        close()
+        readPage()
+        texts += playerBarTexts(pid)
+        guard let again = open() else {
+            panelProblem = "the Now Playing item didn't open"
+            return .notPressed
+        }
+        rows = again
+        mine = appRows(rows, texts: texts)
+    }
+    if mine.count == 1 {
+        let row = mine[0]
+        panelRowText = row.text
+        if row.playing != pausing {
+            close()
+            return .already
+        }
+        guard AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success else {
+            close()
+            panelProblem = "its row's \(pausing ? "Pause" : "Play") didn't take the press"
+            return .notPressed
+        }
+        let deadline = Date().addingTimeInterval(2)
+        var changed = false
+        while !changed, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.05)
+            changed = panelRows().first { $0.text == row.text }?.playing == !pausing
+        }
+        close()
+        return changed ? .changed : .pressed
+    }
+    let candidates = rows.filter { $0.playing == pausing }
+    if mine.isEmpty, pausing, candidates.count == 1, nowPlayingHolder(pid).isThisApp {
+        panelRowText = candidates[0].text
+        let pressed = AXUIElementPerformAction(candidates[0].button, kAXPressAction as CFString) == .success
+        close()
+        return pressed ? .pressed : .notPressed
+    }
+    close()
+    panelProblem = rows.isEmpty ? "the panel showed no rows"
+        : mine.count > 1 ? "\(mine.count) of the panel's rows show \(appName)'s song: which is its own can't be told"
+        : "none of the panel's \(rows.count) rows shows \(appName)'s song (read from "
+            + (["its windows' titles"] + (page?.toggle != nil ? ["its player bar"] : [])
+                + (scripting?.hasCurrentTrack == true ? ["its current track by AppleScript"] : [])).joined(separator: " or ")
+            + ") or its name; the rows don't name their apps"
+    return .notPressed
+}
+
 // MARK: The test
 
 var scriptResult: TrialResult?
@@ -1955,7 +2180,9 @@ if let action {
             tried.append("AppleScript \(command) sent, but it didn't change in 6 s")
         case "page":
             guard page?.toggle != nil else {
-                tried.append("no Play/Pause button on its page")
+                tried.append((pageOutOfView ? "its page didn't show with "
+                    + (hiddenInterface?.switches.map(switchName).joined(separator: " or ") ?? "the switch") + " on" : "no Play/Pause button on its page")
+                    + (pageOutOfView ? pagePressHint() : ""))
                 continue
             }
             // As it reports to Now Playing, else as its page's button says
@@ -1976,7 +2203,8 @@ if let action {
                     + (broughtForward ? " (brought forward a moment: Chromium and Flutter apps may build it only while their window can be seen)." : "."))
                 finish(0)
             }
-            tried.append("pressed its page's '\(button.label)', but it didn't change in 6 s")
+            tried.append("pressed its page's '\(button.label)', but it didn't change in 6 s"
+                + (hiddenInterface != nil && !button.onScreen ? pagePressHint() : ""))
         case "menu":
             guard let menu else {
                 tried.append("no playback menu")
@@ -2005,13 +2233,19 @@ if let action {
             }
             tried.append("pressed its menu's '\(word)', but nothing changed in 6 s")
         case "panel":
-            if isPlaying(pid) != pausing {
+            // Its row says whether it's that way already, and shows the press take.
+            switch panelPress(pid: pid, pausing: pausing) {
+            case .already:
                 say("It's \(pausing ? "paused" : "playing") already.")
                 finish(0)
-            }
-            guard pressInPanel(pid: pid, pausing: pausing) else {
+            case .changed:
+                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
+                finish(0)
+            case .notPressed:
                 tried.append(panelProblem ?? "couldn't press its row in the Now Playing panel")
                 continue
+            case .pressed:
+                break
             }
             if within({ isPlaying(pid) != pausing }) {
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
