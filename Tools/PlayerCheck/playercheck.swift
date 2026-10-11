@@ -19,6 +19,7 @@
 //   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
 //   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing: "<path>\t<reason>"
 //                                                      (empty when nothing shows it can), as Player Check lists them
+// Each check or press is also logged in ~/Library/Logs/PlayerCheck (the last 50).
 // Build: swiftc -O -o playercheck playercheck.swift
 import AppKit
 import ApplicationServices
@@ -30,11 +31,55 @@ import OSLog
 /// Set for --play and --pause: the checks run silently, then one line says what was done.
 var quiet = false
 func say(_ line: String = "") {
+    log(line)
     guard !quiet else { return }
     print(line)
     fflush(stdout)
 }
-func fail(_ line: String) -> Never { FileHandle.standardError.write(Data("playercheck: \(line)\n".utf8)); exit(1) }
+func fail(_ line: String) -> Never {
+    log("playercheck: \(line)")
+    FileHandle.standardError.write(Data("playercheck: \(line)\n".utf8))
+    exit(1)
+}
+
+/// Each check or press of an app is also written, whole (the quiet parts of
+/// a press too) and with each line's time, to a file of its own in
+/// ~/Library/Logs/PlayerCheck, the last `logsKept` kept: a run whose result
+/// went wrong can be read afterwards, though a later check replaced it in
+/// Player Check (the user's first check of Deezer, 2026-10-11).
+let logsFolder = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/PlayerCheck")
+let logsKept = 50
+var logFile: FileHandle?
+let logTime: DateFormatter = {
+    let format = DateFormatter()
+    format.locale = Locale(identifier: "en_US_POSIX")
+    format.dateFormat = "HH:mm:ss.SSS"
+    return format
+}()
+func log(_ line: String) {
+    logFile?.write(Data("\(logTime.string(from: Date()))  \(line)\n".utf8))
+}
+
+/// Starts this run's log, named by its time, the app and what it does,
+/// and removes the oldest beyond `logsKept` (files this tool wrote).
+func startLog(app: String, doing: String) {
+    let files = FileManager.default
+    try? files.createDirectory(at: logsFolder, withIntermediateDirectories: true)
+    let name = DateFormatter()
+    name.locale = Locale(identifier: "en_US_POSIX")
+    name.dateFormat = "yyyy-MM-dd HH.mm.ss.SSS"
+    let safe = { (text: String) in text.map { "/:".contains($0) ? "-" : String($0) }.joined() }
+    let url = logsFolder.appendingPathComponent("\(name.string(from: Date())) \(safe(app)) \(safe(doing)).log")
+    guard files.createFile(atPath: url.path, contents: nil), let handle = try? FileHandle(forWritingTo: url) else { return }
+    logFile = handle
+    let os = ProcessInfo.processInfo.operatingSystemVersion
+    log("playercheck " + CommandLine.arguments.dropFirst().joined(separator: " ")
+        + "  (pid \(getpid()), macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion), "
+        + (ProcessInfo.processInfo.environment["__CFBundleIdentifier"].map { "run by \($0)" } ?? "run from a shell") + ")")
+    let logs = ((try? files.contentsOfDirectory(atPath: logsFolder.path)) ?? []).filter { $0.hasSuffix(".log") }.sorted()
+    for old in logs.dropLast(logsKept) { try? files.removeItem(at: logsFolder.appendingPathComponent(old)) }
+}
+atexit { log("(ended)") }
 // Whoever reads the output may go first (Player Check quitting mid-check):
 // writing then fails quietly, and a test that paused the app still plays
 // it again and puts back what it changed, instead of being killed.
@@ -251,6 +296,7 @@ let version = info["CFBundleShortVersionString"] as? String ?? "?"
 let isWebApp = bundleID.hasPrefix("com.apple.Safari.WebApp.")
 var running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
 
+startLog(app: appName, doing: action.map { $0 + (via.map { " via \($0)" } ?? "") } ?? (readOnly ? "read-only" : "check"))
 say("\(appName) \(version) (\(bundleID))")
 say("  \(appURL.path)")
 say("  " + (running.map { "running, pid \($0.processIdentifier)" } ?? "not running: the menu, sound and Now Playing checks need it running"))
@@ -917,6 +963,7 @@ func switchesBackOff() -> [String] {
 /// Puts back what the tool changed, then ends at once: `_exit`, as `exit`
 /// could wait on the main thread's locks (stdout) from the stop's thread.
 func stopNow(_ code: Int32) -> Never {
+    log("(stopped)")
     switchesBackOff()
     if let front = stopState.frontToRestore { bringForward(front) }
     if stopState.streamPID > 0 { kill(stopState.streamPID, SIGTERM) }
@@ -984,23 +1031,14 @@ func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: 
     var waited = waitForPage(pid, seconds: 4)
     var seconds = 4
     if waited.count == 0, action == nil {
-        let front = NSWorkspace.shared.frontmostApplication
-        if let front, front.processIdentifier != pid { stopState.frontToRestore = front.bundleURL }
-        bringForward(appURL)
-        broughtForward = true
-        if stopState.switchesOn.contains(attribute) {
-            _ = setSwitch(attribute, false, pid: pid)
-            _ = setSwitch(attribute, true, pid: pid)
+        waited = inFront(pid: pid) {
+            if stopState.switchesOn.contains(attribute) {
+                _ = setSwitch(attribute, false, pid: pid)
+                _ = setSwitch(attribute, true, pid: pid)
+            }
+            return waitForPage(pid, seconds: 6)
         }
-        waited = waitForPage(pid, seconds: 6)
         seconds += 6
-        if let url = stopState.frontToRestore {
-            bringForward(url)
-            stopState.frontToRestore = nil
-            // Its desktop slides away for about half a second, and the
-            // frames read meanwhile are off (Spotify's Play: not in sight).
-            Thread.sleep(forTimeInterval: 1)
-        }
         say("  its window was out of sight: brought it forward a moment, with the switch turned on again there"
             + " (Chromium and Flutter apps may build their \(isFlutter ? "interface" : "page") only while their window can be seen)")
     }
@@ -1018,6 +1056,68 @@ func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: 
     shownAfter = waited.after
     pageSwitch = attribute
     return true
+}
+
+/// For a check: brings the app forward a moment for its page to be built,
+/// runs `build` there, then brings back the app that was in front.
+func inFront<T>(pid: pid_t, _ build: () -> T) -> T {
+    let front = NSWorkspace.shared.frontmostApplication
+    if let front, front.processIdentifier != pid { stopState.frontToRestore = front.bundleURL }
+    bringForward(appURL)
+    broughtForward = true
+    let result = build()
+    if let url = stopState.frontToRestore {
+        bringForward(url)
+        stopState.frontToRestore = nil
+        // Its desktop slides away for about half a second, and the
+        // frames read meanwhile are off (Spotify's Play: not in sight).
+        Thread.sleep(forTimeInterval: 1)
+    }
+    return result
+}
+
+/// Whether the page shows a player's Play/Pause: a button in sight named
+/// so, with a player's slider around it (no hit test: a quick look).
+func showsPlayerBar(_ pid: pid_t) -> Bool {
+    (pageButtons(pid: pid) ?? []).contains { $0.inSight && named($0.label, playPauseWords) && playerBar(of: $0.element) != nil }
+}
+
+/// For a check that found the page readable already but with no player's
+/// Play/Pause in it: the page may be a leftover, so it's built again.
+/// Electron drops part of its page when its switch goes off, and doesn't
+/// keep it up to date out of sight: the user's first check of Deezer, on
+/// another desktop some ten minutes after a press had turned its switch
+/// off, found no page button, and later checks did (2026-10-11). The switch
+/// goes off and on, and the player's bar is looked for up to 4 s; when it
+/// doesn't show, the app is brought forward a moment, as `showPage` does
+/// (once per check, as the user allowed), the switch turned off and on there.
+func rebuildPage(with attribute: String, pid: pid_t) {
+    func waitForBar(_ seconds: Double) -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        repeat {
+            Thread.sleep(forTimeInterval: 0.25)
+            if showsPlayerBar(pid) { return true }
+        } while Date() < deadline
+        return false
+    }
+    func switchAgain() {
+        _ = setSwitch(attribute, false, pid: pid)
+        _ = setSwitch(attribute, true, pid: pid)
+    }
+    say("  no player's Play/Pause in it: it may be a leftover, so it's built again (\(switchName(attribute)) turned off and on)")
+    let start = Date()
+    switchAgain()
+    if waitForBar(4) {
+        say(String(format: "  its player bar showed after %.1f s", Date().timeIntervalSince(start)))
+        return
+    }
+    let shown = inFront(pid: pid) {
+        switchAgain()
+        return waitForBar(6)
+    }
+    say("  not in place: brought it forward a moment, with the switch turned off and on there"
+        + (shown ? String(format: "; its player bar showed (%.1f s in all)", Date().timeIntervalSince(start))
+                 : "; still no player's Play/Pause"))
 }
 
 /// Set by a press when its page didn't show with the switch on: an
@@ -1154,11 +1254,13 @@ func readPage() {
             var count = before.count
             var shownAfter: TimeInterval?
             var tookNone = false
+            var readableAlready = false
             if count > 0, let hidden = hiddenInterface {
                 // Shown to an assistive tool before (VoiceOver, or this tool):
                 // a switch still goes on, so the app keeps the page up to date.
                 say("  readable already: an assistive tool asked for it before")
                 pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) }
+                readableAlready = true
             } else if count == 0, let hidden = hiddenInterface {
                 tookNone = true
                 for attribute in hidden.switches {
@@ -1181,6 +1283,9 @@ func readPage() {
                 if hiddenInterface != nil { say("  no switch showed it: its \(items) can't be read this way") }
                 page = PageCheck(buttons: 0, toggle: nil)
             } else {
+                if readableAlready, action == nil, let attribute = pageSwitch, !showsPlayerBar(pid) {
+                    rebuildPage(with: attribute, pid: pid)
+                }
                 let readStart = Date()
                 let buttons = pageButtons(pid: pid) ?? []
                 let readTime = Date().timeIntervalSince(readStart)

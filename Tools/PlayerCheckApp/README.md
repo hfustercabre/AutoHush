@@ -58,6 +58,10 @@ to it and loses its permissions; one signed with a certificate keeps them.
   (✓, or ? not tried) has its own two buttons, which use that way alone.
   The result shows under Play and Pause ("Paused it with its page's 'Pause
   current' button."). The app must be running.
+- **Logs:** every check and Play/Pause is also logged, whole and with each
+  line's time, in `~/Library/Logs/PlayerCheck/` (the last 50 runs): when a
+  result looks wrong, the run that gave it can be read there, though a
+  later check replaced it here.
 
 ## Permissions
 

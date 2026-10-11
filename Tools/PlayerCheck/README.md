@@ -31,6 +31,14 @@ for the menu and page checks, and macOS asks once per app for
 **Automation** the first time it reads or controls that app by AppleScript.
 The app must be running for everything but its scripting dictionary.
 
+Each check or press is also logged, in a file of its own in
+`~/Library/Logs/PlayerCheck/` named by its time, the app and what it did
+("2026-10-11 21.46.20.016 Deezer read-only.log"; "… Deezer pause via
+page.log"): the arguments, then every line with its time, including what a
+press does quietly, and "(ended)" or "(stopped)". The last 50 are kept, so
+a run that went wrong can be read afterwards (Console opens them too).
+`--now-playing-list` and `--now-playing-reasons` aren't logged.
+
 Example, with Spotify paused at the start:
 
 ```
@@ -213,6 +221,17 @@ Everything is read from outside the app, as AutoHush itself would:
   says so and suggests bringing the window into view or another way. With
   its window closed there's no page at all (Deezer plays on without one):
   open it and run again.
+- **A leftover page:** Electron drops part of its page when its switch goes
+  off, and a page out of sight stops changing, so a page readable already
+  may be a leftover with no player bar in it (a first check of Deezer, on
+  another desktop some ten minutes after a press, found no page button,
+  and later checks did). When a check finds a page readable already with
+  no player's Play/Pause in it (a button named so with a slider around it),
+  it builds it again: the switch off and on, the bar looked for up to 4 s;
+  if it doesn't show (out of sight it can't: Deezer's leftover kept its
+  stale words through it), the app is brought forward a moment, as above,
+  with the switch off and on there. A press doesn't. A leftover that still
+  has its bar is used as it is.
 
 **The test** (unless `--read-only`) tries each way while the app plays. If
 it isn't playing, it asks ("waiting: start playing something in Deezer")
