@@ -12,7 +12,9 @@
 //   playercheck <app> --play|--pause [--via script|menu|page]
 //                                                      just plays or pauses it, by that way or the first that works
 //   playercheck --now-playing-list [hours]             the apps macOS keeps in Now Playing, from its log
-//                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>"
+//                                                      (administrators only): "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>",
+//                                                      then "#active\t<pid>"
+//   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
 // Build: swiftc -O -o playercheck playercheck.swift
 import AppKit
 import ApplicationServices
@@ -112,7 +114,12 @@ func printNowPlayingList() -> Never {
     var boot = timeval()
     var size = MemoryLayout<timeval>.size
     sysctlbyname("kern.boottime", &boot, &size, nil, 0)
-    let start = CommandLine.arguments.dropFirst(2).first.flatMap(Double.init).map { Date().addingTimeInterval(-$0 * 3600) }
+    let rest = Array(CommandLine.arguments.dropFirst(2))
+    // --since: only what changed since then (a caller that read the whole list
+    // before keeps it up to date this way, without reading days of log again).
+    let since = rest.firstIndex(of: "--since").flatMap { $0 + 1 < rest.count ? Double(rest[$0 + 1]) : nil }
+    let start = since.map { Date(timeIntervalSince1970: $0) }
+        ?? rest.first.flatMap(Double.init).map { Date().addingTimeInterval(-$0 * 3600) }
         ?? Date(timeIntervalSince1970: TimeInterval(boot.tv_sec))
     let store: OSLogStore
     do { store = try OSLogStore.local() } catch {
@@ -153,11 +160,15 @@ func printNowPlayingList() -> Never {
         clients[pid] = client
     }
     let active = nowPlayingPID()
-    // Still there: not removed, and its process still runs.
-    for client in clients.values where !client.removed && (kill(client.pid, 0) == 0 || errno == EPERM) {
-        print([client.appID, "\(client.pid)", client.state ?? "Registered", client.pid == active ? "1" : "0",
+    // Still there: not removed, and its process still runs. With --since, the
+    // ones gone meanwhile too, as Removed.
+    for client in clients.values {
+        let there = !client.removed && (kill(client.pid, 0) == 0 || errno == EPERM)
+        guard there || since != nil else { continue }
+        print([client.appID, "\(client.pid)", there ? client.state ?? "Registered" : "Removed", client.pid == active ? "1" : "0",
                client.displayName].joined(separator: "\t"))
     }
+    print("#active\t\(active)")
     exit(0)
 }
 
@@ -226,6 +237,8 @@ struct Scripting {
         return pauses.intersection(plays).sorted().first
     }
     var hasPlayerState: Bool { properties["pPlS"] != nil }
+    /// A true/false `playing` property instead (VLC's): its state too.
+    var hasPlayingFlag: Bool { properties.values.contains("playing") }
     var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
     var hasVolume: Bool { properties["pVol"] != nil }
     var fitsScriptablePlayer: Bool { suite != nil && hasPlayerState && hasStateValues }
@@ -282,7 +295,8 @@ extension AXUIElement {
     var title: String { value(kAXTitleAttribute) as? String ?? "" }
     func text(_ attribute: String) -> String { value(attribute) as? String ?? "" }
     var frame: CGRect? {
-        guard let position = value(kAXPositionAttribute), let size = value(kAXSizeAttribute) else { return nil }
+        guard let position = value(kAXPositionAttribute), let size = value(kAXSizeAttribute),
+              CFGetTypeID(position) == AXValueGetTypeID(), CFGetTypeID(size) == AXValueGetTypeID() else { return nil }
         var origin = CGPoint.zero, extent = CGSize.zero
         AXValueGetValue(position as! AXValue, .cgPoint, &origin)
         AXValueGetValue(size as! AXValue, .cgSize, &extent)
@@ -554,9 +568,13 @@ func playerButton(pid: pid_t, named words: Set<String>) -> (button: PageButton, 
     let candidates = (pageButtons(pid: pid) ?? [])
         .filter { $0.inSight && named($0.label, words) }
         .sorted { ($0.fromBottom ?? .infinity) < ($1.fromBottom ?? .infinity) }
-        .filter { isUncovered($0, pid: pid) }
-    if let found = candidates.first(where: { isWithPlayerControls($0.element) }) { return (found, true) }
-    return candidates.first.map { ($0, false) }
+    // Hit tests and slider searches only until the player's button is found.
+    var lowest: PageButton?
+    for candidate in candidates where isUncovered(candidate, pid: pid) {
+        if isWithPlayerControls(candidate.element) { return (candidate, true) }
+        if lowest == nil { lowest = candidate }
+    }
+    return lowest.map { ($0, false) }
 }
 
 /// Waits up to `seconds` until the page's count of buttons holds for 0.75 s:
@@ -585,6 +603,11 @@ func bringForward(_ url: URL) {
 /// Set when the app had to be brought forward for its page to show.
 var broughtForward = false
 
+/// The page's Play/Pause in its player bar, found last, and the last full
+/// search's answer while there's no bar (see `pageToggleLabel`).
+var barToggle: AXUIElement?
+var lastSearch = Date.distantPast, lastSearchLabel: String?
+
 /// What the page showed: how many buttons (0: none), and the player's
 /// Play/Pause, with or without a player's slider around it (without, it's
 /// likely a song's own button: nothing loaded, or nobody signed in).
@@ -602,15 +625,52 @@ var pageNotChecked: String?
 /// Electron's switch goes back off at the end, or when the tool is stopped,
 /// when the page wasn't readable before.
 var switchOffAfter = false
-// Stopped early (Ctrl-C, or the Player Check app's Stop): the switch first.
+
+/// A stop (Ctrl-C, or the Player Check app's Stop) arrives on another thread.
+/// Between a trial's pause and its play it only asks: the trial plays the app
+/// again, then the tool stops. Otherwise the tool stops at once, after putting
+/// back what it changed: Electron's switch, and the app that was in front when
+/// it brought the checked one forward.
+final class StopState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var inTrial = false, requested = false
+    private var front: URL?
+    func setInTrial(_ value: Bool) { lock.withLock { inTrial = value } }
+    /// Records the stop; true when a trial must finish first.
+    func request() -> Bool { lock.withLock { requested = true; return inTrial } }
+    var isRequested: Bool { lock.withLock { requested } }
+    /// The app to bring back to the front, while another was brought forward.
+    var frontToRestore: URL? {
+        get { lock.withLock { front } }
+        set { lock.withLock { front = newValue } }
+    }
+}
+let stopState = StopState()
+
+/// Puts back what the tool changed, then ends at once: `_exit`, as `exit`
+/// could wait on the main thread's locks (stdout) from the stop's thread.
+func stopNow(_ code: Int32) -> Never {
+    if switchOffAfter, let pid = running?.processIdentifier {
+        AXUIElementSetAttributeValue(AXUIElementCreateApplication(pid), manualAccessibility, kCFBooleanFalse)
+    }
+    if let front = stopState.frontToRestore { bringForward(front) }
+    fflush(stdout)
+    _exit(code)
+}
+
+/// After a trial: the stop it held back.
+func stopIfRequested() {
+    guard stopState.isRequested else { return }
+    say("  stopped: \(appName) was played again first")
+    stopNow(143)
+}
+
 for stop in [SIGINT, SIGTERM] { signal(stop, SIG_IGN) }
 let stopSources = [SIGINT, SIGTERM].map { stop in
     let source = DispatchSource.makeSignalSource(signal: stop, queue: .global())
     source.setEventHandler {
-        if switchOffAfter, let pid = running?.processIdentifier {
-            AXUIElementSetAttributeValue(AXUIElementCreateApplication(pid), manualAccessibility, kCFBooleanFalse)
-        }
-        exit(128 + stop)
+        if stopState.request() { return } // the trial plays it again, then stops
+        stopNow(128 + stop)
     }
     source.resume()
     return source
@@ -657,10 +717,14 @@ if !isWebApp, electronVersion == nil {
                 // it stays readable covered, hidden or minimised. So the app
                 // comes forward a moment, then the one that was in front.
                 let front = NSWorkspace.shared.frontmostApplication
+                if let front, front.processIdentifier != pid { stopState.frontToRestore = front.bundleURL }
                 bringForward(appURL)
                 broughtForward = true
                 waited = waitForPage(pid, seconds: 6)
-                if let front, front.processIdentifier != pid, let url = front.bundleURL { bringForward(url) }
+                if let url = stopState.frontToRestore {
+                    bringForward(url)
+                    stopState.frontToRestore = nil
+                }
                 say("  its window was out of sight: brought it forward a moment (Electron builds its page only while its window can be seen)")
             }
             count = waited.count
@@ -678,6 +742,7 @@ if !isWebApp, electronVersion == nil {
             let readTime = Date().timeIntervalSince(readStart)
             let toggle = playerButton(pid: pid, named: playPauseWords)
             page = PageCheck(buttons: buttons.count, toggle: toggle?.button, withControls: toggle?.withControls ?? false)
+            if toggle?.withControls == true { barToggle = toggle?.button.element }
             say((shownAfter.map { String(format: electronVersion != nil ? "  AXManualAccessibility on: its page showed %d buttons after %.1f s"
                                                                       : "  its page showed %d buttons after %.1f s", buttons.count, $0) }
                     ?? "  its page: \(buttons.count) buttons")
@@ -701,20 +766,60 @@ if !isWebApp, electronVersion == nil {
 
 // MARK: - Press test
 
-/// The app's state by script (`player state`), when its dictionary has it
-/// and it answers; the first error is said once (-1743: no Automation
-/// permission for whatever runs this tool).
+/// Why AppleScript can't be used, when macOS refuses it (no Automation permission).
+var scriptProblem: String?
+
+/// -1743: macOS refused the Apple event (the Automation permission).
+func noteScriptError(_ number: Any?) {
+    if (number as? Int) == -1743 {
+        scriptProblem = "macOS doesn't let this tool (or the app running it) control \(appName) by AppleScript: allow it in System Settings → Privacy & Security → Automation"
+    }
+}
+
+/// The app's state by script, when its dictionary has it and it answers:
+/// its `player state` (stopped, playing, paused, as Spotify's), else its
+/// `playing` flag (VLC's: playing or paused). The first error is said once
+/// (-1743: no Automation permission for whatever runs this tool).
 var scriptError: Any?
 func scriptedState() -> String? {
-    guard scripting?.hasPlayerState == true, scriptError == nil else { return nil }
+    guard let scripting, scripting.hasPlayerState || scripting.hasPlayingFlag, scriptError == nil else { return nil }
+    let question = scripting.hasPlayerState ? "get player state as string" : "get playing"
     var error: NSDictionary?
-    let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to get player state as string")?.executeAndReturnError(&error)
+    let result = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(question)")?.executeAndReturnError(&error)
     if let error {
         scriptError = error[NSAppleScript.errorNumber] ?? "?"
-        say("  its player state can't be read by script: error \(scriptError!)")
+        noteScriptError(scriptError)
+        say("  its state can't be read by script: error \(scriptError!)")
         return nil
     }
-    return result?.stringValue
+    guard let result else { return nil }
+    return scripting.hasPlayerState ? result.stringValue : (result.booleanValue ? "playing" : "paused")
+}
+
+/// Sends an AppleScript command to the app; false (and why) when it fails.
+func sendScript(_ command: String) -> Bool {
+    var error: NSDictionary?
+    _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
+    if let error {
+        noteScriptError(error[NSAppleScript.errorNumber])
+        say("    \(command): error \(error[NSAppleScript.errorNumber] ?? "?")")
+    }
+    return error == nil
+}
+
+/// Its AppleScript commands to pause and play it: pause and play in its own
+/// suite (what ScriptablePlayers needs), else commands named so, else one
+/// that toggles (playpause, or VLC's play, which toggles).
+func scriptControls() -> (pause: String, play: String, toggles: Bool)? {
+    guard let scripting else { return nil }
+    if let suite = scripting.suite, let pause = scripting.commands[suite + "Paus"], let play = scripting.commands[suite + "Play"] {
+        return (pause, play, false)
+    }
+    let names = Set(scripting.commands.values.map { $0.lowercased() })
+    if names.contains("pause"), names.contains("play") { return ("pause", "play", false) }
+    if names.contains("playpause") { return ("playpause", "playpause", true) }
+    if names.contains("play") { return ("play", "play", true) }
+    return nil
 }
 
 /// The usual names of a player's state notification: Spotify's
@@ -741,6 +846,28 @@ final class NotificationLog: NSObject {
     }
 }
 
+/// The page's Play/Pause in its player bar, found last (`barToggle`): read
+/// again by its words alone, as a full search reads the whole page and
+/// hit-tests its buttons. A song's own button (no player bar around it)
+/// isn't kept: a bar may show up once something plays. Without one, the
+/// full search runs at most every 2 s.
+func pageToggleLabel(_ pid: pid_t) -> String? {
+    if let element = barToggle {
+        let label = [element.text(kAXDescriptionAttribute), element.title].first { !$0.isEmpty } ?? ""
+        if named(label, playPauseWords) { return label }
+        barToggle = nil // gone, or redrawn as another element
+    }
+    guard Date().timeIntervalSince(lastSearch) >= 2 else { return lastSearchLabel }
+    let found = playerButton(pid: pid, named: playPauseWords)
+    if let found, found.withControls {
+        barToggle = found.button.element
+        return found.button.label
+    }
+    lastSearch = Date()
+    lastSearchLabel = found?.button.label
+    return lastSearchLabel
+}
+
 /// What can be seen of whether it plays: the menu's first item, its
 /// scripted state, its page's Play/Pause, and its sound output.
 struct Look: Equatable {
@@ -757,16 +884,17 @@ struct Look: Equatable {
 
 func look(_ pid: pid_t) -> Look {
     Look(menuTitle: menu == nil ? nil : playbackMenu(pid: pid)?.toggleTitle, state: scriptedState(),
-         pageToggle: page?.toggle == nil ? nil : playerButton(pid: pid, named: playPauseWords)?.button.label,
+         pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid),
          sounding: !soundProcesses(of: pid).isEmpty)
 }
 
 /// Waits up to `seconds`, running the run loop (for notifications), until
-/// `done` holds, then a second more for late notifications; the last look.
+/// `done` holds (or a stop is asked), then a second more for late
+/// notifications; the last look.
 func waitFor(_ seconds: Double, pid: pid_t, until done: (Look) -> Bool) -> Look {
     let deadline = Date().addingTimeInterval(seconds)
     var current = look(pid)
-    while !done(current), Date() < deadline {
+    while !done(current), Date() < deadline, !stopState.isRequested {
         RunLoop.main.run(until: Date().addingTimeInterval(0.25))
         current = look(pid)
     }
@@ -774,12 +902,20 @@ func waitFor(_ seconds: Double, pid: pid_t, until done: (Look) -> Bool) -> Look 
     return current
 }
 
+/// How a trial went: it paused and played again, it only paused, or it
+/// didn't pause.
+enum TrialResult { case worked, pausedOnly, didNotPause }
+
 /// Pauses with `pause`, sees whether it took, plays again with `play` if it
-/// did. Judged by the surest sign it has at the start: its scripted state,
-/// else its page's button (Play while paused), else its menu's word or its
-/// sound. (Deezer's menu word changes late by itself: it said Play while
-/// playing, then Pause a second later, with nothing pressed.)
-func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool) -> Bool {
+/// did; `undo` runs when it didn't (a press that may have hit another app).
+/// Judged by the surest sign it has at the start: its scripted state, else
+/// its page's button (Play while paused), else its menu's word or its sound.
+/// (Deezer's menu word changes late by itself: it said Play while playing,
+/// then Pause a second later, with nothing pressed.) A stop meanwhile waits
+/// until it plays again.
+func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, undo: (() -> Void)? = nil) -> TrialResult {
+    stopState.setInTrial(true)
+    defer { stopState.setInTrial(false) }
     let before = look(pid)
     let byState = before.state != nil, byPage = !byState && before.pageToggle != nil
     func paused(_ now: Look) -> Bool {
@@ -793,15 +929,22 @@ func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool) -> 
         return now.sounding
     }
     say("  \(label): before, \(before.line)")
-    guard pause() else { say("    couldn't send it"); return false }
+    guard pause() else { say("    couldn't send it"); return .didNotPause }
     let after = waitFor(4, pid: pid, until: paused)
-    let took = paused(after)
-    say("    after the pause: \(after.line) → " + (took ? "it paused" : "it didn't pause in 4 s"))
-    guard took else { return false }
-    _ = play()
+    guard paused(after) else {
+        say("    after the pause: \(after.line) → it didn't pause in 4 s")
+        undo?()
+        return .didNotPause
+    }
+    say("    after the pause: \(after.line) → it paused")
+    guard play() else {
+        say("    couldn't play it again")
+        return .pausedOnly
+    }
     let back = waitFor(4, pid: pid, until: playing)
-    say("    after playing again: \(back.line)" + (playing(back) ? "" : " (not playing again: check it)"))
-    return true
+    let again = playing(back)
+    say("    after playing again: \(back.line) → " + (again ? "it plays" : "it didn't play again in 4 s"))
+    return again ? .worked : .pausedOnly
 }
 
 /// Whether it plays, as far as can be seen: its scripted state, else its
@@ -844,13 +987,102 @@ func pressPlayPauseKey() {
     }
 }
 
+/// Why the key can't be posted: macOS drops it silently without access.
+let keyPostProblem: String? = CGPreflightPostEventAccess() ? nil
+    : "macOS doesn't let this tool (or the app running it) post keys: allow it in System Settings → Privacy & Security → Accessibility"
+
 /// Whether the app (or a helper that plays for it) is the Now Playing one;
-/// else which app is.
+/// else which app is (or that MediaRemote didn't answer).
 func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
     let holder = nowPlayingPID()
-    let other = holder <= 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
+    let other = holder < 0 ? "MediaRemote didn't answer" : holder == 0 ? "no app is"
+        : (NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)") + " is"
     return (holder > 0 && (holder == pid || responsible(holder) == pid), other)
 }
+
+// MARK: Whether it can report to Now Playing
+
+/// The frameworks a Mach-O file links ("MediaPlayer" for
+/// /System/Library/Frameworks/MediaPlayer.framework/…), from its load
+/// commands: the arm64 slice of a universal file, else its first. As Player
+/// Check reads them to list the apps that can be in Now Playing.
+func linkedFrameworks(_ url: URL) -> Set<String> {
+    guard let handle = try? FileHandle(forReadingFrom: url) else { return [] }
+    defer { try? handle.close() }
+    func read(_ offset: UInt64, _ count: Int) -> Data? {
+        guard (try? handle.seek(toOffset: offset)) != nil, let data = try? handle.read(upToCount: count), data.count == count else { return nil }
+        return data
+    }
+    func word(_ data: Data, _ offset: Int, bigEndian: Bool = false) -> UInt32 {
+        let value = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: offset, as: UInt32.self) }
+        return bigEndian ? UInt32(bigEndian: value) : value
+    }
+    guard let head = read(0, 8) else { return [] }
+    var slice: UInt64 = 0
+    switch word(head, 0) {
+    case 0xbeba_feca, 0xbfba_feca: // universal (FAT_MAGIC, FAT_MAGIC_64, big-endian)
+        let wide = word(head, 0) == 0xbfba_feca
+        let count = Int(word(head, 4, bigEndian: true)), size = wide ? 32 : 20
+        guard (1...16).contains(count), let table = read(8, count * size) else { return [] }
+        var chosen: UInt64?
+        for index in 0..<count {
+            let base = index * size
+            let offset = wide ? UInt64(word(table, base + 8, bigEndian: true)) << 32 | UInt64(word(table, base + 12, bigEndian: true))
+                              : UInt64(word(table, base + 8, bigEndian: true))
+            if word(table, base, bigEndian: true) == 0x0100_000c { chosen = offset; break } // arm64
+            if chosen == nil { chosen = offset }
+        }
+        slice = chosen ?? 0
+    case 0xfeed_facf: break // MH_MAGIC_64
+    default: return []
+    }
+    guard let header = read(slice, 32), word(header, 0) == 0xfeed_facf else { return [] }
+    let commands = Int(word(header, 16)), size = Int(word(header, 20))
+    guard size < 1 << 22, let table = read(slice + 32, size) else { return [] }
+    // LC_LOAD_DYLIB, LC_LOAD_WEAK_DYLIB, LC_REEXPORT_DYLIB, LC_LAZY_LOAD_DYLIB, LC_LOAD_UPWARD_DYLIB
+    let linking: Set<UInt32> = [0xc, 0x8000_0018, 0x8000_001f, 0x20, 0x8000_0023]
+    var names = Set<String>()
+    var offset = 0
+    for _ in 0..<commands {
+        guard offset + 12 <= table.count else { break }
+        let length = Int(word(table, offset + 4))
+        guard length >= 12, offset + length <= table.count else { break }
+        if linking.contains(word(table, offset)) {
+            let start = offset + Int(word(table, offset + 8))
+            if start < offset + length {
+                let path = String(decoding: table[start..<(offset + length)].prefix { $0 != 0 }, as: UTF8.self)
+                if let end = path.range(of: ".framework/"), let name = path[..<end.lowerBound].split(separator: "/").last {
+                    names.insert(String(name))
+                }
+            }
+        }
+        offset += length
+    }
+    return names
+}
+
+/// Whether anything in it can report to Now Playing (so the Play/Pause key
+/// and the Now Playing panel may reach it): a Safari web app, an Electron
+/// app, or a binary of it (in Contents/MacOS, or its own frameworks) linking
+/// MediaPlayer, MediaRemote or AVKit.
+let canBeNowPlaying: Bool = {
+    if isWebApp || electronVersion != nil || bundleID == "com.apple.Safari" { return true }
+    var binaries: [URL] = []
+    if let items = FileManager.default.enumerator(at: appURL.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {
+        for case let item as URL in items where (try? item.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+            binaries.append(item)
+        }
+    }
+    for framework in (try? FileManager.default.contentsOfDirectory(at: appURL.appendingPathComponent("Contents/Frameworks"),
+                                                                    includingPropertiesForKeys: nil)) ?? []
+    where framework.pathExtension == "framework" {
+        binaries.append(framework.appendingPathComponent(framework.deletingPathExtension().lastPathComponent))
+    }
+    return binaries.contains { !linkedFrameworks($0).isDisjoint(with: ["MediaPlayer", "MediaRemote", "AVKit"]) }
+}()
+let notNowPlaying = "nothing in it reports to Now Playing, so neither the Play/Pause key nor the Now Playing panel can reach it"
+let keyNotNowPlaying = "nothing in it reports to Now Playing, so the key can't reach it"
+let panelNotNowPlaying = "nothing in it reports to Now Playing, so it has no row in the panel"
 
 // MARK: The menu bar's Now Playing panel
 
@@ -867,7 +1099,9 @@ struct PanelRow {
 /// the menu bar: the menu bar's own list doesn't name it.
 func nowPlayingMenuItem() -> AXUIElement? {
     let system = AXUIElementCreateSystemWide()
-    let width = Float(NSScreen.main?.frame.width ?? 1470)
+    // The primary display's: hit-test coordinates start at its top left, and
+    // NSScreen.main is the one with the keyboard focus, maybe another.
+    let width = Float(NSScreen.screens.first?.frame.width ?? 1470)
     var x = width - 20
     while x > width / 3 {
         var hit: AXUIElement?
@@ -954,12 +1188,12 @@ func pressInPanel(pid: pid_t, pausing: Bool, sameRow: Bool = false) -> Bool {
 
 // MARK: The test
 
-var menuTookPress: Bool?
-var scriptTookPause: Bool?
-var pageTookPress: Bool?
-var keyTookPress: Bool?
-var panelTookPress: Bool?
-/// Why the Play/Pause key wasn't pressed, when it wasn't.
+var scriptResult: TrialResult?
+var menuResult: TrialResult?
+var pageResult: TrialResult?
+var keyResult: TrialResult?
+var panelResult: TrialResult?
+/// Why the Play/Pause key wasn't pressed (or not twice), when it wasn't.
 var keyProblem: String?
 /// Why a way wasn't tried, for "Ways to control it".
 var notTried = readOnly ? "not tried: read only" : "not tried"
@@ -967,7 +1201,15 @@ var notifications: NotificationLog?
 if testing {
     say()
     say("Press test")
-    if let running {
+    let script = scriptControls()
+    if running == nil {
+        say("  not run: the app isn't running")
+    } else if script == nil, menu == nil, page?.toggle == nil, !canBeNowPlaying {
+        // Nothing to press, and nothing for the key or the panel to reach:
+        // asking for it to play would only wait.
+        say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and \(notNowPlaying)")
+        notTried = "not tried: nothing to press"
+    } else if let running {
         let pid = running.processIdentifier
         notifications = NotificationLog(bundleID: bundleID)
         // Each way needs it playing: whoever runs the tool is asked to start
@@ -982,15 +1224,11 @@ if testing {
             }
             return going
         }
-        if let scripting, let suite = scripting.suite, let pauseName = scripting.commands[suite + "Paus"],
-           let playName = scripting.commands[suite + "Play"], ready() {
-            func send(_ command: String) -> Bool {
-                var error: NSDictionary?
-                _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
-                if let error { say("    \(command): error \(error[NSAppleScript.errorNumber] ?? "?")") }
-                return error == nil
-            }
-            scriptTookPause = trial("by script", pid: pid, pause: { send(pauseName) }, play: { send(playName) })
+        if let script, scriptProblem == nil, ready() {
+            // A toggle is sent for the pause only while it plays, and again to play.
+            scriptResult = trial("by script (\(script.pause), \(script.play))", pid: pid,
+                                 pause: { sendScript(script.pause) }, play: { sendScript(script.play) })
+            stopIfRequested()
             RunLoop.main.run(until: Date().addingTimeInterval(1))
         }
         if menu != nil, ready() {
@@ -998,7 +1236,8 @@ if testing {
                 guard let item = playbackMenu(pid: pid)?.toggle else { return false }
                 return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
             }
-            menuTookPress = trial("by its menu", pid: pid, pause: press, play: press)
+            menuResult = trial("by its menu", pid: pid, pause: press, play: press)
+            stopIfRequested()
             RunLoop.main.run(until: Date().addingTimeInterval(1))
         }
         if page?.toggle != nil, ready() {
@@ -1008,30 +1247,54 @@ if testing {
                 }
                 return AXUIElementPerformAction(button.element, kAXPressAction as CFString) == .success
             }
-            pageTookPress = trial("by its page's button", pid: pid, pause: { pressPage(pauseWords) }, play: { pressPage(playWords) })
+            pageResult = trial("by its page's button", pid: pid, pause: { pressPage(pauseWords) }, play: { pressPage(playWords) })
+            stopIfRequested()
             RunLoop.main.run(until: Date().addingTimeInterval(1))
         }
-        if ready() {
-            // Pressed only while it's Now Playing: the key goes to that app.
-            let holder = nowPlayingHolder(pid)
-            if holder.isThisApp {
-                keyTookPress = trial("by the Play/Pause key", pid: pid, pause: { pressPlayPauseKey(); return true },
-                                     play: { pressPlayPauseKey(); return true })
-            } else {
-                keyProblem = "it isn't Now Playing while it plays (\(holder.other) is), so the key goes there"
-                say("  by the Play/Pause key: not pressed: \(keyProblem!)")
-                keyTookPress = false
+        if !canBeNowPlaying {
+            keyProblem = keyNotNowPlaying
+            panelProblem = panelNotNowPlaying
+            say("  the Play/Pause key and the Now Playing panel: not pressed: \(notNowPlaying)")
+            keyResult = .didNotPause
+            panelResult = .didNotPause
+        } else {
+            if let keyPostProblem {
+                keyProblem = keyPostProblem
+                say("  by the Play/Pause key: not pressed: \(keyPostProblem)")
+                keyResult = .didNotPause
+            } else if ready() {
+                // The key goes to the Now Playing app: pressed only while it's
+                // this one, both times (another may take it meanwhile, as an
+                // app resuming its music when this one pauses).
+                let holder = nowPlayingHolder(pid)
+                if holder.isThisApp {
+                    keyResult = trial("by the Play/Pause key", pid: pid, pause: { pressPlayPauseKey(); return true }, play: {
+                        let holder = nowPlayingHolder(pid)
+                        guard holder.isThisApp else {
+                            keyProblem = "it paused, but before the second press it wasn't Now Playing any more (\(holder.other)), so the key would have gone there"
+                            return false
+                        }
+                        pressPlayPauseKey()
+                        return true
+                    })
+                } else {
+                    keyProblem = "it isn't Now Playing while it plays (\(holder.other)), so the key goes there"
+                    say("  by the Play/Pause key: not pressed: \(keyProblem!)")
+                    keyResult = .didNotPause
+                }
+                stopIfRequested()
+                RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
-            RunLoop.main.run(until: Date().addingTimeInterval(1))
-        }
-        if ready() {
-            panelTookPress = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
-                                   play: { pressInPanel(pid: pid, pausing: false, sameRow: true) })
-            if panelTookPress == false, panelRowText != nil {
-                // The row pressed may have been another app's: pressed again, that app plays on.
-                _ = pressInPanel(pid: pid, pausing: false, sameRow: true)
+            if ready() {
+                panelResult = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
+                                    play: { pressInPanel(pid: pid, pausing: false, sameRow: true) },
+                                    undo: {
+                                        // The row pressed may have been another app's: pressed again, that app plays on.
+                                        if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, sameRow: true) }
+                                    })
+                if let panelProblem { say("    \(panelProblem)") }
+                stopIfRequested()
             }
-            if let panelProblem { say("    \(panelProblem)") }
         }
         if let seen = notifications?.seen, !seen.isEmpty {
             for (name, keys) in seen.sorted(by: { $0.key < $1.key }) {
@@ -1040,8 +1303,6 @@ if testing {
         } else {
             say("  notifications: none under the usual names (\(bundleID).\(stateNotificationSuffixes[0]), …)")
         }
-    } else {
-        say("  not run: the app isn't running")
     }
 }
 
@@ -1076,27 +1337,26 @@ if let action {
     for way in via.map({ [$0] }) ?? ["script", "page", "menu"] {
         switch way {
         case "script":
-            guard let scripting, scripting.fitsScriptablePlayer, let suite = scripting.suite,
-                  let command = scripting.commands[suite + (pausing ? "Paus" : "Play")] else {
-                tried.append("no AppleScript play and pause as Spotify's")
+            guard let script = scriptControls() else {
+                tried.append("no AppleScript play or pause")
                 continue
             }
-            let target = pausing ? "paused" : "playing"
-            if scriptedState() == target {
-                say("It's \(target) already (its AppleScript player state).")
+            // Its state answers when it has one (Spotify's, VLC's playing flag); else what shows.
+            let isThere = { isPlaying(pid) != pausing }
+            if isThere() {
+                say("It's \(pausing ? "paused" : "playing") already.")
                 finish(0)
             }
-            var error: NSDictionary?
-            _ = NSAppleScript(source: "tell application id \"\(bundleID)\" to \(command)")?.executeAndReturnError(&error)
-            if let error {
-                tried.append("AppleScript \(command): error \(error[NSAppleScript.errorNumber] ?? "?")")
+            let command = pausing ? script.pause : script.play
+            guard sendScript(command) else {
+                tried.append(scriptProblem ?? "AppleScript \(command) failed")
                 continue
             }
-            if within({ scriptedState() == target }) {
-                say("\(pausing ? "Paused" : "Played") it by AppleScript (\(command)): its state is \(target).")
+            if within(isThere) {
+                say("\(pausing ? "Paused" : "Played") it by AppleScript (\(command)).")
                 finish(0)
             }
-            tried.append("AppleScript \(command) sent, but its state didn't change in 6 s")
+            tried.append("AppleScript \(command) sent, but it didn't change in 6 s")
         case "page":
             guard page?.toggle != nil else {
                 tried.append("no Play/Pause button on its page")
@@ -1147,9 +1407,13 @@ if let action {
             tried.append("pressed its menu's '\(before ?? "")', but nothing changed in 6 s")
         case "key":
             // The key goes to the Now Playing app: pressed only when it's this one.
+            if let keyPostProblem {
+                tried.append(keyPostProblem)
+                continue
+            }
             let holder = nowPlayingHolder(pid)
             guard holder.isThisApp else {
-                tried.append("it isn't Now Playing (\(holder.other) is), so the Play/Pause key would go there")
+                tried.append("it isn't Now Playing (\(holder.other)), so the Play/Pause key would go there")
                 continue
             }
             if isPlaying(pid) != pausing {
@@ -1186,27 +1450,39 @@ if let action {
 
 // MARK: - Ways to control it
 
-/// One line per way known to control an app, each with a mark: ✓ it worked
-/// in the test, ✗ not there or didn't work, ? found but not tried (read
-/// only, or it didn't play), – not checked. The Player Check app shows this
-/// section as a checklist.
+/// One line per way known to control an app, each with a mark: ✓ it paused
+/// and played again in the test, ✗ not there or didn't work, ? found but not
+/// tried (read only, or it didn't play), – not checked. The Player Check app
+/// shows this section as a checklist.
 func way(_ mark: String, _ text: String) { say("  \(mark) \(text)") }
 say()
 say("Ways to control it")
-if let scripting {
-    if scripting.fitsScriptablePlayer {
-        switch scriptTookPause {
-        case true?: way("✓", "AppleScript: pausing and playing it by script worked, as Spotify and Apple Music")
-        case false?: way("✗", "AppleScript: its scripted pause didn't take")
-        case nil: way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
+if let script = scriptControls() {
+    let fits = scripting?.fitsScriptablePlayer == true
+    let kind = fits ? ", as Spotify and Apple Music" : " (its own kind, as VLC: not the way ScriptablePlayers expects)"
+    switch scriptResult {
+    case .worked?: way("✓", "AppleScript: '\(script.pause)' and '\(script.play)' paused and played it\(kind)")
+    case .pausedOnly?: way("✗", "AppleScript: '\(script.pause)' paused it, but '\(script.play)' didn't play it again")
+    case .didNotPause?: way("✗", "AppleScript: " + (scriptProblem ?? "'\(script.pause)' didn't pause it"))
+    case nil:
+        if let scriptProblem {
+            way("✗", "AppleScript: \(scriptProblem)")
+        } else if fits {
+            way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
+        } else {
+            way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC) (\(notTried))")
         }
-    } else if scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
-        way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC)")
-    } else {
-        way("✗", "AppleScript: a dictionary without play or pause")
     }
 } else {
-    way("✗", "AppleScript: no scripting dictionary")
+    way("✗", "AppleScript: " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
+}
+/// A trial's line: ✓ paused and played again, ✗ it only paused or didn't.
+func resultLine(_ title: String, _ result: TrialResult, problem: String? = nil) {
+    switch result {
+    case .worked: way("✓", "\(title): pressing it paused and played it")
+    case .pausedOnly: way("✗", "\(title): " + (problem ?? "it paused, but didn't play again"))
+    case .didNotPause: way("✗", "\(title): " + (problem ?? "pressing it changed nothing"))
+    }
 }
 if running == nil {
     way("–", "Playback menu: not checked (it isn't running)")
@@ -1214,10 +1490,10 @@ if running == nil {
     way("–", "Playback menu: not checked (no Accessibility permission)")
 } else if let menu {
     let found = "Playback menu '\(menu.title)'" + (menu.asAutoHushFindsIt ? "" : " (found by \(menu.arrows), not ⌘← ⌘→)")
-    switch menuTookPress {
-    case true?: way("✓", "\(found): pressing it paused and played it, as TIDAL and Apple Podcasts")
-    case false?: way("✗", "\(found): pressing it changed nothing")
-    case nil: way("?", "\(found): first item '\(menu.toggleTitle)' (\(notTried))")
+    if let menuResult {
+        resultLine(found, menuResult)
+    } else {
+        way("?", "\(found): first item '\(menu.toggleTitle)' (\(notTried))")
     }
 } else {
     way("✗", "Playback menu: none with Play/Pause and Previous/Next")
@@ -1228,26 +1504,32 @@ if let pageNotChecked {
     let kind = electronVersion != nil ? "Page button, with Electron's switch on" : "Page button"
     if let toggle = page.toggle {
         let found = "\(kind): '\(toggle.label)'" + (page.withControls ? "" : ", but no player bar around it")
-        switch pageTookPress {
-        case true?: way("✓", "\(found): pressing it paused and played it")
-        case false?: way("✗", "\(found): pressing it changed nothing")
-        case nil: way("?", "\(found) (\(notTried))")
+        if let pageResult {
+            resultLine(found, pageResult)
+        } else {
+            way("?", "\(found) (\(notTried))")
         }
     } else {
         way("✗", "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
     }
 }
-if let keyTookPress {
-    way(keyTookPress ? "✓" : "✗", "Play/Pause key: " + (keyTookPress ? "pressing it paused and played it (it reaches the Now Playing app)"
-                                                                     : keyProblem ?? "pressing it changed nothing"))
+if let keyResult {
+    resultLine("Play/Pause key", keyResult, problem: keyProblem)
+} else if running != nil, !canBeNowPlaying {
+    way("✗", "Play/Pause key: \(keyNotNowPlaying)")
 } else {
     way(keyWay.mark, keyWay.text + (keyWay.mark == "?" ? " (\(notTried))" : ""))
 }
-if let panelTookPress {
-    way(panelTookPress ? "✓" : "✗", "Now Playing panel: " + (panelTookPress ? "pressing its row ('\(panelRowText ?? "")') paused and played it"
-                                                                         : panelProblem ?? "pressing its row changed nothing"))
+if let panelResult {
+    if panelResult == .worked {
+        way("✓", "Now Playing panel: pressing its row ('\(panelRowText ?? "")') paused and played it")
+    } else {
+        resultLine("Now Playing panel", panelResult, problem: panelProblem)
+    }
 } else if running == nil {
     way("–", "Now Playing panel: not checked (it isn't running)")
+} else if !canBeNowPlaying {
+    way("✗", "Now Playing panel: \(panelNotNowPlaying)")
 } else {
     way("?", "Now Playing panel: its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
 }
@@ -1272,14 +1554,20 @@ if isWebApp {
         say("  No state notification with \"Player State\" under the usual names: unless it has one under another,")
         say("  its state must be read once a second (PolledStateObserver), so the profile needs that option.")
     }
-    if scriptTookPause == false { say("  But its scripted pause didn't take: check it by hand before building on it.") }
+    switch scriptResult {
+    case .didNotPause?: say("  But its scripted pause didn't take: check it by hand before building on it.")
+    case .pausedOnly?: say("  But its scripted play didn't bring it back: check it by hand before building on it.")
+    default: break
+    }
 } else if menu != nil {
-    switch menuTookPress {
-    case true?:
+    switch menuResult {
+    case .worked?:
         say("  A menu player, like TIDAL and Apple Podcasts: a MenuPlayerProfile with menu '\(menu!.title)'.")
         say("  Its words for Play and Pause in every language must be read from the app (TidalWords, PodcastsWords).")
         if !menu!.asAutoHushFindsIt { say("  And AutoHush must find the menu by \(menu!.arrows) as well as ⌘← ⌘→.") }
-    case false?:
+    case .pausedOnly?:
+        say("  Its menu paused it, but pressing it again didn't play it: check it by hand before building on it.")
+    case .didNotPause?:
         say("  Its menu has Play/Pause, but pressing it didn't take (as Deezer's menu): not controllable that way.")
     case nil:
         say("  Probably a menu player, like TIDAL and Apple Podcasts (menu '\(menu!.title)'): confirm by testing it while it plays.")
@@ -1307,15 +1595,17 @@ if let page {
         say(electronVersion != nil ? "  Electron's switch showed no page: its buttons can't be read that way."
                                    : "  Its page showed no buttons: is the site loaded?")
     } else if let toggle = page.toggle {
-        switch pageTookPress {
-        case true?:
+        switch pageResult {
+        case .worked?:
             if isWebApp {
                 say("  Its page's Play/Pause works.")
             } else {
                 say("  \(its)'s Play/Pause works: it could be a player that learns that button,")
                 say("  as Safari web apps (WebAppPlayers), with no fades; AutoHush has no such player for apps yet.")
             }
-        case false?:
+        case .pausedOnly?:
+            say("  \(its)'s Pause works, but its Play didn't bring it back: check by ear.")
+        case .didNotPause?:
             say("  \(its) has Play/Pause ('\(toggle.label)'), but pressing it didn't take: check by ear.")
         case nil:
             say("  \(its) has Play/Pause ('\(toggle.label)'): confirm by testing it while it plays.")

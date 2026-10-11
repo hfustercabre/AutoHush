@@ -17,6 +17,6 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Player Check reads a player's state by AppleScript and, in its press test, pauses and plays it once.</string>
+    <string>Player Check reads a player's state by AppleScript and, in its test, pauses it and plays it again.</string>
 </dict>
 </plist>

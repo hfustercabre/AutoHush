@@ -225,17 +225,19 @@ extension Data {
 /// --now-playing-list` reads it from macOS's log (administrators only).
 struct NowPlayingClient {
     let bundleID: String
+    let pid: String
     /// Its last state (Playing, Paused, Stopped…), or Registered: ready for
-    /// Now Playing, never said it plays.
+    /// Now Playing, never said it plays; Removed, gone (`--since` only).
     let state: String
     /// The one the Play/Pause key reaches.
-    let isActive: Bool
+    var isActive: Bool
 
     /// "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>"
     init?(line: String) {
         let parts = line.components(separatedBy: "\t")
         guard parts.count >= 4 else { return nil }
         bundleID = parts[0]
+        pid = parts[1]
         state = parts[2]
         isActive = parts[3] == "1"
     }
@@ -329,13 +331,26 @@ final class Checker {
     var apps: [InstalledApp] = []
     var isScanning = false
     var runningIDs: Set<String> = []
+    /// What's shown per app: its check running, else its last finished one
+    /// (else a check that stopped or failed).
     var reports: [InstalledApp.ID: Report] = [:]
+    /// The last finished check per app, kept between launches: a check
+    /// stopped or failed leaves it in place.
+    private(set) var finished: [InstalledApp.ID: Report] = [:]
+    /// Why the last check of an app didn't finish, while its last finished
+    /// check is shown instead.
+    var attemptNotes: [InstalledApp.ID: String] = [:]
     var checkingID: InstalledApp.ID?
+    /// The check running, to tell it from one started after it was stopped.
+    private var attempt: UUID?
     var isTrusted = AXIsProcessTrusted()
     /// macOS's own Now Playing list, by bundle ID; why it couldn't be read.
     var clients: [String: NowPlayingClient] = [:]
     var clientsProblem: String?
     var isReadingClients = false
+    /// When the list was last read: the next read asks only for what changed
+    /// since (the first reads macOS's log since the Mac started).
+    private var clientsReadAt: Date?
     /// The last Play or Pause per app: what playercheck said, and whether it
     /// worked (nil while it runs).
     var controls: [InstalledApp.ID: (text: String, worked: Bool?)] = [:]
@@ -365,13 +380,13 @@ final class Checker {
     private func loadReports() {
         guard let data = try? Data(contentsOf: Self.savedReports),
               let saved = try? JSONDecoder().decode([String: SavedReport].self, from: data) else { return }
-        reports = saved.filter { $0.value.version == SavedReport.currentVersion }
+        finished = saved.filter { $0.value.version == SavedReport.currentVersion }
             .mapValues { Report(state: .finished, pressed: $0.pressed, lines: $0.lines, date: $0.date) }
+        reports = finished
     }
 
     private func saveReports() {
-        let saved = reports.filter { $0.value.state == .finished }
-            .mapValues { SavedReport(lines: $0.lines, pressed: $0.pressed, date: $0.date) }
+        let saved = finished.mapValues { SavedReport(lines: $0.lines, pressed: $0.pressed, date: $0.date) }
         try? FileManager.default.createDirectory(at: Self.savedReports.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? JSONEncoder().encode(saved).write(to: Self.savedReports)
     }
@@ -381,7 +396,7 @@ final class Checker {
     /// Whether a way to play and pause it is known: from its finished check,
     /// else from its bundle.
     func canControl(_ app: InstalledApp) -> Bool {
-        if let report = reports[app.id], report.state == .finished { return report.ways.contains(where: \.canControl) }
+        if let report = finished[app.id] { return report.ways.contains(where: \.canControl) }
         return app.controlHint != nil
     }
 
@@ -390,8 +405,7 @@ final class Checker {
     /// page's button and the menu in turn (a menu found may be ignored, as
     /// Deezer's is: picking it alone would fail where the page works).
     func preferredWay(_ app: InstalledApp) -> Way? {
-        guard let report = reports[app.id], report.state == .finished else { return nil }
-        return report.ways.first { $0.canControl && $0.mark == .works }
+        finished[app.id]?.ways.first { $0.canControl && $0.mark == .works }
     }
 
     /// Plays or pauses it: playercheck --play or --pause, by `via` or the
@@ -434,22 +448,47 @@ final class Checker {
             isScanning = false
         }
         refreshRunning()
-        readClients()
+        readClients(full: true)
     }
 
-    /// Reads macOS's Now Playing list again (a few seconds: it reads the log
-    /// since the Mac started).
-    func readClients() {
+    /// Reads macOS's Now Playing list again: all of it (the log since the
+    /// Mac started: seconds on a Mac up for days) at first and when asked,
+    /// else only what changed since the last read.
+    func readClients(full: Bool = false) {
         guard !isReadingClients, let tool else {
             if tool == nil { clientsProblem = "playercheck is missing from this app: build it with build.sh." }
             return
         }
         isReadingClients = true
+        let since = full ? nil : clientsReadAt
+        let started = Date()
+        // A little overlap, so nothing written meanwhile is missed.
+        let arguments = ["--now-playing-list"] + (since.map { ["--since", String($0.timeIntervalSince1970 - 2)] } ?? [])
         Task {
-            let (status, output) = await Task.detached { Checker.runAndWait(tool, ["--now-playing-list"]) }.value
+            let (status, output) = await Task.detached { Checker.runAndWait(tool, arguments) }.value
             if status == 0 {
-                clients = Dictionary(output.split(separator: "\n").compactMap { NowPlayingClient(line: String($0)) }
-                    .map { ($0.bundleID, $0) }, uniquingKeysWith: { first, second in first.isActive ? first : second })
+                var updated = since == nil ? [:] : clients
+                var active: String?
+                for line in output.split(separator: "\n").map(String.init) {
+                    if line.hasPrefix("#active\t") {
+                        active = String(line.dropFirst("#active\t".count))
+                    } else if let client = NowPlayingClient(line: line) {
+                        if client.state == "Removed" {
+                            if updated[client.bundleID]?.pid == client.pid { updated[client.bundleID] = nil }
+                        } else {
+                            updated[client.bundleID] = client
+                        }
+                    }
+                }
+                if let active {
+                    updated = updated.mapValues { client in
+                        var client = client
+                        client.isActive = client.pid == active
+                        return client
+                    }
+                }
+                clients = updated
+                clientsReadAt = started
                 clientsProblem = nil
             } else {
                 clients = [:]
@@ -460,8 +499,11 @@ final class Checker {
         }
     }
 
+    /// Its entry in macOS's Now Playing list, while it runs (a list kept up
+    /// to date by changes only may still hold an app that quit).
     func client(of app: InstalledApp) -> NowPlayingClient? {
-        app.bundleID.flatMap { clients[$0] }
+        guard isRunning(app) else { return nil }
+        return app.bundleID.flatMap { clients[$0] }
     }
 
     /// The apps that can be in Now Playing: built for it, or listed there now.
@@ -482,7 +524,10 @@ final class Checker {
     /// window and page), then runs playercheck on it.
     func check(_ app: InstalledApp) {
         guard !isBusy, let tool else { return }
+        let token = UUID()
+        attempt = token
         checkingID = app.id
+        attemptNotes[app.id] = nil
         let opening = !isRunning(app)
         reports[app.id] = Report(state: opening ? .opening : .checking, pressed: true)
         Task {
@@ -493,16 +538,37 @@ final class Checker {
                     _ = try await NSWorkspace.shared.openApplication(at: app.url, configuration: configuration)
                     try await Task.sleep(for: .seconds(5))
                 } catch {
+                    guard attempt == token else { return }
                     reports[app.id]?.state = .failed("Couldn't open it: \(error.localizedDescription)")
-                    checkingID = nil
+                    endAttempt(app.id)
                     return
                 }
-                guard reports[app.id]?.state == .opening else { return } // stopped meanwhile
+                // Stopped meanwhile (and maybe another check started since).
+                guard attempt == token else { return }
                 reports[app.id]?.state = .checking
                 refreshRunning()
             }
             await run(tool, on: app)
         }
+    }
+
+    /// The end of a check: a finished one is kept (and saved); one stopped or
+    /// failed gives way to the last finished check, if there's one, with a note.
+    private func endAttempt(_ id: InstalledApp.ID) {
+        if let report = reports[id], report.state == .finished {
+            finished[id] = report
+            saveReports()
+        } else if let report = reports[id], let previous = finished[id] {
+            switch report.state {
+            case .stopped: attemptNotes[id] = "The check was stopped: the last finished check is shown."
+            case .failed(let reason): attemptNotes[id] = "\(reason). The last finished check is shown."
+            default: break
+            }
+            reports[id] = previous
+        }
+        process = nil
+        attempt = nil
+        checkingID = nil
     }
 
     private func run(_ tool: URL, on app: InstalledApp) async {
@@ -544,21 +610,20 @@ final class Checker {
             reports[id]?.state = process.terminationStatus == 0 ? .finished
                 : .failed("playercheck ended with status \(process.terminationStatus)")
         }
-        saveReports()
-        self.process = nil
-        checkingID = nil
+        endAttempt(id)
         refreshRunning()
         readClients()
     }
 
-    /// Stops the check: playercheck sets Electron's switch back first.
+    /// Stops the check: playercheck plays the app again if a test paused it,
+    /// and sets Electron's switch back, first.
     func stop() {
         guard let id = checkingID else { return }
         reports[id]?.state = .stopped
         if let process {
             process.terminate()
         } else {
-            checkingID = nil
+            endAttempt(id) // still opening the app
         }
     }
 }
@@ -583,7 +648,7 @@ struct ContentView: View {
                     Section("In Now Playing Now") {
                         ForEach(listed) { app in
                             AppRow(app: app, isRunning: checker.isRunning(app), client: checker.client(of: app),
-                                   isChecked: checker.reports[app.id]?.state == .finished).tag(app.id)
+                                   isChecked: checker.finished[app.id] != nil).tag(app.id)
                         }
                     }
                 }
@@ -593,7 +658,7 @@ struct ContentView: View {
                         Section(root.title) {
                             ForEach(apps) { app in
                                 AppRow(app: app, isRunning: checker.isRunning(app), client: nil,
-                                       isChecked: checker.reports[app.id]?.state == .finished).tag(app.id)
+                                       isChecked: checker.finished[app.id] != nil).tag(app.id)
                             }
                         }
                     }
@@ -636,6 +701,7 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem {
                 Button { checker.scan() } label: { Label("Look Again", systemImage: "arrow.clockwise") }
+                    .disabled(checker.isScanning)
                     .help("Look in the Applications folders and macOS's Now Playing list again")
             }
         }
@@ -791,7 +857,7 @@ struct AppDetail: View {
             .disabled(checker.isBusy || !running || checker.tool == nil)
             Text(!running ? "Open it first: it isn't running."
                  : way.map { "By \(Self.wayName($0.via)), which worked in its check." }
-                    ?? (checker.reports[app.id]?.state == .finished
+                    ?? (checker.finished[app.id] != nil
                         ? "None worked in its check yet (found, not tried): it tries AppleScript, its page's button, then its menu."
                         : "Not checked yet (\(app.controlHint ?? "")): it tries AppleScript, its page's button, then its menu."))
                 .font(.caption).foregroundStyle(.secondary)
@@ -827,6 +893,9 @@ struct AppDetail: View {
     }
 
     @ViewBuilder private func results(_ report: Report) -> some View {
+        if let note = checker.attemptNotes[app.id] {
+            Label(note, systemImage: "exclamationmark.circle").foregroundStyle(.secondary)
+        }
         if case .failed(let reason) = report.state {
             Label(reason, systemImage: "xmark.octagon").foregroundStyle(.red)
         } else if report.state == .stopped {
