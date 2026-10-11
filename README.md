@@ -371,6 +371,7 @@ AutoHush (executable: the entry point only)
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
+playercheck, Player Check (developer tools, in Tools/, built on their own): could AutoHush control an app?
 ```
 
 ```text
@@ -423,12 +424,14 @@ Sources/
                          their button, controlling them)
 Tests/                   a test module per module, mirroring its folders (only the player modules' tests
                          name a player), plus AutoHushTestSupport (shared fakes)
-Tools/                   tools for measuring the fades, never part of the app or its disk image; each has
-                         a README.md saying what it does and how (Tools/README.md lists them)
+Tools/                   tools for measuring the fades and checking apps, never part of the app or its disk
+                         image; each has a README.md saying what it does and how (Tools/README.md lists them)
   MeasureVolumeCurve/    measures a player's volume curve
   ListenToFades/         records a loopback device and measures the fades in it
   LoopbackDriver/        AutoHush Loopback, a test-only virtual audio device, with build, install and
                          uninstall scripts
+  PlayerCheck/           playercheck: whether and how AutoHush could control an app
+  PlayerCheckApp/        Player Check, the same in a window, with Play and Pause for the apps it can control
 Resources/               Info.plist, entitlements, AutoHush.icon (the app icon), and Localization/ with the
                          String Catalogs, assembled into the .app by Scripts/build-app.sh
 ```
@@ -443,7 +446,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 - **`General/`** folders hold only what several parts of a module need.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 
-**Adding a media player:** the app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
+**Adding a media player:** first check that the app can be controlled, and how: [PlayerCheck](Tools/PlayerCheck) (or [Player Check](Tools/PlayerCheckApp), in a window) reads its scripting dictionary, playback menu and page, tries pausing and playing it, and says which kind of player it would be. The app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
 1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. If it can't be scripted but has a playback menu with Play/Pause first and ⌘← and ⌘→ items, as TIDAL and Podcasts do, it's a `MenuPlayerProfile`: its bundle ID, name, menu name and how to read its own words for Play and Pause from its bundle. Otherwise it's a type implementing `MusicPlayer`, as `VLCPlayer` does;
 2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;

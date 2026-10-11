@@ -1,0 +1,79 @@
+# Player Check
+
+A window over [PlayerCheck](../PlayerCheck): it lists the apps on your Mac
+that can be in macOS's Now Playing list, and checks the one you pick for
+the ways AutoHush could control it. It can also play and pause the apps
+with a known way, to try each way by hand.
+
+```bash
+sh Tools/PlayerCheckApp/build.sh              # writes "Player Check.app" here, with playercheck inside it
+open "Player Check.app"
+```
+
+`build.sh` takes a folder to build into (the current one by default). The
+app is signed ad hoc, for your own Mac.
+
+## Using it
+
+- **The list:** the apps in `/Applications`, `~/Applications` (where
+  Safari web apps are) and `/System/Applications`, subfolders included,
+  that can be in Now Playing (see below). Those macOS lists in Now Playing
+  right now come first, with their state: "Now Playing (Playing)" for the
+  one the Play/Pause key reaches, "In Now Playing: Paused", or
+  "Registered" for an app ready for it that never said it plays. A green
+  dot: it's running. "checked": it has a check (they're kept between
+  launches, in `~/Library/Application Support/Player Check/`). Search by
+  name; the arrow in the toolbar looks again.
+- **Checking:** choose an app, then **Check…**, and confirm. An app that
+  isn't running is opened first, in the background. **Also pause it and
+  play it again with each way found** tries each way while the app plays
+  (start a song first). **Stop** ends a check.
+- **The results:** "Ways to control it" as a checklist (✓ works, ? found
+  but not tried, ✗ not there or didn't work, – not checked), "For
+  AutoHush" (which kind of player it would be), and the full report, which
+  **Copy Report** copies.
+- **Play and Pause:** an app with a known way to control it gets **Play**
+  and **Pause** buttons: once its check found a way (AppleScript, its
+  playback menu or its page's button), or before any check when the app
+  shows one (a scripting dictionary with play and pause, a Safari web app,
+  an Electron app). They use the way that worked in its check; otherwise
+  they try AppleScript, the page's button, then the menu, in turn. Each way
+  in the checklist that can play and pause has its own two buttons, to try
+  that one alone. The result shows under the buttons ("Paused it with its
+  page's 'Pause current' button."). The app must be running.
+
+## Permissions
+
+- **Accessibility**, for Player Check: reading menus and pages, pressing
+  them, and Electron's switch. PlayerCheck runs inside it and shares it.
+  Without it, a note links to System Settings. It's signed ad hoc, so after
+  rebuilding it macOS may ask for it again.
+- **Automation**, asked by macOS the first time it reads or controls an
+  app by AppleScript.
+- **An administrator account** for the "In Now Playing Now" section: it
+  comes from macOS's log (`playercheck --now-playing-list`), which only
+  administrators can read. Without it, the list still shows the apps that
+  can be in Now Playing.
+
+## Which apps can be in Now Playing
+
+No Info.plist key or entitlement says so: Spotify, Deezer, TIDAL and VLC
+have none. What they share is their App Store category
+(`LSApplicationCategoryType`, music or video), which doesn't match Now
+Playing (Podcasts has an empty one, web apps none, GarageBand is "music"),
+and Apple's own apps carry private MediaRemote entitlements. An app joins
+Now Playing only while it runs, through its code. So Player Check reads the
+frameworks the app's binaries link (their Mach-O load commands: everything
+in `Contents/MacOS`, where VLC's is a plugin, and the app's own
+frameworks):
+
+| Reason shown | Linked | For example (macOS 27) |
+|---|---|---|
+| MediaPlayer | `MediaPlayer.framework` (MPNowPlayingInfoCenter and MPRemoteCommandCenter: the public way) | Spotify, VLC, Music, Podcasts, Books, News |
+| MediaPlayer, through Electron / Chromium (CEF) | the same, in the app's Electron or Chromium framework | Deezer, TIDAL |
+| MediaRemote | `MediaRemote.framework` (Apple's apps) | QuickTime Player, TV, Voice Memos |
+| AVKit, for videos it plays | `AVKit.framework` only (its player view updates Now Playing) | Photos, Notes, App Store |
+| WebKit | Safari, and Safari web apps by their bundle ID (their pages report through WebKit's media process) | web apps for YouTube Music, SoundCloud |
+
+An app macOS lists in Now Playing is shown even if none of these matched;
+TextEdit, Calculator and AutoHush itself aren't listed.
