@@ -4,8 +4,10 @@ Says whether AutoHush could control an app (pause it while another app
 plays, then play it again), and which kind of player it would be, so it
 could be added as the README's [Adding a media player](../../README.md#architecture)
 says. It reads the app's scripting dictionary, its playback menu, where its
-sound comes from, whether it's Now Playing and, for a Safari web app or an
-Electron app (Deezer, TIDAL), the Play/Pause button of its page. Then it
+sound comes from, whether it's Now Playing and the Play/Pause button of its
+page: a web page in its windows (a Safari web app's, or any app's), an
+Electron or Chromium Embedded Framework app's (Deezer and TIDAL; Spotify),
+or a Flutter app's interface (Spotube). Then it
 tests each way to control it, pausing the app and playing it again by each
 (asking you to start it first if it isn't playing), and ends with a
 checklist of what worked. It can also just play or pause the app. [Player Check](../PlayerCheckApp) does all of this from a
@@ -42,6 +44,11 @@ Playback menu
 Sound and Now Playing
   sound output running now: Spotify (com.spotify.client, pid 394)
   Now Playing: this app (until another app reports playing)
+Page buttons
+  built with Chromium (CEF): its page shows once a switch for assistive tools is on (Electron's switch, else VoiceOver's switch)
+  Electron's switch (AXManualAccessibility): not taken
+  VoiceOver's switch on: its page showed 161 buttons after 0.4 s (one read, as AutoHush reads a web app: 35 ms)
+  Play/Pause: 'Pause', 56 pt from the window's bottom, with a player's slider around it
 Press test
   waiting: start playing something in Spotify; the test goes on as soon as it plays (up to 2 minutes)
   it plays: testing
@@ -49,26 +56,30 @@ Press test
     after the pause: menu 'Pause', state paused, sound on → it paused
     after playing again: menu 'Pause', state playing, sound on
   by its menu: …
+  by its page's button: …
   by the Now Playing panel: …
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
 
 Ways to control it
   ✓ AppleScript: pausing and playing it by script worked, as Spotify and Apple Music
   ✓ Playback menu 'Playback': pressing it paused and played it, as TIDAL and Apple Podcasts
-  – Page button: not checked (neither a web app nor an Electron app)
+  ✓ Page button, with VoiceOver's switch on: 'Pause': pressing it paused and played it
   ✓ Now Playing panel: pressing its row ('Leave Forever, Hayes & Y – Departures') paused and played it
 Verdict
   Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode("spfy").
   It has a volume: measure its curve (swift run measure-volume-curve com.spotify.client).
   State notification: com.spotify.client.PlaybackStateChanged.
+  With VoiceOver's switch on, its page's Play/Pause works: it could be a player that learns that button, …
+
+(VoiceOver's switch set back to off, as it was.)
 ```
 
 Deezer's app (7.1.340, Electron 38.4.0), while it plays:
 
 ```
 Page buttons
-  built with Electron 38.4.0: its page shows once Electron's switch is on
-  AXManualAccessibility on: its page showed 112 buttons after 2.2 s (one read, as AutoHush reads a web app: 23 ms)
+  built with Electron 38.4.0: its page shows once a switch for assistive tools is on (Electron's switch)
+  Electron's switch on: its page showed 112 buttons after 2.2 s (one read, as AutoHush reads a web app: 23 ms)
   Play/Pause: 'Pause', 51 pt from the window's bottom, with a player's slider around it
 
 Press test
@@ -122,23 +133,39 @@ Everything is read from outside the app, as AutoHush itself would:
 - **Now Playing:** MediaRemote's player path, read only. A process asks
   MediaRemote once and keeps its first answer, so each question runs a
   fresh copy of the tool, found by its own path (`proc_pidpath`).
-- **Page buttons:** a Safari web app's page is open to Accessibility as it
-  is, but WebKit fills it in only once something first asks for it (YouTube
-  Music, just opened: no buttons at the first look, 36 a few seconds
-  later), so the tool waits until the count of buttons holds. An app with
-  `Contents/Frameworks/Electron Framework.framework` is Electron. Its
-  interface is a web page, kept out of Accessibility until an assistive
-  tool sets `AXManualAccessibility` on the app: Electron's documented
-  switch (electronjs.org, Accessibility), narrower than Chromium's
-  `AXEnhancedUserInterface`, which VoiceOver sets and which has side
-  effects, so the tool never touches that one. It sets the switch, waits
-  for the page (Deezer's: about 2 s), and reads the buttons as AutoHush
-  reads a Safari web app's: each window's `AXWebArea`, then
-  `AXUIElementsForSearchPredicate`, each button named by its description,
-  else its title. The windows are those on the current desktop, else, as
-  AutoHush finds them, those on another (macOS's window list holds only the
-  current desktop's; the undocumented HIServices function
-  `_AXUIElementCreateWithRemoteToken` reaches the rest).
+- **Page buttons:** a web page in the app's windows is open to
+  Accessibility as it is: a Safari web app's, or any app's (a Tauri app's,
+  in Safari's WebKit, or a Qt WebEngine app's, in Chromium; not tried with
+  one yet). WebKit
+  fills it in only once something first asks for it (YouTube Music, just
+  opened: no buttons at the first look, 36 a few seconds later), so the
+  tool waits until the count of buttons holds. The buttons are read as
+  AutoHush reads a Safari web app's: each window's `AXWebArea` (up to 16
+  levels down; at most 2,000 of a window's elements are read looking for
+  one, and never inside a list or table, so a native app's song list isn't
+  walked), then `AXUIElementsForSearchPredicate`, each button named by its
+  description, else its title. The windows are those on the current
+  desktop, else, as AutoHush finds them, those on another (macOS's window
+  list holds only the current desktop's; the undocumented HIServices
+  function `_AXUIElementCreateWithRemoteToken` reaches the rest).
+- **Interfaces kept out of Accessibility:** three frameworks show their
+  interface only once an assistive tool sets a switch (an attribute) on the
+  app, found by the framework in `Contents/Frameworks`:
+
+  | Framework | Its interface | Switches tried, in turn |
+  |---|---|---|
+  | Electron (`Electron Framework`: Deezer, TIDAL) | a web page | `AXManualAccessibility`, Electron's own and documented (electronjs.org, Accessibility) |
+  | Chromium Embedded Framework (`Chromium Embedded Framework`: Spotify) | a web page | none of its own (each app decides): Electron's, then `AXEnhancedUserInterface`, which CEF's sample app listens to (Spotify takes only that one) |
+  | Flutter (`FlutterMacOS`: Spotube) | the window's own elements, not a web page | `AXEnhancedUserInterface` only (Flutter's engine listens for it) |
+
+  `AXEnhancedUserInterface` is VoiceOver's: window managers misbehave while
+  it's on (the reason Electron made its own), so it's tried only for CEF and
+  Flutter apps, after Electron's, and turned back off at the end. Each
+  switch gets 4 s for the page to show (Deezer's: about 2 s; Spotify's:
+  0.4 s). A Flutter app's buttons are the items it marks pressable
+  (`AXPress`): its buttons, and texts and images, named by their
+  description, title or value. Spotube's do show, but not its player bar's
+  Previous, Pause and Next, which have no names.
 - **Which button is the player's:** as AutoHush's learning ranks them:
   named Play or Pause, alone or first (SoundCloud's bar says "Pause
   current"; in English, Spanish, Catalan and a few more: the `playWords`
@@ -147,18 +174,29 @@ Everything is read from outside the app, as AutoHush itself would:
   inside the window (Electron squeezes what's scrolled out of the window to
   no height at its edge); not covered means macOS's hit test at its middle,
   within the app, finds it (song tiles under Deezer's and SoundCloud's
-  player bars sit lower than the bar's button, but under it). A window on
-  another desktop isn't on screen, so its buttons aren't hit-tested.
-- **Electron's switch, set back:** reading it always answers 0, so it
-  counts as off when the page wasn't readable before; then it's set back
-  off at the end (also when the tool is stopped with Ctrl-C), and otherwise
-  left on (VoiceOver may need it). Turned on while the window is fully
-  covered by others, the switch may build no page; once built, the page
-  stays readable covered, hidden or minimised. So when no page shows in
-  4 s, the tool brings the app forward a moment, waits for its page, then
-  brings back the app that was in front, and says so. With its window
-  closed there's no page at all (Deezer plays on without one): open it and
-  run again.
+  player bars sit lower than the bar's button, but under it). Chromium
+  answers a hit test from its last one at first, then precisely a moment
+  later (Spotify's bar button, behind other windows: a group elsewhere,
+  then the button), so a miss is asked again after 0.2 s. A window that
+  isn't on screen (on another desktop, minimised, or its app hidden) isn't
+  hit-tested.
+- **The switches, set back:** a page readable already (an assistive tool
+  asked for it before) needs none, so none is turned on. A switch the tool
+  turned on is turned back off at the end (also when the tool is stopped
+  with Ctrl-C); `AXEnhancedUserInterface` found on already (VoiceOver) is
+  left on. An app may answer an error yet take a switch (Spotify and
+  Spotube answer -25208 to `AXEnhancedUserInterface`, and read it back as
+  on), or read Electron's back as off while it's on (Deezer), so either
+  sign counts. A Chromium or Flutter app may build no page while its
+  window can't be seen (Deezer's, fully covered by others; Spotify's, on
+  another desktop when the switch went on; Spotube's, behind other
+  windows); once built, the page stays readable covered, hidden, minimised
+  or on another desktop. So when no page shows in 4 s, the tool brings the
+  app forward a moment, turns the switch off and on again there, waits for
+  its page, then brings back the app that was in front (and waits a
+  second: frames read while a desktop slides are off), and says so. With
+  its window closed there's no page at all (Deezer plays on without one):
+  open it and run again.
 
 **The test** (unless `--read-only`) tries each way while the app plays. If
 it isn't playing, it asks ("waiting: start playing something in Deezer")
@@ -197,8 +235,8 @@ AppleScript) is named as such, not as the app ignoring the way.
 
 Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, it
 plays the app again first, then stops; otherwise it stops at once. Either
-way it sets Electron's switch back and brings back the app that was in
-front if it had brought the checked one forward.
+way it turns the switches it turned on back off, and brings back the app
+that was in front if it had brought the checked one forward.
 
 Each pause is judged by the surest sign the app has: its AppleScript
 state, else what it reports to Now Playing, else its page's button (Play
@@ -255,7 +293,12 @@ it should. The full test passed every way that applies on Spotify
 (AppleScript, menu, panel), Deezer (page, panel; its menu fails),
 SoundCloud (page, panel) and VLC (its toggling AppleScript `play`, judged
 by its `playing` flag; panel; its Playback menu's item was disabled there,
-so ✗).
+so ✗). Then (2026-10-11) Spotify's page with `AXEnhancedUserInterface`:
+the full test passed all four ways, its window on the current desktop and
+on another, and `--pause`/`--play --via page` worked; Spotube 5.1.2
+(Flutter) showed its interface with that switch, but its player bar's
+buttons have no names, so ✗ page button. A web page in another app (A
+Tauri app's, say) wasn't tried: none was at hand.
 
 ## The apps in Now Playing (`--now-playing-list`)
 

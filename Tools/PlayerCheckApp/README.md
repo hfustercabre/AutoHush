@@ -54,7 +54,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
 - **Play and Pause:** an app with a known way to control it gets **Play**
   and **Pause** buttons: once its check found a way, or before any check
   when the app shows one (a scripting dictionary with play and pause, a
-  Safari web app, an Electron app). They use the first way that worked in
+  Safari web app, an Electron, CEF or Flutter app). They use the first way that worked in
   its check; otherwise they try AppleScript, the page's button, then the
   menu, in turn. Each way in the checklist that worked has its own two
   buttons, to use that one alone. The result shows under the buttons ("Paused it with its
@@ -63,7 +63,10 @@ to it and loses its permissions; one signed with a certificate keeps them.
 ## Permissions
 
 - **Accessibility**, for Player Check: reading menus and pages, pressing
-  them, and Electron's switch. PlayerCheck runs inside it and shares it.
+  them, and the switches that show an Electron, CEF or Flutter app's
+  interface (Electron's `AXManualAccessibility`, VoiceOver's
+  `AXEnhancedUserInterface`; turned back off after). The app's detail shows
+  its framework as a tag. PlayerCheck runs inside it and shares it.
   Without it, a note links to System Settings. Signed ad hoc, a rebuilt
   one needs it again; signed with a certificate (`SIGNING_IDENTITY`, above),
   it keeps it.

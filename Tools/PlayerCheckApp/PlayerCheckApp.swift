@@ -42,7 +42,10 @@ struct InstalledApp: Identifiable, Hashable {
     let subfolder: String?
     let isSafariWebApp: Bool
     let isChromeWebApp: Bool
-    let electronVersion: String?
+    /// What draws its interface, when that keeps it from Accessibility
+    /// until a switch is on: "Electron 38.4.0", "Chromium (CEF)" or
+    /// "Flutter" (as playercheck tells them).
+    let hiddenInterface: String?
     /// Why it can be in Now Playing, from what it's built with; nil when
     /// nothing shows it can (playercheck --now-playing-reasons).
     let nowPlayingReason: String?
@@ -51,11 +54,37 @@ struct InstalledApp: Identifiable, Hashable {
     var id: String { url.path }
 
     /// How it could be played and paused before any check, from its bundle:
-    /// AppleScript, or a page's button (a Safari web app, an Electron app).
+    /// AppleScript, or a page's button (a Safari web app; an Electron, CEF
+    /// or Flutter app's once a switch is on).
     var controlHint: String? {
         if scriptsPlayAndPause { return "its scripting dictionary has play and pause" }
         if isSafariWebApp { return "a Safari web app: its page's buttons" }
-        if electronVersion != nil { return "an Electron app: its page's buttons, with Electron's switch on" }
+        if let hiddenInterface { return "built with \(hiddenInterface): its buttons, with an accessibility switch on" }
+        return nil
+    }
+
+    /// The switches playercheck turns on to read its interface: Electron's
+    /// (AXManualAccessibility), VoiceOver's (AXEnhancedUserInterface) or
+    /// both, tried in that order.
+    var switchNote: String? {
+        guard let hiddenInterface else { return nil }
+        let which = hiddenInterface.hasPrefix("Electron") ? "Electron's accessibility switch is"
+            : hiddenInterface == "Flutter" ? "VoiceOver's accessibility switch is"
+            : "Electron's accessibility switch, else VoiceOver's, is"
+        return "\(which) turned on for the check, and back off after."
+    }
+
+    /// Electron, Chromium (CEF) or Flutter, by the framework in its bundle.
+    static func hiddenInterface(_ url: URL) -> String? {
+        let frameworks = url.appendingPathComponent("Contents/Frameworks")
+        let electron = frameworks.appendingPathComponent("Electron Framework.framework")
+        if FileManager.default.fileExists(atPath: electron.path) {
+            return "Electron " + (Bundle(url: electron)?.infoDictionary?["CFBundleVersion"] as? String ?? "?")
+        }
+        if FileManager.default.fileExists(atPath: frameworks.appendingPathComponent("Chromium Embedded Framework.framework").path) {
+            return "Chromium (CEF)"
+        }
+        if FileManager.default.fileExists(atPath: frameworks.appendingPathComponent("FlutterMacOS.framework").path) { return "Flutter" }
         return nil
     }
 
@@ -83,13 +112,10 @@ struct InstalledApp: Identifiable, Hashable {
                 let bundleID = Bundle(url: url)?.bundleIdentifier
                 var name = FileManager.default.displayName(atPath: url.path)
                 if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
-                let electron = url.appendingPathComponent("Contents/Frameworks/Electron Framework.framework")
-                let electronVersion = FileManager.default.fileExists(atPath: electron.path)
-                    ? (Bundle(url: electron)?.infoDictionary?["CFBundleVersion"] as? String ?? "?") : nil
                 found.append(InstalledApp(url: url, name: name, bundleID: bundleID, root: root, subfolder: subfolder,
                                           isSafariWebApp: bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
                                           isChromeWebApp: bundleID?.hasPrefix("com.google.Chrome.app.") == true,
-                                          electronVersion: electronVersion, nowPlayingReason: nil,
+                                          hiddenInterface: hiddenInterface(url), nowPlayingReason: nil,
                                           scriptsPlayAndPause: scriptsPlayAndPause(url)))
             }
         }
@@ -106,7 +132,7 @@ struct InstalledApp: Identifiable, Hashable {
         return found.map { app in
             InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
                          isSafariWebApp: app.isSafariWebApp, isChromeWebApp: app.isChromeWebApp,
-                         electronVersion: app.electronVersion, nowPlayingReason: reasons[app.url.path],
+                         hiddenInterface: app.hiddenInterface, nowPlayingReason: reasons[app.url.path],
                          scriptsPlayAndPause: app.scriptsPlayAndPause)
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -537,7 +563,7 @@ final class Checker {
     }
 
     /// Stops the check: playercheck plays the app again if a test paused it,
-    /// and sets Electron's switch back, first.
+    /// and turns the accessibility switches it turned on back off, first.
     func stop() {
         guard let id = checkingID else { return }
         reports[id]?.state = .stopped
@@ -715,7 +741,7 @@ struct AppDetail: View {
                     if let client = checker.client(of: app) { Tag(text: client.summary, tint: .pink) }
                     if app.isSafariWebApp { Tag(text: "Safari web app", tint: .blue) }
                     if app.isChromeWebApp { Tag(text: "Chrome web app", tint: .blue) }
-                    if let version = app.electronVersion { Tag(text: "Electron \(version)", tint: .purple) }
+                    if let interface = app.hiddenInterface { Tag(text: interface, tint: .purple) }
                 }
                 .padding(.top, 2)
             }
@@ -805,10 +831,9 @@ struct AppDetail: View {
     private var confirmation: String {
         var parts: [String] = []
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
-        parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing"
-            + (app.isSafariWebApp || app.electronVersion != nil ? ", and its page's buttons." : "."))
+        parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
-        if app.electronVersion != nil { parts.append("Electron's accessibility switch is turned on for the check, and back off after.") }
+        if let note = app.switchNote { parts.append(note) }
         return parts.joined(separator: " ")
     }
 
