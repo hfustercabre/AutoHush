@@ -1418,12 +1418,28 @@ func look(_ pid: pid_t) -> Look {
                 sounding: !soundProcesses(of: pid).isEmpty)
 }
 
-/// For a press, whether its page's player bar is on screen (this desktop,
-/// not hidden or minimised), so its button's word shows the app's state:
-/// then what it reports to Now Playing isn't read (opening macOS's log and
-/// reading back to when the app opened: 1.4–2 s). An Electron page on
-/// another desktop keeps a stale word, so there the log is read.
-var barShowsState: Bool { pressingOneWay && page?.withControls == true && page?.toggle?.onScreen == true }
+/// For a press, whether its page's player bar shows the app's state by its
+/// button's word: on screen (this desktop, not hidden or minimised), or,
+/// for a WebKit page, anywhere. Then what it reports to Now Playing isn't
+/// read (opening macOS's log and reading back to when the app opened:
+/// 1.4–2 s). An Electron page on another desktop keeps a stale word, so
+/// there the log is read.
+var barShowsState: Bool {
+    pressingOneWay && page?.withControls == true && (page?.toggle?.onScreen == true || pageIsWebKit)
+}
+
+/// Whether its page is Safari's WebKit: a Safari web app's, or the app's
+/// own (a Tauri app's, as Pake's YouTube Music), and not Chromium inside Qt
+/// (Qt WebEngine). Out of sight, WebKit keeps its words current: Pake's
+/// YouTube Music and SoundCloud's web app, on another desktop, showed each
+/// change within 0.5 s, also after minutes there (2026-10-11).
+let pageIsWebKit: Bool = {
+    if isWebApp { return true }
+    guard hiddenInterface == nil, let binary = Bundle(url: appURL)?.executableURL,
+          linkedFrameworks(binary).contains("WebKit") else { return false }
+    let frameworks = (try? FileManager.default.contentsOfDirectory(atPath: appURL.appendingPathComponent("Contents/Frameworks").path)) ?? []
+    return !frameworks.contains { $0.hasPrefix("QtWebEngine") }
+}()
 
 /// Waits up to `seconds`, running the run loop (for notifications), until
 /// `done` holds (or a stop is asked), then a second more for late

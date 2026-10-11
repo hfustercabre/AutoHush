@@ -304,7 +304,12 @@ app reports to Now Playing, the page's button's word, or the menu's word or
 the sound. While the page's player bar is on screen, its word is trusted
 and macOS's log isn't read (opening it and reading back to when the app
 opened takes 1.4–2 s); on another desktop an Electron page's word goes
-stale, so there the log is read. The page way presses the player bar's
+stale, so there the log is read. A WebKit page's word is trusted out of
+sight too (a Safari web app's, or an app's own WebKit page, as Tauri apps
+show theirs; not Qt WebEngine's, which is Chromium): on another desktop,
+Pake's YouTube Music and SoundCloud's web app showed each change within
+0.5 s, also after more than 6 minutes there, and their presses there took
+0.3–0.5 s and 0.13–0.15 s. The page way presses the player bar's
 button its page check found, read again by its word, without searching the
 page again.
 
