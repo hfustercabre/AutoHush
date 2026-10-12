@@ -9,8 +9,11 @@ page: a web page in its windows (a Safari web app's, or any app's), an
 Electron or Chromium Embedded Framework app's (Deezer and TIDAL; Spotify),
 or a Flutter app's interface (Spotube). Then it
 tests each way to control it, pausing the app and playing it again by each
-(asking you to start it first if it isn't playing), and ends with a
-checklist of what worked. It can also just play or pause the app. [Player Check](../PlayerCheckApp) does all of this from a
+(asking you to start it first if it isn't playing), with the app's window
+in each state a player's window can be in while AutoHush controls it:
+visible, covered, on another desktop, covered there, full screen,
+minimised and hidden. It ends with a checklist of what worked, and in
+which states. It can also just play or pause the app. [Player Check](../PlayerCheckApp) does all of this from a
 window.
 
 It's a target of AutoHush's package and runs AutoHush's own code wherever
@@ -42,12 +45,16 @@ cd .build/release
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now
 ./playercheck --now-playing-list --since 1760180000   # only what changed since then (apps gone: Removed)
 ./playercheck --now-playing-reasons /Applications/Spotify.app   # why each app can be in Now Playing, its framework and switches (Player Check's list)
+./playercheck --launch-option Deezer     # the launch option it needs (Electron's apps) and whether it runs with it
+./playercheck --relaunch Deezer          # quits it, then opens it again with that option, in the background
+./playercheck --window-state Deezer      # the state its window is in now: visible, covered, on another desktop, …
 ```
 
 The options may come before or after the app's name (`--via page Deezer`
 is a way and an app). Or `swift run playercheck Spotify`. Whatever runs it
 (Terminal, say) needs:
-- **Accessibility**, for the menu and page checks.
+- **Accessibility**, for the menu and page checks, and to put the app's
+  window in each state (the pointer and keyboard events for the desktops).
 - **Automation**, which macOS asks for once per app before the first Apple
   event, as AutoHush asks when a player is chosen.
 - **System Audio Recording**, asked at the first check to measure how loud the
@@ -66,7 +73,8 @@ press does quietly, and "(ended)" or "(stopped)". The last 50 are kept, so
 a run that went wrong can be read afterwards (Console opens them too).
 `--now-playing-list` and `--now-playing-reasons` aren't logged.
 
-Example, with Spotify paused at the start (macOS 27, 2026-10-12):
+Example, Spotify (macOS 27, 2026-10-12; the window states and the
+results are from a later run, with Spotify playing at the start):
 
 ```
 Spotify 1.3.4.258 (com.spotify.client)
@@ -84,14 +92,16 @@ Sound and Now Playing
   heard now: yes
   keeps the Mac awake: 'Video Wake Lock' (display only)
   Now Playing: this app (until another app reports playing)
+Window states
+  each way is tested with its window in each state: visible, covered, on another desktop, covered on another desktop, full screen, minimised, hidden; it's put back as it is now: visible
+  visible now: its page is read in view, and the test starts there
 Page buttons
   built with Chromium (CEF): its page shows once a switch for assistive tools is on (Electron's switch, else VoiceOver's switch)
   Electron's switch (AXManualAccessibility): not taken
   VoiceOver's switch on: its page showed 167 buttons after 0.4 s (one read, as AutoHush reads a web app: 35 ms)
   Play/Pause: 'Pause', 56 pt from the window's bottom, with a player's slider around it
 Press test
-  waiting: start playing something in Spotify; the test goes on as soon as it plays (up to 2 minutes)
-  it plays: testing
+  State 1 of 7: visible
   Automation for Spotify: allowed
   by script (pause, play): before, menu 'Pause', state playing, page 'Pause', sound on, heard
     after the pause: menu 'Play', state paused, page 'Pause', sound on → it paused
@@ -103,19 +113,30 @@ Press test
   by its menu: …
   by its page's learned button: …
   by the Now Playing panel: …
+  State 2 of 7: covered
+  …
+  State 7 of 7: hidden
+  …
+  its window put back as it was (visible)
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
 
 Ways to control it
-  ✓ AppleScript: 'pause' and 'play' paused and played it, as Spotify and Apple Music
-  ✓ Playback menu 'Playback': pressing it paused and played it
-  ✓ Page button, with VoiceOver's switch on: 'Pause' / 'Play', learned as AutoHush learns it: pressing it paused and played it
-  ✓ Now Playing panel: pressing its row ('YOU'RE NEXT, Moon Walker – WASTELAND COUNTRY') paused and played it
+  ✓ AppleScript: 'pause' and 'play' paused and played it, as Spotify and Apple Music (all 7 window states)
+  ✓ Playback menu 'Playback': pressing it paused and played it (all 7 window states)
+  ⚠ Page button, with VoiceOver's switch on: 'Pause' / 'Play', learned as AutoHush learns it: pressing it paused and played it, in 2 of 7 window states
+      ✗ on another desktop: its page didn't show with VoiceOver's switch on
+      ✗ covered on another desktop: its page didn't show with VoiceOver's switch on
+      ✗ full screen: its page didn't show with VoiceOver's switch on
+      ✗ minimised: its page didn't show with VoiceOver's switch on
+      ✗ hidden: its page didn't show with VoiceOver's switch on
+  ✓ Now Playing panel: pressing its row ('I Worry Too Much, Egotist – I Worry Too Much') paused and played it (all 7 window states)
 
 Verdict
   Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode("spfy").
   It has a volume: measure its curve (swift run measure-volume-curve com.spotify.client).
   State notification: com.spotify.client.PlaybackStateChanged, which announced each pause and play (the profile's stateNotification).
   With VoiceOver's switch on, its page's Play/Pause works: it could be a player that learns that button, …
+  It works with its window visible, covered; not on another desktop, covered on another desktop, full screen, minimised, hidden.
 
 (VoiceOver's switch set back to off, as it was.)
 ```
@@ -126,36 +147,51 @@ desktop, its page's word lags a whole state, and the lines say so:
 `page 'Pause' (out of sight: its word lags)`, and "its page's Play/Pause not
 learned: its window is out of sight, …".
 
-Deezer's app (7.1.340, Electron 38.4.0), while it plays (2026-10-11; the
-lines now also show what it reports to Now Playing, its level and its
-keep-awake assertion):
+Deezer's app (7.1.340, Electron 38.4.0), opened as usual, while it plays
+(2026-10-12; the trials' lines left out):
 
 ```
+Window states
+  each way is tested with its window in each state: visible, covered, on another desktop, covered on another desktop, full screen, minimised, hidden; it's put back as it is now: visible
+  visible now: its page is read in view, and the test starts there
+
 Page buttons
   built with Electron 38.4.0: its page shows once a switch for assistive tools is on (Electron's switch)
-  Electron's switch on: its page showed 112 buttons after 2.2 s (one read, as AutoHush reads a web app: 23 ms)
+  opened with --disable-backgrounding-occluded-windows: no: its page takes no presses while its window is covered or on another desktop (the Player Check app can relaunch it with it)
+  Electron's switch on: its page showed 118 buttons after 2.3 s (one read, as AutoHush reads a web app: 25 ms)
   Play/Pause: 'Pause', 51 pt from the window's bottom, with a player's slider around it
 
 Press test
-  by its menu: before, menu 'Pause', page 'Pause', sound on
-    after the pause: menu 'Pause', page 'Pause', sound on → it didn't pause in 4 s
-  by its page's button: before, menu 'Pause', page 'Pause', sound on
-    after the pause: menu 'Pause', page 'Play', sound on → it paused
-    after playing again: menu 'Pause', page 'Pause', sound on
+  State 1 of 7: visible
   …
+  State 7 of 7: hidden
+  …
+  its window put back as it was (visible)
+
 Ways to control it
   ✗ AppleScript: no scripting dictionary
-  ✗ Playback menu 'Play' (found by ⇧← ⇧→, not ⌘← ⌘→): pressing it changed nothing
-  ✓ Page button, with Electron's switch on: 'Pause': pressing it paused and played it
-  ✓ Now Playing panel: pressing its row ('Another One Bites The Dust, Queen – The Game') paused and played it
+  ✗ Playback menu 'Play' (found by ⇧← ⇧→, not ⌘← ⌘→): pressing it changed nothing (in every window state tested)
+  ⚠ Page button, with Electron's switch on: 'Pause' / 'Play', learned as AutoHush learns it: pressing it paused and played it, in 1 of 7 window states
+      ✗ covered: Chromium neither builds nor presses a page whose window is fully out of view; Deezer wasn't opened with --disable-backgrounding-occluded-windows
+      ✗ on another desktop: (the same)
+      ✗ covered on another desktop: (the same)
+      ✗ full screen: (the same)
+      ✗ minimised: pressing it changed nothing
+      ✗ hidden: pressing it changed nothing
+  ✓ Now Playing panel: pressing its row ('Don't Stop Me Now, Queen – Jazz') paused and played it (all 7 window states)
 
 Verdict
   Its menu has Play/Pause, but pressing it didn't take (as Deezer's menu): not controllable that way.
   With Electron's switch on, its page's Play/Pause works: it could be a player that learns that button,
   as Safari web apps (WebAppPlayers), with no fades; AutoHush has no such player for apps yet.
-
-(Electron's switch set back to off, as it was.)
+  It works with its window visible; not covered, on another desktop, covered on another desktop, full screen, minimised, hidden.
+  Opened with --disable-backgrounding-occluded-windows, Chromium keeps its page taking presses while its window is covered
+  or on another desktop: relaunch it with it (the Player Check app's Relaunch) and check again.
 ```
+
+Relaunched with the option (`--relaunch Deezer`), the page passed 5 of 7
+states: all but minimised and hidden. SoundCloud's Safari web app (a WebKit
+page) passed all 7 by its page and by the panel.
 
 Checked on macOS 27 (2026-10-11) against the players AutoHush supports:
 Spotify (`spfy`) and Apple Music (`hook`) come out as scriptable, TIDAL and
@@ -305,13 +341,19 @@ Everything is read from outside the app, as AutoHush itself would:
   turns on a lighter mode that never ends while the app runs). So a press
   on an Electron page waits until 2 s after the switch went on, unless the
   switch reads back on: Electron says so only in that mode, alone.
-- **Out of sight:** a Chromium or Flutter app may build no page while its
-  window can't be seen (Deezer's, fully covered by others; Spotify's, on
-  another desktop when the switch went on; Spotube's, behind other
-  windows); once built, the page stays readable covered, hidden, minimised
-  or on another desktop, but an Electron page there lags one state behind
-  (Deezer's said Pause while paused), and after some minutes out of sight
-  it may take no presses (Deezer's didn't; brought into view, it did). So
+- **Out of sight:** Chromium treats a page whose window is fully out of
+  view (covered, on another desktop, full screen there) as hidden: an
+  Electron app builds no page there, and takes no presses on one (Deezer's,
+  tested 2026-10-12: lost, not late, not queued). A page built in view stays
+  usable out of view only while its switch stays on; a press that turns the
+  switch on and off, as this tool's do, loses it. Opened with
+  `--disable-backgrounding-occluded-windows` (Chromium's option, which keeps
+  a covered window's page visible to it), Deezer's page took presses
+  covered, on another desktop and full screen; minimised or hidden, it
+  didn't. Spotify (CEF) took them covered without it. A Flutter app may
+  build no page out of view either (Spotube's, behind other windows); an
+  Electron page out of view lags one state behind (Deezer's said Pause
+  while paused). So
   when no switch shows its page in 4 s, a check brings the app forward a
   moment, once, turns on again there each switch the app took until its
   page shows, then brings back the app that was in front (and waits a second: frames read while a
@@ -369,10 +411,12 @@ Playing (none of its binaries links MediaPlayer, MediaRemote, AVKit or
 WebKit, as Player Check reads them). A permission macOS refuses (Automation for
 AppleScript) is named as such, not as the app ignoring the way.
 
-Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, it
-plays the app again first, then stops; otherwise it stops at once. Either
-way it turns the switches it turned on back off, and brings back the app
-that was in front if it had brought the checked one forward. It stops the
+Stopped (Ctrl-C, or Player Check's Stop) between a pause and its play, or
+while it moves the app's window, it finishes that first (and plays the app
+again), then stops; otherwise it stops at once. Either way it puts the
+app's window back as it was, turns the switches it turned on back off, and
+brings back the app that was in front if it had brought the checked one
+forward. It stops the
 same way when whoever ran it ends without a word (Player Check's window
 closed, or the app quit by force or crashed): its output would go nowhere,
 and a check left running would go on pausing and playing the app unwatched.
@@ -424,15 +468,100 @@ name it (one with no name gets nothing, measured on macOS 27), so a name
 outside that list can't be seen. Without one, the player's state must be
 read once a second (`PolledStateObserver`).
 
+## Window states
+
+A player's window may be anywhere while AutoHush pauses it, and some ways
+work only in some places (an Electron page, only in view), so the test
+tries every way with the app's main window (its biggest ordinary one that
+Accessibility knows) in each of these states, in this order, and comes
+back to the app it was run from (Player Check, or a terminal) before each
+state's trials:
+
+| State | How the tool puts it there |
+|---|---|
+| visible | shown, on this desktop, not minimised or full screen; when the app it came from covers it whole, that app's window is moved aside (put back at the end) |
+| covered | a window of the tool's own, opaque, over it |
+| on another desktop | dragged there, as a person drags a window: see below |
+| covered on another desktop | the tool's window over it there |
+| full screen | `AXFullScreen` |
+| minimised | `AXMinimized` |
+| hidden | the app hidden, as ⌘H hides it |
+
+Before each, the window is brought back to visible, and after each the
+state is read back: a state the window doesn't reach is "not tested", with
+why. At the end (or at a stop) the window is put back as it was: its
+state, its place and its desktop, the moved window too, and the app the
+tool was run from in front. With no window open (Deezer plays on without
+one), the ways are tried once, as the window is. With only one desktop
+(full screen apps' don't count), the two desktop states aren't tested: add
+a desktop in Mission Control.
+
+In the first state the page's switch stays on, for learning its button;
+after that, each press by the page turns the switch on (giving the page up
+to 4 s to show), presses, and turns it off once it's seen whether it took,
+as the tool's own presses (`--play`, `--pause`) and Player Check's do. Kept
+on all along, a page built in view stays usable out of view (Deezer's
+passed every state that way, even without its launch option), which those
+presses don't get.
+
+Why a state failed is said under the way: what's known (an Electron app
+opened without the launch option its page needs out of view: "Chromium
+neither builds nor presses a page whose window is fully out of view"),
+else what the press said ("its page didn't show with Electron's switch
+on"), else what the trial saw ("pressing it changed nothing").
+
+**Dragging a window to another desktop.** macOS has no API for moving
+another app's window there, so it's dragged: the app is brought forward
+(SkyLight's `_SLPSSetFrontProcessWithOptions`, as window switchers do, and
+the window raised: from a process in the background, Accessibility's
+`AXFrontmost` and `NSRunningApplication.activate()` change nothing), held
+at a spot of its top bar, Control-→ (or ←) pressed, and let go. Found
+making it work (2026-10-12, macOS 27):
+- The arrow must carry the Fn and number-pad flags a keyboard's arrows
+  carry: macOS's desktop shortcuts are registered with them.
+- Control must be released with an event of its own: the flags of posted
+  events stay in the system's keyboard state, and every later click would
+  be a Control-click, which can't drag a window.
+- An Electron app's top bar can be dragged only where its page marks it so,
+  which Accessibility can't tell (Deezer's: right of its search field), so
+  spots that aren't controls are tried in turn, each with a small drag
+  towards the screen's middle (a window at its edge may not go further)
+  that shows whether it holds; the page is shown to Accessibility meanwhile,
+  so its buttons aren't taken for the bar.
+- Once held, the window is dragged back to where it started, so it lands
+  in its place on the other desktop (setting its place afterwards would
+  bring it back to this one).
+
+The desktops and a window's desktop are read with SkyLight's read-only
+`SLSCopyManagedDisplaySpaces` and `SLSCopySpacesForWindows`; the window
+list doesn't keep another desktop's order, so a window there isn't told
+covered or not by it. A window off screen on the current desktop is one
+the app closed and keeps (Electron's): no window.
+
+## Launching Electron apps with Chromium's option
+
+`--launch-option <app>` prints the option an app needs for its page to
+take presses out of view, and whether its running copy has it (`sysctl`'s
+`KERN_PROCARGS2`, as `ps` reads launch arguments), separated by a tab:
+`--disable-backgrounding-occluded-windows` and `yes`, `no` or `not
+running`. Only Electron's apps get one. `--relaunch <app>` quits the app as a person would (never by force:
+it's given 15 s), opens it again with the option, in the background, and
+sends it back behind the app that was in front when it comes forward by
+itself (Deezer does, a few seconds after its window shows). Player Check
+shows a Relaunch button for an Electron app running without it, and opens
+one that isn't running with it.
+
 ## Ways to control it
 
 The report ends, before the verdict, with one line per way known to
 control an app, each with a mark: ✓ it paused and played again in the
-test, ✗ not there or didn't work (or it only paused), ? found but not tried
+test in every window state tested, ⚠ in some (the states where it didn't
+are listed under it, with why: "✗ covered: …"; those not tested, "–
+covered: not tested (…)"), ✗ in none, or not there, ? found but not tried
 (`--read-only`, or it didn't play), – not checked (it doesn't apply, the
 app isn't running, or there's no Accessibility permission, which the menu,
-the page and the Now Playing panel need). The ways are the
-four above. Player Check shows that section as a checklist.
+the page and the Now Playing panel need). The ways are the four above.
+Player Check shows that section as a checklist.
 
 ## Playing and pausing (`--play`, `--pause`)
 

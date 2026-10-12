@@ -37,15 +37,25 @@ to it and loses its permissions; one signed with a certificate keeps them.
   "Registered" for an app ready for it that never said it plays. A green
   dot: it's running. "checked": it has a finished check (kept between
   launches, in `~/Library/Application Support/Player Check/`; those from
-  before the Play/Pause key stopped being a way are dropped). Search by name. The
+  before the window states are dropped, as their ✓ meant one state). Search by name. The
   list of Now Playing apps is read in full when Player Check opens and when
   the arrow in the toolbar looks again; after a check or a Play/Pause, only
   what changed is read.
 - **Checking:** choose an app, then **Check…**, and confirm. An app that
-  isn't running is opened first, in the background. The check tests each
+  isn't running is opened first, in the background (an Electron app with
+  the launch option its page needs out of view, below). The check tests each
   way to control it (AppleScript, its playback menu, its page's button and
   the menu bar's Now Playing panel), pausing the app and playing it again
-  by each. The keyboard's Play/Pause key isn't one: macOS sends it only to
+  by each, with the app's window in each state a player's can be in while
+  AutoHush controls it: visible, covered (Player Check puts a window of
+  its own over it), on another desktop, covered there, full screen,
+  minimised and hidden. Player Check moves the window there itself and
+  comes back to the front before each state's trials; for the desktops it
+  drags the window with the pointer and Control-arrow, so the mouse and
+  keyboard must be left alone meanwhile. Its own window may move aside so
+  the app's shows. Everything is put back as it was at the end (also at a
+  Stop). A check takes about 3 minutes; the status says which state it's
+  in ("Checking: its window covered, 2 of 7…"). The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). It needs the app playing: if it isn't, an
   orange request asks you to start it, and the test goes on by itself as
@@ -54,19 +64,32 @@ to it and loses its permissions; one signed with a certificate keeps them.
   leaves the last finished one shown, with a note. Quitting Player Check,
   or closing its window, stops a check or Play/Pause that's running; one
   whose window went by force (or a crash) stops by itself.
-- **The results:** "Ways to control it" as a checklist (✓ worked in the
-  test, ✗ not there or didn't work, ? not tried, – not checked), "For
+- **The results:** "Ways to control it" as a checklist (✓ worked in every
+  window state, an orange ⚠ in some, with the states it failed in and why
+  under it, ✗ in none or not there, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
   **Copy Report** copies.
-- **Play and Pause:** once a check found a way that works (✓), the app
-  gets **Play** and **Pause** buttons above its results. They use only the
-  first such way in the checklist, and never try another. Before a check,
-  or when no way worked, there are none. Each way found in the checklist
+- **Play and Pause:** once a check found a way that works (✓ or ⚠), the
+  app gets **Play** and **Pause** buttons above its results. Pressed, they
+  read the state the app's window is in (`playercheck --window-state`) and
+  use the first way in the checklist that worked in that state in its
+  check, alone; the result says which ("Its window minimised: by its row in
+  the Now Playing panel."). When no way worked in that state, nothing is
+  pressed and it says so. Before a check, or when no way worked, there are
+  none. Each way found in the checklist
   (✓, or ? not tried) has its own two buttons, which use that way alone.
   The result shows under Play and Pause ("Paused it with its page's 'Pause
   current' button."). While one runs, **Stop** ends it (it may be waiting
   on the app, or on macOS's Automation prompt); the buttons are off until
   it ends. The app must be running.
+- **Electron apps and their launch option:** Chromium takes no presses on
+  an Electron app's page while its window is covered or on another desktop,
+  unless the app was opened with `--disable-backgrounding-occluded-windows`
+  (playercheck's README says more). Player Check reads whether it was
+  (`playercheck --launch-option`); when it wasn't, an orange note says a
+  check now would show those states failing, with **Relaunch … With It**:
+  confirmed, it quits the app and opens it again with the option, in the
+  background (`playercheck --relaunch`), which stops what it was playing.
 - **Logs:** every check and Play/Pause is also logged, whole and with each
   line's time, in `~/Library/Logs/PlayerCheck/` (the last 50 runs): when a
   result looks wrong, the run that gave it can be read there, though a
@@ -78,7 +101,8 @@ to it and loses its permissions; one signed with a certificate keeps them.
   them, and the switches that show an Electron, CEF or Flutter app's
   interface (Electron's `AXManualAccessibility`, VoiceOver's
   `AXEnhancedUserInterface`; turned back off after, unless one may have
-  been on already). The app's detail shows its framework as a tag, and the
+  been on already), and putting the app's window in each state (moving it,
+  and the pointer and keyboard events that drag it to another desktop). The app's detail shows its framework as a tag, and the
   check's confirmation says which switch it turns on and that the app may
   be brought forward a moment while its window is out of sight (both as
   playercheck's `--now-playing-reasons` tells them). PlayerCheck runs inside it and shares it.

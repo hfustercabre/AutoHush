@@ -8,7 +8,10 @@
 // Tools/PlayerCheckApp runs it from a window.
 //   playercheck <app name, bundle ID or path>          checks it, and tests each way to control it: pauses
 //                                                      and plays it once by each (asking for it to be
-//                                                      started first when it isn't playing)
+//                                                      started first when it isn't playing), with its window
+//                                                      in each state a player's can be in (visible, covered,
+//                                                      on another desktop, covered there, full screen,
+//                                                      minimised, hidden), then puts its window back
 //   playercheck <app> --read-only                      checks it without pressing anything
 //   playercheck <app> --play|--pause [--via script|menu|page|panel]
 //                                                      just plays or pauses it, by that way (reading only what it
@@ -19,6 +22,10 @@
 //   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
 //   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing, as Player Check lists them:
 //                                                      "<path>\t<reason>\t<framework>\t<switches>" (each empty when none)
+//   playercheck --launch-option <app>                  the launch option it needs (Electron's apps), and whether it
+//                                                      runs with it: "<option or nothing>\t<yes|no|not running>"
+//   playercheck --relaunch <app>                       quits it, then opens it again with that option, in the background
+//   playercheck --window-state <app>                   the state its main window is in now (visible, covered, …)
 // Each check or press is also logged in ~/Library/Logs/PlayerCheck (the last 50).
 // A target of AutoHush's package, using AutoHush's own code wherever the two
 // do the same thing (Apple events, menus, learned page buttons, sound).
@@ -237,6 +244,36 @@ if CommandLine.arguments.dropFirst().first == "--now-playing-reasons" {
                hidden?.switches.map(switchName).joined(separator: ", else ") ?? ""].joined(separator: "\t"))
     }
     exit(0)
+}
+
+/// --launch-option, --relaunch and --window-state <app>, for the Player
+/// Check app: whether the app needs a launch option and runs with it
+/// ("<option, or nothing>\t<yes|no|not running>"), quitting it and opening
+/// it again with that option, and the state its window is in now (one of
+/// `WindowState`'s titles, "no window" or "not running"), for its Play and
+/// Pause by the way that worked in that state.
+if let option = CommandLine.arguments.dropFirst().first, ["--launch-option", "--relaunch", "--window-state"].contains(option) {
+    guard CommandLine.arguments.count > 2, let url = findApp(CommandLine.arguments[2]), let id = Bundle(url: url)?.bundleIdentifier else {
+        print("no app found")
+        exit(1)
+    }
+    let app = NSRunningApplication.runningApplications(withBundleIdentifier: id).first
+    switch option {
+    case "--launch-option":
+        let needed = LaunchOption.needed(by: url)
+        print([needed ?? "", needed == nil ? "" : app.map { LaunchOption.arguments(of: $0.processIdentifier).contains(needed!) ? "yes" : "no" }
+                                                ?? "not running"].joined(separator: "\t"))
+        exit(0)
+    case "--relaunch":
+        guard let needed = LaunchOption.needed(by: url) else {
+            print("It needs no launch option.")
+            exit(1)
+        }
+        exit(LaunchOption.relaunch(app, url: url, with: needed) ? 0 : 1)
+    default:
+        print(app.map { WindowStates.state(of: $0)?.title ?? "no window" } ?? "not running")
+        exit(0)
+    }
 }
 
 // MARK: - The app
@@ -1141,9 +1178,13 @@ struct PageCheck {
     var withControls = false
 }
 
-say()
-say("Page buttons")
 var page: PageCheck?
+/// For an Electron app that runs: whether it was opened with the option its
+/// page needs to take presses out of view (`LaunchOption`).
+var launchedWithOption: Bool? {
+    guard isElectron, let running else { return nil }
+    return LaunchOption.arguments(of: running.processIdentifier).contains(LaunchOption.occludedWindows)
+}
 /// Why the page wasn't checked, for the summary.
 var pageNotChecked: String?
 /// The switch that showed the page; nil when it showed without one.
@@ -1182,6 +1223,12 @@ final class StopState: @unchecked Sendable {
     var streamPID: pid_t {
         get { lock.withLock { stream } }
         set { lock.withLock { stream = newValue } }
+    }
+    private var windowBack: (() -> Void)?
+    /// Puts the app's window back as it was, once a test moved it.
+    var restoreWindow: (() -> Void)? {
+        get { lock.withLock { windowBack } }
+        set { lock.withLock { windowBack = newValue } }
     }
 }
 let stopState = StopState()
@@ -1230,6 +1277,7 @@ func switchesBackOff() -> [String] {
 /// could wait on the main thread's locks (stdout) from the stop's thread.
 func stopNow(_ code: Int32) -> Never {
     log("(stopped)")
+    stopState.restoreWindow?()
     switchesBackOff()
     if let front = stopState.frontToRestore { bringForward(front) }
     if stopState.streamPID > 0 { kill(stopState.streamPID, SIGTERM) }
@@ -1704,6 +1752,12 @@ func readPage() {
                 say("  built with \(hidden.name): "
                     + (isFlutter ? "its interface (not a web page) shows" : "its page shows")
                     + " once a switch for assistive tools is on (" + hidden.switches.map(switchName).joined(separator: ", else ") + ")")
+                if let launchedWithOption {
+                    say("  opened with \(LaunchOption.occludedWindows): "
+                        + (launchedWithOption ? "yes, so its page takes presses while its window is covered or on another desktop"
+                                              : "no: its page takes no presses while its window is covered or on another desktop"
+                                                + " (the Player Check app can relaunch it with it)"))
+                }
             case nil:
                 say(isWebApp ? "  a Safari web app: WebKit shows its page as it is" : "  a web page in its windows: shown as it is")
             }
@@ -1767,6 +1821,792 @@ func readPage() {
         pageNotChecked = "no window open"
     }
 }
+
+// MARK: - Window states
+
+/// The states a player's window can be in while AutoHush controls it. A test
+/// puts the app's main window in each, in this order (the fewest moves), and
+/// tries every way there, as each may work in some only (the user,
+/// 2026-10-12: Deezer's page button worked in view, not with its window full
+/// screen on another desktop).
+enum WindowState: CaseIterable {
+    case visible, covered, otherDesktop, otherDesktopCovered, fullScreen, minimised, hidden
+    /// As the report names it: the Player Check app reads these.
+    var title: String {
+        switch self {
+        case .visible: "visible"
+        case .covered: "covered"
+        case .otherDesktop: "on another desktop"
+        case .otherDesktopCovered: "covered on another desktop"
+        case .fullScreen: "full screen"
+        case .minimised: "minimised"
+        case .hidden: "hidden"
+        }
+    }
+}
+
+/// The launch option an Electron app needs for its page to take presses
+/// while its window is covered or on another desktop. Without it, Chromium
+/// treats a page whose window is fully out of view as hidden and ignores
+/// presses on it; with it, Deezer's worked covered, on another desktop and
+/// full screen there (2026-10-12). A CEF app (Spotify) took presses covered
+/// without it, so it's Electron's only.
+enum LaunchOption {
+    static let occludedWindows = "--disable-backgrounding-occluded-windows"
+
+    /// The option the app needs, by the framework in its bundle.
+    static func needed(by url: URL) -> String? {
+        if case .electron? = HiddenInterface.of(url) { return occludedWindows }
+        return nil
+    }
+
+    /// A process's launch arguments, its own path first, as `ps` reads them
+    /// (`KERN_PROCARGS2`: processes of the same user).
+    static func arguments(of pid: pid_t) -> [String] {
+        var mib = [CTL_KERN, KERN_PROCARGS2, pid]
+        var size = 0
+        guard sysctl(&mib, 3, nil, &size, nil, 0) == 0, size > 4 else { return [] }
+        var buffer = [UInt8](repeating: 0, count: size)
+        guard sysctl(&mib, 3, &buffer, &size, nil, 0) == 0, size > 4 else { return [] }
+        let count = Int(buffer.withUnsafeBytes { $0.load(as: Int32.self) })
+        // After the count: the executable's path, NULs, then the arguments.
+        var index = 4
+        while index < size, buffer[index] != 0 { index += 1 }
+        while index < size, buffer[index] == 0 { index += 1 }
+        var found: [String] = []
+        while found.count < count, index < size {
+            let start = index
+            while index < size, buffer[index] != 0 { index += 1 }
+            found.append(String(decoding: buffer[start..<index], as: UTF8.self))
+            index += 1
+        }
+        return found
+    }
+
+    /// What `openApplication` answered, from the queue it answers on.
+    private final class Opened: @unchecked Sendable {
+        var app: NSRunningApplication?
+        var error: Error?
+    }
+
+    /// Quits the app as a person would (never by force: it's given 15 s), then
+    /// opens it again with `option`, in the background: an app that comes
+    /// forward by itself once its window shows (Deezer does) goes behind the
+    /// app that was in front again. Says how it went.
+    static func relaunch(_ app: NSRunningApplication?, url: URL, with option: String) -> Bool {
+        let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+        let front = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
+        if let app {
+            _ = app.terminate()
+            let deadline = Date().addingTimeInterval(15)
+            while !app.isTerminated, Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.2)) }
+            guard app.isTerminated else {
+                print("\(name) didn't quit within 15 s (it may be asking something): quit it yourself, then try again.")
+                return false
+            }
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.arguments = [option]
+        configuration.activates = false
+        let opened = Opened()
+        let done = DispatchSemaphore(value: 0)
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { app, error in
+            opened.app = app
+            opened.error = error
+            done.signal()
+        }
+        guard done.wait(timeout: .now() + 30) == .success, let new = opened.app else {
+            print("Couldn't open \(name) again: \(opened.error?.localizedDescription ?? "macOS didn't answer").")
+            return false
+        }
+        // It may come forward a few seconds after its window shows (Deezer's
+        // once its page loaded): watched for 12 s, sent back each time.
+        if let front, front.processIdentifier != app?.processIdentifier {
+            let deadline = Date().addingTimeInterval(12)
+            while Date() < deadline {
+                if WindowStates.frontPID() == new.processIdentifier {
+                    Thread.sleep(forTimeInterval: 0.3)
+                    WindowStates.activate(front)
+                }
+                Thread.sleep(forTimeInterval: 0.25)
+            }
+        }
+        print("\(app == nil ? "Opened" : "Relaunched") \(name) with \(option) (pid \(new.processIdentifier)).")
+        return true
+    }
+}
+
+/// macOS's desktops (Spaces), read through SkyLight's read-only calls, as
+/// window managers read them, resolved at runtime: nil when gone. Only the
+/// main display's.
+enum Desktops {
+    private typealias MainConnection = @convention(c) () -> Int32
+    private typealias CopyDisplaySpaces = @convention(c) (Int32) -> Unmanaged<CFArray>?
+    private typealias CopySpacesForWindows = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?
+    private static func symbol<T>(_ names: [String], _ type: T.Type) -> T? {
+        for name in names {
+            if let found = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) { return unsafeBitCast(found, to: type) }
+        }
+        return nil
+    }
+    private static let connection = symbol(["SLSMainConnectionID", "CGSMainConnectionID"], MainConnection.self)
+    private static let displaySpaces = symbol(["SLSCopyManagedDisplaySpaces", "CGSCopyManagedDisplaySpaces"], CopyDisplaySpaces.self)
+    private static let spacesForWindows = symbol(["SLSCopySpacesForWindows", "CGSCopySpacesForWindows"], CopySpacesForWindows.self)
+
+    /// The main display's desktops in order (full screen apps' among them),
+    /// and the current one.
+    static func all() -> (spaces: [(id: Int, isFullScreen: Bool)], current: Int)? {
+        guard let connection, let displaySpaces,
+              let main = (displaySpaces(connection())?.takeRetainedValue() as? [[String: Any]])?.first else { return nil }
+        func id(_ space: [String: Any]?) -> Int { (space?["ManagedSpaceID"] as? Int) ?? (space?["id64"] as? Int) ?? 0 }
+        let listed = main["Spaces"] as? [[String: Any]] ?? []
+        let spaces: [(id: Int, isFullScreen: Bool)] = listed.map { space in (id: id(space), isFullScreen: space["type"] as? Int == 4) }
+        guard !spaces.isEmpty else { return nil }
+        return (spaces, id(main["Current Space"] as? [String: Any]))
+    }
+
+    /// The desktop a window is on.
+    static func of(window: Int) -> Int? {
+        guard let connection, let spacesForWindows,
+              let spaces = spacesForWindows(connection(), 7, [window] as CFArray)?.takeRetainedValue() as? [Int] else { return nil }
+        return spaces.first
+    }
+
+    /// Where a desktop is in the main display's order.
+    static func index(of id: Int) -> Int? { all()?.spaces.firstIndex { $0.id == id } }
+}
+
+/// Reading an app's main window's state, and changing it as a person would.
+enum WindowStates {
+    typealias Info = [String: Any]
+    static func infos(_ option: CGWindowListOption) -> [Info] {
+        CGWindowListCopyWindowInfo(option, kCGNullWindowID) as? [Info] ?? []
+    }
+    static func frame(of info: Info) -> CGRect {
+        (info[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) } ?? .zero
+    }
+    static func number(of info: Info) -> Int { info[kCGWindowNumber as String] as? Int ?? 0 }
+
+    /// The app's main window: its biggest ordinary one that Accessibility
+    /// knows, wherever it is (a full screen window may come with a bigger one
+    /// it doesn't: Music's), else its biggest.
+    static func mainWindow(of pid: pid_t) -> Info? {
+        let candidates = infos(.optionAll).filter {
+            $0[kCGWindowOwnerPID as String] as? pid_t == pid && $0[kCGWindowLayer as String] as? Int == 0 && frame(of: $0).height >= 200
+        }
+        func area(_ info: Info) -> CGFloat { frame(of: info).width * frame(of: info).height }
+        let known = Set(windowElements(of: pid).map(\.number))
+        return candidates.filter { known.contains(number(of: $0)) }.max { area($0) < area($1) } ?? candidates.max { area($0) < area($1) }
+    }
+
+    private typealias GetWindow = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+    private static let getWindow: GetWindow? = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_AXUIElementGetWindow")
+        .map { unsafeBitCast($0, to: GetWindow.self) }
+
+    /// The app's windows Accessibility knows, with their numbers: this
+    /// desktop's (minimised ones too) and every other's (`AccessibilityWindows`).
+    static func windowElements(of pid: pid_t) -> [(number: Int, element: AXUIElement)] {
+        guard let getWindow else { return [] }
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, 1)
+        var found: [(number: Int, element: AXUIElement)] = []
+        for element in app.elements(kAXWindowsAttribute) + (AccessibilityWindows.windows(ofProcess: pid) ?? []) {
+            var id: CGWindowID = 0
+            if getWindow(element, &id) == .success, !found.contains(where: { $0.number == Int(id) }) { found.append((Int(id), element)) }
+        }
+        return found
+    }
+
+    /// A window's Accessibility element.
+    static func element(of pid: pid_t, number: Int) -> AXUIElement? {
+        windowElements(of: pid).first { $0.number == number }?.element
+    }
+
+    /// Whether the windows on screen above it cover every point of a grid over it.
+    static func isCovered(_ info: Info) -> Bool {
+        let list = infos(.optionOnScreenOnly)
+        guard let index = list.firstIndex(where: { number(of: $0) == number(of: info) }) else { return false }
+        let above = list[..<index].filter { other in
+            other[kCGWindowLayer as String] as? Int == 0 && (other[kCGWindowAlpha as String] as? Double ?? 1) > 0
+        }.map(frame(of:))
+        let box = frame(of: info)
+        for row in 0...8 {
+            for column in 0...8 {
+                let point = CGPoint(x: box.minX + box.width * CGFloat(column) / 8, y: box.minY + box.height * CGFloat(row) / 8)
+                if !above.contains(where: { $0.insetBy(dx: -0.5, dy: -0.5).contains(point) }) { return false }
+            }
+        }
+        return true
+    }
+
+    /// The state its main window is in; nil without one. Hidden is the app's
+    /// (Accessibility answers it as it is now); then minimised and full
+    /// screen, the window's; else where the window server has it. On another
+    /// desktop, never covered there: the window list doesn't keep another
+    /// desktop's order (Deezer's, the front window there, read as covered).
+    /// A closed window an app keeps counts as none.
+    static func state(of app: NSRunningApplication) -> WindowState? {
+        let pid = app.processIdentifier
+        let appElement = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(appElement, 1)
+        if appElement.value(kAXHiddenAttribute) as? Bool == true { return .hidden }
+        guard let info = mainWindow(of: pid) else { return nil }
+        let element = element(of: pid, number: number(of: info))
+        if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimised }
+        if element?.value("AXFullScreen") as? Bool == true { return .fullScreen }
+        if info[kCGWindowIsOnscreen as String] as? Bool == true { return isCovered(info) ? .covered : .visible }
+        // Off screen on this very desktop: closed, as an Electron app keeps a
+        // closed window (Deezer's, playing on), or ordered out.
+        if let desktop = Desktops.of(window: number(of: info)), desktop == Desktops.all()?.current { return nil }
+        return .otherDesktop
+    }
+
+    // SkyLight's front process, as window switchers (AltTab) read and set it:
+    // from a process in the background, Accessibility's AXFrontmost and
+    // NSRunningApplication.activate() answer success and change nothing, and
+    // NSWorkspace's front app lags seconds in the process that changed it
+    // (2026-10-12, in the VM). Resolved at runtime.
+    private typealias GetFrontProcess = @convention(c) (UnsafeMutablePointer<ProcessSerialNumber>) -> Int32
+    private typealias SetFrontProcess = @convention(c) (UnsafePointer<ProcessSerialNumber>, UInt32, UInt32) -> Int32
+    private typealias ProcessForPID = @convention(c) (pid_t, UnsafeMutablePointer<ProcessSerialNumber>) -> Int32
+    private typealias PIDForProcess = @convention(c) (UnsafePointer<ProcessSerialNumber>, UnsafeMutablePointer<pid_t>) -> Int32
+    private static func symbol<T>(_ name: String, _ type: T.Type) -> T? {
+        dlsym(UnsafeMutableRawPointer(bitPattern: -2), name).map { unsafeBitCast($0, to: type) }
+    }
+    private static let getFrontProcess = symbol("_SLPSGetFrontProcess", GetFrontProcess.self)
+    private static let setFrontProcess = symbol("_SLPSSetFrontProcessWithOptions", SetFrontProcess.self)
+    private static let processForPID = symbol("GetProcessForPID", ProcessForPID.self)
+    private static let pidForProcess = symbol("GetProcessPID", PIDForProcess.self)
+
+    /// The app in front now.
+    static func frontPID() -> pid_t? {
+        var process = ProcessSerialNumber(), pid: pid_t = 0
+        if let getFrontProcess, let pidForProcess, getFrontProcess(&process) == 0, pidForProcess(&process, &pid) == 0, pid > 0 { return pid }
+        return NSWorkspace.shared.frontmostApplication?.processIdentifier
+    }
+
+    /// Brings the process forward with `window` (its desktop shown), as a
+    /// person's click would ("user generated"): whether it was asked.
+    private static func setFront(_ pid: pid_t, window: Int) -> Bool {
+        var process = ProcessSerialNumber()
+        guard let setFrontProcess, let processForPID, processForPID(pid, &process) == 0 else { return false }
+        return setFrontProcess(&process, UInt32(window), 0x200) == 0
+    }
+
+    /// Brings an app to the front, and to its window's desktop (`window`, when
+    /// it must be on screen after; else its main window): through SkyLight,
+    /// as window switchers do; else as `open` does, last, as a Safari web app
+    /// may play again then (SoundCloud's did, 2026-10-11).
+    @discardableResult
+    static func activate(_ app: NSRunningApplication, showing window: Int? = nil) -> Bool {
+        func there(within seconds: Double) -> Bool {
+            let deadline = Date().addingTimeInterval(seconds)
+            repeat {
+                let front = frontPID() == app.processIdentifier
+                let shown = window.map { number in
+                    infos(.optionOnScreenOnly).contains { WindowStates.number(of: $0) == number }
+                } ?? true
+                if front && shown { return true }
+                Thread.sleep(forTimeInterval: 0.1)
+            } while Date() < deadline
+            return false
+        }
+        // The process forward, then its window above the others (SkyLight's
+        // call alone left Deezer's window over Player Check's, 2026-10-12).
+        if let number = window ?? mainWindow(of: app.processIdentifier).map(number(of:)),
+           setFront(app.processIdentifier, window: number) {
+            if let element = element(of: app.processIdentifier, number: number) {
+                AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+            }
+            if there(within: 2) { return true }
+        }
+        if let url = app.bundleURL { bringForward(url) }
+        return there(within: 2.5)
+    }
+
+    static func set(_ element: AXUIElement, _ attribute: String, _ on: Bool) {
+        AXUIElementSetAttributeValue(element, attribute as CFString, on ? kCFBooleanTrue : kCFBooleanFalse)
+    }
+
+    static func setFrame(_ element: AXUIElement, _ frame: CGRect, size: Bool = true) {
+        var origin = frame.origin, extent = frame.size
+        if let position = AXValueCreate(.cgPoint, &origin) {
+            AXUIElementSetAttributeValue(element, kAXPositionAttribute as CFString, position)
+        }
+        if size, let value = AXValueCreate(.cgSize, &extent) {
+            AXUIElementSetAttributeValue(element, kAXSizeAttribute as CFString, value)
+        }
+    }
+
+    /// Waits up to `seconds` for `done`.
+    static func wait(_ seconds: Double, until done: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        while !done() {
+            guard Date() < deadline else { return false }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return true
+    }
+
+    // MARK: Dragging it to another desktop
+
+    private static func post(_ event: CGEvent?) {
+        event?.post(tap: .cghidEventTap)
+        usleep(40_000)
+    }
+    private static func mouse(_ type: CGEventType, at point: CGPoint) {
+        post(CGEvent(mouseEventSource: CGEventSource(stateID: .hidSystemState), mouseType: type, mouseCursorPosition: point,
+                     mouseButton: .left))
+    }
+
+    /// Control-→ (or ←) as a keyboard sends it: Control pressed, the arrow
+    /// with the Fn and number-pad flags arrows carry (macOS's desktop
+    /// shortcuts are registered with them: without, it does nothing), then
+    /// Control released with no flags. The flags of posted events stay in the
+    /// system's keyboard state: without the release, every later click is a
+    /// Control-click, which can't drag a window (2026-10-12).
+    private static func controlArrow(right: Bool) {
+        let source = CGEventSource(stateID: .hidSystemState)
+        func control(down: Bool) {
+            let event = CGEvent(keyboardEventSource: source, virtualKey: 59, keyDown: down)
+            event?.type = .flagsChanged
+            event?.flags = down ? .maskControl : []
+            post(event)
+        }
+        control(down: true)
+        for down in [true, false] {
+            let event = CGEvent(keyboardEventSource: source, virtualKey: right ? 124 : 123, keyDown: down)
+            event?.flags = [.maskControl, .maskSecondaryFn, .maskNumericPad]
+            post(event)
+        }
+        control(down: false)
+    }
+
+    /// Where the window can be held to drag it: right of its zoom button (a
+    /// title bar), then along its top bar, at spots that aren't controls. An
+    /// Electron app's top bar can be dragged only where its page marks it so,
+    /// which Accessibility can't tell (Deezer's: right of its search field),
+    /// so each spot is tried in turn.
+    private static func grips(_ element: AXUIElement, _ box: CGRect) -> [CGPoint] {
+        var points: [CGPoint] = []
+        if let zoom = element.element(kAXZoomButtonAttribute)?.frame, zoom.width > 0 {
+            points.append(CGPoint(x: zoom.maxX + 16, y: zoom.midY))
+        }
+        for y in [box.minY + 14, box.minY + 24] {
+            var x = box.maxX - 40
+            while x > box.minX + 80 {
+                points.append(CGPoint(x: x, y: y))
+                x -= 60
+            }
+        }
+        let system = AXUIElementCreateSystemWide()
+        let controls: Set<String> = [kAXButtonRole, kAXTextFieldRole, "AXSearchField", "AXLink", kAXCheckBoxRole, kAXPopUpButtonRole,
+                                     kAXMenuButtonRole, kAXRadioButtonRole, kAXSliderRole, kAXComboBoxRole, kAXTextAreaRole, kAXImageRole]
+        return points.filter { point in
+            var hit: AXUIElement?
+            guard AXUIElementCopyElementAtPosition(system, Float(point.x), Float(point.y), &hit) == .success, let hit else { return true }
+            return !controls.contains(hit.text(kAXRoleAttribute)) && !hit.actions.contains(kAXPressAction)
+        }
+    }
+
+    /// Drags the app's main window `steps` desktops right (left when
+    /// negative), as a person would: it's brought forward, held at a spot of
+    /// its top bar (a small drag towards the screen's middle shows the spot
+    /// holds it), Control-→ or ← pressed, let go; the pointer goes back where
+    /// it was. Once held, the window is dragged back to where it started before
+    /// the desktop changes, so it lands in its place.
+    /// `reveal` shows its page to Accessibility while it's in view (true), so
+    /// the spots tried aren't its page's buttons, and hides it again after
+    /// (false). Whether it got there.
+    static func move(_ app: NSRunningApplication, desktops steps: Int, reveal: ((Bool) -> Void)? = nil) -> Bool {
+        // Once more when no spot held it (SoundCloud's web app, just shown
+        // again after hidden, held nowhere once, 2026-10-12).
+        for attempt in 1...2 {
+            if moveOnce(app, desktops: steps, reveal: reveal) { return true }
+            log("  drag: attempt \(attempt) didn't take it there")
+            Thread.sleep(forTimeInterval: 1)
+        }
+        return false
+    }
+
+    private static func moveOnce(_ app: NSRunningApplication, desktops steps: Int, reveal: ((Bool) -> Void)?) -> Bool {
+        let pid = app.processIdentifier
+        guard steps != 0, let info = mainWindow(of: pid), let start = Desktops.of(window: number(of: info)) else { return false }
+        let shown = activate(app, showing: number(of: info))
+        log("  drag: \(app.localizedName ?? "the app") brought forward: \(shown); in front: "
+            + (frontPID().flatMap { NSRunningApplication(processIdentifier: $0)?.localizedName } ?? "?"))
+        guard shown else { return false }
+        Thread.sleep(forTimeInterval: 0.6)
+        reveal?(true)
+        defer { reveal?(false) }
+        guard let element = element(of: pid, number: number(of: info)), let box = element.frame else { return false }
+        let pointer = CGEvent(source: nil)?.location ?? .zero
+        let direction: CGFloat = box.midX > (NSScreen.screens.first?.frame.midX ?? 0) ? -1 : 1
+        var held = false
+        let spots = grips(element, box)
+        log(String(format: "  drag: window at %.0f,%.0f, %d spots to try", box.minX, box.minY, spots.count))
+        for grip in spots {
+            mouse(.mouseMoved, at: grip)
+            mouse(.leftMouseDown, at: grip)
+            for step in 1...3 { mouse(.leftMouseDragged, at: CGPoint(x: grip.x + direction * CGFloat(step) * 4, y: grip.y)) }
+            usleep(150_000)
+            held = element.frame.map { $0.minX != box.minX } ?? false
+            log(String(format: "  drag: %@ at %.0f,%.0f", held ? "held" : "not held", grip.x, grip.y))
+            if held {
+                // Back where it started, held still, then to the other desktop.
+                for step in [2, 1, 0] { mouse(.leftMouseDragged, at: CGPoint(x: grip.x + direction * CGFloat(step) * 4, y: grip.y)) }
+                usleep(150_000)
+                for _ in 0..<abs(steps) {
+                    controlArrow(right: steps > 0)
+                    Thread.sleep(forTimeInterval: 0.9)
+                }
+                mouse(.leftMouseUp, at: grip)
+                break
+            }
+            mouse(.leftMouseUp, at: CGPoint(x: grip.x + direction * 12, y: grip.y))
+        }
+        CGWarpMouseCursorPosition(pointer)
+        CGAssociateMouseAndMouseCursorPosition(1)
+        Thread.sleep(forTimeInterval: 0.4)
+        return held && Desktops.of(window: number(of: info)) != start
+    }
+}
+
+/// An opaque window over the app's, from this tool: another window covering
+/// it, as Chromium counts one (Deezer's page took no presses under it, as
+/// under any window, 2026-10-12). Made while another desktop is current, it
+/// lands there. AppKit's, so on the main thread only (the test's).
+final class CoverWindow {
+    private var window: NSWindow?
+    var number: Int? { window.map { $0.windowNumber } }
+
+    func show(over box: CGRect, naming name: String) {
+        remove()
+        MainActor.assumeIsolated {
+            NSApplication.shared.setActivationPolicy(.accessory)
+            let area = box.insetBy(dx: -20, dy: -20)
+            let top = NSScreen.screens.first?.frame.height ?? 0
+            let made = NSWindow(contentRect: NSRect(x: area.minX, y: top - area.maxY, width: area.width, height: area.height),
+                                styleMask: .borderless, backing: .buffered, defer: false)
+            made.isOpaque = true
+            made.backgroundColor = .windowBackgroundColor
+            made.isReleasedWhenClosed = false
+            let label = NSTextField(labelWithString: "Player Check covers \(name) here for its test")
+            label.textColor = .secondaryLabelColor
+            label.alignment = .center
+            label.frame = NSRect(x: 24, y: area.height / 2 - 12, width: area.width - 48, height: 24)
+            made.contentView?.addSubview(label)
+            made.orderFrontRegardless()
+            made.display()
+            window = made
+        }
+        settle()
+    }
+
+    /// AppKit shows (or takes away) the window once its transaction is
+    /// committed, which happens as the run loop turns: this tool's waits
+    /// don't turn it.
+    private func settle() {
+        CATransaction.flush()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+    }
+
+    func remove() {
+        guard window != nil else { return }
+        MainActor.assumeIsolated {
+            window?.orderOut(nil)
+            window = nil
+        }
+        settle()
+    }
+}
+
+/// A test's trip through the window states: where the app's window was
+/// (put back at the end, or at a stop), the app to come back to before each
+/// state's trials (the one running this tool, the Player Check app, else the
+/// one in front at the start), and which states can be tested here.
+final class WindowTest {
+    let app: NSRunningApplication
+    var pid: pid_t { app.processIdentifier }
+    let home: NSRunningApplication?
+    let original: WindowState
+    private let originalFrame: CGRect
+    private let originalDesktop: Int?
+    private let homeDesktop: Int?
+    /// The home app's window, when it was moved aside for the app's to show, and where it was.
+    private var homeWindow: (element: AXUIElement, frame: CGRect)?
+    private let cover = CoverWindow()
+    /// Why each state that can't be tested isn't.
+    var untested: [WindowState: String] = [:]
+    /// Shows the app's page to Accessibility (its switch on) while its window
+    /// is dragged, and hides it after: an Electron app's top bar has buttons
+    /// Accessibility sees only then (Deezer's avatar).
+    var revealPage: ((Bool) -> Void)?
+    var states: [WindowState] { WindowState.allCases.filter { untested[$0] == nil } }
+
+    init?(app: NSRunningApplication) {
+        self.app = app
+        let pid = app.processIdentifier
+        guard let state = WindowStates.state(of: app), let info = WindowStates.mainWindow(of: pid) else { return nil }
+        original = state
+        originalFrame = WindowStates.element(of: pid, number: WindowStates.number(of: info))?.frame ?? WindowStates.frame(of: info)
+        originalDesktop = Desktops.of(window: WindowStates.number(of: info))
+        let parent = NSRunningApplication(processIdentifier: getppid())
+        let front = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
+        home = parent?.activationPolicy == .regular ? parent : front?.processIdentifier == pid ? nil : front
+        let desktops = Desktops.all()
+        homeDesktop = desktops?.current
+        // Full screen apps' desktops don't count: they go with their window.
+        if desktops.map({ $0.spaces.filter { !$0.isFullScreen }.count < 2 }) ?? true {
+            let why = desktops == nil ? "macOS's desktops can't be read" : "no other desktop: add one in Mission Control to test it"
+            untested[.otherDesktop] = why
+            untested[.otherDesktopCovered] = why
+        }
+    }
+
+    private var element: AXUIElement? {
+        WindowStates.mainWindow(of: pid).flatMap { WindowStates.element(of: pid, number: WindowStates.number(of: $0)) }
+    }
+
+    /// Back to the app the test came from, until its window is on screen: from
+    /// a full screen app's desktop, its activating alone may leave that desktop
+    /// shown (and the menu bar with it hidden).
+    private func comeHome() {
+        guard let home else { return }
+        let window = WindowStates.mainWindow(of: home.processIdentifier).map(WindowStates.number(of:))
+        for _ in 0..<2 {
+            WindowStates.activate(home, showing: window)
+            Thread.sleep(forTimeInterval: 0.8)
+            // Shown still, once desktops stopped sliding.
+            guard let window, !WindowStates.infos(.optionOnScreenOnly).contains(where: { WindowStates.number(of: $0) == window }) else { return }
+        }
+    }
+
+    /// Shown, on this desktop, not minimised or full screen: the start of
+    /// every other state (`removingCover` false at a stop: the cover is
+    /// AppKit's, for the main thread, and goes with this tool anyway).
+    private func normalize(removingCover: Bool = true) -> String? {
+        if removingCover { cover.remove() }
+        let appElement = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(appElement, 1)
+        if appElement.value(kAXHiddenAttribute) as? Bool == true {
+            WindowStates.set(appElement, kAXHiddenAttribute, false)
+            guard WindowStates.wait(3, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else { return "it couldn't be shown again" }
+        }
+        guard let element else { return "its window can't be reached" }
+        if element.value(kAXMinimizedAttribute) as? Bool == true {
+            WindowStates.set(element, kAXMinimizedAttribute, false)
+            guard WindowStates.wait(4, until: { element.value(kAXMinimizedAttribute) as? Bool != true }) else { return "it couldn't be unminimised" }
+            Thread.sleep(forTimeInterval: 0.6)
+        }
+        if element.value("AXFullScreen") as? Bool == true {
+            WindowStates.set(element, "AXFullScreen", false)
+            guard WindowStates.wait(6, until: { element.value("AXFullScreen") as? Bool != true }) else { return "it couldn't leave full screen" }
+            Thread.sleep(forTimeInterval: 1.2)
+        }
+        if let homeDesktop, let info = WindowStates.mainWindow(of: pid), let there = Desktops.of(window: WindowStates.number(of: info)),
+           there != homeDesktop {
+            guard let from = Desktops.index(of: there), let to = Desktops.index(of: homeDesktop) else {
+                return "its window is on another display's desktop"
+            }
+            guard WindowStates.move(app, desktops: to - from, reveal: revealPage) else { return "its window couldn't be dragged back to this desktop" }
+        }
+        return nil
+    }
+
+    /// Visible: when covered, brought forward, with the home app in front
+    /// again; when the home app's window still covers it, that one is moved
+    /// aside (the user's choice, 2026-10-12), put back at the end.
+    private func showVisible() -> String? {
+        guard let info = WindowStates.mainWindow(of: pid) else { return "its window is gone" }
+        guard WindowStates.isCovered(info) else { return nil }
+        WindowStates.activate(app, showing: WindowStates.number(of: info))
+        comeHome()
+        guard let again = WindowStates.mainWindow(of: pid), WindowStates.isCovered(again) else { return nil }
+        guard let home else { return "it's covered" }
+        let homeApp = AXUIElementCreateApplication(home.processIdentifier)
+        AXUIElementSetMessagingTimeout(homeApp, 1)
+        guard let window = homeApp.element(kAXFocusedWindowAttribute) ?? homeApp.element(kAXMainWindowAttribute),
+              let frame = window.frame else { return "it's covered" }
+        if homeWindow == nil { homeWindow = (window, frame) }
+        // Aside towards the side with room, leaving 160 pt of the app's window
+        // in view; narrower when the screen is too small.
+        let target = WindowStates.frame(of: again)
+        let screen = NSScreen.screens.first?.visibleFrame ?? .zero
+        var moved = frame
+        if target.midX >= frame.midX {
+            moved.origin.x = target.maxX - 160 - frame.width
+            if moved.minX < screen.minX {
+                moved.origin.x = screen.minX
+                moved.size.width = max(400, target.maxX - 160 - screen.minX)
+            }
+        } else {
+            moved.origin.x = target.minX + 160
+            if moved.maxX > screen.maxX { moved.size.width = max(400, screen.maxX - moved.minX) }
+        }
+        WindowStates.setFrame(window, moved)
+        Thread.sleep(forTimeInterval: 0.5)
+        guard let after = WindowStates.mainWindow(of: pid), !WindowStates.isCovered(after) else {
+            return "it's covered by \(home.localizedName ?? "the app in front")'s window, which couldn't be moved aside"
+        }
+        return nil
+    }
+
+    /// Puts the app's window in `state`, with the home app in front after;
+    /// nil once it reads so, else why it couldn't be.
+    func putIn(_ state: WindowState) -> String? {
+        if let why = untested[state] { return why }
+        let why: String?
+        switch state {
+        case .visible:
+            why = normalize() ?? showVisible()
+        case .covered:
+            why = normalize() ?? showVisible() ?? coverIt()
+        case .otherDesktop:
+            why = normalize() ?? toOtherDesktop()
+        case .otherDesktopCovered:
+            let there = WindowStates.state(of: app) == .otherDesktop
+            why = (there ? nil : normalize() ?? toOtherDesktop()) ?? coverOnItsDesktop()
+        case .fullScreen:
+            why = normalize() ?? setWindow("AXFullScreen", reads: .fullScreen, within: 6)
+        case .minimised:
+            why = normalize() ?? setWindow(kAXMinimizedAttribute, reads: .minimised, within: 4)
+        case .hidden:
+            why = normalize() ?? hide()
+        }
+        if let why { return why }
+        comeHome()
+        let now = WindowStates.state(of: app)
+        // Covered on its desktop by this tool's window, there with it (the
+        // window list can't tell covered there: `state(of:)`).
+        if state == .otherDesktopCovered, now == .otherDesktop, let number = cover.number,
+           let info = WindowStates.mainWindow(of: pid), Desktops.of(window: number) == Desktops.of(window: WindowStates.number(of: info)) {
+            return nil
+        }
+        return now == state ? nil : "it reads as " + (now?.title ?? "having no window")
+    }
+
+    private func coverIt() -> String? {
+        guard let info = WindowStates.mainWindow(of: pid) else { return "its window is gone" }
+        cover.show(over: WindowStates.frame(of: info), naming: appName)
+        return nil
+    }
+
+    /// To the nearest other desktop (the next first), chosen now: a full
+    /// screen app's desktop between the two is passed by.
+    private func toOtherDesktop() -> String? {
+        guard let desktops = Desktops.all(), let here = desktops.spaces.firstIndex(where: { $0.id == desktops.current }) else {
+            return "macOS's desktops can't be read"
+        }
+        let others = desktops.spaces.indices.filter { $0 != here && !desktops.spaces[$0].isFullScreen }
+        guard let nearest = others.min(by: { abs($0 - here) < abs($1 - here) || (abs($0 - here) == abs($1 - here) && $0 > $1) }) else {
+            return "no other desktop: add one in Mission Control to test it"
+        }
+        return WindowStates.move(app, desktops: nearest - here, reveal: revealPage) ? nil : "its window couldn't be dragged to another desktop"
+    }
+
+    private func coverOnItsDesktop() -> String? {
+        guard let info = WindowStates.mainWindow(of: pid),
+              WindowStates.activate(app, showing: WindowStates.number(of: info)) else { return "its desktop couldn't be shown" }
+        Thread.sleep(forTimeInterval: 0.6)
+        return coverIt()
+    }
+
+    private func setWindow(_ attribute: String, reads state: WindowState, within seconds: Double) -> String? {
+        guard let element else { return "its window can't be reached" }
+        WindowStates.set(element, attribute, true)
+        guard WindowStates.wait(seconds, until: { WindowStates.state(of: app) == state }) else { return "it didn't go \(state.title)" }
+        if state == .fullScreen {
+            // Its own desktop slides in for about a second: coming home meanwhile
+            // leaves that desktop shown (and the menu bar hidden with it).
+            let window = WindowStates.mainWindow(of: pid).map(WindowStates.number(of:))
+            _ = WindowStates.wait(3, until: { window.flatMap(Desktops.of(window:)) == Desktops.all()?.current })
+            Thread.sleep(forTimeInterval: 1)
+        } else {
+            Thread.sleep(forTimeInterval: 0.6)
+        }
+        return nil
+    }
+
+    private func hide() -> String? {
+        let appElement = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(appElement, 1)
+        WindowStates.set(appElement, kAXHiddenAttribute, true)
+        if !WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) { app.hide() }
+        return WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) ? nil : "it couldn't be hidden"
+    }
+
+    /// Back as it was at the start: its state, place and desktop, the home
+    /// app's window and the home app in front. What it couldn't put back, or nil.
+    @discardableResult
+    func restore(atStop: Bool = false) -> String? {
+        var problem = normalize(removingCover: !atStop)
+        if problem == nil, original != .fullScreen, let element { WindowStates.setFrame(element, originalFrame) }
+        if problem == nil {
+            switch original {
+            case .otherDesktop, .otherDesktopCovered:
+                if let originalDesktop, let homeDesktop, let from = Desktops.index(of: homeDesktop), let to = Desktops.index(of: originalDesktop),
+                   !WindowStates.move(app, desktops: to - from, reveal: revealPage) {
+                    problem = "its window couldn't be dragged back to its desktop"
+                }
+            case .fullScreen: problem = setWindow("AXFullScreen", reads: .fullScreen, within: 6)
+            case .minimised: problem = setWindow(kAXMinimizedAttribute, reads: .minimised, within: 4)
+            case .hidden: problem = hide()
+            case .visible, .covered: break
+            }
+        }
+        if let homeWindow { WindowStates.setFrame(homeWindow.element, homeWindow.frame) }
+        if original != .hidden || home != nil { comeHome() }
+        return problem
+    }
+}
+
+/// The window state the test has the app in now: nil outside one (or before
+/// the first). Out of view, a Chromium page's words lag (`wordsCurrent`).
+var currentWindowState: WindowState?
+/// The trip through the window states, for a test of an app with a window
+/// (and the Accessibility permission to move it); why there's none otherwise.
+var windowTest: WindowTest?
+var windowStatesNote: String?
+if testing, let running, AXIsProcessTrusted() {
+    say()
+    say("Window states")
+    if let test = WindowTest(app: running) {
+        windowTest = test
+        stopState.restoreWindow = { test.restore(atStop: true) }
+        if let hidden = hiddenInterface {
+            let pid = running.processIdentifier
+            test.revealPage = { on in
+                guard let attribute = pageSwitch ?? hidden.switches.first else { return }
+                if on {
+                    if setSwitch(attribute, true, pid: pid), !stopState.switchesOn.contains(attribute) { stopState.switchesOn.append(attribute) }
+                    _ = waitForPage(pid, seconds: 4)
+                } else {
+                    _ = setSwitch(attribute, false, pid: pid)
+                }
+            }
+        }
+        say("  each way is tested with its window in each state: " + WindowState.allCases.map(\.title).joined(separator: ", ")
+            + "; it's put back as it is now: \(test.original.title)")
+        for state in WindowState.allCases { if let why = test.untested[state] { say("  \(state.title): not tested (\(why))") } }
+        stopState.setInTrial(true)
+        let why = test.putIn(.visible)
+        stopState.setInTrial(false)
+        stopIfRequested()
+        if let why {
+            say("  not visible: \(why); its page is read as it is")
+        } else {
+            currentWindowState = .visible
+            say("  visible now: its page is read in view, and the test starts there")
+        }
+    } else {
+        windowStatesNote = "no window open"
+        say("  not tested: no window open (each way is tried once, as it is)")
+    }
+}
+
+say()
+say("Page buttons")
 
 if !pressNeeds(["page"]) {
     say(via == "panel" ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
@@ -2248,8 +3088,11 @@ func look(_ pid: pid_t, level: Bool = false) -> Look {
 /// Whether a page button's words are current: a WebKit page keeps them so
 /// anywhere; a Chromium or Flutter page only while its window is on screen
 /// (this desktop, not hidden or minimised): out of sight an Electron page
-/// lags a state (Deezer's said Pause while paused).
-func wordsCurrent(_ button: FoundButton) -> Bool { pageIsWebKit || button.onScreen }
+/// lags a state (Deezer's said Pause while paused). In a test's window
+/// state other than visible, never (a button's `onScreen` is from the read).
+func wordsCurrent(_ button: FoundButton) -> Bool {
+    pageIsWebKit || (button.onScreen && (currentWindowState ?? .visible) == .visible)
+}
 
 /// Whether the page's Play/Pause word can be judged by now (`wordsCurrent`).
 var pageWordCurrent: Bool { page?.toggle.map(wordsCurrent) ?? false }
@@ -2959,10 +3802,27 @@ func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
 
 // MARK: The test
 
+/// Each way's result: in the first window state tested (visible), or the
+/// only run when there were no states.
 var scriptResult: TrialResult?
 var menuResult: TrialResult?
 var pageResult: TrialResult?
 var panelResult: TrialResult?
+/// Each way's result in each window state ("script", "menu", "page",
+/// "panel"), and why it failed there, for "Ways to control it".
+var stateResults: [String: [(state: WindowState, result: TrialResult, why: String)]] = [:]
+/// Why the trial running failed, as its press said (no button to press…).
+var trialProblem: String?
+/// Why a way's trial failed in a window state: what's known of the state
+/// (an Electron page out of view), else what its press said, else the trial's.
+func whyFailed(_ way: String, in state: WindowState, _ result: TrialResult) -> String {
+    if way == "page", isElectron, launchedWithOption == false, [.covered, .otherDesktop, .otherDesktopCovered, .fullScreen].contains(state) {
+        return "Chromium neither builds nor presses a page whose window is fully out of view; \(appName) wasn't opened with"
+            + " \(LaunchOption.occludedWindows)"
+    }
+    if let trialProblem { return trialProblem }
+    return result == .pausedOnly ? "it paused, but didn't play again" : "pressing it changed nothing"
+}
 /// Why a way wasn't tried, for "Ways to control it".
 var notTried = readOnly ? "not tried: read only" : "not tried"
 var notifications: NotificationLog?
@@ -2981,104 +3841,225 @@ if testing {
     } else if let running {
         let pid = running.processIdentifier
         notifications = NotificationLog(bundleID: bundleID)
+        /// The window state the trials run in, and whether it's the first
+        /// tested (learning the page's button and the volume check happen there).
+        var state: WindowState?
+        var first = true
+        /// Whether the trial's pause pressed the player's own button (learned,
+        /// or with a player's slider around it), so a pause that didn't take
+        /// was the site's refusal, not a wrong button.
+        var pressedPlayersPause = false
+        func pressPage(pausing: Bool) -> Bool {
+            guard let button = pageButtonToPress(pid: pid, pausing: pausing) else {
+                let shown = !(pageButtons(pid: pid) ?? []).isEmpty
+                say("    " + (shown ? "no button in sight to press" : "its page didn't show"))
+                trialProblem = shown ? "its page showed no Play/Pause to press"
+                    : "its page didn't show" + (pageSwitch.map { " with \(switchName($0)) on" } ?? "")
+                return false
+            }
+            var why: String?
+            guard pressPageButton(button, pausing: pausing, why: &why) else {
+                if let why { say("    \(why)") }
+                trialProblem = why
+                return false
+            }
+            if pausing {
+                let players = [learned?.element, page?.withControls == true ? page?.toggle?.element : nil, barToggle].compactMap { $0 }
+                pressedPlayersPause = players.contains { CFEqual($0, button.element) }
+            }
+            return true
+        }
+        /// After the first window state, the page is pressed as Player Check's
+        /// own presses press it (the user, 2026-10-12: "Go with A"): its switch
+        /// off between presses, each press turning it on, giving the page up to
+        /// 4 s to show, and turning it off once it's seen whether it took.
+        /// Kept on instead, a page built in view stays usable out of view
+        /// (Deezer's passed every state), which those presses don't get. The
+        /// first state keeps it on, for learning the button. Only a switch
+        /// this tool may turn off: Electron's, or one it turned on.
+        let pressSwitch: String? = pageSwitch.flatMap { $0 == manualAccessibility || stopState.switchesOn.contains($0) ? $0 : nil }
+        /// Left on by the check (the page was readable already): on again at the end.
+        let pressSwitchLeftOn = pressSwitch.map { !stopState.switchesOn.contains($0) } ?? false
+        func switchForPress(_ on: Bool) {
+            guard let pressSwitch, !first else { return }
+            if on {
+                if setSwitch(pressSwitch, true, pid: pid), !stopState.switchesOn.contains(pressSwitch) {
+                    stopState.switchesOn.append(pressSwitch)
+                }
+                _ = waitForPage(pid, seconds: 4)
+            } else {
+                _ = setSwitch(pressSwitch, false, pid: pid)
+            }
+        }
+        let panelReachable = canBeNowPlaying && AXIsProcessTrusted()
+        /// Each way's play, to play it again quietly when a way left it paused.
+        var plays: [(way: String, title: String, play: () -> Bool)] = []
+        if let script { plays.append(("script", "AppleScript", { sendScript(script.play) })) }
+        if menu != nil { plays.append(("menu", "its menu", { pressMenuToggle(pid: pid) })) }
+        plays.append(("page", "its page's button", {
+            guard page?.toggle != nil else { return false }
+            switchForPress(true)
+            return pressPage(pausing: false)
+        }))
+        if panelReachable { plays.append(("panel", "the Now Playing panel", { pressInPanel(pid: pid, pausing: false) })) }
+        /// After the first state, a way that left it paused: it's played
+        /// again by a way that worked in this state, else by AppleScript or
+        /// the panel if they worked in the first, before anyone is asked.
+        func playAgain() -> Bool {
+            guard let state else { return false }
+            let here = plays.filter { play in stateResults[play.way]?.contains { $0.state == state && $0.result == .worked } == true }
+            let anywhere = plays.filter { ["script", "panel"].contains($0.way) && stateResults[$0.way]?.first?.result == .worked }
+            for play in here + anywhere where play.play() {
+                _ = waitFor(4, pid: pid, until: { _ in isPlaying(pid) })
+                if play.way == "page" { switchForPress(false) }
+                if isPlaying(pid) {
+                    say("    played again by \(play.title)")
+                    return true
+                }
+            }
+            return false
+        }
         // Each way needs it playing: whoever runs the tool is asked to start
-        // it before the first, and whenever a way leaves it stopped.
+        // it before the first, and whenever a way leaves it stopped and it
+        // can't be played again otherwise.
         var going = true
         func ready() -> Bool {
             guard going else { return false }
+            if !first, !isPlaying(pid), playAgain() { return true }
             going = waitUntilPlaying(pid)
             if !going {
                 notTried = "not tried: it didn't play"
                 say("  stopped: \(appName) didn't play within 2 minutes")
-            } else {
+            } else if first {
                 // Its page while it plays, to learn its Play/Pause from the first pause.
                 noteLearningPlaying(pid: pid)
             }
             return going
         }
-        if let script, scriptProblem == nil, ready() {
-            // A toggle is sent for the pause only while it plays, and again to play.
-            scriptResult = trial("by script (\(script.pause), \(script.play))", pid: pid,
-                                 pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
-                                 whilePaused: { checkVolume(); learnPageButton(pid: pid) })
-            stopIfRequested()
-            RunLoop.main.run(until: Date().addingTimeInterval(1))
+        func record(_ way: String, _ result: TrialResult) {
+            if first {
+                switch way {
+                case "script": scriptResult = result
+                case "menu": menuResult = result
+                case "page": pageResult = result
+                default: panelResult = result
+                }
+            }
+            if let state { stateResults[way, default: []].append((state, result, whyFailed(way, in: state, result))) }
+            trialProblem = nil
         }
-        if menu != nil, ready() {
-            menuResult = trial("by its menu", pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
-                               whilePaused: { learnPageButton(pid: pid) })
+        let states: [WindowState?] = windowTest.map { $0.states } ?? [nil]
+        for (index, next) in states.enumerated() where going {
             stopIfRequested()
-            RunLoop.main.run(until: Date().addingTimeInterval(1))
-        }
-        // No other way paused it and no button is named Play or Pause: as
-        // AutoHush asks ("It's Paused"), whoever runs the check pauses it, and
-        // the button whose words changed is learned (the user's choice, 2026-10-12).
-        let pausedByAnother = [scriptResult, menuResult].contains { $0 == .worked || $0 == .pausedOnly }
-        if learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
-            if !learner.hasPlayed {
-                // Its page is out of sight, where its words can't be learned: nobody is asked.
-                learnPageButton(pid: pid)
-            } else {
-                say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
-                    + " changes on it (up to 2 minutes)")
-                let deadline = Date().addingTimeInterval(120)
-                while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
-                if !isPlaying(pid) {
-                    say("  it paused: learning")
+            state = next
+            if let next, let windowTest {
+                say("  State \(index + 1) of \(states.count): \(next.title)")
+                // Off, as between two presses, before the window goes.
+                switchForPress(false)
+                stopState.setInTrial(true)
+                let why = windowTest.putIn(next)
+                stopState.setInTrial(false)
+                stopIfRequested()
+                if let why {
+                    say("    not tested: \(why)")
+                    windowTest.untested[next] = why
+                    continue
+                }
+                currentWindowState = next
+            }
+            trialProblem = nil
+            if let script, scriptProblem == nil, ready() {
+                // A toggle is sent for the pause only while it plays, and again to play.
+                record("script", trial("by script (\(script.pause), \(script.play))", pid: pid,
+                                       pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
+                                       whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil))
+                stopIfRequested()
+                RunLoop.main.run(until: Date().addingTimeInterval(1))
+            }
+            if menu != nil, ready() {
+                record("menu", trial("by its menu", pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
+                                     whilePaused: first ? { learnPageButton(pid: pid) } : nil))
+                stopIfRequested()
+                RunLoop.main.run(until: Date().addingTimeInterval(1))
+            }
+            // No other way paused it and no button is named Play or Pause: as
+            // AutoHush asks ("It's Paused"), whoever runs the check pauses it, and
+            // the button whose words changed is learned (the user's choice, 2026-10-12).
+            let pausedByAnother = [scriptResult, menuResult].contains { $0 == .worked || $0 == .pausedOnly }
+            if first, learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
+                if !learner.hasPlayed {
+                    // Its page is out of sight, where its words can't be learned: nobody is asked.
                     learnPageButton(pid: pid)
                 } else {
-                    say("  it didn't pause within 2 minutes: its page's Play/Pause isn't learned")
+                    say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
+                        + " changes on it (up to 2 minutes)")
+                    let deadline = Date().addingTimeInterval(120)
+                    while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+                    if !isPlaying(pid) {
+                        say("  it paused: learning")
+                        learnPageButton(pid: pid)
+                    } else {
+                        say("  it didn't pause within 2 minutes: its page's Play/Pause isn't learned")
+                    }
+                    stopIfRequested()
                 }
+            }
+            if page?.toggle != nil, ready() {
+                pressedPlayersPause = false
+                let result = trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
+                                   pause: { switchForPress(true); return pressPage(pausing: true) },
+                                   play: { switchForPress(true); return pressPage(pausing: false) },
+                                   undo: { switchForPress(false) },
+                                   whilePaused: first ? { learnPageButton(pid: pid) } : { switchForPress(false) })
+                switchForPress(false)
+                if result == .didNotPause, pressedPlayersPause, (state ?? .visible) == .visible {
+                    say("    a pause its page refuses: AutoHush would mute it instead")
+                }
+                record("page", result)
+                stopIfRequested()
+                RunLoop.main.run(until: Date().addingTimeInterval(1))
+            }
+            if !canBeNowPlaying {
+                if first {
+                    panelProblem = panelNotNowPlaying
+                    say("  the Now Playing panel: not pressed: \(notNowPlaying)")
+                    panelResult = .didNotPause
+                }
+            } else if !AXIsProcessTrusted() {
+                if first { say("  the Now Playing panel: not pressed: \(noPanelItem)") }
+            } else if ready() {
+                panelProblem = nil
+                let result = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
+                                   play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
+                                   undo: {
+                                       // The row pressed may have been another app's: pressed again, that app plays on.
+                                       if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
+                                   },
+                                   whilePaused: first ? { learnPageButton(pid: pid) } : nil)
+                if let panelProblem {
+                    say("    \(panelProblem)")
+                    trialProblem = panelProblem
+                }
+                record("panel", result)
                 stopIfRequested()
             }
+            first = false
         }
-        if page?.toggle != nil, ready() {
-            /// Whether the trial's pause pressed the player's own button (learned,
-            /// or with a player's slider around it), so a pause that didn't take
-            /// was the site's refusal, not a wrong button.
-            var pressedPlayersPause = false
-            func pressPage(pausing: Bool) -> Bool {
-                guard let button = pageButtonToPress(pid: pid, pausing: pausing) else {
-                    say("    no button in sight to press"); return false
-                }
-                var why: String?
-                guard pressPageButton(button, pausing: pausing, why: &why) else {
-                    if let why { say("    \(why)") }
-                    return false
-                }
-                if pausing {
-                    let players = [learned?.element, page?.withControls == true ? page?.toggle?.element : nil, barToggle].compactMap { $0 }
-                    pressedPlayersPause = players.contains { CFEqual($0, button.element) }
-                }
-                return true
-            }
-            pageResult = trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
-                               pause: { pressPage(pausing: true) }, play: { pressPage(pausing: false) },
-                               whilePaused: { learnPageButton(pid: pid) })
-            if pageResult == .didNotPause, pressedPlayersPause {
-                say("    a pause its page refuses: AutoHush would mute it instead")
-            }
+        if let windowTest {
+            stopState.setInTrial(true)
+            let problem = windowTest.restore()
+            stopState.setInTrial(false)
+            stopState.restoreWindow = nil
+            currentWindowState = nil
+            // Read again: another app's windows that covered it may be behind it now.
+            let now = WindowStates.state(of: running)
+            say(now == windowTest.original || problem != nil
+                ? "  its window put back as it was (\(windowTest.original.title))" + (problem.map { ", but \($0)" } ?? "")
+                : "  its window put back where it was, but it was \(windowTest.original.title) and it's \(now?.title ?? "gone") now")
             stopIfRequested()
-            RunLoop.main.run(until: Date().addingTimeInterval(1))
         }
-        if !canBeNowPlaying {
-            panelProblem = panelNotNowPlaying
-            say("  the Now Playing panel: not pressed: \(notNowPlaying)")
-            panelResult = .didNotPause
-        } else if !AXIsProcessTrusted() {
-            say("  the Now Playing panel: not pressed: \(noPanelItem)")
-        } else {
-            if ready() {
-                panelResult = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
-                                    play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
-                                    undo: {
-                                        // The row pressed may have been another app's: pressed again, that app plays on.
-                                        if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
-                                    },
-                                    whilePaused: { learnPageButton(pid: pid) })
-                if let panelProblem { say("    \(panelProblem)") }
-                stopIfRequested()
-            }
+        if pressSwitchLeftOn, let pressSwitch, setSwitch(pressSwitch, true, pid: pid) {
+            stopState.switchesOn.removeAll { $0 == pressSwitch }
         }
         if let seen = notifications?.seen, !seen.isEmpty {
             for (name, keys) in seen.sorted(by: { $0.key < $1.key }) {
@@ -3239,39 +4220,63 @@ if let action {
 // MARK: - Ways to control it
 
 /// One line per way known to control an app, each with a mark: ✓ it paused
-/// and played again in the test, ✗ not there or didn't work, ? found but not
-/// tried (read only, or it didn't play), – not checked. The Player Check app
-/// shows this section as a checklist.
+/// and played again in the test, in every window state tested; ⚠ in some
+/// (the states where it didn't, and why, on the lines under it); ✗ in none,
+/// or not there; ? found but not tried (read only, or it didn't play); –
+/// not checked. The Player Check app shows this section as a checklist.
 func way(_ mark: String, _ text: String) { say("  \(mark) \(text)") }
 say()
 say("Ways to control it")
+/// A way's results in the window states, when the test went through them:
+/// its mark, what its line adds, and a line per state it failed in (only
+/// for ⚠: a ✗ failed in all) or that wasn't tested.
+func stateSummary(_ key: String) -> (mark: String, suffix: String, lines: [String])? {
+    guard let windowTest, let results = stateResults[key], !results.isEmpty else { return nil }
+    let passed = results.filter { $0.result == .worked }.count
+    let mark = passed == results.count ? "✓" : passed == 0 ? "✗" : "⚠"
+    let all = WindowState.allCases.count
+    let suffix = passed == results.count
+        ? " (" + (passed == all ? "all \(all) window states" : passed == 1 ? "the one window state tested" : "the \(passed) window states tested") + ")"
+        : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
+    var lines = mark == "⚠" ? results.filter { $0.result != .worked }.map { "      ✗ \($0.state.title): \($0.why)" } : []
+    for state in WindowState.allCases where !results.contains(where: { $0.state == state }) {
+        lines.append("      – \(state.title): not tested (\(windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")))")
+    }
+    return (mark, suffix, lines)
+}
+/// A tried way's line: ✓, ⚠ or ✗ over the window states tested (✓ or ✗ by
+/// its only run when there were none), `worked` or `failed` saying how it went.
+func triedWay(_ key: String, _ title: String, _ result: TrialResult, worked: String, failed: String) {
+    if let summary = stateSummary(key) {
+        way(summary.mark, "\(title): " + (summary.mark == "✗" ? failed : worked) + summary.suffix)
+        summary.lines.forEach { say($0) }
+    } else {
+        way(result == .worked ? "✓" : "✗", "\(title): " + (result == .worked ? worked : failed))
+        if let windowStatesNote { say("      – window states: not tested (\(windowStatesNote))") }
+    }
+}
 if let script = scriptControls() {
     let fits = scripting?.fitsScriptablePlayer == true
     let kind = fits ? ", as Spotify and Apple Music"
         : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")its own kind, as VLC: not the way ScriptablePlayers expects)"
-    switch scriptResult {
-    case .worked?: way("✓", "AppleScript: '\(script.pause)' and '\(script.play)' paused and played it\(kind)")
-    case .pausedOnly?: way("✗", "AppleScript: '\(script.pause)' paused it, but '\(script.play)' didn't play it again")
-    case .didNotPause?: way("✗", "AppleScript: " + (scriptProblem ?? "'\(script.pause)' didn't pause it"))
-    case nil:
-        if let scriptProblem {
-            way("✗", "AppleScript: \(scriptProblem)")
-        } else if fits {
-            way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
-        } else {
-            way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC) (\(notTried))")
-        }
+    if let scriptResult {
+        triedWay("script", "AppleScript", scriptResult, worked: "'\(script.pause)' and '\(script.play)' paused and played it\(kind)",
+                 failed: scriptResult == .pausedOnly ? "'\(script.pause)' paused it, but '\(script.play)' didn't play it again"
+                                                     : scriptProblem ?? "'\(script.pause)' didn't pause it")
+    } else if let scriptProblem {
+        way("✗", "AppleScript: \(scriptProblem)")
+    } else if fits {
+        way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
+    } else {
+        way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC) (\(notTried))")
     }
 } else {
     way("✗", "AppleScript: " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
 }
 /// A trial's line: ✓ paused and played again, ✗ it only paused or didn't.
-func resultLine(_ title: String, _ result: TrialResult, problem: String? = nil) {
-    switch result {
-    case .worked: way("✓", "\(title): pressing it paused and played it")
-    case .pausedOnly: way("✗", "\(title): " + (problem ?? "it paused, but didn't play again"))
-    case .didNotPause: way("✗", "\(title): " + (problem ?? "pressing it changed nothing"))
-    }
+func resultLine(_ key: String, _ title: String, _ result: TrialResult, problem: String? = nil) {
+    triedWay(key, title, result, worked: "pressing it paused and played it",
+             failed: problem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing it changed nothing"))
 }
 if running == nil {
     way("–", "Playback menu: not checked (it isn't running)")
@@ -3280,7 +4285,7 @@ if running == nil {
 } else if let menu {
     let found = "Playback menu '\(menu.title)'" + (menu.asAutoHushFindsIt ? "" : " (found by \(menu.arrows), not ⌘← ⌘→)")
     if let menuResult {
-        resultLine(found, menuResult)
+        resultLine("menu", found, menuResult)
     } else {
         way("?", "\(found): first item '\(menu.toggleTitle)' (\(notTried))")
     }
@@ -3295,7 +4300,7 @@ if let pageNotChecked {
         let found = "\(kind): " + (learned.map { "'\($0.recipe.pauseLabel)' / '\($0.recipe.playLabel)', learned as AutoHush learns it" }
                                    ?? "'\(toggle.label)'" + (page.withControls ? "" : ", but no player bar around it"))
         if let pageResult {
-            resultLine(found, pageResult)
+            resultLine("page", found, pageResult)
         } else {
             way("?", "\(found) (\(notTried))")
         }
@@ -3303,12 +4308,9 @@ if let pageNotChecked {
         way("✗", "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
     }
 }
-if let panelResult {
-    if panelResult == .worked {
-        way("✓", "Now Playing panel: pressing its row ('\(panelRowText ?? "")') paused and played it")
-    } else {
-        resultLine("Now Playing panel", panelResult, problem: panelProblem)
-    }
+if let panelResult, canBeNowPlaying {
+    triedWay("panel", "Now Playing panel", panelResult, worked: "pressing its row ('\(panelRowText ?? "")') paused and played it",
+             failed: panelProblem ?? (panelResult == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
 } else if running == nil {
     way("–", "Now Playing panel: not checked (it isn't running)")
 } else if !canBeNowPlaying {
@@ -3398,6 +4400,15 @@ if let page {
             say("  \(its) has Play/Pause ('\(toggle.label)'), but pressing it didn't take: check by ear.")
         case nil:
             say("  \(its) has Play/Pause ('\(toggle.label)'): confirm by testing it while it plays.")
+        }
+        if let results = stateResults["page"], let summary = stateSummary("page"), summary.mark == "⚠" {
+            let worked = results.filter { $0.result == .worked }.map(\.state.title)
+            let failed = results.filter { $0.result != .worked }.map(\.state.title)
+            say("  It works with its window " + worked.joined(separator: ", ") + "; not " + failed.joined(separator: ", ") + ".")
+            if launchedWithOption == false, results.contains(where: { $0.result != .worked && [.covered, .otherDesktop, .otherDesktopCovered, .fullScreen].contains($0.state) }) {
+                say("  Opened with \(LaunchOption.occludedWindows), Chromium keeps its page taking presses while its window is covered")
+                say("  or on another desktop: relaunch it with it (the Player Check app's Relaunch) and check again.")
+            }
         }
         if !page.withControls {
             say("  But no player's slider is around it: likely a song's own button, not a player bar (is a song loaded,")

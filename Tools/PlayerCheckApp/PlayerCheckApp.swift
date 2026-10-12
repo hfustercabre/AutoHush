@@ -4,10 +4,14 @@
 // Now Playing list, those macOS lists now first (playercheck's
 // --now-playing-list, from macOS's log). Once an app is chosen and the check
 // confirmed, it runs playercheck on it (opening it first when needed) and
-// shows the ways it could be controlled, the verdict and the full report;
-// checks are kept between launches. An app whose check found a way that
-// works gets Play and Pause buttons, by the first such way, and each way
-// found gets its own (playercheck --play/--pause --via …).
+// shows the ways it could be controlled (each tested with the app's window
+// in every state a player's can be in: ✓ all, ⚠ some, ✗ none), the verdict
+// and the full report; checks are kept between launches. An app whose check
+// found a way that works gets Play and Pause buttons, by the first way that
+// worked with its window as it is when pressed (playercheck --window-state),
+// and each way found gets its own (playercheck --play/--pause --via …). An
+// Electron app running without the launch option its page needs out of view
+// gets a Relaunch button (playercheck --launch-option, --relaunch).
 // Build: sh Tools/PlayerCheckApp/build.sh [folder]
 import AppKit
 import SwiftUI
@@ -141,13 +145,18 @@ struct NowPlayingClient {
 
 // MARK: - A check's report
 
-/// One line of playercheck's "Ways to control it".
+/// One line of playercheck's "Ways to control it", with the window states
+/// under it (those it failed in, or that weren't tested).
 struct Way: Identifiable {
-    enum Mark { case works, found, no, notChecked }
+    /// ✓ worked in every window state tested, ⚠ in some, ✗ in none (or not
+    /// there), ? found but not tried, – not checked.
+    enum Mark { case works, some, found, no, notChecked }
     let id: Int
     let mark: Mark
     let title: String
     let detail: String
+    /// "      ✗ covered: why" → (failed, "covered", "why"); "– …: not tested (…)" → not failed.
+    var states: [(failed: Bool, state: String, why: String)] = []
 
     /// "  ✓ AppleScript: pausing … worked" → works, "AppleScript", "pausing … worked".
     init?(id: Int, line: String) {
@@ -155,6 +164,7 @@ struct Way: Identifiable {
         guard let first = text.first else { return nil }
         switch first {
         case "✓": mark = .works
+        case "⚠": mark = .some
         case "?": mark = .found
         case "✗": mark = .no
         case "–": mark = .notChecked
@@ -183,8 +193,20 @@ struct Way: Identifiable {
         if title == "Now Playing panel" { return "panel" }
         return nil
     }
-    /// A way to play and pause with: it worked in the check, or was found.
-    var canControl: Bool { via != nil && (mark == .works || mark == .found) }
+    /// A way to play and pause with: it worked in the check (in every window
+    /// state or some), or was found.
+    var canControl: Bool { via != nil && (mark == .works || mark == .some || mark == .found) }
+
+    /// Whether it worked in its check with the app's window in `state` (as
+    /// `playercheck --window-state` names it): it worked in every state
+    /// tested, or some, and that one isn't listed under it as failed or not
+    /// tested. On another desktop, covered there too: the window list can't
+    /// tell the two apart.
+    func passes(_ state: String) -> Bool {
+        guard mark == .works || mark == .some else { return false }
+        let wanted = state == "on another desktop" ? [state, "covered on another desktop"] : [state]
+        return !states.contains { wanted.contains($0.state) || $0.state == "window states" }
+    }
 }
 
 /// What playercheck said about one app, as it comes in.
@@ -200,7 +222,30 @@ struct Report {
         guard let start = lines.firstIndex(of: title) else { return [] }
         return Array(lines[(start + 1)...].prefix { $0.hasPrefix(" ") })
     }
-    var ways: [Way] { section("Ways to control it").enumerated().compactMap { Way(id: $0.offset, line: $0.element) } }
+    /// Each way's line, with the more indented lines under it (its window
+    /// states) attached to it.
+    var ways: [Way] {
+        var found: [Way] = []
+        for (index, line) in section("Ways to control it").enumerated() {
+            if line.hasPrefix("      ") {
+                let text = line.trimmingCharacters(in: .whitespaces)
+                guard let mark = text.first, !found.isEmpty, let colon = text.range(of: ": ") else { continue }
+                let state = String(text[text.index(after: text.startIndex)..<colon.lowerBound]).trimmingCharacters(in: .whitespaces)
+                found[found.count - 1].states.append((mark == "✗", state, String(text[colon.upperBound...])))
+            } else if let way = Way(id: index, line: line) {
+                found.append(way)
+            }
+        }
+        return found
+    }
+    /// The window state the check has the app in now ("covered, 2 of 7"),
+    /// from its last "State N of M: <state>" line.
+    var windowState: String? {
+        guard state == .checking, let line = lines.last(where: { $0.hasPrefix("  State ") }),
+              let colon = line.range(of: ": ") else { return nil }
+        let count = line.dropFirst("  State ".count)[..<colon.lowerBound]
+        return "\(line[colon.upperBound...]), \(count)"
+    }
     var verdict: String {
         section("Verdict").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
     }
@@ -300,13 +345,20 @@ final class Checker {
     /// worked (nil while it runs).
     var controls: [InstalledApp.ID: (text: String, worked: Bool?)] = [:]
     var controllingID: InstalledApp.ID?
+    /// Per Electron app: the launch option it needs, and whether its running
+    /// copy has it ("yes", "no", "not running"), as `playercheck
+    /// --launch-option` tells it.
+    var launchOptions: [InstalledApp.ID: (option: String, running: String)] = [:]
+    /// A Relaunch running (its app), and how the last one went per app.
+    var relaunchingID: InstalledApp.ID?
+    var relaunches: [InstalledApp.ID: (text: String, worked: Bool)] = [:]
     /// The check's playercheck, and the Play or Pause's: what Stop ends.
     private var process: Process?
     private var pressProcess: Process?
     private var pressStopped = false
 
-    /// A check or a Play/Pause is running: one at a time.
-    var isBusy: Bool { checkingID != nil || controllingID != nil }
+    /// A check, a Play/Pause or a Relaunch is running: one at a time.
+    var isBusy: Bool { checkingID != nil || controllingID != nil || relaunchingID != nil }
 
     init() {
         loadReports()
@@ -317,11 +369,11 @@ final class Checker {
     private struct SavedReport: Codable {
         let lines: [String]
         let date: Date
-        /// The checks' kind: 3 from when the Play/Pause key stopped being a
-        /// way (it reaches only the Now Playing app, which AutoHush can't
-        /// choose). Older ones are dropped: they list it.
+        /// The checks' kind: 4 from when each way is tested in every window
+        /// state (✓ means all of them). Older ones are dropped: their ✓ meant
+        /// one state, wherever the window happened to be.
         var version: Int? = SavedReport.currentVersion
-        static let currentVersion = 3
+        static let currentVersion = 4
     }
     private static let savedReports = URL.applicationSupportDirectory.appending(path: "Player Check/reports.json")
 
@@ -341,16 +393,38 @@ final class Checker {
 
     // MARK: Playing and pausing
 
-    /// The way its Play and Pause buttons use: the first in the list that
-    /// worked (✓) in its last finished check. Nil before a check, or when none
-    /// worked: then there are no such buttons.
-    func preferredWay(_ app: InstalledApp) -> Way? {
-        finished[app.id]?.ways.first { $0.canControl && $0.mark == .works }
+    /// Whether its Play and Pause buttons show: some way worked in its last
+    /// finished check, in every window state or some. Which one a press uses
+    /// depends on the state its window is in then (`controlByState`).
+    func hasWorkingWay(_ app: InstalledApp) -> Bool {
+        finished[app.id]?.ways.contains { $0.canControl && ($0.mark == .works || $0.mark == .some) } ?? false
+    }
+
+    /// Plays or pauses it by the first way that worked in its last check with
+    /// its window as it is now (the user, 2026-10-12): playercheck
+    /// --window-state tells the state, then --via that way alone.
+    func controlByState(_ app: InstalledApp, _ action: String) {
+        guard !isBusy, let tool, let ways = finished[app.id]?.ways else { return }
+        controllingID = app.id
+        controls[app.id] = ((action == "play" ? "Playing" : "Pausing") + "…", nil)
+        Task {
+            let (_, output) = await Task.detached { Self.runAndWait(tool, ["--window-state", app.url.path]) }.value
+            let state = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            controllingID = nil
+            // Without a window (or not known), only a way that worked in every state.
+            let known = !state.isEmpty && state != "no window" && state != "not running" && !state.contains(" found")
+            guard let way = ways.first(where: { $0.canControl && (known ? $0.passes(state) : $0.mark == .works) }), let via = way.via else {
+                controls[app.id] = (known ? "No way worked in its check with its window \(state)." : "No way worked in every window state in its check.", false)
+                return
+            }
+            control(app, action, via: via, note: known ? "Its window \(state): by \(AppDetail.wayName(via))." : nil)
+        }
     }
 
     /// Plays or pauses it by that one way: playercheck --play or --pause
-    /// --via `via` tries no other. `stopPress` ends it.
-    func control(_ app: InstalledApp, _ action: String, via: String) {
+    /// --via `via` tries no other. `stopPress` ends it. `note` goes before
+    /// what playercheck says (the window's state and the way chosen).
+    func control(_ app: InstalledApp, _ action: String, via: String, note: String? = nil) {
         guard !isBusy, let tool else { return }
         let run: ToolRun
         do {
@@ -367,12 +441,43 @@ final class Checker {
             var output: [String] = []
             for await line in run.lines { output.append(line) }
             let status = await run.status()
+            let said = output.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
             controls[app.id] = pressStopped
                 ? ("Stopped before it said whether it worked.", false)
-                : (output.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines), status == 0)
+                : ((note.map { $0 + " " } ?? "") + said, status == 0)
             pressProcess = nil
             controllingID = nil
             readClients()
+        }
+    }
+
+    /// For an Electron app: the launch option it needs, and whether it runs
+    /// with it (`launchOptions`), asked of playercheck.
+    func readLaunchOption(_ app: InstalledApp) {
+        guard let tool, app.hiddenInterface?.hasPrefix("Electron") == true else { return }
+        Task {
+            let (status, output) = await Task.detached { Self.runAndWait(tool, ["--launch-option", app.url.path]) }.value
+            let parts = output.trimmingCharacters(in: .newlines).components(separatedBy: "\t")
+            guard status == 0, parts.count == 2, !parts[0].isEmpty else {
+                launchOptions[app.id] = nil
+                return
+            }
+            launchOptions[app.id] = (parts[0], parts[1])
+        }
+    }
+
+    /// Quits the app and opens it again with its launch option, in the
+    /// background (playercheck --relaunch), then reads the option again.
+    func relaunch(_ app: InstalledApp) {
+        guard !isBusy, relaunchingID == nil, let tool else { return }
+        relaunchingID = app.id
+        relaunches[app.id] = nil
+        Task {
+            let (status, output) = await Task.detached { Self.runAndWait(tool, ["--relaunch", app.url.path]) }.value
+            relaunches[app.id] = (output.trimmingCharacters(in: .whitespacesAndNewlines), status == 0)
+            relaunchingID = nil
+            refreshRunning()
+            readLaunchOption(app)
         }
     }
 
@@ -536,6 +641,13 @@ final class Checker {
             if opening {
                 let configuration = NSWorkspace.OpenConfiguration()
                 configuration.activates = false
+                // An Electron app opens with the option its page needs to take
+                // presses out of view (the user's choice, 2026-10-12).
+                if app.hiddenInterface?.hasPrefix("Electron") == true {
+                    let (_, said) = await Task.detached { Self.runAndWait(tool, ["--launch-option", app.url.path]) }.value
+                    let option = said.components(separatedBy: "\t").first ?? ""
+                    if !option.isEmpty { configuration.arguments = [option] }
+                }
                 do {
                     _ = try await NSWorkspace.shared.openApplication(at: app.url, configuration: configuration)
                     try await Task.sleep(for: .seconds(5))
@@ -549,6 +661,7 @@ final class Checker {
                 guard attempt == token else { return }
                 reports[app.id]?.state = .checking
                 refreshRunning()
+                readLaunchOption(app)
             }
             await run(tool, on: app)
         }
@@ -732,6 +845,7 @@ struct AppDetail: View {
     let app: InstalledApp
     let checker: Checker
     @State private var confirming = false
+    @State private var confirmingRelaunch = false
     @State private var showsReport = false
 
     private var report: Report? { checker.reports[app.id] }
@@ -743,9 +857,10 @@ struct AppDetail: View {
                 header
                 // While a check waits for it, its own request says it instead.
                 if !checker.isTrusted, !(isChecking && report?.state == .allowing) { permissionNote }
+                launchOptionNote
                 controls
-                if let way = checker.preferredWay(app), let via = way.via {
-                    playAndPause(via: via)
+                if checker.hasWorkingWay(app) {
+                    playAndPause
                 } else if checker.controllingID == app.id || checker.controls[app.id] != nil {
                     // A way's own buttons, with no way that worked to head the section.
                     pressStatus
@@ -761,6 +876,47 @@ struct AppDetail: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(confirmation)
+        }
+        .alert("Relaunch “\(app.name)”?", isPresented: $confirmingRelaunch) {
+            Button("Relaunch") { checker.relaunch(app) }
+                .keyboardShortcut(.defaultAction)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\(app.name) quits and opens again with \(checker.launchOptions[app.id]?.option ?? "its launch option"), in the background."
+                 + " Whatever it's playing stops.")
+        }
+        .task(id: checker.isRunning(app)) { checker.readLaunchOption(app) }
+    }
+
+    /// For an Electron app running without the option its page needs to take
+    /// presses out of view: a warning (a check now would show those window
+    /// states failing) and a button to relaunch it with it.
+    @ViewBuilder private var launchOptionNote: some View {
+        if let launch = checker.launchOptions[app.id], launch.running == "no" || checker.relaunchingID == app.id {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("\(app.name) is running without Chromium's \(launch.option): its page can't be pressed while its window is covered"
+                      + " or on another desktop, so a check now would show those states failing.",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Button("Relaunch \(app.name) With It") { confirmingRelaunch = true }
+                        .disabled(checker.isBusy || checker.tool == nil)
+                    if checker.relaunchingID == app.id {
+                        ProgressView().controlSize(.small)
+                        Text("Relaunching…").foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        }
+        if let result = checker.relaunches[app.id], checker.relaunchingID != app.id {
+            Label(result.text, systemImage: result.worked ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundStyle(result.worked ? .green : .red)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -812,7 +968,8 @@ struct AppDetail: View {
                     Button("Stop") { checker.stop() }
                     ProgressView().controlSize(.small)
                     Text(report?.state == .allowing ? "Waiting for the Accessibility permission…"
-                         : report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…" : "Checking…")
+                         : report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…"
+                         : report?.windowState.map { "Checking: its window \($0)…" } ?? "Checking…")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -847,18 +1004,19 @@ struct AppDetail: View {
         }
     }
 
-    /// Play and Pause, by the first way that worked in its check, alone.
-    private func playAndPause(via: String) -> some View {
+    /// Play and Pause, by the first way that worked in its check with the
+    /// app's window in the state it's in when pressed, alone.
+    private var playAndPause: some View {
         let running = checker.isRunning(app)
         return VStack(alignment: .leading, spacing: 8) {
             Text("Play and Pause").font(.headline)
             HStack {
-                Button { checker.control(app, "play", via: via) } label: { Label("Play", systemImage: "play.fill") }
-                Button { checker.control(app, "pause", via: via) } label: { Label("Pause", systemImage: "pause.fill") }
+                Button { checker.controlByState(app, "play") } label: { Label("Play", systemImage: "play.fill") }
+                Button { checker.controlByState(app, "pause") } label: { Label("Pause", systemImage: "pause.fill") }
             }
             .disabled(checker.isBusy || !running || checker.tool == nil)
             Text(!running ? "Open it first: it isn't running."
-                 : "By \(Self.wayName(via)), the first way that worked in its check.")
+                 : "By the first way that worked in its check with its window as it is when pressed (covered, minimised, …).")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             pressStatus
@@ -898,6 +1056,10 @@ struct AppDetail: View {
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
+        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimised and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
+        if let launch = checker.launchOptions[app.id], launch.running == "no" {
+            parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
+        }
         if let note = app.switchNote { parts.append(note) }
         return parts.joined(separator: " ")
     }
@@ -921,7 +1083,7 @@ struct AppDetail: View {
                     WayRow(way: way, control: usable ? way.via.map { via in { checker.control(app, $0, via: via) } } : nil,
                            isBusy: checker.isBusy)
                 }
-                Text("✓ worked in the test  ·  ✗ not there or didn't work  ·  ? not tried  ·  – not checked")
+                Text("✓ worked in every window state  ·  ⚠ in some  ·  ✗ in none, or not there  ·  ? not tried  ·  – not checked")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -969,10 +1131,24 @@ struct WayRow: View {
                     if !way.detail.isEmpty {
                         Text(way.detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
+                    // The window states it failed in, and those not tested.
+                    ForEach(way.states.indices, id: \.self) { index in
+                        let state = way.states[index]
+                        Label {
+                            Text("\(Text(state.state).fontWeight(.medium)): \(state.why)")
+                        } icon: {
+                            Image(systemName: state.failed ? "xmark" : "minus")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(state.failed ? Color.orange : .secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 2)
                 }
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(label): \(way.title). \(way.detail)")
+            .accessibilityLabel("\(label): \(way.title). \(way.detail)"
+                                + way.states.map { ". \($0.failed ? "Failed" : "Not tested") \($0.state): \($0.why)" }.joined())
             Spacer(minLength: 8)
             if let control, let via = way.via {
                 let name = AppDetail.wayName(via)
@@ -989,6 +1165,7 @@ struct WayRow: View {
     private var symbol: String {
         switch way.mark {
         case .works: "checkmark.circle.fill"
+        case .some: "exclamationmark.triangle.fill"
         case .found: "questionmark.circle.fill"
         case .no: "xmark.circle.fill"
         case .notChecked: "minus.circle"
@@ -997,6 +1174,7 @@ struct WayRow: View {
     private var tint: Color {
         switch way.mark {
         case .works: .green
+        case .some: .orange
         case .found: .orange
         case .no: .red
         case .notChecked: .secondary
@@ -1005,6 +1183,7 @@ struct WayRow: View {
     private var label: String {
         switch way.mark {
         case .works: "Works"
+        case .some: "Works in some states"
         case .found: "Found, not tried"
         case .no: "No"
         case .notChecked: "Not checked"
