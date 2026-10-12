@@ -101,8 +101,7 @@ let package = Package(
             name: "PlayerCheck",
             dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "VLCSupport"],
             path: "Tools/PlayerCheck",
-            exclude: ["README.md"],
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            exclude: ["README.md"]
         ),
 
         // Fakes shared by the test targets.

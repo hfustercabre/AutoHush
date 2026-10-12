@@ -45,11 +45,14 @@ to it and loses its permissions; one signed with a certificate keeps them.
   isn't running is opened first, in the background (an Electron app with
   the launch option its page needs out of view, below). Before anything
   else, the check makes sure Player Check has every permission it needs
-  (Accessibility, System Audio Recording, and Automation for the app when
-  it has AppleScript play or pause), and macOS asks for any not decided
-  yet; without all of them it's cancelled before it does anything, and an
+  (Accessibility, Audio Recording, and Automation for the app when it has
+  AppleScript play or pause), and macOS asks for any not decided yet;
+  without all of them it's cancelled before it does anything, and an
   orange warning says which is missing, with Open System Settings (the
-  last finished check stays shown). The app is muted all through the check
+  last finished check stays shown). An app that doesn't answer whether it
+  may be controlled (one still starting) is asked again for up to 20 s;
+  if it never answers, the check is cancelled the same way, with no
+  button, as there's no permission to allow. The app is muted all through the check
   (you don't hear it; Player Check still hears whether it plays) and heard
   again at the end. Then it makes sure the app plays: if it isn't
   playing, an orange request asks you to start it, and the check goes on
@@ -61,7 +64,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
   by each, with the app's window in each state a player's can be in while
   AutoHush controls it: visible, covered (Player Check puts a window of
   its own over it), on another desktop, covered there, full screen,
-  minimised and hidden. Player Check moves the window there itself, starting
+  minimized and hidden. Player Check moves the window there itself, starting
   by bringing it to visible on this desktop whatever state it's in, and
   comes back to the front before each state's trials; for the desktops it
   drags the window with the pointer and Control-arrow, so the mouse and
@@ -81,7 +84,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
   or closing its window, stops a check or Play/Pause that's running; one
   whose window went by force (or a crash) stops by itself. Its window
   doesn't go full screen: the green button zooms it instead.
-- **The results:** "Ways to control it" as a checklist (✓ worked in every
+- **The results:** "Ways to Control It" as a checklist (✓ worked in every
   window state, an orange ⚠ in some, with the states it failed in and why
   under it, ✗ in none or not there, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
@@ -90,7 +93,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
   app gets **Play** and **Pause** buttons above its results. Pressed, they
   read the state the app's window is in (`playercheck --window-state`) and
   use the first way in the checklist that worked in that state in its
-  check, alone; the result says which ("Its window minimised: by its row in
+  check, alone; the result says which ("Its window minimized: by its row in
   the Now Playing panel."). When no way worked in that state, nothing is
   pressed and it says so. Before a check, or when no way worked, there are
   none. Each way found in the checklist
@@ -129,13 +132,14 @@ to it and loses its permissions; one signed with a certificate keeps them.
   wait). A check without it could only test AppleScript. Signed ad hoc, a
   rebuilt one needs it again; signed with a certificate (`SIGNING_IDENTITY`,
   above), it keeps it.
-- **Automation**, asked by macOS before Player Check first reads or
-  controls an app by AppleScript, as AutoHush asks it.
-- **System Audio Recording**, asked at the first check: Player Check
-  measures how loud the app is, as AutoHush does, to tell whether it plays
-  (macOS shows its recording indicator meanwhile; nothing is recorded).
-  Without it, sound is judged by what the app tells macOS and its open
-  output.
+- **Automation** for an app with AppleScript play or pause, asked at the
+  start of its check (and before a Play or Pause by AppleScript), as
+  AutoHush asks it.
+- **Audio Recording**, asked at the first check: Player Check measures how
+  loud the app is, as AutoHush does, to tell whether it plays, and keeps
+  it muted through the check (macOS shows its recording indicator
+  meanwhile; nothing is recorded). A check needs it; without it, a Play or
+  Pause judges sound by what the app tells macOS and its open output.
 - **An administrator account** for the "In Now Playing Now" section: it
   comes from macOS's log (`playercheck --now-playing-list`), which only
   administrators can read. Without it, the list still shows the apps that

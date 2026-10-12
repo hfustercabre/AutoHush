@@ -217,20 +217,22 @@ struct Report {
     var lines: [String] = []
     var date = Date()
 
-    /// The lines under a heading (a line that isn't indented).
+    /// The lines under a heading (a line that isn't indented), whatever its
+    /// case: playercheck's headings are title case, older saved checks' not.
     func section(_ title: String) -> [String] {
-        guard let start = lines.firstIndex(of: title) else { return [] }
+        guard let start = lines.firstIndex(where: { $0.caseInsensitiveCompare(title) == .orderedSame }) else { return [] }
         return Array(lines[(start + 1)...].prefix { $0.hasPrefix(" ") })
     }
     /// Each way's line, with the more indented lines under it (its window
     /// states) attached to it.
     var ways: [Way] {
         var found: [Way] = []
-        for (index, line) in section("Ways to control it").enumerated() {
+        for (index, line) in section("Ways to Control It").enumerated() {
             if line.hasPrefix("      ") {
                 let text = line.trimmingCharacters(in: .whitespaces)
                 guard let mark = text.first, !found.isEmpty, let colon = text.range(of: ": ") else { continue }
                 let state = String(text[text.index(after: text.startIndex)..<colon.lowerBound]).trimmingCharacters(in: .whitespaces)
+                    .replacingOccurrences(of: "minimised", with: "minimized")
                 found[found.count - 1].states.append((mark == "✗", state, String(text[colon.upperBound...])))
             } else if let way = Way(id: index, line: line) {
                 found.append(way)
@@ -405,8 +407,8 @@ final class Checker {
     }
 
     /// Plays or pauses it by the first way that worked in its last check with
-    /// its window as it is now (the user, 2026-10-12): playercheck
-    /// --window-state tells the state, then --via that way alone.
+    /// its window as it is now: playercheck --window-state tells the state,
+    /// then --via that way alone.
     func controlByState(_ app: InstalledApp, _ action: String) {
         guard !isBusy, let tool, let ways = finished[app.id]?.ways else { return }
         controllingID = app.id
@@ -647,7 +649,7 @@ final class Checker {
                 let configuration = NSWorkspace.OpenConfiguration()
                 configuration.activates = false
                 // An Electron app opens with the option its page needs to take
-                // presses out of view (the user's choice, 2026-10-12).
+                // presses out of view.
                 if app.hiddenInterface?.hasPrefix("Electron") == true {
                     let (_, said) = await Task.detached { Self.runAndWait(tool, ["--launch-option", app.url.path]) }.value
                     let option = said.components(separatedBy: "\t").first ?? ""
@@ -713,7 +715,10 @@ final class Checker {
         let status = await run.status()
         if reports[id]?.state == .checking {
             if status == 3 {
-                // Cancelled before doing anything: a permission it needs isn't allowed.
+                // Cancelled before doing anything: a permission it needs isn't
+                // allowed (named in a line ending "not allowed" or "not
+                // answered"), or the app didn't answer whether it is (no
+                // permission to show in System Settings).
                 let lines = reports[id]?.lines ?? []
                 let said = lines.last { $0.hasPrefix("Not checked: ") }.map { String($0.dropFirst("Not checked: ".count)) }
                     ?? "A permission the check needs isn't allowed."
@@ -967,10 +972,11 @@ struct AppDetail: View {
     }
 
     /// Privacy & Security at a permission's list, as playercheck names it
-    /// ("System Audio Recording" is under Screen & System Audio Recording).
+    /// (Audio Recording is under Screen & System Audio Recording; older
+    /// checks called it "System Audio Recording").
     static func openPrivacySettings(for permission: String) {
         let pane = permission == "Accessibility" ? "Privacy_Accessibility"
-            : permission == "System Audio Recording" ? "Privacy_ScreenCapture"
+            : permission.hasSuffix("Audio Recording") ? "Privacy_ScreenCapture"
             : permission.hasPrefix("Automation") ? "Privacy_Automation" : "Privacy"
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)")!)
     }
@@ -1033,7 +1039,9 @@ struct AppDetail: View {
                         .font(.body.weight(.medium))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Open System Settings") { Self.openPrivacySettings(for: problem.missing) }
+                    if !problem.missing.isEmpty {
+                        Button("Open System Settings") { Self.openPrivacySettings(for: problem.missing) }
+                    }
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1057,7 +1065,7 @@ struct AppDetail: View {
             }
             .disabled(checker.isBusy || !running || checker.tool == nil)
             Text(!running ? "Open it first: it isn't running."
-                 : "By the first way that worked in its check with its window as it is when pressed (covered, minimised, …).")
+                 : "By the first way that worked in its check with its window as it is when pressed (covered, minimized, …).")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             pressStatus
@@ -1095,12 +1103,12 @@ struct AppDetail: View {
             parts.append("It needs the Accessibility permission first: macOS asks for it, and the check starts once it's allowed.")
         }
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
-        parts.append("Before anything else, it makes sure Player Check has every permission a check needs: Accessibility, System Audio Recording, and Automation for \(app.name) if it can be scripted; macOS asks for any not decided yet, and without all of them the check is cancelled before it does anything.")
+        parts.append("Before anything else, it makes sure Player Check has every permission a check needs: Accessibility, Audio Recording, and Automation for \(app.name) if it can be scripted; macOS asks for any not decided yet, and without all of them the check is cancelled before it does anything.")
         parts.append("\(app.name) is muted all through the check (you won't hear it; Player Check still hears whether it plays) and heard again at the end.")
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
-        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimised and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
+        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
         if let launch = checker.launchOptions[app.id], launch.running == "no" {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
         }
@@ -1120,7 +1128,7 @@ struct AppDetail: View {
         let ways = report.ways
         if !ways.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Ways to control it").font(.headline)
+                Text("Ways to Control It").font(.headline)
                 ForEach(ways) { way in
                     // Each way's own buttons use that way alone.
                     let usable = way.canControl && checker.isRunning(app) && report.state == .finished
@@ -1266,9 +1274,8 @@ struct PlayerCheckApp: App {
     var body: some Scene {
         Window("Player Check", id: "main") {
             ContentView(checker: delegate.checker)
-                // Never full screen (the user, 2026-10-12: "The PlayerCheck
-                // app should not be allowed to go full screen"). An AppKit
-                // collection behavior set on the window didn't hold.
+                // Never full screen. An AppKit collection behavior set on the
+                // window didn't hold.
                 .windowFullScreenBehavior(.disabled)
         }
         .defaultSize(width: 980, height: 680)
