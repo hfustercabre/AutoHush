@@ -377,8 +377,17 @@ Everything is read from outside the app, as AutoHush itself would:
 
 **The test** (unless `--read-only`) tries each way while the app plays. If
 it isn't playing, it asks ("waiting: start playing something in Deezer")
-and goes on by itself as soon as it plays, up to 2 minutes; it asks again
-if a way leaves it stopped. Each way pauses the app, then plays it again:
+and goes on by itself as soon as it plays, up to 2 minutes. Each way
+pauses the app, then plays it again; a play that didn't take is pressed
+once more ("pressed once more: … the first didn't take"; the way still
+fails in that state, saying so). A way that leaves it paused is followed by
+playing it again quietly before anyone is asked, in any window state: by a
+way that worked in this state, else by AppleScript, its menu, then the Now
+Playing panel (a last resort, as it shows on screen); only when none plays
+it does it ask again. A track that ends during a trial (the app reads
+stopped after the play, where the pause left it paused) says nothing about
+the way: the trial runs again once it plays, and fails only if the track
+ends again ("play a longer one"). The ways, in order:
 
 1. AppleScript: its pause and play commands (as Spotify's), else commands
    named so, else one that toggles (playpause, or VLC's play); to its

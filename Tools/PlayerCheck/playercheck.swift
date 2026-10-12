@@ -3065,6 +3065,14 @@ struct Look: Equatable {
     var audible: Bool? = nil
     /// As its keep-awake assertions tell it (`awake`); nil while they don't.
     var awake: Bool? = nil
+    /// Stopped, as its surest state tells it: its scripted state, else what
+    /// it reports to Now Playing, else its menu's item (disabled). A track
+    /// that ends leaves it so (VLC's said stopped, not paused).
+    var stopped: Bool {
+        if let state { return state == "stopped" }
+        if let reported { return reported == "Stopped" }
+        return menuState == "stopped"
+    }
     var line: String {
         [menuTitle.map { "menu '\($0)'" + (menuState == "stopped" ? " (disabled)" : "") }, state.map { "state \($0)" }, reported.map { "reports \($0.lowercased())" },
          pageToggle.map { "page '\($0)'" + (pageCurrent ? "" : " (out of sight: its word lags)") }, "sound \(sounding ? "on" : "off")",
@@ -3145,6 +3153,11 @@ func waitFor(_ seconds: Double, pid: pid_t, level: Bool = false, until done: (Lo
 /// didn't pause.
 enum TrialResult { case worked, pausedOnly, didNotPause }
 
+/// Set by `trial` when, after its play, the app read stopped where its pause
+/// had left it paused: its track ended meanwhile (the 61 s test track did,
+/// 2026-10-12), so the trial says nothing about the way and is run again.
+var trialTrackEnded = false
+
 /// Whether a press took, judged by the surest sign the app had before it:
 /// its scripted state, else what it reports to Now Playing, else its page's
 /// button (Play while paused; while its word is current), else its level (as AutoHush hears it), else
@@ -3185,12 +3198,15 @@ struct Sign {
 /// `play` if it did; `undo` runs when it didn't (a press that may have hit
 /// another app), `whilePaused` between a pause that took and the play (to
 /// learn the page's button, or check the volume, while it's silent). What
-/// the state notifications announced is said after each. A stop meanwhile
-/// waits until it plays again.
+/// the state notifications announced is said after each. A play that didn't
+/// take is pressed once more (still a failure, said so in `trialProblem`); a
+/// track that ended meanwhile sets `trialTrackEnded`. A stop meanwhile waits
+/// until it plays again.
 func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, undo: (() -> Void)? = nil,
            whilePaused: (() -> Void)? = nil) -> TrialResult {
     stopState.setInTrial(true)
     defer { stopState.setInTrial(false) }
+    trialTrackEnded = false
     let before = look(pid, level: true)
     let sign = Sign(before: before)
     let paused = sign.paused, playing = sign.playing
@@ -3208,19 +3224,50 @@ func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, und
     announcementLine(since: pausedAt).map { say($0) }
     let pauseAnnounced = notifications?.announced(since: pausedAt).last.flatMap { $0.state == .playing ? nil : $0.name }
     whilePaused?()
+    /// Once more, before anyone is asked (the user, 2026-10-12: "Implement 1
+    /// and 2"): a play it missed shows as such, and still fails the way. Not
+    /// when it plays by now (a toggle would pause it again).
+    func pressedOnceMore() -> TrialResult {
+        let now = look(pid, level: sign.byLevel)
+        guard !playing(now) else {
+            say("    now: \(now.line) → it plays: its play took late")
+            trialProblem = "it paused, but played again only after more than 4 s"
+            return .pausedOnly
+        }
+        guard play() else {
+            say("    pressed once more: couldn't play it again either")
+            return .pausedOnly
+        }
+        let second = waitFor(4, pid: pid, level: sign.byLevel, until: playing)
+        if playing(second) {
+            say("    pressed once more: \(second.line) → it plays: the first didn't take")
+            trialProblem = "it paused, but played again only when pressed a second time" + (trialProblem.map { " (the first: \($0))" } ?? "")
+        } else if second.stopped, !after.stopped {
+            say("    pressed once more: \(second.line) → it stopped: its track ended meanwhile")
+            trialTrackEnded = true
+        } else {
+            say("    pressed once more: \(second.line) → it didn't play either")
+        }
+        return .pausedOnly
+    }
     let playedAt = Date()
     guard play() else {
         say("    couldn't play it again")
-        return .pausedOnly
+        return pressedOnceMore()
     }
     let back = waitFor(4, pid: pid, level: sign.byLevel, until: playing)
     let again = playing(back)
+    if !again, back.stopped, !after.stopped {
+        say("    after playing again: \(back.line) → it stopped: its track ended meanwhile")
+        trialTrackEnded = true
+        return .pausedOnly
+    }
     say("    after playing again: \(back.line) → " + (again ? "it plays" : "it didn't play again in 4 s"))
     announcementLine(since: playedAt).map { say($0) }
     if let pauseAnnounced, notifications?.announced(since: playedAt).last.map({ $0.state == .playing && $0.name == pauseAnnounced }) == true {
         announcingNotification = announcingNotification ?? pauseAnnounced
     }
-    return again ? .worked : .pausedOnly
+    return again ? .worked : pressedOnceMore()
 }
 
 /// Whether it plays, as far as can be seen, in `Sign`'s order: its scripted
@@ -3902,14 +3949,33 @@ if testing {
             return pressPage(pausing: false)
         }))
         if panelReachable { plays.append(("panel", "the Now Playing panel", { pressInPanel(pid: pid, pausing: false) })) }
-        /// After the first state, a way that left it paused: it's played
-        /// again by a way that worked in this state, else by AppleScript or
-        /// the panel if they worked in the first, before anyone is asked.
+        /// Whether a trial has run (before the first, whoever runs the check
+        /// starts it), and the way whose trial ran last (its play was pressed
+        /// twice already).
+        var trialRan = false
+        var lastWay: String?
+        /// Whether a way worked in this window state (with no window, in the one run).
+        func workedHere(_ way: String) -> Bool {
+            guard let state else {
+                return [("script", scriptResult), ("menu", menuResult), ("page", pageResult), ("panel", panelResult)]
+                    .contains { $0.0 == way && $0.1 == .worked }
+            }
+            return stateResults[way]?.contains { $0.state == state && $0.result == .worked } == true
+        }
+        /// A way that left it paused, or a track that ended: before anyone
+        /// is asked, in any state, it's played again by a way that worked in
+        /// this state, else by the others (the user, 2026-10-12: "Implement 1
+        /// and 2"): AppleScript, its menu, then the panel, a last resort as it
+        /// shows on screen. Each only while it doesn't play (a toggle would
+        /// pause it).
         func playAgain() -> Bool {
-            guard let state else { return false }
-            let here = plays.filter { play in stateResults[play.way]?.contains { $0.state == state && $0.result == .worked } == true }
-            let anywhere = plays.filter { ["script", "panel"].contains($0.way) && stateResults[$0.way]?.first?.result == .worked }
-            for play in here + anywhere where play.play() {
+            let here = plays.filter { workedHere($0.way) }
+            let others = plays.filter { play in
+                ["script", "menu", "panel"].contains(play.way) && play.way != lastWay && !here.contains { $0.way == play.way }
+            }
+            for play in here + others {
+                guard !isPlaying(pid) else { return true }
+                guard play.play() else { continue }
                 _ = waitFor(4, pid: pid, until: { _ in isPlaying(pid) })
                 if play.way == "page" { switchForPress(false) }
                 if isPlaying(pid) {
@@ -3925,7 +3991,10 @@ if testing {
         var going = true
         func ready() -> Bool {
             guard going else { return false }
-            if !first, !isPlaying(pid), playAgain() { return true }
+            if trialRan, !isPlaying(pid), playAgain() {
+                if first { noteLearningPlaying(pid: pid) }
+                return true
+            }
             going = waitUntilPlaying(pid)
             if !going {
                 notTried = "not tried: it didn't play"
@@ -3947,6 +4016,26 @@ if testing {
             }
             if let state { stateResults[way, default: []].append((state, result, whyFailed(way, in: state, result))) }
             trialProblem = nil
+            trialRan = true
+            lastWay = way
+        }
+        /// A trial whose track ended meanwhile (`trialTrackEnded`) is run
+        /// again once it plays (`ready`): it said nothing about the way. Ended
+        /// twice, it fails saying so.
+        func trialAgainIfEnded(_ way: String, _ run: () -> TrialResult) -> TrialResult {
+            let result = run()
+            guard trialTrackEnded else { return result }
+            trialRan = true
+            lastWay = way
+            say("    its track ended during the trial: once more, once it plays")
+            guard ready() else {
+                trialProblem = "its track ended during the trial, and it didn't play again"
+                return result
+            }
+            trialProblem = nil
+            let again = run()
+            if trialTrackEnded { trialProblem = "its track ended during the trial, twice: play a longer one and check again" }
+            return again
         }
         let states: [WindowState?] = windowTest.map { $0.states } ?? [nil]
         for (index, next) in states.enumerated() where going {
@@ -3970,15 +4059,19 @@ if testing {
             trialProblem = nil
             if let script, scriptProblem == nil, ready() {
                 // A toggle is sent for the pause only while it plays, and again to play.
-                record("script", trial("by script (\(script.pause), \(script.play))", pid: pid,
-                                       pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
-                                       whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil))
+                record("script", trialAgainIfEnded("script") {
+                    trial("by script (\(script.pause), \(script.play))", pid: pid,
+                          pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
+                          whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil)
+                })
                 stopIfRequested()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
             if menu != nil, ready() {
-                record("menu", trial("by its menu", pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
-                                     whilePaused: first ? { learnPageButton(pid: pid) } : nil))
+                record("menu", trialAgainIfEnded("menu") {
+                    trial("by its menu", pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
+                          whilePaused: first ? { learnPageButton(pid: pid) } : nil)
+                })
                 stopIfRequested()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
@@ -4005,12 +4098,14 @@ if testing {
                 }
             }
             if page?.toggle != nil, ready() {
-                pressedPlayersPause = false
-                let result = trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
-                                   pause: { switchForPress(true); return pressPage(pausing: true) },
-                                   play: { switchForPress(true); return pressPage(pausing: false) },
-                                   undo: { switchForPress(false) },
-                                   whilePaused: first ? { learnPageButton(pid: pid) } : { switchForPress(false) })
+                let result = trialAgainIfEnded("page") {
+                    pressedPlayersPause = false
+                    return trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
+                                 pause: { switchForPress(true); return pressPage(pausing: true) },
+                                 play: { switchForPress(true); return pressPage(pausing: false) },
+                                 undo: { switchForPress(false) },
+                                 whilePaused: first ? { learnPageButton(pid: pid) } : { switchForPress(false) })
+                }
                 switchForPress(false)
                 if result == .didNotPause, pressedPlayersPause, (state ?? .visible) == .visible {
                     say("    a pause its page refuses: AutoHush would mute it instead")
@@ -4028,17 +4123,20 @@ if testing {
             } else if !AXIsProcessTrusted() {
                 if first { say("  the Now Playing panel: not pressed: \(noPanelItem)") }
             } else if ready() {
-                panelProblem = nil
-                let result = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
-                                   play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
-                                   undo: {
-                                       // The row pressed may have been another app's: pressed again, that app plays on.
-                                       if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
-                                   },
-                                   whilePaused: first ? { learnPageButton(pid: pid) } : nil)
+                let result = trialAgainIfEnded("panel") {
+                    panelProblem = nil
+                    return trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
+                                 play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
+                                 undo: {
+                                     // The row pressed may have been another app's: pressed again, that app plays on.
+                                     if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
+                                 },
+                                 whilePaused: first ? { learnPageButton(pid: pid) } : nil)
+                }
                 if let panelProblem {
                     say("    \(panelProblem)")
-                    trialProblem = panelProblem
+                    // Its own reason, unless its play took only when pressed once more.
+                    trialProblem = trialProblem ?? panelProblem
                 }
                 record("panel", result)
                 stopIfRequested()

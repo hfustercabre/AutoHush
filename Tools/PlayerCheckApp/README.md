@@ -59,7 +59,11 @@ to it and loses its permissions; one signed with a certificate keeps them.
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). It needs the app playing: if it isn't, an
   orange request asks you to start it, and the test goes on by itself as
-  soon as it plays (up to 2 minutes). **Stop** ends a check (if a test had
+  soon as it plays (up to 2 minutes). When a way leaves it paused, the
+  check first plays it again by itself (that way once more, then a way that
+  worked, else AppleScript, its menu, then the panel) and asks you only
+  when none does; a track that ends during a test is tested again rather
+  than failing the way. **Stop** ends a check (if a test had
   paused the app, it's played again first). A check stopped or failed
   leaves the last finished one shown, with a note. Quitting Player Check,
   or closing its window, stops a check or Play/Pause that's running; one
