@@ -44,7 +44,9 @@ cd .build/release
 ./playercheck --now-playing-reasons /Applications/Spotify.app   # why each app can be in Now Playing, its framework and switches (Player Check's list)
 ```
 
-Or `swift run playercheck Spotify`. Whatever runs it (Terminal, say) needs:
+The options may come before or after the app's name (`--via page Deezer`
+is a way and an app). Or `swift run playercheck Spotify`. Whatever runs it
+(Terminal, say) needs:
 - **Accessibility**, for the menu and page checks.
 - **Automation**, which macOS asks for once per app before the first Apple
   event, as AutoHush asks when a player is chosen.
@@ -64,7 +66,7 @@ press does quietly, and "(ended)" or "(stopped)". The last 50 are kept, so
 a run that went wrong can be read afterwards (Console opens them too).
 `--now-playing-list` and `--now-playing-reasons` aren't logged.
 
-Example, with Spotify paused at the start:
+Example, with Spotify paused at the start (macOS 27, 2026-10-12):
 
 ```
 Spotify 1.3.4.258 (com.spotify.client)
@@ -72,42 +74,61 @@ Scripting dictionary
   commands: pause (spfyPaus), playpause (spfyPlPs), play (spfyPlay)
   player state (pPlS): yes, values stopped/playing/paused: yes
   sound volume (pVol): yes, so it can fade
+  pause and play share suite 'spfy'
 Playback menu
   'Playback': first item 'Pause', enabled
+  its own words for Play and Pause weren't found in its bundle: its item is read with this tool's list
 Sound and Now Playing
-  sound output running now: Spotify (com.spotify.client, pid 394)
+  sound output running now: Spotify (com.spotify.client, pid 401)
+  its level: measured as AutoHush measures it (process taps; macOS shows its recording indicator meanwhile)
+  heard now: yes
+  keeps the Mac awake: 'Video Wake Lock' (display only)
   Now Playing: this app (until another app reports playing)
 Page buttons
   built with Chromium (CEF): its page shows once a switch for assistive tools is on (Electron's switch, else VoiceOver's switch)
   Electron's switch (AXManualAccessibility): not taken
-  VoiceOver's switch on: its page showed 161 buttons after 0.4 s (one read, as AutoHush reads a web app: 35 ms)
+  VoiceOver's switch on: its page showed 167 buttons after 0.4 s (one read, as AutoHush reads a web app: 35 ms)
   Play/Pause: 'Pause', 56 pt from the window's bottom, with a player's slider around it
 Press test
   waiting: start playing something in Spotify; the test goes on as soon as it plays (up to 2 minutes)
   it plays: testing
-  by script: before, menu 'Pause', state playing, sound on
-    after the pause: menu 'Pause', state paused, sound on → it paused
-    after playing again: menu 'Pause', state playing, sound on
+  Automation for Spotify: allowed
+  by script (pause, play): before, menu 'Pause', state playing, page 'Pause', sound on, heard
+    after the pause: menu 'Play', state paused, page 'Pause', sound on → it paused
+    announced: paused (com.spotify.client.PlaybackStateChanged)
+    volume ('sound volume'): 100; set to 99, it reads 98: reads 1 less than set (as Spotify, one less): the profile needs readVolume; put back to 100
+    learned its page's Play/Pause, as AutoHush learns a web app's: 'Pause' while it plays, 'Play' while paused, 56 pt from the window's bottom (the button this tool found)
+    after playing again: menu 'Pause', state playing, page 'Play', sound on → it plays
+    announced: playing (com.spotify.client.PlaybackStateChanged)
   by its menu: …
-  by its page's button: …
+  by its page's learned button: …
   by the Now Playing panel: …
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
 
 Ways to control it
-  ✓ AppleScript: pausing and playing it by script worked, as Spotify and Apple Music
-  ✓ Playback menu 'Playback': pressing it paused and played it, as TIDAL and Apple Podcasts
-  ✓ Page button, with VoiceOver's switch on: 'Pause': pressing it paused and played it
-  ✓ Now Playing panel: pressing its row ('Leave Forever, Hayes & Y – Departures') paused and played it
+  ✓ AppleScript: 'pause' and 'play' paused and played it, as Spotify and Apple Music
+  ✓ Playback menu 'Playback': pressing it paused and played it
+  ✓ Page button, with VoiceOver's switch on: 'Pause' / 'Play', learned as AutoHush learns it: pressing it paused and played it
+  ✓ Now Playing panel: pressing its row ('YOU'RE NEXT, Moon Walker – WASTELAND COUNTRY') paused and played it
+
 Verdict
   Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode("spfy").
   It has a volume: measure its curve (swift run measure-volume-curve com.spotify.client).
-  State notification: com.spotify.client.PlaybackStateChanged.
+  State notification: com.spotify.client.PlaybackStateChanged, which announced each pause and play (the profile's stateNotification).
   With VoiceOver's switch on, its page's Play/Pause works: it could be a player that learns that button, …
 
 (VoiceOver's switch set back to off, as it was.)
 ```
 
-Deezer's app (7.1.340, Electron 38.4.0), while it plays:
+The page's word may lag the state by a moment (above: 'Pause' just after the
+pause), so a sure sign judges each test. With Spotify's window on another
+desktop, its page's word lags a whole state, and the lines say so:
+`page 'Pause' (out of sight: its word lags)`, and "its page's Play/Pause not
+learned: its window is out of sight, …".
+
+Deezer's app (7.1.340, Electron 38.4.0), while it plays (2026-10-11; the
+lines now also show what it reports to Now Playing, its level and its
+keep-awake assertion):
 
 ```
 Page buttons
@@ -150,10 +171,14 @@ Everything is read from outside the app, as AutoHush itself would:
   its resources, read as it is; else `/usr/bin/sdef` prints the dictionary
   (from an aete, or the old `.scriptSuite` files, VLC's), but only while the
   app runs, since `sdef` opens an app to ask it. The app is asked its state, the name of its
-  current track and its commands by Apple events, as AutoHush sends them:
-  to the running process (an event can never launch the app), waiting 5 s
-  for the reply, after asking macOS for Automation once; errors are worded
-  as AutoHush words them. AutoHush's
+  current track and its commands by Apple events, built and sent as AutoHush
+  builds and sends them (`ScriptablePlayer`'s events): to the running
+  process (an event can never launch the app), waiting 5 s for the reply,
+  once macOS allows Automation (asked before the first event; an answer
+  other than allowed or denied, as from an app still starting, is asked
+  again before the next); errors are worded as AutoHush words them, with
+  the app's own message. Its `player state` is read as AutoHush reads it,
+  so Music's fast forwarding and rewinding count as playing. AutoHush's
   `ScriptablePlayers` need pause and play in the app's own suite
   (`<suite>Paus`, `<suite>Play`), the `player state` property (`pPlS`) with
   stopped, playing and paused (`kPSS`, `kPSP`, `kPSp`), and `sound volume`
@@ -175,13 +200,16 @@ Everything is read from outside the app, as AutoHush itself would:
 
   Its **volume** is checked as fades need it, once, while the first test has
   the app paused (silent): its `sound volume`, else its `audio volume`
-  (VLC's, 0–512), set one step away, read back, then put back. It reports
-  whether it reads back as set, or reads another number (Spotify reads one
-  less, so its profile needs `readVolume`). It waits a moment between
-  changes, since Music drops a change that follows another at once.
+  (VLC's, 0–512), set one step away, read back, then put back, however the
+  change went (one refused or not read back may still have taken). It
+  reports whether it reads back as set, or reads another number (Spotify
+  reads one less, so its profile needs `readVolume`). It waits a moment
+  between changes, since Music drops a change that follows another at once.
 - **Playback menu:** through Accessibility, the menu whose items include ⌘←
-  and ⌘→, with Play/Pause first, as `AccessibilityPlaybackMenu` finds it
-  whatever the app's language; such a menu is read and pressed through
+  and ⌘→ (items that say ⌘ alone: one that gives no modifiers counts here,
+  but AutoHush wouldn't find it, and the tool says so), with Play/Pause
+  first, as `AccessibilityPlaybackMenu` finds it whatever the app's
+  language; such a menu is read and pressed through
   `AccessibilityPlaybackMenu` itself (0.5 s to answer). Its item tells the
   state as AutoHush's `MenuPlayer` reads it: disabled, stopped (nothing to
   play); else by the app's own words for Play and Pause, read from its
@@ -275,9 +303,9 @@ Everything is read from outside the app, as AutoHush itself would:
   or on another desktop, but an Electron page there lags one state behind
   (Deezer's said Pause while paused), and after some minutes out of sight
   it may take no presses (Deezer's didn't; brought into view, it did). So
-  when no page shows in 4 s, a check brings the app forward a moment,
-  turns the switch off and on again there, waits for its page, then brings
-  back the app that was in front (and waits a second: frames read while a
+  when no switch shows its page in 4 s, a check brings the app forward a
+  moment, once, turns on again there each switch the app took until its
+  page shows, then brings back the app that was in front (and waits a second: frames read while a
   desktop slides are off), and says so. A press never brings anything
   forward (Player Check should be as unintrusive as possible): when the
   page doesn't show, or a press on a page out of sight doesn't take, it
@@ -343,7 +371,7 @@ and a check left running would go on pausing and playing the app unwatched.
 Each pause is judged by the surest sign the app has, in this order:
 1. its AppleScript state;
 2. what it reports to Now Playing;
-3. its page's button (Play while paused);
+3. its page's button (Play while paused), while its word is current: a WebKit page's anywhere, a Chromium or Flutter page's only on screen (out of sight its word lags a state, and shows as "out of sight: its word lags");
 4. its level;
 5. its keep-awake assertion;
 6. its menu's state;
@@ -360,13 +388,15 @@ with nothing pressed.)
 - **What's saved:** the site's own words for Play and Pause, and where the button is, as a `PlayPauseRecipe`.
 - **From then on:** the page way presses that button.
 - **When nothing else can pause it and no button is named Play or Pause:** the check asks whoever runs it to pause the app ("waiting: pause … yourself"), as AutoHush asks with It's Paused, and learns from that.
-- **A Chromium page out of sight** keeps its words, so nothing changes there and nothing is learned.
+- **A Chromium or Flutter page out of sight:** its words lag a state behind, and would be learned the wrong way round, so no look is taken there, the user isn't asked to pause it, and a press there teaches nothing.
+- **A press that took** teaches the button again (what it said before and after), only while its words are current.
 
 A page button the site disabled (during an ad) is never pressed, as
 AutoHush never presses one. AutoHush would mute the app instead, as it does
-for a pause a site ignores. A press can't hold a mute after it ends, so the
-tool says so.
-What it reports is each "PlaybackState changed from … to …" MediaRemote's
+for a pause a site ignores (the player's own button pressed, and the app
+didn't pause). A press can't hold a mute after it ends, so the tool says so.
+
+**What the app reports to Now Playing** is each "PlaybackState changed from … to …" MediaRemote's
 daemon writes in macOS's log, read as `--now-playing-list` reads it: the
 past once (a log store opened is a snapshot that later lines don't reach,
 and opening one takes about 0.6 s), back to when the app opened (an hour at
@@ -392,7 +422,7 @@ control an app, each with a mark: ✓ it paused and played again in the
 test, ✗ not there or didn't work (or it only paused), ? found but not tried
 (`--read-only`, or it didn't play), – not checked (it doesn't apply, or the
 app isn't running). The ways are the
-five above. Player Check shows that section as a checklist.
+four above. Player Check shows that section as a checklist.
 
 ## Playing and pausing (`--play`, `--pause`)
 
@@ -400,12 +430,13 @@ The checks run silently, then it plays or pauses the app by the way named
 with `--via` (`script`, `menu`, `page` or `panel`), or else tries
 AppleScript (as Spotify's), the page's button, then the menu (the panel
 only when named: it shows on screen), and prints one line: what it
-did and what changed ("Paused it by AppleScript (pause): its state is
-paused."), that it was that way already, or why none worked. It exits 0
-when it's played or paused, 1 when not. AppleScript and the page's buttons
-say play or pause; the menu's first item toggles, so it's pressed only when
-the sound says the app is the other way (an Electron app's sound stays on
-a few seconds after a pause: that's why the page comes first). Each way is
+did ("Paused it by AppleScript (pause), as its notification announced."),
+that it was that way already, or why none worked. It exits 0 when it's
+played or paused, 1 when not. AppleScript and the page's buttons say play
+or pause; the menu's first item toggles, so it's pressed only when the
+surest sign, as a test judges (above), says the app is the other way (its
+menu's word only for an app with nothing surer: Deezer's changes late by
+itself). Each way is
 confirmed within 6 s, looking every 0.05 s: the scripted state, what the
 app reports to Now Playing, the page's button's word, or the menu's word or
 the sound. While the page's player bar is on screen, its word is trusted
@@ -425,8 +456,10 @@ the scripting dictionary when the bundle has one (for the script way, and
 its state shows quickest whether the app plays), the menu for the menu way,
 the page for the page way and the panel (whose row is found by the page's
 player bar), and the menu and the page for any way when nothing surer than
-their words shows whether the app plays. "Sound and Now Playing" is only
-shown, so a press never reads it.
+their words shows whether the app plays (its scripted state, or, for an
+administrator, what it reports to Now Playing). The app's own words for
+Play and Pause are read whenever the menu or the page may be. "Sound and
+Now Playing" is only shown, so a press never reads it.
 
 **The player bar's button is remembered**, as AutoHush remembers a web
 app's learned button. Each check or press that finds it saves, per app, in

@@ -242,7 +242,9 @@ if CommandLine.arguments.dropFirst().first == "--now-playing-reasons" {
 // MARK: - The app
 
 let arguments = Array(CommandLine.arguments.dropFirst())
-guard let target = arguments.first(where: { !$0.hasPrefix("--") }) else {
+// The app is the argument that's neither an option nor --via's way, wherever it comes.
+guard let target = arguments.indices.first(where: { !arguments[$0].hasPrefix("--") && ($0 == 0 || arguments[$0 - 1] != "--via") })
+    .map({ arguments[$0] }) else {
     fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|panel]]")
 }
 /// --read-only: the checks without the test.
@@ -514,16 +516,21 @@ func playbackMenu(pid: pid_t) -> FoundMenu? {
     for barItem in menuBar.children {
         guard let menu = barItem.children.first, let first = menu.children.first else { continue }
         // Each arrow key's modifiers, every item's (AXMenuItemCmdModifiers: 0 is ⌘ alone):
-        // TIDAL has ⌘← for Previous and ⇧⌘← for Seek back.
-        var arrows: [Int: [Int]] = [:]
+        // TIDAL has ⌘← for Previous and ⇧⌘← for Seek back. An item that doesn't
+        // say counts as ⌘ here, but AutoHush takes only one that says 0.
+        var arrows: [Int: [Int]] = [:], saidCommand: Set<Int> = []
         for item in menu.children {
             if let key = item.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int, key == 123 || key == 124 {
-                arrows[key, default: []].append(item.value(kAXMenuItemCmdModifiersAttribute) as? Int ?? 0)
+                let modifiers = item.value(kAXMenuItemCmdModifiersAttribute) as? Int
+                arrows[key, default: []].append(modifiers ?? 0)
+                if modifiers == 0 { saidCommand.insert(key) }
             }
         }
         guard let left = arrows[123], let right = arrows[124] else { continue }
         if left.contains(0), right.contains(0) {
-            return FoundMenu(title: barItem.title, toggle: first, asAutoHushFindsIt: true, arrows: "⌘← ⌘→")
+            let asAutoHush = saidCommand == [123, 124]
+            return FoundMenu(title: barItem.title, toggle: first, asAutoHushFindsIt: asAutoHush,
+                             arrows: asAutoHush ? "⌘← ⌘→" : "← → (with no modifiers given)")
         }
         if other == nil, first.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int == 49 {
             other = FoundMenu(title: barItem.title, toggle: first, asAutoHushFindsIt: false,
@@ -670,26 +677,44 @@ func appWords(of url: URL) -> (words: PlayPauseWords, source: String)? {
         : Kept(play: play.sorted(), pause: pause.sorted(), source: sources.joined(separator: ", "))
     cache[key] = .some(found)
     try? files.createDirectory(at: cacheFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-    try? JSONEncoder().encode(cache).write(to: cacheFile)
+    // Whole or not at all: a run stopped mid-write (`_exit`) leaves the old file.
+    try? JSONEncoder().encode(cache).write(to: cacheFile, options: .atomic)
     return found.map { (PlayPauseWords(play: Set($0.play), pause: Set($0.pause)), $0.source) }
 }
 
+/// Whether anything in it can report to Now Playing (so it may have a row
+/// in the Now Playing panel, and report its state), read once: it reads the
+/// load commands of every binary in the app (`nowPlayingReason`).
+let canBeNowPlaying = nowPlayingReason(of: appURL, bundleID: bundleID) != nil
+
+/// Whether this account can read what apps report to Now Playing: macOS's
+/// log opens only to administrators (the admin group).
+let isAdministrator: Bool = {
+    var groups = [gid_t](repeating: 0, count: 256)
+    let count = getgroups(Int32(groups.count), &groups)
+    // Unknown: taken as one, and opening the log tells.
+    return count < 0 || groups.prefix(Int(count)).contains(80)
+}()
+
+/// Whether something surer than its menu's or page's word shows whether it
+/// plays: its scripted state, or what it reports to Now Playing, which only
+/// an administrator can read.
+let hasSurerSign = scripting?.hasState == true || (canBeNowPlaying && isAdministrator)
+/// A press by one way reads the menu and the page for their own way (the
+/// panel needs the page's player bar, which names the song), or when nothing
+/// surer shows whether the app plays.
+func pressNeeds(_ ways: Set<String>) -> Bool { !pressingOneWay || ways.contains(via!) || !hasSurerSign }
+
 /// The app's own words, for its menu's state and its page's buttons, merged
-/// with this tool's list (`playWords`, `pauseWords`). A press reads them only
-/// for the menu or the page (kept, they cost a file read).
-let ownAppWords = !pressingOneWay || via == "menu" || via == "page" ? appWords(of: appURL) : nil
+/// with this tool's list (`playWords`, `pauseWords`). A press reads them
+/// whenever it may read the menu or the page (the panel's way reads the
+/// page's player bar; kept, they cost a file read).
+let ownAppWords = pressNeeds(["menu", "page", "panel"]) ? appWords(of: appURL) : nil
 let ownWords = ownAppWords?.words
 
 say()
 say("Playback menu")
 var menu: FoundMenu?
-/// Whether something surer than its menu's or page's word shows whether it
-/// plays: its scripted state, or what it reports to Now Playing.
-let hasSurerSign = scripting?.hasState == true || nowPlayingReason(of: appURL, bundleID: bundleID) != nil
-/// A press by one way reads the menu and the page for their own way (the
-/// panel needs the page's player bar, which names the song), or when nothing
-/// surer shows whether the app plays.
-func pressNeeds(_ ways: Set<String>) -> Bool { !pressingOneWay || ways.contains(via!) || !hasSurerSign }
 if !pressNeeds(["menu"]) {
     say("  not read: --via \(via!) doesn't need it")
 } else if running == nil {
@@ -1247,43 +1272,60 @@ func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
     return true
 }
 
-/// Turns `attribute` on and waits for the page: whether a page showed (in
-/// `count`, after `shownAfter` s), nil when the app didn't take the switch.
-/// A Chromium app builds its page only while its window can be seen
-/// (Deezer's, covered: none), and once built it stays readable covered,
-/// hidden or on another desktop; Spotify, on another desktop when its
-/// switch went on, and Spotube, behind other windows, showed nothing until
-/// the switch went on again in front. So when nothing shows, a check brings
-/// the app forward a moment with the switch turned off and on again, then
-/// the app that was in front. A press never does (the user, 2026-10-11: the
-/// tool should be as unintrusive as possible): it says why the page can't
-/// be read, and the page way isn't used.
-func showPage(with attribute: String, pid: pid_t, count: inout Int, shownAfter: inout TimeInterval?) -> Bool? {
-    guard turnOn(attribute, pid: pid, pageReadable: false) else { return nil }
-    var waited = waitForPage(pid, seconds: 4)
-    var seconds = 4
-    if waited.count == 0, action == nil {
-        waited = inFront(pid: pid) {
-            if stopState.switchesOn.contains(attribute) {
-                _ = setSwitch(attribute, false, pid: pid)
-                _ = setSwitch(attribute, true, pid: pid)
-            }
-            return waitForPage(pid, seconds: 6)
-        }
-        seconds += 6
-        say("  its window was out of sight: brought it forward a moment, with the switch turned on again there"
-            + " (Chromium and Flutter apps may build their \(isFlutter ? "interface" : "page") only while their window can be seen)")
-    }
-    guard waited.count > 0 else {
-        say("  \(switchName(attribute)) (\(attribute)) on, but nothing showed in \(seconds) s")
-        if action != nil {
-            pageOutOfView = true
-        }
+/// Turns on the app's `switches` in turn, each given 4 s for its page to
+/// show: whether a page showed (in `count`, after `shownAfter` s), nil when
+/// the app took none. A Chromium app builds its page only while its window
+/// can be seen (Deezer's, covered: none), and once built it stays readable
+/// covered, hidden or on another desktop; Spotify, on another desktop when
+/// its switch went on, and Spotube, behind other windows, showed nothing
+/// until the switch went on again in front. So when nothing shows, a check
+/// brings the app forward a moment, once (the user, 2026-10-11: "If it's
+/// only once to make the check, it's okay"), turns on there again each
+/// switch it took until one shows, then brings back the app that was in
+/// front. A press never does (the tool should be as unintrusive as
+/// possible): it says why the page can't be read, and the page way isn't used.
+func showPage(with switches: [String], pid: pid_t, count: inout Int, shownAfter: inout TimeInterval?) -> Bool? {
+    /// Turns a switch this tool turned on back off.
+    func off(_ attribute: String) {
         if stopState.switchesOn.contains(attribute), setSwitch(attribute, false, pid: pid) {
             stopState.switchesOn.removeAll { $0 == attribute }
         }
-        return false
     }
+    // The switches it took, and whether this tool turned each on (VoiceOver's
+    // may have been on already: left as it is).
+    var taken: [(attribute: String, ours: Bool)] = []
+    var shown: (attribute: String, waited: (count: Int, after: TimeInterval))?
+    for attribute in switches where shown == nil {
+        guard turnOn(attribute, pid: pid, pageReadable: false) else { continue }
+        taken.append((attribute, stopState.switchesOn.contains(attribute)))
+        let waited = waitForPage(pid, seconds: 4)
+        if waited.count > 0 {
+            shown = (attribute, waited)
+        } else {
+            say("  \(switchName(attribute)) (\(attribute)) on, but nothing showed in 4 s")
+            off(attribute)
+        }
+    }
+    guard !taken.isEmpty else { return nil }
+    if shown == nil, action != nil { pageOutOfView = true }
+    if shown == nil, action == nil {
+        shown = inFront(pid: pid) {
+            for (attribute, ours) in taken {
+                if ours, !stopState.switchesOn.contains(attribute), setSwitch(attribute, true, pid: pid) {
+                    stopState.switchesOn.append(attribute)
+                }
+                let waited = waitForPage(pid, seconds: 6)
+                if waited.count > 0 { return (attribute, waited) }
+                off(attribute)
+            }
+            return nil
+        }
+        say("  its window was out of sight: brought it forward a moment, with "
+            + (taken.count == 1 ? "the switch" : "each switch") + " turned on again there"
+            + " (Chromium and Flutter apps may build their \(isFlutter ? "interface" : "page") only while their window can be seen)"
+            + (shown == nil ? "; nothing showed there either" : ""))
+    }
+    guard let (attribute, waited) = shown else { return false }
     count = waited.count
     shownAfter = waited.after
     pageSwitch = attribute
@@ -1411,7 +1453,9 @@ func saveButton(_ change: (inout SavedButton) -> Void) {
     change(&mine)
     all[bundleID] = mine
     try? FileManager.default.createDirectory(at: placesFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-    try? JSONEncoder().encode(all).write(to: placesFile)
+    // Whole or not at all: a run stopped mid-write (`_exit`) would leave a
+    // cut file, read as empty, and the next save would keep only this app.
+    try? JSONEncoder().encode(all).write(to: placesFile, options: .atomic)
 }
 
 /// The button's place, climbing from it to its page or window.
@@ -1451,15 +1495,29 @@ var learned: (recipe: PlayPauseRecipe, element: AXUIElement)?
 let savedRecipe = savedButtons()[bundleID]?.recipe?.recipe
 var learningSaid = false
 
-/// The page's buttons as AutoHush's learning takes them, and their elements by handle.
-func learningButtons(_ pid: pid_t) -> (buttons: [PageButton], elements: [ButtonHandle: AXUIElement]) {
-    var elements: [ButtonHandle: AXUIElement] = [:]
-    let buttons = (pageButtons(pid: pid) ?? []).map { found -> PageButton in
-        let handle = ButtonHandle(found.element)
-        elements[handle] = found.element
-        return PageButton(handle: handle, label: found.label, isEnabled: found.element.value(kAXEnabledAttribute) as? Bool ?? true)
+/// The page's buttons as AutoHush's learning takes them, and each one found
+/// by its handle: only those whose words are current (`wordsCurrent`), as a
+/// Chromium page out of sight lags a state, and its words would be learned
+/// the wrong way round. `outOfSight`: it has buttons, but none current.
+func learningButtons(_ pid: pid_t) -> (buttons: [PageButton], found: [ButtonHandle: FoundButton], outOfSight: Bool) {
+    let all = pageButtons(pid: pid) ?? []
+    var found: [ButtonHandle: FoundButton] = [:]
+    let buttons = all.filter(wordsCurrent).map { button -> PageButton in
+        let handle = ButtonHandle(button.element)
+        found[handle] = button
+        return PageButton(handle: handle, label: button.label, isEnabled: button.element.value(kAXEnabledAttribute) as? Bool ?? true)
     }
-    return (buttons, elements)
+    return (buttons, found, buttons.isEmpty && !all.isEmpty)
+}
+
+/// Set when a look for learning found the page out of sight.
+var learningOutOfSight = false
+
+/// Says once that the page's Play/Pause isn't learned, and why.
+func sayNotLearned(_ why: String) {
+    guard !learningSaid else { return }
+    learningSaid = true
+    say("    its page's Play/Pause not learned: \(why)")
 }
 
 /// What a page button's words say of the state: by the learned recipe (the
@@ -1471,30 +1529,37 @@ func wordSays(_ words: String) -> PlayerState? {
     return named(words, pauseWords) ? .playing : named(words, playWords) ? .paused : nil
 }
 
-/// Takes the look while it plays, once a test has it playing (`ready`).
+/// Takes the look while it plays, once a test has it playing (`ready`):
+/// not while its page is out of sight (taken at the next test instead).
 func noteLearningPlaying(pid: pid_t) {
     guard page?.buttons ?? 0 > 0, !learner.hasPlayed, learned == nil else { return }
-    learner.notePlaying(learningButtons(pid).buttons, at: Date())
+    let look = learningButtons(pid)
+    learningOutOfSight = look.outOfSight
+    guard !look.outOfSight else { return }
+    learner.notePlaying(look.buttons, at: Date())
 }
+
+let outOfSightWhy = "its window is out of sight, where a Chromium or Flutter page's words lag a state behind"
 
 /// Once a test paused it (by any way): the button whose words changed is
 /// learned (`PlayPauseLearner.recipe`: in sight, with a player's controls,
 /// the barest words, the lowest), saved merged with what was learned before,
 /// and pressed by the page way from then on. Said once when nothing changed.
 func learnPageButton(pid: pid_t) {
-    guard learned == nil, learner.hasPlayed else { return }
-    let (buttons, elements) = learningButtons(pid)
+    guard learned == nil else { return }
+    guard learner.hasPlayed else {
+        if learningOutOfSight { sayNotLearned(outOfSightWhy) }
+        return
+    }
+    let (buttons, found, outOfSight) = learningButtons(pid)
+    if outOfSight { return sayNotLearned(outOfSightWhy) }
     let placed = learner.candidates(paused: buttons).compactMap { candidate in
         webPage.place(of: candidate.handle).flatMap { place in webPage.standing(of: candidate.handle).map { (candidate, place, $0) } }
     }
-    guard let (recipe, handle) = PlayPauseLearner.recipe(from: placed), let element = elements[handle] else {
-        if !learningSaid {
-            learningSaid = true
-            say("    its page's Play/Pause not learned: none of its buttons changed words"
-                + (hiddenInterface != nil && page?.toggle?.onScreen == false ? " (a Chromium page out of sight keeps its words)" : ""))
-        }
-        return
+    guard let (recipe, handle) = PlayPauseLearner.recipe(from: placed), let button = found[handle] else {
+        return sayNotLearned("none of its buttons changed words")
     }
+    let element = button.element
     let merged = savedRecipe?.merging(recipe) ?? recipe
     learned = (merged, element)
     saveButton { saved in
@@ -1507,10 +1572,9 @@ func learnPageButton(pid: pid_t) {
         + " while paused, \(Int(recipe.places[0].distanceFromBottom)) pt from the window's bottom"
         + (same == true ? " (the button this tool found)" : guess.map { " (not '\($0.label)', the one this tool found)" } ?? ""))
     if same != true {
-        let frame = element.frame
         page = PageCheck(buttons: page?.buttons ?? buttons.count,
                          toggle: FoundButton(element: element, label: label(of: element), fromBottom: recipe.places[0].distanceFromBottom,
-                                             inSight: true, onScreen: guess?.onScreen ?? (frame != nil)),
+                                             inSight: true, onScreen: button.onScreen),
                          withControls: placed.first { $0.0.handle == handle }?.2.isWithPlayerControls ?? false)
         barToggle = element
     }
@@ -1518,8 +1582,13 @@ func learnPageButton(pid: pid_t) {
 
 /// After a press by the page that took: what the pressed button said before
 /// and after it is learned, as AutoHush learns a button again once it went
-/// missing, merged with what was learned before.
-func learnFromPress(_ element: AXUIElement, before: String, pausing: Bool) {
+/// missing, merged with what was learned before. Only while its words are
+/// current (`wordsCurrent`): out of sight, a Chromium page's lag one state,
+/// and would be saved the wrong way round ('Pause' as the word for paused),
+/// replacing the right ones (`merging` keeps only the newer words).
+func learnFromPress(_ button: FoundButton, before: String, pausing: Bool) {
+    guard wordsCurrent(button) else { return }
+    let element = button.element
     let after = label(of: element)
     guard !before.isEmpty, !after.isEmpty, before != after, let place = webPage.place(of: ButtonHandle(element)) else { return }
     let recipe = PlayPauseRecipe(playLabel: pausing ? after : before, pauseLabel: pausing ? before : after, places: [place])
@@ -1624,12 +1693,7 @@ func readPage() {
                 pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) }
                 readableAlready = true
             } else if count == 0, let hidden = hiddenInterface {
-                tookNone = true
-                for attribute in hidden.switches {
-                    guard let shown = showPage(with: attribute, pid: pid, count: &count, shownAfter: &shownAfter) else { continue }
-                    tookNone = false
-                    if shown { break }
-                }
+                tookNone = showPage(with: hidden.switches, pid: pid, count: &count, shownAfter: &shownAfter) == nil
             } else if count == 0 {
                 // A web page fills in once something first asks for it (YouTube
                 // Music, just opened: 0 buttons at the first look, 36 a few
@@ -1699,97 +1763,149 @@ func noteScriptError(_ number: Any?) {
     }
 }
 
-/// A four-character code as a number ("spfy" → 0x73706679).
+/// AutoHush's Apple event codes (`ScriptablePlayer.Code`): the standard
+/// suites', and the keywords of events, replies and object specifiers.
+typealias EventCode = ScriptablePlayer.Code
+
+/// A code read from a dictionary at run time as a number ("spfy" →
+/// 0x73706679): ScriptablePlayers' `fourCharCode` takes only literals.
 func osType(_ text: String) -> FourCharCode {
     text.utf8.prefix(4).reduce(0) { $0 << 8 | FourCharCode($1) }
 }
 
-/// The object specifier for the property `code` of `container` (nil: the
-/// application), as AppleScript builds one for "player state" or "name of
-/// current track".
+/// The object specifier for the property `code` of `container`: of the
+/// application as AutoHush builds it (`ScriptablePlayer.propertySpecifier`,
+/// "player state"), else of what `container` names ("name of current
+/// track", "playing of every document").
 func propertySpecifier(_ code: String, of container: NSAppleEventDescriptor? = nil) -> NSAppleEventDescriptor {
-    let specifier = NSAppleEventDescriptor.record().coerce(toDescriptorType: osType("obj "))!
-    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: osType("prop")), forKeyword: osType("want"))
-    specifier.setDescriptor(container ?? NSAppleEventDescriptor.null(), forKeyword: osType("from"))
-    specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("prop")), forKeyword: osType("form"))
-    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: osType(code)), forKeyword: osType("seld"))
+    let specifier = ScriptablePlayer.propertySpecifier(osType(code))
+    if let container { specifier.setDescriptor(container, forKeyword: EventCode.container) }
     return specifier
 }
 
 /// Whether macOS lets this tool (or the app running it) send the app Apple
-/// events, asked once before the first, as AutoHush asks when a player is
-/// chosen (`AutomationPermission`): a send waits only 5 s, too short for
-/// someone reading macOS's prompt. Said once; denied, no event is sent.
+/// events, asked before the first, as AutoHush asks when a player is chosen
+/// (`AutomationPermission`): a send waits only 5 s, too short for someone
+/// reading macOS's prompt. Allowed or denied, it's said once and kept; any
+/// other answer (the app still starting: -600) is asked again before the
+/// next event. Nil when allowed; else the error the event gets instead.
 var automationAnswer: AutomationPermission?
-func automationAllowed(pid: pid_t) -> Bool {
-    if automationAnswer == nil {
-        let answer = AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true))
-        automationAnswer = answer
-        // A press's output is its one line of result: there it's only logged.
-        let note = action == nil ? say : log
-        switch answer {
-        case .allowed: note("  Automation for \(appName): allowed")
-        case .denied, .notAsked:
-            noteScriptError(-1743)
-            note("  Automation for \(appName): not allowed: allow it in System Settings → Privacy & Security → Automation")
-        case .notRunning: break
-        }
+func automationRefusal(pid: pid_t) -> NSError? {
+    switch automationAnswer {
+    case .allowed?: return nil
+    case .denied?: return NSError(domain: NSOSStatusErrorDomain, code: Int(errAEEventNotPermitted))
+    default: break
     }
-    return automationAnswer == .allowed
+    let status = AutomationPermission.check(pid: pid, ask: true)
+    let answer = AutomationPermission(status: status)
+    // A press's output is its one line of result: there it's only logged.
+    let note = action == nil ? say : log
+    switch answer {
+    case .allowed:
+        automationAnswer = answer
+        note("  Automation for \(appName): allowed")
+        return nil
+    case .denied:
+        automationAnswer = answer
+        noteScriptError(-1743)
+        note("  Automation for \(appName): not allowed: allow it in System Settings → Privacy & Security → Automation")
+        return NSError(domain: NSOSStatusErrorDomain, code: Int(errAEEventNotPermitted))
+    case .notAsked, .notRunning:
+        return NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+    }
 }
 
-/// An Apple event error as AutoHush words it (`ScriptablePlayer.mapError`),
-/// with macOS's number: "error -1743 (Automation permission … not granted)".
+/// An Apple event error as AutoHush words it (`ScriptablePlayer.mapError`,
+/// with the app's own message when it gave one), with macOS's number:
+/// "error -1743 (Automation permission … not granted)".
 func eventError(_ error: NSError) -> String {
-    let mapped = ScriptablePlayer.mapError(number: error.code, message: nil)
+    let mapped = ScriptablePlayer.mapError(number: error.code, message: error.userInfo[NSLocalizedFailureReasonErrorKey] as? String)
+    if case .playerCommandFailed(.appleEventError(_, let message?)) = mapped { return "error \(error.code) (\(message))" }
     if case .playerCommandFailed = mapped { return "error \(error.code)" }
     return "error \(error.code) (\(mapped.localizedDescription))"
 }
 
-/// Sends the app an Apple event as AutoHush's `AppleEventChannel` does: to
-/// the running process, so an event can never launch the app, waiting
-/// `AppleEventChannel.replyTimeout` (5 s) for the reply, after asking for
-/// Automation once (`automationAllowed`). The reply's result, or the error
-/// number (-1743: macOS refused it; -600: it isn't running).
-func sendAppleEvent(_ code: String, directObject: NSAppleEventDescriptor? = nil,
-                    parameters: [String: NSAppleEventDescriptor] = [:]) -> Result<NSAppleEventDescriptor?, NSError> {
+/// Sends the app the Apple event `makeEvent` builds for its process, as
+/// AutoHush's `AppleEventChannel` sends one: to the running process, so an
+/// event can never launch the app, waiting `AppleEventChannel.replyTimeout`
+/// (5 s) for the reply, once Automation is allowed (`automationRefusal`).
+/// The reply's direct object, or the error number, with the app's message
+/// as `ScriptablePlayer.replyError` reads it (-1743: macOS refused it;
+/// -600: it isn't running).
+func sendAppleEvent(_ makeEvent: (pid_t) -> NSAppleEventDescriptor) -> Result<NSAppleEventDescriptor?, NSError> {
     guard let pid = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first(where: { !$0.isTerminated })?
-        .processIdentifier else { return .failure(NSError(domain: NSOSStatusErrorDomain, code: -600)) }
-    guard automationAllowed(pid: pid) else { return .failure(NSError(domain: NSOSStatusErrorDomain, code: -1743)) }
-    let event = NSAppleEventDescriptor.appleEvent(withEventClass: osType(String(code.prefix(4))),
-                                                  eventID: osType(String(code.suffix(4))),
-                                                  targetDescriptor: NSAppleEventDescriptor(processIdentifier: pid),
-                                                  returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
-    if let directObject { event.setParam(directObject, forKeyword: osType("----")) }
-    for (keyword, value) in parameters { event.setParam(value, forKeyword: osType(keyword)) }
+        .processIdentifier else { return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(procNotFound))) }
+    if let refusal = automationRefusal(pid: pid) { return .failure(refusal) }
     do {
-        let reply = try event.sendEvent(options: [.waitForReply, .canInteract], timeout: AppleEventChannel.replyTimeout)
-        if let number = reply.paramDescriptor(forKeyword: osType("errn"))?.int32Value, number != 0 {
-            return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(number)))
+        let reply = try makeEvent(pid).sendEvent(options: [.waitForReply, .canInteract], timeout: AppleEventChannel.replyTimeout)
+        if let number = reply.paramDescriptor(forKeyword: EventCode.errorNumber)?.int32Value, number != 0 {
+            let message = reply.paramDescriptor(forKeyword: EventCode.errorString)?.stringValue
+            return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(number),
+                                    userInfo: message.map { [NSLocalizedFailureReasonErrorKey: $0] } ?? [:]))
         }
-        return .success(reply.paramDescriptor(forKeyword: osType("----")))
+        return .success(reply.paramDescriptor(forKeyword: EventCode.directObject))
     } catch {
         return .failure(error as NSError)
     }
 }
 
+/// `get <property>` of the application, as AutoHush asks a player's state
+/// or volume (`ScriptablePlayer.makeGetPropertyEvent`).
+func getProperty(_ code: String) -> Result<NSAppleEventDescriptor?, NSError> {
+    sendAppleEvent { ScriptablePlayer.makeGetPropertyEvent(osType(code), processIdentifier: $0) }
+}
+
+/// `set <property> to <value>` of the application, as AutoHush sets a
+/// player's volume (`ScriptablePlayer.makeSetPropertyEvent`); nil once set.
+func setProperty(_ code: String, to value: Int) -> NSError? {
+    if case .failure(let error) = sendAppleEvent({ ScriptablePlayer.makeSetPropertyEvent(osType(code), to: value, processIdentifier: $0) }) {
+        return error
+    }
+    return nil
+}
+
+/// `get` of what `specifier` names (a document's property, the current
+/// track's name): AutoHush's get event with that direct object.
+func getData(of specifier: NSAppleEventDescriptor) -> Result<NSAppleEventDescriptor?, NSError> {
+    sendAppleEvent { pid in
+        let event = ScriptablePlayer.makeCommandEvent(suite: EventCode.coreSuite, EventCode.getData, processIdentifier: pid)
+        event.setParam(specifier, forKeyword: EventCode.directObject)
+        return event
+    }
+}
+
+/// One of its dictionary's commands by code ("spfyPaus": suite, then
+/// command), as AutoHush sends pause and play (`ScriptablePlayer.makeCommandEvent`),
+/// told which document to act on when it needs one; nil once sent.
+func sendCommand(_ code: String, to target: NSAppleEventDescriptor? = nil) -> NSError? {
+    let result = sendAppleEvent { pid in
+        let event = ScriptablePlayer.makeCommandEvent(suite: osType(String(code.prefix(4))), osType(String(code.suffix(4))),
+                                                      processIdentifier: pid)
+        if let target { event.setParam(target, forKeyword: EventCode.directObject) }
+        return event
+    }
+    if case .failure(let error) = result { return error }
+    return nil
+}
+
 /// The object specifier for the app's documents: every one, or one by name
 /// or by index (1: the front one), as AppleScript builds "document 1".
 func documentSpecifier(named name: String? = nil, index: Int? = nil) -> NSAppleEventDescriptor {
-    let specifier = NSAppleEventDescriptor.record().coerce(toDescriptorType: osType("obj "))!
-    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: osType(scripting?.documentClass ?? "docu")), forKeyword: osType("want"))
-    specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: osType("from"))
+    let record = NSAppleEventDescriptor.record()
+    let specifier = record.coerce(toDescriptorType: EventCode.objectSpecifier) ?? record
+    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: osType(scripting?.documentClass ?? "docu")), forKeyword: EventCode.desiredClass)
+    specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: EventCode.container)
     if let name {
-        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("name")), forKeyword: osType("form"))
-        specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: osType("seld"))
+        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("name")), forKeyword: EventCode.keyForm)
+        specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: EventCode.keyData)
     } else {
-        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("indx")), forKeyword: osType("form"))
+        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("indx")), forKeyword: EventCode.keyForm)
         if let index {
-            specifier.setDescriptor(NSAppleEventDescriptor(int32: Int32(index)), forKeyword: osType("seld"))
+            specifier.setDescriptor(NSAppleEventDescriptor(int32: Int32(index)), forKeyword: EventCode.keyData)
         } else {
             var all = osType("all ")
             specifier.setDescriptor(NSAppleEventDescriptor(descriptorType: osType("abso"), bytes: &all, length: 4)!,
-                                    forKeyword: osType("seld"))
+                                    forKeyword: EventCode.keyData)
         }
     }
     return specifier
@@ -1798,7 +1914,7 @@ func documentSpecifier(named name: String? = nil, index: Int? = nil) -> NSAppleE
 /// A reply's items: a list's, else the one value.
 func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     guard let descriptor else { return [] }
-    guard descriptor.descriptorType == osType("list") else { return [descriptor] }
+    guard descriptor.descriptorType == typeAEList else { return [descriptor] }
     return descriptor.numberOfItems > 0 ? (1...descriptor.numberOfItems).compactMap { descriptor.atIndex($0) } : []
 }
 
@@ -1807,8 +1923,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 func scriptedDocuments() -> Result<[(name: String, playing: Bool)], NSError> {
     guard let playing = scripting?.documentPlaying else { return .success([]) }
     let every = documentSpecifier()
-    switch (sendAppleEvent("coregetd", directObject: propertySpecifier("pnam", of: every)),
-            sendAppleEvent("coregetd", directObject: propertySpecifier(playing, of: every))) {
+    switch (getData(of: propertySpecifier("pnam", of: every)), getData(of: propertySpecifier(playing, of: every))) {
     case (.failure(let error), _), (_, .failure(let error)):
         return .failure(error)
     case (.success(let names), .success(let flags)):
@@ -1820,13 +1935,15 @@ func scriptedDocuments() -> Result<[(name: String, playing: Bool)], NSError> {
 var pausedDocuments: [String] = []
 
 /// The app's state by script, when its dictionary has it and it answers:
-/// its `player state` (stopped, playing, paused, as Spotify's), else its
-/// `playing` flag (VLC's: playing or paused), else its documents' (QuickTime
-/// Player's: playing while one is, stopped with none open), asked by Apple
-/// event. Only macOS refusing it (-1743: no Automation permission for
-/// whatever runs this tool) stops the asking; another error (a timeout,
-/// -1712, from a busy VLC) counts for that look only. Each kind of error is
-/// said once.
+/// its `player state` (stopped, playing, paused, as Spotify's, read as
+/// AutoHush reads it: `ScriptablePlayer.playerState(fromEnumCode:)`, which
+/// counts Music's fast forwarding and rewinding as playing), else its
+/// `playing` flag (VLC's: playing or paused), else its documents'
+/// (QuickTime Player's: playing while one is, stopped with none open),
+/// asked by Apple event. Only macOS refusing it (-1743: no Automation
+/// permission for whatever runs this tool) stops the asking; another error
+/// (a timeout, -1712, from a busy VLC) counts for that look only. Each kind
+/// of error is said once.
 var scriptError: Any?
 var scriptErrorsSaid: Set<String> = []
 func scriptedState() -> String? {
@@ -1847,7 +1964,7 @@ func scriptedState() -> String? {
         }
     }
     let property = scripting.hasPlayerState ? "pPlS" : scripting.properties.first { $0.value == "playing" }!.key
-    switch sendAppleEvent("coregetd", directObject: propertySpecifier(property)) {
+    switch getProperty(property) {
     case .failure(let error):
         return failed(error)
     case .success(let result):
@@ -1857,16 +1974,16 @@ func scriptedState() -> String? {
             // Not playing: VLC's `current time` is -1 with no item, so it's
             // stopped, else paused, as AutoHush's VLCPlayer tells them apart.
             guard let time = scripting.properties.first(where: { $0.value == "current time" })?.key,
-                  case .success(let reply?) = sendAppleEvent("coregetd", directObject: propertySpecifier(time))
+                  case .success(let reply?) = getProperty(time)
             else { return "paused" }
             let state = VLCPlayer.state(playing: false, currentTime: Int(reply.int32Value))
             return state == .unknown ? "paused" : state.rawValue
         }
-        let states: [String: String] = ["kPSP": "playing", "kPSp": "paused", "kPSS": "stopped",
-                                        "kPSF": "fast forwarding", "kPSR": "rewinding"]
         let code = result.enumCodeValue
-        let text = String(bytes: [24, 16, 8, 0].map { UInt8(truncatingIfNeeded: code >> $0) }, encoding: .macOSRoman) ?? "?"
-        return states[text] ?? text
+        let state = ScriptablePlayer.playerState(fromEnumCode: code)
+        if state != .unknown { return state.rawValue }
+        // A value AutoHush doesn't know: its code, as the app gave it.
+        return String(bytes: [24, 16, 8, 0].map { UInt8(truncatingIfNeeded: code >> $0) }, encoding: .macOSRoman) ?? "?"
     }
 }
 
@@ -1876,7 +1993,7 @@ func scriptedState() -> String? {
 /// Nil without one, or when it doesn't answer (nothing loaded).
 func scriptedSong() -> String? {
     guard let scripting, scripting.hasCurrentTrack, scriptError == nil else { return nil }
-    switch sendAppleEvent("coregetd", directObject: propertySpecifier("pnam", of: propertySpecifier("pTrk"))) {
+    switch getData(of: propertySpecifier("pnam", of: propertySpecifier("pTrk"))) {
     case .failure(let error):
         noteScriptError(error.code)
         return nil
@@ -1900,7 +2017,7 @@ func sendScript(_ command: String) -> Bool {
         return false
     }
     guard scripting?.documentCommands.contains(code) == true else {
-        if case .failure(let error) = sendAppleEvent(code) { return failed(error) }
+        if let error = sendCommand(code) { return failed(error) }
         return true
     }
     let documents: [(name: String, playing: Bool)]
@@ -1925,7 +2042,7 @@ func sendScript(_ command: String) -> Bool {
         return false
     }
     for target in targets {
-        if case .failure(let error) = sendAppleEvent(code, directObject: target) { return failed(error) }
+        if let error = sendCommand(code, to: target) { return failed(error) }
     }
     return true
 }
@@ -1935,7 +2052,8 @@ func sendScript(_ command: String) -> Bool {
 /// Music's), else its `audio volume` (VLC's, 0–512), set one step away and
 /// read back, then put back. An app that reads back another number than it
 /// was set to (Spotify: one less) needs the profile's `readVolume`, or each
-/// fade restoring the volume it read loses a step.
+/// fade restoring the volume it read loses a step. It's put back however
+/// the change went: a change refused or not read back may still have taken.
 var volumeChecked = false
 func checkVolume() {
     guard !volumeChecked, let scripting,
@@ -1944,33 +2062,35 @@ func checkVolume() {
     else { return }
     volumeChecked = true
     func read() -> Int? {
-        guard case .success(let reply?) = sendAppleEvent("coregetd", directObject: propertySpecifier(code)) else { return nil }
+        guard case .success(let reply?) = getProperty(code) else { return nil }
         return Int(reply.int32Value)
-    }
-    func set(_ value: Int) -> NSError? {
-        if case .failure(let error) = sendAppleEvent("coresetd", directObject: propertySpecifier(code),
-                                                     parameters: ["data": NSAppleEventDescriptor(int32: Int32(value))]) { return error }
-        return nil
     }
     guard let start = read() else { say("    volume ('\(name)'): can't be read: no fades"); return }
     let target = start > 1 ? start - 1 : start + 1
-    if let error = set(target) { say("    volume ('\(name)'): \(start), can't be set (\(eventError(error))): no fades"); return }
+    let setError = setProperty(code, to: target)
     // Music drops a change that follows another within a moment (measured:
     // set 99 then 100 at once, it stays at 99; 0.2 s apart, it takes both).
     Thread.sleep(forTimeInterval: 0.3)
-    guard let back = read() else { say("    volume ('\(name)'): set to \(target), then can't be read: no fades"); return }
-    let offset = back - target
+    let back = read()
     // Put back as it was: an app that reads one less is set one more.
-    var restored: Int?
+    let offset = setError == nil ? (back.map { $0 - target } ?? 0) : 0
+    var restored = back
     for _ in 0..<2 where restored != start {
-        _ = set(start - offset)
+        _ = setProperty(code, to: start - offset)
         Thread.sleep(forTimeInterval: 0.3)
         restored = read()
     }
+    let putBack = restored == start ? "; put back to \(start)"
+        : "; couldn't put it back: it reads \(restored.map(String.init) ?? "?") (was \(start))"
+    if let setError {
+        say("    volume ('\(name)'): \(start), can't be set (\(eventError(setError))): no fades" + (back == start ? "" : putBack))
+        return
+    }
+    guard let back else { say("    volume ('\(name)'): set to \(target), then can't be read: no fades" + putBack); return }
     say("    volume ('\(name)'): \(start); set to \(target), it reads \(back): "
         + (offset == 0 ? "reads back as set, so it can fade"
            : "reads \(abs(offset)) \(offset < 0 ? "less" : "more") than set (as Spotify, one less): the profile needs readVolume")
-        + (restored == start ? "; put back to \(start)" : "; couldn't put it back: it reads \(restored.map(String.init) ?? "?") (was \(start))")
+        + putBack
         + (name == "audio volume" ? " (its own scale: VLC's goes to 512)" : ""))
 }
 
@@ -2072,6 +2192,9 @@ struct Look: Equatable {
     var state: String?
     var reported: String?
     var pageToggle: String?
+    /// Whether `pageToggle`'s word is current (`pageWordCurrent`); a stale
+    /// one is shown, but nothing is judged by it.
+    var pageCurrent = true
     var sounding: Bool
     /// Heard by its level; nil when not measured.
     var audible: Bool? = nil
@@ -2079,7 +2202,7 @@ struct Look: Equatable {
     var awake: Bool? = nil
     var line: String {
         [menuTitle.map { "menu '\($0)'" + (menuState == "stopped" ? " (disabled)" : "") }, state.map { "state \($0)" }, reported.map { "reports \($0.lowercased())" },
-         pageToggle.map { "page '\($0)'" }, "sound \(sounding ? "on" : "off")",
+         pageToggle.map { "page '\($0)'" + (pageCurrent ? "" : " (out of sight: its word lags)") }, "sound \(sounding ? "on" : "off")",
          audible.map { $0 ? "heard" : "silent" }, awake.map { $0 ? "keeps the Mac awake" : "no keep-awake assertion" }]
             .compactMap { $0 }.joined(separator: ", ")
     }
@@ -2093,18 +2216,26 @@ func look(_ pid: pid_t, level: Bool = false) -> Look {
     let sounding = !soundProcesses(of: pid).isEmpty
     return Look(menuTitle: toggle?.title, menuState: toggle.flatMap(menuState), state: state,
                 reported: state == nil && !barShowsState ? reportedState() : nil,
-                pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid),
+                pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid), pageCurrent: pageWordCurrent,
                 sounding: sounding, audible: level ? audible(pid) : nil, awake: awake(pid, sounding: sounding))
 }
 
+/// Whether a page button's words are current: a WebKit page keeps them so
+/// anywhere; a Chromium or Flutter page only while its window is on screen
+/// (this desktop, not hidden or minimised): out of sight an Electron page
+/// lags a state (Deezer's said Pause while paused).
+func wordsCurrent(_ button: FoundButton) -> Bool { pageIsWebKit || button.onScreen }
+
+/// Whether the page's Play/Pause word can be judged by now (`wordsCurrent`).
+var pageWordCurrent: Bool { page?.toggle.map(wordsCurrent) ?? false }
+
 /// For a press, whether its page's player bar shows the app's state by its
-/// button's word: on screen (this desktop, not hidden or minimised), or,
-/// for a WebKit page, anywhere. Then what it reports to Now Playing isn't
-/// read (opening macOS's log and reading back to when the app opened:
-/// 1.4–2 s). An Electron page on another desktop keeps a stale word, so
-/// there the log is read.
+/// button's word (`pageWordCurrent`). Then what it reports to Now Playing
+/// isn't read (opening macOS's log and reading back to when the app opened:
+/// 1.4–2 s). Out of sight, an Electron page's word is stale, so there the
+/// log is read.
 var barShowsState: Bool {
-    pressingOneWay && page?.withControls == true && (page?.toggle?.onScreen == true || pageIsWebKit)
+    pressingOneWay && page?.withControls == true && pageWordCurrent
 }
 
 /// Whether its page is Safari's WebKit: a Safari web app's, or the app's
@@ -2124,7 +2255,7 @@ let pageIsWebKit: Bool = {
 /// when nothing surer shows the state, so presses stay quick.
 func lookForSign(_ pid: pid_t) -> Look {
     let quick = look(pid)
-    guard levelsAllowed, quick.state == nil, quick.reported == nil, quick.pageToggle == nil else { return quick }
+    guard levelsAllowed, quick.state == nil, quick.reported == nil, quick.pageToggle == nil || !quick.pageCurrent else { return quick }
     return look(pid, level: true)
 }
 
@@ -2148,7 +2279,7 @@ enum TrialResult { case worked, pausedOnly, didNotPause }
 
 /// Whether a press took, judged by the surest sign the app had before it:
 /// its scripted state, else what it reports to Now Playing, else its page's
-/// button (Play while paused), else its level (as AutoHush hears it), else
+/// button (Play while paused; while its word is current), else its level (as AutoHush hears it), else
 /// its keep-awake assertion (as AntiDot mode reads it), else its menu's
 /// state (as AutoHush's MenuPlayer reads it), else its menu's word changing
 /// or its sound. (Deezer's menu word changes late by itself: it said Play
@@ -2157,7 +2288,8 @@ struct Sign {
     let before: Look
     var byState: Bool { before.state != nil }
     var byReport: Bool { !byState && before.reported != nil }
-    var byPage: Bool { !byState && !byReport && before.pageToggle != nil }
+    /// Only while its word is current: a stale one would hide the pause.
+    var byPage: Bool { !byState && !byReport && before.pageToggle != nil && before.pageCurrent }
     var byLevel: Bool { !byState && !byReport && !byPage && before.audible != nil }
     var byAwake: Bool { !byState && !byReport && !byPage && !byLevel && before.awake != nil }
     var byMenu: Bool { !byState && !byReport && !byPage && !byLevel && !byAwake && before.menuState != nil }
@@ -2225,14 +2357,14 @@ func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, und
 
 /// Whether it plays, as far as can be seen, in `Sign`'s order: its scripted
 /// state, else what it reports to Now Playing, else its page's button (Pause
-/// while it plays), else its level, else its keep-awake assertion, else its
+/// while it plays; while its word is current), else its level, else its keep-awake assertion, else its
 /// menu's state, else its sound output (which an Electron app or a web app
 /// keeps a few seconds after a pause, VLC a minute).
 func isPlaying(_ pid: pid_t) -> Bool {
     let now = look(pid)
     if let state = now.state { return state == "playing" }
     if let reported = now.reported { return reported == "Playing" }
-    if let toggle = now.pageToggle { return wordSays(toggle) == .playing }
+    if let toggle = now.pageToggle, now.pageCurrent { return wordSays(toggle) == .playing }
     if let heard = audible(pid) { return heard }
     if let awake = now.awake { return awake }
     if let menu = now.menuState { return menu == "playing" }
@@ -2372,10 +2504,6 @@ func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
     return nil
 }
 
-/// Whether anything in it can report to Now Playing (so it may have a row
-/// in the Now Playing panel, and report its state).
-let canBeNowPlaying = nowPlayingReason(of: appURL, bundleID: bundleID) != nil
-
 // MARK: What it reports to Now Playing
 
 /// What an app reports to Now Playing itself, from the lines MediaRemote's
@@ -2471,9 +2599,9 @@ var reportedTrackerMade = false
 /// Electron app's page on another desktop keeps the word it had, Play
 /// while Deezer played). Read back to when the app opened, an hour at
 /// most. Nil for an app that can't report to Now Playing, when the log
-/// can't be read, or while it reported nothing since then.
+/// can't be read (not an administrator), or while it reported nothing since then.
 func reportedState() -> String? {
-    guard canBeNowPlaying, let running else { return nil }
+    guard canBeNowPlaying, isAdministrator, let running else { return nil }
     if !reportedTrackerMade {
         reportedTrackerMade = true
         reportedTracker = ReportedState(appID: bundleID, since: max(running.launchDate ?? .distantPast, Date().addingTimeInterval(-3600)))
@@ -2853,19 +2981,28 @@ if testing {
         // the button whose words changed is learned (the user's choice, 2026-10-12).
         let pausedByAnother = [scriptResult, menuResult].contains { $0 == .worked || $0 == .pausedOnly }
         if learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
-            say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
-                + " changes on it (up to 2 minutes)")
-            let deadline = Date().addingTimeInterval(120)
-            while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
-            if !isPlaying(pid) {
-                say("  it paused: learning")
+            if !learner.hasPlayed {
+                // Its page is out of sight, where its words can't be learned: nobody is asked.
                 learnPageButton(pid: pid)
             } else {
-                say("  it didn't pause within 2 minutes: its page's Play/Pause isn't learned")
+                say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
+                    + " changes on it (up to 2 minutes)")
+                let deadline = Date().addingTimeInterval(120)
+                while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+                if !isPlaying(pid) {
+                    say("  it paused: learning")
+                    learnPageButton(pid: pid)
+                } else {
+                    say("  it didn't pause within 2 minutes: its page's Play/Pause isn't learned")
+                }
+                stopIfRequested()
             }
-            stopIfRequested()
         }
         if page?.toggle != nil, ready() {
+            /// Whether the trial's pause pressed the player's own button (learned,
+            /// or with a player's slider around it), so a pause that didn't take
+            /// was the site's refusal, not a wrong button.
+            var pressedPlayersPause = false
             func pressPage(pausing: Bool) -> Bool {
                 guard let button = pageButtonToPress(pid: pid, pausing: pausing) else {
                     say("    no button in sight to press"); return false
@@ -2875,12 +3012,16 @@ if testing {
                     if let why { say("    \(why)") }
                     return false
                 }
+                if pausing {
+                    let players = [learned?.element, page?.withControls == true ? page?.toggle?.element : nil, barToggle].compactMap { $0 }
+                    pressedPlayersPause = players.contains { CFEqual($0, button.element) }
+                }
                 return true
             }
             pageResult = trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
                                pause: { pressPage(pausing: true) }, play: { pressPage(pausing: false) },
                                whilePaused: { learnPageButton(pid: pid) })
-            if pageResult == .didNotPause, learned != nil || page?.toggle != nil {
+            if pageResult == .didNotPause, pressedPlayersPause {
                 say("    a pause its page refuses: AutoHush would mute it instead")
             }
             stopIfRequested()
@@ -2992,7 +3133,7 @@ if let action {
                 continue
             }
             if within(done) {
-                learnFromPress(button.element, before: button.label, pausing: pausing)
+                learnFromPress(button, before: button.label, pausing: pausing)
                 say("\(pausing ? "Paused" : "Played") it with its page's '\(button.label)' button"
                     + (pageSwitch.map { ", \(switchName($0)) on" } ?? "")
                     + (broughtForward ? " (brought forward a moment: Chromium and Flutter apps may build it only while their window can be seen)." : "."))
