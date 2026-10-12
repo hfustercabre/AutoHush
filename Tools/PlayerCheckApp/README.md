@@ -51,7 +51,11 @@ to it and loses its permissions; one signed with a certificate keeps them.
   orange warning says which is missing, with Open System Settings (the
   last finished check stays shown). The app is muted all through the check
   (you don't hear it; Player Check still hears whether it plays) and heard
-  again at the end. The check tests each
+  again at the end. Then it makes sure the app plays: if it isn't
+  playing, an orange request asks you to start it, and the check goes on
+  by itself as soon as it plays (up to 2 minutes; if it doesn't, the check
+  stops there, with nothing moved or pressed). Only then does anything
+  move. The check tests each
   way to control it (AppleScript, its playback menu, its page's button and
   the menu bar's Now Playing panel), pausing the app and playing it again
   by each, with the app's window in each state a player's can be in while
@@ -66,9 +70,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
   Stop). A check takes about 3 minutes; the status says which state it's
   in ("Checking: its window covered, 2 of 7…"). The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
-  player, the app that started playing may hold Now Playing). It needs the app playing: if it isn't, an
-  orange request asks you to start it, and the test goes on by itself as
-  soon as it plays (up to 2 minutes). When a way leaves it paused, the
+  player, the app that started playing may hold Now Playing). When a way leaves it paused, the
   check first plays it again by itself (that way once more, then a way that
   worked, else AppleScript, its menu, then the panel) and asks you only
   when none does; a track that ends during a test is tested again rather

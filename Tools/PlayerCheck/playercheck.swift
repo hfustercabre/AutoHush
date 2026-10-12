@@ -2726,53 +2726,6 @@ var currentWindowState: WindowState?
 /// (and the Accessibility permission to move it); why there's none otherwise.
 var windowTest: WindowTest?
 var windowStatesNote: String?
-if testing, let running, AXIsProcessTrusted() {
-    say()
-    say("Window states")
-    if let test = WindowTest(app: running) {
-        windowTest = test
-        stopState.restoreWindow = { test.restore(atStop: true) }
-        if let hidden = hiddenInterface {
-            let pid = running.processIdentifier
-            test.revealPage = { on in
-                guard let attribute = pageSwitch ?? hidden.switches.first else { return }
-                if on {
-                    if setSwitch(attribute, true, pid: pid), !stopState.switchesOn.contains(attribute) { stopState.switchesOn.append(attribute) }
-                    _ = waitForPage(pid, seconds: 4)
-                } else {
-                    _ = setSwitch(attribute, false, pid: pid)
-                }
-            }
-        }
-        say("  each way is tested with its window in each state: " + WindowState.allCases.map(\.title).joined(separator: ", ")
-            + "; it's put back as it is now: \(test.original.title)")
-        for state in WindowState.allCases { if let why = test.untested[state] { say("  \(state.title): not tested (\(why))") } }
-        stopState.setInTrial(true)
-        let why = test.putIn(.visible)
-        stopState.setInTrial(false)
-        stopIfRequested()
-        if let why {
-            say("  not visible: \(why); its page is read as it is")
-        } else {
-            currentWindowState = .visible
-            say("  visible now: its page is read in view, and the test starts there")
-        }
-    } else {
-        windowStatesNote = "no window open"
-        say("  not tested: no window open (each way is tried once, as it is)")
-    }
-}
-
-say()
-say("Page buttons")
-
-if !pressNeeds(["page"]) {
-    say(via == "panel" ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
-                       : "  not read: --via \(via!) doesn't need it")
-    pageNotChecked = "not needed for --via \(via!)"
-} else {
-    readPage()
-}
 
 // MARK: - Press test
 
@@ -4058,6 +4011,103 @@ func whyFailed(_ way: String, in state: WindowState, _ result: TrialResult) -> S
 /// Why a way wasn't tried, for "Ways to control it".
 var notTried = readOnly ? "not tried: read only" : "not tried"
 var notifications: NotificationLog?
+
+// MARK: - The first state, last of all
+
+func readPageButtons() {
+    say()
+    say("Page buttons")
+
+    if !pressNeeds(["page"]) {
+        say(via == "panel" ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
+                           : "  not read: --via \(via!) doesn't need it")
+        pageNotChecked = "not needed for --via \(via!)"
+    } else {
+        readPage()
+    }
+}
+
+/// A test with nothing else to press (no AppleScript play or pause, no
+/// playback menu, no row in the Now Playing panel): its page is read first,
+/// as it is, so an app with nothing to press is neither asked to play nor moved.
+let onlyItsPage = testing && running != nil && scriptControls() == nil && menu == nil && !(canBeNowPlaying && AXIsProcessTrusted())
+if onlyItsPage { readPageButtons() }
+
+/// Whether it played before its window was moved: moving it to the first
+/// state comes last, once the rest a test needs is known (the user,
+/// 2026-10-12: "it should also check if the app is playing before moving it
+/// to the initial position of the tests. Moving it should be the last thing
+/// to do if every other requirement was checked"): the permissions, something
+/// to press, and the app playing, asked for when it isn't. Nil when not asked
+/// (no test, or nothing to press).
+var playedFirst: Bool?
+if testing, let running, !onlyItsPage || page?.toggle != nil {
+    say()
+    say("Playing")
+    let pid = running.processIdentifier
+    if isPlaying(pid) {
+        playedFirst = true
+        say("  it plays: testing")
+    } else {
+        playedFirst = waitUntilPlaying(pid)
+        if playedFirst == false { say("  stopped: \(appName) didn't play within 2 minutes; nothing was moved or pressed") }
+    }
+}
+
+if testing, let running, AXIsProcessTrusted() {
+    say()
+    say("Window states")
+    if playedFirst != true {
+        let why = playedFirst == false ? "it didn't play" : "nothing to press"
+        windowStatesNote = why
+        say("  not tested: \(why), so its window wasn't moved")
+    } else if let test = WindowTest(app: running) {
+        windowTest = test
+        stopState.restoreWindow = { test.restore(atStop: true) }
+        if let hidden = hiddenInterface {
+            let pid = running.processIdentifier
+            test.revealPage = { on in
+                guard let attribute = pageSwitch ?? hidden.switches.first else { return }
+                if on {
+                    if setSwitch(attribute, true, pid: pid), !stopState.switchesOn.contains(attribute) { stopState.switchesOn.append(attribute) }
+                    _ = waitForPage(pid, seconds: 4)
+                } else {
+                    _ = setSwitch(attribute, false, pid: pid)
+                }
+            }
+        }
+        say("  each way is tested with its window in each state: " + WindowState.allCases.map(\.title).joined(separator: ", ")
+            + "; it's put back as it is now: \(test.original.title)")
+        for state in WindowState.allCases { if let why = test.untested[state] { say("  \(state.title): not tested (\(why))") } }
+        stopState.setInTrial(true)
+        let why = test.putIn(.visible)
+        stopState.setInTrial(false)
+        stopIfRequested()
+        if let why {
+            say("  not visible: \(why); its page is read as it is")
+        } else {
+            currentWindowState = .visible
+            say("  visible now: its page is read in view, and the test starts there")
+        }
+    } else {
+        windowStatesNote = "no window open"
+        say("  not tested: no window open (each way is tried once, as it is)")
+    }
+}
+
+if !onlyItsPage {
+    if playedFirst == false {
+        // The test stopped: its page isn't built (an Electron app's may be
+        // brought forward for it) for nothing.
+        say()
+        say("Page buttons")
+        say("  not read: \(appName) didn't play, so the check stopped")
+        pageNotChecked = "it didn't play"
+    } else {
+        readPageButtons()
+    }
+}
+
 if testing {
     say()
     say("Press test")
@@ -4070,6 +4120,9 @@ if testing {
         say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and "
             + (canBeNowPlaying ? "without the Accessibility permission the Now Playing panel can't be reached" : notNowPlaying))
         notTried = "not tried: nothing to press"
+    } else if playedFirst == false {
+        say("  not run: \(appName) didn't play")
+        notTried = "not tried: it didn't play"
     } else if let running {
         let pid = running.processIdentifier
         notifications = NotificationLog(bundleID: bundleID)

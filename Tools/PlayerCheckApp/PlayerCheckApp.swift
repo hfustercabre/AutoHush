@@ -1098,7 +1098,8 @@ struct AppDetail: View {
         parts.append("Before anything else, it makes sure Player Check has every permission a check needs: Accessibility, System Audio Recording, and Automation for \(app.name) if it can be scripted; macOS asks for any not decided yet, and without all of them the check is cancelled before it does anything.")
         parts.append("\(app.name) is muted all through the check (you won't hear it; Player Check still hears whether it plays) and heard again at the end.")
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
-        parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
+        parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
+        parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
         parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimised and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
         if let launch = checker.launchOptions[app.id], launch.running == "no" {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")

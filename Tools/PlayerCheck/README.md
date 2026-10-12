@@ -117,6 +117,8 @@ Sound and Now Playing
   heard now: yes
   keeps the Mac awake: 'Video Wake Lock' (display only)
   Now Playing: this app (until another app reports playing)
+Playing
+  it plays: testing
 Window states
   each way is tested with its window in each state: visible, covered, on another desktop, covered on another desktop, full screen, minimised, hidden; it's put back as it is now: visible
   visible now: its page is read in view, and the test starts there
@@ -400,9 +402,15 @@ Everything is read from outside the app, as AutoHush itself would:
   with the switch off and on there. A press doesn't. A leftover that still
   has its bar is used as it is.
 
-**The test** (unless `--read-only`) tries each way while the app plays. If
-it isn't playing, it asks ("waiting: start playing something in Deezer")
-and goes on by itself as soon as it plays, up to 2 minutes. Each way
+**The test** (unless `--read-only`) tries each way while the app plays.
+Moving its window comes last: once its permissions are allowed, the rest
+is read and it plays ("Playing"). If it isn't playing, it asks ("waiting:
+start playing something in Deezer") and goes on by itself as soon as it
+plays, up to 2 minutes; if it doesn't, the check stops there, with nothing
+moved or pressed. An app with nothing to press but its page (no
+AppleScript play or pause, no playback menu, no row in the Now Playing
+panel) has its page read first, where it is, so one with nothing to press
+isn't asked to play or moved at all. Each way
 pauses the app, then plays it again; a play that didn't take is pressed
 once more ("pressed once more: … the first didn't take"; the way still
 fails in that state, saying so). A way that leaves it paused is followed by
@@ -524,8 +532,8 @@ state's trials:
 | minimised | `AXMinimized` |
 | hidden | the app hidden, as ⌘H hides it |
 
-Before the first, and before each, the window is brought back to visible,
-whatever state it starts in, and after each the state is read back: a
+Before the first (once the app plays, above), and before each, the window
+is brought back to visible, whatever state it starts in, and after each the state is read back: a
 state the window doesn't reach is "not tested", with why. A window on
 another desktop that Accessibility can't reach there (VLC's: no element
 number answers for it) is reached by bringing the app forward first, its
