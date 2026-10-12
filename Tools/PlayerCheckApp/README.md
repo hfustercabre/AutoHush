@@ -75,7 +75,8 @@ to it and loses its permissions; one signed with a certificate keeps them.
   worked, else AppleScript, its menu, then the panel) and asks you only
   when none does; a track that ends during a test is tested again rather
   than failing the way. **Stop** ends a check (if a test had
-  paused the app, it's played again first). A check stopped or failed
+  paused the app, it's played again first; what the check is doing ends
+  first, then the window is put back). A check stopped or failed
   leaves the last finished one shown, with a note. Quitting Player Check,
   or closing its window, stops a check or Play/Pause that's running; one
   whose window went by force (or a crash) stops by itself. Its window

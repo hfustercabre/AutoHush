@@ -1304,10 +1304,16 @@ var pageNotChecked: String?
 var pageSwitch: String?
 
 /// A stop (Ctrl-C, or the Player Check app's Stop) arrives on another thread.
-/// Between a trial's pause and its play it only asks: the trial plays the app
-/// again, then the tool stops. Otherwise the tool stops at once, after putting
-/// back what it changed: the switches it turned on, and the app that was in
-/// front when it brought the checked one forward.
+/// While the app's window is away from where it was, and between a trial's
+/// pause and its play, it only asks: the check stops itself at its next
+/// step (`stopIfRequested`: after the trial, which plays the app again, the
+/// move or the page read under way, or at once in a wait), then puts back
+/// what it changed. Put back from the stop's thread meanwhile, the window
+/// was dragged while the next trial ran, and stayed out of place (VLC's,
+/// on Player Check's desktop instead of its own, 2026-10-12). Otherwise the
+/// tool stops at once, after putting back what it changed: the switches it
+/// turned on, and the app that was in front when it brought the checked one
+/// forward.
 final class StopState: @unchecked Sendable {
     private let lock = NSLock()
     private var inTrial = false, requested = false
@@ -1319,8 +1325,18 @@ final class StopState: @unchecked Sendable {
         set { lock.withLock { switches = newValue } }
     }
     func setInTrial(_ value: Bool) { lock.withLock { inTrial = value } }
-    /// Records the stop; true when a trial must finish first.
-    func request() -> Bool { lock.withLock { requested = true; return inTrial } }
+    /// Records the stop; true when the check must stop itself: in a trial,
+    /// or while the window is away (`beginMoving`).
+    func request() -> Bool { lock.withLock { requested = true; return inTrial || windowBack != nil } }
+    /// Sets how the window is put back, before it's first moved; false when
+    /// a stop came first (then nothing may move).
+    func beginMoving(_ restore: @escaping () -> Void) -> Bool {
+        lock.withLock {
+            guard !requested else { return false }
+            windowBack = restore
+            return true
+        }
+    }
     var isRequested: Bool { lock.withLock { requested } }
     /// The app to bring back to the front, while another was brought forward.
     var frontToRestore: URL? {
@@ -1398,10 +1414,11 @@ func stopNow(_ code: Int32) -> Never {
     _exit(code)
 }
 
-/// After a trial: the stop it held back.
-func stopIfRequested() {
+/// After a trial, or another step a stop waited for: the stop it held back,
+/// said by `line` (by default, after a trial: it played the app again).
+func stopIfRequested(_ line: String? = nil) {
     guard stopState.isRequested else { return }
-    say("  stopped: \(appName) was played again first")
+    say("  " + (line ?? "stopped: \(appName) was played again first"))
     stopNow(143)
 }
 
@@ -3403,13 +3420,13 @@ func isPlaying(_ pid: pid_t) -> Bool {
 
 /// Waits until it plays, asking whoever runs the tool to start it (the
 /// Player Check app shows the "waiting:" line as a request): true once it
-/// plays, false after `seconds`.
+/// plays, false after `seconds` (or at a stop).
 func waitUntilPlaying(_ pid: pid_t, seconds: Double = 120) -> Bool {
     if isPlaying(pid) { return true }
     say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
-    while Date() < deadline {
+    while Date() < deadline, !stopState.isRequested {
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
         if isPlaying(pid) {
             say("  it plays: testing")
@@ -4050,6 +4067,7 @@ if testing, let running, !onlyItsPage || page?.toggle != nil {
         say("  it plays: testing")
     } else {
         playedFirst = waitUntilPlaying(pid)
+        stopIfRequested("stopped while waiting for \(appName) to play: nothing was moved or pressed")
         if playedFirst == false { say("  stopped: \(appName) didn't play within 2 minutes; nothing was moved or pressed") }
     }
 }
@@ -4063,7 +4081,10 @@ if testing, let running, AXIsProcessTrusted() {
         say("  not tested: \(why), so its window wasn't moved")
     } else if let test = WindowTest(app: running) {
         windowTest = test
-        stopState.restoreWindow = { test.restore(atStop: true) }
+        guard stopState.beginMoving({ test.restore(atStop: true) }) else {
+            stopIfRequested("stopped: nothing was moved")
+            stopNow(143)
+        }
         if let hidden = hiddenInterface {
             let pid = running.processIdentifier
             test.revealPage = { on in
@@ -4082,7 +4103,7 @@ if testing, let running, AXIsProcessTrusted() {
         stopState.setInTrial(true)
         let why = test.putIn(.visible)
         stopState.setInTrial(false)
-        stopIfRequested()
+        stopIfRequested("stopped: its window is put back")
         if let why {
             say("  not visible: \(why); its page is read as it is")
         } else {
@@ -4234,6 +4255,7 @@ if testing {
                 return true
             }
             going = waitUntilPlaying(pid)
+            stopIfRequested(going ? nil : "stopped while waiting for \(appName) to play")
             if !going {
                 notTried = "not tried: it didn't play"
                 say("  stopped: \(appName) didn't play within 2 minutes")
@@ -4277,7 +4299,7 @@ if testing {
         }
         let states: [WindowState?] = windowTest.map { $0.states } ?? [nil]
         for (index, next) in states.enumerated() where going {
-            stopIfRequested()
+            stopIfRequested(trialRan ? nil : "stopped: its window is put back")
             state = next
             if let next, let windowTest {
                 say("  State \(index + 1) of \(states.count): \(next.title)")
@@ -4326,6 +4348,7 @@ if testing {
                         + " changes on it (up to 2 minutes)")
                     let deadline = Date().addingTimeInterval(120)
                     while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+                    stopIfRequested("stopped while waiting for \(appName) to be paused")
                     if !isPlaying(pid) {
                         say("  it paused: learning")
                         learnPageButton(pid: pid)
