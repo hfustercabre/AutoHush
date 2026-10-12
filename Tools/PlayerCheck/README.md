@@ -207,7 +207,7 @@ Everything is read from outside the app, as AutoHush itself would:
   its resources, read as it is; else `/usr/bin/sdef` prints the dictionary
   (from an aete, or the old `.scriptSuite` files, VLC's), but only while the
   app runs, since `sdef` opens an app to ask it. The app is asked its state, the name of its
-  current track and its commands by Apple events, built and sent as AutoHush
+  current track (or VLC's `name of current item`) and its commands by Apple events, built and sent as AutoHush
   builds and sends them (`ScriptablePlayer`'s events): to the running
   process (an event can never launch the app), waiting 5 s for the reply,
   once macOS allows Automation (asked before the first event; an answer
@@ -398,13 +398,16 @@ ends again ("play a longer one"). The ways, in order:
    panel opens for about half a second, and takes the keyboard meanwhile.
    Its rows don't name their apps (the panel shows only their icons), so
    the app's row is the one whose song its windows' titles, its page's
-   player bar or its AppleScript `current track` show whole (SoundCloud's
-   window keeps a generic title, and so does a paused Spotify's; its bar,
-   and Spotify's current track, name the song), or that shows only its
-   name. While pausing, it can also be the only row playing when the app
-   is the Now Playing one. Nothing is pressed when that isn't exactly one
-   row. Play presses the row that was paused. A row pressed that changed
-   when the app didn't is pressed again, so that app is left as it was.
+   player bar or its AppleScript `current track` (else `name of current
+   item`, VLC's) show whole (SoundCloud's window keeps a generic title,
+   and so does a paused Spotify's; its bar, and Spotify's current track,
+   name the song; VLC's window on another desktop can't be read at all),
+   or that shows only its name. Else it's the row the app changed with
+   before, kept between runs (below). While pausing, it can also be the
+   only row playing when the app is the Now Playing one. Nothing is pressed
+   when that isn't exactly one row. Play presses the row that was paused. A
+   row pressed that changed when the app didn't is pressed again, so that
+   app is left as it was.
 
 The keyboard's Play/Pause key isn't tested: macOS sends it only to the
 Now Playing app, and AutoHush can't choose which app that is (when it
@@ -627,8 +630,11 @@ built it again (about 3.5 s; only keeping the switch on between presses
 would).
 
 **A press by the panel** finds the app's row by its song in its windows'
-titles or its current track first (Deezer's title and Spotify's track name
-it), with the remembered player bar's song when there is one, and reads the
+titles or what it plays by AppleScript first (Deezer's title, Spotify's
+current track and VLC's current item name it), with the remembered player
+bar's song when there is one; else by the text of the row it last changed
+the app with (in a check's panel trial or a press by the panel), kept in
+`button-places.json` too, when exactly one row shows it; and reads the
 page only when nothing matches (SoundCloud's title doesn't name the song).
 The row's own Play/Pause, as Now Playing knows the app, says whether it's
 that way already, and shows the press take before the panel closes (2 s at

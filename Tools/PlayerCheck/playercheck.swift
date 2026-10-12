@@ -369,6 +369,11 @@ struct Scripting {
     var hasVolume: Bool { properties["pVol"] != nil }
     /// A `current track` (pTrk) with a name: what it plays, by script.
     var hasCurrentTrack: Bool { properties["pTrk"] != nil }
+    /// Else a property of its own naming it (VLC's `name of current item`,
+    /// AANA): its panel row shows that name too, wherever its window is.
+    var currentItemName: String? { properties.first { $0.value == "name of current item" }?.key }
+    /// Whether it says by script what it plays (`scriptedSong`).
+    var namesItsSong: Bool { hasCurrentTrack || currentItemName != nil }
     var fitsScriptablePlayer: Bool { suite != nil && hasPlayerState && hasStateValues }
     /// A command's code ("spfyPaus") by its name: the app's own suite's
     /// first, as ScriptablePlayers sends it.
@@ -1499,6 +1504,9 @@ struct ButtonPath: Codable, Equatable {
 struct SavedButton: Codable {
     var path: ButtonPath?
     var recipe: SavedRecipe?
+    /// The text of its row in the Now Playing panel, once a press of it
+    /// changed the app (`rememberPanelRow`).
+    var panelRow: String?
 }
 struct SavedRecipe: Codable {
     struct Place: Codable { var path: [String]; var fromBottom: Double }
@@ -2853,12 +2861,16 @@ func scriptedState() -> String? {
 }
 
 /// The name of what it plays, by Apple event, when its dictionary has a
-/// `current track` (Spotify's, Music's, TV's). It stays while paused, where
-/// a window's title may not (a paused Spotify's says "Spotify Premium").
+/// `current track` (Spotify's, Music's, TV's), else a `name of current item`
+/// (VLC's). It stays while paused, where a window's title may not (a paused
+/// Spotify's says "Spotify Premium"), and it's read wherever its window is
+/// (VLC's on another desktop can't be reached by Accessibility, 2026-10-12).
 /// Nil without one, or when it doesn't answer (nothing loaded).
 func scriptedSong() -> String? {
-    guard let scripting, scripting.hasCurrentTrack, scriptError == nil else { return nil }
-    switch getData(of: propertySpecifier("pnam", of: propertySpecifier("pTrk"))) {
+    guard let scripting, scripting.namesItsSong, scriptError == nil else { return nil }
+    let specifier = scripting.hasCurrentTrack || scripting.currentItemName == nil
+        ? propertySpecifier("pnam", of: propertySpecifier("pTrk")) : propertySpecifier(scripting.currentItemName!)
+    switch getData(of: specifier) {
     case .failure(let error):
         noteScriptError(error.code)
         return nil
@@ -3687,6 +3699,22 @@ func appRows(_ rows: [PanelRow], texts: [String]) -> [PanelRow] {
 var panelRowText: String?
 var panelProblem: String?
 
+/// Keeps the row just pressed as the app's, between runs, once the app
+/// changed with it: a later press finds it by its text when nothing shows
+/// the app's song (a Play after a Pause, as a check's play does within one
+/// run; VLC's window on another desktop gives no title, 2026-10-12).
+func rememberPanelRow() {
+    guard let panelRowText, savedButtons()[bundleID]?.panelRow != panelRowText else { return }
+    saveButton { $0.panelRow = panelRowText }
+}
+
+/// The one row whose text is the app's remembered row's, if exactly one is.
+func rememberedRow(_ rows: [PanelRow]) -> PanelRow? {
+    guard let text = savedButtons()[bundleID]?.panelRow else { return nil }
+    let same = rows.filter { $0.text == text }
+    return same.count == 1 ? same[0] : nil
+}
+
 /// Which row to press: the app's; the one pressed last, else the app's; or
 /// only the one pressed last (to put back a press that changed it).
 enum PanelRowChoice { case app, lastElseApp, lastOnly }
@@ -3695,8 +3723,9 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
 /// when `pausing`, Play otherwise) and closes it; true once pressed. The
 /// rows don't name their apps (only an icon shows it), so the app's row is
 /// the one showing its song (`appRows`: by its windows' titles, its page's
-/// player bar or its AppleScript current track); while pausing, else the
-/// only row playing when the app is the Now Playing one. Nothing is pressed
+/// player bar or what it plays by AppleScript); else the row it changed with
+/// before (`rememberedRow`); while pausing, else the only row playing when
+/// the app is the Now Playing one. Nothing is pressed
 /// when that's not one row. The panel shows under the menu bar for about
 /// half a second, and takes the keyboard meanwhile.
 func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> Bool {
@@ -3732,7 +3761,9 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
     var mine: [PanelRow] = []
     if row == nil, choice != .lastOnly {
         mine = appRows(candidates, texts: texts)
-        row = mine.count == 1 ? mine[0] : mine.isEmpty && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil
+        // Its song first; else the row it changed with before; else, pausing, the only one playing.
+        row = mine.count == 1 ? mine[0] : !mine.isEmpty ? nil
+            : rememberedRow(candidates) ?? (holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil)
     }
     guard let row else {
         let state = pausing ? "Pause" : "Play"
@@ -3741,7 +3772,7 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
             : mine.count > 1 ? "\(mine.count) of the panel's rows with \(state) show \(appName)'s song: which is its own can't be told"
             : "none of the panel's \(candidates.count) rows with \(state) shows \(appName)'s song (read from "
                 + (["its windows' titles"] + (page?.toggle != nil ? ["its player bar"] : [])
-                    + (scripting?.hasCurrentTrack == true ? ["its current track by AppleScript"] : [])).joined(separator: " or ")
+                    + (scripting?.namesItsSong == true ? ["what it plays, by AppleScript"] : [])).joined(separator: " or ")
                 + ") or its name; the rows don't name their apps"
         close()
         return false
@@ -3756,8 +3787,9 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
 enum PanelPress { case already, changed, pressed, notPressed }
 
 /// A press by the panel (`--via panel`). The app's row is found by its song
-/// in its windows' titles or its current track (Deezer's title and
-/// Spotify's track name it); only when none matches is its page read, for
+/// in its windows' titles or what it plays by AppleScript (Deezer's title,
+/// Spotify's current track and VLC's current item name it), else as the row
+/// it changed with before (`rememberedRow`); only when none matches is its page read, for
 /// its player bar's song (SoundCloud's title doesn't name it), since reading
 /// a page can take seconds (Deezer's is built anew each time). The row's own
 /// Play/Pause, as Now Playing knows the app, tells whether it's that way
@@ -3798,6 +3830,8 @@ func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
         return .notPressed
     }
     var mine = appRows(rows, texts: texts)
+    // Else the row it changed with before, before reading its page (seconds).
+    if mine.isEmpty, let remembered = rememberedRow(rows) { mine = [remembered] }
     if mine.isEmpty, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
         close()
         readPage()
@@ -3842,7 +3876,7 @@ func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
         : mine.count > 1 ? "\(mine.count) of the panel's rows show \(appName)'s song: which is its own can't be told"
         : "none of the panel's \(rows.count) rows shows \(appName)'s song (read from "
             + (["its windows' titles"] + (page?.toggle != nil ? ["its player bar"] : [])
-                + (scripting?.hasCurrentTrack == true ? ["its current track by AppleScript"] : [])).joined(separator: " or ")
+                + (scripting?.namesItsSong == true ? ["what it plays, by AppleScript"] : [])).joined(separator: " or ")
             + ") or its name; the rows don't name their apps"
     return .notPressed
 }
@@ -4138,6 +4172,8 @@ if testing {
                     // Its own reason, unless its play took only when pressed once more.
                     trialProblem = trialProblem ?? panelProblem
                 }
+                // It paused with that row: its own, for later presses.
+                if result != .didNotPause { rememberPanelRow() }
                 record("panel", result)
                 stopIfRequested()
             }
@@ -4290,6 +4326,7 @@ if let action {
                 say("It's \(pausing ? "paused" : "playing") already.")
                 finish(0)
             case .changed:
+                rememberPanelRow()
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
                 finish(0)
             case .notPressed:
@@ -4299,6 +4336,7 @@ if let action {
                 break
             }
             if within({ isPlaying(pid) != pausing }) {
+                rememberPanelRow()
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel ('\(panelRowText ?? "")').")
                 finish(0)
             }
