@@ -21,6 +21,9 @@ import PackageDescription
 //   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 //   listen-to-fades (developer tool, in Tools/): records a loopback device
 //                               and measures AutoHush's fades in it
+//   playercheck (tool, in Tools/) → ScriptablePlayers, MenuPlayers, WebAppPlayers,
+//                               VLCSupport, AutoHushKit: whether and how AutoHush
+//                               could control an app, checked with AutoHush's own code
 //
 // Code inside a module is grouped by domain. Types shared between modules use
 // `package` access: visible inside this package, not to anyone else. Bundle
@@ -35,6 +38,7 @@ let package = Package(
         .executable(name: "AutoHush", targets: ["AutoHush"]),
         .executable(name: "measure-volume-curve", targets: ["MeasureVolumeCurve"]),
         .executable(name: "listen-to-fades", targets: ["ListenToFades"]),
+        .executable(name: "playercheck", targets: ["PlayerCheck"]),
     ],
     targets: [
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
@@ -87,6 +91,18 @@ let package = Package(
             name: "ListenToFades",
             path: "Tools/ListenToFades",
             exclude: ["README.md"]
+        ),
+
+        // Checks whether and how AutoHush could control an app, with AutoHush's
+        // own code for what they share (Apple events, menus, learned page
+        // buttons, sound). A tool: never part of AutoHush.app. One file of
+        // top-level code, written for the Swift 5 language mode.
+        .executableTarget(
+            name: "PlayerCheck",
+            dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "VLCSupport"],
+            path: "Tools/PlayerCheck",
+            exclude: ["README.md"],
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
 
         // Fakes shared by the test targets.

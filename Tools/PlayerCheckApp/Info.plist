@@ -18,5 +18,7 @@
     <true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Player Check reads a player's state by AppleScript and, in its test, pauses it and plays it again.</string>
+    <key>NSAudioCaptureUsageDescription</key>
+    <string>Player Check measures how loud an app is, to tell whether it plays, as AutoHush does. Audio is never recorded, stored or sent anywhere.</string>
 </dict>
 </plist>

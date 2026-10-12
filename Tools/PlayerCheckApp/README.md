@@ -10,6 +10,11 @@ sh Tools/PlayerCheckApp/build.sh              # writes "Player Check.app" here, 
 open "Player Check.app"
 ```
 
+playercheck is built as a product of AutoHush's package (it runs AutoHush's
+own code for what the two share), so `build.sh` runs
+`swift build -c release --product playercheck` in the repository first;
+the first build compiles AutoHush's modules and takes a few minutes.
+
 `build.sh` takes a folder to build into (the current one by default). The
 app is signed ad hoc, for your own Mac, unless `SIGNING_IDENTITY` names a
 code signing certificate in your keychain (for example "AutoHush
@@ -80,8 +85,13 @@ to it and loses its permissions; one signed with a certificate keeps them.
   Without it, a note links to System Settings. Signed ad hoc, a rebuilt
   one needs it again; signed with a certificate (`SIGNING_IDENTITY`, above),
   it keeps it.
-- **Automation**, asked by macOS the first time it reads or controls an
-  app by AppleScript.
+- **Automation**, asked by macOS before Player Check first reads or
+  controls an app by AppleScript, as AutoHush asks it.
+- **System Audio Recording**, asked at the first check: Player Check
+  measures how loud the app is, as AutoHush does, to tell whether it plays
+  (macOS shows its recording indicator meanwhile; nothing is recorded).
+  Without it, sound is judged by what the app tells macOS and its open
+  output.
 - **An administrator account** for the "In Now Playing Now" section: it
   comes from macOS's log (`playercheck --now-playing-list`), which only
   administrators can read. Without it, the list still shows the apps that

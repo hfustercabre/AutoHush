@@ -371,7 +371,8 @@ AutoHush (executable: the entry point only)
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
-playercheck, Player Check (developer tools, in Tools/, built on their own): could AutoHush control an app?
+playercheck (tool, in Tools/) → ScriptablePlayers, MenuPlayers, WebAppPlayers, VLCSupport, AutoHushKit:
+                            could AutoHush control an app? (Player Check shows it in a window)
 ```
 
 ```text
