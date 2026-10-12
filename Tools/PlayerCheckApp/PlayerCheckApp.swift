@@ -328,6 +328,10 @@ final class Checker {
     /// Why the last check of an app didn't finish, while its last finished
     /// check is shown instead.
     var attemptNotes: [InstalledApp.ID: String] = [:]
+    /// A check cancelled before it did anything, as a permission it needs
+    /// isn't allowed (playercheck's exit status 3): what it said, and the
+    /// first permission missing, for its pane in System Settings.
+    var permissionProblems: [InstalledApp.ID: (text: String, missing: String)] = [:]
     var checkingID: InstalledApp.ID?
     /// The check running, to tell it from one started after it was stopped.
     private var attempt: UUID?
@@ -624,6 +628,7 @@ final class Checker {
         attempt = token
         checkingID = app.id
         attemptNotes[app.id] = nil
+        permissionProblems[app.id] = nil
         refreshRunning()
         let allowing = !isTrusted
         reports[app.id] = Report(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
@@ -676,6 +681,9 @@ final class Checker {
         } else if let report = reports[id], let previous = finished[id] {
             switch report.state {
             case .stopped: attemptNotes[id] = "The check was stopped: the last finished check is shown."
+            case .failed where permissionProblems[id] != nil:
+                // Its warning says why, above the last finished check.
+                break
             case .failed(let reason):
                 // macOS's messages end with a full stop already.
                 attemptNotes[id] = (reason.hasSuffix(".") ? String(reason.dropLast()) : reason) + ". The last finished check is shown."
@@ -704,7 +712,18 @@ final class Checker {
         }
         let status = await run.status()
         if reports[id]?.state == .checking {
-            reports[id]?.state = status == 0 ? .finished : .failed("playercheck ended with status \(status)")
+            if status == 3 {
+                // Cancelled before doing anything: a permission it needs isn't allowed.
+                let lines = reports[id]?.lines ?? []
+                let said = lines.last { $0.hasPrefix("Not checked: ") }.map { String($0.dropFirst("Not checked: ".count)) }
+                    ?? "A permission the check needs isn't allowed."
+                let missing = lines.first { $0.hasPrefix("  ") && ($0.hasSuffix(": not allowed") || $0.hasSuffix(": not answered")) }
+                    .map { $0.trimmingCharacters(in: .whitespaces).components(separatedBy: ":")[0] } ?? ""
+                permissionProblems[id] = (said, missing)
+                reports[id]?.state = .failed("The check was cancelled: \(said)")
+            } else {
+                reports[id]?.state = status == 0 ? .finished : .failed("playercheck ended with status \(status)")
+            }
         }
         endAttempt(id)
         refreshRunning()
@@ -947,6 +966,15 @@ struct AppDetail: View {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
+    /// Privacy & Security at a permission's list, as playercheck names it
+    /// ("System Audio Recording" is under Screen & System Audio Recording).
+    static func openPrivacySettings(for permission: String) {
+        let pane = permission == "Accessibility" ? "Privacy_Accessibility"
+            : permission == "System Audio Recording" ? "Privacy_ScreenCapture"
+            : permission.hasPrefix("Automation") ? "Privacy_Automation" : "Privacy"
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)")!)
+    }
+
     private var permissionNote: some View {
         GroupBox {
             HStack {
@@ -997,6 +1025,19 @@ struct AppDetail: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
                     .fixedSize(horizontal: false, vertical: true)
+            }
+            if !isChecking, let problem = checker.permissionProblems[app.id] {
+                // Cancelled before it did anything (no window moved, nothing pressed).
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("The check was cancelled before it did anything: \(problem.text)", systemImage: "exclamationmark.triangle")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Open System Settings") { Self.openPrivacySettings(for: problem.missing) }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
             if checker.tool == nil {
                 Text("playercheck is missing from this app: build it with build.sh.").foregroundStyle(.red)
@@ -1054,6 +1095,8 @@ struct AppDetail: View {
             parts.append("It needs the Accessibility permission first: macOS asks for it, and the check starts once it's allowed.")
         }
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
+        parts.append("Before anything else, it makes sure Player Check has every permission a check needs: Accessibility, System Audio Recording, and Automation for \(app.name) if it can be scripted; macOS asks for any not decided yet, and without all of them the check is cancelled before it does anything.")
+        parts.append("\(app.name) is muted all through the check (you won't hear it; Player Check still hears whether it plays) and heard again at the end.")
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")
         parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimised and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
@@ -1068,7 +1111,7 @@ struct AppDetail: View {
         if let note = checker.attemptNotes[app.id] {
             Label(note, systemImage: "exclamationmark.circle").foregroundStyle(.secondary)
         }
-        if case .failed(let reason) = report.state {
+        if case .failed(let reason) = report.state, checker.permissionProblems[app.id] == nil {
             Label(reason, systemImage: "xmark.octagon").foregroundStyle(.red)
         } else if report.state == .stopped {
             Label("Stopped: the report is incomplete.", systemImage: "stop.circle").foregroundStyle(.secondary)

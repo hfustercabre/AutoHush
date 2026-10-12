@@ -55,12 +55,32 @@ is a way and an app). Or `swift run playercheck Spotify`. Whatever runs it
 (Terminal, say) needs:
 - **Accessibility**, for the menu and page checks, and to put the app's
   window in each state (the pointer and keyboard events for the desktops).
-- **Automation**, which macOS asks for once per app before the first Apple
-  event, as AutoHush asks when a player is chosen.
-- **System Audio Recording**, asked at the first check to measure how loud the
-  app is, as AutoHush does; macOS shows its recording indicator while it
-  listens. Without it, sound is judged by what the app tells macOS and its
-  open output.
+- **System Audio Recording**, to measure how loud the app is, as AutoHush
+  does, and to keep it muted through a test (below); macOS shows its
+  recording indicator while it listens.
+- **Automation** for the app, when it has AppleScript play or pause, as
+  AutoHush asks when a player is chosen.
+
+A test asks for all of them first, in its **Permissions**, before it does
+anything else: macOS asks for any not decided yet (and waits up to 2
+minutes for Accessibility). Without all of them it stops there, with
+"Not checked: … needs …" and exit status 3: no window moved, nothing
+pressed. `--read-only` and `--play`/`--pause` ask nothing up front (without
+System Audio Recording, sound is judged by what the app tells macOS and its
+open output).
+
+**The app is muted through a test**: Permissions done, its audio processes
+go behind a muted process tap, as AutoHush mutes a web app's ad
+(`ProcessTapMuter`), until the test ends ("… unmuted: the test is over").
+You don't hear it, but every sign still works: a muted tap silences only
+what reaches the output, and every other tap, the level's included, still
+hears the app (measured with VLC: nothing reached the output while an
+unmuted tap, and the muting one, heard it at 0.7–0.8); and the app doesn't
+know, so its scripted state, what it reports to Now Playing, its page, its
+keep-awake assertions, its menu and its open output are as they'd be. Its
+audio processes are looked at every 0.1 s, so one it starts later (an
+audio service started at its first play) is muted within that. A tap ends
+with the tool, so a stop or a crash lets it be heard again too.
 
 The app must be running for everything but its scripting dictionary, and
 nothing it does launches an app.
@@ -83,6 +103,11 @@ Scripting dictionary
   player state (pPlS): yes, values stopped/playing/paused: yes
   sound volume (pVol): yes, so it can fade
   pause and play share suite 'spfy'
+Permissions
+  Accessibility: allowed
+  System Audio Recording: allowed
+  Automation for Spotify: allowed
+  Spotify is muted until the check ends: you won't hear it, while its sound still reaches what measures it
 Playback menu
   'Playback': first item 'Pause', enabled
   its own words for Play and Pause weren't found in its bundle: its item is read with this tool's list
@@ -102,7 +127,6 @@ Page buttons
   Play/Pause: 'Pause', 56 pt from the window's bottom, with a player's slider around it
 Press test
   State 1 of 7: visible
-  Automation for Spotify: allowed
   by script (pause, play): before, menu 'Pause', state playing, page 'Pause', sound on, heard
     after the pause: menu 'Play', state paused, page 'Pause', sound on → it paused
     announced: paused (com.spotify.client.PlaybackStateChanged)
@@ -119,6 +143,7 @@ Press test
   …
   its window put back as it was (visible)
   notification: com.spotify.client.PlaybackStateChanged [… Player State …]
+  Spotify unmuted: the test is over
 
 Ways to control it
   ✓ AppleScript: 'pause' and 'play' paused and played it, as Spotify and Apple Music (all 7 window states)

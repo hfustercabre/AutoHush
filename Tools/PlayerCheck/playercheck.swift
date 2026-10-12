@@ -754,6 +754,113 @@ func pressNeeds(_ ways: Set<String>) -> Bool { !pressingOneWay || ways.contains(
 let ownAppWords = pressNeeds(["menu", "page", "panel"]) ? appWords(of: appURL) : nil
 let ownWords = ownAppWords?.words
 
+// MARK: - Permissions, before anything a test does
+
+/// Whether its level can be measured (`setUpLevels`), and Automation's
+/// answer for the app (`automationRefusal`): declared here, as a test's
+/// Permissions set them before anything else.
+var levelsAllowed = false
+var automationAnswer: AutomationPermission?
+
+/// Keeps the app silent through a test (the user, 2026-10-12: "mute the app
+/// running the tests but still detect if it's playing"): its audio
+/// processes behind a muted process tap, as AutoHush mutes a web app's ad
+/// (`ProcessTapMuter`). Its sound still reaches every other tap, so its
+/// level is still measured: in the VM, nothing of VLC reached the output
+/// while an unmuted tap, and the muting one, heard it at 0.7–0.8. Nothing
+/// else it shows changes (its scripted state, what it reports to Now
+/// Playing, its page, its keep-awake assertions, its menu, its open
+/// output): the app doesn't know. Its processes are looked at every 0.1 s,
+/// so one it starts later (an audio service started at its first play) is
+/// muted within that, a new tap made before the old one goes. A tap ends
+/// with this tool, so a stop or a crash lets it be heard again too.
+final class TestMute: @unchecked Sendable {
+    private let pid: pid_t
+    private let queue = DispatchQueue(label: "playercheck.mute")
+    private var timer: DispatchSourceTimer?
+    private var muter: ProcessTapMuter?
+    /// The processes last tried: a set that couldn't be muted isn't tried
+    /// again until it changes.
+    private var tried: Set<AudioObjectID> = []
+
+    init(pid: pid_t) { self.pid = pid }
+
+    /// Muted once before it returns (so it's silent when the test says so:
+    /// started on the timer, VLC was heard a second more), then kept so.
+    func start() {
+        queue.sync { refresh() }
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now() + 0.1, repeating: 0.1)
+        timer.setEventHandler { [weak self] in self?.refresh() }
+        queue.sync { self.timer = timer }
+        timer.resume()
+    }
+
+    private func refresh() {
+        let now = Set(OwnedAudioProcesses.objects(ownedBy: pid))
+        guard now != tried else { return }
+        tried = now
+        guard !now.isEmpty else { return }
+        let next = ProcessTapMuter()
+        guard next.mute(appPID: pid) else { return }
+        muter?.unmute(appPID: pid)
+        muter = next
+    }
+
+    func stop() {
+        queue.sync {
+            timer?.cancel()
+            timer = nil
+            muter?.unmute(appPID: pid)
+            muter = nil
+        }
+    }
+}
+var testMute: TestMute?
+
+// What a test needs, asked before it does anything (the user, 2026-10-12:
+// "check and, if it didn't have them, ask for the required permissions
+// before starting doing anything … If not all rights are granted, it should
+// show a warning and cancel"): Accessibility (the window's states, the menu,
+// the page, the panel), System Audio Recording (its level, and the mute that
+// keeps it silent meanwhile), and Automation for the app when it has
+// AppleScript play or pause. Without all of them nothing more is done: no
+// window moved, nothing pressed. Exit status 3 says so to Player Check.
+if testing, let running {
+    say()
+    say("Permissions")
+    let holder = NSRunningApplication(processIdentifier: responsible(getpid()))?.localizedName ?? "this tool"
+    var missing: [String] = []
+    if !AXIsProcessTrusted() {
+        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        say("  waiting: allow Accessibility for \(holder) in System Settings; the check goes on as soon as it's allowed (up to 2 minutes)")
+        let deadline = Date().addingTimeInterval(120)
+        while !AXIsProcessTrusted(), Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+    }
+    let trusted = AXIsProcessTrusted()
+    say("  Accessibility: " + (trusted ? "allowed" : "not allowed"))
+    if !trusted { missing.append("Accessibility") }
+    setUpLevels(asking: true, saying: false)
+    say("  System Audio Recording: " + (levelsAllowed ? "allowed" : "not allowed"))
+    if !levelsAllowed { missing.append("System Audio Recording") }
+    if scriptControls() != nil {
+        let answer = AutomationPermission(status: AutomationPermission.check(pid: running.processIdentifier, ask: true))
+        if answer == .allowed || answer == .denied { automationAnswer = answer }
+        say("  Automation for \(appName): " + (answer == .allowed ? "allowed" : answer == .denied ? "not allowed" : "not answered"))
+        if answer != .allowed { missing.append("Automation for \(appName)") }
+    }
+    if !missing.isEmpty {
+        let list = missing.count > 1 ? missing.dropLast().joined(separator: ", ") + " and " + missing.last! : missing[0]
+        say()
+        say("Not checked: \(holder) needs \(list). Allow \(missing.count > 1 ? "them" : "it") in System Settings → Privacy & Security,"
+            + " then check again.")
+        exit(3)
+    }
+    testMute = TestMute(pid: running.processIdentifier)
+    testMute?.start()
+    say("  \(appName) is muted until the check ends: you won't hear it, while its sound still reaches what measures it")
+}
+
 say()
 say("Playback menu")
 var menu: FoundMenu?
@@ -803,16 +910,17 @@ func soundProcesses(of pid: pid_t) -> [String] {
     }.sorted()
 }
 
-/// Whether its sound is measured, as AutoHush judges sound by default: by
-/// its level, through process taps, which need System Audio Recording (and
-/// show macOS's recording indicator while they listen). A check asks for it
-/// when it's undecided; a press only uses it when it's allowed.
-var levelsAllowed = false
-func setUpLevels(asking: Bool) {
+/// Sets `levelsAllowed`: whether its sound is measured, as AutoHush judges
+/// sound by default: by its level, through process taps, which need System
+/// Audio Recording (and show macOS's recording indicator while they
+/// listen). A check asks for it when it's undecided (in its Permissions,
+/// `saying` nothing about its level yet); a press only uses it when it's
+/// allowed.
+func setUpLevels(asking: Bool, saying: Bool = true) {
     let permission = TCCAudioCapturePermission()
     var status = permission.status()
     if status == .notDetermined, asking {
-        say("  System Audio Recording: asked (to measure its sound as AutoHush does)")
+        say("  System Audio Recording: asked (to measure its sound as AutoHush does, and to keep it silent meanwhile)")
         let answer = OSAllocatedUnfairLock<Bool?>(initialState: nil)
         permission.request { granted in answer.withLock { $0 = granted } }
         let deadline = Date().addingTimeInterval(120)
@@ -820,7 +928,7 @@ func setUpLevels(asking: Bool) {
         status = answer.withLock { $0 } == true ? .granted : permission.status()
     }
     levelsAllowed = status == .granted
-    guard asking else { return }
+    guard asking, saying else { return }
     switch status {
     case .granted?:
         say("  its level: measured as AutoHush measures it (process taps; macOS shows its recording indicator meanwhile)")
@@ -2701,10 +2809,10 @@ func propertySpecifier(_ code: String, of container: NSAppleEventDescriptor? = n
 /// Whether macOS lets this tool (or the app running it) send the app Apple
 /// events, asked before the first, as AutoHush asks when a player is chosen
 /// (`AutomationPermission`): a send waits only 5 s, too short for someone
-/// reading macOS's prompt. Allowed or denied, it's said once and kept; any
-/// other answer (the app still starting: -600) is asked again before the
-/// next event. Nil when allowed; else the error the event gets instead.
-var automationAnswer: AutomationPermission?
+/// reading macOS's prompt. Allowed or denied, it's said once and kept
+/// (`automationAnswer`; a test's Permissions ask it first); any other answer
+/// (the app still starting: -600) is asked again before the next event. Nil
+/// when allowed; else the error the event gets instead.
 func automationRefusal(pid: pid_t) -> NSError? {
     switch automationAnswer {
     case .allowed?: return nil
@@ -3345,7 +3453,8 @@ func isPlaying(_ pid: pid_t) -> Bool {
 /// plays, false after `seconds`.
 func waitUntilPlaying(_ pid: pid_t, seconds: Double = 120) -> Bool {
     if isPlaying(pid) { return true }
-    say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)")
+    say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
+        + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
     while Date() < deadline {
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
@@ -4245,6 +4354,12 @@ if testing {
             say("  notifications: none under the usual names (\(bundleID).\(stateNotificationSuffixes[0]), …)")
         }
     }
+}
+// Heard again once the test is done with it (playing again if it was).
+if let mute = testMute {
+    mute.stop()
+    testMute = nil
+    say("  \(appName) unmuted: the test is over")
 }
 
 // MARK: - Play or pause (--play, --pause)

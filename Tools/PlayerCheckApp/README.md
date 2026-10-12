@@ -43,7 +43,15 @@ to it and loses its permissions; one signed with a certificate keeps them.
   what changed is read.
 - **Checking:** choose an app, then **Check…**, and confirm. An app that
   isn't running is opened first, in the background (an Electron app with
-  the launch option its page needs out of view, below). The check tests each
+  the launch option its page needs out of view, below). Before anything
+  else, the check makes sure Player Check has every permission it needs
+  (Accessibility, System Audio Recording, and Automation for the app when
+  it has AppleScript play or pause), and macOS asks for any not decided
+  yet; without all of them it's cancelled before it does anything, and an
+  orange warning says which is missing, with Open System Settings (the
+  last finished check stays shown). The app is muted all through the check
+  (you don't hear it; Player Check still hears whether it plays) and heard
+  again at the end. The check tests each
   way to control it (AppleScript, its playback menu, its page's button and
   the menu bar's Now Playing panel), pausing the app and playing it again
   by each, with the app's window in each state a player's can be in while
