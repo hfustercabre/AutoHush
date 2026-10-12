@@ -899,6 +899,7 @@ enum HiddenInterface {
 }
 let hiddenInterface = HiddenInterface.of(appURL)
 var isFlutter: Bool { if case .flutter? = hiddenInterface { true } else { false } }
+var isElectron: Bool { if case .electron? = hiddenInterface { true } else { false } }
 
 /// Play and Pause as players' pages name their buttons (any case), in
 /// English, Spanish, Catalan and a few more, and the app's own words: what
@@ -1172,6 +1173,10 @@ final class StopState: @unchecked Sendable {
         get { lock.withLock { front } }
         set { lock.withLock { front = newValue } }
     }
+    private var setOn: [String: Date] = [:]
+    /// When this tool last turned `attribute` on (`waitForFullerMode`).
+    func switchSetOn(_ attribute: String) { lock.withLock { setOn[attribute] = Date() } }
+    func switchSetOnAt(_ attribute: String) -> Date? { lock.withLock { setOn[attribute] } }
     private var stream: pid_t = 0
     /// The `log stream` this tool follows Now Playing with, ended with it.
     var streamPID: pid_t {
@@ -1188,8 +1193,28 @@ let stopState = StopState()
 func setSwitch(_ attribute: String, _ on: Bool, pid: pid_t) -> Bool {
     let app = AXUIElementCreateApplication(pid)
     AXUIElementSetMessagingTimeout(app, 1)
+    if on { stopState.switchSetOn(attribute) }
     if AXUIElementSetAttributeValue(app, attribute as CFString, on ? kCFBooleanTrue : kCFBooleanFalse) == .success { return true }
     return app.value(attribute) as? Bool == on
+}
+
+/// An Electron app takes presses on its page only in its fuller
+/// accessibility mode, which starts 2 s after its switch last went on
+/// (Electron debounces the requests; an off sent meanwhile cancels it, and
+/// keeps a fuller mode already on: electron_application.mm). A press right
+/// after the switch goes on does nothing, though the page shows and the
+/// press is accepted (Deezer's, kept built by another tool reading its
+/// role, 2026-10-12). So before a press: at once when the switch reads back
+/// on (Electron says so only in that mode), else not before those 2 s.
+func waitForFullerMode(pid: pid_t) {
+    guard isElectron, let since = stopState.switchSetOnAt(manualAccessibility) else { return }
+    let app = AXUIElementCreateApplication(pid)
+    AXUIElementSetMessagingTimeout(app, 1)
+    guard app.value(manualAccessibility) as? Bool != true else { return }
+    let wait = 2.2 - Date().timeIntervalSince(since)
+    guard wait > 0 else { return }
+    log(String(format: "  waited %.1f s for Electron's fuller mode: its page takes presses only 2 s after its switch goes on", wait))
+    Thread.sleep(forTimeInterval: wait)
 }
 
 /// Turns the switches this tool turned on back off: those that didn't go.
@@ -2618,6 +2643,7 @@ func pressPageButton(_ button: FoundButton, pausing: Bool, why: inout String?) -
             + (pausing ? "; AutoHush would mute it instead" : "")
         return false
     }
+    if let pid = running?.processIdentifier { waitForFullerMode(pid: pid) }
     return AXUIElementPerformAction(button.element, kAXPressAction as CFString) == .success
 }
 

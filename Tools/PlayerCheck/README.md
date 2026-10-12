@@ -296,6 +296,15 @@ Everything is read from outside the app, as AutoHush itself would:
   leaving the app as it found it. An app may answer an error yet take a
   switch (Spotify and Spotube answer -25208 to `AXEnhancedUserInterface`,
   and read it back as on), so either sign counts.
+- **Electron's fuller mode, for presses:** Electron takes presses on its
+  page only in the fuller accessibility mode its switch asks for, which
+  starts 2 s after the switch last went on (Electron waits for requests to
+  settle; an off sent meanwhile cancels the request and leaves a fuller
+  mode already on). A press sooner is accepted but does nothing, while the
+  page may already show (kept by another tool reading the app's role, which
+  turns on a lighter mode that never ends while the app runs). So a press
+  on an Electron page waits until 2 s after the switch went on, unless the
+  switch reads back on: Electron says so only in that mode, alone.
 - **Out of sight:** a Chromium or Flutter app may build no page while its
   window can't be seen (Deezer's, fully covered by others; Spotify's, on
   another desktop when the switch went on; Spotube's, behind other
