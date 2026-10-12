@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **A web app's window on another desktop could go unfound.** AutoHush
+  reaches windows on other desktops by trying the app's element numbers,
+  only the first thousand. An app that makes its window again later can
+  give it a higher number, and then AutoHush couldn't read its page there.
+  When no window is among the first thousand but the app has one out of
+  sight, it now looks further.
+
 ## [0.12.1] — 2026-10-11
 
 ### Fixed
