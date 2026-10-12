@@ -189,7 +189,8 @@ struct Way: Identifiable {
 
 /// What playercheck said about one app, as it comes in.
 struct Report {
-    enum State: Equatable { case opening, checking, finished, stopped, failed(String) }
+    /// `allowing`: waiting for the Accessibility permission, before anything runs.
+    enum State: Equatable { case allowing, opening, checking, finished, stopped, failed(String) }
     var state: State
     var lines: [String] = []
     var date = Date()
@@ -501,17 +502,37 @@ final class Checker {
         app.bundleID.map(runningIDs.contains) ?? false
     }
 
+    /// Asks macOS for the Accessibility permission: its own request, which
+    /// leads to System Settings (the same as AutoHush's).
+    nonisolated static func askForAccessibility() {
+        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+    }
+
     /// Opens the app when it isn't running (and gives it time to load its
-    /// window and page), then runs playercheck on it.
+    /// window and page), then runs playercheck on it. Without the
+    /// Accessibility permission, which its menu, page and panel ways need,
+    /// macOS is asked for it first, and the check starts once it's allowed
+    /// (Stop ends the wait).
     func check(_ app: InstalledApp) {
         guard !isBusy, let tool else { return }
         let token = UUID()
         attempt = token
         checkingID = app.id
         attemptNotes[app.id] = nil
-        let opening = !isRunning(app)
-        reports[app.id] = Report(state: opening ? .opening : .checking)
+        refreshRunning()
+        let allowing = !isTrusted
+        reports[app.id] = Report(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
         Task {
+            if allowing {
+                Self.askForAccessibility()
+                while !AXIsProcessTrusted() {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    guard attempt == token else { return } // stopped
+                }
+                refreshRunning()
+            }
+            let opening = !isRunning(app)
+            reports[app.id]?.state = opening ? .opening : .checking
             if opening {
                 let configuration = NSWorkspace.OpenConfiguration()
                 configuration.activates = false
@@ -720,7 +741,8 @@ struct AppDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
-                if !checker.isTrusted { permissionNote }
+                // While a check waits for it, its own request says it instead.
+                if !checker.isTrusted, !(isChecking && report?.state == .allowing) { permissionNote }
                 controls
                 if let way = checker.preferredWay(app), let via = way.via {
                     playAndPause(via: via)
@@ -765,14 +787,16 @@ struct AppDetail: View {
         }
     }
 
+    static func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+    }
+
     private var permissionNote: some View {
         GroupBox {
             HStack {
                 Label("Player Check needs the Accessibility permission to read menus and pages.", systemImage: "exclamationmark.triangle")
                 Spacer()
-                Button("Open Settings") {
-                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-                }
+                Button("Open Settings") { Self.openAccessibilitySettings() }
             }
             .padding(4)
         }
@@ -787,9 +811,25 @@ struct AppDetail: View {
                 if isChecking {
                     Button("Stop") { checker.stop() }
                     ProgressView().controlSize(.small)
-                    Text(report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…" : "Checking…")
+                    Text(report?.state == .allowing ? "Waiting for the Accessibility permission…"
+                         : report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…" : "Checking…")
                         .foregroundStyle(.secondary)
                 }
+            }
+            if isChecking, report?.state == .allowing {
+                // Asked of macOS: the check starts by itself once it's allowed.
+                VStack(alignment: .leading, spacing: 8) {
+                    // Not named by its pane: macOS 27 calls it Device Control and Data Access.
+                    Label("Turn on Player Check in the list System Settings opens (macOS's request leads there, or the button below). The check starts as soon as it's allowed.",
+                          systemImage: "hand.raised")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Open System Settings") { Self.openAccessibilitySettings() }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
             if isChecking, let request = report?.request {
                 // The test needs the app playing: the check asks, then goes on by itself.
@@ -852,6 +892,9 @@ struct AppDetail: View {
 
     private var confirmation: String {
         var parts: [String] = []
+        if !checker.isTrusted {
+            parts.append("It needs the Accessibility permission first: macOS asks for it, and the check starts once it's allowed.")
+        }
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment). If \(app.name) isn't playing, you're asked to start it.")

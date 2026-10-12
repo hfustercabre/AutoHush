@@ -2655,6 +2655,13 @@ func pageButtonToPress(pid: pid_t, pausing: Bool) -> FoundButton? {
     return named?.button
 }
 let notNowPlaying = "nothing in it reports to Now Playing, so the Now Playing panel can't reach it"
+/// Why the panel's item in the menu bar wasn't found: it's found and pressed
+/// through Accessibility, so without that permission, that's why.
+var noPanelItem: String {
+    AXIsProcessTrusted()
+        ? "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        : "this tool (or the app running it) needs the Accessibility permission: the panel is found and pressed through it"
+}
 let panelNotNowPlaying = "nothing in it reports to Now Playing, so it has no row in the panel"
 
 // MARK: The menu bar's Now Playing panel
@@ -2786,7 +2793,7 @@ func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> B
     }
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
-        panelProblem = "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        panelProblem = noPanelItem
         return false
     }
     guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else {
@@ -2852,7 +2859,7 @@ func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
     var texts = appWindows(of: pid).windows.map(\.title) + playerBarTexts(pid)
     if let song = scriptedSong() { texts.append(song) }
     guard let item = nowPlayingMenuItem() else {
-        panelProblem = "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        panelProblem = noPanelItem
         return .notPressed
     }
     func open() -> [PanelRow]? {
@@ -2939,10 +2946,11 @@ if testing {
     let script = scriptControls()
     if running == nil {
         say("  not run: the app isn't running")
-    } else if script == nil, menu == nil, page?.toggle == nil, !canBeNowPlaying {
-        // Nothing to press, and nothing for the panel to reach:
-        // asking for it to play would only wait.
-        say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and \(notNowPlaying)")
+    } else if script == nil, menu == nil, page?.toggle == nil, !canBeNowPlaying || !AXIsProcessTrusted() {
+        // Nothing to press, and nothing for the panel to reach (or no
+        // Accessibility to reach it with): asking for it to play would only wait.
+        say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and "
+            + (canBeNowPlaying ? "without the Accessibility permission the Now Playing panel can't be reached" : notNowPlaying))
         notTried = "not tried: nothing to press"
     } else if let running {
         let pid = running.processIdentifier
@@ -3031,6 +3039,8 @@ if testing {
             panelProblem = panelNotNowPlaying
             say("  the Now Playing panel: not pressed: \(notNowPlaying)")
             panelResult = .didNotPause
+        } else if !AXIsProcessTrusted() {
+            say("  the Now Playing panel: not pressed: \(noPanelItem)")
         } else {
             if ready() {
                 panelResult = trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
@@ -3277,6 +3287,8 @@ if let panelResult {
     way("–", "Now Playing panel: not checked (it isn't running)")
 } else if !canBeNowPlaying {
     way("✗", "Now Playing panel: \(panelNotNowPlaying)")
+} else if !AXIsProcessTrusted() {
+    way("–", "Now Playing panel: not checked (no Accessibility permission)")
 } else {
     way("?", "Now Playing panel: its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
 }

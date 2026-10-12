@@ -82,9 +82,12 @@ to it and loses its permissions; one signed with a certificate keeps them.
   check's confirmation says which switch it turns on and that the app may
   be brought forward a moment while its window is out of sight (both as
   playercheck's `--now-playing-reasons` tells them). PlayerCheck runs inside it and shares it.
-  Without it, a note links to System Settings. Signed ad hoc, a rebuilt
-  one needs it again; signed with a certificate (`SIGNING_IDENTITY`, above),
-  it keeps it.
+  Without it, a note links to System Settings, and **Check…** first asks
+  macOS for it (macOS's own request, which leads to System Settings), then
+  waits: the check starts by itself once it's allowed (**Stop** ends the
+  wait). A check without it could only test AppleScript. Signed ad hoc, a
+  rebuilt one needs it again; signed with a certificate (`SIGNING_IDENTITY`,
+  above), it keeps it.
 - **Automation**, asked by macOS before Player Check first reads or
   controls an app by AppleScript, as AutoHush asks it.
 - **System Audio Recording**, asked at the first check: Player Check

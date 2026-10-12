@@ -420,8 +420,9 @@ read once a second (`PolledStateObserver`).
 The report ends, before the verdict, with one line per way known to
 control an app, each with a mark: ✓ it paused and played again in the
 test, ✗ not there or didn't work (or it only paused), ? found but not tried
-(`--read-only`, or it didn't play), – not checked (it doesn't apply, or the
-app isn't running). The ways are the
+(`--read-only`, or it didn't play), – not checked (it doesn't apply, the
+app isn't running, or there's no Accessibility permission, which the menu,
+the page and the Now Playing panel need). The ways are the
 four above. Player Check shows that section as a checklist.
 
 ## Playing and pausing (`--play`, `--pause`)
