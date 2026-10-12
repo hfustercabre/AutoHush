@@ -49,7 +49,8 @@ to it and loses its permissions; one signed with a certificate keeps them.
   by each, with the app's window in each state a player's can be in while
   AutoHush controls it: visible, covered (Player Check puts a window of
   its own over it), on another desktop, covered there, full screen,
-  minimised and hidden. Player Check moves the window there itself and
+  minimised and hidden. Player Check moves the window there itself, starting
+  by bringing it to visible on this desktop whatever state it's in, and
   comes back to the front before each state's trials; for the desktops it
   drags the window with the pointer and Control-arrow, so the mouse and
   keyboard must be left alone meanwhile. Its own window may move aside so
@@ -67,7 +68,8 @@ to it and loses its permissions; one signed with a certificate keeps them.
   paused the app, it's played again first). A check stopped or failed
   leaves the last finished one shown, with a note. Quitting Player Check,
   or closing its window, stops a check or Play/Pause that's running; one
-  whose window went by force (or a crash) stops by itself.
+  whose window went by force (or a crash) stops by itself. Its window
+  doesn't go full screen: the green button zooms it instead.
 - **The results:** "Ways to control it" as a checklist (✓ worked in every
   window state, an orange ⚠ in some, with the states it failed in and why
   under it, ✗ in none or not there, ? not tried, – not checked), "For

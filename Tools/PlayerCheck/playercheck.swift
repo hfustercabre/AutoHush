@@ -2190,6 +2190,18 @@ enum WindowStates {
         control(down: false)
     }
 
+    /// Shows the main display's desktop `id` as a person would, one Control-→
+    /// or ← at a time; whether it's the current one after.
+    static func showDesktop(_ id: Int) -> Bool {
+        guard let all = Desktops.all(), let to = all.spaces.firstIndex(where: { $0.id == id }),
+              let from = all.spaces.firstIndex(where: { $0.id == all.current }) else { return false }
+        for _ in 0..<abs(to - from) {
+            controlArrow(right: to > from)
+            Thread.sleep(forTimeInterval: 0.9)
+        }
+        return wait(2, until: { Desktops.all()?.current == id })
+    }
+
     /// Where the window can be held to drag it: right of its zoom button (a
     /// title bar), then along its top bar, at spots that aren't controls. An
     /// Electron app's top bar can be dragged only where its page marks it so,
@@ -2264,11 +2276,23 @@ enum WindowStates {
                 // Back where it started, held still, then to the other desktop.
                 for step in [2, 1, 0] { mouse(.leftMouseDragged, at: CGPoint(x: grip.x + direction * CGFloat(step) * 4, y: grip.y)) }
                 usleep(150_000)
+                // A drag's first points don't move the window (macOS waits for
+                // the pointer to go a little way first), so back at the grip it
+                // can sit short of its place (VLC's, 4 pt, 2026-10-12): the
+                // pointer goes on by what's missing until it's there.
+                var at = grip
+                for _ in 0..<3 {
+                    guard let now = element.frame, now.origin != box.origin else { break }
+                    at = CGPoint(x: at.x + box.minX - now.minX, y: at.y + box.minY - now.minY)
+                    mouse(.leftMouseDragged, at: at)
+                    usleep(150_000)
+                }
+                log(String(format: "  drag: held in place at %.0f,%.0f", element.frame?.minX ?? -1, element.frame?.minY ?? -1))
                 for _ in 0..<abs(steps) {
                     controlArrow(right: steps > 0)
                     Thread.sleep(forTimeInterval: 0.9)
                 }
-                mouse(.leftMouseUp, at: grip)
+                mouse(.leftMouseUp, at: at)
                 break
             }
             mouse(.leftMouseUp, at: CGPoint(x: grip.x + direction * 12, y: grip.y))
@@ -2401,6 +2425,19 @@ final class WindowTest {
             WindowStates.set(appElement, kAXHiddenAttribute, false)
             guard WindowStates.wait(3, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else { return "it couldn't be shown again" }
         }
+        // Out of sight and out of Accessibility's reach (VLC's window on
+        // another desktop: no element number answered, 2026-10-12): its
+        // desktop shown first, where its window can be reached; then it's
+        // dragged back here as any other. Bringing VLC forward didn't show
+        // that desktop (some of its hidden windows are on this one), so the
+        // desktop is shown with Control-arrow, as a person would.
+        if self.element == nil, let info = WindowStates.mainWindow(of: pid), info[kCGWindowIsOnscreen as String] as? Bool != true,
+           let there = Desktops.of(window: WindowStates.number(of: info)), there != Desktops.all()?.current {
+            guard WindowStates.showDesktop(there), WindowStates.wait(3, until: { self.element != nil }) else {
+                comeHome()
+                return "its window can't be reached, even with its desktop shown"
+            }
+        }
         guard let element else { return "its window can't be reached" }
         if element.value(kAXMinimizedAttribute) as? Bool == true {
             WindowStates.set(element, kAXMinimizedAttribute, false)
@@ -2514,8 +2551,13 @@ final class WindowTest {
     }
 
     private func coverOnItsDesktop() -> String? {
-        guard let info = WindowStates.mainWindow(of: pid),
-              WindowStates.activate(app, showing: WindowStates.number(of: info)) else { return "its desktop couldn't be shown" }
+        guard let info = WindowStates.mainWindow(of: pid) else { return "its window is gone" }
+        let number = WindowStates.number(of: info)
+        // Brought forward there; else that desktop shown with Control-arrow
+        // (VLC's coming forward didn't show it: `normalize`).
+        if !WindowStates.activate(app, showing: number) {
+            guard let there = Desktops.of(window: number), WindowStates.showDesktop(there) else { return "its desktop couldn't be shown" }
+        }
         Thread.sleep(forTimeInterval: 0.6)
         return coverIt()
     }

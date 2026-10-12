@@ -1222,6 +1222,10 @@ struct PlayerCheckApp: App {
     var body: some Scene {
         Window("Player Check", id: "main") {
             ContentView(checker: delegate.checker)
+                // Never full screen (the user, 2026-10-12: "The PlayerCheck
+                // app should not be allowed to go full screen"). An AppKit
+                // collection behavior set on the window didn't hold.
+                .windowFullScreenBehavior(.disabled)
         }
         .defaultSize(width: 980, height: 680)
     }

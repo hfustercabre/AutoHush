@@ -499,9 +499,12 @@ state's trials:
 | minimised | `AXMinimized` |
 | hidden | the app hidden, as ⌘H hides it |
 
-Before each, the window is brought back to visible, and after each the
-state is read back: a state the window doesn't reach is "not tested", with
-why. At the end (or at a stop) the window is put back as it was: its
+Before the first, and before each, the window is brought back to visible,
+whatever state it starts in, and after each the state is read back: a
+state the window doesn't reach is "not tested", with why. A window on
+another desktop that Accessibility can't reach there (VLC's: no element
+number answers for it) is reached by bringing the app forward first, its
+desktop shown, then dragged back as any other. At the end (or at a stop) the window is put back as it was: its
 state, its place and its desktop, the moved window too, and the app the
 tool was run from in front. With no window open (Deezer plays on without
 one), the ways are tried once, as the window is. With only one desktop
