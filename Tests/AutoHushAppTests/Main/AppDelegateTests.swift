@@ -81,7 +81,8 @@ struct AppDelegateTests {
         _ scratch: Scratch = Scratch(),
         chosenPlayer: String? = Players.first,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
-        updateInstaller: MockUpdateInstaller = MockUpdateInstaller()
+        updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
+        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let sut = AppDelegate(
@@ -107,7 +108,8 @@ struct AppDelegateTests {
             retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
-            permissionCenter: scratch.permissionCenter
+            permissionCenter: scratch.permissionCenter,
+            windowWatchSleep: windowWatchSleep
         )
         return (sut, scratch.monitorings)
     }
@@ -979,6 +981,54 @@ struct AppDelegateTests {
         sut.requestPermission(.systemAudioRecording)
         await waitFor { scratch.asked.count == 4 }
         #expect(scratch.asked.last == "ask audio")
+    }
+
+    // MARK: - The window watch
+
+    @MainActor
+    @Test("while the welcome window shows, the players installed and the permissions are followed; closed while it asked for them, it's done")
+    func watchFollowsWelcome() async {
+        let scratch = Scratch()
+        scratch.installed = [Players.first]
+        scratch.audio = .denied
+        let clock = SteppedSleep()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, windowWatchSleep: clock.sleep)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
+        await waitFor { clock.sleeping == 1 }
+        #expect(sut.settingsModel.permissions.audio == .denied)
+
+        scratch.installed.insert(Players.second) // installed meanwhile
+        clock.step()
+        await waitFor { sut.status.playerOptions.allSatisfy(\.isInstalled) }
+        #expect(sut.status.playerOptions.allSatisfy { $0.isInstalled })
+
+        sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        scratch.chooser.close() // closed instead of Done: the same
+        clock.step()
+        await waitFor { !sut.settingsModel.welcomeAsksPermissions }
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+    }
+
+    @MainActor
+    @Test("while only the learning window shows, the permissions are followed, not the players")
+    func watchFollowsLearning() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+                                        status: .learning(hasPlayed: false))
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
+        scratch.installed.insert(webApp.bundleID)
+        let clock = SteppedSleep()
+        let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
+        sut.chooseMusicPlayer(webApp.bundleID) // opens the learning window
+        #expect(scratch.learningWindow.isOpen)
+        await waitFor { clock.sleeping == 1 }
+
+        scratch.audio = .denied
+        scratch.installed.remove(Players.first)
+        clock.step()
+        await waitFor { sut.settingsModel.permissions.audio == .denied }
+        #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true) // not looked at again
     }
 
     // MARK: - Permissions while running

@@ -47,6 +47,12 @@ down the minute the user has to pause it, with a note when a step can't be
 taken. The windows that show the steps read it from the app state.
 _Avoid_: learner (that's the player's own part, which reads the page).
 
+**Window watch** (`WindowWatch`): while AutoHush's windows are open,
+follows once a second what they show that macOS doesn't announce: the
+players installed, the permissions, whether notifications are on, launch
+at login, Diagnostics. Each window says what it needs; the watch refreshes
+only what the open ones need, and stops when none is open.
+
 **Monitoring** (`MonitoringPipeline`): the engine of one start. It follows
 which apps play, decides when to pause and resume the player, and does it.
 Each start makes a new one, and it stops as a whole.

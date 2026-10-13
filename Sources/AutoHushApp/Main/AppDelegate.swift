@@ -26,9 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
-    /// Follows the notification setting and the installed players while
-    /// Settings or the welcome window is open.
-    private var windowsWatch: Task<Void, Never>?
+    /// Follows what the open windows show that macOS doesn't announce.
+    private(set) var windowWatch: WindowWatch!
     /// The music players to choose from.
     private let players: MusicPlayerCatalog
     private let locateApp: PlayerOption.Locate
@@ -115,7 +114,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         retries: PlayerSession.Retries = PlayerSession.Retries(),
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
         installCheckDelay: Duration = .seconds(1),
-        permissionCenter: PermissionCenter = PermissionCenter()
+        permissionCenter: PermissionCenter = PermissionCenter(),
+        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.preferences = preferences
         self.players = players
@@ -190,6 +190,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         settingsModel.currentVersion = currentVersion?.description
         settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
+        windowWatch = WindowWatch(sleep: windowWatchSleep,
+                                  refresh: { [weak self] in await self?.refresh($0) },
+                                  everyTick: { [weak self] in self?.followWelcomeClosed() })
+        registerWatchedWindows()
         showChosenPlayer()
         refreshPlayerOptions()
         showApps()
@@ -476,7 +480,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
         }
-        if fromWelcome { watchWindows() }
+        if fromWelcome { windowWatch.wake() }
     }
 
     /// The welcome window is done: the player is chosen and what it needs
@@ -611,7 +615,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.welcomeAsksPermissions = false
         refreshPlayerOptions()
         playerChooser?.show()
-        watchWindows()
+        windowWatch.wake()
     }
 
     /// Whether the welcome window is on screen.
@@ -687,45 +691,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         settingsWindowController?.show(page: page)
         refreshPlayerOptions()
-        watchWindows()
+        windowWatch.wake()
     }
 
-    /// While Settings or the welcome window is open, checks every second
-    /// whether the user turned AutoHush's notifications on or off, or reset
-    /// them, in System Settings, and which music players are installed, so
-    /// the windows follow at once and a reset is asked about again. macOS
-    /// doesn't announce these changes. While the Diagnostics page shows, it
-    /// follows what AutoHush sees, too.
-    ///
-    /// The learning and Add a Web App windows are followed too: while any of
-    /// these shows, the permissions AutoHush needs are read again, so a
-    /// window waiting for one goes on by itself once it's allowed.
-    func watchWindows() {
-        windowsWatch?.cancel()
-        windowsWatch = Task { [weak self] in
-            while !Task.isCancelled, let self, self.isShowingWatchedWindow {
-                // Minimized, Settings is still open: it's up to date once it's back.
-                let settingsShown = self.settingsWindowController?.window?.isOpen == true
-                if settingsShown || self.isShowingPlayerChooser {
-                    self.refreshPlayerOptions()
-                    if settingsShown, self.settingsWindowController?.shownPage == .diagnostics { self.refreshDiagnostics() }
-                    let off = await self.updates.followNotificationPermission() == .off
-                    if self.settingsModel.notificationsOff != off { self.settingsModel.notificationsOff = off }
-                }
-                if settingsShown { self.settingsModel.refreshLaunchAtLogin() }
-                await self.refreshPermissions()
-                self.followWelcomeClosed()
-                try? await Task.sleep(for: .seconds(1))
-            }
-            self?.followWelcomeClosed()
+    /// What each window shows that the window watch follows while it's open
+    /// (Settings counts as open minimized too). macOS doesn't announce a
+    /// change to these: notifications turned on or off, or reset, in System
+    /// Settings (a reset is asked about again), the players installed, a
+    /// permission allowed (a window waiting for one goes on by itself).
+    private func registerWatchedWindows() {
+        windowWatch.register(isOpen: { [weak self] in self?.settingsWindowController?.window?.isOpen == true }) { [weak self] in
+            var needs: Set<WindowWatch.Refresh> = [.players, .notifications, .launchAtLogin, .permissions]
+            if self?.settingsWindowController?.shownPage == .diagnostics { needs.insert(.diagnostics) }
+            return needs
         }
+        windowWatch.register(isOpen: { [weak self] in self?.isShowingPlayerChooser == true }) {
+            [.players, .notifications, .permissions]
+        }
+        windowWatch.register(isOpen: { [weak self] in self?.learningWindow?.isOpen == true }) { [.permissions] }
+        windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [.permissions] }
     }
 
-    /// Settings (on screen or minimized), the welcome, learning or Add a Web
-    /// App window is open.
-    private var isShowingWatchedWindow: Bool {
-        settingsWindowController?.window?.isOpen == true || isShowingPlayerChooser
-            || learningWindow?.isOpen == true || addWebAppWindow?.isOpen == true
+    /// One of the window watch's refreshes.
+    private func refresh(_ need: WindowWatch.Refresh) async {
+        switch need {
+        case .players:
+            refreshPlayerOptions()
+        case .diagnostics:
+            refreshDiagnostics()
+        case .notifications:
+            let off = await updates.followNotificationPermission() == .off
+            if settingsModel.notificationsOff != off { settingsModel.notificationsOff = off }
+        case .launchAtLogin:
+            settingsModel.refreshLaunchAtLogin()
+        case .permissions:
+            await refreshPermissions()
+        }
     }
 
     /// The welcome window closed while it asked for the permissions: done,
