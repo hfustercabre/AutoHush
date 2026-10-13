@@ -310,6 +310,10 @@ struct SymbolTile: View {
 /// panel, a little rounder and roomier.
 struct Card<Content: View>: View {
     var padding: CGFloat = 12
+    /// Clear glass, which casts no shadow: for a card whose view ends just
+    /// under it, where the regular glass's shadow would be cut off in a
+    /// straight line (the menu's card, in its row).
+    var clearGlass = false
     @ViewBuilder let content: Content
 
     @ViewBuilder var body: some View {
@@ -317,7 +321,7 @@ struct Card<Content: View>: View {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(padding + 2)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .glassEffect(clearGlass ? .clear : .regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         } else {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(padding)

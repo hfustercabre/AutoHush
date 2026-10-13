@@ -9,7 +9,9 @@ struct StatusCardView: View {
     private var status: AppStatus { model.status }
 
     var body: some View {
-        Card(padding: 10) {
+        // Clear glass: its menu row ends 2 pt under the card, which would
+        // cut the regular glass's shadow off in a straight line.
+        Card(padding: 10, clearGlass: true) {
             HStack(spacing: 10) {
                 playerIcon(size: 36)
                 VStack(alignment: .leading, spacing: 1) {

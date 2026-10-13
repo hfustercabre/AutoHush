@@ -130,7 +130,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 
 | Component | Use it for |
 |---|---|
-| `Card` | A group of related rows on a rounded, tinted background (corner 12, padding 12); on macOS 26 and later a Liquid Glass panel (`.glassEffect(.regular)`, corner 18, padding 14). Rows inside are 10 pt apart, with a `CardDivider` between rows that are separate items. |
+| `Card` | A group of related rows on a rounded, tinted background (corner 12, padding 12); on macOS 26 and later a Liquid Glass panel (`.glassEffect(.regular)`, corner 18, padding 14). The menu's card is clear glass (`clearGlass`): its row ends just under it, and the regular glass's shadow would be cut off there in a straight line. Rows inside are 10 pt apart, with a `CardDivider` between rows that are separate items. |
 | `SectionHeading` | The heading over a card in Settings and the other windows, e.g. "Timing", "Steps". |
 | `SectionLabel` | A small grey label: the menu's headings ("Playing Now") and lead-ins above a control ("When an update is found"). |
 | `RowTitle` | A row's title, with an optional description under it. |
