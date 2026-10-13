@@ -1398,8 +1398,14 @@ struct CheckPanelView: View {
                 progress(state)
             }
             if movingWindows {
-                Label("Don't use the mouse or keyboard until it ends.", systemImage: "hand.raised")
-                    .font(.caption).foregroundStyle(.secondary)
+                // A warning, as the window's: the check drags windows with the pointer.
+                Label("Don't use the mouse or keyboard until it ends.", systemImage: "exclamationmark.triangle")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
         }
         .padding(14)
@@ -1430,9 +1436,12 @@ struct CheckPanelView: View {
         }
     }
 
-    /// From the window states' move until the report: the check drags windows with the pointer.
+    /// From the window states' move until the report: the check drags
+    /// windows with the pointer. Not while it asks something of you (to
+    /// pause the app yourself), which needs them.
     private var movingWindows: Bool {
-        guard let report, report.state == .checking || report.state == .stopped, report.lines.contains("Window States") else { return false }
+        guard let report, report.state == .checking || report.state == .stopped, report.request == nil,
+              report.lines.contains("Window States") else { return false }
         return report.state == .stopped || ["Window States", "Page Buttons", "Press Test"].contains(report.lastHeading)
     }
 
