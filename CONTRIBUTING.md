@@ -25,8 +25,8 @@ security problem goes privately, as [SECURITY.md](SECURITY.md) says.
    - **`feature-`** for something new (`feature-qobuz`);
    - **`change-`** for a change to how something already works
      (`change-fade-length`).
-3. Check that it builds and its tests pass (README →
-   [Build and test](README.md#build-and-test)), and that it follows the
+3. Check that it builds and its tests pass (DEVELOPMENT.md →
+   [Build and test](DEVELOPMENT.md#build-and-test)), and that it follows the
    [style guide](STYLE_GUIDE.md).
 4. Open a pull request into **`wip`**, not `main`, saying what it changes
    and why (its template asks for that, and how you checked it).
@@ -39,9 +39,9 @@ reaches `main` with the next release.
 
 ## Where to look
 
-- **How AutoHush works and where things go:** README →
-  [For developers](README.md#for-developers), including what adding a media
+- **How AutoHush works and where things go:**
+  [DEVELOPMENT.md](DEVELOPMENT.md), including what adding a media
   player takes.
 - **How it looks and reads:** [STYLE_GUIDE.md](STYLE_GUIDE.md).
 - **Text people read:** written as `String(localized:)` with a comment for
-  translators (README → [Translations](README.md#translations)).
+  translators (DEVELOPMENT.md → [Translations](DEVELOPMENT.md#translations)).

@@ -332,8 +332,8 @@ their download symbol.
 
 ## Translations
 
-AutoHush is translated into 34 languages besides English. The README's
-[Translations](README.md#translations) section explains how; for style:
+AutoHush is translated into 34 languages besides English. DEVELOPMENT.md's
+[Translations](DEVELOPMENT.md#translations) section explains how; for style:
 
 - **Every change translates every language.** A new or changed English
   string is translated into all 34 before the change is done.

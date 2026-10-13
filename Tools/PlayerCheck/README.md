@@ -2,8 +2,8 @@
 
 Says whether AutoHush could control an app (pause it while another app
 plays, then play it again), and which kind of player it would be, so it can
-be added as the README's [Adding a media
-player](../../README.md#architecture) says. It reads the app from outside,
+be added as DEVELOPMENT.md's [Adding a media
+player](../../DEVELOPMENT.md#architecture) says. It reads the app from outside,
 as AutoHush would, then tests each way to control it, with the app's window
 in each state a player's window can be in. [Player Check](../PlayerCheckApp)
 does all of this from a window.
