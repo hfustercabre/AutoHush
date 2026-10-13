@@ -102,6 +102,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// The pause under way: the player's state is checked, then the music
     /// fades out and pauses.
     private var pauseTask: Task<Void, Never>?
+    /// The debounce the pending resume and pause wait on before they run;
+    /// `nil` for one that runs at once (`waitUntilIdle`).
+    private var pendingResumeWait: Task<Void, Never>?
+    private var pendingPauseWait: Task<Void, Never>?
 
     /// A resume is retried this often, this far apart, while the player does
     /// not answer, or doesn't do what it was told (a page that didn't follow
@@ -385,6 +389,29 @@ package actor PlaybackArbiter: PlaybackArbiting {
         while let pauseTask { await pauseTask.value }
     }
 
+    /// Waits until nothing is left running: the pause under way, and a
+    /// pending resume or pause whose debounce is over or that had none. One
+    /// still waiting on its debounce doesn't count. Tests use it before
+    /// checking what happened, or that nothing did; their manual scheduler
+    /// ends a debounce by cancelling it.
+    package func waitUntilIdle() async {
+        var finished: Set<Task<Void, Never>> = []
+        while true {
+            let running = [
+                pauseTask,
+                Self.isOver(pendingResumeWait) ? pendingResumeTask : nil,
+                Self.isOver(pendingPauseWait) ? pendingPauseTask : nil,
+            ].compactMap { $0 }.filter { !finished.contains($0) }
+            guard let next = running.first else { return }
+            await next.value
+            finished.insert(next)
+        }
+    }
+
+    private static func isOver(_ debounce: Task<Void, Never>?) -> Bool {
+        debounce?.isCancelled ?? true
+    }
+
     /// Pauses after `delay` if other apps are still playing then. A newer
     /// pause, an app starting or auto-pause going off calls it off.
     private func schedulePause(after delay: TimeInterval) {
@@ -392,6 +419,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         let id = UUID()
         pendingPauseID = id
         let wait = debounceScheduler.scheduleDebounce(after: delay)
+        pendingPauseWait = wait
         pendingPauseTask = Task { [weak self] in
             _ = await wait.value
             await self?.pauseIfStillPending(id: id)
@@ -401,6 +429,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private func pauseIfStillPending(id: UUID) {
         guard pendingPauseID == id else { return }
         pendingPauseTask = nil
+        pendingPauseWait = nil
         pendingPauseID = nil
         if !activeSources.isEmpty { startPause() }
     }
@@ -408,12 +437,14 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private func cancelPendingPause() {
         pendingPauseTask?.cancel()
         pendingPauseTask = nil
+        pendingPauseWait = nil
         pendingPauseID = nil
     }
 
     private func cancelPendingResume() {
         pendingResumeTask?.cancel()
         pendingResumeTask = nil
+        pendingResumeWait = nil
         pendingResumeID = nil
     }
 
@@ -546,6 +577,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         let id = UUID()
         pendingResumeID = id
         let debounceTask = delay.map { debounceScheduler.scheduleDebounce(after: $0) }
+        pendingResumeWait = debounceTask
         pendingResumeTask = Task { [weak self] in
             _ = await debounceTask?.value
             await self?.resumeIfStillPending(id: id, retriesLeft: retriesLeft)
@@ -585,6 +617,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         // Forget the pending resume without cancelling it: this may be running
         // inside it, and a cancelled task would rush the fade-in's steps.
         pendingResumeTask = nil
+        pendingResumeWait = nil
         pendingResumeID = nil
         pausedByUs = false
         do {

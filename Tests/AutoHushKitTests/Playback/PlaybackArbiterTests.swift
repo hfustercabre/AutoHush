@@ -14,8 +14,10 @@ struct PlaybackArbiterTests {
         await TestWait.until(condition)
     }
 
-    /// Gives work that hops between actors time to finish before checking
-    /// what happened (or that nothing more did).
+    /// For a test that holds the arbiter's work at a gate: gives the work
+    /// that isn't held time to hop between actors before checking what
+    /// happened, or that nothing more did. Elsewhere `waitUntilIdle()`
+    /// waits exactly as long as that work.
     private func settle() async {
         try? await Task.sleep(for: .milliseconds(50))
     }
@@ -88,7 +90,7 @@ struct PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "play"])
     }
 
@@ -101,7 +103,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         #expect(await player.muteIfPlayingAnywayCount == 1)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.commandLog.isEmpty)
     }
 
@@ -202,7 +204,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged(sourceID, playing: true)
         await arbiter.sourceChanged(sourceID, playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.state == .playing)
         #expect(await player.playCallCount == 1)
@@ -240,7 +242,7 @@ struct PlaybackArbiterTests {
             await scheduler.completeNext()
         }
         await waitUntil { await player.stateQueryCount == PlaybackArbiter.resumeRetries + 2 } // the pause's, the resume's, the retries
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
         #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries)
     }
@@ -278,7 +280,7 @@ struct PlaybackArbiterTests {
             await scheduler.completeNext()
         }
         await waitUntil { await player.playCallCount == PlaybackArbiter.resumeRetries + 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == PlaybackArbiter.resumeRetries + 1)
         #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries)
     }
@@ -296,7 +298,7 @@ struct PlaybackArbiterTests {
         await arbiter.setAsleep(true)
         await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false) // its sound stops as the Mac falls asleep
         await arbiter.setAsleep(false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
         #expect(scheduler.scheduledDelays.isEmpty)
         #expect(await player.state == .paused)
@@ -323,7 +325,7 @@ struct PlaybackArbiterTests {
         await arbiter.setAsleep(false)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
 
@@ -354,7 +356,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         #expect(await player.commandLog == ["mute"]) // told once awake, when it can act
         await arbiter.setAsleep(false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "forgetPause"])
     }
 
@@ -510,7 +512,7 @@ struct PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 0)
         #expect(await player.volumeLevel == 60)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
 
@@ -520,7 +522,7 @@ struct PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 0)
     }
@@ -533,7 +535,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("com.colliderli.iina", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 0)
     }
@@ -676,7 +678,7 @@ struct PlaybackArbiterTests {
 
         // When the source stops, the arbiter must not touch the player.
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
 
@@ -694,7 +696,7 @@ struct PlaybackArbiterTests {
         #expect(await nextState(from: stateStream.stream) == .musicIdle)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
 
@@ -712,7 +714,7 @@ struct PlaybackArbiterTests {
         _ = await nextState(from: stateStream.stream)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
 
@@ -725,7 +727,7 @@ struct PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.paused)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 1)
     }
@@ -757,7 +759,7 @@ struct PlaybackArbiterTests {
         await player.setUnansweredStateQueries(1)
         await arbiter.handlePlayerStateChange(.playing)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 0)
     }
@@ -771,7 +773,7 @@ struct PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.unknown)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 1)
     }
@@ -877,7 +879,7 @@ struct PlaybackArbiterTests {
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await arbiter.setAutoPauseEnabled(false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 1) // not a second time
     }
@@ -931,7 +933,7 @@ struct PlaybackArbiterTests {
         await arbiter.setAutoPauseEnabled(true) // e.g. a snooze ends
         await arbiter.sourceChanged("us.zoom.xos", playing: false)
         await scheduler.completeNext()
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.pauseCallCount == 0)
         #expect(await player.playCallCount == 0)
@@ -949,7 +951,7 @@ struct PlaybackArbiterTests {
         await arbiter.setAutoPauseEnabled(true)
         await arbiter.setAutoPauseEnabled(false)
         await scheduler.completeNext()
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.pauseCallCount == 0)
     }
@@ -968,7 +970,7 @@ struct PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
 
         await scheduler.completeNext() // the wait it called off
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.pauseCallCount == 1)
     }
 
@@ -1027,7 +1029,7 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true) // found again: the resume is called off
         #expect(await nextState(from: stateStream.stream) == .pausedByMonitor)
         await scheduler.completeNext() // the wait it called off
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
         #expect(await player.pauseCallCount == 0) // already paused
 
@@ -1043,7 +1045,7 @@ struct PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
         #expect(await !arbiter.takeOverPause()) // no pause to take over
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(scheduler.scheduledDelays.isEmpty)
         #expect(await player.playCallCount == 0)
     }
@@ -1166,7 +1168,7 @@ struct PlaybackArbiterTests {
         // The user quits the player, and no notification says so.
         await player.overrideState(.notRunning)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         let playCount = await player.playCallCount
         #expect(playCount == 0)
@@ -1182,12 +1184,12 @@ struct PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("com.colliderli.iina", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0) // IINA still plays
 
         await arbiter.sourceChanged("com.colliderli.iina", playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 1)
     }
 
@@ -1240,7 +1242,7 @@ struct PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await waitUntil { await player.playCallCount == 1 }
-        await settle()
+        await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["play"])
         #expect(await player.state == .playing)
     }
@@ -1272,7 +1274,7 @@ struct PlaybackArbiterTests {
         clock.advance(by: 0.5)
         await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true, heardSince: heard)
         await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1289,7 +1291,7 @@ struct PlaybackArbiterTests {
         clock.advance(by: 3 - secondsAfterHeard)
         await arbiter.sourceChanged("com.apple.podcasts", playing: true, heardSince: heard)
         await arbiter.sourceChanged("com.apple.podcasts", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1322,7 +1324,7 @@ struct PlaybackArbiterTests {
         await pausedElsewhere(player, arbiter)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        if isTakenOver { await waitUntil { await player.playCallCount == 1 } } else { await settle() }
+        if isTakenOver { await waitUntil { await player.playCallCount == 1 } } else { await arbiter.waitUntilIdle() }
 
         #expect(await player.playCallCount == (isTakenOver ? 1 : 0))
     }
@@ -1336,7 +1338,7 @@ struct PlaybackArbiterTests {
         clock.advance(by: 0.1)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1352,7 +1354,7 @@ struct PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.stopped)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1371,7 +1373,7 @@ struct PlaybackArbiterTests {
         await player.overrideState(.paused)
         await arbiter.handlePlayerStateChange(.paused) // and the user again, long after VLC started
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1394,7 +1396,7 @@ struct PlaybackArbiterTests {
         await waitUntil { await player.stateQueryCount == 2 } // after the one at start-up
         await arbiter.waitForPause()
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }
@@ -1414,7 +1416,7 @@ struct PlaybackArbiterTests {
         await pausedElsewhere(player, arbiter) // the user
         await arbiter.waitForPause()
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.pauseCallCount == 0)
         #expect(await player.playCallCount == 0)
@@ -1468,7 +1470,7 @@ struct PlaybackArbiterTests {
         await pausedElsewhere(player, arbiter)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await settle()
+        await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
     }

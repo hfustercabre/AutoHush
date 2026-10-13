@@ -58,6 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Runs while the user has said the player plays: once `learningPauseWait`
     /// is over, learning starts over.
     var learningTimer: Task<Void, Never>?
+    /// How `learningTimer` waits (tests end the wait themselves).
+    let learningSleep: @Sendable (Duration) async -> Void
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -151,6 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         },
         learnedWindowDelay: Duration = .seconds(1.5),
         learningPauseWait: Duration = .seconds(LearningStatus.pauseWait),
+        learningSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         permissionRetryInterval: TimeInterval = 3,
@@ -168,6 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.makeLearningWindow = makeLearningWindow
         self.learnedWindowDelay = learnedWindowDelay
         self.learningPauseWait = learningPauseWait
+        self.learningSleep = learningSleep
         self.webAppMaker = webAppMaker
         self.makeAddWebAppWindow = makeAddWebAppWindow
         self.openApp = openApp

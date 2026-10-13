@@ -95,7 +95,8 @@ struct AppDelegateTests {
         realBootstrap: Bool = false,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
-        learningPauseWait: Duration = .seconds(60)
+        learningPauseWait: Duration = .seconds(60),
+        learningSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) -> (AppDelegate, BootstrapCounter) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let counter = BootstrapCounter()
@@ -119,6 +120,7 @@ struct AppDelegateTests {
             openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
             learningPauseWait: learningPauseWait,
+            learningSleep: learningSleep,
             currentVersion: AppVersion("0.2.0"),
             permissionRetryInterval: 0.05,
             retryDelays: 0.02...0.08,
@@ -540,13 +542,15 @@ struct AppDelegateTests {
                                         status: .learning(hasPlayed: false))
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
         scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        let clock = ManualSleep()
+        let (sut, _) = makeSUT(scratch, learningSleep: clock.sleep)
         sut.chooseMusicPlayer(webApp.bundleID)
         webApp.pausesByItself(true)
         sut.learningStep(.itsPlaying)
         #expect(sut.settingsModel.learningPauseMode == .trying)
         await waitFor { sut.status.learning == .learned }
-        try? await Task.sleep(for: .milliseconds(150))
+        #expect(sut.learningTimer == nil) // no minute counts
+        clock.timeIsUp()
         #expect(sut.settingsModel.learningPauseMode != .failed)
         #expect(sut.settingsModel.learningPauseDeadline == nil)
         #expect(sut.settingsModel.learningNote == nil)
@@ -579,14 +583,16 @@ struct AppDelegateTests {
                                         status: .learning(hasPlayed: false))
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
         scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        let clock = ManualSleep()
+        let (sut, _) = makeSUT(scratch, learningSleep: clock.sleep)
         sut.chooseMusicPlayer(webApp.bundleID)
         webApp.learnAtTheLastMoment()
         sut.learningStep(.itsPlaying)
         await waitFor { sut.settingsModel.learningPauseMode == .failed }
         sut.learningStep(.pauseManually)
+        clock.timeIsUp() // the minute ends: It's Paused comes just then
         await waitFor { sut.status.learning == .learned }
-        try? await Task.sleep(for: .milliseconds(150))
+        await sut.learningTimer?.value
         #expect(webApp.restartCount == 0)
         #expect(sut.settingsModel.learningNote == nil)
     }
@@ -599,13 +605,16 @@ struct AppDelegateTests {
                                         status: .learning(hasPlayed: false))
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
         scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch, learningPauseWait: .milliseconds(50))
+        let clock = ManualSleep()
+        let (sut, _) = makeSUT(scratch, learningPauseWait: .seconds(42), learningSleep: clock.sleep)
         sut.chooseMusicPlayer(webApp.bundleID)
         sut.learningStep(.itsPlaying)
         await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        try? await Task.sleep(for: .milliseconds(150))
-        #expect(sut.settingsModel.learning == .learning(hasPlayed: true)) // no minute counts until Pause It Manually
+        #expect(sut.learningTimer == nil) // no minute counts until Pause It Manually
+        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
         sut.learningStep(.pauseManually)
+        await waitFor { clock.durations == [.seconds(42)] } // its minute counts
+        clock.timeIsUp()
         await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) }
         #expect(webApp.restartCount == 1)
         #expect(sut.settingsModel.learningNote == .timedOut)

@@ -167,8 +167,9 @@ extension AppDelegate {
         learningTimer?.cancel()
         setLearningPause(deadline: Date().addingTimeInterval(Double(learningPauseWait.components.seconds)), note: nil)
         let wait = learningPauseWait
+        let sleep = learningSleep
         learningTimer = Task { [weak self] in
-            try? await Task.sleep(for: wait)
+            await sleep(wait)
             guard !Task.isCancelled, let learner = self?.player as? any LearningMusicPlayer else { return }
             // It's Paused may have come at the last moment: learned, nothing to say.
             if await learner.restartLearning() { self?.setLearningPause(deadline: nil, note: .timedOut, mode: .automatic) }
