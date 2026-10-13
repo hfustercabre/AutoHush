@@ -1,8 +1,10 @@
 import Foundation
 import AutoHushKit
 
-/// Everything the menu bar shows, as plain values. `StatusMenuController`
-/// renders it; keeping the rules here makes them testable without AppKit.
+/// Everything the menu and the windows show, as plain values, kept in
+/// `AppState`. `StatusMenuController` renders it, and `SettingsModel` reads
+/// it for the windows; keeping the rules here makes them testable without
+/// AppKit.
 struct AppStatus: Equatable {
     /// Whether AutoHush pauses the music, as the menu and Settings show it.
     enum AutoPause: Equatable {
@@ -68,6 +70,9 @@ struct AppStatus: Equatable {
     var autoPause: AutoPause = .on
     /// Sources playing right now, ignored ones included.
     private(set) var activeSources: [AudioSource] = []
+    /// The apps that played sound, the most recent first, and the ones the
+    /// user ignores; never the chosen player, which doesn't pause itself.
+    var seenApps: [AudioSource] = []
     var ignoredApps: [AudioSource] = []
     /// A newer release found by the update check, and how far along it is.
     var updateOffer: UpdateOffer?

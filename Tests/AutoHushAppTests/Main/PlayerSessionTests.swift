@@ -31,7 +31,7 @@ struct PlayerSessionTests {
         var changes: [PlayerSession.State] = []
 
         func record(_ session: PlayerSession) {
-            session.didChange = { [unowned self] in self.changes.append($0) }
+            session.didChange = { [weak self] in self?.changes.append($0) }
         }
 
         func makeSession(_ chosen: (any MusicPlayer)?) -> PlayerSession {
@@ -41,8 +41,9 @@ struct PlayerSessionTests {
                 preferences: preferences,
                 settings: PlayerSessionTests.settings,
                 makeMonitoring: monitorings.make,
-                locateApp: { [unowned self] id in
-                    self.installed.contains(id) ? URL(fileURLWithPath: "/Applications/\(id).app") : nil
+                // Weak: a session may still be retrying a start once its test is over.
+                locateApp: { [weak self] id in
+                    self?.installed.contains(id) == true ? URL(fileURLWithPath: "/Applications/\(id).app") : nil
                 },
                 retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08)
             )

@@ -5,13 +5,16 @@ import AutoHushPlayers
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    /// What the menu bar shows; rendered by `statusMenu` once it exists.
-    private(set) var status = AppStatus() {
-        didSet {
-            statusMenu?.status = status
-            // Settings → General says it too.
-            if settingsModel?.statusLine != status.statusLine { settingsModel?.statusLine = status.statusLine }
-            if settingsModel?.statusNeedsAttention != status.needsAttention { settingsModel?.statusNeedsAttention = status.needsAttention }
+    /// The app's state, which the menu and the windows show.
+    let appState = AppState()
+    /// What the menu and the windows show, kept in `appState`; each change
+    /// goes to `statusMenu` too, once it exists, which renders its copy.
+    private(set) var status: AppStatus {
+        get { appState.status }
+        set {
+            guard newValue != appState.status else { return }
+            appState.status = newValue
+            statusMenu?.status = newValue
         }
     }
 
@@ -166,6 +169,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onSettingsChange: { [weak self] in self?.showUpdateSettings() }
         )
         settingsModel = SettingsModel(
+            state: appState,
+            appListOrder: preferences.appListOrder,
             launchAtLoginController: launchAtLoginController,
             actions: .init(
                 chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
@@ -195,8 +200,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
         settingsModel.currentVersion = currentVersion?.description
         settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
-        settingsModel.statusLine = status.statusLine
-        settingsModel.statusNeedsAttention = status.needsAttention
         showChosenPlayer()
         refreshPlayerOptions()
         showApps()
@@ -419,9 +422,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showApps() {
         let chosen = player?.bundleID
         let withoutPlayer = { (apps: [AudioSource]) in apps.filter { $0.id != chosen } }
-        status.ignoredApps = withoutPlayer(preferences.ignoredApps)
-        settingsModel.setApps(seen: withoutPlayer(preferences.seenApps), ignored: withoutPlayer(preferences.ignoredApps),
-                              order: preferences.appListOrder)
+        var shown = status
+        shown.seenApps = withoutPlayer(preferences.seenApps)
+        shown.ignoredApps = withoutPlayer(preferences.ignoredApps)
+        status = shown
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,
@@ -431,8 +435,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if setting != preferences.autoPause { preferences.autoPause = setting }
 
         status.autoPause = AppStatus.AutoPause(setting, now: now)
-        settingsModel.isAutoPauseOn = status.autoPause == .on
-        settingsModel.autoPauseNote = status.autoPause.settingsNote
         let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil
         scheduleAutoPauseUpdate(at: snoozeEnd.map { AppStatus.AutoPause.nextChange(snoozedUntil: $0, now: now) })
         session.settings = Self.monitoringSettings(preferences, now: now)
@@ -502,8 +504,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Settings, the steps in their windows; once learned, or with nothing
     /// to learn, the windows that show the steps close.
     func showLearning(_ learning: LearningStatus?) {
-        if status.learning != learning { status.learning = learning }
-        if settingsModel.learning != learning { settingsModel.learning = learning }
+        status.learning = learning
         followLearningPause(learning)
         if learning != nil, learning != .learned { return }
         // Learned (both steps ticked), or nothing to learn: the windows go.
@@ -533,10 +534,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsModel.learningPauseMode != mode { settingsModel.learningPauseMode = mode }
     }
 
-    /// Shows the chosen player in the menu and Settings.
+    /// Shows the chosen player in the menu and the windows.
     private func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
-        settingsModel.chosenPlayerID = player?.bundleID
         settingsModel.playerCanFade = player?.canFade ?? true
     }
 
@@ -546,8 +546,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// would, and controlled afresh once it's installed again.
     func refreshPlayerOptions() {
         let options = PlayerOption.list(players, locate: locateApp)
-        if status.playerOptions != options { status.playerOptions = options }
-        if settingsModel.playerOptions != options { settingsModel.playerOptions = options }
+        status.playerOptions = options
         forgetDeletedWebApps(among: options)
         guard let player else {
             showSession() // waiting for a player, among these

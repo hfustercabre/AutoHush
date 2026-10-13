@@ -34,8 +34,9 @@ The words used for the parts below are in the [glossary](GLOSSARY.md).
 
 ```text
 AppDelegate ── lifecycle, choosing the player, the windows, wiring features to the engine
+  ├── AppState ── the one AppStatus: what the menu and the windows show, written by AppDelegate only
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
-  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel
+  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by itself after a failed start, when it opens), checks access again, keeps the held pauses and the hand-over
         └── MonitoringPipeline ── one per start, started and torn down as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes its player
@@ -79,8 +80,9 @@ Sources/
     Main/                AppDelegate (wiring; its web app, permission and Diagnostics parts in
                          AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
                          player from its start until AutoHush quits), MonitoringPipeline
-                         (the engine for each start), the app-wide state: AppStatus (what the menu shows, with
-                         UpdateOffer) and SettingsModel (what Settings and the other windows show), then
+                         (the engine for each start), the app-wide state: AppState, which holds AppStatus (what
+                         the menu and the windows show, with UpdateOffer), and SettingsModel (what only
+                         Settings and the other windows show, and their actions), then
                          StatusPresentation (the status's icons and text), AppHealthState, PermissionCenter
                          (reads and asks for the permissions), OtherInstances (quits the copies opened before it),
                          MainMenu (the Mac's standard menu bar, while a window is open), HeldPauses (a player
@@ -138,7 +140,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 **Where things go:**
 
 - **`AutoHushKit`** has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
-- **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide state (`AppStatus` for the menu, `SettingsModel` for the windows). Features may use the engine, `General/` and that state, not each other: what several of them show lives in `General/`.
+- **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show). Features may use the engine, `General/` and that state, not each other: what several of them show lives in `General/`.
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
 - **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
 - **Text people read** lives in the app, never in the engine: mostly in `Main/StatusPresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.

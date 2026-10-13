@@ -11,8 +11,9 @@ struct SettingsModelTests {
         var calls: [String] = []
     }
 
-    private func makeModel(_ controller: MockLaunchAtLoginController, _ log: ActionLog = ActionLog()) -> SettingsModel {
-        SettingsModel(launchAtLoginController: controller, actions: .init(
+    private func makeModel(_ controller: MockLaunchAtLoginController, _ log: ActionLog = ActionLog(),
+                           order: AppListOrder = .standard) -> SettingsModel {
+        SettingsModel(appListOrder: order, launchAtLoginController: controller, actions: .init(
             chooseMusicPlayer: { log.calls.append("player \($0)") },
             setAutoPause: { log.calls.append("autoPause \($0)") },
             setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
@@ -26,6 +27,12 @@ struct SettingsModelTests {
             checkForUpdates: { log.calls.append("checkNow") },
             openNotificationSettings: { log.calls.append("notificationSettings") }
         ))
+    }
+
+    /// The apps as the app's state has them.
+    private func show(_ model: SettingsModel, seen: [AudioSource], ignored: [AudioSource]) {
+        model.state.status.seenApps = seen
+        model.state.status.ignoredApps = ignored
     }
 
     @Test("the version shows with its build number for About and Diagnostics, and not at all while unknown")
@@ -102,7 +109,7 @@ struct SettingsModelTests {
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
-        model.setApps(seen: [vlc, chrome], ignored: [AudioSource(id: vlc.id, name: "VLC"), zoom])
+        show(model, seen: [vlc, chrome], ignored: [AudioSource(id: vlc.id, name: "VLC"), zoom])
 
         #expect(model.apps.map(\.source.name) == ["VLC", "Google Chrome", "zoom.us"])
         #expect(model.apps.map(\.isIgnored) == [true, false, true])
@@ -119,7 +126,7 @@ struct SettingsModelTests {
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
         let arc = AudioSource(id: "company.thebrowser.Browser", name: "Arc")
         // Played most recently: Safari, VLC, Chrome, Arc; zoom was ignored without playing.
-        model.setApps(seen: [safari, vlc, chrome, arc], ignored: [vlc, zoom])
+        show(model, seen: [safari, vlc, chrome, arc], ignored: [vlc, zoom])
         func names(_ criterion: AppListOrder.Criterion, reversed: Bool = false) -> [String] {
             model.setAppListOrder(AppListOrder(criterion: criterion, isReversed: reversed))
             return model.apps.map(\.source.name)
@@ -135,7 +142,7 @@ struct SettingsModelTests {
 
         // New apps arrive in the chosen order.
         model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
-        model.setApps(seen: [chrome, safari], ignored: [])
+        show(model, seen: [chrome, safari], ignored: [])
         #expect(model.apps.map(\.source.name) == ["Safari", "Google Chrome"])
     }
 
@@ -146,7 +153,7 @@ struct SettingsModelTests {
         let facetime = AudioSource(id: "com.apple.FaceTime", name: "FaceTime")
         let musica = AudioSource(id: "com.example.musica", name: "Música")
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
-        model.setApps(seen: [facetime, safari, chrome, musica], ignored: [])
+        show(model, seen: [facetime, safari, chrome, musica], ignored: [])
         #expect(model.shownApps == model.apps) // closed
 
         model.appSearch = ""
@@ -163,7 +170,7 @@ struct SettingsModelTests {
         #expect(model.shownApps.map(\.source.name) == ["FaceTime", "Música", "Safari"])
     }
 
-    @Test("choosing an order is passed on once; the app's stored order is shown when it comes")
+    @Test("choosing an order is passed on once; the stored order is shown from the start")
     func appsOrderChoice() {
         let log = ActionLog()
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
@@ -173,9 +180,33 @@ struct SettingsModelTests {
         model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
         #expect(log.calls == ["order name true"])
 
-        model.setApps(seen: [], ignored: [], order: AppListOrder(criterion: .state))
-        #expect(model.appListOrder == AppListOrder(criterion: .state))
-        #expect(log.calls == ["order name true"]) // shown, not chosen again
+        let stored = ActionLog()
+        let reopened = makeModel(MockLaunchAtLoginController(isEnabled: false), stored, order: AppListOrder(criterion: .state))
+        #expect(reopened.appListOrder == AppListOrder(criterion: .state))
+        #expect(stored.calls.isEmpty) // shown, not chosen again
+    }
+
+    @Test("what the menu shows too comes from the app's state, and follows it")
+    func readsTheAppState() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
+                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
+        model.state.status.playerOptions = [spotify]
+        model.state.status.chosenPlayerID = spotify.bundleID
+        #expect(model.playerOptions == [spotify])
+        #expect(model.chosenPlayerID == spotify.bundleID && model.chosenPlayerName == "Spotify")
+        #expect(!model.canLearnControlsAgain)
+
+        model.state.status.setHealth(.needsPermission(.automation(player: "Spotify")))
+        #expect(!model.statusLine.isEmpty && model.statusLine == model.state.status.statusLine)
+        #expect(model.statusNeedsAttention)
+
+        model.state.status.autoPause = .snoozed("until 15:30")
+        #expect(!model.isAutoPauseOn)
+        #expect(model.autoPauseNote == "Turned off until 15:30.")
+
+        model.state.status.learning = .learned
+        #expect(model.learning == .learned && model.canLearnControlsAgain)
     }
 
     @Test("actions are forwarded; timings are clamped first")
@@ -286,7 +317,7 @@ struct SettingsModelTests {
         let log = ActionLog()
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-        model.setApps(seen: [chrome], ignored: [])
+        show(model, seen: [chrome], ignored: [])
         model.toggleSelection(of: chrome.id)
         #expect(model.selectedApp?.id == chrome.id)
 
@@ -301,7 +332,7 @@ struct SettingsModelTests {
         let log = ActionLog()
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
-        model.setApps(seen: [zoom], ignored: [zoom])
+        show(model, seen: [zoom], ignored: [zoom])
         let row = model.apps[0]
 
         model.remove(row)
@@ -325,7 +356,7 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        model.setApps(seen: [safari, vlc], ignored: [])
+        show(model, seen: [safari, vlc], ignored: [])
         model.toggleSelection(of: vlc.id)
         model.toggleSelection(of: vlc.id)
         #expect(model.selectedApp == nil)

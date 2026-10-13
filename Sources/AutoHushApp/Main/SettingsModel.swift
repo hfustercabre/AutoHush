@@ -2,9 +2,11 @@ import Foundation
 import Observation
 import AutoHushKit
 
-/// What the Settings window shows and edits. `AppDelegate` keeps it in sync
-/// with the app's state and performs the actions; launch at login is handled
-/// here directly.
+/// What the Settings window shows and edits, and the welcome, learning and
+/// Add a Web App windows with it. What the menu shows too (the chosen
+/// player, the status line, Auto-Pause, learning, the apps) it reads from
+/// `AppState`; the rest `AppDelegate` keeps in sync here, and performs the
+/// actions. Launch at login is handled here directly.
 @MainActor
 @Observable
 final class SettingsModel {
@@ -54,17 +56,10 @@ final class SettingsModel {
     private(set) var launchAtLoginError: String?
     /// macOS waits for the user to allow AutoHush in Login Items.
     private(set) var launchAtLoginNeedsApproval = false
-    /// The music players to choose from (also in the welcome window).
-    var playerOptions: [PlayerOption] = []
-    /// The bundle ID of the chosen player; `nil` while none is chosen.
-    var chosenPlayerID: String?
     /// Whether AutoHush can fade the chosen player; the fade settings are
     /// dimmed when it can't.
     var playerCanFade = true
 
-    /// How far AutoHush has come learning to control the chosen player;
-    /// `nil` for a player it controls without learning.
-    var learning: LearningStatus?
     /// Once the user said the chosen player plays: when learning starts
     /// over without the pause.
     var learningPauseDeadline: Date?
@@ -79,26 +74,29 @@ final class SettingsModel {
     /// The welcome window shows what the chosen player needs, after its list.
     var welcomeAsksPermissions = false
 
+    // What the menu shows too, from the app's state.
+    /// The music players to choose from (also in the welcome window).
+    var playerOptions: [PlayerOption] { state.status.playerOptions }
+    /// The bundle ID of the chosen player; `nil` while none is chosen.
+    var chosenPlayerID: String? { state.status.chosenPlayerID }
     /// The chosen player as it's offered.
-    var chosenPlayer: PlayerOption? {
-        playerOptions.first { $0.bundleID == chosenPlayerID }
-    }
-
+    var chosenPlayer: PlayerOption? { state.status.chosenPlayer }
     /// The chosen player's name, e.g. "Spotify".
     var chosenPlayerName: String? { chosenPlayer?.name }
+    /// How far AutoHush has come learning to control the chosen player;
+    /// `nil` for a player it controls without learning.
+    var learning: LearningStatus? { state.status.learning }
+    /// Its controls can be learned afresh (see `AppStatus`).
+    var canLearnControlsAgain: Bool { state.status.canLearnControlsAgain }
     /// What the music player is doing, as the menu's card says it, e.g.
     /// "Paused — Safari is playing"; orange (`statusNeedsAttention`) when
     /// something needs the user.
-    var statusLine = ""
-    var statusNeedsAttention = false
-
-    /// The chosen player learns its controls (a web app): they can be learned
-    /// afresh, once learned (they may have been learned wrong) or before
-    /// (the learning window was closed halfway).
-    var canLearnControlsAgain: Bool { chosenPlayer != nil && learning != nil }
-    var isAutoPauseOn = true
+    var statusLine: String { state.status.statusLine }
+    var statusNeedsAttention: Bool { state.status.needsAttention }
+    var isAutoPauseOn: Bool { state.status.autoPause == .on }
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
-    var autoPauseNote: String?
+    var autoPauseNote: String? { state.status.autoPause.settingsNote }
+
     var detectionMethod = DetectionMethod.audioLevels
     var checksForUpdatesAutomatically = true
     /// What automatic checks lead to: notify, download or install.
@@ -132,11 +130,14 @@ final class SettingsModel {
     var lastUpdateCheck: Date?
 
     // Apps
-    /// The apps, in `appListOrder`.
-    private(set) var apps: [AppRow] = []
+    /// The apps that played sound, the most recent first, plus the ignored
+    /// ones, in `appListOrder`.
+    var apps: [AppRow] {
+        Self.ordered(Self.rows(seen: state.status.seenApps, ignored: state.status.ignoredApps), by: appListOrder)
+    }
     /// How the apps are ordered; the most recent first unless the user
     /// chose otherwise.
-    private(set) var appListOrder = AppListOrder.standard
+    private(set) var appListOrder: AppListOrder
     /// The search in Settings → Apps: `nil` while it's closed. It's closed
     /// again each time Settings opens.
     var appSearch: String?
@@ -194,10 +195,15 @@ final class SettingsModel {
     /// captures audio, so macOS never shows the purple recording indicator.
     var isAntiDotMode: Bool { detectionMethod != .audioLevels }
 
+    /// What the menu shows too.
+    @ObservationIgnored let state: AppState
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
     @ObservationIgnored private let actions: Actions
 
-    init(launchAtLoginController: any LaunchAtLoginControlling, actions: Actions) {
+    init(state: AppState = AppState(), appListOrder: AppListOrder = .standard,
+         launchAtLoginController: any LaunchAtLoginControlling, actions: Actions) {
+        self.state = state
+        self.appListOrder = appListOrder
         self.launchAtLoginController = launchAtLoginController
         self.actions = actions
         refreshLaunchAtLogin()
@@ -275,7 +281,6 @@ final class SettingsModel {
     func setAppListOrder(_ order: AppListOrder) {
         guard order != appListOrder else { return }
         appListOrder = order
-        apps = Self.ordered(apps, by: order)
         actions.setAppListOrder(order)
     }
     func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
@@ -345,12 +350,11 @@ final class SettingsModel {
         setTimings(timings.withDefaultFades)
     }
 
-    // MARK: - Updates from the app
+    // MARK: - The apps' rows
 
-    /// Apps that have played audio, the most recent first, plus ignored
-    /// apps, shown in `order` (the one already chosen when `nil`).
-    func setApps(seen: [AudioSource], ignored: [AudioSource], order: AppListOrder? = nil) {
-        if let order { appListOrder = order }
+    /// A row for each app that played audio, ranked the most recent first,
+    /// then one for each ignored app that never played.
+    static func rows(seen: [AudioSource], ignored: [AudioSource]) -> [AppRow] {
         let ignoredIDs = Set(ignored.map(\.id))
         var rows = seen.enumerated().map {
             AppRow(source: $0.element, isIgnored: ignoredIDs.contains($0.element.id), playedRank: $0.offset)
@@ -358,7 +362,7 @@ final class SettingsModel {
         for app in ignored where !rows.contains(where: { $0.id == app.id }) {
             rows.append(AppRow(source: app, isIgnored: true))
         }
-        apps = Self.ordered(rows, by: appListOrder)
+        return rows
     }
 
     /// The rows in `order`. Ties, and the apps that never played, go by name;

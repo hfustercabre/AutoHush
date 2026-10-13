@@ -34,16 +34,16 @@ struct WindowTitleTests {
     @Test("the learning window's title names the chosen player, and follows it")
     func learningTitle() async {
         let model = makeModel()
-        model.playerOptions = [
+        model.state.status.playerOptions = [
             PlayerOption(bundleID: "com.apple.Safari.WebApp.A", name: "YT Music", appURL: URL(fileURLWithPath: "/Applications/A.app"),
                          kind: .safariWebApp),
             PlayerOption(bundleID: "com.apple.Safari.WebApp.B", name: "Deezer", appURL: URL(fileURLWithPath: "/Applications/B.app"),
                          kind: .safariWebApp),
         ]
-        model.chosenPlayerID = "com.apple.Safari.WebApp.A"
+        model.state.status.chosenPlayerID = "com.apple.Safari.WebApp.A"
         let sut = LearningWindowController(model: model)
         #expect(sut.window?.title == "Learn YT Music’s Controls")
-        model.chosenPlayerID = "com.apple.Safari.WebApp.B"
+        model.state.status.chosenPlayerID = "com.apple.Safari.WebApp.B"
         await TestWait.until { sut.window?.title == "Learn Deezer’s Controls" }
         #expect(sut.window?.title == "Learn Deezer’s Controls")
     }

@@ -25,7 +25,19 @@ tried again by itself. _Avoid_: bootstrap.
 runs, and if not, why: starting, ready, not running or not installed,
 retrying, a permission needed, or failed. With no player chosen, it asks
 for one. The menu's status line says it. _Avoid_: status (that's
-everything the menu shows, `AppStatus`).
+everything the menu and the windows show, `AppStatus`).
+
+**Status** (`AppStatus`): everything the menu and the windows show about
+AutoHush, as one value: the chosen player and the players to choose from,
+the health, the music's state, the apps playing, seen and ignored,
+Auto-Pause, learning, an update found. Its rules turn it into words and
+icons: the status line, its orange, the menu bar icon.
+
+**App state** (`AppState`): the one place the status is kept. AppDelegate
+writes it; Settings and the welcome, learning and Add a Web App windows
+read it; the menu gets a copy each time it changes (its card follows it
+while open, its rows when it next opens). _Avoid_: model (Settings' model is the windows' own: what they
+alone show, and their actions).
 
 **Monitoring** (`MonitoringPipeline`): the engine of one start. It follows
 which apps play, decides when to pause and resume the player, and does it.
