@@ -35,6 +35,7 @@ The words used for the parts below are in the [glossary](GLOSSARY.md).
 ```text
 AppDelegate ── lifecycle, choosing the player, the windows, wiring features to the engine
   ├── AppState ── the one AppStatus: what the menu and the windows show, written by AppDelegate only
+  ├── UserSettings ── the user's settings (Auto-Pause and its snooze, the apps, timings, detection), stored in Preferences
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
@@ -81,7 +82,8 @@ Sources/
                          AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
                          player from its start until AutoHush quits), LearningSession (learning a web
                          app's controls with the user), WindowWatch (what the open windows show,
-                         followed once a second), MonitoringPipeline
+                         followed once a second), UserSettings (the user's settings), AppActions (what only
+                         AppDelegate does, for the windows and the menu), MonitoringPipeline
                          (the engine for each start), the app-wide state: AppState, which holds AppStatus (what
                          the menu and the windows show, with UpdateOffer), and SettingsModel (what only
                          Settings and the other windows show, and their actions), then

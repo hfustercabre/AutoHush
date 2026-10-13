@@ -21,8 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenu: StatusMenuController?
     /// The chosen player, from its start until AutoHush quits.
     let session: PlayerSession
+    /// The user's settings: Auto-Pause, the apps, the timings, detection.
+    let userSettings: UserSettings
     let preferences: Preferences
-    private var snoozeTimer: Timer?
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
@@ -55,7 +56,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
-    private let updateNotifier: any UpdateNotifying
     private var playerLaunchObserver: (any NSObjectProtocol)?
     /// The Mac going to sleep and waking up.
     private var sleepObservers: [any NSObjectProtocol] = []
@@ -128,22 +128,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.openApp = openApp
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
+        userSettings = UserSettings(preferences: preferences)
         session = PlayerSession(
             player: players.player(bundleID: preferences.musicPlayer),
             players: players,
             preferences: preferences,
-            settings: Self.monitoringSettings(preferences),
+            settings: userSettings.state.monitoring,
             makeMonitoring: makeMonitoring,
             locateApp: locateApp,
             retries: retries
         )
-        self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
         self.permissionCenter = permissionCenter
         super.init()
         session.didChange = { [weak self] _ in self?.showSession() }
+        userSettings.didChange = { [weak self] in self?.showUserSettings($0) }
         learning.didChange = { [weak self] in self?.showLearning($0) }
         updates = UpdateController(
             checker: updateChecker,
@@ -160,31 +161,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         settingsModel = SettingsModel(
             state: appState,
-            appListOrder: preferences.appListOrder,
-            launchAtLoginController: launchAtLoginController,
-            actions: .init(
-                chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
-                setAutoPause: { [weak self] in self?.setAutoPause($0) },
-                setIgnored: { [weak self] in self?.setIgnored($0, $1) },
-                forgetApp: { [weak self] in self?.forget($0) },
-                forgetAllApps: { [weak self] in self?.forgetAllApps() },
-                setAppListOrder: { [weak self] in self?.preferences.appListOrder = $0 },
-                setTimings: { [weak self] in self?.setTimings($0) },
-                setDetectionMethod: { [weak self] in self?.setDetectionMethod($0) },
-                setChecksForUpdates: { [weak self] in self?.setChecksForUpdatesAutomatically($0) },
-                setAutomaticUpdates: { [weak self] in self?.setAutomaticUpdates($0) },
-                checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
-                openNotificationSettings: { SystemSettingsPane.notifications.open() },
-                refreshDiagnostics: { [weak self] in self?.refreshDiagnostics() },
-                addWebApp: { [weak self] in self?.showAddWebApp() },
-                learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
-                learningStep: { [weak self] in self?.learning.step($0) },
-                requestPermission: { [weak self] in self?.requestPermission($0) },
-                finishWelcome: { [weak self] in self?.finishWelcome() }
-            )
+            settings: userSettings,
+            updates: updates,
+            learningSession: learning,
+            actions: self,
+            launchAtLoginController: launchAtLoginController
         )
-        settingsModel.timings = preferences.timings
-        settingsModel.detectionMethod = preferences.detectionMethod
         settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
         settingsModel.automaticUpdates = preferences.automaticUpdates
         settingsModel.updateInstallNote = updates.installUnavailability?.explanation
@@ -196,8 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerWatchedWindows()
         showChosenPlayer()
         refreshPlayerOptions()
-        showApps()
-        applyAutoPause()
+        showUserSettings(userSettings.state)
         learning.follow(player)
         addWebAppModel.exampleAddress = players.exampleWebAddress
         addWebAppModel.countrySites = players.countrySites
@@ -212,29 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() })
-        statusMenu = StatusMenuController(
-            status: status,
-            actions: .init(
-                toggleAutoPause: { [weak self] in self?.toggleAutoPause() },
-                snooze: { [weak self] in self?.snooze($0) },
-                chooseMusicPlayer: { [weak self] in self?.chooseMusicPlayer($0) },
-                addWebApp: { [weak self] in self?.showAddWebApp() },
-                learnControlsAgain: { [weak self] in self?.learnControlsAgain() },
-                menuWillOpen: { [weak self] in self?.menuWillOpen() },
-                setIgnored: { [weak self] in self?.setIgnored($0, $1) },
-                resolveWarning: { [weak self] in self?.requestPermission($0) },
-                reopen: { [weak self] in self?.reopen() },
-                useAntiDotMode: { [weak self] in self?.settingsModel.useAntiDotMode() },
-                retry: { [weak self] in self?.retry() },
-                openSettings: { [weak self] in self?.openSettings() },
-                showDiagnostics: { [weak self] in self?.showDiagnostics() },
-                showAvailableUpdate: { [weak self] in self?.updates.presentAvailableUpdate() },
-                checkForUpdates: { [weak self] in self?.updates.checkFromUser() },
-                showAbout: { [weak self] in self?.openSettings(page: .about) },
-                showControlError: { [weak self] in self?.showControlError() },
-                quit: { NSApp.terminate(nil) }
-            )
-        )
+        statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
+                                          updates: updates, actions: self)
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
         registerSleepObservers()
@@ -294,7 +254,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shown.detection = state.detection
         shown.controlError = state.controlError
         if shown != status { status = shown }
-        if sourcesChanged { showApps() }
+        // The monitoring recorded the apps it heard: Settings → Apps lists them.
+        if sourcesChanged { userSettings.appsSeenChanged() }
     }
 
     /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
@@ -312,102 +273,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         terminate()
     }
 
-    // MARK: - Auto-pause and ignored apps
+    // MARK: - The user's settings and the updates'
 
-    func toggleAutoPause(now: Date = Date()) {
-        let isActive = preferences.autoPause.isActive(at: now)
-        // Turning it on also ends a snooze; turning it off is indefinite.
-        preferences.autoPause = AutoPauseSetting(isEnabled: !isActive, snoozedUntil: nil)
-        applyAutoPause(now: now)
-    }
-
-    func snooze(_ snooze: AutoPauseSnooze, now: Date = Date()) {
-        preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: snooze.endDate(from: now))
-        applyAutoPause(now: now)
-    }
-
-    func setAutoPause(_ on: Bool) {
-        preferences.autoPause = AutoPauseSetting(isEnabled: on, snoozedUntil: nil)
-        applyAutoPause()
-    }
-
-    func setIgnored(_ source: AudioSource, _ ignored: Bool) {
-        // Keep the app (with its icon) listed in Settings → Apps, where it
-        // was: switching it isn't playing.
-        if source.bundlePath != nil { preferences.keepSeen(source) }
-        var apps = preferences.ignoredApps.filter { $0.id != source.id }
-        if ignored { apps.append(AudioSource(id: source.id, name: source.name)) }
-        applyIgnoredApps(apps)
-    }
-
-    /// Removes an app from Settings → Apps; a forgotten app is no longer ignored.
-    func forget(_ source: AudioSource) {
-        preferences.seenApps.removeAll { $0.id == source.id }
-        applyIgnoredApps(preferences.ignoredApps.filter { $0.id != source.id })
-    }
-
-    /// Empties Settings → Apps: every app is forgotten and none is ignored
-    /// any more. Apps reappear as they play audio.
-    func forgetAllApps() {
-        preferences.seenApps = []
-        applyIgnoredApps([])
-    }
-
-    func setTimings(_ timings: TimingSettings) {
-        preferences.timings = timings
-        settingsModel.timings = preferences.timings
-        session.settings = Self.monitoringSettings(preferences)
-    }
-
-    func setChecksForUpdatesAutomatically(_ enabled: Bool) {
-        updates.checksAutomatically = enabled
-        settingsModel.checksForUpdatesAutomatically = enabled
-        if enabled { Task { await updates.runAutomaticTasks() } }
-    }
-
-    /// Shows how a check from Settings is going, and when updates were last
-    /// checked for (every check reports here).
-    private func showUpdateStatus(_ status: String) {
-        settingsModel.updateStatus = status
-        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
-    }
-
-    /// Shows the update settings as they are, after AutoHush changed them.
-    private func showUpdateSettings() {
-        settingsModel.checksForUpdatesAutomatically = updates.checksAutomatically
-        settingsModel.automaticUpdates = updates.mode
-    }
-
-    /// Stores what automatic checks lead to, and acts on an update already
-    /// found the new way (e.g. downloads it). A choice that notifies asks for
-    /// permission to, if the user hasn't answered yet.
-    func setAutomaticUpdates(_ mode: AutomaticUpdates) {
-        updates.mode = mode
-        settingsModel.automaticUpdates = mode
-        if mode != .install { updateNotifier.requestPermission() }
-        Task { await updates.runAutomaticTasks() }
-    }
-
-    func setDetectionMethod(_ method: DetectionMethod) {
-        preferences.detectionMethod = method
-        settingsModel.detectionMethod = method
-        session.settings = Self.monitoringSettings(preferences)
-    }
-
-    /// Stores the ignored apps and passes them to the menu, the monitor and Settings.
-    private func applyIgnoredApps(_ apps: [AudioSource]) {
-        preferences.ignoredApps = apps
-        session.settings = Self.monitoringSettings(preferences)
+    /// Shows the user's settings in the menu and Settings, and passes what
+    /// the monitoring follows on to the player session.
+    private func showUserSettings(_ settings: UserSettings.State) {
+        status.autoPause = settings.autoPause
         showApps()
-    }
-
-    /// What the chosen player's monitoring follows, as the preferences say
-    /// at `now`.
-    private static func monitoringSettings(_ preferences: Preferences, now: Date = Date()) -> MonitoringSettings {
-        MonitoringSettings(autoPause: preferences.autoPause.isActive(at: now),
-                           ignored: Set(preferences.ignoredApps.map(\.id)),
-                           timings: preferences.timings,
-                           detection: preferences.detectionMethod)
+        session.settings = settings.monitoring
+        if settingsModel.timings != settings.timings { settingsModel.timings = settings.timings }
+        if settingsModel.detectionMethod != settings.detection { settingsModel.detectionMethod = settings.detection }
+        if settingsModel.appListOrder != settings.listOrder { settingsModel.appListOrder = settings.listOrder }
     }
 
     /// Shows the ignored apps in the menu, and the apps seen and ignored in
@@ -417,34 +293,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let chosen = player?.bundleID
         let withoutPlayer = { (apps: [AudioSource]) in apps.filter { $0.id != chosen } }
         var shown = status
-        shown.seenApps = withoutPlayer(preferences.seenApps)
-        shown.ignoredApps = withoutPlayer(preferences.ignoredApps)
+        shown.seenApps = withoutPlayer(userSettings.state.seenApps)
+        shown.ignoredApps = withoutPlayer(userSettings.state.ignoredApps)
         status = shown
     }
 
-    /// Derives the effective auto-pause state from the preferences, shows it,
-    /// passes it to the monitoring and schedules its next change.
-    private func applyAutoPause(now: Date = Date()) {
-        let setting = preferences.autoPause.clearingExpiredSnooze(at: now)
-        if setting != preferences.autoPause { preferences.autoPause = setting }
-
-        status.autoPause = AppStatus.AutoPause(setting, now: now)
-        let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil
-        scheduleAutoPauseUpdate(at: snoozeEnd.map { AppStatus.AutoPause.nextChange(snoozedUntil: $0, now: now) })
-        session.settings = Self.monitoringSettings(preferences, now: now)
+    /// Shows how a check from Settings is going, and when updates were last
+    /// checked for (every check reports here).
+    private func showUpdateStatus(_ status: String) {
+        settingsModel.updateStatus = status
+        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
     }
 
-    /// Applies auto-pause again at `date`: when the snooze ends, or at midnight
-    /// so the menu's "until tomorrow 8:00" becomes "until 8:00" (`nil`: no snooze).
-    private func scheduleAutoPauseUpdate(at date: Date?) {
-        snoozeTimer?.invalidate()
-        snoozeTimer = nil
-        guard let date else { return }
-        let timer = Timer(fire: date, interval: 0, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.applyAutoPause() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        snoozeTimer = timer
+    /// Shows the update settings as they are, after the user or AutoHush
+    /// changed them.
+    private func showUpdateSettings() {
+        settingsModel.checksForUpdatesAutomatically = updates.checksAutomatically
+        settingsModel.automaticUpdates = updates.mode
     }
 
     // MARK: - Music player
@@ -455,7 +320,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// user is moving to another one. A player AutoHush must learn opens the
     /// learning window, unless another window shows the steps. A suggested
     /// web app opens "Add a Web App", filled in with its address.
-    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true) {
+    func chooseMusicPlayer(_ bundleID: String) {
+        chooseMusicPlayer(bundleID, showsLearningWindow: true)
+    }
+
+    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool) {
         refreshPlayerOptions()
         if let address = status.playerOptions.first(where: { $0.bundleID == bundleID })?.webAddress {
             showAddWebApp(address: address)
@@ -685,7 +554,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu actions
 
-    private func openSettings(page: SettingsWindowController.Page? = nil) {
+    func openSettings(page: SettingsWindowController.Page? = nil) {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
@@ -745,20 +614,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The info button after the card's line: why the player couldn't be
     /// controlled (also in Settings → Diagnostics, as "Last error").
-    private func showControlError() {
+    func showControlError() {
         guard let alert = status.controlErrorAlert else { return }
         InfoAlert.show(alert.title, alert.message)
-    }
-
-    /// ⌥-click on Settings in the menu: Settings, on the Diagnostics tab.
-    private func showDiagnostics() {
-        openSettings(page: .diagnostics)
-    }
-
-    /// Retry, on the menu's card after a failed start: starts over at once,
-    /// with the waits between automatic tries back to the shortest.
-    private func retry() {
-        session.retry()
     }
 
     // MARK: - Updates
@@ -798,4 +656,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             && statusMenu?.isMenuOpen != true
             && !NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey }
     }
+}
+
+// MARK: - What only AppDelegate does
+
+extension AppDelegate: AppActions {
+    func openAddWebApp() { showAddWebApp() }
+    func reopenAutoHush() { reopen() }
+    func openNotificationSettings() { SystemSettingsPane.notifications.open() }
+    func quit() { NSApp.terminate(nil) }
 }

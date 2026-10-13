@@ -5,42 +5,13 @@ import AutoHushKit
 /// What the Settings window shows and edits, and the welcome, learning and
 /// Add a Web App windows with it. What the app's state holds (the chosen
 /// player, the status line, Auto-Pause, learning and its pause, the apps)
-/// it reads from `AppState`; the rest `AppDelegate` keeps in sync here,
-/// and performs the actions. Launch at login is handled here directly.
+/// it reads from `AppState`; the rest `AppDelegate` keeps in sync here. The
+/// views' actions go to the modules that own them (`settings`, `updates`,
+/// `learningSession`), or to `actions` for what only AppDelegate does. Launch at
+/// login is handled here directly.
 @MainActor
 @Observable
 final class SettingsModel {
-    /// What changing a setting does; `AppDelegate` provides them.
-    struct Actions {
-        var chooseMusicPlayer: @MainActor (String) -> Void
-        var setAutoPause: @MainActor (Bool) -> Void
-        var setIgnored: @MainActor (AudioSource, Bool) -> Void
-        var forgetApp: @MainActor (AudioSource) -> Void
-        var forgetAllApps: @MainActor () -> Void
-        var setAppListOrder: @MainActor (AppListOrder) -> Void = { _ in }
-        var setTimings: @MainActor (TimingSettings) -> Void
-        var setDetectionMethod: @MainActor (DetectionMethod) -> Void
-        var setChecksForUpdates: @MainActor (Bool) -> Void
-        var setAutomaticUpdates: @MainActor (AutomaticUpdates) -> Void
-        var checkForUpdates: @MainActor () -> Void
-        var openNotificationSettings: @MainActor () -> Void
-        /// Brings `diagnostics` up to date.
-        var refreshDiagnostics: @MainActor () -> Void = {}
-        /// Opens the "Add a Web App" window.
-        var addWebApp: @MainActor () -> Void = {}
-        /// Learns the chosen player's controls in a new learning window: what
-        /// it learned keeps working until the user says it plays there.
-        var learnControlsAgain: @MainActor () -> Void = {}
-        /// The user says, while AutoHush learns the player, that it plays
-        /// (It's Playing) or that it's paused (It's Paused).
-        var learningStep: @MainActor (StepButton) -> Void = { _ in }
-        /// Asks for a missing permission: macOS's prompt, System Settings,
-        /// opening the player, or reopening AutoHush (`PermissionCenter`).
-        var requestPermission: @MainActor (Permission) -> Void = { _ in }
-        /// The welcome window is done: the player chosen, what it needs allowed.
-        var finishWelcome: @MainActor () -> Void = {}
-    }
-
     /// One app in Settings → Apps, and whether it is ignored.
     struct AppRow: Identifiable, Equatable {
         let source: AudioSource
@@ -97,7 +68,7 @@ final class SettingsModel {
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String? { state.status.autoPause.settingsNote }
 
-    var detectionMethod = DetectionMethod.audioLevels
+    var detectionMethod: DetectionMethod
     var checksForUpdatesAutomatically = true
     /// What automatic checks lead to: notify, download or install.
     var automaticUpdates = AutomaticUpdates.install
@@ -137,7 +108,7 @@ final class SettingsModel {
     }
     /// How the apps are ordered; the most recent first unless the user
     /// chose otherwise.
-    private(set) var appListOrder: AppListOrder
+    var appListOrder: AppListOrder
     /// The search in Settings → Apps: `nil` while it's closed. It's closed
     /// again each time Settings opens.
     var appSearch: String?
@@ -165,7 +136,7 @@ final class SettingsModel {
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
     // Detection and Fades
-    var timings = TimingSettings.defaults
+    var timings: TimingSettings
 
     /// Detection's timings shown (pause after, resume after, and the
     /// silence threshold while AntiDot mode is off) are their defaults, so
@@ -197,15 +168,29 @@ final class SettingsModel {
 
     /// What the menu shows too, and learning's pause.
     @ObservationIgnored let state: AppState
+    /// The user's settings: Settings changes them there.
+    @ObservationIgnored let settings: UserSettings
+    /// Update checks, and their settings.
+    @ObservationIgnored let updates: any UpdateCommands
+    /// Learning the chosen web app's controls: its windows' steps.
+    @ObservationIgnored let learningSession: LearningSession
+    /// What only AppDelegate does: choosing a player, its windows, the
+    /// permissions.
+    @ObservationIgnored weak var actions: (any AppActions)?
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
-    @ObservationIgnored private let actions: Actions
 
-    init(state: AppState = AppState(), appListOrder: AppListOrder = .standard,
-         launchAtLoginController: any LaunchAtLoginControlling, actions: Actions) {
+    init(state: AppState = AppState(), settings: UserSettings, updates: any UpdateCommands,
+         learningSession: LearningSession = LearningSession(), actions: (any AppActions)?,
+         launchAtLoginController: any LaunchAtLoginControlling) {
         self.state = state
-        self.appListOrder = appListOrder
-        self.launchAtLoginController = launchAtLoginController
+        self.settings = settings
+        self.updates = updates
+        self.learningSession = learningSession
         self.actions = actions
+        self.launchAtLoginController = launchAtLoginController
+        appListOrder = settings.state.listOrder
+        timings = settings.state.timings
+        detectionMethod = settings.state.detection
         refreshLaunchAtLogin()
     }
 
@@ -232,15 +217,7 @@ final class SettingsModel {
         launchAtLoginController.openSystemSettings()
     }
 
-    // MARK: - Forwarded actions
-
-    func chooseMusicPlayer(_ bundleID: String) { actions.chooseMusicPlayer(bundleID) }
-    func addWebApp() { actions.addWebApp() }
-    func learnControlsAgain() { actions.learnControlsAgain() }
-    func learningStep(_ button: StepButton) { actions.learningStep(button) }
-    func setAutoPause(_ on: Bool) { actions.setAutoPause(on) }
-    func setPausesMusic(_ pauses: Bool, for source: AudioSource) { actions.setIgnored(source, !pauses) }
-    func forget(_ source: AudioSource) { actions.forgetApp(source) }
+    // MARK: - Apps
 
     /// A click on an app in Settings → Apps: selects it, or unselects it.
     func toggleSelection(of id: String) {
@@ -273,18 +250,15 @@ final class SettingsModel {
     func cancelRemoval() { appAwaitingRemoval = nil }
 
     private func takeOff(_ row: AppRow) {
-        forget(row.source)
+        settings.forget(row.source)
         if selectedAppID == row.id { selectedAppID = nil }
     }
-    func forgetAllApps() { actions.forgetAllApps() }
 
     func setAppListOrder(_ order: AppListOrder) {
         guard order != appListOrder else { return }
         appListOrder = order
-        actions.setAppListOrder(order)
+        settings.setListOrder(order)
     }
-    func setChecksForUpdates(_ on: Bool) { actions.setChecksForUpdates(on) }
-    func setAutomaticUpdates(_ mode: AutomaticUpdates) { actions.setAutomaticUpdates(mode) }
 
     /// Whether `mode` can be chosen now: notifying needs notifications.
     func isAvailable(_ mode: AutomaticUpdates) -> Bool {
@@ -309,26 +283,21 @@ final class SettingsModel {
             self?.noteFlash = nil
         }
     }
-    func checkForUpdates() { actions.checkForUpdates() }
-    func openNotificationSettings() { actions.openNotificationSettings() }
-    func requestPermission(_ permission: Permission) { actions.requestPermission(permission) }
-    func finishWelcome() { actions.finishWelcome() }
 
     /// Back to the welcome window's list, to choose another player.
     func showWelcomePlayers() { welcomeAsksPermissions = false }
 
     /// AntiDot mode doesn't need Audio Recording: the way past it without allowing it.
     func useAntiDotMode() { setDetectionMethod(.playbackSignals) }
-    func refreshDiagnostics() { actions.refreshDiagnostics() }
 
     func setTimings(_ timings: TimingSettings) {
         self.timings = timings.clamped
-        actions.setTimings(self.timings)
+        settings.setTimings(self.timings)
     }
 
     func setDetectionMethod(_ method: DetectionMethod) {
         detectionMethod = method
-        actions.setDetectionMethod(method)
+        settings.setDetectionMethod(method)
     }
 
     /// On: judges apps by what they tell macOS (the indicator-free method

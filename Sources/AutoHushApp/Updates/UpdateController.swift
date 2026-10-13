@@ -44,7 +44,8 @@ final class UpdateController {
     private let onOffer: @MainActor (UpdateOffer?) -> Void
     /// The last check's, download's or install's outcome in one line, shown in Settings.
     private let onStatus: @MainActor (String) -> Void
-    /// AutoHush changed the update settings by itself (`adapt(toNotificationsOff:)`).
+    /// The update settings changed: the user's choice in Settings, or AutoHush
+    /// by itself (`adapt(toNotificationsOff:)`).
     private let onSettingsChange: @MainActor () -> Void
     private var timer: Timer?
     /// A check is under way; one asked for meanwhile is answered by it.
@@ -113,6 +114,26 @@ final class UpdateController {
 
     /// Why this copy of AutoHush can't install updates, or nil when it can.
     var installUnavailability: UpdateInstallUnavailability? { installer.unavailability }
+
+    // MARK: - The user's settings
+
+    /// Checks by itself once a day, or not, as the user chose in Settings;
+    /// turned on, it checks at once if a check is due.
+    func setChecksAutomatically(_ enabled: Bool) {
+        checksAutomatically = enabled
+        onSettingsChange()
+        if enabled { Task { await runAutomaticTasks() } }
+    }
+
+    /// Stores what automatic checks lead to, and acts on an update already
+    /// found the new way (e.g. downloads it). A choice that notifies asks for
+    /// permission to, if the user hasn't answered yet.
+    func setMode(_ newMode: AutomaticUpdates) {
+        mode = newMode
+        onSettingsChange()
+        if newMode != .install { notifier.requestPermission() }
+        Task { await runAutomaticTasks() }
+    }
 
     // MARK: - Launch and scheduling
 

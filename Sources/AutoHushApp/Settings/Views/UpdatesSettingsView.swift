@@ -11,7 +11,7 @@ struct UpdatesSettingsView: View {
             Card {
                 SwitchRow(Text("Check for updates automatically", comment: "Settings → Updates: switch for the daily update check"), isOn: Binding(
                     get: { model.checksForUpdatesAutomatically },
-                    set: { model.setChecksForUpdates($0) }
+                    set: { model.updates.setChecksAutomatically($0) }
                 ))
                 // What checks lead to only matters while they run.
                 if model.checksForUpdatesAutomatically {
@@ -23,7 +23,7 @@ struct UpdatesSettingsView: View {
                         },
                         // A copy that can't install itself can only notify.
                         selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                        onSelect: { model.setAutomaticUpdates($0) },
+                        onSelect: { model.updates.setMode($0) },
                         onUnavailableClick: { model.flashNotificationsNote() }
                     )
                     .disabled(model.updateInstallNote != nil)
@@ -37,7 +37,7 @@ struct UpdatesSettingsView: View {
                         .font(.appCaption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
-                    Button { model.openNotificationSettings() } label: {
+                    Button { model.actions?.openNotificationSettings() } label: {
                         Text("Open Notifications Settings…", comment: "Settings → Updates: button that opens System Settings → Notifications")
                     }
                         .buttonStyle(.chip)
@@ -46,7 +46,7 @@ struct UpdatesSettingsView: View {
                 HStack {
                     RowTitle(Text(model.updateTitle), subtitle: model.lastCheckedNote().map { Text($0) })
                     Spacer(minLength: 8)
-                    Button { model.checkForUpdates() } label: {
+                    Button { model.updates.checkFromUser() } label: {
                         Text("Check Now", comment: "Settings → Updates: checks for an update now")
                     }
                         .buttonStyle(.chip)

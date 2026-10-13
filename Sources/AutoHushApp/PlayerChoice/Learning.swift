@@ -81,7 +81,7 @@ struct LearningWindowView: View {
                     LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
                                   locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
                                   deadline: model.learningPauseDeadline, note: model.learningNote,
-                                  pauseMode: model.learningPauseMode, action: { model.learningStep($0) })
+                                  pauseMode: model.learningPauseMode, action: { model.learningSession.step($0) })
                     // Learning again, the controls it learned still work
                     // until It's Playing: the line would be untrue then.
                     if model.learning != .relearning {

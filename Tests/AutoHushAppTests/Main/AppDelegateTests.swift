@@ -1066,142 +1066,41 @@ struct AppDelegateTests {
 
     // MARK: - Auto-pause and ignored apps
 
-    @MainActor
-    @Test("toggling auto-pause switches it off and on again, and persists")
-    func toggleAutoPause() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        #expect(sut.status.autoPause == .on)
-
-        sut.toggleAutoPause()
-        #expect(sut.status.autoPause == .off)
-        #expect(scratch.preferences.autoPause == AutoPauseSetting(isEnabled: false))
-
-        sut.toggleAutoPause()
-        #expect(sut.status.autoPause == .on)
-    }
+    // MARK: - Settings and updates
 
     @MainActor
-    @Test("snoozing turns auto-pause off until the end; toggling ends the snooze")
-    func snoozeThenToggle() {
+    @Test("the user's settings show in the menu and Settings, and reach the monitoring")
+    func userSettingsShown() async {
         let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        let now = Date()
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+        let monitoring = monitorings.made[0]
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
 
-        sut.snooze(.oneHour, now: now)
+        sut.userSettings.snooze(.oneHour)
         guard case .snoozed = sut.status.autoPause else {
             Issue.record("expected snoozed, got \(sut.status.autoPause)")
             return
         }
-        #expect(scratch.preferences.autoPause.snoozedUntil == AutoPauseSnooze.oneHour.endDate(from: now))
-
-        sut.toggleAutoPause(now: now)
-        #expect(sut.status.autoPause == .on)
-        #expect(scratch.preferences.autoPause.snoozedUntil == nil)
-    }
-
-    @MainActor
-    @Test("an expired snooze is cleared at launch")
-    func expiredSnoozeCleared() {
-        let scratch = Scratch()
-        scratch.preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: Date().addingTimeInterval(-60))
-        let (sut, _) = makeSUT(scratch)
-        #expect(sut.status.autoPause == .on)
-        #expect(scratch.preferences.autoPause.snoozedUntil == nil)
-    }
-
-    @MainActor
-    @Test("ignoring and un-ignoring an app updates the menu and the preferences")
-    func ignoreApp() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-
-        sut.setIgnored(vlc, true)
-        #expect(sut.status.ignoredApps == [AudioSource(id: "org.videolan.vlc", name: "VLC")])
-        #expect(scratch.preferences.ignoredApps.map(\.id) == ["org.videolan.vlc"])
-
-        sut.setIgnored(vlc, false)
-        #expect(sut.status.ignoredApps.isEmpty)
-        #expect(scratch.preferences.ignoredApps.isEmpty)
-    }
-
-    @MainActor
-    @Test("switching an app keeps its place in the order apps played; the order chosen is kept")
-    func ignoringKeepsPlayedOrder() {
-        let scratch = Scratch()
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app")
-        scratch.preferences.recordSeen([vlc])
-        scratch.preferences.recordSeen([chrome])
-        scratch.preferences.appListOrder = AppListOrder(criterion: .lastPlayed, isReversed: true)
-        let (sut, _) = makeSUT(scratch)
-        #expect(sut.settingsModel.appListOrder.isReversed)
-        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id, chrome.id])
-
-        sut.setIgnored(vlc, true)
-        #expect(scratch.preferences.seenApps == [chrome, vlc])
-        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id, chrome.id])
-
-        sut.settingsModel.setAppListOrder(AppListOrder(criterion: .state))
-        #expect(scratch.preferences.appListOrder == AppListOrder(criterion: .state))
-        #expect(sut.settingsModel.apps.map(\.id) == [chrome.id, vlc.id])
-    }
-
-    // MARK: - Settings and updates
-
-    @MainActor
-    @Test("the Settings model mirrors auto-pause, apps and timings")
-    func settingsModelMirrorsState() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-
-        sut.snooze(.oneHour)
         #expect(!sut.settingsModel.isAutoPauseOn)
         #expect(sut.settingsModel.autoPauseNote?.hasPrefix("Turned off until") == true)
-        sut.setAutoPause(true)
+        #expect(monitoring.autoPause == false)
+        sut.userSettings.setAutoPause(true)
         #expect(sut.settingsModel.isAutoPauseOn && sut.settingsModel.autoPauseNote == nil)
+        #expect(monitoring.autoPause == true)
 
-        sut.setIgnored(vlc, true)
-        #expect(sut.settingsModel.apps.map(\.id) == ["org.videolan.vlc"])
+        sut.userSettings.setIgnored(vlc, true)
+        #expect(sut.status.ignoredApps == [AudioSource(id: vlc.id, name: "VLC")])
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id])
         #expect(sut.settingsModel.apps.first?.isIgnored == true)
+        #expect(monitoring.ignored == [vlc.id])
 
-        sut.setTimings(TimingSettings(stopGrace: 4))
-        #expect(scratch.preferences.timings.stopGrace == 4)
+        sut.userSettings.setTimings(TimingSettings(stopGrace: 4))
         #expect(sut.settingsModel.timings.stopGrace == 4)
-    }
-
-    @MainActor
-    @Test("forgetting an ignored app un-ignores it and removes it from the list")
-    func forgetApp() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-        sut.setIgnored(vlc, true)
-
-        sut.forget(vlc)
-        #expect(sut.status.ignoredApps.isEmpty)
-        #expect(scratch.preferences.seenApps.isEmpty)
-        #expect(sut.settingsModel.apps.isEmpty)
-    }
-
-    @MainActor
-    @Test("resetting the list forgets every app and ignores none")
-    func forgetAllApps() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app")
-        scratch.preferences.recordSeen([chrome])
-        sut.setIgnored(vlc, true)
-        #expect(sut.settingsModel.apps.count == 2)
-
-        sut.forgetAllApps()
-        #expect(sut.status.ignoredApps.isEmpty)
-        #expect(scratch.preferences.ignoredApps.isEmpty)
-        #expect(scratch.preferences.seenApps.isEmpty)
-        #expect(sut.settingsModel.apps.isEmpty)
+        #expect(monitoring.configurations.last?.sourceStopGrace == 4)
+        sut.userSettings.setDetectionMethod(.playbackSignals)
+        #expect(sut.settingsModel.detectionMethod == .playbackSignals)
+        #expect(monitoring.detectionMethods == [.playbackSignals])
     }
 
     @MainActor
@@ -1227,30 +1126,16 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("turning automatic update checks off is saved and shown in Settings")
-    func automaticChecksSetting() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        sut.setChecksForUpdatesAutomatically(false)
-        #expect(!scratch.preferences.checksForUpdatesAutomatically)
-        #expect(!sut.settingsModel.checksForUpdatesAutomatically)
-        #expect(!sut.updates.isCheckDue())
-    }
-
-    @MainActor
-    @Test("the update choice is saved and shown in Settings; it starts at installing")
-    func automaticUpdatesSetting() {
+    @Test("the update settings show in Settings as they're changed; the choice starts at installing")
+    func updateSettingsShown() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
         #expect(sut.settingsModel.automaticUpdates == .install)
         #expect(sut.settingsModel.updateInstallNote == nil)
-        sut.setAutomaticUpdates(.install)
-        #expect(scratch.notifier.permissionRequests == 0)
-        sut.setAutomaticUpdates(.download)
-        #expect(scratch.preferences.automaticUpdates == .download)
+        sut.updates.setMode(.download)
         #expect(sut.settingsModel.automaticUpdates == .download)
-        #expect(sut.updates.mode == .download)
-        #expect(scratch.notifier.permissionRequests == 1) // a choice that notifies asks, if not answered yet
+        sut.updates.setChecksAutomatically(false)
+        #expect(!sut.settingsModel.checksForUpdatesAutomatically)
     }
 
     @MainActor
@@ -1258,7 +1143,7 @@ struct AppDelegateTests {
     func notificationsOffShownInSettings() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
-        sut.setAutomaticUpdates(.download)
+        sut.updates.setMode(.download)
         #expect(sut.updates.adapt(toNotificationsOff: true))
         #expect(sut.settingsModel.automaticUpdates == .install)
         #expect(!sut.settingsModel.checksForUpdatesAutomatically)

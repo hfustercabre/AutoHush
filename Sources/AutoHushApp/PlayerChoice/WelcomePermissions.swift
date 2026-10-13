@@ -48,7 +48,7 @@ struct WelcomePermissionsView: View {
                 }
                 .buttonStyle(.chip)
                 Spacer()
-                Button { model.finishWelcome() } label: {
+                Button { model.actions?.finishWelcome() } label: {
                     Text("Done", comment: "Welcome window: button that closes it once the permissions are allowed")
                         .font(.appBody.weight(.semibold))
                         .padding(.horizontal, 6)

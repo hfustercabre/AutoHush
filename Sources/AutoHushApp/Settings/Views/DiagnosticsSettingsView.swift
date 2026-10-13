@@ -33,7 +33,7 @@ struct DiagnosticsSettingsView: View {
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear { model.refreshDiagnostics() }
+        .onAppear { model.actions?.refreshDiagnostics() }
     }
 
     // MARK: - Parts

@@ -53,6 +53,12 @@ players installed, the permissions, whether notifications are on, launch
 at login, Diagnostics. Each window says what it needs; the watch refreshes
 only what the open ones need, and stops when none is open.
 
+**User settings** (`UserSettings`): the user's own settings and what
+follows from them: Auto-Pause and its snooze, the apps ignored and the
+apps seen, the timings, the detection method, the order of Settings' list
+of apps. It stores them, and the monitoring, the menu and Settings show
+them. _Avoid_: preferences (that's where they're stored, `Preferences`).
+
 **Monitoring** (`MonitoringPipeline`): the engine of one start. It follows
 which apps play, decides when to pause and resume the player, and does it.
 Each start makes a new one, and it stops as a whole.

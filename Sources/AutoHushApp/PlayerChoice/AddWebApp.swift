@@ -552,7 +552,7 @@ struct AddWebAppView: View {
 
     private func step(_ step: ChecklistStep, locked: Bool) -> some View {
         ChecklistStepRow(step: step, dimmed: step.state == .done || locked, bold: [.current, .failed].contains(step.state), action: { button in
-            if button == .addToDock { model.addTapped() } else { settings.learningStep(button) }
+            if button == .addToDock { model.addTapped() } else { settings.learningSession.step(button) }
         }) {
             StepSymbol(step: step, locked: locked)
         }

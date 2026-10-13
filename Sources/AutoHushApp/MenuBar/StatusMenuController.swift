@@ -40,37 +40,6 @@ import AutoHushKit
 /// open, has the Mac's standard ones: `MainMenu`).
 @MainActor
 final class StatusMenuController: NSObject {
-    /// What the menu's items do; `AppDelegate` provides them.
-    struct Actions {
-        var toggleAutoPause: @MainActor () -> Void
-        var snooze: @MainActor (AutoPauseSnooze) -> Void
-        var chooseMusicPlayer: @MainActor (String) -> Void
-        /// Opens the "Add a Web App" window.
-        var addWebApp: @MainActor () -> Void = {}
-        /// Learns the chosen player's controls afresh, in a new learning
-        /// window (whether they were learned or not).
-        var learnControlsAgain: @MainActor () -> Void = {}
-        /// The menu is about to open: a last chance to bring `status` up to
-        /// date (e.g. which players are installed) before it is built.
-        var menuWillOpen: @MainActor () -> Void
-        var setIgnored: @MainActor (AudioSource, Bool) -> Void
-        var resolveWarning: @MainActor (Permission) -> Void
-        /// Quits and opens AutoHush again, so macOS applies System Audio
-        /// Recording (see `AppStatus.offersReopen`).
-        var reopen: @MainActor () -> Void = {}
-        /// AntiDot mode doesn't need Audio Recording: the way past its warning.
-        var useAntiDotMode: @MainActor () -> Void = {}
-        var retry: @MainActor () -> Void
-        var openSettings: @MainActor () -> Void
-        var showDiagnostics: @MainActor () -> Void
-        var showAvailableUpdate: @MainActor () -> Void
-        var checkForUpdates: @MainActor () -> Void
-        var showAbout: @MainActor () -> Void
-        /// Shows why the music player couldn't be controlled, in an alert.
-        var showControlError: @MainActor () -> Void = {}
-        var quit: @MainActor () -> Void
-    }
-
     /// Carries a menu item's argument to its action.
     private final class Payload<Value>: NSObject {
         let value: Value
@@ -88,7 +57,12 @@ final class StatusMenuController: NSObject {
     /// What the menu's custom views show.
     let model: StatusMenuModel
 
-    private let actions: Actions
+    /// What the menu's items do: the user's settings, Retry, the updates,
+    /// and what only AppDelegate does.
+    private let settings: UserSettings
+    private let session: PlayerSession
+    private let updates: any UpdateCommands
+    private weak var actions: (any AppActions)?
     private(set) var isMenuOpen = false
     /// The card at the top, and the players unfolded under it, with their
     /// search when there are enough of them.
@@ -97,8 +71,12 @@ final class StatusMenuController: NSObject {
     private var playerSearchItem: NSMenuItem?
     private var playerRows: [NSMenuItem] = []
 
-    init(status: AppStatus = AppStatus(), actions: Actions) {
+    init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
+         updates: any UpdateCommands, actions: (any AppActions)?) {
         self.status = status
+        self.settings = settings
+        self.session = session
+        self.updates = updates
         self.actions = actions
         model = StatusMenuModel(status: status)
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -347,15 +325,15 @@ final class StatusMenuController: NSObject {
     func perform(_ command: StatusMenuCommand) {
         switch command {
         case .toggleAutoPause:
-            actions.toggleAutoPause()
+            settings.toggleAutoPause()
         case .setIgnored(let source, let ignored):
-            actions.setIgnored(source, ignored)
+            settings.setIgnored(source, ignored)
         case .togglePlayerList:
             togglePlayerList()
         case .searchPlayers(let search):
             searchPlayers(search)
         case .retry:
-            actions.retry() // the card shows how it goes
+            session.retry() // the card shows how it goes
         case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
@@ -367,39 +345,39 @@ final class StatusMenuController: NSObject {
 
     private func run(_ command: StatusMenuCommand) {
         switch command {
-        case .snooze(let snooze): actions.snooze(snooze)
-        case .openSettings:       actions.openSettings()
-        case .showDiagnostics:    actions.showDiagnostics()
-        case .updates:            status.updateOffer == nil ? actions.checkForUpdates() : actions.showAvailableUpdate()
-        case .showAbout:          actions.showAbout()
-        case .showControlError:   actions.showControlError()
-        case .learnControls:      actions.learnControlsAgain()
-        case .quit:               actions.quit()
+        case .snooze(let snooze): settings.snooze(snooze)
+        case .openSettings:       actions?.openSettings(page: nil)
+        case .showDiagnostics:    actions?.openSettings(page: .diagnostics)
+        case .updates:            status.updateOffer == nil ? updates.checkFromUser() : updates.presentAvailableUpdate()
+        case .showAbout:          actions?.openSettings(page: .about)
+        case .showControlError:   actions?.showControlError()
+        case .learnControls:      actions?.learnControlsAgain()
+        case .quit:               actions?.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
         }
     }
 
-    @objc private func showAvailableUpdate() { actions.showAvailableUpdate() }
+    @objc private func showAvailableUpdate() { updates.presentAvailableUpdate() }
 
-    @objc private func addWebApp() { actions.addWebApp() }
+    @objc private func addWebApp() { actions?.openAddWebApp() }
 
-    @objc private func reopen() { actions.reopen() }
+    @objc private func reopen() { actions?.reopenAutoHush() }
 
-    @objc private func useAntiDotMode() { actions.useAntiDotMode() }
+    @objc private func useAntiDotMode() { settings.setDetectionMethod(.playbackSignals) }
 
     @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }
-        actions.chooseMusicPlayer(payload.value)
+        actions?.chooseMusicPlayer(payload.value)
     }
 
     @objc private func toggleIgnored(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<(AudioSource, Bool)> else { return }
-        actions.setIgnored(payload.value.0, payload.value.1)
+        settings.setIgnored(payload.value.0, payload.value.1)
     }
 
     @objc private func resolveWarning(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<Permission> else { return }
-        actions.resolveWarning(payload.value)
+        actions?.requestPermission(payload.value)
     }
 }
 
@@ -408,7 +386,7 @@ final class StatusMenuController: NSObject {
 extension StatusMenuController: NSMenuDelegate {
     /// Called before the menu opens, while it can still be rebuilt.
     func menuNeedsUpdate(_ menu: NSMenu) {
-        actions.menuWillOpen()
+        actions?.menuWillOpen()
         rebuild()
     }
 

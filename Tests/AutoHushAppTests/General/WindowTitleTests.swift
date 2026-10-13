@@ -7,15 +7,12 @@ import AutoHushTestSupport
 @Suite("Windows")
 @MainActor
 struct WindowTitleTests {
+    private let actions = FakeAppActions()
+    private let updates = FakeUpdateCommands()
+
     private func makeModel() -> SettingsModel {
-        SettingsModel(
-            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
-                           forgetApp: { _ in }, forgetAllApps: {},
-                           setTimings: { _ in }, setDetectionMethod: { _ in },
-                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
-                           openNotificationSettings: {})
-        )
+        SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                      launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
     }
 
     @Test("the welcome window's title is its page's, and follows it")

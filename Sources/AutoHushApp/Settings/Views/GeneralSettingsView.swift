@@ -31,7 +31,7 @@ struct GeneralSettingsView: View {
         SettingsPageScroll {
             playerCard
             PlayerTiles(options: model.playerOptions.offered, selection: model.chosenPlayerID,
-                        onSelect: { model.chooseMusicPlayer($0.bundleID) }, onAddWebApp: { model.addWebApp() })
+                        onSelect: { model.actions?.chooseMusicPlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() })
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
             }
@@ -80,14 +80,14 @@ struct GeneralSettingsView: View {
             // afresh in the learning window (the steps show only there).
             if let name = model.chosenPlayerName, model.canLearnControlsAgain {
                 CardDivider()
-                ControlsRow(name: name, isLearned: model.learning?.isLearned == true) { model.learnControlsAgain() }
+                ControlsRow(name: name, isLearned: model.learning?.isLearned == true) { model.actions?.learnControlsAgain() }
             }
             CardDivider()
             SwitchRow(
                 Text("Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row"),
                 subtitle: Text("Choose which apps pause your player on the Apps page.",
                                comment: "Settings → General, under the Auto-Pause switch; Apps is the Settings page that lists them"),
-                isOn: Binding(get: { model.isAutoPauseOn }, set: { model.setAutoPause($0) })
+                isOn: Binding(get: { model.isAutoPauseOn }, set: { model.settings.setAutoPause($0) })
             )
             if let note = model.autoPauseNote {
                 Text(note).captionStyle()

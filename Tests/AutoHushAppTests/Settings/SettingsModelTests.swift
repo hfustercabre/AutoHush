@@ -7,26 +7,28 @@ import AutoHushTestSupport
 @Suite("SettingsModel")
 @MainActor
 struct SettingsModelTests {
-    private final class ActionLog {
-        var calls: [String] = []
+    /// What Settings asked of AppDelegate and the updates; the user's
+    /// settings show their own changes.
+    private let log = CallLog()
+    private let actions: FakeAppActions
+    private let updates: FakeUpdateCommands
+
+    init() {
+        actions = FakeAppActions(log: log)
+        updates = FakeUpdateCommands(log: log)
     }
 
-    private func makeModel(_ controller: MockLaunchAtLoginController, _ log: ActionLog = ActionLog(),
-                           order: AppListOrder = .standard) -> SettingsModel {
-        SettingsModel(appListOrder: order, launchAtLoginController: controller, actions: .init(
-            chooseMusicPlayer: { log.calls.append("player \($0)") },
-            setAutoPause: { log.calls.append("autoPause \($0)") },
-            setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
-            forgetApp: { log.calls.append("forget \($0.id)") },
-            forgetAllApps: { log.calls.append("forgetAll") },
-            setAppListOrder: { log.calls.append("order \($0.criterion.rawValue) \($0.isReversed)") },
-            setTimings: { log.calls.append("timings \($0.startConfirmation)") },
-            setDetectionMethod: { log.calls.append("method \($0.rawValue)") },
-            setChecksForUpdates: { log.calls.append("autoUpdate \($0)") },
-            setAutomaticUpdates: { log.calls.append("updates \($0.rawValue)") },
-            checkForUpdates: { log.calls.append("checkNow") },
-            openNotificationSettings: { log.calls.append("notificationSettings") }
-        ))
+    private func makeModel(_ controller: MockLaunchAtLoginController,
+                           settings: UserSettings = .inMemory()) -> SettingsModel {
+        SettingsModel(settings: settings, updates: updates, actions: actions, launchAtLoginController: controller)
+    }
+
+    /// The user's settings, with these apps seen and ignored.
+    private func userSettings(seen: [AudioSource], ignored: [AudioSource] = []) -> UserSettings {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        preferences.recordSeen(seen)
+        preferences.ignoredApps = ignored
+        return UserSettings(preferences: preferences)
     }
 
     /// The apps as the app's state has them.
@@ -56,11 +58,10 @@ struct SettingsModelTests {
 
     @Test("AntiDot mode is the way past Audio Recording; Back returns to the welcome window's players")
     func permissionActions() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.useAntiDotMode()
         #expect(model.detectionMethod == .playbackSignals)
-        #expect(log.calls == ["method askApps"])
+        #expect(model.settings.state.detection == .playbackSignals)
         model.welcomeAsksPermissions = true
         model.showWelcomePlayers()
         #expect(!model.welcomeAsksPermissions)
@@ -172,18 +173,17 @@ struct SettingsModelTests {
 
     @Test("choosing an order is passed on once; the stored order is shown from the start")
     func appsOrderChoice() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(model.appListOrder == .standard)
 
         model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
         model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
-        #expect(log.calls == ["order name true"])
+        #expect(model.settings.state.listOrder == AppListOrder(criterion: .name, isReversed: true))
 
-        let stored = ActionLog()
-        let reopened = makeModel(MockLaunchAtLoginController(isEnabled: false), stored, order: AppListOrder(criterion: .state))
+        let stored = UserSettings.inMemory()
+        stored.setListOrder(AppListOrder(criterion: .state))
+        let reopened = makeModel(MockLaunchAtLoginController(isEnabled: false), settings: stored)
         #expect(reopened.appListOrder == AppListOrder(criterion: .state))
-        #expect(stored.calls.isEmpty) // shown, not chosen again
     }
 
     @Test("what the menu shows too comes from the app's state, and follows it")
@@ -209,37 +209,21 @@ struct SettingsModelTests {
         #expect(model.learning == .learned && model.canLearnControlsAgain)
     }
 
-    @Test("actions are forwarded; timings are clamped first")
-    func forwardsActions() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-
-        model.chooseMusicPlayer("com.example.player")
-        model.setAutoPause(false)
-        model.setPausesMusic(false, for: vlc)
-        model.forget(vlc)
-        model.forgetAllApps()
+    @Test("Settings' own setters store through the user's settings, the timings clamped first")
+    func storesThroughUserSettings() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.setTimings(TimingSettings(startConfirmation: 99))
         model.setDetectionMethod(.openStreams)
-        model.setChecksForUpdates(false)
-        model.setAutomaticUpdates(.download)
-        model.checkForUpdates()
-        model.openNotificationSettings()
-
-        #expect(log.calls == [
-            "player com.example.player", "autoPause false", "ignore org.videolan.vlc true", "forget org.videolan.vlc", "forgetAll",
-            "timings 5.0", "method openStreams", "autoUpdate false", "updates download", "checkNow",
-            "notificationSettings",
-        ])
         #expect(model.timings.startConfirmation == 5)
+        #expect(model.settings.state.timings.startConfirmation == 5)
         #expect(model.detectionMethod == .openStreams)
+        #expect(model.settings.state.detection == .openStreams)
+        #expect(log.calls.isEmpty)
     }
 
     @Test("AntiDot mode switches between audio levels and playback signals")
     func antiDotMode() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(!model.isAntiDotMode)
 
         model.setAntiDotMode(true)
@@ -249,7 +233,7 @@ struct SettingsModelTests {
         #expect(model.detectionMethod == .openStreams)
         model.setAntiDotMode(false)
         #expect(!model.isAntiDotMode && model.detectionMethod == .audioLevels)
-        #expect(log.calls == ["method askApps", "method openStreams", "method audioLevels"])
+        #expect(model.settings.state.detection == .audioLevels)
     }
 
     @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, or the fades")
@@ -314,41 +298,40 @@ struct SettingsModelTests {
 
     @Test("Remove takes an app that pauses the music off the list at once, and its selection with it")
     func removeAppThatPauses() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        let settings = userSettings(seen: [chrome])
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), settings: settings)
         show(model, seen: [chrome], ignored: [])
         model.toggleSelection(of: chrome.id)
         #expect(model.selectedApp?.id == chrome.id)
 
         model.remove(model.selectedApp!)
-        #expect(log.calls == ["forget com.google.Chrome"])
+        #expect(settings.state.seenApps.isEmpty) // forgotten
         #expect(model.selectedApp == nil)
         #expect(model.appAwaitingRemoval == nil)
     }
 
     @Test("Remove asks first for an app that's turned off: confirming forgets it, cancelling keeps it")
     func removeTurnedOffApp() {
-        let log = ActionLog()
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), log)
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
+        let settings = userSettings(seen: [zoom], ignored: [zoom])
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), settings: settings)
         show(model, seen: [zoom], ignored: [zoom])
         let row = model.apps[0]
 
         model.remove(row)
-        #expect(log.calls.isEmpty)
+        #expect(settings.state.seenApps == [zoom]) // not yet: it's asked first
         #expect(model.appAwaitingRemoval?.id == zoom.id)
         #expect(model.removalName == "zoom.us")
         model.cancelRemoval()
         #expect(model.appAwaitingRemoval == nil)
-        #expect(log.calls.isEmpty)
+        #expect(settings.state.seenApps == [zoom])
 
         model.remove(row)
         model.confirmRemoval()
-        #expect(log.calls == ["forget us.zoom.xos"])
+        #expect(settings.state.seenApps.isEmpty && settings.state.ignoredApps.isEmpty)
         #expect(model.appAwaitingRemoval == nil)
         model.confirmRemoval() // nothing waits any more
-        #expect(log.calls == ["forget us.zoom.xos"])
     }
 
     @Test("a click selects an app and a second one unselects it; an app the search hides can't be removed")
@@ -410,15 +393,12 @@ struct SettingsModelTests {
 @Suite("SettingsWindowController", .serialized)
 @MainActor
 struct SettingsWindowControllerTests {
+    private let actions = FakeAppActions()
+    private let updates = FakeUpdateCommands()
+
     private func makeModel() -> SettingsModel {
-        SettingsModel(
-            launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-            actions: .init(chooseMusicPlayer: { _ in }, setAutoPause: { _ in }, setIgnored: { _, _ in },
-                           forgetApp: { _ in }, forgetAllApps: {},
-                           setTimings: { _ in }, setDetectionMethod: { _ in },
-                           setChecksForUpdates: { _ in }, setAutomaticUpdates: { _ in }, checkForUpdates: {},
-                           openNotificationSettings: {})
-        )
+        SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                      launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
     }
 
     @Test("has a sidebar of pages in three groups beside the page, and opens on the one asked for, named in the title")

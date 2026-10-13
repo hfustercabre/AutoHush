@@ -84,7 +84,7 @@ struct AppsSettingsView: View {
         }
         .confirmationDialog(Text("Reset the list of apps?", comment: "Settings → Apps: title of the confirmation for Reset List"),
                             isPresented: $confirmingReset) {
-            Button(role: .destructive) { model.forgetAllApps() } label: {
+            Button(role: .destructive) { model.settings.forgetAll() } label: {
                 Text("Reset List", comment: "Settings → Apps: confirms forgetting every app in the list")
             }
         } message: {
@@ -181,7 +181,7 @@ struct AppsSettingsView: View {
             .onTapGesture { model.toggleSelection(of: row.id) }
             Toggle(isOn: Binding(
                 get: { !row.isIgnored },
-                set: { model.setPausesMusic($0, for: row.source) }
+                set: { model.settings.setIgnored(row.source, !$0) }
             )) {
                 Text(verbatim: row.source.name)
             }
@@ -214,7 +214,7 @@ struct AppsSettingsView: View {
             InfoAlert.show(alert.title, alert.message)
             return
         }
-        model.setPausesMusic(false, for: source)
+        model.settings.setIgnored(source, true)
     }
 
     /// The app chosen to ignore has no bundle identifier, which is how

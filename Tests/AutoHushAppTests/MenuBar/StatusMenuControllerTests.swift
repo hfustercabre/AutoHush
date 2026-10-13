@@ -7,33 +7,23 @@ import AutoHushTestSupport
 @Suite("StatusMenuController")
 @MainActor
 struct StatusMenuControllerTests {
-    private final class ActionLog {
-        var calls: [String] = []
-    }
-
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
     private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    /// What the menu asked of AppDelegate and the updates, in order; the
+    /// user's settings and the player session show their own changes.
+    private let log = CallLog()
+    private let actions: FakeAppActions
+    private let updates: FakeUpdateCommands
+    private let settings = UserSettings.inMemory()
+    private let session = PlayerSession.noPlayer()
 
-    private func makeController(_ log: ActionLog = ActionLog()) -> StatusMenuController {
-        StatusMenuController(actions: .init(
-            toggleAutoPause: { log.calls.append("toggleAutoPause") },
-            snooze: { log.calls.append("snooze \($0.title)") },
-            chooseMusicPlayer: { log.calls.append("player \($0)") },
-            learnControlsAgain: { log.calls.append("learnAgain") },
-            menuWillOpen: { log.calls.append("menuWillOpen") },
-            setIgnored: { log.calls.append("ignore \($0.id) \($1)") },
-            resolveWarning: { log.calls.append("warning \($0.grantTitle)") },
-            reopen: { log.calls.append("reopen") },
-            useAntiDotMode: { log.calls.append("antiDot") },
-            retry: { log.calls.append("retry") },
-            openSettings: { log.calls.append("settings") },
-            showDiagnostics: { log.calls.append("diagnostics") },
-            showAvailableUpdate: { log.calls.append("update") },
-            checkForUpdates: { log.calls.append("checkUpdates") },
-            showAbout: { log.calls.append("about") },
-            showControlError: { log.calls.append("why") },
-            quit: { log.calls.append("quit") }
-        ))
+    init() {
+        actions = FakeAppActions(log: log)
+        updates = FakeUpdateCommands(log: log)
+    }
+
+    private func makeController() -> StatusMenuController {
+        StatusMenuController(settings: settings, session: session, updates: updates, actions: actions)
     }
 
     /// Ready to control the Jukebox player, paused for another app.
@@ -70,7 +60,7 @@ struct StatusMenuControllerTests {
 
     /// Waits until `log` has `count` calls: some commands run once the menu
     /// has closed.
-    private func wait(for count: Int, in log: ActionLog) async {
+    private func wait(for count: Int, in log: CallLog) async {
         await TestWait.until { log.calls.count >= count }
     }
 
@@ -117,8 +107,7 @@ struct StatusMenuControllerTests {
 
     @Test("the app can bring the status up to date before the menu opens")
     func updateBeforeOpening() {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         prepareToOpen(sut)
         #expect(log.calls == ["menuWillOpen"])
@@ -140,8 +129,7 @@ struct StatusMenuControllerTests {
 
     @Test("the player button unfolds the players under the card, under “Supported Apps”; one that isn't installed comes last and can't be chosen; every icon shows")
     func playerList() throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         status.playerOptions = [
@@ -178,8 +166,7 @@ struct StatusMenuControllerTests {
 
     @Test("a suggested web app is offered after the web apps, can be clicked, and goes the way a player does")
     func suggestedWebApp() throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
@@ -207,8 +194,7 @@ struct StatusMenuControllerTests {
 
     @Test("a web app's controls are learned from the card's Controls row, learned or not; no other row offers it, and no steps show")
     func learnControls() async throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         let webApp = PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
@@ -361,31 +347,35 @@ struct StatusMenuControllerTests {
 
     @Test("switches act at once and keep the menu open")
     func switches() {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         sut.perform(.toggleAutoPause)
         sut.perform(.setIgnored(chrome, true))
-        #expect(log.calls == ["toggleAutoPause", "ignore com.google.Chrome true"])
+        #expect(settings.state.autoPause == .off)
+        #expect(settings.state.ignoredApps.map(\.id) == [chrome.id])
+        #expect(log.calls.isEmpty)
     }
 
     @Test("buttons close the menu, then act")
     func buttons() async {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         let commands: [StatusMenuCommand] = [.snooze(.oneHour), .openSettings, .showDiagnostics, .updates, .showAbout,
                                              .showControlError, .quit]
         commands.forEach(sut.perform)
         #expect(log.calls.isEmpty) // not yet: the menu closes first
-        await wait(for: commands.count, in: log)
-        #expect(log.calls == ["snooze 1 Hour", "settings", "diagnostics", "checkUpdates", "about", "why", "quit"])
+        #expect(settings.state.autoPause == .on)
+        await wait(for: commands.count - 1, in: log)
+        #expect(log.calls == ["settings", "diagnostics", "checkUpdates", "about", "why", "quit"])
+        guard case .snoozed = settings.state.autoPause else {
+            Issue.record("not snoozed: \(settings.state.autoPause)")
+            return
+        }
     }
 
     @Test("once an update is found, Updates shows it instead of checking again")
     func updatesShowsTheOffer() async {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
@@ -398,11 +388,11 @@ struct StatusMenuControllerTests {
 
     @Test("Retry tries again at once and keeps the menu open")
     func retry() {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
+        #expect(session.state.health == nil) // no player chosen
         sut.perform(.retry)
-        #expect(log.calls == ["retry"])
+        #expect(session.state.health == .starting)
     }
 
     @Test("no row has a keyboard shortcut, in any state")
@@ -430,9 +420,9 @@ struct StatusMenuControllerTests {
 
     @Test("ignored apps can be un-ignored from their own submenu")
     func ignoredAppsSubmenu() throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
+        settings.setIgnored(vlc, true)
         var status = readyStatus()
         status.ignoredApps = [vlc]
         sut.status = status
@@ -441,13 +431,13 @@ struct StatusMenuControllerTests {
         let submenu = try #require(try item("Ignored Apps", in: sut.menu).submenu)
         #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
         try perform(submenu.items[1])
-        #expect(log.calls == ["menuWillOpen", "ignore org.videolan.vlc false"])
+        #expect(log.calls == ["menuWillOpen"])
+        #expect(settings.state.ignoredApps.isEmpty)
     }
 
     @Test("once the user went to allow audio recording, its row reopens AutoHush")
     func reopenItem() throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         status.detection = .unavailable
@@ -458,13 +448,13 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
         try perform(try item("Reopen AutoHush", in: sut.menu))
         try perform(try item("Use AntiDot Mode Instead", in: sut.menu))
-        #expect(log.calls == ["menuWillOpen", "reopen", "antiDot"])
+        #expect(log.calls == ["menuWillOpen", "reopen"])
+        #expect(settings.state.detection == .playbackSignals)
     }
 
     @Test("a warning appears under the card as one actionable row")
     func warningItem() throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
@@ -480,8 +470,7 @@ struct StatusMenuControllerTests {
     @Test("once an update is found, a row above the toolbar shows it, greyed out while it installs",
           arguments: [UpdateOffer.State.available, .downloaded])
     func updateItem(state: UpdateOffer.State) throws {
-        let log = ActionLog()
-        let sut = makeController(log)
+        let sut = makeController()
         defer { sut.remove() }
         let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
         var status = readyStatus()

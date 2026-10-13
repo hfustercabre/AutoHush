@@ -42,13 +42,14 @@ struct UpdateControllerTests {
                 preferences: preferences,
                 downloadsFolder: folder,
                 currentVersion: currentVersion,
-                now: { [unowned self] in now },
+                // Weak: an automatic run a setting started may end after its test.
+                now: { [weak self] in self?.now ?? Date(timeIntervalSinceReferenceDate: 800_000_000) },
                 isQuietMoment: { quiet.value },
-                quit: { [unowned self] in quits += 1 },
-                openURL: { [unowned self] in opened.append($0) },
-                onOffer: { [unowned self] in offers.append($0) },
-                onStatus: { [unowned self] in statuses.append($0) },
-                onSettingsChange: { [unowned self] in settingsChanges += 1 }
+                quit: { [weak self] in self?.quits += 1 },
+                openURL: { [weak self] in self?.opened.append($0) },
+                onOffer: { [weak self] in self?.offers.append($0) },
+                onStatus: { [weak self] in self?.statuses.append($0) },
+                onSettingsChange: { [weak self] in self?.settingsChanges += 1 }
             )
         }
 
@@ -79,6 +80,27 @@ struct UpdateControllerTests {
     private let v030 = AppVersion("0.3.0")!
 
     // MARK: - Checking
+
+    @Test("turning automatic checks off is stored and shown; no check is due then")
+    func automaticChecksSetting() {
+        let h = Harness(checker: .latestRelease("v0.2.0"))
+        h.controller.setChecksAutomatically(false)
+        #expect(!h.preferences.checksForUpdatesAutomatically)
+        #expect(h.settingsChanges == 1)
+        #expect(!h.controller.isCheckDue())
+    }
+
+    @Test("the update choice is stored and shown; a choice that notifies asks for permission, if not answered yet")
+    func automaticUpdatesSetting() {
+        let h = Harness(checker: .latestRelease("v0.2.0"))
+        h.controller.setMode(.install)
+        #expect(h.notifier.permissionRequests == 0)
+        h.controller.setMode(.download)
+        #expect(h.preferences.automaticUpdates == .download)
+        #expect(h.controller.mode == .download)
+        #expect(h.settingsChanges == 2)
+        #expect(h.notifier.permissionRequests == 1)
+    }
 
     @Test("a check asked for while one is under way doesn't start another")
     func overlappingChecks() async {
