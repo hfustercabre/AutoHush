@@ -17,6 +17,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   sight, it now looks further.
 - **"Allowed" was hard to read in the welcome window in light mode.** The
   word was in green; now only its check is, as in Settings.
+- **A web app looked just like the app of the same name.** Spotify's app
+  and a Spotify web app showed the same name and icon, told apart only by
+  their section. A web app's icon now carries Safari's, wherever it shows.
 - **A line under the menu's card in light mode.** On macOS 26 and later,
   the card's shadow was cut off in a straight line where its row of the
   menu ends. The card is now of clear glass, which casts no shadow.

@@ -34,6 +34,31 @@ enum AppIcon {
         return image
     }
 
+    /// Safari's own icon (its app in /Applications is a link into the
+    /// system), looked up once rather than at every redraw.
+    static let safari: NSImage = {
+        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.resolvingSymlinksInPath().path
+        return NSWorkspace.shared.icon(forFile: path ?? "/Applications/Safari.app")
+    }()
+
+    /// A Safari web app's icon, the one at `bundlePath`, with Safari's at its
+    /// lower right, a little over half its size: it tells the web app from
+    /// an app of the same name and icon.
+    static func webAppImage(bundlePath: String?, size: CGFloat) -> NSImage {
+        let key = "webapp:\(bundlePath ?? "")#\(size)"
+        if let cached = cache[key] { return cached }
+        let icon = image(bundlePath: bundlePath, size: size)
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            icon.draw(in: rect)
+            // A little past the corner: only Safari's icon's empty margin is cut off.
+            let side = (size * 0.55).rounded()
+            safari.draw(in: NSRect(x: rect.maxX - side + size * 0.06, y: rect.minY - size * 0.06, width: side, height: side))
+            return true
+        }
+        cache[key] = image
+        return image
+    }
+
     /// A stand-in for the icon of a player that isn't installed, `id` being
     /// its bundle ID: drawn like an app icon, dark or in its colors.
     static func image(placeholder: PlayerIconPlaceholder, id: String, size: CGFloat, dark: Bool = usesDarkIcons) -> NSImage {

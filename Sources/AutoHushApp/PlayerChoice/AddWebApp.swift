@@ -273,7 +273,7 @@ struct AddWebAppView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: Self.safariIcon,
+                WindowHeader(icon: AppIcon.safari,
                              description: Text("Paste the address of a website that plays music, podcasts or videos. AutoHush opens it in Safari, adds it to your Dock as an app, and learns its controls.",
                                                comment: "Add a Web App window, at its top beside Safari's icon"))
                 NoteLabel(PlayerOption.webAppsWarning)
@@ -557,11 +557,4 @@ struct AddWebAppView: View {
             StepSymbol(step: step, locked: locked)
         }
     }
-
-    /// Safari's own icon (its app in /Applications is a link into the
-    /// system), looked up once rather than at every redraw.
-    private static let safariIcon: NSImage = {
-        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.resolvingSymlinksInPath().path
-        return NSWorkspace.shared.icon(forFile: path ?? "/Applications/Safari.app")
-    }()
 }

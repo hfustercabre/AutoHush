@@ -179,6 +179,12 @@ where they appear:
 | 36 pt | The menu card's player |
 | 56 pt | The chosen player in Settings → General; a `WindowHeader`'s icon |
 
+A Safari web app's icon carries Safari's at its lower right, a little over
+half its size (`AppIcon.webAppImage`, through `PlayerOption.icon`), wherever
+it shows: so a web app is never taken for an app of the same name and icon
+(Spotify's app and its website, both "Spotify"). Suggested web apps keep
+their download symbol.
+
 **Marking the chosen item:**
 - In a list that acts on a click, as menus and pop-ups do, the chosen item
   has a checkmark on the left.

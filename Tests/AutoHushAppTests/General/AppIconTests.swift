@@ -16,6 +16,11 @@ struct AppIconTests {
 
     /// Draws the placeholder 100 points wide, a pixel per point.
     private func render(dark: Bool) -> NSBitmapImageRep {
+        render(AppIcon.image(placeholder: placeholder, id: "com.example.test.\(dark)", size: 100, dark: dark))
+    }
+
+    /// Draws `image` 100 points wide, a pixel per point.
+    private func render(_ image: NSImage) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: 100, pixelsHigh: 100,
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -23,8 +28,7 @@ struct AppIconTests {
         )!
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-        AppIcon.image(placeholder: placeholder, id: "com.example.test.\(dark)", size: 100, dark: dark)
-            .draw(in: NSRect(x: 0, y: 0, width: 100, height: 100))
+        image.draw(in: NSRect(x: 0, y: 0, width: 100, height: 100))
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -53,6 +57,21 @@ struct AppIconTests {
         let tile = color(rep, at: 20, 50)
         #expect(tile.alphaComponent > 0.9)
         #expect(max(tile.redComponent, tile.greenComponent, tile.blueComponent) < 0.2)
+    }
+
+    @Test("a Safari web app's icon carries Safari's at its lower right, so it isn't taken for an app of the same name")
+    func webAppBadge() {
+        let path = "/System/Applications/Calculator.app"
+        let plain = render(AppIcon.image(bundlePath: path, size: 100))
+        let webApp = render(AppIcon.webAppImage(bundlePath: path, size: 100))
+        #expect(color(webApp, at: 20, 20) == color(plain, at: 20, 20)) // the web app's own icon
+        #expect(color(webApp, at: 78, 78) != color(plain, at: 78, 78)) // Safari's over it
+
+        let url = URL(fileURLWithPath: path)
+        #expect(PlayerOption(bundleID: "com.example.web", name: "Calculator", appURL: url, kind: .safariWebApp)
+            .icon(size: 100) === AppIcon.webAppImage(bundlePath: path, size: 100))
+        #expect(PlayerOption(bundleID: "com.example.app", name: "Calculator", appURL: url)
+            .icon(size: 100) === AppIcon.image(bundlePath: path, size: 100))
     }
 
     @Test("icons are dark when the style says so, or follows a dark appearance")

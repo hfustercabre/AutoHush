@@ -81,14 +81,16 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// The app's icon; its placeholder while it isn't installed; a download
-    /// symbol for a suggested web app.
+    /// symbol for a suggested web app. A Safari web app's carries Safari's
+    /// icon, so it isn't taken for an app of the same name.
     @MainActor
     func icon(size: CGFloat) -> NSImage {
         if webAddress != nil { return Self.downloadSymbol(size: size) }
         if appURL == nil, let iconPlaceholder {
             return AppIcon.image(placeholder: iconPlaceholder, id: bundleID, size: size)
         }
-        return AppIcon.image(bundlePath: appURL?.path, size: size)
+        return kind == .app ? AppIcon.image(bundlePath: appURL?.path, size: size)
+            : AppIcon.webAppImage(bundlePath: appURL?.path, size: size)
     }
 
     /// A download arrow in a circle, about as big as an app icon's artwork,
