@@ -3,10 +3,10 @@ import Observation
 import AutoHushKit
 
 /// What the Settings window shows and edits, and the welcome, learning and
-/// Add a Web App windows with it. What the menu shows too (the chosen
-/// player, the status line, Auto-Pause, learning, the apps) it reads from
-/// `AppState`; the rest `AppDelegate` keeps in sync here, and performs the
-/// actions. Launch at login is handled here directly.
+/// Add a Web App windows with it. What the app's state holds (the chosen
+/// player, the status line, Auto-Pause, learning and its pause, the apps)
+/// it reads from `AppState`; the rest `AppDelegate` keeps in sync here,
+/// and performs the actions. Launch at login is handled here directly.
 @MainActor
 @Observable
 final class SettingsModel {
@@ -60,21 +60,13 @@ final class SettingsModel {
     /// dimmed when it can't.
     var playerCanFade = true
 
-    /// Once the user said the chosen player plays: when learning starts
-    /// over without the pause.
-    var learningPauseDeadline: Date?
-    /// Why the user's last learning click didn't move it on.
-    var learningNote: LearningNote?
-    /// Once the user said it plays: AutoHush pauses it itself, to learn
-    /// which button changes, or, when it couldn't, the user does.
-    var learningPauseMode = LearningPauseMode.automatic
     /// What AutoHush needs for the chosen player, as it stands; followed
     /// about once a second while a window that waits for it shows.
     var permissions = PermissionsState()
     /// The welcome window shows what the chosen player needs, after its list.
     var welcomeAsksPermissions = false
 
-    // What the menu shows too, from the app's state.
+    // From the app's state.
     /// The music players to choose from (also in the welcome window).
     var playerOptions: [PlayerOption] { state.status.playerOptions }
     /// The bundle ID of the chosen player; `nil` while none is chosen.
@@ -88,6 +80,14 @@ final class SettingsModel {
     var learning: LearningStatus? { state.status.learning }
     /// Its controls can be learned afresh (see `AppStatus`).
     var canLearnControlsAgain: Bool { state.status.canLearnControlsAgain }
+    /// Once the user said the chosen player plays: when learning starts
+    /// over without the pause.
+    var learningPauseDeadline: Date? { state.status.learningPause.deadline }
+    /// Why the user's last learning click didn't move it on.
+    var learningNote: LearningNote? { state.status.learningPause.note }
+    /// Once the user said it plays: AutoHush pauses it itself, to learn
+    /// which button changes, or, when it couldn't, the user does.
+    var learningPauseMode: LearningPauseMode { state.status.learningPause.mode }
     /// What the music player is doing, as the menu's card says it, e.g.
     /// "Paused — Safari is playing"; orange (`statusNeedsAttention`) when
     /// something needs the user.
@@ -195,7 +195,7 @@ final class SettingsModel {
     /// captures audio, so macOS never shows the purple recording indicator.
     var isAntiDotMode: Bool { detectionMethod != .audioLevels }
 
-    /// What the menu shows too.
+    /// What the menu shows too, and learning's pause.
     @ObservationIgnored let state: AppState
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
     @ObservationIgnored private let actions: Actions

@@ -6,37 +6,11 @@ import AutoHushKit
 extension AppDelegate {
     // MARK: - Learning a player
 
-    /// Shows how learning the chosen player goes, as it goes; nothing for a
-    /// player that needs no learning.
-    func watchLearning() {
-        learningWatch?.cancel()
-        learningWatch = nil
-        // Another player: nothing it was told carries over.
-        learningTimer?.cancel()
-        learningTimer = nil
-        setLearningPause(deadline: nil, note: nil, mode: .automatic)
-        guard let learner = player as? any LearningMusicPlayer else {
-            showLearning(nil)
-            return
-        }
-        showLearning(learner.learningStatus)
-        learningWatch = Task { [weak self] in
-            for await learning in learner.learningUpdates() {
-                guard !Task.isCancelled else { return }
-                self?.showLearning(learning)
-            }
-        }
-    }
-
-    /// Learns the chosen player's controls afresh, as the user asked: once
-    /// learned (they may have been learned wrong), or before (the learning
-    /// window was closed halfway). A window showing the steps closes, and so
-    /// does Add a Web App, and a new learning window starts from the first
-    /// step. What the player learned stays until the user says it plays
-    /// there; closing the window before that keeps it (`learningWindowClosed`).
+    /// Learns the chosen player's controls afresh, as the user asked: a
+    /// window showing the steps closes, and so does Add a Web App, and a new
+    /// learning window starts from the first step (`LearningSession`).
     func learnControlsAgain() {
-        guard let learner = player as? any LearningMusicPlayer else { return }
-        logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
+        guard player is any LearningMusicPlayer else { return }
         if let window = learningWindow, window.isOpen {
             window.onClose = nil // replaced, not left: nothing to keep
             window.close()
@@ -45,134 +19,9 @@ extension AppDelegate {
         // Add a Web App floats in the same corner: it goes, an add under way
         // with it (cancelled, as its Cancel does).
         if let window = addWebAppWindow, window.isOpen { window.close() }
-        learningTimer?.cancel()
-        learningTimer = nil
-        setLearningPause(deadline: nil, note: nil, mode: .automatic)
         Task { [weak self] in
-            await learner.learnAgain()
-            guard let self, self.player?.bundleID == learner.bundleID else { return }
+            guard let self, await self.learning.learnAgain() else { return }
             self.showLearningWindow()
-        }
-    }
-
-    /// The user's clicks while AutoHush learns the chosen player: It's
-    /// Playing, then, if AutoHush couldn't pause it itself, Try Again or
-    /// Pause It Manually, and It's Paused. A click that can't be taken
-    /// leaves a note under its step saying why.
-    func learningStep(_ button: StepButton) {
-        guard let learner = player as? any LearningMusicPlayer else { return }
-        switch button {
-        case .itsPlaying, .tryAgain: pauseByItself(learner)
-        case .pauseManually: pauseByHand(learner)
-        case .itsPaused: markPaused(learner)
-        case .addToDock: break
-        }
-    }
-
-    /// It plays (It's Playing, or Try Again): a fresh look at its page, then
-    /// AutoHush pauses it itself and learns. When that doesn't take, its
-    /// step is marked failed, offering Try Again and Pause It Manually; when
-    /// another app would get the Play/Pause key, the user pauses it at once,
-    /// as with Pause It Manually.
-    private func pauseByItself(_ learner: any LearningMusicPlayer) {
-        setLearningPause(deadline: nil, note: nil, mode: .trying)
-        Task { [weak self] in
-            let mark = await learner.markPlaying()
-            guard let self, self.player?.bundleID == learner.bundleID else { return }
-            guard mark == .noted else { return await self.backToPlaying(learner, after: mark) }
-            let pause = await learner.pauseByItself()
-            guard self.player?.bundleID == learner.bundleID, learner.learningStatus == .learning(hasPlayed: true) else { return }
-            switch pause {
-            case .paused:
-                break
-            case .didntTake:
-                self.setLearningPause(deadline: nil, note: nil, mode: .failed)
-            case .keyGoesElsewhere:
-                self.setLearningPause(deadline: nil, note: nil, mode: .keyElsewhere)
-                self.startLearningPause()
-            }
-        }
-    }
-
-    /// Pause It Manually: a fresh look at its page while it plays, then the
-    /// user has `learningPauseWait` to pause it and say so (It's Paused).
-    private func pauseByHand(_ learner: any LearningMusicPlayer) {
-        Task { [weak self] in
-            let mark = await learner.markPlaying()
-            guard let self, self.player?.bundleID == learner.bundleID else { return }
-            guard mark == .noted else { return await self.backToPlaying(learner, after: mark) }
-            self.setLearningPause(deadline: nil, note: nil, mode: .byHand)
-            self.startLearningPause()
-        }
-    }
-
-    /// It's Paused: learned, or a note under the step saying why not.
-    private func markPaused(_ learner: any LearningMusicPlayer) {
-        Task { [weak self] in
-            let mark = await learner.markPaused()
-            guard let self, self.player?.bundleID == learner.bundleID else { return }
-            switch mark {
-            case .nothingChanged: self.setLearningPause(deadline: self.settingsModel.learningPauseDeadline, note: .nothingChanged)
-            case .tooLate:        self.setLearningPause(deadline: nil, note: .timedOut, mode: .automatic)
-            case .cantSeePage:    self.setLearningPause(deadline: nil, note: .cantSeePage, mode: .automatic)
-            case .noted, .notLearning, .notHeard: break
-            }
-        }
-    }
-
-    /// The look while it plays couldn't be taken (it's silent, or its page
-    /// can't be read): back to the first step, saying why.
-    private func backToPlaying(_ learner: any LearningMusicPlayer, after mark: LearningMark) async {
-        if learner.learningStatus == .learning(hasPlayed: true) { await learner.restartLearning() }
-        guard player?.bundleID == learner.bundleID else { return }
-        let note: LearningNote? = switch mark {
-        case .notHeard: .notHeard
-        case .cantSeePage: .cantSeePage
-        default: nil
-        }
-        setLearningPause(deadline: nil, note: note, mode: .automatic)
-    }
-
-    /// The learning window closed (Later, its close button, or learned):
-    /// learning again, before the user said it plays, what the player
-    /// learned stays. The player knows whether it was learning again: its
-    /// status may say it learns meanwhile (its button went missing).
-    private func learningWindowClosed() {
-        guard let learner = player as? any LearningMusicPlayer else { return }
-        Task { await learner.keepLearned() }
-    }
-
-    /// Follows learning as the player reports it. Once it plays, AutoHush
-    /// pauses it, or the user does (their minute starts at Pause It
-    /// Manually). Back at the first step, the note that says why stays (set
-    /// by whatever sent it back); learned, the steps show how it was paused;
-    /// with nothing to learn, nothing shows.
-    func followLearningPause(_ learning: LearningStatus?) {
-        if learning == .learning(hasPlayed: true) { return }
-        learningTimer?.cancel()
-        learningTimer = nil
-        switch learning {
-        case .learning?, .relearning?:
-            setLearningPause(deadline: nil, note: settingsModel.learningNote, mode: .automatic)
-        case .learned?:
-            setLearningPause(deadline: nil, note: nil, mode: settingsModel.learningPauseMode == .failed ? .automatic : nil)
-        case nil:
-            setLearningPause(deadline: nil, note: nil, mode: .automatic)
-        }
-    }
-
-    /// The user has `learningPauseWait` to pause the player and say so; the
-    /// steps count it down, then learning starts over, saying why.
-    private func startLearningPause() {
-        learningTimer?.cancel()
-        setLearningPause(deadline: Date().addingTimeInterval(Double(learningPauseWait.components.seconds)), note: nil)
-        let wait = learningPauseWait
-        let sleep = learningSleep
-        learningTimer = Task { [weak self] in
-            await sleep(wait)
-            guard !Task.isCancelled, let learner = self?.player as? any LearningMusicPlayer else { return }
-            // It's Paused may have come at the last moment: learned, nothing to say.
-            if await learner.restartLearning() { self?.setLearningPause(deadline: nil, note: .timedOut, mode: .automatic) }
         }
     }
 
@@ -263,7 +112,7 @@ extension AppDelegate {
     func showLearningWindow() {
         let opening = learningWindow?.isOpen != true
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
-        learningWindow?.onClose = { [weak self] in self?.learningWindowClosed() }
+        learningWindow?.onClose = { [weak self] in self?.learning.windowClosed() }
         learningWindow?.show()
         watchWindows() // follows the permission it may wait for
         if opening, let player, let url = status.chosenPlayer?.appURL, !permissionCenter.isRunning(player.bundleID) {

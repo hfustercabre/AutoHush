@@ -79,7 +79,8 @@ Sources/
   AutoHushApp/
     Main/                AppDelegate (wiring; its web app, permission and Diagnostics parts in
                          AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
-                         player from its start until AutoHush quits), MonitoringPipeline
+                         player from its start until AutoHush quits), LearningSession (learning a web
+                         app's controls with the user), MonitoringPipeline
                          (the engine for each start), the app-wide state: AppState, which holds AppStatus (what
                          the menu and the windows show, with UpdateOffer), and SettingsModel (what only
                          Settings and the other windows show, and their actions), then

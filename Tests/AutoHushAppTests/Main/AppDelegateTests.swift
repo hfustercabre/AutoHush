@@ -81,9 +81,7 @@ struct AppDelegateTests {
         _ scratch: Scratch = Scratch(),
         chosenPlayer: String? = Players.first,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
-        updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
-        learningPauseWait: Duration = .seconds(60),
-        learningSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        updateInstaller: MockUpdateInstaller = MockUpdateInstaller()
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let sut = AppDelegate(
@@ -105,8 +103,6 @@ struct AppDelegateTests {
             makeAddWebAppWindow: { _, _ in scratch.addWindow },
             openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
-            learningPauseWait: learningPauseWait,
-            learningSleep: learningSleep,
             currentVersion: AppVersion("0.2.0"),
             retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
@@ -437,187 +433,6 @@ struct AppDelegateTests {
         try? await Task.sleep(for: .milliseconds(50))
         #expect(!made.withLock { $0 })
         #expect(scratch.opened.isEmpty)
-    }
-
-    @MainActor
-    @Test("It's Playing, Pause It Manually and It's Paused go to the player; a click it can't take says why under its step")
-    func learningClicks() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch)
-        sut.chooseMusicPlayer(webApp.bundleID)
-
-        webApp.answer(playing: .notHeard)
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningNote == .notHeard }
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-
-        webApp.answer(playing: .noted, paused: .nothingChanged)
-        sut.learningStep(.itsPlaying)
-        // AutoHush's own pause didn't take: its step failed, and no minute counts yet.
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
-        #expect(sut.settingsModel.learningNote == nil)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-
-        // Pause It Manually: the user has a minute to pause it.
-        sut.learningStep(.pauseManually)
-        await waitFor { sut.settingsModel.learningPauseDeadline != nil }
-        #expect(sut.settingsModel.learningPauseMode == .byHand)
-        let deadline = sut.settingsModel.learningPauseDeadline
-        #expect(deadline.map { abs($0.timeIntervalSinceNow - 60) < 2 } == true)
-
-        sut.learningStep(.itsPaused)
-        await waitFor { sut.settingsModel.learningNote == .nothingChanged }
-        #expect(sut.settingsModel.learningPauseDeadline == deadline) // the minute goes on
-
-        // The page went before It's Paused: back to the first step, saying why.
-        webApp.answer(paused: .cantSeePage)
-        sut.learningStep(.itsPaused)
-        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) && sut.settingsModel.learningNote == .cantSeePage }
-        #expect(sut.settingsModel.learningNote == .cantSeePage)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(sut.settingsModel.learningPauseMode == .automatic)
-
-        webApp.answer(playing: .noted, paused: .noted)
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        sut.learningStep(.pauseManually)
-        await waitFor { sut.settingsModel.learningPauseMode == .byHand }
-        sut.learningStep(.itsPaused)
-        await waitFor { sut.status.learning == .learned }
-        #expect(sut.settingsModel.learningNote == nil)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(sut.settingsModel.learningPauseMode == .byHand) // the steps show the user paused it
-    }
-
-    @MainActor
-    @Test("once AutoHush couldn't pause it: Try Again tries once more; Pause It Manually while it's silent goes back to the first step")
-    func learningAfterAFailedPause() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch)
-        sut.chooseMusicPlayer(webApp.bundleID)
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-
-        // The song stopped meanwhile: back to the first step, saying why.
-        webApp.answer(playing: .notHeard)
-        sut.learningStep(.pauseManually)
-        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) }
-        #expect(webApp.restartCount == 1)
-        #expect(sut.settingsModel.learningNote == .notHeard)
-        #expect(sut.settingsModel.learningPauseMode == .automatic)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-
-        webApp.answer(playing: .noted)
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        webApp.pausesByItself(true)
-        sut.learningStep(.tryAgain)
-        #expect(sut.settingsModel.learningPauseMode == .trying)
-        await waitFor { sut.status.learning == .learned }
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(sut.settingsModel.learningNote == nil)
-    }
-
-    @MainActor
-    @Test("It's Playing: AutoHush pauses it itself meanwhile; when that takes, it has learned, with no minute to count")
-    func learningPausesByItself() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let clock = ManualSleep()
-        let (sut, _) = makeSUT(scratch, learningSleep: clock.sleep)
-        sut.chooseMusicPlayer(webApp.bundleID)
-        webApp.pausesByItself(true)
-        sut.learningStep(.itsPlaying)
-        #expect(sut.settingsModel.learningPauseMode == .trying)
-        await waitFor { sut.status.learning == .learned }
-        #expect(sut.learningTimer == nil) // no minute counts
-        clock.timeIsUp()
-        #expect(sut.settingsModel.learningPauseMode != .failed)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(sut.settingsModel.learningNote == nil)
-        #expect(webApp.restartCount == 0)
-    }
-
-    @MainActor
-    @Test("It's Playing while another app is Now Playing: no key, the user pauses it at once, with the minute to count")
-    func learningKeyWouldGoElsewhere() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let (sut, _) = makeSUT(scratch, learningPauseWait: .seconds(60))
-        sut.chooseMusicPlayer(webApp.bundleID)
-        webApp.keyGoesElsewhere()
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .keyElsewhere }
-        await waitFor { sut.settingsModel.learningPauseDeadline != nil } // its minute counts down
-        #expect(sut.settingsModel.learningNote == nil)
-        #expect(sut.status.learning == .learning(hasPlayed: true))
-    }
-
-    @MainActor
-    @Test("It's Paused as the minute ends: learned, and nothing says the minute went by")
-    func learningPausedAtTheLastMoment() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let clock = ManualSleep()
-        let (sut, _) = makeSUT(scratch, learningSleep: clock.sleep)
-        sut.chooseMusicPlayer(webApp.bundleID)
-        webApp.learnAtTheLastMoment()
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        sut.learningStep(.pauseManually)
-        clock.timeIsUp() // the minute ends: It's Paused comes just then
-        await waitFor { sut.status.learning == .learned }
-        await sut.learningTimer?.value
-        #expect(webApp.restartCount == 0)
-        #expect(sut.settingsModel.learningNote == nil)
-    }
-
-    @MainActor
-    @Test("without It's Paused in time, learning starts over and says why")
-    func learningPauseTimesOut() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let clock = ManualSleep()
-        let (sut, _) = makeSUT(scratch, learningPauseWait: .seconds(42), learningSleep: clock.sleep)
-        sut.chooseMusicPlayer(webApp.bundleID)
-        sut.learningStep(.itsPlaying)
-        await waitFor { sut.settingsModel.learningPauseMode == .failed }
-        #expect(sut.learningTimer == nil) // no minute counts until Pause It Manually
-        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
-        sut.learningStep(.pauseManually)
-        await waitFor { clock.durations == [.seconds(42)] } // its minute counts
-        clock.timeIsUp()
-        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: false) }
-        #expect(webApp.restartCount == 1)
-        #expect(sut.settingsModel.learningNote == .timedOut)
-        #expect(sut.settingsModel.learningPauseMode == .automatic)
-        #expect(sut.settingsModel.learningPauseDeadline == nil)
-        #expect(scratch.learningWindow.isOpen) // still learning
-
-        // Choosing another player forgets it all.
-        sut.chooseMusicPlayer(Players.first)
-        #expect(sut.settingsModel.learningNote == nil)
     }
 
     @MainActor

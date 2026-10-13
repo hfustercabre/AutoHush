@@ -55,6 +55,9 @@ struct AppStatus: Equatable {
     /// `nil` for a player it controls without learning. The menu's card
     /// says whether it's learned; the steps show only in a window.
     var learning: LearningStatus?
+    /// Where the pause stands while it learns, for the windows that show
+    /// the steps.
+    var learningPause = LearningPause()
     /// The chosen player learns its controls (a web app): they can be learned
     /// afresh, once learned (they may have been learned wrong) or before
     /// (the learning window was closed halfway).
