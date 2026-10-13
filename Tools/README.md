@@ -1,9 +1,9 @@
 # Tools
 
 Tools for measuring AutoHush's fades and for checking which apps it could
-control. **None of them is part of the app or its disk image:** no app target depends on them, `Scripts/build-app.sh`
-builds only the AutoHush product, and what the build itself needs lives in
-`Scripts/`.
+control. **None of them is part of the app or its disk image:** no app
+target depends on them, `Scripts/build-app.sh` builds only the AutoHush
+product, and what the build itself needs lives in `Scripts/`.
 
 | Tool | What it does |
 |---|---|

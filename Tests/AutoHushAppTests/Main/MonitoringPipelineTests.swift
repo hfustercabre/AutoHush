@@ -87,7 +87,7 @@ struct MonitoringPipelineTests {
         let setup = Setup(player: player)
         await setup.pipeline.start(asleep: true)
         await setup.otherAppPlays()
-        try? await Task.sleep(for: .milliseconds(100))
+        await setup.pipeline.eventsDelivered()
         #expect(await player.pauseCallCount == 0)
         setup.pipeline.stop()
     }

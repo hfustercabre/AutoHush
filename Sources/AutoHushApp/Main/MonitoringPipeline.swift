@@ -128,11 +128,10 @@ final class MonitoringPipeline {
     /// Observes the player, seeds the arbiter with its live state, takes over
     /// a pause handed over by the AutoHush before this one when asked to, then
     /// starts audio monitoring — unless `stop()` was called in the meantime.
-    /// Started while the Mac sleeps (`asleep`), the arbiter knows it before
-    /// any app reaches it; a wake told meanwhile wins, though it may reach
-    /// the arbiter first (the changes are numbered).
-    /// Starts monitoring; `true` when it took a pause over (`takingOverPause`
-    /// and the player is paused).
+    /// `true` when it took a pause over (`takingOverPause`, and the player is
+    /// paused). Started while the Mac sleeps (`asleep`), the arbiter knows it
+    /// before any app reaches it; a wake told meanwhile wins, though it may
+    /// reach the arbiter first (the changes are numbered).
     @discardableResult
     func start(takingOverPause: Bool = false, asleep: Bool = false) async -> Bool {
         if asleep {
@@ -205,6 +204,12 @@ final class MonitoringPipeline {
 
     func activeAudioReport() -> [ActiveAudioReport.Entry] {
         monitor.activeAudioReport()
+    }
+
+    /// Returns once what the monitor has seen so far has reached the
+    /// arbiter (see `AudioMonitor.eventsDelivered`); tests use it.
+    func eventsDelivered() async {
+        await monitor.eventsDelivered()
     }
 }
 

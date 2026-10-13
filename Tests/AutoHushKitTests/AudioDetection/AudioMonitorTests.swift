@@ -132,7 +132,7 @@ struct AudioMonitorTests {
         h.step(after: 0.6, [])
         h.step(after: 1.0)
         h.step(after: 3.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -169,7 +169,7 @@ struct AudioMonitorTests {
         h.step(after: 0.25, [])                              // stream closes between videos
         h.step(after: 1.5, [Self.process(2, "com.apple.Safari")]) // next video starts
         h.step(after: 5.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events == [.init(bundleID: "com.apple.Safari", isPlaying: true)])
         h.monitor.stop()
     }
@@ -209,7 +209,7 @@ struct AudioMonitorTests {
         h.step(after: 0.1, [Self.process(1, "com.example.hiss")], peaks: [1: 0.0001])
         h.step(after: 1.0)
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -367,7 +367,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "com.example.player")])
         h.step(after: 1)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -434,7 +434,7 @@ struct AudioMonitorTests {
         assertions.held = [1001: MockPowerAssertions.playing]
         h.step([Self.process(1, "com.example.player")], peaks: [1: 0]) // says it plays, but silent
         h.step(after: 1.0, peaks: [1: 0])
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .silent, evidence: .level(0))])
         h.monitor.stop()
@@ -601,7 +601,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0])
         h.step(after: 1.0)
         h.step(after: 3.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.meter.lastMetered == [1])
         h.monitor.stop()
@@ -731,7 +731,7 @@ struct AudioMonitorTests {
         await h.recorder.waitForPlayerLocal(count: 2)
         #expect(await h.recorder.playerLocal == [false, true])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -763,7 +763,7 @@ struct AudioMonitorTests {
 
         // One helper stops: the app keeps playing.
         h.step(after: 0.25, [Self.process(2, "com.google.Chrome.helper")])
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.count == 1)
         h.monitor.stop()
     }
@@ -777,7 +777,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "\(TestPlayer.bundleID).helper")])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.activeSources.values.last?.isEmpty ?? true)
         h.monitor.stop()
@@ -802,7 +802,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "")])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.activeSources.values.last?.isEmpty ?? true)
         #expect(h.monitor.activeAudioReport().isEmpty)
@@ -818,7 +818,7 @@ struct AudioMonitorTests {
         await h.recorder.waitForPlayerLocal(count: 2)
         #expect(await h.recorder.playerLocal == [false, true])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -829,7 +829,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "org.videolan.vlc")])
         h.step(after: 0.25)
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, isIgnored: true)])
@@ -863,7 +863,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "org.videolan.vlc")])
         h.step(after: 0.25, [])
-        try? await Task.sleep(for: .milliseconds(30))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.activeSources.values.last?.map(\.id) == [])
         h.monitor.stop()
@@ -877,7 +877,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.coreaudiod")])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }
@@ -888,7 +888,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([AudioProcessInfo(objectID: 1, bundleID: "com.example.self", pid: getpid())])
         h.step(after: 1.0)
-        try? await Task.sleep(for: .milliseconds(50))
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.monitor.stop()
     }

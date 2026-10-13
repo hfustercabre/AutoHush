@@ -52,7 +52,7 @@ struct AppsSettingsView: View {
                     }
                     .animation(.default, value: model.apps)
                     Text("Turn an app off to keep your player playing while it makes sound. Select an app to remove it from the list.",
-                 comment: "Settings → Apps, under the list; “Select” as in clicking an app in the list")
+                         comment: "Settings → Apps, under the list; “Select” as in clicking an app in the list")
                         .captionStyle()
                         .padding(.horizontal, 4)
                 }

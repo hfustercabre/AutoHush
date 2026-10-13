@@ -10,9 +10,10 @@ import AutoHushKit
 ///
 /// Sites differ, and their words are in the site's language, so the button
 /// is learned once, from the user saying when the web app plays, and the
-/// page once paused, by AutoHush itself or the user (see `WebAppControl`). Its windows are reached on every Space, minimized ones
-/// too. It never presses the button blindly: pausing presses it only while
-/// the button says the music plays, playing only while it says it's paused.
+/// page once paused, by AutoHush itself or the user (see `WebAppControl`).
+/// Its windows are reached on every Space, minimized ones too. It never
+/// presses the button blindly: pausing presses it only while the button
+/// says the music plays, playing only while it says it's paused.
 /// Its volume can't be read, so it pauses and plays without fading. A pause
 /// the site refuses, or an ad that plays while its button says "Play", mutes
 /// the web app instead.

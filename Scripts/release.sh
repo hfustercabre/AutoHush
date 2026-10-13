@@ -4,9 +4,9 @@
 # Usage: bash Scripts/release.sh <version>        e.g. bash Scripts/release.sh 0.3.0
 #
 # Steps:
-#   1. sets the version in Resources/Info.plist (build number + 1) and turns
+#   1. runs the test suite, before anything changes
+#   2. sets the version in Resources/Info.plist (build number + 1) and turns
 #      CHANGELOG.md's [Unreleased] section into [<version>] — <date>
-#   2. runs the test suite
 #   3. builds the app, signed with the AutoHush certificate (hardened runtime)
 #   4. packages dist/AutoHush-<version>.dmg
 #   5. writes the release notes into dist/release-notes-<version>.md
@@ -38,16 +38,16 @@ grep -q '^## \[Unreleased\]' "$CHANGELOG" || fail "CHANGELOG.md has no [Unreleas
 IDENTITY="$(resolve_signing_identity)"
 [[ "$IDENTITY" != "-" ]] || fail "no signing certificate: run Scripts/create-signing-certificate.sh (or restore your backup) first"
 
-# 1. Version and changelog ---------------------------------------------------
+# 1. Tests -------------------------------------------------------------------
+step "Running tests"
+swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
+
+# 2. Version and changelog ---------------------------------------------------
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))
 step "Setting version $VERSION ($BUILD_NUMBER)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST"
 sed -i '' "s/^## \[Unreleased\]$/## [$VERSION] — $(date +%Y-%m-%d)/" "$CHANGELOG"
-
-# 2. Tests -------------------------------------------------------------------
-step "Running tests"
-swift test >/dev/null || fail "tests failed; release aborted (version files were already updated)"
 
 # 3–4. App and disk image -----------------------------------------------------
 SIGNING_IDENTITY="$IDENTITY" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"

@@ -54,9 +54,6 @@ package struct AppConfiguration: Sendable {
     /// System processes that must NEVER trigger a pause.
     package static let excludedBundleIDs: Set<String> = [
         "com.apple.coreaudiod",
-        "com.apple.audio.SandboxHelper",
-        "com.apple.audio.AudioComponentRegistrar",
-        "com.apple.audio.UISoundsServer",
         "com.apple.systemsound",
         // Plays notification banner sounds, alert beeps and system sound
         // effects on behalf of every app (measured on macOS 27); it reports

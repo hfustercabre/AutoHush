@@ -95,8 +95,8 @@ let package = Package(
 
         // Checks whether and how AutoHush could control an app, with AutoHush's
         // own code for what they share (Apple events, menus, learned page
-        // buttons, sound). A tool: never part of AutoHush.app. One file of
-        // top-level code, written for the Swift 5 language mode.
+        // buttons, sound). A tool: never part of AutoHush.app. Its files are
+        // split by subject, with main.swift's top-level code running the steps.
         .executableTarget(
             name: "PlayerCheck",
             dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "VLCSupport"],

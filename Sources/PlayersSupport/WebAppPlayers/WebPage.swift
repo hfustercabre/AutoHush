@@ -154,49 +154,40 @@ package struct AccessibilityWebPage: WebPage {
 
     package func place(of handle: ButtonHandle) -> ButtonPlace? {
         guard let element = Self.element(of: handle), let frame = Self.frame(of: element) else { return nil }
-        var path: [String] = []
-        var node = element
-        var window: AXUIElement?
-        var inPage = true
-        for _ in 0..<Self.pathDepth {
-            guard let parent = node.element(kAXParentAttribute) else { break }
-            node = parent
-            let role = node.string(kAXRoleAttribute) ?? ""
-            if role == kAXWindowRole {
-                window = node
-                break
-            }
-            if role == "AXWebArea" { inPage = false }
-            guard inPage else { continue } // on to its window
-            let subrole = node.string(kAXSubroleAttribute)
-            path.append(subrole.map { "\(role):\($0)" } ?? role)
-        }
+        let (around, window) = Self.surroundings(of: element)
         guard let window, let windowFrame = Self.frame(of: window) else { return nil }
+        let path = around.map { node, role in node.string(kAXSubroleAttribute).map { "\(role):\($0)" } ?? role }
         return ButtonPlace(path: path, distanceFromBottom: windowFrame.maxY - frame.midY)
     }
 
     package func standing(of handle: ButtonHandle) -> ButtonStanding? {
         guard let element = Self.element(of: handle), let frame = Self.frame(of: element) else { return nil }
-        var around: [AXUIElement] = []
+        let (around, window) = Self.surroundings(of: element)
+        guard let window, let windowFrame = Self.frame(of: window) else { return nil }
+        var reads = Self.controlsReadLimit
+        let withControls = around.prefix(Self.controlsLevels).contains { Self.holdsSlider($0.element, depth: 0, reads: &reads) }
+        return ButtonStanding(isInWindow: (windowFrame.minY...windowFrame.maxY).contains(frame.midY),
+                              isWithPlayerControls: withControls)
+    }
+
+    /// The elements around `element` in its page, its parent first, with
+    /// their roles (the page itself, and what holds it, aren't among them),
+    /// and the window it's in; `nil` for a window not found within
+    /// `pathDepth` parents.
+    private static func surroundings(of element: AXUIElement)
+        -> (inPage: [(element: AXUIElement, role: String)], window: AXUIElement?) {
+        var inPage: [(element: AXUIElement, role: String)] = []
         var node = element
-        var window: AXUIElement?
-        var inPage = true
-        for _ in 0..<Self.pathDepth {
+        var pastPage = false
+        for _ in 0..<pathDepth {
             guard let parent = node.element(kAXParentAttribute) else { break }
             node = parent
             let role = node.string(kAXRoleAttribute) ?? ""
-            if role == kAXWindowRole {
-                window = node
-                break
-            }
-            if role == "AXWebArea" { inPage = false }
-            if inPage, around.count < Self.controlsLevels { around.append(node) }
+            if role == kAXWindowRole { return (inPage, node) }
+            if role == "AXWebArea" { pastPage = true }
+            if !pastPage { inPage.append((node, role)) } // else on to its window
         }
-        guard let window, let windowFrame = Self.frame(of: window) else { return nil }
-        var reads = Self.controlsReadLimit
-        let withControls = around.contains { Self.holdsSlider($0, depth: 0, reads: &reads) }
-        return ButtonStanding(isInWindow: (windowFrame.minY...windowFrame.maxY).contains(frame.midY),
-                              isWithPlayerControls: withControls)
+        return (inPage, nil)
     }
 
     /// Whether a slider or a progress bar is in `element`, as a player's

@@ -112,7 +112,7 @@ enum DiagnosticsReport {
 
     private static func sections(status: AppStatus, facts: DiagnosticsFacts) -> [DiagnosticsSnapshot.Section] {
         [player(status: status, facts: facts), detection(status: status, facts: facts),
-         permissions(status: status, facts: facts), autoHush(status: status, facts: facts), mac(facts: facts)]
+         permissions(facts: facts), autoHush(status: status, facts: facts), mac(facts: facts)]
     }
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
@@ -181,7 +181,7 @@ enum DiagnosticsReport {
         return .init(kind: .detection, title: String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped"), summary: method, rows: rows)
     }
 
-    private static func permissions(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
+    private static func permissions(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         var rows: [Row] = []
         let antiDot = facts.detectionMethod != .audioLevels
         let audio = String(localized: "Audio recording", comment: "Diagnostics: the System Audio Recording permission")

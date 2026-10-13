@@ -1,11 +1,12 @@
 # PlayerCheck
 
 Says whether AutoHush could control an app (pause it while another app
-plays, then play it again), and which kind of player it would be, so it
-can be added as the README's [Adding a media player](../../README.md#architecture)
-says. It reads the app from outside, as AutoHush would, then tests each way
-to control it, with the app's window in each state a player's window can
-be in. [Player Check](../PlayerCheckApp) does all of this from a window.
+plays, then play it again), and which kind of player it would be, so it can
+be added as the README's [Adding a media
+player](../../README.md#architecture) says. It reads the app from outside,
+as AutoHush would, then tests each way to control it, with the app's window
+in each state a player's window can be in. [Player Check](../PlayerCheckApp)
+does all of this from a window.
 
 It's a target of AutoHush's package and runs AutoHush's own code wherever
 the two do the same thing (Apple events, VLC's states, playback menus and
@@ -126,16 +127,16 @@ only to the Now Playing app, which AutoHush can't choose.
 
 ## Whether it plays
 
-A pause or a play is judged by the surest sign the app showed before it:
-its AppleScript state, what it reports to Now Playing (from macOS's log,
+A pause or a play is judged by the surest sign the app showed before it: its
+AppleScript state, what it reports to Now Playing (from macOS's log,
 administrators only), its page's word (only while current: a WebKit page's
 anywhere, a Chromium or Flutter page's only on screen), its level, its
-keep-awake assertion, its menu's state; else its menu's word changing or
-its sound. A Chromium browser's web app has no level (its sound is the
-browser's, all its pages together); its keep-awake sign counts the
-browser's "Playing audio" assertions instead (below). Its state notification (`<bundle ID>.PlaybackStateChanged`,
-`.playerInfo`, …) confirms too, and the verdict names the one that
-announced both.
+keep-awake assertion, its menu's state; else its menu's word changing or its
+sound. A Chromium browser's web app has no level (its sound is the
+browser's, all its pages together); its keep-awake sign counts the browser's
+"Playing audio" assertions instead (below). Its state notification (`<bundle
+ID>.PlaybackStateChanged`, `.playerInfo`, …) confirms too, and the verdict
+names the one that announced both.
 
 ## Pages kept out of Accessibility
 
@@ -170,29 +171,13 @@ do, they fail minimized or hidden. Since Chromium 130 it reports to Now
 Playing as itself, with its own row in the panel. Its sound and keep-awake
 assertions are the browser's, shared with its tabs: the browser holds one
 "Playing audio" assertion per playing page (a tab, a call, another web
-app, any profile), so the check counts them once the web app plays, and
-one more or fewer than its other pages' tells whether it plays; another
-page starting or stopping meanwhile makes that unclear (said).
+app, any profile). So the check counts the other pages' (before it
+waits for the web app to play; or, found playing already, all of them
+but one), and one more than theirs says it plays; another page starting
+or stopping meanwhile makes that unclear (said). Its last-resort sound
+sign is the browser's own output.
 
 ## Window states
-A Chromium browser's web app is a launcher in `~/Applications/<Browser>
-Apps.localized/` whose Info.plist names its site (`CrAppModeShortcutURL`)
-and its browser (`CrBundleIdentifier`). Its window is its own, but the
-page in it is the browser's: the switch goes on the browser, for all its
-windows and tabs, and the browser takes presses 2 s after it (a press
-waits). Set on the web app, or read without it (the page shows once
-anything asked the browser for it), presses are silently ignored. The
-browser makes a page pressable only while its window can be seen: turned
-on then and kept on, presses take in every state (hidden or minimized, its
-word lags); turned on for each press, as this tool's presses and trials
-do, they fail minimized or hidden. Since Chromium 130 it reports to Now
-Playing as itself, with its own row in the panel. Its sound and keep-awake
-assertions are the browser's, shared with its tabs: the browser holds one
-"Playing audio" assertion per playing page (a tab, a call, another web
-app, any profile), so the check counts them once the web app plays, and
-one more or fewer than its other pages' tells whether it plays; another
-page starting or stopping meanwhile makes that unclear (said).
-
 
 Each way is tried with the app's main window in each of these states:
 
@@ -252,11 +237,12 @@ blocked.
 ## Stopping
 
 Ctrl-C, Player Check's Stop, Escape while input is blocked, or whoever ran
-it ending (its window closed, a crash): while the window is away from where it was, or in a trial, the
-check finishes the step under way (a trial plays the app again first; a
-move; the page read; a wait ends at once), then puts the window back and
-stops; before anything moved, it stops at once. Either way the switches it
-turned on are set back, and the app that was in front comes back.
+it ending (its window closed, a crash): while the window is away from where
+it was, or in a trial, the check finishes the step under way (a trial plays
+the app again first; a move; the page read; a wait ends at once), then puts
+the window back and stops; before anything moved, it stops at once. Either
+way the switches it turned on are set back, and the app that was in front
+comes back.
 
 ## Playing and pausing (`--play`, `--pause`)
 

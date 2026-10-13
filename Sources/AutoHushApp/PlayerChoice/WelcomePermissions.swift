@@ -70,13 +70,15 @@ struct WelcomePermissionsView: View {
             Spacer(minLength: 8)
             switch access {
             case .allowed:
+                // Green is for the symbol only: as text it's too faint in light mode.
                 Label {
                     Text("Allowed", comment: "Diagnostics and the welcome window: a permission that is granted")
                 } icon: {
                     Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.appSuccess)
                 }
                 .font(.appCallout)
-                .foregroundStyle(.appSuccess)
+                .foregroundStyle(.appSecondary)
             case .notNeeded:
                 Text("Not Needed", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
                     .font(.appCallout)

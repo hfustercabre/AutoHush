@@ -34,14 +34,15 @@ package actor VLCPlayer: MusicPlayer {
     /// VLC's `modules/audio_output/auhal.c`), so half is about −18 dB.
     package nonisolated var volumeCurve: VolumeCurve { .cubic }
 
-    private let channel: AppleEventChannel
+    private let channel: any AppleEventSending
     private let logger = Logger(category: "VLCPlayer")
     /// The last volume read, in VLC's numbers and AutoHush's, so setting it
     /// back restores VLC's exact number rather than a rounded one.
     private var lastVolume: (vlc: Int, volume: Int)?
 
-    package init() {
-        channel = AppleEventChannel(bundleID: Self.appBundleID, label: "VLC")
+    /// `channel`: VLC's Apple events; tests stand in for it.
+    package init(channel: (any AppleEventSending)? = nil) {
+        self.channel = channel ?? AppleEventChannel(bundleID: Self.appBundleID, label: "VLC")
     }
 
     package func verifyControlAccess() async throws {

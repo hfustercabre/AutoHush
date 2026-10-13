@@ -7,8 +7,8 @@ import AutoHushKit
 /// the website in Safari and, once the user says to add it, opens Safari's
 /// own File → Add to Dock, where the user can rename the web app and clicks
 /// Add (or Cancel: then it waits for Add to Dock again), and closes the tab
-/// it opened. Nothing else is created or
-/// changed; macOS has no other way to make one.
+/// it opened. Nothing else is created or changed; macOS has no other way to
+/// make one.
 ///
 /// Safari makes the web app from the page it shows, so the site itself must
 /// show first: a site can ask something first on another of its hosts

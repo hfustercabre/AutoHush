@@ -1,5 +1,4 @@
 import SwiftUI
-import AutoHushKit
 
 // A player AutoHush must first learn to control (a Safari web app: which of
 // its buttons plays and pauses it) asks the user to play it and say so

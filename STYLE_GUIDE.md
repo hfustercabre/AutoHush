@@ -107,7 +107,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.primary` | system | system | Text and symbols |
 | `.appSecondary` | black 68% | system secondary | Descriptions, section labels, values, captions |
 | `.appWarning` | #B03000 | system orange | Things that need the user: warning symbols, a status line with a problem |
-| `.appSuccess` | system green | system green | Symbols for what works (Diagnostics) |
+| `.appSuccess` | system green | system green | Symbols for what works (Diagnostics, the welcome window's permissions); never text, too faint in light mode |
 | accent color | system | system | Switches that are on, the selected chip, links, the main button |
 | `.cardFill` / `.cardBorder` | black 5% / 10% | quaternary 60% / none | A card's background and outline |
 | `.chipFill` / `.chipHoverFill` | black 8% / 13% | quaternary 60% / quaternary | A chip at rest / under the pointer; search fields |
@@ -158,7 +158,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
 | `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It's Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
-| `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs under "Permissions", a row each (a `SymbolTile`, `RowTitle`, then the `PermissionButton` or an "Allowed" check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done in the `BottomBar`. |
+| `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs under "Permissions", a row each (a `SymbolTile`, `RowTitle`, then the `PermissionButton` or "Allowed" in `.appSecondary` after a check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done in the `BottomBar`. |
 
 **Permission blocks.** Wherever something needs a permission that's
 missing, say what's missing in a `NoteLabel` (`.warning`) with its

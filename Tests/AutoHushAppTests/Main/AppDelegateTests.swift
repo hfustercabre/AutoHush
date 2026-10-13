@@ -545,7 +545,6 @@ struct AppDelegateTests {
         webApp.pausesByItself(true)
         sut.learningStep(.itsPlaying)
         #expect(sut.settingsModel.learningPauseMode == .trying)
-        #expect(sut.settingsModel.learningPauseMode == .trying)
         await waitFor { sut.status.learning == .learned }
         try? await Task.sleep(for: .milliseconds(150))
         #expect(sut.settingsModel.learningPauseMode != .failed)

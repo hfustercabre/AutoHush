@@ -15,6 +15,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   give it a higher number, and then AutoHush couldn't read its page there.
   When no window is among the first thousand but the app has one out of
   sight, it now looks further.
+- **"Allowed" was hard to read in the welcome window in light mode.** The
+  word was in green; now only its check is, as in Settings.
 
 ## [0.12.1] — 2026-10-11
 

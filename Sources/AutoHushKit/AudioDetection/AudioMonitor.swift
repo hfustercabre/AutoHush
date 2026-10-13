@@ -49,6 +49,8 @@ package final class AudioMonitor: @unchecked Sendable {
         /// `heardSince`: for a start, when the app was first heard, if known.
         case source(id: String, isPlaying: Bool, heardSince: Date?)
         case localPlayback(Bool)
+        /// Every event sent before it has reached the arbiter (`eventsDelivered`).
+        case delivered(@Sendable () -> Void)
     }
 
     /// The player playing but its tap silent for this long means level detection
@@ -165,6 +167,8 @@ package final class AudioMonitor: @unchecked Sendable {
                     await arbiter.handleSourceChange(sourceID: id, isPlaying: isPlaying, heardSince: heardSince)
                 case .localPlayback(let isLocal):
                     await arbiter.handleLocalPlaybackChange(isLocal)
+                case .delivered(let done):
+                    done()
                 }
             }
         }
@@ -256,6 +260,15 @@ package final class AudioMonitor: @unchecked Sendable {
             for id in self.tracker.activeSources.sorted() where previous.contains(id) != ids.contains(id) {
                 self.events.yield(.source(id: id, isPlaying: previous.contains(id), heardSince: nil))
             }
+        }
+    }
+
+    /// Returns once every event the monitor has sent so far, and any its
+    /// queued work sends, has reached the arbiter. Tests use it to see that
+    /// none came.
+    package func eventsDelivered() async {
+        await withCheckedContinuation { continuation in
+            queue.async { self.events.yield(.delivered { continuation.resume() }) }
         }
     }
 

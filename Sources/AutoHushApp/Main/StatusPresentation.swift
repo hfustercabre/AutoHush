@@ -128,7 +128,7 @@ extension AppHealthState {
 struct ControlError: Equatable {
     /// E.g. "AutoHush can't find Play/Pause in TIDAL's menus."
     let text: String
-    /// E.g. "Controlling the music player failed: its Play/Pause menu item wasn't found."
+    /// E.g. "Controlling the media player failed: its Play/Pause menu item wasn't found."
     let detail: String
 
     init(text: String, detail: String) {

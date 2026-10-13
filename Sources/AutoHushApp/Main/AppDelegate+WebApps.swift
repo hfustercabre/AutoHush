@@ -32,9 +32,8 @@ extension AppDelegate {
     /// learned (they may have been learned wrong), or before (the learning
     /// window was closed halfway). A window showing the steps closes, and so
     /// does Add a Web App, and a new learning window starts from the first
-    /// step. What the player
-    /// learned stays until the user says it plays there; closing the window
-    /// before that keeps it (`learningWindowClosed`).
+    /// step. What the player learned stays until the user says it plays
+    /// there; closing the window before that keeps it (`learningWindowClosed`).
     func learnControlsAgain() {
         guard let learner = player as? any LearningMusicPlayer else { return }
         logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
@@ -191,8 +190,8 @@ extension AppDelegate {
 
     /// Makes the address a web app, then opens it, chooses it, and lets the
     /// window show the learning (or, added while the welcome window shows,
-    /// closes: the welcome window goes on). Closing the window cancels it until the
-    /// web app is made.
+    /// closes: the welcome window goes on). Closing the window cancels it
+    /// until the web app is made.
     func addWebApp(from address: String) {
         guard addingWebApp == nil else { return }
         let model = addWebAppModel
