@@ -1,0 +1,38 @@
+# Builds AutoHush with warnings as errors and runs its tests on every pull
+# request into wip, as CONTRIBUTING.md asks of each change. It reads the code
+# and nothing else: no secrets, no writing, so a fork's pull request runs it
+# as it is.
+name: Build and test
+
+on:
+  pull_request:
+    branches: [wip]
+
+permissions:
+  contents: read
+
+# A new push to the pull request stops the run for the one before.
+concurrency:
+  group: build-and-test-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    # Xcode 27 and the macOS 27 SDK, which the app is built with (Liquid
+    # Glass, macOS 27's menu images). GitHub still calls the image a preview.
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tools
+        run: xcodebuild -version && swift --version
+      - name: Build everything, warnings as errors
+        run: swift build -Xswiftc -warnings-as-errors
+      - name: Test
+        # Without the slow disk image tests; a release runs them all.
+        env:
+          AUTOHUSH_QUICK_TESTS: "1"
+        run: swift test -Xswiftc -warnings-as-errors

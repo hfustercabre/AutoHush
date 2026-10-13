@@ -33,7 +33,8 @@ security problem goes privately, as [SECURITY.md](SECURITY.md) says.
 
 A check on every pull request flags one whose branch name or target doesn't
 follow these rules; a wrong target can be fixed by editing the pull
-request. I review each pull request before approving and merging it, and it
+request. Another builds it with warnings as errors and runs the tests, on
+Xcode 27. I review each pull request before approving and merging it, and it
 reaches `main` with the next release.
 
 ## Where to look
