@@ -72,16 +72,20 @@ to it and loses its permissions; one signed with a certificate keeps them.
   move until the window is put back, your clicks, scrolling and keys are
   blocked (playercheck's `--block-input`): the pointer still moves (except
   during a drag), and the panel's Stop and Escape still work, both stopping
-  the check; whenever the check asks you something, they're yours again. Its
-  own window may move aside so the app's shows. Everything is put back as it was at the end (also at a
-  Stop). A check takes about 3 minutes; the status says which state it's
+  the check; whenever the check asks you something, they're yours again.
+  Meanwhile every screen dims (black at 50%) but the panel: the shade lets
+  the check's drags through and hides nothing from it (macOS still counts
+  the windows under it as visible, so a Chromium page there takes presses).
+  Its own window may move aside so the app's shows. Everything is put back
+  as it was at the end (also at a Stop). A check takes about 3 minutes; the status says which state it's
   in ("Checking: its window covered, 2 of 7…"). While it runs, a small
   panel at the screen's bottom right shows how far it has got, on every
   desktop (full screen apps' too): what it's doing, what it asks of you
   with the time left, the window states as segments with the one it's in
   and the way it's pressing, while your input is blocked an orange line
-  saying so, and its **Stop**, which leaves the app you're in where it is. It floats above other windows, which the check doesn't
-  count as covering the app. The keyboard's Play/Pause key isn't one: macOS sends it only to
+  saying so, and its **Stop**, which leaves the app you're in where it is.
+  It floats above other windows, the menu bar and the shade, which the
+  check doesn't count as covering the app. The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). When a way leaves it paused, the
   check first plays it again by itself (that way once more, then a way that

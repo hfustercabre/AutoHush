@@ -1157,7 +1157,7 @@ struct AppDetail: View {
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
-        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so from the first move until the window is put back your clicks, scrolling and keys are blocked (the pointer still moves, except during a drag). The panel's Stop and Escape still work, and stop the check; whenever the check asks you something, they're all yours again. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
+        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so from the first move until the window is put back your clicks, scrolling and keys are blocked (the pointer still moves, except during a drag) and the screen dims, apart from the panel. The panel's Stop and Escape still work, and stop the check; whenever the check asks you something, they're all yours again. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
         parts.append("A small panel at the bottom right of the screen shows how far it has got, with Stop, on every desktop.")
         if let launch = checker.launchOptions[app.id], launch.running == "no" {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
@@ -1312,10 +1312,21 @@ struct Tag: View {
 /// too: the check moves the app's window between them, and whoever starts
 /// the app playing may be on its desktop. It floats above other windows
 /// (the check counts only ordinary windows as covering the app) and never
-/// comes forward: clicking Stop leaves the app in front where it is.
+/// comes forward: clicking Stop leaves the app in front where it is. While
+/// playercheck blocks the mouse and keyboard, a shade dims every screen
+/// but the panel.
 @MainActor
 final class CheckPanel {
+    /// The shade's level and the panel's, above the menu bar, the Dock and
+    /// Control Center's panels (level 101: the Now Playing panel a check
+    /// opens), so the shade dims them all and the panel stays above it.
+    /// playercheck's InputBlock lets clicks through only on Player Check's
+    /// windows at `panelLevel`, so it never takes the full-screen shade for
+    /// the panel: keep its number in step.
+    static let shadeLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
+    static let panelLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 2)
     private var panel: NSPanel?
+    private var shades: [NSWindow] = []
 
     func show(_ app: InstalledApp, checker: Checker) {
         hide()
@@ -1324,15 +1335,17 @@ final class CheckPanel {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
-        panel.level = .floating
+        panel.level = Self.panelLevel
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.hidesOnDeactivate = false
         panel.canHide = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.isReleasedWhenClosed = false
-        let content = NSHostingView(rootView: CheckPanelView(app: app, checker: checker) { [weak panel] size in
+        let content = NSHostingView(rootView: CheckPanelView(app: app, checker: checker, resized: { [weak panel] size in
             Self.fit(panel, to: size)
-        })
+        }, dimmed: { [weak self] on in
+            self?.dim(on)
+        }))
         let radius: CGFloat = 20
         if #available(macOS 26, *) {
             let glass = NSGlassEffectView()
@@ -1365,6 +1378,42 @@ final class CheckPanel {
     func hide() {
         panel?.orderOut(nil)
         panel = nil
+        shades.forEach { $0.orderOut(nil) }
+        shades = []
+    }
+
+    /// Dims every screen but the panel, black at 50%, fading in or out. The
+    /// shade lets the check's drags through (it ignores the mouse), and
+    /// doesn't hide what's under it from the check: macOS still counts those
+    /// windows as visible (a Chromium page under it takes presses), and
+    /// Accessibility's hit tests pass it by.
+    private func dim(_ on: Bool) {
+        if on, shades.isEmpty { shades = NSScreen.screens.map(Self.shade) }
+        let shown = shades
+        if !on { shades = [] }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.25
+            for shade in shown { shade.animator().alphaValue = on ? 1 : 0 }
+        } completionHandler: {
+            if !on { shown.forEach { $0.orderOut(nil) } }
+        }
+    }
+
+    private static func shade(_ screen: NSScreen) -> NSWindow {
+        let shade = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        shade.isOpaque = false
+        shade.backgroundColor = NSColor.black.withAlphaComponent(0.5)
+        shade.alphaValue = 0
+        shade.ignoresMouseEvents = true
+        shade.hasShadow = false
+        shade.level = shadeLevel
+        shade.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        shade.canHide = false
+        shade.hidesOnDeactivate = false
+        shade.isReleasedWhenClosed = false
+        shade.setFrame(screen.frame, display: false)
+        shade.orderFrontRegardless()
+        return shade
     }
 
     /// Its size for its content, its bottom right corner 16 pt from the
@@ -1380,12 +1429,14 @@ final class CheckPanel {
 /// what it asks of you (with the time left), or the window states as
 /// segments (each one filled once tested), the one it's in and the way
 /// it's pressing; and, while playercheck blocks the mouse and keyboard,
-/// that it does.
+/// that it does (the screen dims meanwhile).
 struct CheckPanelView: View {
     let app: InstalledApp
     let checker: Checker
     /// Its size, for the panel to fit it.
     let resized: (CGSize) -> Void
+    /// Whether the screen is dimmed: while input is blocked.
+    let dimmed: (Bool) -> Void
 
     private var report: Report? { checker.reports[app.id] }
 
@@ -1426,6 +1477,7 @@ struct CheckPanelView: View {
         .frame(width: 310)
         .fixedSize(horizontal: false, vertical: true)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { resized($0) }
+        .onChange(of: inputBlocked, initial: true) { _, blocked in dimmed(blocked) }
     }
 
     /// What the check is doing, by the report's section.

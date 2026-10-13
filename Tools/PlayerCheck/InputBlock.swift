@@ -151,14 +151,16 @@ final class InputBlock: @unchecked Sendable {
     }
 
     /// Every 0.5 s: where Player Check's panel is (its windows at the
-    /// floating level), and whether the check still writes.
+    /// panel's level), and whether the check still writes.
     private func lookAround() {
         let parent = getppid()
-        let floating = Int(CGWindowLevelForKey(.floatingWindow))
+        // Player Check's `CheckPanel.panelLevel`: its full-screen shade sits
+        // one below, and must never count as the panel.
+        let panelLevel = Int(CGWindowLevelForKey(.popUpMenuWindow)) + 2
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         let frames = windows.compactMap { info -> CGRect? in
             guard (info[kCGWindowOwnerPID as String] as? Int).map({ pid_t($0) }) == parent,
-                  info[kCGWindowLayer as String] as? Int == floating,
+                  info[kCGWindowLayer as String] as? Int == panelLevel,
                   let bounds = info[kCGWindowBounds as String] as? NSDictionary else { return nil }
             return CGRect(dictionaryRepresentation: bounds as CFDictionary)
         }

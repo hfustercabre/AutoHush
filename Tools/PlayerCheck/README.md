@@ -229,7 +229,8 @@ clicks, drags, scrolling and gestures. It lets through:
 - the tool's own events, marked in `kCGEventSourceUserData`;
 - the pointer's moves, except during a drag, which they would carry off;
 - clicks on Player Check's panel (the parent process's windows at the
-  floating level), so its Stop works;
+  panel's level, one above the shade Player Check dims the screen with
+  meanwhile), so its Stop works;
 - Escape, which stops the check as Stop does.
 
 The block is lifted while the check asks something ("waiting: …"), and if
