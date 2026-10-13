@@ -1,6 +1,7 @@
 import Foundation
 
-/// A player's monitoring, as `HeldPauses` keeps it: a `MonitoringPipeline`.
+/// A player's monitoring, as `HeldPauses` keeps it: a `MonitoringPipeline`
+/// (see `SessionMonitoring`).
 @MainActor
 protocol HeldMonitoring: AnyObject {
     func stop()
@@ -9,8 +10,6 @@ protocol HeldMonitoring: AnyObject {
     func setAutoPauseEnabled(_ enabled: Bool)
     func setIgnoredSources(_ ids: Set<String>)
 }
-
-extension MonitoringPipeline: HeldMonitoring {}
 
 /// The monitoring of players AutoHush held paused when the user chose
 /// another. Each runs on only to end its own pause, as it would have (the

@@ -12,7 +12,7 @@ extension AppDelegate {
             uniquingKeysWith: { first, _ in first }
         )
         let snapshot = DiagnosticsReport.snapshot(
-            activeAudio: pipeline?.activeAudioReport() ?? [], status: status, facts: diagnosticsFacts(),
+            activeAudio: session.activeAudioReport(), status: status, facts: diagnosticsFacts(),
             bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path }
         )
         if settingsModel.diagnostics != snapshot { settingsModel.diagnostics = snapshot }

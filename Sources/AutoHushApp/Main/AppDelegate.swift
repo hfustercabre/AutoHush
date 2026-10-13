@@ -16,10 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var statusMenu: StatusMenuController?
-    private(set) var pipeline: MonitoringPipeline?
+    /// The chosen player, from its start until AutoHush quits.
+    let session: PlayerSession
     let preferences: Preferences
     private var snoozeTimer: Timer?
-    private var bootstrapGeneration = 0
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     private var settingsWindowController: SettingsWindowController?
@@ -28,12 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowsWatch: Task<Void, Never>?
     /// The music players to choose from.
     private let players: MusicPlayerCatalog
-    /// The app a process runs as when its program doesn't say (a Safari web
-    /// app), so its sound is told apart.
-    private let hostedApp: @Sendable (pid_t) -> AudioSource?
     private let locateApp: PlayerOption.Locate
     /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
-    private(set) var player: (any MusicPlayer)?
+    var player: (any MusicPlayer)? { session.player }
     /// Asks for the music player while none is chosen; made when first needed.
     private var playerChooser: (any PlayerChooserPresenting)?
     private let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
@@ -67,51 +64,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var playerLaunchObserver: (any NSObjectProtocol)?
     /// The Mac going to sleep and waking up.
     private var sleepObservers: [any NSObjectProtocol] = []
-    /// Between the Mac going to sleep and waking up: a pipeline started
-    /// meanwhile (the player relaunched in a dark wake) knows it too.
-    private var macIsAsleep = false
     let logger = Logger(category: "AppDelegate")
-    /// Replaces the real bootstrap in tests, so they never script the music player or
-    /// tap real audio processes.
-    private let bootstrapOverride: (@MainActor () -> Void)?
-    /// The first monitoring that starts may take over a pause handed over by
-    /// the AutoHush before this one; later ones don't.
-    private var pauseHandoverChecked = false
-    /// The monitoring of players AutoHush held paused when the user chose
-    /// another, running on to end those pauses (`HeldPauses`).
-    let heldPauses = HeldPauses()
-    /// Which monitoring an update comes from: the current one has this.
-    private var pipelineToken = UUID()
-    /// A restart for an update or by another copy takes seconds: an older
-    /// handover is stale.
-    static let pauseHandoverMaxAge: TimeInterval = 60
     /// Copies of AutoHush opened before this one, which quit when it opens.
     private let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
     private var terminationSignal: (any DispatchSourceSignal)?
-    /// After a failed start, starting is tried again by itself: while a
-    /// permission is missing every `permissionRetryInterval`, since it may be
-    /// granted any moment; otherwise after `retryDelays.lowerBound`, doubling
-    /// up to `retryDelays.upperBound`, so a busy or hung player isn't flooded
-    /// with requests. macOS announces neither. A player that isn't running is
-    /// started on when it opens, and one that isn't installed when it's back.
-    private let permissionRetryInterval: TimeInterval
-    private let retryDelays: ClosedRange<TimeInterval>
-    private var retryTimer: Timer?
-    /// Failed starts in a row, for the delay before the next one.
-    private var failedStarts = 0
-    /// The problem of the last failed start, logged as an error once; its
-    /// repeats (every few seconds while a permission is missing) go to the
-    /// debug log.
-    private(set) var loggedStartupProblem: String?
     /// Reads the permissions AutoHush needs, and asks for them.
     let permissionCenter: PermissionCenter
     /// The player chosen in the welcome window is to be learned: the learning
     /// window opens once the welcome window is done.
     private var learningAfterWelcome = false
-    /// The check that AutoHush may still control the player, while one runs:
-    /// see `checkControlAccess()`.
-    private var accessCheck: Task<Void, Never>?
     /// Watches the Applications folders, and the one holding the chosen
     /// player's app, so AutoHush notices at once when it's uninstalled or
     /// installed again.
@@ -131,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
-        hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = SupportedPlayers.hostedApp(pid:),
+        makeMonitoring: @escaping PlayerSession.MakeMonitoring = PlayerSession.pipelines(hostedApp: SupportedPlayers.hostedApp(pid:)),
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
         makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
             PlayerChooserWindowController(model: $0)
@@ -156,16 +118,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         learningSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
-        permissionRetryInterval: TimeInterval = 3,
-        retryDelays: ClosedRange<TimeInterval> = 5...60,
+        retries: PlayerSession.Retries = PlayerSession.Retries(),
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
         installCheckDelay: Duration = .seconds(1),
-        permissionCenter: PermissionCenter = PermissionCenter(),
-        bootstrapOverride: (@MainActor () -> Void)? = nil
+        permissionCenter: PermissionCenter = PermissionCenter()
     ) {
         self.preferences = preferences
         self.players = players
-        self.hostedApp = hostedApp
         self.locateApp = locateApp
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
@@ -177,16 +136,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.openApp = openApp
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
-        self.player = players.player(bundleID: preferences.musicPlayer)
-        self.bootstrapOverride = bootstrapOverride
+        session = PlayerSession(
+            player: players.player(bundleID: preferences.musicPlayer),
+            players: players,
+            preferences: preferences,
+            settings: Self.monitoringSettings(preferences),
+            makeMonitoring: makeMonitoring,
+            locateApp: locateApp,
+            retries: retries
+        )
         self.updateNotifier = updateNotifier
         self.otherInstances = otherInstances
-        self.permissionRetryInterval = permissionRetryInterval
-        self.retryDelays = retryDelays
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
         self.permissionCenter = permissionCenter
         super.init()
+        session.didChange = { [weak self] _ in self?.showSession() }
         updates = UpdateController(
             checker: updateChecker,
             installer: updateInstaller,
@@ -283,12 +248,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             let others = await otherInstances.quitAll()
             if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
-            startHeldPauses(handedOverHeldPlayers())
-            if player == nil {
-                showPlayerChooser()
-            } else {
-                requestBootstrap()
-            }
+            session.launch()
+            if player == nil { showPlayerChooser() }
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
@@ -297,14 +258,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Waits (briefly) for a fade in progress to give the player its volume
     /// back, so quitting never leaves the music faded down.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // A pause AutoHush is holding is handed over: an AutoHush opened next
-        // (an update, another copy, a quick reopen) resumes the music once the
-        // other apps stop. Later than `pauseHandoverMaxAge`, it's ignored,
-        // and so is one for another player than the one chosen by then.
-        handOverPauses()
-        let pipeline = self.pipeline
-        guard pipeline != nil || !heldPauses.isEmpty else { return .terminateNow }
-        self.pipeline = nil
+        // A pause AutoHush is holding is handed over (see `PlayerSession.quit`).
+        guard let stopping = session.quit() else { return .terminateNow }
         var replied = false
         let reply: @MainActor () -> Void = {
             guard !replied else { return }
@@ -312,8 +267,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sender.reply(toApplicationShouldTerminate: true)
         }
         Task { @MainActor in
-            await pipeline?.stopAndRestoreVolume()
-            await heldPauses.stopAndRestoreAll()
+            await stopping.value
             reply()
         }
         // Never hang the quit. A timer, not the main queue: it also fires when
@@ -327,64 +281,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         unregisterPlayerLaunchObserver()
         sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         sleepObservers = []
-        tearDownPipeline()
     }
 
     // MARK: - Status
 
-    func setHealth(_ health: AppHealthState) {
-        status.setHealth(health)
-    }
-
-    /// Tries starting again after `error`, unless an event will: see
-    /// `retryDelays`.
-    private func retryLater(after error: any Error) {
-        let delay: TimeInterval
-        switch error as? MusicPlayerError {
-        case .playerNotRunning:
-            return // started on when the player opens
-        case .automationPermissionDenied, .accessibilityPermissionDenied:
-            delay = permissionRetryInterval
-        default:
-            failedStarts += 1
-            delay = Self.retryDelay(afterFailedStarts: failedStarts, delays: retryDelays)
-        }
-        cancelRetry()
-        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.retryTimer = nil
-                self?.requestBootstrap()
-            }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        retryTimer = timer
-    }
-
-    private func cancelRetry() {
-        retryTimer?.invalidate()
-        retryTimer = nil
-    }
-
-    /// The wait before starting again after `failedStarts` failed starts in a
-    /// row: the range's lower bound, doubling up to its upper bound.
-    nonisolated static func retryDelay(afterFailedStarts failedStarts: Int, delays: ClosedRange<TimeInterval>) -> TimeInterval {
-        min(delays.lowerBound * pow(2, Double(max(failedStarts - 1, 0))), delays.upperBound)
-    }
-
-    func apply(_ update: MonitoringPipeline.StatusUpdate) {
-        switch update {
-        case .playback(let state):       status.playback = state
-        case .activeSources(let sources):
-            let othersStarted = status.activeSources.isEmpty && !sources.isEmpty
-            status.setActiveSources(sources)
-            preferences.recordSeen(sources)
-            showApps()
-            if othersStarted { checkControlAccess() }
-        case .detection(let mode):       status.detection = mode
-        case .learnedAssertions(let id, let assertions): preferences.playbackAssertions[id] = assertions
-        case .pauseFailure(let error):
-            status.controlError = error.map { ControlError($0, player: status.playerName) }
-        }
+    /// Shows what the player session knows in the menu and Settings; with no
+    /// player chosen, the status line asks for one, among those listed.
+    private func showSession() {
+        let state = session.state
+        let sourcesChanged = state.activeSources != status.activeSources
+        var shown = status
+        shown.setHealth(state.health ?? .waitingForPlayer(among: shown.playerOptions))
+        shown.setActiveSources(state.activeSources)
+        shown.playback = state.playback
+        shown.detection = state.detection
+        shown.controlError = state.controlError
+        if shown != status { status = shown }
+        if sourcesChanged { showApps() }
     }
 
     /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
@@ -400,56 +313,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         terminate()
-    }
-
-    // MARK: - A pause held while choosing another player
-
-    /// The user chooses `bundleID`: a pause AutoHush holds on the player it
-    /// leaves is still its own to end, so that player's monitoring runs on
-    /// for it (`heldPauses`). A player held paused that is chosen again is
-    /// taken back by its new monitoring.
-    private func holdPause(for bundleID: String) {
-        if heldPauses.choose(bundleID, leaving: player?.bundleID, current: pipeline, token: pipelineToken,
-                             holdsPause: status.playback == .pausedByMonitor) {
-            pipeline = nil // left running by the next start
-        }
-    }
-
-    /// Hands the pauses AutoHush holds over to the AutoHush opened next: the
-    /// chosen player's, and those of players held paused when another was
-    /// chosen.
-    func handOverPauses(now: Date = Date()) {
-        let holdsChosen = status.playback == .pausedByMonitor
-        guard holdsChosen || !heldPauses.isEmpty else { return }
-        preferences.pauseHandover = PauseHandover(at: now, player: holdsChosen ? player?.bundleID : nil,
-                                                  holdsChosen: holdsChosen, held: heldPauses.bundleIDs)
-    }
-
-    /// At launch: the players held paused when the AutoHush before this one
-    /// quit, recently, other than the chosen one, whose own monitoring takes
-    /// its pause back (`takesOverPause`); read once.
-    func handedOverHeldPlayers(now: Date = Date()) -> [String] {
-        guard let handover = preferences.pauseHandover, !handover.held.isEmpty,
-              (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at)) else { return [] }
-        let chosen = player?.bundleID
-        preferences.pauseHandover = PauseHandover(at: handover.at, player: handover.player, holdsChosen: handover.holdsChosen,
-                                                  held: handover.held.filter { $0 == chosen })
-        return handover.held.filter { $0 != chosen }
-    }
-
-    /// Players held paused get their monitoring again, whatever the chosen
-    /// player's does: it takes their pause over and ends it as it would have.
-    private func startHeldPauses(_ bundleIDs: [String]) {
-        for bundleID in bundleIDs {
-            guard let held = players.player(bundleID: bundleID) else { continue }
-            let token = UUID()
-            let monitoring = makePipeline(for: held, token: token)
-            heldPauses.keep(monitoring, token: token, bundleID: bundleID, awaitingTakeOver: true)
-            Task { [weak self, macIsAsleep] in
-                // Played or quit by the user meanwhile: nothing to end.
-                if await !monitoring.start(takingOverPause: true, asleep: macIsAsleep) { self?.heldPauses.drop(token) }
-            }
-        }
     }
 
     // MARK: - Auto-pause and ignored apps
@@ -496,7 +359,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func setTimings(_ timings: TimingSettings) {
         preferences.timings = timings
         settingsModel.timings = preferences.timings
-        pipeline?.setConfiguration(currentConfiguration)
+        session.settings = Self.monitoringSettings(preferences)
     }
 
     func setChecksForUpdatesAutomatically(_ enabled: Bool) {
@@ -531,23 +394,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func setDetectionMethod(_ method: DetectionMethod) {
         preferences.detectionMethod = method
         settingsModel.detectionMethod = method
-        pipeline?.setDetectionMethod(method)
+        session.settings = Self.monitoringSettings(preferences)
     }
 
     /// Stores the ignored apps and passes them to the menu, the monitor and Settings.
     private func applyIgnoredApps(_ apps: [AudioSource]) {
         preferences.ignoredApps = apps
-        pipeline?.setIgnoredSources(Set(apps.map(\.id)))
-        heldPauses.setIgnoredSources(Set(apps.map(\.id)))
+        session.settings = Self.monitoringSettings(preferences)
         showApps()
     }
 
-    /// The engine's configuration: the user's timings, and the chosen player,
-    /// whose own audio never counts as another app playing.
-    var currentConfiguration: AppConfiguration {
-        var configuration = AppConfiguration(timings: preferences.timings)
-        configuration.musicPlayerBundleID = player?.bundleID
-        return configuration
+    /// What the chosen player's monitoring follows, as the preferences say
+    /// at `now`.
+    private static func monitoringSettings(_ preferences: Preferences, now: Date = Date()) -> MonitoringSettings {
+        MonitoringSettings(autoPause: preferences.autoPause.isActive(at: now),
+                           ignored: Set(preferences.ignoredApps.map(\.id)),
+                           timings: preferences.timings,
+                           detection: preferences.detectionMethod)
     }
 
     /// Shows the ignored apps in the menu, and the apps seen and ignored in
@@ -562,7 +425,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Derives the effective auto-pause state from the preferences, shows it,
-    /// passes it to the pipeline and schedules its next change.
+    /// passes it to the monitoring and schedules its next change.
     private func applyAutoPause(now: Date = Date()) {
         let setting = preferences.autoPause.clearingExpiredSnooze(at: now)
         if setting != preferences.autoPause { preferences.autoPause = setting }
@@ -572,8 +435,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsModel.autoPauseNote = status.autoPause.settingsNote
         let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil
         scheduleAutoPauseUpdate(at: snoozeEnd.map { AppStatus.AutoPause.nextChange(snoozedUntil: $0, now: now) })
-        pipeline?.setAutoPauseEnabled(setting.isActive(at: now))
-        heldPauses.setAutoPauseEnabled(setting.isActive(at: now))
+        session.settings = Self.monitoringSettings(preferences, now: now)
     }
 
     /// Applies auto-pause again at `date`: when the snooze ends, or at midnight
@@ -608,10 +470,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
         else { return }
         logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
-        holdPause(for: bundleID)
         preferences.musicPlayer = bundleID
-        player = chosen
-        failedStarts = 0
+        session.choose(chosen)
         watchFolders(holding: appURL)
         showChosenPlayer()
         showApps()
@@ -624,8 +484,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
         }
-        setHealth(.starting)
-        requestBootstrap()
         if fromWelcome { watchWindows() }
     }
 
@@ -692,7 +550,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsModel.playerOptions != options { settingsModel.playerOptions = options }
         forgetDeletedWebApps(among: options)
         guard let player else {
-            setHealth(.waitingForPlayer(among: options))
+            showSession() // waiting for a player, among these
             return
         }
         // A deleted web app can't come back as the same app (adding the site
@@ -700,21 +558,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if player.kind == .safariWebApp, !options.contains(where: { $0.bundleID == player.bundleID }),
            Self.isDeleted(player.bundleID) {
             logger.notice("\(player.name, privacy: .public) was deleted: no music player is chosen")
-            forgetChosenPlayer(among: options)
+            forgetChosenPlayer()
             return
         }
         let appURL = options.first { $0.bundleID == player.bundleID }?.appURL
         watchFolders(holding: appURL)
-        let notInstalled = AppHealthState.playerNotInstalled(player.name)
-        if appURL != nil {
-            if status.health == notInstalled { retry() }
-        } else if status.health != notInstalled {
-            logger.notice("\(player.name, privacy: .public) is not installed")
-            bootstrapGeneration += 1 // a start under way gives up
-            cancelRetry()            // and none is tried until it's back
-            tearDownPipeline()
-            setHealth(notInstalled)
-        }
+        session.setPlayerInstalled(appURL != nil)
     }
 
     /// Watches the Applications folders, and the folder the chosen player's
@@ -741,15 +590,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// No player is chosen any more: the status line asks for one.
-    private func forgetChosenPlayer(among options: [PlayerOption]) {
+    private func forgetChosenPlayer() {
         preferences.musicPlayer = nil
-        player = nil
-        bootstrapGeneration += 1 // a start under way gives up
-        cancelRetry()
-        tearDownPipeline()
+        session.choose(nil)
         showChosenPlayer()
         watchLearning()
-        setHealth(.waitingForPlayer(among: options))
     }
 
     /// Forgets the learned buttons of web apps that are gone: deleted, not
@@ -794,7 +639,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// since it opened.
     func menuWillOpen() {
         refreshPlayerOptions()
-        checkControlAccess()
+        session.checkAccess()
         if isShowingPlayerChooser { playerChooser?.bringForward() }
     }
 
@@ -821,23 +666,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func handleApplicationDidLaunch(bundleIdentifier: String?) {
         guard let bundleIdentifier, players.player(bundleID: bundleIdentifier) != nil else { return }
         refreshPlayerOptions()
-        guard let player else {
+        guard player != nil else {
             showPlayerChooser()
             return
         }
-        guard bundleIdentifier == player.bundleID else { return }
-        logger.debug("\(player.name, privacy: .public) launch detected — re-running bootstrap")
-        failedStarts = 0
-        setHealth(.starting)
-        // The player may not answer yet while it finishes starting up.
-        requestBootstrap(retries: Self.startupRetries)
+        session.playerLaunched(bundleIdentifier)
     }
 
-    /// Music AutoHush paused stays paused after the Mac sleeps: the
-    /// arbiter forgets the pause as the Mac falls asleep, when the other
-    /// apps' sound stops too, and decides nothing until it's awake. The
-    /// screens waking count as awake too, so a wake macOS didn't announce
-    /// can't leave AutoHush deciding nothing.
+    /// The Mac going to sleep and waking up, for the player session (see
+    /// `PlayerSession.setAsleep`). The screens waking count as awake too, so
+    /// a wake macOS didn't announce can't leave AutoHush deciding nothing.
     private func registerSleepObservers() {
         let center = NSWorkspace.shared.notificationCenter
         sleepObservers = [
@@ -846,162 +684,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             (NSWorkspace.screensDidWakeNotification, false),
         ].map { name, asleep in
             center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
-                Task { @MainActor [weak self] in self?.setMacAsleep(asleep) }
+                Task { @MainActor [weak self] in self?.session.setAsleep(asleep) }
             }
         }
-    }
-
-    private func setMacAsleep(_ asleep: Bool) {
-        guard asleep != macIsAsleep else { return }
-        macIsAsleep = asleep
-        // As any pause: after sleeping it's the user's (decision S2).
-        if asleep { heldPauses.stopAll() }
-        logger.info("The Mac \(asleep ? "goes to sleep" : "woke up", privacy: .public)")
-        pipeline?.setAsleep(asleep)
     }
 
     private func unregisterPlayerLaunchObserver() {
         guard let playerLaunchObserver else { return }
         NSWorkspace.shared.notificationCenter.removeObserver(playerLaunchObserver)
         self.playerLaunchObserver = nil
-    }
-
-    // MARK: - Bootstrap
-
-    /// Startup checks after the player launches are retried this often, this
-    /// far apart, while it is not ready to answer.
-    static let startupRetries = 3
-    static let startupRetryDelay: TimeInterval = 2
-
-    private func requestBootstrap(retries: Int = 0) {
-        if let bootstrapOverride {
-            bootstrapOverride()
-            return
-        }
-        Task { await bootstrap(retriesLeft: retries) }
-    }
-
-    /// Errors that mean the player is not ready yet rather than a lasting problem.
-    nonisolated static func isTransientStartupError(_ error: any Error) -> Bool {
-        switch error as? MusicPlayerError {
-        case .playerNotResponding, .playerNotRunning: return true
-        default:                                         return false
-        }
-    }
-
-    private func bootstrap(retriesLeft: Int = 0) async {
-        bootstrapGeneration += 1
-        let generation = bootstrapGeneration
-        cancelRetry() // this start takes its place
-        tearDownPipeline()
-        guard let player else {
-            setHealth(.waitingForPlayer(among: status.playerOptions)) // nothing to control yet
-            return
-        }
-        // Where the player says, else where macOS knows it, as the players are listed.
-        guard player.installedURL ?? locateApp(player.bundleID) != nil else {
-            setHealth(.playerNotInstalled(player.name))
-            return
-        }
-
-        do {
-            try await player.verifyControlAccess()
-        } catch {
-            guard generation == bootstrapGeneration else { return }
-            if retriesLeft > 0, Self.isTransientStartupError(error) {
-                logger.debug("\(player.name, privacy: .public) is not ready yet (\(error.localizedDescription, privacy: .public)) — retrying")
-                try? await Task.sleep(for: .seconds(Self.startupRetryDelay))
-                guard generation == bootstrapGeneration else { return } // Retry or another launch took over
-                await bootstrap(retriesLeft: retriesLeft - 1)
-                return
-            }
-            let problem = "\(player.name): \(error.localizedDescription)"
-            if problem == loggedStartupProblem {
-                logger.debug("Still can't control \(problem, privacy: .public)")
-            } else {
-                logger.error("Can't control \(problem, privacy: .public)")
-                loggedStartupProblem = problem
-            }
-            // The line says AutoHush can't control it: the menu tells why.
-            switch error as? MusicPlayerError {
-            case .playerCommandFailed?, .stillLearning?, nil: status.controlError = ControlError(error, player: player.name)
-            default: status.controlError = nil
-            }
-            setHealth(AppHealthState(startupError: error, playerName: player.name))
-            retryLater(after: error)
-            return
-        }
-        // A newer bootstrap (Retry, player relaunch) started while we awaited.
-        guard generation == bootstrapGeneration else { return }
-
-        let token = UUID()
-        pipelineToken = token
-        let pipeline = makePipeline(for: player, token: token)
-        self.pipeline = pipeline
-        // Both asked every time: each answers once.
-        let takesBack = heldPauses.takesBack(player.bundleID)
-        let takesOver = takesOverPause()
-        await pipeline.start(takingOverPause: takesOver || takesBack, asleep: macIsAsleep)
-        guard generation == bootstrapGeneration else { return }
-        failedStarts = 0
-        loggedStartupProblem = nil
-        status.controlError = nil
-        setHealth(.ready)
-    }
-
-    /// Monitoring for `player`, whose updates come with `token`: the current
-    /// one's are applied; a held pause's stay with `heldPauses`.
-    private func makePipeline(for player: any MusicPlayer, token: UUID) -> MonitoringPipeline {
-        var configuration = currentConfiguration
-        configuration.musicPlayerBundleID = player.bundleID
-        return MonitoringPipeline(
-            player: player,
-            hostedApp: hostedApp,
-            configuration: configuration,
-            autoPauseEnabled: preferences.autoPause.isActive(at: Date()),
-            ignoredSourceIDs: Set(preferences.ignoredApps.map(\.id)),
-            detectionMethod: preferences.detectionMethod,
-            learnedAssertions: preferences.playbackAssertions
-        ) { [weak self, token] update in
-            guard let self, !self.heldPauses.takes(update, from: token) else { return }
-            self.apply(update)
-        }
-    }
-
-    /// Checks again that AutoHush may still control the player, when it
-    /// matters: another app starts playing, or the menu opens. macOS doesn't
-    /// announce a permission taken away while monitoring runs, and the player
-    /// then only reads as unknown, so nothing would be paused, silently. A
-    /// missing permission starts over as at launch: the menu asks for it, and
-    /// monitoring starts again by itself once it's given back.
-    func checkControlAccess() {
-        guard status.isReady, let player, accessCheck == nil else { return }
-        let generation = bootstrapGeneration
-        accessCheck = Task { [weak self] in
-            defer { self?.accessCheck = nil }
-            do {
-                try await player.verifyControlAccess()
-            } catch {
-                guard let self, generation == self.bootstrapGeneration else { return }
-                switch error as? MusicPlayerError {
-                case .automationPermissionDenied?, .accessibilityPermissionDenied?:
-                    self.logger.error("Lost control of \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
-                    self.requestBootstrap()
-                default:
-                    break // the player quit or didn't answer: monitoring follows those
-                }
-            }
-        }
-    }
-
-    /// Without a pipeline nothing is known about the music: a state it left
-    /// behind would otherwise hand over a pause that no longer exists, or
-    /// keep automatic updates from ever finding a quiet moment.
-    private func tearDownPipeline() {
-        pipeline?.stop()
-        pipeline = nil
-        status.playback = .unknown
-        status.detection = .pending
     }
 
     // MARK: - Menu actions
@@ -1082,9 +773,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Retry, on the menu's card after a failed start: starts over at once,
     /// with the waits between automatic tries back to the shortest.
     private func retry() {
-        failedStarts = 0
-        setHealth(.starting)
-        requestBootstrap()
+        session.retry()
     }
 
     // MARK: - Updates
@@ -1115,31 +804,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         terminationSignal = source
     }
 
-    /// Whether monitoring takes over a pause handed over by the AutoHush before
-    /// this one, at most `pauseHandoverMaxAge` before `now`, and for the
-    /// player chosen now: the player may have changed meanwhile (one that
-    /// didn't say, from AutoHush 0.8.2 and earlier, counts). Only the first
-    /// monitoring asks; it starts after other copies have quit, so their
-    /// handover is in by then.
-    func takesOverPause(now: Date = Date()) -> Bool {
-        guard !pauseHandoverChecked else { return false }
-        pauseHandoverChecked = true
-        guard let handover = preferences.pauseHandover else { return false }
-        preferences.pauseHandover = nil
-        guard (0...Self.pauseHandoverMaxAge).contains(now.timeIntervalSince(handover.at)) else { return false }
-        // Held paused then, and chosen now: its own pause, back.
-        if let chosen = player?.bundleID, handover.held.contains(chosen) { return true }
-        guard handover.holdsChosen else { return false }
-        if let paused = handover.player, paused != player?.bundleID { return false }
-        return true
-    }
-
     /// A moment when AutoHush can restart for an update unnoticed: it isn't
     /// holding the music paused (the new version would take that pause over,
     /// but there is no need to rely on it), and none of its menus, windows or
     /// alerts is open.
     private var isQuietMoment: Bool {
-        status.playback != .pausedByMonitor && heldPauses.isEmpty
+        !session.isHoldingPause
             && statusMenu?.isMenuOpen != true
             && !NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey }
     }

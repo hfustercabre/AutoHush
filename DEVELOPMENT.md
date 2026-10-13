@@ -30,25 +30,28 @@ its translations, contributing and releases. For using AutoHush, see the
 
 ## Architecture
 
+The words used for the parts below are in the [glossary](GLOSSARY.md).
+
 ```text
-AppDelegate ── lifecycle, bootstrap (launch, automatic retries, player relaunch), wiring features to the engine
+AppDelegate ── lifecycle, choosing the player, the windows, wiring features to the engine
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
   ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
-  └── MonitoringPipeline ── one per bootstrap, started and torn down as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes its player
-        PlayerStateObserving ── the player's state (distributed notification, quit) ─┐
-        AudioMonitor                                                                 │
-          ├── HALAudioProcessSnapshotProvider: process list + is-running listeners   │
-          ├── ProcessTapLevelMeter: per-app peak level (normal mode)                 │
-          ├── IOKitPowerAssertionReader: who says "I'm playing" (AntiDot mode)       │
-          ├── SourceActivityTracker: start confirmation + stop grace                 │
-          └── ordered source events + "music plays on this Mac" ────┐                │
-                                                                    ▼                ▼
-                                                              PlaybackArbiter
-                                                                ├── pauses the player on the first app
-                                                                ├── resumes after all apps stop
-                                                                ├── VolumeFader: logarithmic fades around both
-                                                                └── MusicPlayer (ScriptablePlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility)
+  └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by itself after a failed start, when it opens), checks access again, keeps the held pauses and the hand-over
+        └── MonitoringPipeline ── one per start, started and torn down as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes its player
+              PlayerStateObserving ── the player's state (distributed notification, quit) ─┐
+              AudioMonitor                                                                 │
+                ├── HALAudioProcessSnapshotProvider: process list + is-running listeners   │
+                ├── ProcessTapLevelMeter: per-app peak level (normal mode)                 │
+                ├── IOKitPowerAssertionReader: who says "I'm playing" (AntiDot mode)       │
+                ├── SourceActivityTracker: start confirmation + stop grace                 │
+                └── ordered source events + "music plays on this Mac" ────┐                │
+                                                                          ▼                ▼
+                                                                    PlaybackArbiter
+                                                                      ├── pauses the player on the first app
+                                                                      ├── resumes after all apps stop
+                                                                      ├── VolumeFader: logarithmic fades around both
+                                                                      └── MusicPlayer (ScriptablePlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility)
 ```
 
 AutoHush is a Swift package of several modules, so the compiler keeps the layers apart:
@@ -74,7 +77,8 @@ Sources/
   AutoHush/              AutoHushMain (starts AutoHushApp)
   AutoHushApp/
     Main/                AppDelegate (wiring; its web app, permission and Diagnostics parts in
-                         AppDelegate+WebApps, +Permissions and +Diagnostics), MonitoringPipeline
+                         AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
+                         player from its start until AutoHush quits), MonitoringPipeline
                          (the engine for each start), the app-wide state: AppStatus (what the menu shows, with
                          UpdateOffer) and SettingsModel (what Settings and the other windows show), then
                          StatusPresentation (the status's icons and text), AppHealthState, PermissionCenter

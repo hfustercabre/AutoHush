@@ -22,8 +22,9 @@ final class FakeLearningWindow: LearningWindowPresenting {
     }
 }
 
-/// A player that must learn, whose learning the test moves along; it never
-/// can be controlled, so a real bootstrap stops at once.
+/// A player that must learn, whose learning the test moves along; it can't
+/// be controlled (Accessibility is missing) unless a test says otherwise,
+/// so a start stops at once.
 actor MockLearningPlayer: LearningMusicPlayer {
     nonisolated let bundleID: String
     nonisolated let name: String
@@ -46,6 +47,8 @@ actor MockLearningPlayer: LearningMusicPlayer {
         /// What It's Playing and It's Paused answer; `.noted` moves it on.
         var playingMark = LearningMark.noted
         var pausedMark = LearningMark.noted
+        /// Why AutoHush may not control it; `nil` once it may.
+        var verifyError: MusicPlayerError? = .accessibilityPermissionDenied
     }
 
     private nonisolated let state: OSAllocatedUnfairLock<State>
@@ -157,7 +160,14 @@ actor MockLearningPlayer: LearningMusicPlayer {
         state.withLock { $0.learnedAtTheLastMoment = true }
     }
 
-    func verifyControlAccess() async throws { throw MusicPlayerError.accessibilityPermissionDenied }
+    /// Why a start stops at its check from now on; `nil`: it goes on.
+    nonisolated func setFailVerify(_ error: MusicPlayerError?) {
+        state.withLock { $0.verifyError = error }
+    }
+
+    func verifyControlAccess() async throws {
+        if let error = state.withLock({ $0.verifyError }) { throw error }
+    }
     func playerState() async -> PlayerState { .unknown }
     func pause() async throws {}
     func play() async throws {}

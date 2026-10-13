@@ -8,25 +8,20 @@ import AutoHushTestSupport
 
 @Suite("AppDelegate")
 struct AppDelegateTests {
-    /// Counts bootstrap requests; the real bootstrap would script the music
-    /// player and tap real audio processes from inside the test process.
-    @MainActor
-    private final class BootstrapCounter {
-        var count = 0
-    }
-
     /// In-memory preferences and a downloads folder of its own, so tests
     /// never write preference files or touch AutoHush's real Caches. Two
-    /// stand-in music players to choose from, which of them are installed
-    /// (the second in a folder inside /Applications), and folder watches the
-    /// test fires.
+    /// stand-in music players to choose from, which may be controlled, which
+    /// of them are installed (the second in a folder inside /Applications),
+    /// folder watches the test fires, and monitorings that stand in for the
+    /// engine, so a start never taps real audio processes.
     @MainActor
     private final class Scratch {
         var preferences = Preferences(store: InMemoryPreferenceStore())
         let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         let notifier = MockUpdateNotifier()
-        let first = MockMusicPlayer(bundleID: Players.first, name: "First", failVerifyWith: Denied.automation)
-        let second = MockMusicPlayer(bundleID: Players.second, name: "Second", canFade: false, failVerifyWith: Denied.automation)
+        let first = MockMusicPlayer(bundleID: Players.first, name: "First")
+        let second = MockMusicPlayer(bundleID: Players.second, name: "Second", canFade: false)
+        let monitorings = FakeMonitorings()
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
@@ -74,33 +69,23 @@ struct AppDelegateTests {
         }
     }
 
-    /// Every stand-in player refuses control, so a real bootstrap stops at
-    /// the permission check, before it would monitor anything.
-    private enum Denied {
-        static let automation = MusicPlayerError.automationPermissionDenied
-    }
-
     private enum Players {
         static let first = "com.example.first"
         static let second = "com.example.second"
     }
 
     /// `chosenPlayer`: the player already chosen before this launch, if any.
-    /// `realBootstrap`: only for a bootstrap that stops before the player is
-    /// scripted.
+    /// Returns the monitorings its starts made, too.
     @MainActor
     private func makeSUT(
         _ scratch: Scratch = Scratch(),
         chosenPlayer: String? = Players.first,
-        realBootstrap: Bool = false,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
         learningPauseWait: Duration = .seconds(60),
         learningSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
-    ) -> (AppDelegate, BootstrapCounter) {
+    ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
-        let counter = BootstrapCounter()
-        let countBootstrap: @MainActor () -> Void = { counter.count += 1 }
         let sut = AppDelegate(
             preferences: scratch.preferences,
             launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
@@ -109,6 +94,7 @@ struct AppDelegateTests {
             updateNotifier: scratch.notifier,
             updateDownloadsFolder: scratch.downloads,
             players: scratch.players,
+            makeMonitoring: scratch.monitorings.make,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
             makeLearningWindow: { _ in
@@ -122,14 +108,19 @@ struct AppDelegateTests {
             learningPauseWait: learningPauseWait,
             learningSleep: learningSleep,
             currentVersion: AppVersion("0.2.0"),
-            permissionRetryInterval: 0.05,
-            retryDelays: 0.02...0.08,
+            retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
-            permissionCenter: scratch.permissionCenter,
-            bootstrapOverride: realBootstrap ? nil : countBootstrap
+            permissionCenter: scratch.permissionCenter
         )
-        return (sut, counter)
+        return (sut, scratch.monitorings)
+    }
+
+    /// Starts monitoring the chosen player, as at launch, and waits until it runs.
+    @MainActor
+    private func start(_ sut: AppDelegate) async {
+        sut.session.launch()
+        await TestWait.until { sut.status.health == .ready }
     }
 
     // MARK: - Players that learn
@@ -283,7 +274,7 @@ struct AppDelegateTests {
 
     @MainActor
     @Test("while a permission is missing, the learning window asks for it first, and the card's Controls row stays")
-    func learningWaitsForPermission() {
+    func learningWaitsForPermission() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
                                         status: .learning(hasPlayed: false))
@@ -292,12 +283,13 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        sut.setHealth(.needsPermission(.accessibility(player: "YT Music")))
+        await waitFor { sut.status.health == .needsPermission(.accessibility(player: "YT Music")) }
         #expect(scratch.learningWindow.isOpen) // with the permission as its first step
         #expect(sut.status.needsPermission)
         #expect(sut.status.canLearnControlsAgain) // the card's Controls row stays
 
-        sut.setHealth(.ready) // allowed: the retry started monitoring
+        webApp.setFailVerify(nil) // allowed: the retry starts monitoring
+        await waitFor { sut.status.health == .ready }
         #expect(!sut.status.needsPermission)
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(scratch.learningWindow.shownCount == 1)
@@ -305,16 +297,17 @@ struct AppDelegateTests {
 
     @MainActor
     @Test("a web app that isn't running yet still opens the learning window, which says to play it")
-    func learningWindowForPlayerNotRunning() {
+    func learningWindowForPlayerNotRunning() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
                                         status: .learning(hasPlayed: false))
+        webApp.setFailVerify(.playerNotRunning)
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
         scratch.installed.insert(webApp.bundleID)
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        sut.setHealth(.degraded("YT Music is not running"))
+        await waitFor { sut.status.health == .degraded("YT Music is not running") }
         #expect(scratch.learningWindow.isOpen)
     }
 
@@ -748,38 +741,43 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("another app's launch does not change health state or re-bootstrap")
-    func otherAppLaunchDoesNothing() {
-        let (sut, bootstraps) = makeSUT()
+    @Test("another app's launch does not change health state or start again")
+    func otherAppLaunchDoesNothing() async {
+        let (sut, monitorings) = makeSUT()
 
         #expect(sut.status.health == .starting)
         sut.handleApplicationDidLaunch(bundleIdentifier: "org.videolan.vlc")
+        try? await Task.sleep(for: .milliseconds(50))
         #expect(sut.status.health == .starting)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.isEmpty)
     }
 
     @MainActor
-    @Test("the chosen player's launch sets app back to starting and re-bootstraps")
-    func playerLaunchSetsStartingState() {
-        let (sut, bootstraps) = makeSUT()
-        sut.setHealth(.degraded("First is not running"))
+    @Test("the chosen player's launch sets app back to starting and starts it again")
+    func playerLaunchSetsStartingState() async {
+        let scratch = Scratch()
+        await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, monitorings) = makeSUT(scratch)
+        sut.session.launch()
+        await waitFor { sut.status.health == .degraded("First is not running") }
 
+        await scratch.first.setFailVerify(nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
-
         #expect(sut.status.health == .starting)
-        #expect(bootstraps.count == 1)
+        await waitFor { sut.status.health == .ready }
+        #expect(monitorings.made.count == 1)
     }
 
     @MainActor
     @Test("nil bundle identifier does nothing")
-    func nilBundleIdentifierDoesNothing() {
-        let (sut, bootstraps) = makeSUT()
-        sut.setHealth(.ready)
+    func nilBundleIdentifierDoesNothing() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
 
         sut.handleApplicationDidLaunch(bundleIdentifier: nil)
-
+        try? await Task.sleep(for: .milliseconds(50))
         #expect(sut.status.health == .ready)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.count == 1)
     }
 
     // MARK: - Music player
@@ -794,7 +792,6 @@ struct AppDelegateTests {
         #expect(sut.status.playerOptions.map(\.name) == ["First", "Second"])
         #expect(sut.settingsModel.playerOptions == sut.status.playerOptions)
         #expect(sut.settingsModel.chosenPlayerID == nil)
-        #expect(sut.currentConfiguration.musicPlayerBundleID == nil)
     }
 
     @MainActor
@@ -802,14 +799,14 @@ struct AppDelegateTests {
     func noPlayerInstalled() {
         let scratch = Scratch()
         scratch.installed = []
-        let (sut, bootstraps) = makeSUT(scratch, chosenPlayer: nil)
+        let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
         #expect(sut.status.health == .needsPlayer("No supported media player is installed"))
         #expect(sut.status.playerOptions.allSatisfy { !$0.isInstalled })
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.player == nil)
         #expect(scratch.preferences.musicPlayer == nil)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.isEmpty)
 
         // Installed later: it can be chosen.
         scratch.installed = [Players.first]
@@ -821,9 +818,9 @@ struct AppDelegateTests {
 
     @MainActor
     @Test("choosing a player stores it, shows it and starts over with it; choosing it again does nothing")
-    func choosePlayer() {
+    func choosePlayer() async {
         let scratch = Scratch()
-        let (sut, bootstraps) = makeSUT(scratch, chosenPlayer: nil)
+        let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
 
         sut.chooseMusicPlayer(Players.second)
         #expect(scratch.preferences.musicPlayer == Players.second)
@@ -833,17 +830,18 @@ struct AppDelegateTests {
         #expect(sut.status.chosenPlayerID == Players.second)
         #expect(sut.settingsModel.chosenPlayerID == Players.second)
         #expect(sut.status.health == .starting)
-        #expect(sut.currentConfiguration.musicPlayerBundleID == Players.second)
-        #expect(bootstraps.count == 1)
+        await waitFor { sut.status.health == .ready }
+        #expect(monitorings.made.map(\.bundleID) == [Players.second])
 
         sut.chooseMusicPlayer(Players.second)
-        #expect(bootstraps.count == 1)
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(monitorings.made.count == 1)
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.status.playerName == "First")
         #expect(sut.settingsModel.playerCanFade)
-        #expect(sut.currentConfiguration.musicPlayerBundleID == Players.first)
-        #expect(bootstraps.count == 2)
+        await waitFor { monitorings.made.count == 2 }
+        #expect(monitorings.made.map(\.bundleID) == [Players.second, Players.first])
     }
 
     @MainActor
@@ -851,39 +849,40 @@ struct AppDelegateTests {
     func chooseUnavailablePlayer() {
         let scratch = Scratch()
         scratch.installed = [Players.first]
-        let (sut, bootstraps) = makeSUT(scratch)
+        let (sut, monitorings) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(Players.second)
         sut.chooseMusicPlayer("com.example.unknown")
         #expect(sut.player?.bundleID == Players.first)
         #expect(scratch.preferences.musicPlayer == Players.first)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.isEmpty)
     }
 
     @MainActor
     @Test("another supported player opening shows it as installed, without starting over")
-    func otherPlayerLaunch() {
+    func otherPlayerLaunch() async {
         let scratch = Scratch()
         scratch.installed = [Players.first]
-        let (sut, bootstraps) = makeSUT(scratch)
-        sut.setHealth(.ready)
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
 
         scratch.installed.insert(Players.second)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
         #expect(sut.status.playerOptions.map(\.isInstalled) == [true, true])
+        try? await Task.sleep(for: .milliseconds(50))
         #expect(sut.status.health == .ready)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.count == 1)
     }
 
     @MainActor
     @Test("while no player is chosen, a supported player opening brings the welcome window back")
     func playerLaunchWhileWaiting() {
-        let (sut, bootstraps) = makeSUT(chosenPlayer: nil)
+        let (sut, monitorings) = makeSUT(chosenPlayer: nil)
         #expect(!sut.isShowingPlayerChooser)
 
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
         #expect(sut.isShowingPlayerChooser)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.isEmpty)
 
         sut.chooseMusicPlayer(Players.second)
         // It goes on to what the player needs, and closes once done.
@@ -930,15 +929,6 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("only the chosen player's audio is the music; other players count like any app")
-    func onlyChosenPlayerIsProtected() {
-        let (sut, _) = makeSUT()
-        let configuration = sut.currentConfiguration
-        #expect(!configuration.isMediaSource(Players.first))
-        #expect(configuration.isMediaSource(Players.second))
-    }
-
-    @MainActor
     @Test("someone updating from before the choice keeps the former player, unasked")
     func updatingKeepsFormerPlayer() {
         let scratch = Scratch()
@@ -957,47 +947,6 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("while the player needs a permission, starting is tried again every few seconds")
-    func retriesWhilePermissionMissing() async {
-        let scratch = Scratch()
-        // The real bootstrap stops at the permission check, before monitoring anything.
-        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
-        sut.chooseMusicPlayer(Players.first)
-        await TestWait.until { await scratch.first.verifyCallCount >= 3 }
-        #expect(await scratch.first.verifyCallCount >= 3)
-        #expect(sut.status.health == .needsPermission(.automation(player: "First")))
-        // Logged as an error once; the repeats are the same problem.
-        #expect(sut.loggedStartupProblem == "First: \(MusicPlayerError.automationPermissionDenied.localizedDescription)")
-    }
-
-    @MainActor
-    @Test("a busy or hung player is asked again by itself, less and less often")
-    func retriesWhilePlayerNotResponding() async {
-        let scratch = Scratch()
-        await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
-        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
-        sut.chooseMusicPlayer(Players.second)
-        await TestWait.until { await scratch.second.verifyCallCount >= 3 }
-        #expect(await scratch.second.verifyCallCount >= 3)
-        #expect(sut.status.health == .retrying("Second is not responding"))
-        #expect(sut.status.canRetry) // the menu offers Retry too
-    }
-
-    @MainActor
-    @Test("a player that isn't running isn't asked again until it opens")
-    func noRetryWhilePlayerNotRunning() async {
-        let scratch = Scratch()
-        await scratch.second.setFailVerify(MusicPlayerError.playerNotRunning)
-        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
-        sut.chooseMusicPlayer(Players.second)
-        await TestWait.until { sut.status.health != .starting }
-        try? await Task.sleep(for: .milliseconds(200))
-        #expect(await scratch.second.verifyCallCount == 1)
-        #expect(sut.status.health == .degraded("Second is not running"))
-        #expect(!sut.status.canRetry)
-    }
-
-    @MainActor
     @Test("Diagnostics in Settings follows what AutoHush sees")
     func diagnostics() {
         let (sut, _) = makeSUT()
@@ -1010,16 +959,11 @@ struct AppDelegateTests {
         #expect(diagnostics?.text.contains("Automation for First") == true)
     }
 
-    @Test("the waits between automatic starts double up to a ceiling")
-    func retryDelays() {
-        #expect((1...6).map { AppDelegate.retryDelay(afterFailedStarts: $0, delays: 5...60) } == [5, 10, 20, 40, 60, 60])
-    }
-
     @MainActor
     @Test("only the chosen player is ever asked for permission to control it, and only once chosen")
     func onlyChosenPlayerIsAsked() async {
         let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, realBootstrap: true)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
 
         // Nothing is asked before a player is chosen, not even when one opens.
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
@@ -1029,7 +973,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(Players.second) // also closes the welcome window
         await TestWait.until { sut.status.health != .starting }
-        #expect(sut.status.health == .needsPermission(.automation(player: "Second")))
+        #expect(sut.status.health == .ready)
         #expect(await scratch.second.verifyCallCount == 1)
         #expect(await scratch.first.verifyCallCount == 0)
     }
@@ -1039,8 +983,8 @@ struct AppDelegateTests {
     func chosenPlayerUninstalled() async {
         let scratch = Scratch()
         scratch.installed = []
-        // The real bootstrap stops at the install check, before scripting the player.
-        let (sut, _) = makeSUT(scratch, realBootstrap: true)
+        // The start stops at the install check, before scripting the player.
+        let (sut, _) = makeSUT(scratch)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.health == .degraded("First is not installed"))
@@ -1048,51 +992,40 @@ struct AppDelegateTests {
         // Installed again: it's controlled afresh as soon as AutoHush notices.
         scratch.installed = [Players.first]
         sut.refreshPlayerOptions()
-        await TestWait.until { sut.status.health == .needsPermission(.automation(player: "First")) }
-        #expect(sut.status.health == .needsPermission(.automation(player: "First")))
+        await TestWait.until { sut.status.health == .ready }
         #expect(await scratch.first.verifyCallCount == 1)
     }
 
     @MainActor
-    @Test("a start that fails with the player's error says AutoHush can't control it, and keeps why for the menu")
-    func failedStartKeepsItsCause() async {
+    @Test("what the player session knows shows in the menu and Settings: why it can't control the player, the music, the apps playing")
+    func sessionShown() async {
         let scratch = Scratch()
         await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
-        let (sut, _) = makeSUT(scratch, realBootstrap: true)
+        let (sut, monitorings) = makeSUT(scratch)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.statusLine == "Can’t control First right now")
+        #expect(sut.settingsModel.statusLine == "Can’t control First right now")
         #expect(sut.status.controlError?.text == "AutoHush can’t find Play/Pause in First’s menus.")
 
-        // A pause that fails once it runs says why too, and the cause goes once it's over.
-        sut.apply(.pauseFailure(.playerCommandFailed(.pressIgnored)))
-        #expect(sut.status.controlError?.text == "First didn’t respond to its Play/Pause.")
-        sut.apply(.pauseFailure(nil))
+        await scratch.first.setFailVerify(nil)
+        await TestWait.until { sut.status.health == .ready }
         #expect(sut.status.controlError == nil)
-    }
-
-    @MainActor
-    @Test("a web app macOS doesn't know of yet is started from where it is, as it's listed")
-    func webAppStartsFromItsOwnPlace() async {
-        let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.new", name: "New Site", status: .learned,
-                                        installedURL: URL(fileURLWithPath: "/Users/someone/Applications/New Site.app"))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        // Not in `installed`: Launch Services hasn't caught up with it.
-        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID, realBootstrap: true)
-        sut.handleApplicationDidLaunch(bundleIdentifier: webApp.bundleID)
-        await TestWait.until { sut.status.health != .starting }
-        // The real bootstrap went past the install check, and stopped at the permission one.
-        #expect(sut.status.health == .needsPermission(.accessibility(player: "New Site")))
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        monitorings.made[0].send(.activeSources([vlc]))
+        #expect(sut.status.playback == .pausedByMonitor)
+        #expect(sut.status.activeSources == [vlc])
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id]) // listed in Settings → Apps as it plays
     }
 
     @MainActor
     @Test("the chosen player uninstalled while AutoHush runs is noticed without a restart, and put back starts it again")
     func playerUninstalledWhileRunning() async {
         let scratch = Scratch()
-        let (sut, bootstraps) = makeSUT(scratch)
-        sut.setHealth(.ready)
-        sut.apply(.playback(.musicPlaying))
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+        monitorings.made[0].send(.playback(.musicPlaying))
 
         // Moved to the Trash: its folder changes, and nothing else happens.
         scratch.installed = []
@@ -1100,22 +1033,23 @@ struct AppDelegateTests {
         await TestWait.until { sut.status.health != .ready }
         #expect(sut.status.health == .degraded("First is not installed"))
         #expect(sut.status.playback == .unknown)
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made[0].isStopped)
 
         // Put back: controlled afresh.
         scratch.installed = [Players.first]
         scratch.changeFolder()
-        await TestWait.until { bootstraps.count > 0 }
-        #expect(sut.status.health == .starting)
-        #expect(bootstraps.count == 1)
+        await TestWait.until { sut.status.health == .ready }
+        #expect(monitorings.made.count == 2)
     }
 
     @MainActor
     @Test("opening the menu notices a player that was uninstalled while it wasn't running")
-    func menuNoticesUninstalledPlayer() {
+    func menuNoticesUninstalledPlayer() async {
         let scratch = Scratch()
-        let (sut, bootstraps) = makeSUT(scratch)
-        sut.setHealth(.degraded("First is not running"))
+        await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, monitorings) = makeSUT(scratch)
+        sut.session.launch()
+        await waitFor { sut.status.health == .degraded("First is not running") }
 
         scratch.installed = []
         sut.refreshPlayerOptions() // what opening the menu or Settings does
@@ -1125,7 +1059,7 @@ struct AppDelegateTests {
         // Asked again, it stays as it is.
         sut.refreshPlayerOptions()
         #expect(sut.status.health == .degraded("First is not installed"))
-        #expect(bootstraps.count == 0)
+        #expect(monitorings.made.isEmpty)
     }
 
     @MainActor
@@ -1151,22 +1085,6 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(chosenPlayer: nil)
         sut.refreshPlayerOptions()
         #expect(sut.watchedFolders.isEmpty)
-    }
-
-    @MainActor
-    @Test("a pipeline torn down leaves no playback state behind, so no stale pause is handed over")
-    func playbackStateEndsWithPipeline() async {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch, realBootstrap: true)
-        sut.apply(.playback(.pausedByMonitor))
-
-        // The other player's start stops at the permission check.
-        sut.chooseMusicPlayer(Players.second)
-        await TestWait.until { sut.status.health != .starting }
-        #expect(sut.status.playback == .unknown)
-        #expect(sut.status.detection == .pending)
-        #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
-        #expect(scratch.preferences.pauseHandover == nil)
     }
 
     // MARK: - Permissions in the windows
@@ -1249,49 +1167,6 @@ struct AppDelegateTests {
     }
 
     // MARK: - Permissions while running
-
-    @MainActor
-    @Test("a permission taken away while monitoring runs is noticed when another app starts playing, and starts over")
-    func lostPermissionNoticedWhenOthersPlay() async {
-        let scratch = Scratch() // its players refuse Automation
-        let (sut, bootstraps) = makeSUT(scratch)
-        sut.setHealth(.ready)
-
-        sut.apply(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC")]))
-        await waitFor { bootstraps.count == 1 }
-        #expect(bootstraps.count == 1)
-
-        // Still playing: not checked again.
-        sut.apply(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC"), AudioSource(id: "com.apple.Safari", name: "Safari")]))
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(await scratch.first.verifyCallCount == 1)
-    }
-
-    @MainActor
-    @Test("checking control access starts over only for a missing permission, and only while monitoring runs")
-    func controlAccessCheck() async {
-        let scratch = Scratch()
-        let (sut, bootstraps) = makeSUT(scratch)
-
-        sut.checkControlAccess() // not monitoring yet
-        try? await Task.sleep(for: .milliseconds(30))
-        #expect(await scratch.first.verifyCallCount == 0)
-
-        sut.setHealth(.ready)
-        for error: MusicPlayerError? in [nil, .playerNotRunning, .playerNotResponding] {
-            await scratch.first.setFailVerify(error)
-            let calls = await scratch.first.verifyCallCount
-            sut.checkControlAccess()
-            await TestWait.until { await scratch.first.verifyCallCount > calls }
-            try? await Task.sleep(for: .milliseconds(30))
-        }
-        #expect(bootstraps.count == 0)
-
-        await scratch.first.setFailVerify(MusicPlayerError.accessibilityPermissionDenied)
-        sut.checkControlAccess()
-        await waitFor { bootstraps.count == 1 }
-        #expect(bootstraps.count == 1)
-    }
 
     @MainActor
     @Test("after going to allow audio recording in System Settings, the menu offers to reopen AutoHush; other permissions don't")
@@ -1471,15 +1346,6 @@ struct AppDelegateTests {
         #expect(sut.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
     }
 
-    @Test("startup retries only while the player is not ready yet")
-    func transientStartupErrors() {
-        #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotResponding))
-        #expect(AppDelegate.isTransientStartupError(MusicPlayerError.playerNotRunning))
-        #expect(!AppDelegate.isTransientStartupError(MusicPlayerError.automationPermissionDenied))
-        #expect(!AppDelegate.isTransientStartupError(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil))))
-        #expect(!AppDelegate.isTransientStartupError(StubError.failed))
-    }
-
     @MainActor
     @Test("a newer release found by an update check is offered in the menu and Settings")
     func updateAvailable() async {
@@ -1504,93 +1370,6 @@ struct AppDelegateTests {
         #expect(!scratch.preferences.checksForUpdatesAutomatically)
         #expect(!sut.settingsModel.checksForUpdatesAutomatically)
         #expect(!sut.updates.isCheckDue())
-    }
-
-    @MainActor
-    @Test("a pause handed over by the AutoHush before is taken over once, and only when recent")
-    func pauseHandover() {
-        let now = Date()
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        // Handed over after launch, as a copy that quits for this one does.
-        scratch.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil)
-        #expect(sut.takesOverPause(now: now))
-        #expect(scratch.preferences.pauseHandover == nil) // read once
-        scratch.preferences.pauseHandover = PauseHandover(at: now, player: nil)
-        #expect(!sut.takesOverPause(now: now)) // only the first monitoring takes one over
-
-        let stale = Scratch()
-        stale.preferences.pauseHandover = PauseHandover(
-            at: now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1)), player: nil
-        )
-        #expect(!makeSUT(stale).0.takesOverPause(now: now))
-        #expect(!makeSUT().0.takesOverPause(now: now))
-    }
-
-    @MainActor
-    @Test("a pause handed over for another player than the one chosen now isn't taken over")
-    func pauseHandoverForAnotherPlayer() {
-        let now = Date()
-        let other = Scratch()
-        // The player was changed outside the app meanwhile.
-        other.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: Players.second)
-        #expect(!makeSUT(other, chosenPlayer: Players.first).0.takesOverPause(now: now))
-        #expect(other.preferences.pauseHandover == nil)
-
-        let same = Scratch()
-        same.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: Players.first)
-        #expect(makeSUT(same, chosenPlayer: Players.first).0.takesOverPause(now: now))
-    }
-
-    @MainActor
-    @Test("quitting while holding a pause hands it over for the chosen player")
-    func pauseHandedOverOnQuit() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.first)
-        sut.apply(.playback(.pausedByMonitor))
-        _ = sut.applicationShouldTerminate(NSApplication.shared)
-        #expect(scratch.preferences.pauseHandover?.player == Players.first)
-    }
-
-    @MainActor
-    @Test("quitting with players held paused hands those over too, with or without the chosen one's pause")
-    func heldPausesHandedOverOnQuit() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.second)
-        sut.heldPauses.keep(FakeMonitoring(), token: UUID(), bundleID: Players.first)
-        sut.handOverPauses()
-        #expect(scratch.preferences.pauseHandover?.held == [Players.first])
-        #expect(scratch.preferences.pauseHandover?.holdsChosen == false)
-
-        sut.apply(.playback(.pausedByMonitor)) // the chosen one paused too
-        sut.handOverPauses()
-        #expect(scratch.preferences.pauseHandover?.player == Players.second)
-        #expect(scratch.preferences.pauseHandover?.holdsChosen == true)
-    }
-
-    @MainActor
-    @Test("players held paused when the AutoHush before quit are handed over: the others' monitoring starts at launch, the chosen one takes its own back")
-    func heldPausesHandedOverOnLaunch() {
-        let now = Date()
-        let scratch = Scratch()
-        scratch.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil,
-                                                          holdsChosen: false, held: [Players.second])
-        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.first)
-        #expect(sut.handedOverHeldPlayers(now: now) == [Players.second])
-        #expect(sut.handedOverHeldPlayers(now: now).isEmpty) // read once
-        #expect(!sut.takesOverPause(now: now)) // the chosen player wasn't paused
-
-        let back = Scratch()
-        back.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-5), player: nil,
-                                                       holdsChosen: false, held: [Players.first, Players.second])
-        let (chosen, _) = makeSUT(back, chosenPlayer: Players.first)
-        #expect(chosen.handedOverHeldPlayers(now: now) == [Players.second])
-        #expect(chosen.takesOverPause(now: now)) // chosen again since: its own pause back
-
-        let stale = Scratch()
-        stale.preferences.pauseHandover = PauseHandover(at: now.addingTimeInterval(-(AppDelegate.pauseHandoverMaxAge + 1)),
-                                                        player: nil, holdsChosen: false, held: [Players.second])
-        #expect(makeSUT(stale, chosenPlayer: Players.first).0.handedOverHeldPlayers(now: now).isEmpty)
     }
 
     @MainActor
