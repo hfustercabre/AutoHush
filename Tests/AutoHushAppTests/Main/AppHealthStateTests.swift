@@ -29,17 +29,17 @@ struct AppHealthStateTests {
     @Test("a failed player command is retried; the line says AutoHush can't control it, the menu tells why")
     func commandFailed() {
         #expect(health(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil)))
-            == .retrying("Can't control Jukebox right now"))
+            == .retrying("Can’t control Jukebox right now"))
     }
 
     @Test("each failure is said in words, with the log's English for a bug report")
     func controlErrorWords() {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
-        #expect(menu.text == "AutoHush can't find Play/Pause in TIDAL's menus.")
+        #expect(menu.text == "AutoHush can’t find Play/Pause in TIDAL’s menus.")
         #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn't found.")
         #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")), player: "Spotify").text
                 == "Spotify answered with an error (-1708).")
-        #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn't responding.")
+        #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn’t responding.")
         #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "VLC").text == "AutoHush may no longer control VLC.")
         for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
             #expect(failure.text(player: "YT Music").contains("YT Music"))
@@ -68,7 +68,7 @@ struct AppHealthStateTests {
 
     @Test("any other error fails; the menu tells why, in the error's own words")
     func otherError() {
-        #expect(health(StubError.failed) == .failed("Can't control Jukebox right now"))
+        #expect(health(StubError.failed) == .failed("Can’t control Jukebox right now"))
         #expect(ControlError(StubError.failed, player: "Jukebox").text == "stub failed")
     }
 }

@@ -43,7 +43,7 @@ enum UpdateCheckError: LocalizedError, Equatable {
             return String(localized: "GitHub answered with HTTP status \(status).",
                           comment: "Update check error; %lld is an HTTP status code")
         case .unreadableRelease:
-            return String(localized: "GitHub's release information could not be read.", comment: "Update check error")
+            return String(localized: "GitHub’s release information could not be read.", comment: "Update check error")
         }
     }
 }

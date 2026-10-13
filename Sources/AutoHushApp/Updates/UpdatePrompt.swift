@@ -39,7 +39,7 @@ struct UpdatePrompt: Equatable {
         if isDownloaded {
             title = String(localized: "AutoHush \(new) Is Ready to Install",
                            comment: "Update popup title; %@ is the new version, already downloaded")
-            message = String(localized: "You're running version \(current), and version \(new) is downloaded. Installing it restarts AutoHush.",
+            message = String(localized: "You’re running version \(current), and version \(new) is downloaded. Installing it restarts AutoHush.",
                              comment: "Update popup; the first %@ is the installed version, the second the downloaded one")
             buttons = [
                 Button(title: String(localized: "Install and Relaunch", comment: "Update alert button"), choice: .install),
@@ -47,7 +47,7 @@ struct UpdatePrompt: Equatable {
             ]
         } else {
             title = String(localized: "AutoHush \(new) Is Available", comment: "Alert title; %@ is the new version number")
-            message = String(localized: "You're running version \(current), and version \(new) is available. Installing it restarts AutoHush.",
+            message = String(localized: "You’re running version \(current), and version \(new) is available. Installing it restarts AutoHush.",
                              comment: "Update popup; the first %@ is the installed version, the second the new one")
             buttons = [
                 Button(title: String(localized: "Download and Install",

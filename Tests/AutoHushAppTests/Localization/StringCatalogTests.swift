@@ -32,6 +32,19 @@ struct StringCatalogTests {
         }
     }
 
+    @Test("apostrophes are curly, in English and every translation, as macOS writes them", arguments: ["Localizable", "InfoPlist"])
+    func curlyApostrophes(table: String) throws {
+        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
+        for (key, entry) in catalog.strings {
+            #expect(!key.contains("'"), "“\(key)”")
+            for (language, localization) in entry.localizations ?? [:] {
+                for (text, _) in localization.texts {
+                    #expect(!text.contains("'"), "\(language) text of “\(key)”: \(text)")
+                }
+            }
+        }
+    }
+
     @Test("Info.plist's texts are in the InfoPlist catalog, word for word")
     func infoPlistTexts() throws {
         let data = try Data(contentsOf: Self.resources.appending(path: "Info.plist"))

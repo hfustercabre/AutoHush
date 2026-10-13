@@ -89,7 +89,7 @@ struct PlayerChooserView: View {
         VStack(spacing: 0) {
             VStack(spacing: 16) {
                 WindowHeader(icon: NSApplication.shared.applicationIconImage,
-                             description: Text("AutoHush pauses what's playing on it (music, podcasts or videos) while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.",
+                             description: Text("AutoHush pauses what’s playing on it (music, podcasts or videos) while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings.",
                                                comment: "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”"))
                 players
             }

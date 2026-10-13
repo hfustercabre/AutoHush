@@ -14,7 +14,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'AutoHush posa en pausa i reprèn el teu reproductor multimèdia."
+            "value" : "L’AutoHush posa en pausa i reprèn el teu reproductor multimèdia."
           }
         },
         "cs" : {
@@ -230,7 +230,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'AutoHush mesura el volum de les altres apps per posar el reproductor en pausa només quan sonen de debò. L'àudio no es grava, no es desa ni s'envia enlloc."
+            "value" : "L’AutoHush mesura el volum de les altres apps per posar el reproductor en pausa només quan sonen de debò. L’àudio no es grava, no es desa ni s’envia enlloc."
           }
         },
         "cs" : {
@@ -284,13 +284,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L’audio n’est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L'audio n'est jamais enregistré, conservé ni envoyé où que ce soit."
+            "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L’audio n’est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
         "hi" : {
@@ -320,7 +320,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush misura il volume delle altre app per mettere in pausa il lettore solo quando c'è un suono udibile. L'audio non viene mai registrato, salvato né inviato altrove."
+            "value" : "AutoHush misura il volume delle altre app per mettere in pausa il lettore solo quando c’è un suono udibile. L’audio non viene mai registrato, salvato né inviato altrove."
           }
         },
         "ja" : {

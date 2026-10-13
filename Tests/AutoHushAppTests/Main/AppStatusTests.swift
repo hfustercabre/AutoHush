@@ -25,7 +25,7 @@ struct AppStatusTests {
     func pauseFailed() {
         var status = ready(.pauseFailed)
         status.setActiveSources([safari])
-        #expect(status.statusLine == "Couldn't pause — Safari is playing")
+        #expect(status.statusLine == "Couldn’t pause — Safari is playing")
         #expect(status.icon == .attention)
         #expect(status.needsAttention)
         status.autoPause = .off
@@ -36,11 +36,11 @@ struct AppStatusTests {
     func controlErrorAlert() {
         var status = ready(.pauseFailed)
         #expect(status.controlErrorAlert == nil) // nothing to tell
-        status.controlError = ControlError(text: "Jukebox didn't respond to its Play/Pause.", detail: "In English.")
-        #expect(status.controlErrorAlert?.title == "Couldn't Pause Jukebox")
-        #expect(status.controlErrorAlert?.message == "Jukebox didn't respond to its Play/Pause.\n\nIn English.")
-        status.setHealth(.retrying("Can't control Jukebox right now"))
-        #expect(status.controlErrorAlert?.title == "Can't Control Jukebox")
+        status.controlError = ControlError(text: "Jukebox didn’t respond to its Play/Pause.", detail: "In English.")
+        #expect(status.controlErrorAlert?.title == "Couldn’t Pause Jukebox")
+        #expect(status.controlErrorAlert?.message == "Jukebox didn’t respond to its Play/Pause.\n\nIn English.")
+        status.setHealth(.retrying("Can’t control Jukebox right now"))
+        #expect(status.controlErrorAlert?.title == "Can’t Control Jukebox")
     }
 
     @Test("starts in the starting state with nothing to fix")

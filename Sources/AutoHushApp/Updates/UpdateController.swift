@@ -224,7 +224,7 @@ final class UpdateController {
             resultWanted = false
         }
         guard let currentVersion else {
-            onStatus(String(localized: "The app's version is unknown.", comment: "Update status in Settings"))
+            onStatus(String(localized: "The app’s version is unknown.", comment: "Update status in Settings"))
             return
         }
         onStatus(String(localized: "Checking…", comment: "Update status in Settings: a check is running"))
@@ -256,9 +256,9 @@ final class UpdateController {
             if resultWanted { present(result) }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
-            onStatus(String(localized: "Couldn't check for updates.", comment: "Update status in Settings"))
+            onStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
             if resultWanted {
-                let title = String(localized: "Couldn't Check for Updates", comment: "Alert title")
+                let title = String(localized: "Couldn’t Check for Updates", comment: "Alert title")
                 InfoAlert.show(title, error.localizedDescription)
             }
         }
@@ -283,7 +283,7 @@ final class UpdateController {
             announce(.downloaded(release.version))
         } catch {
             logger.error("Downloading \(version, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-            onStatus(String(localized: "Couldn't download version \(version).",
+            onStatus(String(localized: "Couldn’t download version \(version).",
                             comment: "Update status in Settings; %@ is a version number"))
         }
     }
@@ -317,7 +317,7 @@ final class UpdateController {
             if image != nil { downloads.remove() }
             isInstalling = false
             logger.error("Installing \(version, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-            onStatus(String(localized: "Couldn't install version \(version).",
+            onStatus(String(localized: "Couldn’t install version \(version).",
                             comment: "Update status in Settings; %@ is a version number"))
             if userInitiated {
                 presentInstallError(error, release: release)
@@ -487,7 +487,7 @@ final class UpdateController {
     /// install it by hand.
     private func presentInstallError(_ error: any Error, release: AppRelease) {
         let alert = NSAlert()
-        alert.messageText = String(localized: "Couldn't Install the Update", comment: "Alert title")
+        alert.messageText = String(localized: "Couldn’t Install the Update", comment: "Alert title")
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
         alert.addButton(withTitle: String(localized: "Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)"))

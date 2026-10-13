@@ -80,7 +80,7 @@ struct WelcomePermissionsView: View {
                 .font(.appCallout)
                 .foregroundStyle(.appSecondary)
             case .notNeeded:
-                Text("Not Needed", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
+                Text("Not needed", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
                     .font(.appCallout)
                     .foregroundStyle(.appSecondary)
             default:

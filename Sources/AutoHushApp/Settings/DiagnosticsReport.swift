@@ -221,7 +221,7 @@ enum DiagnosticsReport {
         rows.append(Row(label: String(localized: "Notifications", comment: "Diagnostics: the notifications permission"),
                         value: facts.notificationsOff ? off : allowed, mark: facts.notificationsOff ? .neutral : .ok))
         let summary = rows.contains { $0.mark == .problem }
-            ? String(localized: "Something's missing", comment: "Diagnostics: a permission isn't granted")
+            ? String(localized: "Something’s missing", comment: "Diagnostics: a permission isn't granted")
             : String(localized: "All allowed", comment: "Diagnostics: every permission AutoHush needs is granted")
         return .init(kind: .permissions, title: String(localized: "Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"),
                      summary: summary, rows: rows)
@@ -317,7 +317,7 @@ enum DiagnosticsReport {
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
-        case .pauseFailed:      return String(localized: "Playing: couldn't pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
+        case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }
     }
@@ -358,10 +358,10 @@ enum DiagnosticsReport {
     private static func describe(_ evidence: ActiveAudioReport.Entry.Evidence) -> String {
         switch evidence {
         case .announcing:
-            return String(localized: "tells macOS it's playing",
+            return String(localized: "tells macOS it’s playing",
                           comment: "Diagnostics: why an app counts as playing, in AntiDot mode or while levels aren't measured")
         case .notAnnouncing:
-            return String(localized: "not telling macOS it's playing",
+            return String(localized: "not telling macOS it’s playing",
                           comment: "Diagnostics: why an app counts as paused, in AntiDot mode or while levels aren't measured")
         case .level(let peak) where peak > 0:
             return String(localized: "\(Int((20 * log10(peak)).rounded())) dBFS",

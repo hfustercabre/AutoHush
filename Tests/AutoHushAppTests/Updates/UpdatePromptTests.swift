@@ -14,7 +14,7 @@ struct UpdatePromptTests {
     func available() {
         let prompt = UpdatePrompt(release: release, running: running, isDownloaded: false, canInstall: true, isHomebrewInstall: false)
         #expect(prompt.title == "AutoHush 0.3.8 Is Available")
-        #expect(prompt.message == "You're running version 0.3.7, and version 0.3.8 is available. Installing it restarts AutoHush.")
+        #expect(prompt.message == "You’re running version 0.3.7, and version 0.3.8 is available. Installing it restarts AutoHush.")
         #expect(prompt.buttons.map(\.title) == ["Download and Install", "Later", "Open Release Page"])
         #expect(prompt.buttons.map(\.choice) == [.install, .later, .openReleasePage])
     }
@@ -23,7 +23,7 @@ struct UpdatePromptTests {
     func downloaded() {
         let prompt = UpdatePrompt(release: release, running: running, isDownloaded: true, canInstall: true, isHomebrewInstall: false)
         #expect(prompt.title == "AutoHush 0.3.8 Is Ready to Install")
-        #expect(prompt.message == "You're running version 0.3.7, and version 0.3.8 is downloaded. Installing it restarts AutoHush.")
+        #expect(prompt.message == "You’re running version 0.3.7, and version 0.3.8 is downloaded. Installing it restarts AutoHush.")
         #expect(prompt.buttons.map(\.title) == ["Install and Relaunch", "Later", "Open Release Page"])
         #expect(prompt.buttons.first?.choice == .install)
     }
@@ -49,13 +49,13 @@ struct UpdateNoticeTests {
     func texts() {
         let available = UpdateNotice.available(version, running: AppVersion("0.3.7")!)
         #expect(available.title == "AutoHush 0.3.8 is available")
-        #expect(available.body == "You're running 0.3.7. Click to see what's new and install it.")
+        #expect(available.body == "You’re running 0.3.7. Click to see what’s new and install it.")
         #expect(available.key == "available 0.3.8")
         #expect(UpdateNotice.downloaded(version).title == "AutoHush 0.3.8 is ready to install")
         #expect(UpdateNotice.downloaded(version).key == "downloaded 0.3.8")
         #expect(UpdateNotice.installed(version).title == "AutoHush was updated to 0.3.8")
-        #expect(UpdateNotice.installed(version).body == "Click to see what's new.")
-        #expect(UpdateNotice.installFailed(version).title == "Couldn't update AutoHush to 0.3.8")
+        #expect(UpdateNotice.installed(version).body == "Click to see what’s new.")
+        #expect(UpdateNotice.installFailed(version).title == "Couldn’t update AutoHush to 0.3.8")
         #expect(UpdateNotice.installFailed(version).key == "installFailed 0.3.8")
     }
 }

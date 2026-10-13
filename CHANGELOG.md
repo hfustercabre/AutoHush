@@ -24,6 +24,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   menu bar icon now says what the menu's status line does ("AutoHush:
   Spotify is not running"), and a web app named as an app is reads as a
   Safari web app where you choose your player.
+- **Apostrophes were mixed.** AutoHush's text used both straight and curly
+  apostrophes; it now uses curly ones throughout, in every language, and
+  the welcome window says “Not needed” beside “Allowed”.
 - **A line under the menu's card in light mode.** On macOS 26 and later,
   the card's shadow was cut off in a straight line where its row of the
   menu ends. The card is now of clear glass, which casts no shadow.

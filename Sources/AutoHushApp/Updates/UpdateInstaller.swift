@@ -15,10 +15,10 @@ enum UpdateInstallUnavailability: Equatable, Sendable {
     var explanation: String {
         switch self {
         case .notSignedWithCertificate:
-            return String(localized: "This copy of AutoHush can't update itself, because it isn't signed with AutoHush's certificate.",
+            return String(localized: "This copy of AutoHush can’t update itself, because it isn’t signed with AutoHush’s certificate.",
                           comment: "Settings, under the update choices (development builds)")
         case .readOnlyLocation:
-            return String(localized: "AutoHush can't update itself, because it can't write to the folder it's in.",
+            return String(localized: "AutoHush can’t update itself, because it can’t write to the folder it’s in.",
                           comment: "Settings, under the update choices")
         }
     }
@@ -52,12 +52,12 @@ enum UpdateInstallError: LocalizedError, Equatable {
         case .damaged:
             return String(localized: "The download is damaged.", comment: "Update install error")
         case .notGenuine:
-            return String(localized: "The download isn't signed with the same certificate as AutoHush, so it wasn't installed.",
+            return String(localized: "The download isn’t signed with the same certificate as AutoHush, so it wasn’t installed.",
                           comment: "Update install error")
         case .wrongVersion:
-            return String(localized: "The download doesn't contain the version GitHub announced.", comment: "Update install error")
+            return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
         case .notReplaced(let reason):
-            return String(localized: "AutoHush couldn't replace itself: \(reason)",
+            return String(localized: "AutoHush couldn’t replace itself: \(reason)",
                           comment: "Update install error; %@ is the reason macOS gave")
         }
     }

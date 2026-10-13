@@ -79,9 +79,9 @@ struct AddWebAppModelTests {
     func notAWebAddressNote() {
         let model = AddWebAppModel()
         model.fail(.notAWebAddress)
-        #expect(model.problemText == "That isn't a web address.")
+        #expect(model.problemText == "That isn’t a web address.")
         model.exampleAddress = "music.example.com"
-        #expect(model.problemText == "That isn't a web address. Try one like music.example.com.")
+        #expect(model.problemText == "That isn’t a web address. Try one like music.example.com.")
     }
 
     @Test("a service with a site per country: the Mac's country at first, a pick puts its site in the address")

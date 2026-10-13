@@ -140,7 +140,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `ChipButtonStyle(filled: true)` | Chips in a row, such as the menu's durations ("5 min"). On macOS 26 and later Liquid Glass (corner 12), interactive, and tinted with the accent color when selected (`ChoiceChips`). |
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the players' tiles, the player search's rows. |
 | `ChipButtonStyle(cornerRadius: 6)` | Small buttons inside the menu card: the player button and Retry. |
-| The card's status line with `info.circle` | When the media player couldn't be controlled ("Can't control TIDAL right now", "Couldn't pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can't Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
+| The card's status line with `info.circle` | When the media player couldn't be controlled ("Can’t control TIDAL right now", "Couldn’t pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can’t Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
 | `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Untested" after an untested web app. |
 | `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, or "Not installed" (dimmed). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
@@ -156,7 +156,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `RestoreDefaultsButton` | Under a page's cards on the right: sets that page's settings back (Detection's timings, or the fades), dimmed while they're the defaults. |
 | `SupportLine` | "Would you like to support me?" with its link, in About and, compact, at the foot of Settings' sidebar. |
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
-| `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It's Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
+| `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It’s Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
 | `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs under "Permissions", a row each (a `SymbolTile`, `RowTitle`, then the `PermissionButton` or "Allowed" in `.appSecondary` after a check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done in the `BottomBar`. |
 
@@ -215,7 +215,7 @@ their download symbol.
   - **A service with its own site in some countries** (Amazon Music,
     `CountrySites`) is suggested on the site for the Mac's region. While
     the address is one of its sites, Add a Web App's address card adds a
-    row under the field, "Your account's country", with a borderless
+    row under the field, "Your account’s country", with a borderless
     pop-up of the countries with their own site, by name, then a divider
     and "Other Countries"; choosing one puts its site in the field. A
     caption under the card says why (a sign-in works only on the
@@ -249,11 +249,11 @@ their download symbol.
   - **A step the user says is done** (It's Playing, It's Paused, Add to Dock)
     has its button under its caption while it's the one to do: a blue chip
     (`StepActionButton`), outside the step's VoiceOver element. Its caption
-    ends by naming the button ("Then click It's Paused."). The same steps
+    ends by naming the button ("Then click It’s Paused."). The same steps
     and buttons show in both windows that show them (learning, Add a Web
     App).
   - **A time limit** shows as a `CountdownBanner`, a whole sentence that
-    counts down ("You have 0:45 to pause it and click It's Paused.").
+    counts down ("You have 0:45 to pause it and click It’s Paused.").
   - **A click that couldn't be taken** says why in a `NoteLabel` under that
     step, until the next click.
   - **A step only some cases need** ("Answer the site in Safari") shows only
@@ -289,7 +289,7 @@ their download symbol.
 | Buttons and menu items: "Check Now", "Ignore Another App…" | Lead-ins that read into their control: "Turn off for", "Sort by", "When an update is found" |
 | Pop-up items: "Last Played" | Choice chips: "Notify me", "Install it automatically" |
 | Section headings: "Pauses Playback", "Playing Now", "Apps with Sound" | Descriptions, notes and status lines |
-| Alert titles: "Couldn't Install the Update" | Tooltips and VoiceOver labels: "Search by name", "Reverse order" |
+| Alert titles: "Couldn’t Install the Update" | Tooltips and VoiceOver labels: "Search by name", "Reverse order" |
 
 - **Title case** follows Apple's rules: capitalize every word except
   articles, and conjunctions and prepositions of four letters or fewer.
@@ -312,8 +312,11 @@ their download symbol.
   only in names (Apple Music, YouTube Music).
 - **Permissions:** you "allow" them, never "grant" them. Use the names macOS
   gives them: Automation, Accessibility, Audio Recording.
-- **Contractions:** use them: couldn't, can't, isn't, it's, don't. Never
+- **Contractions:** use them: couldn’t, can’t, isn’t, it’s, don’t. Never
   "could not".
+- **Apostrophes** are curly (’), as macOS writes them: "can’t", "Spotify’s",
+  in English and in every language that has them ("l’app", "Mac’te"). A
+  straight ' never shows; a test checks both catalogs.
 - **Ellipsis** (`…`, a single character) ends a button or menu item that
   asks for something more before it acts (a panel, a dialog, another
   window), and a state in progress ("Checking…"). A button that acts at once
@@ -376,7 +379,7 @@ AutoHush is translated into 34 languages besides English. The README's
   - German puts a no-break space before "…".
   - Chinese puts spaces between Chinese and Latin text and uses full-width
     punctuation, with "⋯" in Traditional Chinese.
-  - Catalan puts the article before AutoHush ("l'AutoHush"), but not before
+  - Catalan puts the article before AutoHush ("l’AutoHush"), but not before
     a placeholder.
   - Russian uses « » quotes.
   - Arabic uses its own comma, question mark and semicolon (، ؟ ؛) and « ».

@@ -59,7 +59,7 @@ extension AppHealthState {
     /// The status line when the player answered with an error: the menu
     /// shows why under it (`AppStatus.controlError`).
     static func cantControl(_ playerName: String) -> String {
-        String(localized: "Can't control \(playerName) right now",
+        String(localized: "Can’t control \(playerName) right now",
                comment: "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player, e.g. TIDAL")
     }
 }

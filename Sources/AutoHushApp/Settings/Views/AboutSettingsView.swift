@@ -40,7 +40,7 @@ struct AboutSettingsView: View {
                     .padding(.top, Self.gap - 7.5)
             }
             VStack(spacing: 6) {
-                Text("Pauses what's playing (music, podcasts or videos) while other apps play audio, and resumes it afterwards.",
+                Text("Pauses what’s playing (music, podcasts or videos) while other apps play audio, and resumes it afterwards.",
                      comment: "Settings → About: what AutoHush does")
                 Text("Works with \(players).",
                      comment: "Settings → About; %@ lists the media players it works with, e.g. “Spotify, Apple Music and TIDAL”")
@@ -52,7 +52,7 @@ struct AboutSettingsView: View {
             .padding(.top, Self.gap - 3.5)
             HStack(spacing: 8) {
                 link(Text(verbatim: "GitHub"), symbol: "chevron.left.forwardslash.chevron.right", to: ProjectInfo.homepage)
-                link(Text("What's New", comment: "Settings → About: opens the release notes on GitHub"),
+                link(Text("What’s New", comment: "Settings → About: opens the release notes on GitHub"),
                      symbol: "sparkles", to: ProjectInfo.whatsNewPage(for: model.currentVersion.flatMap(AppVersion.init)))
                 link(Text("Report an Issue", comment: "Settings → About: opens a new issue on GitHub"),
                      symbol: "ladybug", to: ProjectInfo.newIssuePage)

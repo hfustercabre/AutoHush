@@ -1052,12 +1052,12 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch, realBootstrap: true)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         await TestWait.until { sut.status.health != .starting }
-        #expect(sut.status.statusLine == "Can't control First right now")
-        #expect(sut.status.controlError?.text == "AutoHush can't find Play/Pause in First's menus.")
+        #expect(sut.status.statusLine == "Can’t control First right now")
+        #expect(sut.status.controlError?.text == "AutoHush can’t find Play/Pause in First’s menus.")
 
         // A pause that fails once it runs says why too, and the cause goes once it's over.
         sut.apply(.pauseFailure(.playerCommandFailed(.pressIgnored)))
-        #expect(sut.status.controlError?.text == "First didn't respond to its Play/Pause.")
+        #expect(sut.status.controlError?.text == "First didn’t respond to its Play/Pause.")
         sut.apply(.pauseFailure(nil))
         #expect(sut.status.controlError == nil)
     }
@@ -1617,7 +1617,7 @@ struct AppDelegateTests {
     @Test("Settings says why AutoHush can't update itself")
     func installUnavailableNote() {
         let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))
-        #expect(sut.settingsModel.updateInstallNote == "AutoHush can't update itself, because it can't write to the folder it's in.")
+        #expect(sut.settingsModel.updateInstallNote == "AutoHush can’t update itself, because it can’t write to the folder it’s in.")
     }
 }
 

@@ -71,8 +71,8 @@ extension PlaybackState {
         case .pauseFailed:
             return StatePresentation(
                 icon: .attention,
-                label: String(localized: "AutoHush: couldn't pause your player", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Couldn't pause — \(Self.describePlaying(playing))",
+                label: String(localized: "AutoHush: couldn’t pause your player", comment: "VoiceOver label of the menu bar icon"),
+                line: String(localized: "Couldn’t pause — \(Self.describePlaying(playing))",
                              comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”")
             )
         }
@@ -135,10 +135,10 @@ struct ControlError: Equatable {
             text = String(localized: "AutoHush may no longer control \(player).",
                           comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")
         case .playerNotRunning?:
-            text = String(localized: "\(player) isn't running.",
+            text = String(localized: "\(player) isn’t running.",
                           comment: "Why the media player couldn't be controlled: it quit; %@ is the player")
         case .playerNotResponding?:
-            text = String(localized: "\(player) isn't responding.",
+            text = String(localized: "\(player) isn’t responding.",
                           comment: "Why the media player couldn't be controlled; %@ is the player")
         case .stillLearning?, nil:
             text = error.localizedDescription
@@ -151,22 +151,22 @@ extension ControlFailure {
     func text(player: String) -> String {
         switch self {
         case .menuItemNotFound:
-            String(localized: "AutoHush can't find Play/Pause in \(player)'s menus.",
+            String(localized: "AutoHush can’t find Play/Pause in \(player)’s menus.",
                    comment: "Why the media player couldn't be controlled: an update may have changed its menus; %@ is the player, e.g. TIDAL")
         case .stateUnknown:
-            String(localized: "\(player) doesn't say whether it's playing.",
+            String(localized: "\(player) doesn’t say whether it’s playing.",
                    comment: "Why the media player couldn't be controlled: its state can't be read; %@ is the player")
         case .nothingToPlay:
             String(localized: "\(player) has nothing to play.",
                    comment: "Why the media player couldn't be controlled: its Play is disabled; %@ is the player")
         case .buttonDisabled:
-            String(localized: "\(player)'s Play/Pause button is disabled, as during an ad.",
+            String(localized: "\(player)’s Play/Pause button is disabled, as during an ad.",
                    comment: "Why a web app couldn't be paused: the site disabled its button; %@ is the web app")
         case .pressFailed:
-            String(localized: "AutoHush couldn't press \(player)'s Play/Pause.",
+            String(localized: "AutoHush couldn’t press \(player)’s Play/Pause.",
                    comment: "Why the media player couldn't be controlled; %@ is the player")
         case .pressIgnored:
-            String(localized: "\(player) didn't respond to its Play/Pause.",
+            String(localized: "\(player) didn’t respond to its Play/Pause.",
                    comment: "Why the media player couldn't be controlled: a press didn't change it; %@ is the player")
         case .appleEventError(let number, _):
             String(localized: "\(player) answered with an error (\(String(number))).",

@@ -32,7 +32,7 @@ struct UpdatesSettingsView: View {
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
                     // Blinks bright after a click on a choice that needs notifications.
-                    Text("Notifications are off for AutoHush, so it can't tell you about updates.",
+                    Text("Notifications are off for AutoHush, so it can’t tell you about updates.",
                          comment: "Settings → Updates, under the update choices, while notifications are off for AutoHush")
                         .font(.appCaption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
@@ -79,7 +79,7 @@ extension AutomaticUpdates {
             return String(localized: "AutoHush downloads it and lets you know. It keeps the download for 7 days.",
                           comment: "Settings, under the update choice Download it and notify me")
         case .install:
-            return String(localized: "AutoHush installs it when it isn't holding your player paused, and lets you know afterwards.",
+            return String(localized: "AutoHush installs it when it isn’t holding your player paused, and lets you know afterwards.",
                           comment: "Settings, under the update choice Install it automatically")
         }
     }

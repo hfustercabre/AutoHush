@@ -79,9 +79,9 @@ struct AppStatus: Equatable {
     var controlErrorAlert: (title: String, message: String)? {
         guard let controlError else { return nil }
         let title = playback == .pauseFailed && isReady
-            ? String(localized: "Couldn't Pause \(playerName)",
+            ? String(localized: "Couldn’t Pause \(playerName)",
                      comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
-            : String(localized: "Can't Control \(playerName)",
+            : String(localized: "Can’t Control \(playerName)",
                      comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
         return (title, "\(controlError.text)\n\n\(controlError.detail)")
     }

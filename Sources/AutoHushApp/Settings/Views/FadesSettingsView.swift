@@ -47,7 +47,7 @@ struct FadesSettingsView: View {
                 .disabled(!model.playerCanFade)
                 .opacity(model.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
                 if !model.playerCanFade, let player = model.chosenPlayerName {
-                    NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can't change its volume.",
+                    NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
                                      comment: "Settings → Fades, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),
                               kind: .info)
                 }

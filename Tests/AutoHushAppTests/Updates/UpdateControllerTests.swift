@@ -135,7 +135,7 @@ struct UpdateControllerTests {
     func failedCheck() async {
         let h = Harness(checker: .offline)
         await h.controller.check(userInitiated: false)
-        #expect(h.statuses.last == "Couldn't check for updates.")
+        #expect(h.statuses.last == "Couldn’t check for updates.")
         #expect(h.preferences.lastUpdateCheck == nil)
         #expect(h.offers.isEmpty)
     }
@@ -144,7 +144,7 @@ struct UpdateControllerTests {
     func unknownVersion() async {
         let h = Harness(checker: .offline, currentVersion: nil)
         await h.controller.check(userInitiated: false)
-        #expect(h.statuses == ["The app's version is unknown."])
+        #expect(h.statuses == ["The app’s version is unknown."])
     }
 
     // MARK: - Notify me
@@ -277,7 +277,7 @@ struct UpdateControllerTests {
         let installer = MockUpdateInstaller(downloadError: URLError(.notConnectedToInternet))
         let h = Harness(checker: .latestRelease("v0.3.0"), installer: installer, mode: .download)
         await h.controller.runAutomaticTasks()
-        #expect(h.statuses.last == "Couldn't download version 0.3.0.")
+        #expect(h.statuses.last == "Couldn’t download version 0.3.0.")
         #expect(h.keptFiles.isEmpty)
         #expect(h.notifier.announced.isEmpty)
 
@@ -444,7 +444,7 @@ struct UpdateControllerTests {
     func failedAutomaticInstall() async {
         let h = Harness(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(prepareError: UpdateInstallError.notGenuine))
         await h.controller.runAutomaticTasks()
-        #expect(h.statuses.last == "Couldn't install version 0.3.0.")
+        #expect(h.statuses.last == "Couldn’t install version 0.3.0.")
         #expect(h.offer?.state == .available)
         #expect(h.quits == 0)
         #expect(h.notifier.announced == [.installFailed(v030)])

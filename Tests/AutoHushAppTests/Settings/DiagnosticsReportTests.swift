@@ -120,7 +120,7 @@ struct DiagnosticsReportTests {
         #expect(rows.contains(DiagnosticsSnapshot.Row(label: "Play/Pause words read", value: "No", mark: .problem)))
         #expect(rows.contains(DiagnosticsSnapshot.Row(
             label: "Last error",
-            value: "AutoHush can't find Play/Pause in Jukebox's menus.\nControlling the media player failed: its Play/Pause menu item wasn't found.",
+            value: "AutoHush can’t find Play/Pause in Jukebox’s menus.\nControlling the media player failed: its Play/Pause menu item wasn't found.",
             mark: .problem)))
 
         let plain = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts())
@@ -157,7 +157,7 @@ struct DiagnosticsReportTests {
         }.map(\.value) == ["Not needed in AntiDot mode", "Not checked yet", "Allowed"])
 
         let refused = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts { $0.audioRecording = .denied })
-        #expect(refused.sections.first { $0.kind == .permissions }?.summary == "Something's missing")
+        #expect(refused.sections.first { $0.kind == .permissions }?.summary == "Something’s missing")
     }
 
     @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on, with its longer start without video")
@@ -225,9 +225,9 @@ struct DiagnosticsReportTests {
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),
          "Safari (com.apple.Safari) — output open, silent, ignored (silence)"),
         (.init(id: "com.example.a", state: .playing, evidence: .announcing),
-         "com.example.a — playing (tells macOS it's playing)"),
+         "com.example.a — playing (tells macOS it’s playing)"),
         (.init(id: "com.example.b", state: .silent, evidence: .notAnnouncing),
-         "com.example.b — output open, silent (not telling macOS it's playing)"),
+         "com.example.b — output open, silent (not telling macOS it’s playing)"),
         (.init(id: "com.example.c", state: .playing, isIgnored: true, evidence: .level(0.1)),
          "com.example.c — playing, ignored (-20 dBFS)"),
     ])

@@ -221,9 +221,9 @@ struct AppsSettingsView: View {
     /// AutoHush tells apps' sound apart: it can't be ignored.
     static func unidentifiedAppAlert(url: URL) -> (title: String, message: String) {
         let name = (FileManager.default.displayName(atPath: url.path) as NSString).deletingPathExtension
-        return (String(localized: "Couldn't Ignore \(name)",
+        return (String(localized: "Couldn’t Ignore \(name)",
                        comment: "Settings → Apps: title of the alert after Ignore Another App… when the chosen app can't be ignored; %@ is the app's name"),
-                String(localized: "\(name) doesn't identify itself as Mac apps do, so AutoHush can't tell when it plays.",
+                String(localized: "\(name) doesn’t identify itself as Mac apps do, so AutoHush can’t tell when it plays.",
                        comment: "Settings → Apps: the alert after Ignore Another App…, when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name"))
     }
 }
