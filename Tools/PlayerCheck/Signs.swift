@@ -146,11 +146,15 @@ struct Sign {
     say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
+    // Whoever runs the check may need the mouse and keyboard for it.
+    inputBlock.pause()
+    defer { inputBlock.resume() }
     while Date() < deadline, !stopState.isRequested {
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
         if isPlaying(pid) {
             say("  it plays: testing")
             RunLoop.main.run(until: Date().addingTimeInterval(1.5)) // it settles, and reports to Now Playing
+            countOtherPages(pid)
             return true
         }
     }

@@ -67,6 +67,12 @@ import AppKit
         } else if let test = WindowTest(app: running) {
             windowTest = test
             guard stopState.beginMoving() else { stopIfRequested("stopped: nothing was moved"); stopNow(143) }
+            if blockInput {
+                say(inputBlock.start()
+                    ? "  your clicks, scrolling and keys are blocked until its window is put back (the pointer still moves;"
+                        + " Escape or the panel's Stop ends the check)"
+                    : "  input not blocked: blocking it needs the Accessibility permission")
+            }
             if let hidden = hiddenInterface {
                 let pid = running.processIdentifier
                 test.revealPage = { on in
@@ -328,7 +334,9 @@ import AppKit
                 say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
                     + " changes on it (up to 2 minutes)")
                 let deadline = Date().addingTimeInterval(120)
+                inputBlock.pause()
                 while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+                inputBlock.resume()
                 stopIfRequested("stopped while waiting for \(appName) to be paused")
                 if !isPlaying(pid) {
                     say("  it paused: learning")
@@ -391,6 +399,7 @@ import AppKit
         let problem = windowTest.restore()
         stopState.setInTrial(false)
         currentWindowState = nil
+        if inputBlock.end() { say("  mouse and keyboard free again") }
         // Read again: another app's windows that covered it may be behind it now.
         let now = WindowStates.state(of: running)
         say(now == windowTest.original || problem != nil

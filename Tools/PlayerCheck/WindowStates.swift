@@ -381,13 +381,19 @@ enum Desktops {
 
     // MARK: Dragging it to another desktop
 
+    /// Marked as this tool's, which `InputBlock` lets through.
     private static func post(_ event: CGEvent?) {
+        event?.setIntegerValueField(.eventSourceUserData, value: InputBlock.marker)
         event?.post(tap: .cghidEventTap)
         usleep(40_000)
     }
+    /// With no modifiers: made from the system's state, it would carry one
+    /// held on the keyboard (a Control-click can't drag a window).
     private static func mouse(_ type: CGEventType, at point: CGPoint) {
-        post(CGEvent(mouseEventSource: CGEventSource(stateID: .hidSystemState), mouseType: type, mouseCursorPosition: point,
-                     mouseButton: .left))
+        let event = CGEvent(mouseEventSource: CGEventSource(stateID: .hidSystemState), mouseType: type, mouseCursorPosition: point,
+                            mouseButton: .left)
+        event?.flags = []
+        post(event)
     }
 
     /// Control-→ (or ←) as a keyboard sends it: Control pressed, the arrow
@@ -488,6 +494,7 @@ enum Desktops {
         var held = false
         let spots = grips(element, box)
         log(String(format: "  drag: window at %.0f,%.0f, %d spots to try", box.minX, box.minY, spots.count))
+        inputBlock.dragging = true
         for grip in spots {
             mouse(.mouseMoved, at: grip)
             mouse(.leftMouseDown, at: grip)
@@ -522,6 +529,7 @@ enum Desktops {
         }
         CGWarpMouseCursorPosition(pointer)
         CGAssociateMouseAndMouseCursorPosition(1)
+        inputBlock.dragging = false
         Thread.sleep(forTimeInterval: 0.4)
         return held && Desktops.of(window: number(of: info)) != start
     }

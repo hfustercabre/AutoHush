@@ -12,6 +12,8 @@
 //                                                      in each state a player's can be in (visible, covered,
 //                                                      on another desktop, covered there, full screen,
 //                                                      minimized, hidden), then puts its window back
+//   playercheck <app> --block-input                    the same, blocking clicks, scrolling and keys while it moves
+//                                                      the window and presses (Escape stops the check)
 //   playercheck <app> --read-only                      checks it without pressing anything
 //   playercheck <app> --play|--pause [--via script|menu|page|panel]
 //                                                      just plays or pauses it, by that way (reading only what it

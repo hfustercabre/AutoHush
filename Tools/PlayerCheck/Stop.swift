@@ -81,14 +81,15 @@ func bringForward(_ url: URL) {
 
 // MARK: - Stopping
 
-/// A stop (Ctrl-C, or the Player Check app's Stop) arrives on another
-/// thread. While the app's window is away from where it was, and between a
-/// trial's pause and its play, it only asks: the check stops itself at its
-/// next step (`stopIfRequested`: after the trial, which plays the app again,
-/// the move or the page read under way, or at once in a wait), then puts the
-/// window back. Put back from the stop's thread meanwhile, the window was
-/// dragged while the next trial ran, and stayed out of place. Otherwise the
-/// tool stops at once (`stopNow`).
+/// A stop (Ctrl-C, the Player Check app's Stop, or Escape while input is
+/// blocked: `InputBlock`) arrives on another thread. While the app's window
+/// is away from where it was, and between a trial's pause and its play, it
+/// only asks: the check stops itself at its next step (`stopIfRequested`:
+/// after the trial, which plays the app again, the move or the page read
+/// under way, or at once in a wait), then puts the window back. Put back
+/// from the stop's thread meanwhile, the window was dragged while the next
+/// trial ran, and stayed out of place. Otherwise the tool stops at once
+/// (`stopNow`).
 final class StopState: @unchecked Sendable {
     private let lock = NSLock()
     private var inTrial = false, requested = false, away = false
@@ -118,6 +119,7 @@ let stopState = StopState()
 /// thread. The window, when away, is put back first by `stopIfRequested`.
 func stopNow(_ code: Int32) -> Never {
     log("(stopped)")
+    inputBlock.end()
     switchesBackOff()
     if let front = changes.frontToRestore { bringForward(front) }
     if changes.streamPID > 0 { kill(changes.streamPID, SIGTERM) }
@@ -132,6 +134,7 @@ func stopNow(_ code: Int32) -> Never {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
     if stopState.isWindowAway { windowTest?.restore() }
+    if inputBlock.end() { say("  mouse and keyboard free again") }
     stopNow(143)
 }
 

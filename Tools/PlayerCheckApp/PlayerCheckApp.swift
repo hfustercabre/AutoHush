@@ -745,7 +745,7 @@ final class Checker {
     private func run(_ tool: URL, on app: InstalledApp) async {
         let run: ToolRun
         do {
-            run = try ToolRun(tool, [app.url.path])
+            run = try ToolRun(tool, [app.url.path, "--block-input"])
         } catch {
             reports[app.id]?.state = .failed("Couldn't run playercheck: \(error.localizedDescription)")
             endAttempt(app.id)
@@ -772,7 +772,8 @@ final class Checker {
                 permissionProblems[id] = (said, missing)
                 reports[id]?.state = .failed("The check was cancelled: \(said)")
             } else {
-                reports[id]?.state = status == 0 ? .finished : .failed("playercheck ended with status \(status)")
+                // 143: stopped by Escape, while it blocked the mouse and keyboard.
+                reports[id]?.state = status == 0 ? .finished : status == 143 ? .stopped : .failed("playercheck ended with status \(status)")
             }
         }
         endAttempt(id)
@@ -1156,7 +1157,7 @@ struct AppDetail: View {
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
-        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
+        parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so from the first move until the window is put back your clicks, scrolling and keys are blocked (the pointer still moves, except during a drag). The panel's Stop and Escape still work, and stop the check; whenever the check asks you something, they're all yours again. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
         parts.append("A small panel at the bottom right of the screen shows how far it has got, with Stop, on every desktop.")
         if let launch = checker.launchOptions[app.id], launch.running == "no" {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
@@ -1378,8 +1379,8 @@ final class CheckPanel {
 /// What the check's panel shows: the app, what the check is doing, Stop;
 /// what it asks of you (with the time left), or the window states as
 /// segments (each one filled once tested), the one it's in and the way
-/// it's pressing; and, while it moves windows, to keep off the mouse and
-/// keyboard.
+/// it's pressing; and, while playercheck blocks the mouse and keyboard,
+/// that it does.
 struct CheckPanelView: View {
     let app: InstalledApp
     let checker: Checker
@@ -1410,9 +1411,9 @@ struct CheckPanelView: View {
             } else if let state = report?.testedState {
                 progress(state)
             }
-            if movingWindows {
-                // A warning, as the window's: the check drags windows with the pointer.
-                Label("Don't use the mouse or keyboard until it ends.", systemImage: "exclamationmark.triangle")
+            if inputBlocked {
+                // As the window's warnings: the check drags windows with the pointer.
+                Label("Clicks, scrolling and keys are blocked until it ends. Stop or Escape ends the check.", systemImage: "hand.raised")
                     .font(.callout.weight(.medium))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1449,13 +1450,13 @@ struct CheckPanelView: View {
         }
     }
 
-    /// From the window states' move until the report: the check drags
-    /// windows with the pointer. Not while it asks something of you (to
-    /// pause the app yourself), which needs them.
-    private var movingWindows: Bool {
+    /// From playercheck's "blocked" line until it says they're free again,
+    /// a stop's put-back included; not while it asks something of you,
+    /// when it lifts the block.
+    private var inputBlocked: Bool {
         guard let report, report.state == .checking || report.state == .stopped, report.request == nil,
-              report.lines.contains("Window States") else { return false }
-        return report.state == .stopped || ["Window States", "Page Buttons", "Press Test"].contains(report.lastHeading)
+              let start = report.lines.lastIndex(where: { $0.hasPrefix("  your clicks, scrolling and keys are blocked") }) else { return false }
+        return !report.lines[start...].contains { $0.hasPrefix("  mouse and keyboard free again") }
     }
 
     /// The request ("start playing something in VLC; the test goes on …

@@ -13,7 +13,7 @@ enum Way: String, CaseIterable { case script, menu, page, panel }
 /// The app: the argument that's neither an option nor --via's way, wherever it comes.
 let target: String = {
     guard let index = arguments.indices.first(where: { !arguments[$0].hasPrefix("--") && ($0 == 0 || arguments[$0 - 1] != "--via") }) else {
-        fail("usage: playercheck <app name, bundle ID or path> [--read-only | --play | --pause [--via script|menu|page|panel]]")
+        fail("usage: playercheck <app name, bundle ID or path> [--block-input | --read-only | --play | --pause [--via script|menu|page|panel]]")
     }
     return arguments[index]
 }()
@@ -33,6 +33,10 @@ let via: Way? = {
 }()
 /// The test: each way to control it is tried, pausing it and playing it again.
 let testing = !readOnly && action == nil
+/// --block-input: while the test moves the window and presses, whoever runs
+/// it can't click, scroll or type (`InputBlock`). Player Check passes it; a
+/// shell has no panel to stop from, and Ctrl-C would be blocked.
+let blockInput = testing && arguments.contains("--block-input")
 /// --play or --pause by one way: only what that way needs is read, and what
 /// shows whether the app plays (`isPlaying`), so a press starts sooner.
 let pressingOneWay = action != nil && via != nil

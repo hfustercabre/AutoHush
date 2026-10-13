@@ -68,16 +68,19 @@ to it and loses its permissions; one signed with a certificate keeps them.
   minimized and hidden. Player Check moves the window there itself, starting
   by bringing it to visible on this desktop whatever state it's in, and
   comes back to the front before each state's trials; for the desktops it
-  drags the window with the pointer and Control-arrow, so the mouse and
-  keyboard must be left alone meanwhile. Its own window may move aside so
-  the app's shows. Everything is put back as it was at the end (also at a
+  drags the window with the pointer and Control-arrow. So from the first
+  move until the window is put back, your clicks, scrolling and keys are
+  blocked (playercheck's `--block-input`): the pointer still moves (except
+  during a drag), and the panel's Stop and Escape still work, both stopping
+  the check; whenever the check asks you something, they're yours again. Its
+  own window may move aside so the app's shows. Everything is put back as it was at the end (also at a
   Stop). A check takes about 3 minutes; the status says which state it's
   in ("Checking: its window covered, 2 of 7…"). While it runs, a small
   panel at the screen's bottom right shows how far it has got, on every
   desktop (full screen apps' too): what it's doing, what it asks of you
   with the time left, the window states as segments with the one it's in
-  and the way it's pressing, and its **Stop**, which leaves the app you're
-  in where it is. It floats above other windows, which the check doesn't
+  and the way it's pressing, while your input is blocked an orange line
+  saying so, and its **Stop**, which leaves the app you're in where it is. It floats above other windows, which the check doesn't
   count as covering the app. The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). When a way leaves it paused, the
@@ -173,6 +176,7 @@ its checks use.
 | MediaRemote | `MediaRemote.framework` (Apple's apps) | QuickTime Player, TV, Voice Memos |
 | AVKit, for videos it plays | `AVKit.framework` only (its player view updates Now Playing) | Photos, Notes, App Store |
 | WebKit | Safari, and Safari web apps by their bundle ID (their pages report through WebKit's media process) | web apps for YouTube Music, SoundCloud |
+| Chromium, as a <Browser> web app | nothing it links: its launcher's Info.plist names its browser (`CrBundleIdentifier`); since Chromium 130 each web app reports as itself, apart from the browser's tabs | web apps made with Chrome or Brave (in `~/Applications/<Browser> Apps.localized`) |
 | WebKit, for the pages it shows | `WebKit.framework` (the pages any app shows report through WebKit's GPU process, under the app's bundle ID) | Pake's YouTube Music (a Tauri app); also apps that only show pages, as Mail, Maps and Dictionary |
 
 The last row lists apps that aren't players: whether they report depends on

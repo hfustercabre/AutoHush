@@ -21,6 +21,7 @@ report to Now Playing, and the Now Playing panel.
 swift build -c release --product playercheck   # from the repository; writes .build/release/playercheck
 cd .build/release
 ./playercheck Spotify                    # by name, bundle ID or path: checks it and tests each way
+./playercheck Spotify --block-input      # the same, blocking clicks, scrolling and keys while it moves the window and presses
 ./playercheck Spotify --read-only        # checks it without pressing anything
 ./playercheck Spotify --pause            # just pauses it (--play: plays it), by the first way that works
 ./playercheck Deezer --play --via page   # by that way only: script, menu, page or panel
@@ -140,6 +141,7 @@ announced both.
 | Electron (Deezer, TIDAL) | a web page | `AXManualAccessibility` (Electron's) |
 | Chromium Embedded Framework (Spotify) | a web page | Electron's, then `AXEnhancedUserInterface` (VoiceOver's) |
 | Flutter (Spotube) | the window's own elements | `AXEnhancedUserInterface` |
+| A Chromium browser's web app (Chrome's, Brave's) | a web page, served by the browser | `AXEnhancedUserInterface`, set on the browser |
 
 | A Chromium browser's web app (Chrome's, Brave's) | a web page, served by the browser | `AXEnhancedUserInterface`, set on the browser |
 A switch the tool turned on is turned back off at the end (one found on is
@@ -150,6 +152,24 @@ a page whose window is fully out of view as hidden: no page is built, and
 presses are lost. Opened with `--disable-backgrounding-occluded-windows`,
 an Electron app's page takes presses covered and on another desktop
 (`--relaunch` opens it so); minimized or hidden, still not.
+
+A Chromium browser's web app is a launcher in `~/Applications/<Browser>
+Apps.localized/` whose Info.plist names its site (`CrAppModeShortcutURL`)
+and its browser (`CrBundleIdentifier`). Its window is its own, but the
+page in it is the browser's: the switch goes on the browser, for all its
+windows and tabs, and the browser takes presses 2 s after it (a press
+waits). Set on the web app, or read without it (the page shows once
+anything asked the browser for it), presses are silently ignored. The
+browser makes a page pressable only while its window can be seen: turned
+on then and kept on, presses take in every state (hidden or minimized, its
+word lags); turned on for each press, as this tool's presses and trials
+do, they fail minimized or hidden. Since Chromium 130 it reports to Now
+Playing as itself, with its own row in the panel. Its sound and keep-awake
+assertions are the browser's, shared with its tabs: the browser holds one
+"Playing audio" assertion per playing page (a tab, a call, another web
+app, any profile), so the check counts them once the web app plays, and
+one more or fewer than its other pages' tells whether it plays; another
+page starting or stopping meanwhile makes that unclear (said).
 
 ## Window states
 A Chromium browser's web app is a launcher in `~/Applications/<Browser>
@@ -197,10 +217,33 @@ windows of other apps that covered it raised again, and the app it was run
 from in front. With no window open the ways are tried once; with one
 desktop, the two desktop states aren't tested.
 
+## Blocking the mouse and keyboard (`--block-input`)
+
+The drags to another desktop are made of pointer and keyboard events, and
+a click or a key from whoever runs the check spoils them (or a trial). With
+`--block-input` (Player Check always passes it), from the first move of the
+window until it's put back, an active event tap where input enters the
+window server drops their keys (modifiers, media and function keys too),
+clicks, drags, scrolling and gestures. It lets through:
+
+- the tool's own events, marked in `kCGEventSourceUserData`;
+- the pointer's moves, except during a drag, which they would carry off;
+- clicks on Player Check's panel (the parent process's windows at the
+  floating level), so its Stop works;
+- Escape, which stops the check as Stop does.
+
+The block is lifted while the check asks something ("waiting: …"), and if
+the check writes nothing for a minute. The tap runs on a thread of its own
+and goes with the process, however it ends. When the block ends, the
+modifiers are posted as they are on the keyboard, so no app keeps one
+held. Input other tools post (BetterTouchTool, Keyboard Maestro) is
+blocked too meanwhile. From a shell it's off by default: there's no panel
+there, and Ctrl-C would be blocked.
+
 ## Stopping
 
-Ctrl-C, Player Check's Stop, or whoever ran it ending (its window closed,
-a crash): while the window is away from where it was, or in a trial, the
+Ctrl-C, Player Check's Stop, Escape while input is blocked, or whoever ran
+it ending (its window closed, a crash): while the window is away from where it was, or in a trial, the
 check finishes the step under way (a trial plays the app again first; a
 move; the page read; a wait ends at once), then puts the window back and
 stops; before anything moved, it stops at once. Either way the switches it

@@ -32,6 +32,7 @@ final class RunLog: @unchecked Sendable {
     static let kept = 50
     private let lock = NSLock()
     private var file: FileHandle?
+    private var last = Date()
     private let time: DateFormatter = {
         let format = DateFormatter()
         format.locale = Locale(identifier: "en_US_POSIX")
@@ -41,9 +42,13 @@ final class RunLog: @unchecked Sendable {
 
     func write(_ line: String) {
         lock.withLock {
+            last = Date()
             file?.write(Data("\(time.string(from: Date()))  \(line)\n".utf8))
         }
     }
+
+    /// When the run last wrote a line (`InputBlock`'s watchdog).
+    var lastWrite: Date { lock.withLock { last } }
 
     /// Starts this run's log, named by its time, the app and what it does,
     /// and removes the oldest beyond `kept` (files this tool wrote).
