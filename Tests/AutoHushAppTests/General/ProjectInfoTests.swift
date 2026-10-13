@@ -12,8 +12,8 @@ struct ProjectInfoTests {
         #expect(ProjectInfo.whatsNewPage(for: nil).absoluteString == "https://github.com/hfustercabre/AutoHush/releases")
     }
 
-    @Test("Report an Issue opens a new issue on GitHub")
+    @Test("Report an Issue opens the bug report form on GitHub")
     func newIssue() {
-        #expect(ProjectInfo.newIssuePage.absoluteString == "https://github.com/hfustercabre/AutoHush/issues/new")
+        #expect(ProjectInfo.newIssuePage.absoluteString == "https://github.com/hfustercabre/AutoHush/issues/new?template=bug.yml")
     }
 }

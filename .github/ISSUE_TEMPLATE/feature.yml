@@ -1,0 +1,17 @@
+name: Feature request
+description: Something AutoHush could do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like AutoHush to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: When would it help you?
+  - type: markdown
+    attributes:
+      value: AutoHush keeps to being as unintrusive as possible, so ideas that need a virtual audio device or a microphone, or that reroute your Mac's sound, can't be taken up.

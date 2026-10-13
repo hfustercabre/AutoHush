@@ -1,0 +1,25 @@
+name: A player to support
+description: An app you'd like AutoHush to pause and resume.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AutoHush works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL, and with any website added to the Dock from Safari. For another app, [Player Check](https://github.com/hfustercabre/AutoHush/tree/main/Tools/PlayerCheckApp) finds out whether AutoHush could control it, and how: build it as its README says, check the app, then click Copy Report and paste the report below.
+  - type: input
+    id: app
+    attributes:
+      label: The app
+      description: Its name, and where to get it.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Player Check's report
+      render: text
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: For example, how you use the app, or whether it has a web player.

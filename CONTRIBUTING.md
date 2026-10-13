@@ -3,6 +3,14 @@
 Thanks for wanting to help. Every change is reviewed before it's merged, so
 it helps to follow these few rules.
 
+## Reporting a problem or an idea
+
+[Open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose)
+with its form: a bug report (with Diagnostics' report: Settings →
+Diagnostics → Copy Report), a feature request, a player to support (with
+[Player Check](Tools/PlayerCheckApp)'s report) or a translation fix. A
+security problem goes privately, as [SECURITY.md](SECURITY.md) says.
+
 ## Branches
 
 - **`main`** holds the latest release. It only moves when a new version is
@@ -21,7 +29,7 @@ it helps to follow these few rules.
    [Build and test](README.md#build-and-test)), and that it follows the
    [style guide](STYLE_GUIDE.md).
 4. Open a pull request into **`wip`**, not `main`, saying what it changes
-   and why.
+   and why (its template asks for that, and how you checked it).
 
 A check on every pull request flags one whose branch name or target doesn't
 follow these rules; a wrong target can be fixed by editing the pull

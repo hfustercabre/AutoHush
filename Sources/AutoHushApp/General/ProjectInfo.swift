@@ -18,6 +18,8 @@ enum ProjectInfo {
         version.map(releasePage(for:)) ?? homepage.appending(path: "releases")
     }
 
-    /// Report an Issue in Settings → About.
+    /// Report an Issue in Settings → About: the bug report form, which asks
+    /// for the version, macOS, the player and Diagnostics' report.
     static let newIssuePage = homepage.appending(path: "issues/new")
+        .appending(queryItems: [URLQueryItem(name: "template", value: "bug.yml")])
 }

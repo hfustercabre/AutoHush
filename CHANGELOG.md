@@ -24,6 +24,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   menu bar icon now says what the menu's status line does ("AutoHush:
   Spotify is not running"), and a web app named as an app is reads as a
   Safari web app where you choose your player.
+- **Report an Issue opened an empty issue.** Settings → About's button now
+  opens the bug report form, which asks for what helps fix it: the
+  version, macOS, your player and Diagnostics' report.
 - **Apostrophes were mixed.** AutoHush's text used both straight and curly
   apostrophes; it now uses curly ones throughout, in every language, and
   the welcome window says “Not needed” beside “Allowed”.

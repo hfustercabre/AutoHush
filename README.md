@@ -205,7 +205,7 @@ On macOS 26 and later, AutoHush's menu and windows use Liquid Glass; on macOS 15
 AutoHush speaks 35 languages: English, Spanish (Spain and Latin America), Catalan, German, French (France and Canada), Italian, Portuguese (Brazil and Portugal), Dutch, Swedish, Danish, Norwegian, Finnish, Polish, Czech, Slovak, Hungarian, Romanian, Croatian, Slovenian, Greek, Ukrainian, Russian, Turkish, Arabic, Hindi, Indonesian, Vietnamese, Japanese, Korean and Chinese (Simplified, Traditional, and Traditional for Hong Kong). In Arabic it reads right to left. It uses the first of your Mac's preferred languages that it has (System Settings → General → Language & Region), and English otherwise. To give AutoHush a language of its own, add it to the Applications list in that same pane.
 
 > [!WARNING]
-> Only English, Spanish (Spain) and Catalan have been checked by a native speaker. The other languages were translated automatically, so they may contain mistakes or odd wording. If you spot one, please [open an issue](https://github.com/hfustercabre/AutoHush/issues) with the text and a better wording.
+> Only English, Spanish (Spain) and Catalan have been checked by a native speaker. The other languages were translated automatically, so they may contain mistakes or odd wording. If you spot one, please [report it](https://github.com/hfustercabre/AutoHush/issues/new?template=translation.yml) with the text and a better wording.
 
 ## The purple dot and AntiDot mode
 
@@ -502,6 +502,8 @@ Contributions are welcome. The repository has two branches:
 - **`wip`** is where development happens. Every change goes there first.
 
 To propose a change, fork the repository and create a branch from `wip` whose name starts with what it is: **`fix-`** for a bug fix, **`feature-`** for something new, or **`change-`** for a change to how something already works (for example `fix-vlc-resume` or `feature-qobuz`). Then open a pull request into **`wip`**, not `main`. I review every pull request before approving and merging it, and it reaches `main` with the next release. Before you open it, check that it builds and its tests pass (see [Build and test](#build-and-test)) and that it follows the [style guide](STYLE_GUIDE.md). A check on every pull request flags one whose branch name or target doesn't follow this; [CONTRIBUTING.md](CONTRIBUTING.md) has it all in one place.
+
+To report a problem or suggest something, [open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose): there's a form for a bug (with Diagnostics' report, from **Settings → Diagnostics → Copy Report**), a feature, a player you'd like AutoHush to support (with [Player Check](Tools/PlayerCheckApp)'s report) and a translation fix. A security problem goes privately, as [SECURITY.md](SECURITY.md) says.
 
 ### Signing and releases
 

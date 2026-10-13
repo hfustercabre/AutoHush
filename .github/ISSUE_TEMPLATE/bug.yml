@@ -1,0 +1,61 @@
+name: Bug report
+description: AutoHush doesn't do what it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting it. The more of this you fill in, the sooner it can be fixed.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, and what AutoHush did. For example, "Safari played a video and Spotify didn't pause."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AutoHush version
+      description: In Settings → About.
+      placeholder: "0.12.1"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: In the Apple menu → About This Mac.
+      placeholder: "macOS 26.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: player
+    attributes:
+      label: Your media player
+      options:
+        - Spotify
+        - Apple Music
+        - VLC
+        - Apple Podcasts
+        - TIDAL
+        - A Safari web app (say which below)
+        - None chosen
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: In Settings → Diagnostics, click Copy Report and paste it here. It lists AutoHush's settings and permissions, your player's state and the apps that played sound lately; remove anything you'd rather not share.
+      render: text
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Which web app, how often it happens, screenshots.

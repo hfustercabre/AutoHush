@@ -1,0 +1,67 @@
+name: A translation fix
+description: Wording that's wrong or odd in your language.
+body:
+  - type: markdown
+    attributes:
+      value: Only English, Spanish (Spain) and Catalan have been checked by a native speaker, so the others may contain mistakes. Thanks for helping fix them.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - Arabic
+        - Catalan
+        - Chinese (Hong Kong)
+        - Chinese (Simplified)
+        - Chinese (Traditional)
+        - Croatian
+        - Czech
+        - Danish
+        - Dutch
+        - English
+        - Finnish
+        - French
+        - French (Canada)
+        - German
+        - Greek
+        - Hindi
+        - Hungarian
+        - Indonesian
+        - Italian
+        - Japanese
+        - Korean
+        - Norwegian Bokmål
+        - Polish
+        - Portuguese (Brazil)
+        - Portuguese (Portugal)
+        - Romanian
+        - Russian
+        - Slovak
+        - Slovenian
+        - Spanish (Latin America)
+        - Spanish (Spain)
+        - Swedish
+        - Turkish
+        - Ukrainian
+        - Vietnamese
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where does it show?
+      placeholder: "Settings → Fades, under the switch"
+    validations:
+      required: true
+  - type: textarea
+    id: now
+    attributes:
+      label: What it says now
+    validations:
+      required: true
+  - type: textarea
+    id: better
+    attributes:
+      label: A better wording
+    validations:
+      required: true
