@@ -52,6 +52,20 @@ struct PlayerOptionTests {
         #expect(PlayerOption.webAppsWarning.hasPrefix("Web apps are experimental."))
     }
 
+    @Test("VoiceOver says a web app is one only when an app has its name")
+    func spokenName() {
+        let app = PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: URL(fileURLWithPath: "/Applications/Spotify.app"))
+        var webApp = option("spotify", installed: true)
+        webApp.kind = .safariWebApp
+        var other = option("YT Music", installed: true)
+        other.kind = .safariWebApp
+        let options = [app, webApp, other]
+        #expect(webApp.spokenName(among: options) == "spotify, Safari web app")
+        #expect(app.spokenName(among: options) == "Spotify")
+        #expect(other.spokenName(among: options) == "YT Music")
+        #expect(webApp.spokenName(among: [webApp, other]) == "spotify")
+    }
+
     @Test("suggested web apps come after the web apps, marked with a download symbol, and can be clicked though not installed")
     func suggestions() {
         let catalog = MusicPlayerCatalog(

@@ -405,6 +405,12 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     (`IconChipButton` sets both).
   - A control whose state the symbol shows also says it as its value, e.g.
     the sort arrow's "Newest first".
+  - The menu bar icon says "AutoHush: " and what's happening; while
+    something needs the user, the menu's status line ("AutoHush: Spotify is
+    not running"), never a word of AutoHush's own like "degraded".
+  - What an image alone tells is said in words: a web app whose name is
+    also an app's reads "Spotify, Safari web app" where players are offered
+    (`PlayerOption.spokenName`), as its icon's Safari badge shows.
 - **Decorative images** (app icons beside their names, symbols beside text)
   are hidden from VoiceOver.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`

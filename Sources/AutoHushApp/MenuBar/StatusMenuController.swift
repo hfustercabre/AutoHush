@@ -324,6 +324,11 @@ final class StatusMenuController: NSObject {
             row.isEnabled = option.isClickable
             row.subtitle = PlayerOption.notInstalledLabel
         }
+        // VoiceOver can't see the web app's Safari badge: one named as an app is says so.
+        let spoken = option.spokenName(among: status.playerOptions)
+        if spoken != option.name {
+            row.setAccessibilityLabel(option.isUntested ? "\(spoken), \(PlayerOption.untestedBadge)" : spoken)
+        }
         return row
     }
 

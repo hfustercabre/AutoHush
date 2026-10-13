@@ -20,6 +20,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A web app looked just like the app of the same name.** Spotify's app
   and a Spotify web app showed the same name and icon, told apart only by
   their section. A web app's icon now carries Safari's, wherever it shows.
+- **VoiceOver said "degraded" or "failed".** While something needs you, the
+  menu bar icon now says what the menu's status line does ("AutoHush:
+  Spotify is not running"), and a web app named as an app is reads as a
+  Safari web app where you choose your player.
 - **A line under the menu's card in light mode.** On macOS 26 and later,
   the card's shadow was cut off in a straight line where its row of the
   menu ends. The card is now of clear glass, which casts no shadow.

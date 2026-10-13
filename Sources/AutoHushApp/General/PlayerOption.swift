@@ -93,6 +93,17 @@ struct PlayerOption: Equatable, Identifiable {
             : AppIcon.webAppImage(bundlePath: appURL?.path, size: size)
     }
 
+    /// What VoiceOver says for it where players are offered: a web app
+    /// named as one of `options`' apps is says it's one ("Spotify, Safari
+    /// web app"), as its icon's Safari badge shows.
+    func spokenName(among options: [PlayerOption]) -> String {
+        guard kind != .app,
+              options.contains(where: { $0.kind == .app && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame })
+        else { return name }
+        return String(localized: "\(name), Safari web app",
+                      comment: "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name, e.g. Spotify")
+    }
+
     /// A download arrow in a circle, about as big as an app icon's artwork,
     /// in the text's color (a template).
     @MainActor

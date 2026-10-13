@@ -263,6 +263,28 @@ struct StatusMenuControllerTests {
         #expect(row.attributedTitle?.string.hasPrefix("SoundCloud") == true)
         #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
         #expect(sut.menu.items[4].attributedTitle == nil) // a tested one has no badge
+        #expect(row.accessibilityLabel()?.contains("Safari web app") != true) // no app has its name
+    }
+
+    @Test("a web app named as an app is is read as a Safari web app, with its badge")
+    func webAppNamedAsApp() {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.M", name: "First",
+                                    appURL: URL(fileURLWithPath: "/Applications/First Web.app"), kind: .safariWebApp)
+        untested.isUntested = true
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            untested,
+        ]
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        let rows = sut.menu.items.filter { $0.title == "First" }
+        #expect(rows.count == 2)
+        #expect(rows[0].accessibilityLabel()?.contains("Safari web app") != true)
+        #expect(rows[1].accessibilityLabel() == "First, Safari web app, Untested")
     }
 
     @Test("a long untested name is cut short with “…”, so its badge still shows; its plain title stays whole")

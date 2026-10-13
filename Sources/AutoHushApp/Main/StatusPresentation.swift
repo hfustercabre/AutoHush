@@ -21,6 +21,17 @@ extension StatePresentation {
             line: String(localized: "Starting services", comment: "Status line while AutoHush starts")
         )
     }
+
+    /// While something needs the user: VoiceOver says what the status line
+    /// does ("AutoHush: Spotify is not running").
+    static func needingAttention(_ line: String) -> StatePresentation {
+        StatePresentation(
+            icon: .attention,
+            label: String(localized: "AutoHush: \(line)",
+                          comment: "VoiceOver label of the menu bar icon while something needs the user; %@ is the menu's status line, e.g. “Spotify is not running” or “Choose a media player”"),
+            line: line
+        )
+    }
 }
 
 extension PlaybackState {
@@ -93,31 +104,10 @@ extension AppHealthState {
             return .starting
         case .ready:
             return nil
-        case .needsPlayer(let message):
-            return StatePresentation(
-                icon: .attention,
-                label: String(localized: "AutoHush: no media player chosen", comment: "VoiceOver label of the menu bar icon"),
-                line: message
-            )
-        case .degraded(let message), .retrying(let message):
-            return StatePresentation(
-                icon: .attention,
-                label: String(localized: "AutoHush: degraded",
-                              comment: "VoiceOver label of the menu bar icon: something keeps AutoHush from working"),
-                line: message
-            )
+        case .needsPlayer(let message), .degraded(let message), .retrying(let message), .failed(let message):
+            return .needingAttention(message)
         case .needsPermission(let permission):
-            return StatePresentation(
-                icon: .attention,
-                label: String(localized: "AutoHush: needs permission", comment: "VoiceOver label of the menu bar icon"),
-                line: permission.statusLine
-            )
-        case .failed(let message):
-            return StatePresentation(
-                icon: .attention,
-                label: String(localized: "AutoHush: failed", comment: "VoiceOver label of the menu bar icon"),
-                line: message
-            )
+            return .needingAttention(permission.statusLine)
         }
     }
 }

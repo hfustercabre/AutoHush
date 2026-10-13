@@ -41,15 +41,16 @@ struct StatusPresentationTests {
         #expect(PlaybackState.unknown.presentation() == AppHealthState.starting.presentation)
     }
 
-    @Test("each health state has its icon, label and status line; problems show their message", arguments: [
+    @Test("each health state has its icon, label and status line; problems show their message, which VoiceOver says too", arguments: [
         (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
-        (.needsPlayer("Choose a media player"), .attention, "AutoHush: no media player chosen", "Choose a media player"),
-        (.degraded("Jukebox is not running"), .attention, "AutoHush: degraded", "Jukebox is not running"),
+        (.needsPlayer("Choose a media player"), .attention, "AutoHush: Choose a media player", "Choose a media player"),
+        (.degraded("Jukebox is not running"), .attention, "AutoHush: Jukebox is not running", "Jukebox is not running"),
+        (.retrying("Jukebox is not responding"), .attention, "AutoHush: Jukebox is not responding", "Jukebox is not responding"),
         (.needsPermission(.automation(player: "Jukebox")), .attention,
-         "AutoHush: needs permission", "Allow Automation access to control Jukebox"),
+         "AutoHush: Allow Automation access to control Jukebox", "Allow Automation access to control Jukebox"),
         (.needsPermission(.accessibility(player: "Jukebox")), .attention,
-         "AutoHush: needs permission", "Allow Accessibility access to control Jukebox"),
-        (.failed("Monitor failed hard"), .attention, "AutoHush: failed", "Monitor failed hard"),
+         "AutoHush: Allow Accessibility access to control Jukebox", "Allow Accessibility access to control Jukebox"),
+        (.failed("Monitor failed hard"), .attention, "AutoHush: Monitor failed hard", "Monitor failed hard"),
     ])
     func healthState(state: AppHealthState, icon: MenuBarIcon, label: String, line: String) {
         #expect(state.presentation == StatePresentation(icon: icon, label: label, line: line))

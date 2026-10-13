@@ -119,6 +119,7 @@ struct PlayerTiles: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: option.name).font(.appCallout).lineLimit(1).minimumScaleFactor(0.85)
+                        .accessibilityLabel(Text(verbatim: option.spokenName(among: options)))
                     note(option)
                 }
                 Spacer(minLength: 0)
