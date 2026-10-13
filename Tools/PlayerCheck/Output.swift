@@ -3,7 +3,7 @@ import Foundation
 // MARK: - The report
 
 /// Set for --play and --pause: the checks run silently, then one line says what was done.
-@MainActor var quiet = false
+@MainActor var quiet = action != nil
 
 /// A line of the report: printed (unless `quiet`) and logged.
 @MainActor func say(_ line: String = "") {

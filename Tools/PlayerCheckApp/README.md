@@ -71,7 +71,13 @@ to it and loses its permissions; one signed with a certificate keeps them.
   keyboard must be left alone meanwhile. Its own window may move aside so
   the app's shows. Everything is put back as it was at the end (also at a
   Stop). A check takes about 3 minutes; the status says which state it's
-  in ("Checking: its window covered, 2 of 7…"). The keyboard's Play/Pause key isn't one: macOS sends it only to
+  in ("Checking: its window covered, 2 of 7…"). While it runs, a small
+  panel at the screen's bottom right shows how far it has got, on every
+  desktop (full screen apps' too): what it's doing, what it asks of you
+  with the time left, the window states as segments with the one it's in
+  and the way it's pressing, and its **Stop**, which leaves the app you're
+  in where it is. It floats above other windows, which the check doesn't
+  count as covering the app. The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). When a way leaves it paused, the
   check first plays it again by itself (that way once more, then a way that

@@ -11,7 +11,9 @@
 // worked with its window as it is when pressed (playercheck --window-state),
 // and each way found gets its own (playercheck --play/--pause --via …). An
 // Electron app running without the launch option its page needs out of view
-// gets a Relaunch button (playercheck --launch-option, --relaunch).
+// gets a Relaunch button (playercheck --launch-option, --relaunch). While a
+// check runs, a small panel at the screen's bottom right shows how far it
+// has got, with Stop, on every desktop.
 // Build: sh Tools/PlayerCheckApp/build.sh [folder]
 import AppKit
 import SwiftUI
@@ -216,6 +218,8 @@ struct Report {
     var state: State
     var lines: [String] = []
     var date = Date()
+    /// When its last request ("waiting: …") came, for the time left.
+    var requestSince: Date?
 
     /// The lines under a heading (a line that isn't indented), whatever its
     /// case: playercheck's headings are title case, older saved checks' not.
@@ -240,14 +244,40 @@ struct Report {
         }
         return found
     }
-    /// The window state the check has the app in now ("covered, 2 of 7"),
-    /// from its last "State N of M: <state>" line.
-    var windowState: String? {
+    /// The window state the check has the app in now, from its last "State
+    /// N of M: <state>" line.
+    var testedState: (index: Int, count: Int, name: String)? {
         guard state == .checking, let line = lines.last(where: { $0.hasPrefix("  State ") }),
               let colon = line.range(of: ": ") else { return nil }
-        let count = line.dropFirst("  State ".count)[..<colon.lowerBound]
-        return "\(line[colon.upperBound...]), \(count)"
+        let numbers = line.dropFirst("  State ".count)[..<colon.lowerBound].components(separatedBy: " of ").compactMap { Int($0) }
+        guard numbers.count == 2 else { return nil }
+        return (numbers[0], numbers[1], String(line[colon.upperBound...]))
     }
+    /// The same as "covered, 2 of 7".
+    var windowState: String? { testedState.map { "\($0.name), \($0.index) of \($0.count)" } }
+    /// What the check does in that window state: the way it's pressing and
+    /// whether it's pausing or playing it again ("By its playback menu:
+    /// playing it again"), why the state isn't tested, or the move there.
+    var stateActivity: String? {
+        guard testedState != nil, let start = lines.lastIndex(where: { $0.hasPrefix("  State ") }) else { return nil }
+        let after = lines[(start + 1)...]
+        if let by = after.lastIndex(where: { $0.hasPrefix("  by ") }) {
+            let line = lines[by]
+            let way = line.hasPrefix("  by script") ? "AppleScript" : line.hasPrefix("  by its menu") ? "its playback menu"
+                : line.hasPrefix("  by its page") ? "its page's button" : line.hasPrefix("  by the Now Playing panel") ? "the Now Playing panel"
+                : String(line.dropFirst("  by ".count).prefix { $0 != ":" && $0 != "(" }).trimmingCharacters(in: .whitespaces)
+            let result = lines[(by + 1)...].last { $0.hasPrefix("    after ") }
+            let doing = result == nil ? ": pausing it" : result!.hasPrefix("    after the pause") ? ": playing it again" : ""
+            return "By \(way)\(doing)"
+        }
+        if let untested = after.last(where: { $0.hasPrefix("    not tested") }) {
+            let text = untested.trimmingCharacters(in: .whitespaces)
+            return text.prefix(1).uppercased() + text.dropFirst()
+        }
+        return "Moving its window there"
+    }
+    /// The heading of the section playercheck is in.
+    var lastHeading: String? { lines.last { !$0.hasPrefix(" ") } }
     var verdict: String {
         section("Verdict").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
     }
@@ -362,6 +392,8 @@ final class Checker {
     private var process: Process?
     private var pressProcess: Process?
     private var pressStopped = false
+    /// The running check's progress and Stop, on every desktop.
+    @ObservationIgnored private let panel = CheckPanel()
 
     /// A check, a Play/Pause or a Relaunch is running: one at a time.
     var isBusy: Bool { checkingID != nil || controllingID != nil || relaunchingID != nil }
@@ -634,6 +666,7 @@ final class Checker {
         refreshRunning()
         let allowing = !isTrusted
         reports[app.id] = Report(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
+        panel.show(app, checker: self)
         Task {
             if allowing {
                 Self.askForAccessibility()
@@ -696,6 +729,7 @@ final class Checker {
         process = nil
         attempt = nil
         checkingID = nil
+        panel.hide()
     }
 
     private func run(_ tool: URL, on app: InstalledApp) async {
@@ -710,6 +744,7 @@ final class Checker {
         self.process = run.process
         let id = app.id
         for await line in run.lines where !line.isEmpty {
+            if line.hasPrefix("  waiting: ") { reports[id]?.requestSince = Date() }
             reports[id]?.lines.append(line)
         }
         let status = await run.status()
@@ -1109,6 +1144,7 @@ struct AppDetail: View {
         parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
         parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so don't use the mouse or keyboard meanwhile. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
+        parts.append("A small panel at the bottom right of the screen shows how far it has got, with Stop, on every desktop.")
         if let launch = checker.launchOptions[app.id], launch.running == "no" {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
         }
@@ -1252,6 +1288,214 @@ struct Tag: View {
             .padding(.horizontal, 7).padding(.vertical, 2)
             .foregroundStyle(tint)
             .background(tint.opacity(0.12), in: Capsule())
+    }
+}
+
+// MARK: - The check's panel
+
+/// A check's progress and Stop, in a small panel at the bottom right of the
+/// screen while the check runs. It's on every desktop, full screen apps'
+/// too: the check moves the app's window between them, and whoever starts
+/// the app playing may be on its desktop. It floats above other windows
+/// (the check counts only ordinary windows as covering the app) and never
+/// comes forward: clicking Stop leaves the app in front where it is.
+@MainActor
+final class CheckPanel {
+    private var panel: NSPanel?
+
+    func show(_ app: InstalledApp, checker: Checker) {
+        hide()
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 310, height: 120),
+                            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .floating
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        panel.hidesOnDeactivate = false
+        panel.canHide = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.isReleasedWhenClosed = false
+        let content = NSHostingView(rootView: CheckPanelView(app: app, checker: checker) { [weak panel] size in
+            Self.fit(panel, to: size)
+        })
+        let radius: CGFloat = 20
+        if #available(macOS 26, *) {
+            let glass = NSGlassEffectView()
+            glass.cornerRadius = radius
+            glass.contentView = content
+            panel.contentView = glass
+        } else {
+            let effect = NSVisualEffectView()
+            effect.material = .popover
+            effect.blendingMode = .behindWindow
+            effect.state = .active
+            let mask = NSImage(size: NSSize(width: radius * 2 + 1, height: radius * 2 + 1), flipped: false) { rect in
+                NSColor.black.setFill()
+                NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+                return true
+            }
+            mask.capInsets = NSEdgeInsets(top: radius, left: radius, bottom: radius, right: radius)
+            mask.resizingMode = .stretch
+            effect.maskImage = mask
+            content.frame = effect.bounds
+            content.autoresizingMask = [.width, .height]
+            effect.addSubview(content)
+            panel.contentView = effect
+        }
+        Self.fit(panel, to: content.fittingSize)
+        panel.orderFrontRegardless()
+        self.panel = panel
+    }
+
+    func hide() {
+        panel?.orderOut(nil)
+        panel = nil
+    }
+
+    /// Its size for its content, its bottom right corner 16 pt from the
+    /// main display's (above the Dock).
+    private static func fit(_ panel: NSPanel?, to size: CGSize) {
+        guard let panel, size.width > 0, size.height > 0 else { return }
+        let screen = NSScreen.screens.first?.visibleFrame ?? .zero
+        panel.setFrame(NSRect(x: screen.maxX - size.width - 16, y: screen.minY + 16, width: size.width, height: size.height), display: true)
+    }
+}
+
+/// What the check's panel shows: the app, what the check is doing, Stop;
+/// what it asks of you (with the time left), or the window states as
+/// segments (each one filled once tested), the one it's in and the way
+/// it's pressing; and, while it moves windows, to keep off the mouse and
+/// keyboard.
+struct CheckPanelView: View {
+    let app: InstalledApp
+    let checker: Checker
+    /// Its size, for the panel to fit it.
+    let resized: (CGSize) -> Void
+
+    private var report: Report? { checker.reports[app.id] }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: app.url.path))
+                    .resizable().frame(width: 34, height: 34)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Checking \(app.name)").font(.headline).lineLimit(1)
+                    Text(stage).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Button("Stop") { checker.stop() }
+                    .disabled(report?.state == .stopped)
+            }
+            if let request = report?.request {
+                requestNote(request)
+            } else if report?.state == .allowing {
+                note("Turn on Player Check in the list System Settings opens", detail: "The check starts as soon as it's allowed.",
+                     systemImage: "checkmark.shield")
+            } else if let state = report?.testedState {
+                progress(state)
+            }
+            if movingWindows {
+                Label("Don't use the mouse or keyboard until it ends.", systemImage: "hand.raised")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .frame(width: 310)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { resized($0) }
+    }
+
+    /// What the check is doing, by the report's section.
+    private var stage: String {
+        guard let report else { return "" }
+        switch report.state {
+        case .allowing: return "Waiting for the Accessibility permission"
+        case .opening: return "Opening \(app.name)…"
+        case .stopped: return "Stopping: putting everything back as it was…"
+        case .finished, .failed: return ""
+        case .checking: break
+        }
+        if report.request != nil { return "Waiting for you" }
+        switch report.lastHeading {
+        case "Permissions": return "Checking permissions"
+        case "Playing": return "Checking that it plays"
+        case "Window States": return "Moving its window to where the test starts"
+        case "Page Buttons": return "Reading its page"
+        case "Press Test": return "Testing its window states"
+        case "Ways to Control It", "Verdict": return "Writing the report"
+        default: return "Reading its dictionary, menus and sound"
+        }
+    }
+
+    /// From the window states' move until the report: the check drags windows with the pointer.
+    private var movingWindows: Bool {
+        guard let report, report.state == .checking || report.state == .stopped, report.lines.contains("Window States") else { return false }
+        return report.state == .stopped || ["Window States", "Page Buttons", "Press Test"].contains(report.lastHeading)
+    }
+
+    /// The request ("start playing something in VLC; the test goes on …
+    /// (up to 2 minutes). …"): what's asked, then the rest with the time left.
+    private func requestNote(_ request: String) -> some View {
+        let cut = [request.range(of: "; "), request.range(of: ": ")].compactMap { $0 }.min { $0.lowerBound < $1.lowerBound }
+        let asked = cut.map { String(request[..<$0.lowerBound]) } ?? request
+        var rest = cut.map { String(request[$0.upperBound...]) } ?? ""
+        if !rest.isEmpty { rest = rest.prefix(1).uppercased() + rest.dropFirst() + (rest.hasSuffix(".") ? "" : ".") }
+        let symbol = asked.hasPrefix("Pause") ? "pause.circle" : asked.hasPrefix("Allow") ? "checkmark.shield" : "play.circle"
+        return TimelineView(.periodic(from: .now, by: 1)) { context in
+            note(asked, detail: Self.withTimeLeft(rest, since: report?.requestSince, now: context.date), systemImage: symbol)
+        }
+    }
+
+    /// "(up to 2 minutes)" as the time left since the request came ("(1:48 left)").
+    static func withTimeLeft(_ text: String, since: Date?, now: Date) -> String {
+        guard let since, let start = text.range(of: "up to "),
+              let unit = text.range(of: " minute", range: start.upperBound..<text.endIndex),
+              let minutes = Int(text[start.upperBound..<unit.lowerBound]) else { return text }
+        let end = text[unit.upperBound...].hasPrefix("s") ? text.index(after: unit.upperBound) : unit.upperBound
+        let left = max(0, Int(since.addingTimeInterval(Double(minutes * 60)).timeIntervalSince(now).rounded()))
+        return text.replacingCharacters(in: start.lowerBound..<end, with: String(format: "%d:%02d left", left / 60, left % 60))
+    }
+
+    /// The main window's orange note: what's asked of you, and more under it.
+    private func note(_ text: String, detail: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(text, systemImage: systemImage).fontWeight(.medium).foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+            if !detail.isEmpty {
+                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        .accessibilityElement(children: .combine)
+    }
+
+    /// The window states as segments, the one it's in, and what it does there.
+    private func progress(_ state: (index: Int, count: Int, name: String)) -> some View {
+        let name = state.name.prefix(1).uppercased() + state.name.dropFirst()
+        let activity = report?.stateActivity ?? ""
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 3) {
+                ForEach(1...max(state.count, 1), id: \.self) { index in
+                    Capsule()
+                        .fill(index < state.index ? Color.accentColor
+                              : index == state.index ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.22))
+                        .frame(height: 5)
+                }
+            }
+            HStack {
+                Text(name).font(.callout.weight(.medium))
+                Spacer()
+                Text("\(state.index) of \(state.count)").font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            }
+            Text(activity).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Window state \(state.index) of \(state.count): \(state.name). \(activity)")
     }
 }
 
