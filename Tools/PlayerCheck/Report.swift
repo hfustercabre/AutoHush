@@ -118,6 +118,9 @@ import AppKit
     if isWebApp {
         say("  A Safari web app: AutoHush learns its page's Play/Pause button (WebAppPlayers).")
         say("  Test the site live, then add it to SupportedPlayers.testedWebApps.")
+    } else if let browser = webAppBrowser {
+        say("  A \(browser) web app: AutoHush has no player for these yet. Its sound is \(browser)'s, shared with its tabs:")
+        say("  another page of \(browser) playing (a tab, a call, another web app) shows as one more “Playing audio” assertion.")
     } else if let scripting, scripting.fitsScriptablePlayer, let suite = scripting.suite {
         say("  Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode(\"\(suite)\").")
         say("  " + (scripting.hasVolume ? "It has a volume: measure its curve (swift run measure-volume-curve \(bundleID))."
@@ -195,6 +198,12 @@ import AppKit
             let worked = results.filter { $0.result == .worked }.map(\.state.title)
             let failed = results.filter { $0.result != .worked }.map(\.state.title)
             say("  It works with its window " + worked.joined(separator: ", ") + "; not " + failed.joined(separator: ", ") + ".")
+            if let browser = webAppBrowser,
+               results.contains(where: { $0.result != .worked && [WindowState.minimized, .hidden].contains($0.state) }) {
+                say("  \(browser) makes a page pressable only while its window can be seen, and this tool turns its switch on for")
+                say("  each press: minimized or hidden, that fails. Turned on while the window was in view and kept on (as a player")
+                say("  could keep it), presses take minimized too (a Chrome web app's did).")
+            }
             if launchedWithOption == false, results.contains(where: { $0.result != .worked && WindowState.outOfView.contains($0.state) }) {
                 say("  Opened with \(LaunchOption.occludedWindows), Chromium keeps its page taking presses while its window is covered")
                 say("  or on another desktop: relaunch it with it (the Player Check app's Relaunch) and check again.")

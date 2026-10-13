@@ -62,7 +62,8 @@ other tap, its level's included, still hears it, and the app doesn't know.
 A process it starts later is muted within 0.1 s, a set that can't be tapped
 yet is tried again every half second, and the report says when it couldn't
 be muted. The tap ends with the tool, so a stop or a crash lets it be heard
-again.
+again. A Chromium browser's web app plays through its browser, so the whole
+browser is muted, its tabs and other web apps too.
 
 ## What a check does
 
@@ -126,7 +127,9 @@ its AppleScript state, what it reports to Now Playing (from macOS's log,
 administrators only), its page's word (only while current: a WebKit page's
 anywhere, a Chromium or Flutter page's only on screen), its level, its
 keep-awake assertion, its menu's state; else its menu's word changing or
-its sound. Its state notification (`<bundle ID>.PlaybackStateChanged`,
+its sound. A Chromium browser's web app has no level (its sound is the
+browser's, all its pages together); its keep-awake sign counts the
+browser's "Playing audio" assertions instead (below). Its state notification (`<bundle ID>.PlaybackStateChanged`,
 `.playerInfo`, …) confirms too, and the verdict names the one that
 announced both.
 
@@ -138,6 +141,7 @@ announced both.
 | Chromium Embedded Framework (Spotify) | a web page | Electron's, then `AXEnhancedUserInterface` (VoiceOver's) |
 | Flutter (Spotube) | the window's own elements | `AXEnhancedUserInterface` |
 
+| A Chromium browser's web app (Chrome's, Brave's) | a web page, served by the browser | `AXEnhancedUserInterface`, set on the browser |
 A switch the tool turned on is turned back off at the end (one found on is
 set back on). When no switch shows the page in 4 s, a check brings the app
 forward a moment, once; a press never does. Electron takes presses only
@@ -148,6 +152,24 @@ an Electron app's page takes presses covered and on another desktop
 (`--relaunch` opens it so); minimized or hidden, still not.
 
 ## Window states
+A Chromium browser's web app is a launcher in `~/Applications/<Browser>
+Apps.localized/` whose Info.plist names its site (`CrAppModeShortcutURL`)
+and its browser (`CrBundleIdentifier`). Its window is its own, but the
+page in it is the browser's: the switch goes on the browser, for all its
+windows and tabs, and the browser takes presses 2 s after it (a press
+waits). Set on the web app, or read without it (the page shows once
+anything asked the browser for it), presses are silently ignored. The
+browser makes a page pressable only while its window can be seen: turned
+on then and kept on, presses take in every state (hidden or minimized, its
+word lags); turned on for each press, as this tool's presses and trials
+do, they fail minimized or hidden. Since Chromium 130 it reports to Now
+Playing as itself, with its own row in the panel. Its sound and keep-awake
+assertions are the browser's, shared with its tabs: the browser holds one
+"Playing audio" assertion per playing page (a tab, a call, another web
+app, any profile), so the check counts them once the web app plays, and
+one more or fewer than its other pages' tells whether it plays; another
+page starting or stopping meanwhile makes that unclear (said).
+
 
 Each way is tried with the app's main window in each of these states:
 
@@ -215,7 +237,8 @@ log: only administrators can read it, and its wording isn't an API.
 
 `--now-playing-reasons` gives, per app, why it can be in Now Playing (the
 frameworks its binaries link: MediaPlayer, through Electron or CEF too;
-MediaRemote; AVKit; WebKit), the framework that hides its interface, and
+MediaRemote; AVKit; WebKit; Chromium, for a browser's web app), the framework
+that hides its interface, and
 the switches a check turns on, so Player Check lists apps by the same rule.
 
 ## Example

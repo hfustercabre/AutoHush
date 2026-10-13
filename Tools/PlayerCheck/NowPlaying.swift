@@ -158,7 +158,7 @@ func printNowPlayingReasons() -> Never {
         let url = URL(fileURLWithPath: path)
         let hidden = HiddenInterface.of(url)
         print([path, nowPlayingReason(of: url, bundleID: Bundle(url: url)?.bundleIdentifier) ?? "", hidden?.name ?? "",
-               hidden?.switches.map(switchName).joined(separator: ", else ") ?? ""].joined(separator: "\t"))
+               hidden?.switches.map { switchName($0, of: hidden) }.joined(separator: ", else ") ?? ""].joined(separator: "\t"))
     }
     exit(0)
 }
@@ -233,10 +233,14 @@ func linkedFrameworks(_ url: URL) -> Set<String> {
 /// apps; Pake's YouTube Music, a Tauri app linking only WebKit, was the
 /// active Now Playing app while it played). So: the frameworks its binaries
 /// link, those in Contents/MacOS (VLC's is a plugin there) and its own
-/// frameworks'. The Player Check app lists the apps by it
+/// frameworks'. A Chromium browser's web app links none (its launcher loads
+/// the browser's code), yet reports as itself, apart from the browser's
+/// tabs, since Chromium 130 (Chrome's and Brave's did, with their own rows
+/// in the Now Playing panel). The Player Check app lists the apps by it
 /// (`--now-playing-reasons`).
 func nowPlayingReason(of url: URL, bundleID: String?) -> String? {
     if bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true { return "WebKit, as a Safari web app" }
+    if case .chromiumWebApp(_, let browser)? = HiddenInterface.of(url) { return "Chromium, as a \(browser) web app" }
     if bundleID == "com.apple.Safari" || bundleID?.hasPrefix("com.apple.SafariTechnologyPreview") == true { return "WebKit" }
     var binaries: [URL] = []
     if let items = FileManager.default.enumerator(at: url.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {

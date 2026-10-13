@@ -54,7 +54,12 @@ struct Look {
         [menuTitle.map { "menu “\($0)”" + (menuState == .stopped ? " (disabled)" : "") }, state.map { "state \($0.rawValue)" },
          reported.map { "reports \($0.lowercased())" },
          pageToggle.map { "page “\($0)”" + (pageCurrent ? "" : " (out of sight: its word lags)") }, "sound \(sounding ? "on" : "off")",
-         audible.map { $0 ? "heard" : "silent" }, awake.map { $0 ? "keeps the Mac awake" : "no keep-awake assertion" }]
+         audible.map { $0 ? "heard" : "silent" },
+         awake.map { awake in
+             // A browser's web app: the browser's "Playing audio" assertions, counted (`pagesSay`).
+             webAppBrowser == nil ? (awake ? "keeps the Mac awake" : "no keep-awake assertion")
+                 : awake ? "its “Playing audio” held" : "no “Playing audio” of its own"
+         }]
             .compactMap { $0 }.joined(separator: ", ")
     }
 }
@@ -134,7 +139,10 @@ struct Sign {
 /// Player Check app shows the "waiting:" line as a request): true once it
 /// plays, false after `seconds` (or at a stop).
 @MainActor func waitUntilPlaying(_ pid: pid_t, seconds: Double = 120) -> Bool {
-    if isPlaying(pid) { return true }
+    if isPlaying(pid) {
+        countOtherPages(pid)
+        return true
+    }
     say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
@@ -146,6 +154,7 @@ struct Sign {
             return true
         }
     }
+            countOtherPages(pid)
     return false
 }
 

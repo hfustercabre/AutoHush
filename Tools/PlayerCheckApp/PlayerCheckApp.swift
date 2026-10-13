@@ -47,12 +47,11 @@ struct InstalledApp: Identifiable, Hashable {
     /// The subfolders between its Applications folder and it, e.g. "Utilities".
     let subfolder: String?
     let isSafariWebApp: Bool
-    let isChromeWebApp: Bool
     /// What draws its interface, when that keeps it from Accessibility
-    /// until a switch is on: "Electron 38.4.0", "Chromium (CEF)" or
-    /// "Flutter", and the switches a check turns on for it ("Electron's
-    /// switch, else VoiceOver's switch"), as playercheck tells them
-    /// (--now-playing-reasons).
+    /// until a switch is on: "Electron 38.4.0", "Chromium (CEF)", "Flutter"
+    /// or a Chromium browser's web app ("Google Chrome web app"), and the
+    /// switches a check turns on for it ("Electron's switch, else
+    /// VoiceOver's switch"), as playercheck tells them (--now-playing-reasons).
     let hiddenInterface: String?
     let switches: String?
     /// Why it can be in Now Playing, from what it's built with; nil when
@@ -63,8 +62,20 @@ struct InstalledApp: Identifiable, Hashable {
     /// For the check's confirmation, as playercheck does it: the switch it
     /// turns on to read the app's interface, which one it leaves on, and
     /// that it may bring the app forward a moment to have its page built.
+    /// A Chromium browser's web app's browser ("Google Chrome"), from the
+    /// interface playercheck names ("Google Chrome web app"); nil otherwise.
+    var webAppBrowser: String? {
+        guard let hiddenInterface, hiddenInterface.hasSuffix(" web app") else { return nil }
+        return String(hiddenInterface.dropLast(" web app".count))
+    }
+
     var switchNote: String? {
         guard let switches else { return nil }
+        if let browser = webAppBrowser {
+            return "To read its page, the check turns on \(switches), which reaches all of \(browser)'s windows and tabs, and turns"
+                + " it back off after, unless VoiceOver had it on: then it's left on. Each Play or Pause by its page does the same,"
+                + " about 2 seconds longer."
+        }
         let page = hiddenInterface == "Flutter" ? "interface" : "page"
         return "To read its \(page), the check turns on an accessibility switch (\(switches)) and turns it back off after,"
             + " unless it may have been on already (its \(page) was readable before, or VoiceOver had it on): then it's left on."
@@ -113,7 +124,6 @@ struct InstalledApp: Identifiable, Hashable {
             let columns = told[app.url.path]?.map { $0.isEmpty ? nil : $0 } ?? [nil, nil, nil]
             return InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
                                 isSafariWebApp: app.bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
-                                isChromeWebApp: app.bundleID?.hasPrefix("com.google.Chrome.app.") == true,
                                 hiddenInterface: columns[1], switches: columns[2], nowPlayingReason: columns[0])
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
@@ -994,7 +1004,6 @@ struct AppDetail: View {
                     Tag(text: checker.isRunning(app) ? "Running" : "Not running", tint: checker.isRunning(app) ? .green : .secondary)
                     if let client = checker.client(of: app) { Tag(text: client.summary, tint: .pink) }
                     if app.isSafariWebApp { Tag(text: "Safari web app", tint: .blue) }
-                    if app.isChromeWebApp { Tag(text: "Chrome web app", tint: .blue) }
                     if let interface = app.hiddenInterface { Tag(text: interface, tint: .purple) }
                 }
                 .padding(.top, 2)
@@ -1139,7 +1148,11 @@ struct AppDetail: View {
         }
         if !checker.isRunning(app) { parts.append("It isn't running: Player Check opens it first, in the background.") }
         parts.append("Before anything else, it makes sure Player Check has every permission a check needs: Accessibility, Audio Recording, and Automation for \(app.name) if it can be scripted; macOS asks for any not decided yet, and without all of them the check is cancelled before it does anything.")
-        parts.append("\(app.name) is muted all through the check (you won't hear it; Player Check still hears whether it plays) and heard again at the end.")
+        if let browser = app.webAppBrowser {
+            parts.append("\(browser) is muted all through the check, its other tabs and web apps too (a call in it as well), and heard again at the end.")
+        } else {
+            parts.append("\(app.name) is muted all through the check (you won't hear it; Player Check still hears whether it plays) and heard again at the end.")
+        }
         parts.append("It reads its scripting dictionary, its menus, its sound and Now Playing, and its page's buttons if it shows a page.")
         parts.append("Before it moves anything, \(app.name) must be playing: if it isn't, you're asked to start it, and the check waits up to 2 minutes.")
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")

@@ -45,12 +45,13 @@ final class Changes: @unchecked Sendable {
 }
 let changes = Changes()
 
-/// Sets a switch on the app; whether it took. An app may answer an error
-/// yet take it (Spotify and Spotube answer -25208 to VoiceOver's switch, and
-/// read it back as set), or read one back as off while it's on (Deezer,
-/// Electron's): either sign counts.
+/// Sets a switch on the app (a Chromium browser's web app's: on its
+/// browser, `switchTarget`); whether it took. An app may answer an error
+/// yet take it (Spotify, Spotube and Chrome answer -25208 to VoiceOver's
+/// switch, and read it back as set), or read one back as off while it's on
+/// (Deezer, Electron's): either sign counts.
 func setSwitch(_ attribute: String, _ on: Bool, pid: pid_t) -> Bool {
-    let app = AXUIElementCreateApplication(pid)
+    let app = AXUIElementCreateApplication(switchTarget(pid))
     AXUIElementSetMessagingTimeout(app, 1)
     if on { changes.switchSetOn(attribute) }
     if AXUIElementSetAttributeValue(app, attribute as CFString, on ? kCFBooleanTrue : kCFBooleanFalse) == .success { return true }

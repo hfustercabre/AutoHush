@@ -76,9 +76,13 @@ import AutoHushKit
             + " or it's busy): check again in a moment.")
         exit(3)
     }
-    let mute = TestMute(pid: running.processIdentifier)
+    // A browser's web app plays through its browser: the whole browser is
+    // muted (its tabs and other web apps too): its own sound can't be told apart.
+    let mute = TestMute(pid: soundOwner(running.processIdentifier))
     testMute = mute
+    let muted = webAppBrowser.map { "\($0) is muted until the check ends, its tabs and other web apps too: you won't hear \(appName)" }
+        ?? "\(appName) is muted until the check ends: you won't hear it, while its sound still reaches what measures it"
     say(mute.start()
-        ? "  \(appName) is muted until the check ends: you won't hear it, while its sound still reaches what measures it"
-        : "  \(appName) couldn't be muted yet (macOS didn't take the tap): you may hear it; it's tried again meanwhile")
+        ? "  " + muted
+        : "  \(webAppBrowser ?? appName) couldn't be muted yet (macOS didn't take the tap): you may hear it; it's tried again meanwhile")
 }

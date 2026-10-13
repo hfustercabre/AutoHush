@@ -54,7 +54,8 @@ to it and loses its permissions; one signed with a certificate keeps them.
   if it never answers, the check is cancelled the same way, with no
   button, as there's no permission to allow. The app is muted all through the check
   (you don't hear it; Player Check still hears whether it plays) and heard
-  again at the end. Then it makes sure the app plays: if it isn't
+  again at the end; a Chromium browser's web app plays through its
+  browser, so the whole browser is, its other tabs and web apps too. Then it makes sure the app plays: if it isn't
   playing, an orange request asks you to start it, and the check goes on
   by itself as soon as it plays (up to 2 minutes; if it doesn't, the check
   stops there, with nothing moved or pressed). Only then does anything
@@ -126,8 +127,9 @@ to it and loses its permissions; one signed with a certificate keeps them.
 - **Accessibility**, for Player Check: reading menus and pages, pressing
   them, and the switches that show an Electron, CEF or Flutter app's
   interface (Electron's `AXManualAccessibility`, VoiceOver's
-  `AXEnhancedUserInterface`; turned back off after, unless one may have
-  been on already), and putting the app's window in each state (moving it,
+  `AXEnhancedUserInterface`; for a Chromium browser's web app, VoiceOver's
+  set on the browser, for all its windows and tabs; turned back off after,
+  unless one may have been on already), and putting the app's window in each state (moving it,
   and the pointer and keyboard events that drag it to another desktop). The app's detail shows its framework as a tag, and the
   check's confirmation says which switch it turns on and that the app may
   be brought forward a moment while its window is out of sight (both as
@@ -174,6 +176,7 @@ its checks use.
 | WebKit, for the pages it shows | `WebKit.framework` (the pages any app shows report through WebKit's GPU process, under the app's bundle ID) | Pake's YouTube Music (a Tauri app); also apps that only show pages, as Mail, Maps and Dictionary |
 
 The last row lists apps that aren't players: whether they report depends on
+| Chromium, as a <Browser> web app | nothing it links: its launcher's Info.plist names its browser (`CrBundleIdentifier`); since Chromium 130 each web app reports as itself, apart from the browser's tabs | web apps made with Chrome or Brave (in `~/Applications/<Browser> Apps.localized`) |
 the pages they show (Pake's YouTube Music was the active Now Playing app
 while it played; Mail's messages rarely play anything). An app macOS lists
 in Now Playing is shown even if none of these matched; TextEdit, Calculator

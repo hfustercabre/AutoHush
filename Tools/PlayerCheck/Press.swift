@@ -62,7 +62,7 @@ import AppKit
         case .page:
             guard page?.toggle != nil else {
                 tried.append((pageOutOfView ? "its page didn't show with "
-                    + (hiddenInterface?.switches.map(switchName).joined(separator: " or ") ?? "the switch") + " on" : "no Play/Pause button on its page")
+                    + (hiddenInterface?.switches.map { switchName($0) }.joined(separator: " or ") ?? "the switch") + " on" : "no Play/Pause button on its page")
                     + (pageOutOfView ? pagePressHint() : ""))
                 continue
             }

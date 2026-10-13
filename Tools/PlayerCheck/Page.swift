@@ -9,8 +9,10 @@ import WebAppPlayers
 /// (electronjs.org, Accessibility); VoiceOver's is the one VoiceOver sets.
 let manualAccessibility = "AXManualAccessibility"
 let enhancedUserInterface = "AXEnhancedUserInterface"
-func switchName(_ attribute: String) -> String {
-    attribute == manualAccessibility ? "Electron's switch" : "VoiceOver's switch"
+func switchName(_ attribute: String, of interface: HiddenInterface? = hiddenInterface) -> String {
+    if attribute == manualAccessibility { return "Electron's switch" }
+    if case .chromiumWebApp(_, let browser)? = interface { return "\(browser)'s VoiceOver switch" }
+    return "VoiceOver's switch"
 }
 
 /// An interface the app keeps out of Accessibility until an assistive tool
@@ -20,28 +22,43 @@ func switchName(_ attribute: String) -> String {
 /// - Chromium Embedded Framework (CEF; Spotify): none of its own, as each
 ///   app decides: Electron's, else VoiceOver's `AXEnhancedUserInterface`,
 ///   which CEF's sample app listens to (Spotify takes only that one);
-/// - Flutter (Spotube): VoiceOver's only (Flutter's engine listens for it).
-/// Electron's and CEF's interface is a web page, as a Safari web app's;
-/// Flutter's is the window's own elements. Any other app's web page (as in
-/// a Tauri app, Safari's WebKit) shows as it is.
+/// - Flutter (Spotube): VoiceOver's only (Flutter's engine listens for it);
+/// - a Chromium browser's web app (Chrome's, Brave's): VoiceOver's, set on
+///   the browser (`switchTarget`), whose own process serves the page shown
+///   in the web app's window; Chromium turns its complete mode on for all
+///   its windows and tabs 2 s later (chrome_browser_application_mac.mm).
+/// Electron's, CEF's and a browser's web app's interface is a web page, as a
+/// Safari web app's; Flutter's is the window's own elements. Any other app's
+/// web page (as in a Tauri app, Safari's WebKit) shows as it is.
 enum HiddenInterface {
     case electron(version: String), cef, flutter
+    /// The web app's browser: its bundle ID and name.
+    case chromiumWebApp(browserID: String, browser: String)
     var name: String {
         switch self {
         case .electron(let version): "Electron \(version)"
         case .cef: "Chromium (CEF)"
         case .flutter: "Flutter"
+        case .chromiumWebApp(_, let browser): "\(browser) web app"
         }
     }
     var switches: [String] {
         switch self {
         case .electron: [manualAccessibility]
         case .cef: [manualAccessibility, enhancedUserInterface]
-        case .flutter: [enhancedUserInterface]
+        case .flutter, .chromiumWebApp: [enhancedUserInterface]
         }
     }
-    /// The app's, by the frameworks in its bundle.
+    /// The app's, by the frameworks in its bundle; a Chromium browser's web
+    /// app by its launcher's Info.plist, which names the site it opens and
+    /// the browser it belongs to (Chromium writes both for every browser).
     static func of(_ appURL: URL) -> HiddenInterface? {
+        let info = NSDictionary(contentsOf: appURL.appendingPathComponent("Contents/Info.plist")) as? [String: Any] ?? [:]
+        if info["CrAppModeShortcutURL"] != nil, let browserID = info["CrBundleIdentifier"] as? String {
+            let browser = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browserID).flatMap { Bundle(url: $0)?.infoDictionary }
+                .flatMap { ($0["CFBundleDisplayName"] ?? $0["CFBundleName"]) as? String } ?? browserID
+            return .chromiumWebApp(browserID: browserID, browser: browser)
+        }
         let frameworks = appURL.appendingPathComponent("Contents/Frameworks")
         func framework(_ name: String) -> URL? {
             let url = frameworks.appendingPathComponent("\(name).framework")
@@ -58,6 +75,18 @@ enum HiddenInterface {
 let hiddenInterface = HiddenInterface.of(appURL)
 var isFlutter: Bool { if case .flutter? = hiddenInterface { true } else { false } }
 var isElectron: Bool { if case .electron? = hiddenInterface { true } else { false } }
+/// A Chromium browser's web app: its browser's name; nil for any other app.
+var webAppBrowser: String? { if case .chromiumWebApp(_, let browser)? = hiddenInterface { browser } else { nil } }
+
+/// The process a switch is set on: a Chromium browser's web app's browser
+/// (its own process serves the page; set on the web app, nothing shows),
+/// else the app itself. Its sound and keep-awake assertions are the
+/// browser's too (`soundOwner`).
+func switchTarget(_ pid: pid_t) -> pid_t {
+    guard case .chromiumWebApp(let browserID, _)? = hiddenInterface,
+          let browser = NSRunningApplication.runningApplications(withBundleIdentifier: browserID).first else { return pid }
+    return browser.processIdentifier
+}
 
 /// Whether its page is Safari's WebKit: a Safari web app's, or the app's
 /// own (a Tauri app's, as Pake's YouTube Music), and not Chromium inside Qt
@@ -309,7 +338,7 @@ struct PageCheck {
 /// page kept for later goes stale out of sight (Deezer's took no presses
 /// after minutes on another desktop).
 @MainActor func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
-    let app = AXUIElementCreateApplication(pid)
+    let app = AXUIElementCreateApplication(switchTarget(pid))
     AXUIElementSetMessagingTimeout(app, 1)
     if attribute == enhancedUserInterface, app.value(attribute) as? Bool == true {
         say("  \(switchName(attribute)) (\(attribute)) is on already: VoiceOver or another tool turned it on, so it's left on")
@@ -335,15 +364,27 @@ struct PageCheck {
 /// keeps a fuller mode already on: electron_application.mm). A press right
 /// after the switch goes on does nothing, though the page shows and the
 /// press is accepted. So before a press: at once when the switch reads back
-/// on (Electron says so only in that mode), else not before those 2 s.
+/// on (Electron says so only in that mode), else not before those 2 s. A
+/// Chromium browser's web app the same, the browser's complete mode 2 s
+/// after its switch (chrome_browser_application_mac.mm); its switch reads
+/// back on at once, so that tells nothing.
 func waitForFullerMode(pid: pid_t) {
-    guard isElectron, let since = changes.switchSetOnAt(manualAccessibility) else { return }
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 1)
-    guard app.value(manualAccessibility) as? Bool != true else { return }
+    let attribute: String
+    switch hiddenInterface {
+    case .electron?: attribute = manualAccessibility
+    case .chromiumWebApp?: attribute = enhancedUserInterface
+    default: return
+    }
+    guard let since = changes.switchSetOnAt(attribute) else { return }
+    if isElectron {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, 1)
+        guard app.value(manualAccessibility) as? Bool != true else { return }
+    }
     let wait = 2.2 - Date().timeIntervalSince(since)
     guard wait > 0 else { return }
-    log(String(format: "  waited %.1f s for Electron's fuller mode: its page takes presses only 2 s after its switch goes on", wait))
+    log(String(format: "  waited %.1f s for %@'s fuller mode: its page takes presses only 2 s after its switch goes on",
+               wait, webAppBrowser ?? "Electron"))
     Thread.sleep(forTimeInterval: wait)
 }
 
@@ -470,7 +511,8 @@ func waitForFullerMode(pid: pid_t) {
 
 /// Why a press by the page didn't work, and what to try instead.
 func pagePressHint() -> String {
-    "; an \(hiddenInterface.map { "app built with \($0.name)" } ?? "app") may build its page, or take presses on it, only while its"
+    "; " + (webAppBrowser.map { "a \($0) web app" } ?? "an \(hiddenInterface.map { "app built with \($0.name)" } ?? "app")")
+        + " may build its page, or take presses on it, only while its"
         + " window is in view: bring it into view and try again, or use another way (AppleScript, its menu, or the Now Playing panel"
         + " as a last resort)"
 }
@@ -511,10 +553,13 @@ func pagePressHint() -> String {
     }
     let items = isFlutter ? "pressable items" : "buttons"
     switch hiddenInterface {
+    case .chromiumWebApp(_, let browser)?:
+        say("  a \(browser) web app: its page shows, and takes presses, once \(switchName(enhancedUserInterface)) is on;"
+            + " it's set on \(browser) itself, for all its windows and tabs")
     case let hidden?:
         say("  built with \(hidden.name): "
             + (isFlutter ? "its interface (not a web page) shows" : "its page shows")
-            + " once a switch for assistive tools is on (" + hidden.switches.map(switchName).joined(separator: ", else ") + ")")
+            + " once a switch for assistive tools is on (" + hidden.switches.map { switchName($0) }.joined(separator: ", else ") + ")")
         if let launchedWithOption {
             say("  opened with \(LaunchOption.occludedWindows): "
                 + (launchedWithOption ? "yes, so its page takes presses while its window is covered or on another desktop"

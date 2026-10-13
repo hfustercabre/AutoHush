@@ -1,6 +1,7 @@
 import AppKit
 import AutoHushKit
 import CoreAudio
+import IOKit.pwr_mgt
 import os
 
 // MARK: - Sound
@@ -70,7 +71,57 @@ func soundProcesses(of pid: pid_t) -> [String] {
 /// Whether it can be heard now, by its level (half a second of listening,
 /// AutoHush's threshold: `ProcessTapLevelProbe`); nil when it isn't measured.
 @MainActor func audible(_ pid: pid_t) -> Bool? {
-    levelsAllowed ? ProcessTapLevelProbe().isAudible(appPID: pid) : nil
+    // A browser's web app: its sound can't be told from the browser's other pages'.
+    guard webAppBrowser == nil else { return nil }
+    return levelsAllowed ? ProcessTapLevelProbe().isAudible(appPID: pid) : nil
+}
+
+/// The process that owns the app's sound and keep-awake assertions: a
+/// Chromium browser's web app's browser (one process for all its pages:
+/// tabs, calls, web apps), else the app.
+func soundOwner(_ pid: pid_t) -> pid_t { switchTarget(pid) }
+
+/// The pages a Chromium browser plays now: it holds one "Playing audio"
+/// assertion per playing page (its audio wake lock), all on its own process
+/// (Chrome and Brave, measured: a web app, a tab's file, a Web Audio tone, a
+/// WebRTC call, a tab in another profile each added one). AutoHush's reader
+/// keeps a process's assertions as a set, so they're counted here.
+func playingPages(of browserPID: pid_t) -> Int {
+    var byProcess: Unmanaged<CFDictionary>?
+    guard IOPMCopyAssertionsByProcess(&byProcess) == kIOReturnSuccess,
+          let all = byProcess?.takeRetainedValue() as? [NSNumber: [[String: Any]]] else { return 0 }
+    return (all[NSNumber(value: browserPID)] ?? []).filter {
+        $0["AssertionOnBehalfOfPID"] == nil && $0["AssertName"] as? String == "Playing audio"
+    }.count
+}
+
+/// A browser's web app found playing: the browser's other playing pages
+/// then, which its keep-awake sign compares with (`pagesSay`); nil until
+/// counted, and once they changed.
+@MainActor var otherPlayingPages: Int?
+
+/// Counts the browser's other playing pages, the web app playing: when
+/// it's first found playing, and again after they changed.
+@MainActor func countOtherPages(_ pid: pid_t) {
+    guard let browser = webAppBrowser, otherPlayingPages == nil else { return }
+    let total = playingPages(of: soundOwner(pid))
+    otherPlayingPages = total > 0 ? total - 1 : nil
+    say("  \(browser)'s playing pages: \(total), this one's among them (one “Playing audio” assertion each)")
+}
+
+/// Whether a browser's web app plays, as the browser's "Playing audio"
+/// assertions tell it: one more than its other pages', it plays; as many,
+/// it doesn't (its own goes about 3 s after it pauses). Nil before they're
+/// counted, and once another page started or stopped (said once).
+@MainActor func pagesSay(_ pid: pid_t) -> Bool? {
+    guard let others = otherPlayingPages else { return nil }
+    let total = playingPages(of: soundOwner(pid))
+    if total == others + 1 { return true }
+    if total == others { return false }
+    otherPlayingPages = nil
+    say("    \(webAppBrowser ?? "its browser")'s playing pages went to \(total), from \(others) others: another page started or stopped,"
+        + " so its assertions no longer tell")
+    return nil
 }
 
 /// Its own keep-awake assertions now (its processes' and helpers'), as
@@ -88,6 +139,7 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
 /// sound was on (in this run), but not now, it's paused; nil while it never did.
 @MainActor var heldWhileSounding = false
 @MainActor func awake(_ pid: pid_t, sounding: Bool) -> Bool? {
+    if webAppBrowser != nil { return pagesSay(pid) }
     let held = assertions(of: pid).contains { $0.kind == .system }
     if held, sounding { heldWhileSounding = true }
     return held ? true : heldWhileSounding ? false : nil
@@ -101,7 +153,23 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
     if action != nil {
         say("  not read: only shown in a check")
         setUpLevels(asking: false)
-    } else if let running {
+        return
+    }
+    guard let running else {
+        say("  not checked: the app isn't running")
+        return
+    }
+    if let browser = webAppBrowser {
+        // A browser's web app: its sound and assertions are the browser's.
+        let owner = soundOwner(running.processIdentifier)
+        let sound = soundProcesses(of: owner)
+        say("  its sound is \(browser)'s, shared with its tabs and other web apps: "
+            + (sound.isEmpty ? "none running now" : sound.joined(separator: "; ")))
+        setUpLevels(asking: true, saying: false)
+        say("  its level: not measured: \(browser) plays all its pages' sound together")
+        say("  \(browser)'s playing pages now: \(playingPages(of: owner)) (one “Playing audio” assertion each: tabs, calls, web apps);"
+            + " counted once it plays, they tell whether it does")
+    } else {
         let sound = soundProcesses(of: running.processIdentifier)
         say("  sound output running now: " + (sound.isEmpty ? "none (it isn't playing)" : sound.joined(separator: "; ")))
         setUpLevels(asking: true)
@@ -110,15 +178,13 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
         say("  keeps the Mac awake: " + (held.isEmpty ? "no assertion now (media apps hold one while they play, as AntiDot mode reads it)"
             : held.sorted { $0.name < $1.name }.map { "“\($0.name)”" + ($0.kind == .display ? " (display only)" : "") }.joined(separator: ", ")))
         _ = awake(running.processIdentifier, sounding: !sound.isEmpty)
-        let holder = nowPlayingPID()
-        let holds = holder > 0 && (holder == running.processIdentifier || responsible(holder) == running.processIdentifier)
-        let other = holder == 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
-        say("  Now Playing: " + (holder < 0 ? "MediaRemote didn't answer"
-            : holds ? "this app (until another app reports playing)"
-            : holder == 0 ? "no app" : "another app (\(other))"))
-    } else {
-        say("  not checked: the app isn't running")
     }
+    let holder = nowPlayingPID()
+    let holds = holder > 0 && (holder == running.processIdentifier || responsible(holder) == running.processIdentifier)
+    let other = holder == 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
+    say("  Now Playing: " + (holder < 0 ? "MediaRemote didn't answer"
+        : holds ? "this app (until another app reports playing)"
+        : holder == 0 ? "no app" : "another app (\(other))"))
 }
 
 // MARK: - Silent through a test
@@ -198,6 +264,6 @@ final class TestMute: @unchecked Sendable {
 @MainActor func unmuteAfterTest() {
     guard let mute = testMute else { return }
     testMute = nil
-    say("  \(appName) unmuted: the test is over"
+    say("  \(webAppBrowser ?? appName) unmuted: the test is over"
         + (mute.stop() ? " (its sound couldn't be muted for a while: it may have been heard)" : ""))
 }
