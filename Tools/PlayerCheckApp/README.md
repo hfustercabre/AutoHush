@@ -84,8 +84,9 @@ to it and loses its permissions; one signed with a certificate keeps them.
   with the time left, the window states as segments with the one it's in
   and the way it's pressing, while your input is blocked an orange line
   saying so, and its **Stop**, which leaves the app you're in where it is.
-  It floats above other windows, the menu bar and the shade, which the
-  check doesn't count as covering the app. The keyboard's Play/Pause key isn't one: macOS sends it only to
+  It floats above other windows (above the menu bar and the shade too
+  while the screen is dimmed), which the check doesn't count as covering
+  the app; during a drag, a click on it is taken as its Stop. The keyboard's Play/Pause key isn't one: macOS sends it only to
   the Now Playing app, which AutoHush can't choose (when AutoHush pauses a
   player, the app that started playing may hold Now Playing). When a way leaves it paused, the
   check first plays it again by itself (that way once more, then a way that

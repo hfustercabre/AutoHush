@@ -293,9 +293,15 @@ struct Report {
     }
     /// What playercheck asks of whoever runs it while it waits ("start
     /// playing something in Deezer; …"): the app must play for the test.
+    /// Asked until it's answered (it plays, it paused, Accessibility is
+    /// decided), the wait ends ("stopped…", "it didn't…") or its section
+    /// does: a line said meanwhile (a script error, a browser's page count)
+    /// doesn't end it.
     var request: String? {
-        guard state == .checking, let last = lines.last, last.hasPrefix("  waiting: ") else { return nil }
-        let text = last.dropFirst("  waiting: ".count)
+        guard state == .checking, let asked = lines.lastIndex(where: { $0.hasPrefix("  waiting: ") }) else { return nil }
+        let ends = ["  it plays", "  it paused", "  it didn't", "  stopped", "  Accessibility:"]
+        guard !lines[(asked + 1)...].contains(where: { line in !line.hasPrefix(" ") || ends.contains { line.hasPrefix($0) } }) else { return nil }
+        let text = lines[asked].dropFirst("  waiting: ".count)
         return text.prefix(1).uppercased() + text.dropFirst()
     }
     /// The whole report, with a blank line before each heading.
@@ -1317,12 +1323,13 @@ struct Tag: View {
 /// but the panel.
 @MainActor
 final class CheckPanel {
-    /// The shade's level and the panel's, above the menu bar, the Dock and
-    /// Control Center's panels (level 101: the Now Playing panel a check
-    /// opens), so the shade dims them all and the panel stays above it.
-    /// playercheck's InputBlock lets clicks through only on Player Check's
-    /// windows at `panelLevel`, so it never takes the full-screen shade for
-    /// the panel: keep its number in step.
+    /// The shade's level, and the panel's while the screen is dimmed: above
+    /// the menu bar, the Dock and Control Center's panels (level 101: the Now
+    /// Playing panel a check opens), so the shade dims them all and the panel
+    /// stays above it. Otherwise the panel floats, under menus and the Dock,
+    /// as the user may need them. playercheck's InputBlock lets clicks through
+    /// on Player Check's windows above the ordinary ones that don't cover a
+    /// whole display: the panel, never the shade.
     static let shadeLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
     static let panelLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 2)
     private var panel: NSPanel?
@@ -1335,7 +1342,7 @@ final class CheckPanel {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
-        panel.level = Self.panelLevel
+        panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.hidesOnDeactivate = false
         panel.canHide = false
@@ -1388,6 +1395,7 @@ final class CheckPanel {
     /// windows as visible (a Chromium page under it takes presses), and
     /// Accessibility's hit tests pass it by.
     private func dim(_ on: Bool) {
+        panel?.level = on ? Self.panelLevel : .floating
         if on, shades.isEmpty { shades = NSScreen.screens.map(Self.shade) }
         let shown = shades
         if !on { shades = [] }

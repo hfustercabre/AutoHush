@@ -105,8 +105,22 @@ func playingPages(of browserPID: pid_t) -> Int {
 @MainActor func countOtherPages(_ pid: pid_t) {
     guard let browser = webAppBrowser, otherPlayingPages == nil else { return }
     let total = playingPages(of: soundOwner(pid))
-    otherPlayingPages = total > 0 ? total - 1 : nil
+    // None held: nothing to count from (it's taken at the next look while it plays).
+    guard total > 0 else { return }
+    otherPlayingPages = total - 1
     say("  \(browser)'s playing pages: \(total), this one's among them (one “Playing audio” assertion each)")
+}
+
+/// Before a wait for it to play: the browser's playing pages now are the
+/// others' (it doesn't play yet), so one more says it plays, the one sign of
+/// it without what it reports to Now Playing (read by administrators only).
+/// Counted again while waiting whenever they changed (`pagesSay` let them
+/// go): one it played before the wait, and paused for it, lowers them.
+@MainActor func countPagesBeforePlaying(_ pid: pid_t, saying: Bool) {
+    guard let browser = webAppBrowser, otherPlayingPages == nil else { return }
+    let total = playingPages(of: soundOwner(pid))
+    otherPlayingPages = total
+    if saying { say("  \(browser)'s playing pages now, without it: \(total); once it plays, there's one more") }
 }
 
 /// Whether a browser's web app plays, as the browser's "Playing audio"

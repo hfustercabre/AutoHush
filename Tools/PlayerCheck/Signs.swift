@@ -69,7 +69,8 @@ struct Look {
     // surer), and, for a press, only while its player bar isn't on screen.
     let state = scriptedState()
     let toggle = menu == nil ? nil : menuToggle(pid: pid)
-    let sounding = !soundProcesses(of: pid).isEmpty
+    // A browser's web app's sound is its browser's (its launcher has none).
+    let sounding = !soundProcesses(of: soundOwner(pid)).isEmpty
     return Look(menuTitle: toggle?.title, menuState: toggle.flatMap(menuState), state: state,
                 reported: state == nil && !barShowsState ? reportedState() : nil,
                 pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid), pageCurrent: pageWordCurrent,
@@ -143,6 +144,7 @@ struct Sign {
         countOtherPages(pid)
         return true
     }
+    countPagesBeforePlaying(pid, saying: true)
     say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
@@ -151,6 +153,7 @@ struct Sign {
     defer { inputBlock.resume() }
     while Date() < deadline, !stopState.isRequested {
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        countPagesBeforePlaying(pid, saying: false)
         if isPlaying(pid) {
             say("  it plays: testing")
             RunLoop.main.run(until: Date().addingTimeInterval(1.5)) // it settles, and reports to Now Playing
@@ -158,7 +161,6 @@ struct Sign {
             return true
         }
     }
-            countOtherPages(pid)
     return false
 }
 

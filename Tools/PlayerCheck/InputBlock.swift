@@ -8,10 +8,12 @@ import AppKit
 /// drops their keys (modifiers, media and function keys too), clicks, drags,
 /// scrolling and gestures. It lets through this tool's own events (marked
 /// with `marker`), the pointer's moves (except during a drag, which they
-/// would carry off), clicks on Player Check's panel (its Stop), and Escape,
-/// which stops the check as Stop does. It's lifted while the check asks
-/// something of them, and if the check writes nothing for `watchdog`
-/// seconds; the tap goes with this process, however it ends.
+/// would carry off), clicks on Player Check's panel (its Stop; during a drag,
+/// a click there is taken as Stop, as it can't reach the panel without
+/// letting go of the window), and Escape, which stops the check as Stop
+/// does. It's lifted while the check asks something of them; if the check
+/// writes nothing for `watchdog` seconds, it's lifted and the check stops at
+/// its next step. The tap goes with this process, however it ends.
 /// The tap runs on a thread of its own: the main thread sleeps in waits,
 /// and a tap answered there would hold up their input until macOS turned it
 /// off.
@@ -29,7 +31,7 @@ final class InputBlock: @unchecked Sendable {
     private let lock = NSLock()
     private var tap: CFMachPort?
     private var loop: CFRunLoop?
-    private var active = false, paused = false, drag = false, escaped = false
+    private var active = false, paused = false, drag = false, stopAsked = false
     /// When the watchdog's minute starts: the last line the check wrote, or
     /// the block's start or resumption, whichever is later.
     private var since = Date()
@@ -38,10 +40,11 @@ final class InputBlock: @unchecked Sendable {
     private var pressedOnPanel: Set<Int64> = []
 
     var isOn: Bool { lock.withLock { active } }
-    /// While the check drags the window: the pointer's moves are held too.
+    /// While the check drags the window: the pointer's moves are held too,
+    /// and a button held on the panel since before doesn't get its release.
     var dragging: Bool {
         get { lock.withLock { drag } }
-        set { lock.withLock { drag = newValue } }
+        set { lock.withLock { drag = newValue; if newValue { pressedOnPanel = [] } } }
     }
 
     /// Starts blocking; false when the tap couldn't be made (it needs the
@@ -107,7 +110,7 @@ final class InputBlock: @unchecked Sendable {
         return true
     }
 
-    private enum Verdict { case pass, drop, escape }
+    private enum Verdict { case pass, drop, stop(String) }
 
     private func handle(_ type: CGEventType, _ event: CGEvent) -> Unmanaged<CGEvent>? {
         let pass = Unmanaged.passUnretained(event)
@@ -121,17 +124,22 @@ final class InputBlock: @unchecked Sendable {
             guard active, !paused else { return .pass }
             switch type {
             case .keyDown where event.getIntegerValueField(.keyboardEventKeycode) == Self.escape:
-                if escaped { return .drop }
-                escaped = true
-                return .escape
+                if stopAsked { return .drop }
+                stopAsked = true
+                return .stop("  Escape pressed: stopping")
             case .mouseMoved:
                 return drag ? .drop : .pass
             case .leftMouseDown, .rightMouseDown, .otherMouseDown:
-                guard !drag, panels.contains(where: { $0.contains(event.location) }) else { return .drop }
+                guard panels.contains(where: { $0.contains(event.location) }) else { return .drop }
+                if drag {
+                    if stopAsked { return .drop }
+                    stopAsked = true
+                    return .stop("  the panel clicked during a drag: stopping")
+                }
                 pressedOnPanel.insert(button)
                 return .pass
             case .leftMouseUp, .rightMouseUp, .otherMouseUp:
-                return pressedOnPanel.remove(button) != nil ? .pass : .drop
+                return !drag && pressedOnPanel.remove(button) != nil ? .pass : .drop
             case .leftMouseDragged, .rightMouseDragged, .otherMouseDragged:
                 return !drag && pressedOnPanel.contains(button) ? .pass : .drop
             default:
@@ -141,8 +149,8 @@ final class InputBlock: @unchecked Sendable {
         switch verdict {
         case .pass: return pass
         case .drop: return nil
-        case .escape:
-            tell("  Escape pressed: stopping")
+        case .stop(let line):
+            tell(line)
             // As the stop signals' handler: while the window is away (the
             // whole block), the check stops itself and puts it back.
             if !stopState.request() { stopNow(143) }
@@ -150,19 +158,23 @@ final class InputBlock: @unchecked Sendable {
         }
     }
 
-    /// Every 0.5 s: where Player Check's panel is (its windows at the
-    /// panel's level), and whether the check still writes.
+    /// Every 0.5 s: where Player Check's panel is (its windows above the
+    /// ordinary ones, but not those covering a whole display: the shade it
+    /// dims the screen with), and whether the check still writes.
     private func lookAround() {
         let parent = getppid()
-        // Player Check's `CheckPanel.panelLevel`: its full-screen shade sits
-        // one below, and must never count as the panel.
-        let panelLevel = Int(CGWindowLevelForKey(.popUpMenuWindow)) + 2
+        var count: UInt32 = 0
+        var displays = [CGDirectDisplayID](repeating: 0, count: 16)
+        CGGetActiveDisplayList(16, &displays, &count)
+        let screens = displays.prefix(Int(count)).map(CGDisplayBounds)
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         let frames = windows.compactMap { info -> CGRect? in
             guard (info[kCGWindowOwnerPID as String] as? Int).map({ pid_t($0) }) == parent,
-                  info[kCGWindowLayer as String] as? Int == panelLevel,
-                  let bounds = info[kCGWindowBounds as String] as? NSDictionary else { return nil }
-            return CGRect(dictionaryRepresentation: bounds as CFDictionary)
+                  (info[kCGWindowLayer as String] as? Int ?? 0) > 0,
+                  let bounds = info[kCGWindowBounds as String] as? NSDictionary,
+                  let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
+                  !screens.contains(where: { $0.size == frame.size }) else { return nil }
+            return frame
         }
         let silent = lock.withLock { () -> Bool in
             panels = frames
@@ -170,7 +182,9 @@ final class InputBlock: @unchecked Sendable {
             return Date().timeIntervalSince(max(since, runLog.lastWrite)) > Self.watchdog
         }
         if silent, end() {
-            tell("  mouse and keyboard free again: the check wrote nothing for \(Int(Self.watchdog)) s")
+            tell("  mouse and keyboard free again: the check wrote nothing for \(Int(Self.watchdog)) s, so it stops at its next step")
+            // Back, it would drag the window with their input free: it stops (and puts it back) instead.
+            _ = stopState.request()
         }
     }
 

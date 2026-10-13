@@ -41,9 +41,10 @@ file holds one subject (`Scripting`, `Menu`, `Page`, `WindowStates`,
 ## Permissions
 
 Whatever runs it (Terminal, or Player Check) needs:
-- **Accessibility**, for the menu, the page and the Now Playing panel, and
-  to put the app's window in each state (pointer and keyboard events for
-  the desktops).
+- **Accessibility**, for the menu, the page and the Now Playing panel, to
+  put the app's window in each state (pointer and keyboard events for the
+  desktops), and, with `--block-input`, to block the user's input meanwhile
+  (an active event tap).
 - **Audio Recording**, to measure how loud the app is, as AutoHush does,
   and to keep it muted through a test; macOS shows its recording indicator
   meanwhile.
@@ -83,7 +84,9 @@ Each step is a section of the report, in this order:
    as it plays, up to 2 minutes; if it doesn't, the check stops, with
    nothing moved or pressed. Moving the window comes only after this.
 6. **Window States** (a test only): the window is put in the first state,
-   visible on this desktop.
+   visible on this desktop. With `--block-input` (Player Check's), the
+   user's clicks, scrolling and keys are blocked from here until the window
+   is put back, apart from the requests; Escape stops the check (below).
 7. **Page Buttons:** its page's Play/Pause, read in view (a Chromium page
    is built and kept current only in view). An app with nothing to press
    but its page has its page read before step 5, where it is, so one with
@@ -228,18 +231,23 @@ clicks, drags, scrolling and gestures. It lets through:
 
 - the tool's own events, marked in `kCGEventSourceUserData`;
 - the pointer's moves, except during a drag, which they would carry off;
-- clicks on Player Check's panel (the parent process's windows at the
-  panel's level, one above the shade Player Check dims the screen with
-  meanwhile), so its Stop works;
+- clicks on Player Check's panel (the parent process's windows above the
+  ordinary ones that don't cover a whole display: not the shade Player
+  Check dims the screen with meanwhile), so its Stop works; during a drag,
+  a click there can't reach it without letting go of the window, so it's
+  taken as Stop;
 - Escape, which stops the check as Stop does.
 
-The block is lifted while the check asks something ("waiting: …"), and if
-the check writes nothing for a minute. The tap runs on a thread of its own
-and goes with the process, however it ends. When the block ends, the
-modifiers are posted as they are on the keyboard, so no app keeps one
-held. Input other tools post (BetterTouchTool, Keyboard Maestro) is
-blocked too meanwhile. From a shell it's off by default: there's no panel
-there, and Ctrl-C would be blocked.
+The block is lifted while the check asks something ("waiting: …"). If the
+check writes nothing for a minute, it's lifted and the check stops at its
+next step, rather than drag the window with the user's input free. The tap
+runs on a thread of its own and goes with the process, however it ends.
+When the block ends, the modifiers are posted as they are on the keyboard,
+so no app keeps one held. Input other tools post where hardware input
+enters (the HID event tap) is blocked too meanwhile; what they post further
+on (the session's event tap, or to one app) never reaches the block. From a
+shell it's off by default: there's no panel there, and Ctrl-C would be
+blocked.
 
 ## Stopping
 
