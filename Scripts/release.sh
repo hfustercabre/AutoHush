@@ -40,7 +40,8 @@ IDENTITY="$(resolve_signing_identity)"
 
 # 1. Tests -------------------------------------------------------------------
 step "Running tests"
-swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
+# Every test, the slow ones too, even where quick runs are the default.
+env -u AUTOHUSH_QUICK_TESTS swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
 
 # 2. Version and changelog ---------------------------------------------------
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))

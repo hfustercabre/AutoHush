@@ -463,6 +463,7 @@ Defaults that aren't in Settings, such as tick rates, the gap tolerance and the 
 ```bash
 swift build      # build every module and the tools
 swift test       # run the tests of every module
+AUTOHUSH_QUICK_TESTS=1 swift test   # the same without the slow ones (real disk images)
 bash Scripts/build-app.sh release   # build and sign AutoHush.app
 ```
 

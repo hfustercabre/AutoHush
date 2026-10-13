@@ -84,23 +84,23 @@ struct UpdateInstallerTests {
 
     // MARK: - Preparing
 
-    @Test("a genuine update is copied out of its disk image, next to the installed app")
+    @Test("a genuine update is copied out of its disk image, next to the installed app", .slow)
     func preparesGenuineUpdate() async throws {
         try await expectPrepared(openingWith: DiskImageTool.inOrderOfPreference)
     }
 
     @Test("diskutil opens and closes the disk image, where macOS has `diskutil image`",
-          .enabled(if: hasDiskutilImage))
+          .slow, .enabled(if: hasDiskutilImage))
     func opensWithDiskutil() async throws {
         try await expectPrepared(openingWith: [.diskutil])
     }
 
-    @Test("hdiutil opens and closes the disk image, as on macOS 15")
+    @Test("hdiutil opens and closes the disk image, as on macOS 15", .slow)
     func opensWithHdiutil() async throws {
         try await expectPrepared(openingWith: [.hdiutil])
     }
 
-    @Test("a tool that's missing or fails makes way for the next one")
+    @Test("a tool that's missing or fails makes way for the next one", .slow)
     func fallsBackToNextTool() async throws {
         let missing = DiskImageTool(path: "/nonexistent/diskutil", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
         let failing = DiskImageTool(path: "/usr/bin/false", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
@@ -127,7 +127,7 @@ struct UpdateInstallerTests {
         #expect(!FileManager.default.fileExists(atPath: update.folder.path))
     }
 
-    @Test("an app signed by anyone else is refused")
+    @Test("an app signed by anyone else is refused", .slow)
     func refusesOtherSigners() async throws {
         let scratch = try Scratch()
         let autoHush = #"identifier "com.autohush.AutoHush" and certificate leaf = H"085edf2752c4f31bcdff25dbe14636958d50cdf6""#
@@ -145,7 +145,7 @@ struct UpdateInstallerTests {
         }
     }
 
-    @Test("a download that isn't a disk image is refused")
+    @Test("a download that isn't a disk image is refused", .slow)
     func refusesNonImage() async throws {
         let scratch = try Scratch()
         let page = scratch.folder.appending(path: "page.html")
@@ -155,7 +155,7 @@ struct UpdateInstallerTests {
         }
     }
 
-    @Test("a disk image holding another version than announced is refused")
+    @Test("a disk image holding another version than announced is refused", .slow)
     func refusesOtherVersion() async throws {
         let scratch = try Scratch()
         await #expect(throws: UpdateInstallError.wrongVersion) {
@@ -211,7 +211,7 @@ struct UpdateInstallerTests {
         #expect(requests.all.map(\.allowsConstrainedNetworkAccess) == [allowed])
     }
 
-    @Test("an update is prepared from a kept image without downloading, and the image stays")
+    @Test("an update is prepared from a kept image without downloading, and the image stays", .slow)
     func preparesFromKeptImage() async throws {
         let scratch = try Scratch()
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
