@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -207,6 +208,36 @@ struct SettingsModelTests {
 
         model.state.status.learning = .learned
         #expect(model.learning == .learned && model.canLearnControlsAgain)
+    }
+
+    @Test("a window follows only the parts it shows: the music's state leaves the apps alone, the apps leave the status line alone; the apps are ordered again as their order changes")
+    func followsPartByPart() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        show(model, seen: [vlc], ignored: [])
+        model.state.status.setHealth(.ready)
+
+        let apps = Changes()
+        withObservationTracking { _ = model.apps } onChange: { apps.count += 1 }
+        model.state.status.playback = .pausedByMonitor
+        model.state.status.setActiveSources([chrome])
+        #expect(apps.count == 0)
+
+        let line = Changes()
+        withObservationTracking { _ = model.statusLine } onChange: { line.count += 1 }
+        show(model, seen: [vlc, chrome], ignored: [vlc])
+        #expect(line.count == 0)
+        #expect(apps.count == 1)
+        #expect(model.apps.map(\.id) == [vlc.id, chrome.id])
+        model.state.status.playback = .musicPlaying
+        #expect(line.count == 1)
+
+        let order = Changes()
+        withObservationTracking { _ = model.apps } onChange: { order.count += 1 }
+        model.setAppListOrder(AppListOrder(criterion: .name))
+        #expect(order.count == 1)
+        #expect(model.apps.map(\.id) == [chrome.id, vlc.id])
     }
 
     @Test("Settings' own setters store through the user's settings, the timings clamped first")
@@ -486,4 +517,9 @@ struct SettingsWindowControllerTests {
         #expect(model.appSearch == nil)
         #expect(model.foldedDiagnostics.isEmpty)
     }
+}
+
+/// How many times what a test followed changed (`withObservationTracking`).
+private final class Changes: @unchecked Sendable {
+    var count = 0
 }

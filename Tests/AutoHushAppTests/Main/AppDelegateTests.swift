@@ -1064,7 +1064,42 @@ struct AppDelegateTests {
         #expect(calls.isEmpty)
     }
 
-    // MARK: - Auto-pause and ignored apps
+    // MARK: - The menu
+
+    @MainActor
+    @Test("the menu shows the app's status, and its items reach AutoHush's own settings, player session and choice of player")
+    func menuWiring() async throws {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        sut.showStatusMenu()
+        let menu = try #require(sut.statusMenu)
+        defer { menu.remove() }
+        await start(sut)
+        #expect(menu.status == sut.status)
+
+        menu.perform(.toggleAutoPause)
+        #expect(!sut.userSettings.state.autoPauseActive)
+        #expect(sut.status.autoPause == .off && menu.status.autoPause == .off)
+
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        menu.perform(.setIgnored(vlc, true))
+        #expect(sut.session.settings.ignored == [vlc.id])
+        #expect(menu.status.ignoredApps == [vlc])
+
+        // A player chosen from its list is AppDelegate's to choose.
+        await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
+        menu.menuNeedsUpdate(menu.menu)
+        menu.perform(.togglePlayerList)
+        let second = try #require(menu.menu.items.first { $0.title == "Second" })
+        menu.menu.performActionForItem(at: menu.menu.index(of: second))
+        #expect(sut.player?.bundleID == Players.second)
+        #expect(menu.status.chosenPlayerID == Players.second)
+
+        // Its start failed: Retry is the player session's.
+        await TestWait.until { sut.status.canRetry }
+        menu.perform(.retry)
+        #expect(sut.status.health == .starting && menu.status.health == .starting)
+    }
 
     // MARK: - Settings and updates
 

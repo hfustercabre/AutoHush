@@ -1,12 +1,15 @@
 import Foundation
+import Observation
 import AutoHushKit
 
 /// The user's own settings and what follows from them (see GLOSSARY.md):
 /// Auto-Pause and its snooze, the apps ignored and the apps seen, the
 /// timings, the detection method, the order of Settings' list of apps. It
 /// stores them in `Preferences`; the menu, Settings and the monitoring show
-/// or follow its state.
+/// or follow its state. Settings reads what only it shows (the timings,
+/// detection and the list's order) here; the rest through the app state.
 @MainActor
+@Observable
 final class UserSettings {
     /// What the menu, Settings and the monitoring show or follow of it.
     struct State: Equatable {
@@ -35,12 +38,12 @@ final class UserSettings {
         didSet { if state != oldValue { didChange(state) } }
     }
     /// Called each time `state` changes.
-    var didChange: @MainActor (State) -> Void = { _ in }
+    @ObservationIgnored var didChange: @MainActor (State) -> Void = { _ in }
 
-    private let preferences: Preferences
+    @ObservationIgnored private let preferences: Preferences
     /// When the menu's words for a snooze change next: its end, or midnight
     /// before it ("until tomorrow 8:00" becomes "until 8:00").
-    private var snoozeTimer: Timer?
+    @ObservationIgnored private var snoozeTimer: Timer?
 
     /// An expired snooze is cleared at once.
     init(preferences: Preferences, now: Date = Date()) {

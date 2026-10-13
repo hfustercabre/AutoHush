@@ -31,7 +31,7 @@ struct GeneralSettingsView: View {
         SettingsPageScroll {
             playerCard
             PlayerTiles(options: model.playerOptions.offered, selection: model.chosenPlayerID,
-                        onSelect: { model.actions?.chooseMusicPlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() })
+                        onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() })
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
             }

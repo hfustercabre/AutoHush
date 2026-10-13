@@ -37,7 +37,7 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
   ├── AppState ── the one AppStatus: what the menu and the windows show, written by AppDelegate only
   ├── UserSettings ── the user's settings (Auto-Pause and its snooze, the apps, timings, detection), stored in Preferences
   ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
-  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState
+  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState (and UserSettings for what only Settings shows)
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by itself after a failed start, when it opens), checks access again, keeps the held pauses and the hand-over
         └── MonitoringPipeline ── one per start, started and torn down as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes its player

@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private var statusMenu: StatusMenuController?
+    private(set) var statusMenu: StatusMenuController?
     /// The chosen player, from its start until AutoHush quits.
     let session: PlayerSession
     /// The user's settings: Auto-Pause, the apps, the timings, detection.
@@ -179,7 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showChosenPlayer()
         refreshPlayerOptions()
         showUserSettings(userSettings.state)
-        learning.follow(player)
+        learning.follow(player) // as the session does, from the start (`setChosenPlayer`)
         addWebAppModel.exampleAddress = players.exampleWebAddress
         addWebAppModel.countrySites = players.countrySites
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
@@ -193,8 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() })
-        statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
-                                          updates: updates, actions: self)
+        showStatusMenu()
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
         registerSleepObservers()
@@ -210,6 +209,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
+    }
+
+    /// Puts AutoHush's menu in the menu bar: it shows the status, and its
+    /// items go to the user's settings, the player session, the updates and
+    /// AppDelegate.
+    func showStatusMenu() {
+        statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
+                                          updates: updates, actions: self)
     }
 
     /// Waits (briefly) for a fade in progress to give the player its volume
@@ -275,15 +282,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - The user's settings and the updates'
 
-    /// Shows the user's settings in the menu and Settings, and passes what
-    /// the monitoring follows on to the player session.
+    /// Shows Auto-Pause and the apps in the menu and the windows (Settings
+    /// reads the rest from `UserSettings` itself), and passes what the
+    /// monitoring follows on to the player session.
     private func showUserSettings(_ settings: UserSettings.State) {
         status.autoPause = settings.autoPause
         showApps()
         session.settings = settings.monitoring
-        if settingsModel.timings != settings.timings { settingsModel.timings = settings.timings }
-        if settingsModel.detectionMethod != settings.detection { settingsModel.detectionMethod = settings.detection }
-        if settingsModel.appListOrder != settings.listOrder { settingsModel.appListOrder = settings.listOrder }
     }
 
     /// Shows the ignored apps in the menu, and the apps seen and ignored in
@@ -320,11 +325,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// user is moving to another one. A player AutoHush must learn opens the
     /// learning window, unless another window shows the steps. A suggested
     /// web app opens "Add a Web App", filled in with its address.
-    func chooseMusicPlayer(_ bundleID: String) {
-        chooseMusicPlayer(bundleID, showsLearningWindow: true)
-    }
-
-    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool) {
+    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true) {
         refreshPlayerOptions()
         if let address = status.playerOptions.first(where: { $0.bundleID == bundleID })?.webAddress {
             showAddWebApp(address: address)
@@ -335,16 +336,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
         else { return }
         logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
-        preferences.musicPlayer = bundleID
-        session.choose(chosen)
+        setChosenPlayer(chosen)
         watchFolders(holding: appURL)
-        showChosenPlayer()
         showApps()
         // From the welcome window: it goes on to what the player needs, and
         // closes once that's allowed; the learning window waits for it.
         let fromWelcome = isShowingPlayerChooser
         if fromWelcome { settingsModel.welcomeAsksPermissions = true }
-        learning.follow(chosen)
         learningAfterWelcome = false
         if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
@@ -415,7 +413,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if player.kind == .safariWebApp, !options.contains(where: { $0.bundleID == player.bundleID }),
            Self.isDeleted(player.bundleID) {
             logger.notice("\(player.name, privacy: .public) was deleted: no music player is chosen")
-            forgetChosenPlayer()
+            setChosenPlayer(nil)
             return
         }
         let appURL = options.first { $0.bundleID == player.bundleID }?.appURL
@@ -446,12 +444,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return url.pathComponents.contains(".Trash")
     }
 
-    /// No player is chosen any more: the status line asks for one.
-    private func forgetChosenPlayer() {
-        preferences.musicPlayer = nil
-        session.choose(nil)
+    /// `player` is the chosen one now (`nil`: none, and the status line asks
+    /// for one): it's stored, and the player session and the learning
+    /// session are told together, so they always follow the same player.
+    private func setChosenPlayer(_ player: (any MusicPlayer)?) {
+        preferences.musicPlayer = player?.bundleID
+        session.choose(player)
         showChosenPlayer()
-        learning.follow(nil)
+        learning.follow(player)
     }
 
     /// Forgets the learned buttons of web apps that are gone: deleted, not
@@ -661,6 +661,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - What only AppDelegate does
 
 extension AppDelegate: AppActions {
+    func choosePlayer(_ bundleID: String) { chooseMusicPlayer(bundleID) }
     func openAddWebApp() { showAddWebApp() }
     func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }

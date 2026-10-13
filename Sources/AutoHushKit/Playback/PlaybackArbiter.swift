@@ -327,7 +327,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Queries the player's live state, caches it and publishes the resulting
-    /// playback state. Used once at bootstrap to seed the cache.
+    /// playback state. Used once as monitoring starts, to seed the cache.
     @discardableResult
     package func refreshPlaybackState() async -> PlayerState {
         let state = await livePlayerState()
@@ -336,7 +336,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Stops all future actions, including an already scheduled resume.
-    /// Called when this arbiter is replaced by a new bootstrap.
+    /// Called as its monitoring stops: a new start replaces it, or AutoHush quits.
     package func shutdown() async {
         isShutDown = true
         cancelPendingPause()

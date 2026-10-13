@@ -10,7 +10,7 @@ import AutoHushKit
 protocol AppActions: AnyObject {
     /// Makes `bundleID` the player AutoHush controls; a suggested web app
     /// opens "Add a Web App" instead.
-    func chooseMusicPlayer(_ bundleID: String)
+    func choosePlayer(_ bundleID: String)
     /// Opens the "Add a Web App" window.
     func openAddWebApp()
     /// Learns the chosen player's controls afresh, in a new learning window.

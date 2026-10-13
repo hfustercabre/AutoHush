@@ -5,7 +5,8 @@ import AutoHushKit
 /// What the Settings window shows and edits, and the welcome, learning and
 /// Add a Web App windows with it. What the app's state holds (the chosen
 /// player, the status line, Auto-Pause, learning and its pause, the apps)
-/// it reads from `AppState`; the rest `AppDelegate` keeps in sync here. The
+/// it reads from `AppState`, and the timings, detection and the apps' order
+/// from `UserSettings`; the rest `AppDelegate` keeps in sync here. The
 /// views' actions go to the modules that own them (`settings`, `updates`,
 /// `learningSession`), or to `actions` for what only AppDelegate does. Launch at
 /// login is handled here directly.
@@ -39,36 +40,42 @@ final class SettingsModel {
 
     // From the app's state.
     /// The music players to choose from (also in the welcome window).
-    var playerOptions: [PlayerOption] { state.status.playerOptions }
+    var playerOptions: [PlayerOption] { state.playerOptions }
     /// The bundle ID of the chosen player; `nil` while none is chosen.
-    var chosenPlayerID: String? { state.status.chosenPlayerID }
+    var chosenPlayerID: String? { state.chosenPlayerID }
     /// The chosen player as it's offered.
-    var chosenPlayer: PlayerOption? { state.status.chosenPlayer }
+    var chosenPlayer: PlayerOption? { state.chosenPlayer }
     /// The chosen player's name, e.g. "Spotify".
     var chosenPlayerName: String? { chosenPlayer?.name }
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
-    var learning: LearningStatus? { state.status.learning }
+    var learning: LearningStatus? { state.learning }
     /// Its controls can be learned afresh (see `AppStatus`).
-    var canLearnControlsAgain: Bool { state.status.canLearnControlsAgain }
+    var canLearnControlsAgain: Bool { state.canLearnControlsAgain }
     /// Once the user said the chosen player plays: when learning starts
     /// over without the pause.
-    var learningPauseDeadline: Date? { state.status.learningPause.deadline }
+    var learningPauseDeadline: Date? { state.learningPause.deadline }
     /// Why the user's last learning click didn't move it on.
-    var learningNote: LearningNote? { state.status.learningPause.note }
+    var learningNote: LearningNote? { state.learningPause.note }
     /// Once the user said it plays: AutoHush pauses it itself, to learn
     /// which button changes, or, when it couldn't, the user does.
-    var learningPauseMode: LearningPauseMode { state.status.learningPause.mode }
+    var learningPauseMode: LearningPauseMode { state.learningPause.mode }
     /// What the music player is doing, as the menu's card says it, e.g.
     /// "Paused — Safari is playing"; orange (`statusNeedsAttention`) when
     /// something needs the user.
-    var statusLine: String { state.status.statusLine }
-    var statusNeedsAttention: Bool { state.status.needsAttention }
-    var isAutoPauseOn: Bool { state.status.autoPause == .on }
+    var statusLine: String { state.statusLine }
+    var statusNeedsAttention: Bool { state.needsAttention }
+    var isAutoPauseOn: Bool { state.autoPause == .on }
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
-    var autoPauseNote: String? { state.status.autoPause.settingsNote }
+    var autoPauseNote: String? { state.autoPause.settingsNote }
 
-    var detectionMethod: DetectionMethod
+    // From the user's settings.
+    var detectionMethod: DetectionMethod { settings.state.detection }
+    /// How the apps are ordered; the most recent first unless the user
+    /// chose otherwise.
+    var appListOrder: AppListOrder { settings.state.listOrder }
+    var timings: TimingSettings { settings.state.timings }
+
     var checksForUpdatesAutomatically = true
     /// What automatic checks lead to: notify, download or install.
     var automaticUpdates = AutomaticUpdates.install
@@ -102,13 +109,17 @@ final class SettingsModel {
 
     // Apps
     /// The apps that played sound, the most recent first, plus the ignored
-    /// ones, in `appListOrder`.
+    /// ones, in `appListOrder`. Ordered again only when the apps or the
+    /// order changed, not each time a view reads them.
     var apps: [AppRow] {
-        Self.ordered(Self.rows(seen: state.status.seenApps, ignored: state.status.ignoredApps), by: appListOrder)
+        let seen = state.seenApps, ignored = state.ignoredApps, order = appListOrder
+        if let last = orderedApps, last.seen == seen, last.ignored == ignored, last.order == order { return last.rows }
+        let rows = Self.ordered(Self.rows(seen: seen, ignored: ignored), by: order)
+        orderedApps = (seen, ignored, order, rows)
+        return rows
     }
-    /// How the apps are ordered; the most recent first unless the user
-    /// chose otherwise.
-    var appListOrder: AppListOrder
+    /// The rows `apps` ordered last, and what from.
+    @ObservationIgnored private var orderedApps: (seen: [AudioSource], ignored: [AudioSource], order: AppListOrder, rows: [AppRow])?
     /// The search in Settings → Apps: `nil` while it's closed. It's closed
     /// again each time Settings opens.
     var appSearch: String?
@@ -136,8 +147,6 @@ final class SettingsModel {
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
     // Detection and Fades
-    var timings: TimingSettings
-
     /// Detection's timings shown (pause after, resume after, and the
     /// silence threshold while AntiDot mode is off) are their defaults, so
     /// its Restore Defaults has nothing to do.
@@ -168,7 +177,8 @@ final class SettingsModel {
 
     /// What the menu shows too, and learning's pause.
     @ObservationIgnored let state: AppState
-    /// The user's settings: Settings changes them there.
+    /// The user's settings: Settings shows some of them from there, and
+    /// changes them there.
     @ObservationIgnored let settings: UserSettings
     /// Update checks, and their settings.
     @ObservationIgnored let updates: any UpdateCommands
@@ -188,9 +198,6 @@ final class SettingsModel {
         self.learningSession = learningSession
         self.actions = actions
         self.launchAtLoginController = launchAtLoginController
-        appListOrder = settings.state.listOrder
-        timings = settings.state.timings
-        detectionMethod = settings.state.detection
         refreshLaunchAtLogin()
     }
 
@@ -256,7 +263,6 @@ final class SettingsModel {
 
     func setAppListOrder(_ order: AppListOrder) {
         guard order != appListOrder else { return }
-        appListOrder = order
         settings.setListOrder(order)
     }
 
@@ -291,12 +297,10 @@ final class SettingsModel {
     func useAntiDotMode() { setDetectionMethod(.playbackSignals) }
 
     func setTimings(_ timings: TimingSettings) {
-        self.timings = timings.clamped
-        settings.setTimings(self.timings)
+        settings.setTimings(timings.clamped)
     }
 
     func setDetectionMethod(_ method: DetectionMethod) {
-        detectionMethod = method
         settings.setDetectionMethod(method)
     }
 

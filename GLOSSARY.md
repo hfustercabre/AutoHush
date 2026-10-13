@@ -35,7 +35,8 @@ icons: the status line, its orange, the menu bar icon.
 
 **App state** (`AppState`): the one place the status is kept. AppDelegate
 writes it; Settings and the welcome, learning and Add a Web App windows
-read it; the menu gets a copy each time it changes (its card follows it
+read it part by part, each window drawn again only when a part it shows
+changes; the menu gets a copy each time it changes (its card follows it
 while open, its rows when it next opens). _Avoid_: model (Settings' model is the windows' own: what they
 alone show, and their actions).
 
@@ -57,7 +58,9 @@ only what the open ones need, and stops when none is open.
 follows from them: Auto-Pause and its snooze, the apps ignored and the
 apps seen, the timings, the detection method, the order of Settings' list
 of apps. It stores them, and the monitoring, the menu and Settings show
-them. _Avoid_: preferences (that's where they're stored, `Preferences`).
+them: Settings reads what only it shows (the timings, detection, the
+list's order) here, the rest from the app state. _Avoid_: preferences
+(that's where they're stored, `Preferences`).
 
 **Monitoring** (`MonitoringPipeline`): the engine of one start. It follows
 which apps play, decides when to pause and resume the player, and does it.

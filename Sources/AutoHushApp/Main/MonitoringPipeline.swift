@@ -1,8 +1,8 @@
 import Foundation
 import AutoHushKit
 
-/// Everything one bootstrap creates — arbiter, audio monitor and player
-/// observer — wired together, started and torn down as a unit.
+/// Everything one start creates (see GLOSSARY.md) — arbiter, audio monitor
+/// and player observer — wired together, started and torn down as a unit.
 ///
 /// Commands to the arbiter (player state changes, auto-pause on/off) and
 /// status updates for the menu each travel through a single ordered stream,

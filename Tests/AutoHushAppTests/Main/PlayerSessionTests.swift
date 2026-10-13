@@ -482,6 +482,25 @@ struct PlayerSessionTests {
     }
 
     @MainActor
+    @Test("a start under way as AutoHush quits gives up, and nothing starts after: no monitoring outlives the quit")
+    func quitDuringStart() async {
+        let bench = Bench()
+        let checking = ManualSleep() // holds the start at its access check
+        await bench.first.setBeforeVerify { await checking.sleep(.zero) }
+        let session = bench.makeSession(bench.first)
+        session.launch()
+        await TestWait.until { checking.durations.count == 1 }
+
+        #expect(session.quit() == nil) // nothing runs yet
+        checking.timeIsUp()
+        session.retry()
+        session.playerLaunched(Players.first)
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(bench.monitorings.made.isEmpty)
+        #expect(await bench.first.verifyCallCount == 1)
+    }
+
+    @MainActor
     @Test("quitting with players held paused hands those over too, with or without the chosen one's pause")
     func heldPausesHandedOverOnQuit() async {
         let bench = Bench()

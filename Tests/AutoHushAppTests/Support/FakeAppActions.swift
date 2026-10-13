@@ -15,7 +15,7 @@ final class FakeAppActions: AppActions {
     let log: CallLog
     init(log: CallLog = CallLog()) { self.log = log }
 
-    func chooseMusicPlayer(_ bundleID: String) { log.calls.append("player \(bundleID)") }
+    func choosePlayer(_ bundleID: String) { log.calls.append("player \(bundleID)") }
     func openAddWebApp() { log.calls.append("addWebApp") }
     func learnControlsAgain() { log.calls.append("learnAgain") }
     func requestPermission(_ permission: Permission) { log.calls.append("warning \(permission.grantTitle)") }

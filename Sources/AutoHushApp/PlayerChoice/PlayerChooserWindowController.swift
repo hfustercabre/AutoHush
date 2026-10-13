@@ -153,11 +153,11 @@ struct PlayerChooserView: View {
     /// A click on a tile: a suggested web app opens "Add a Web App" filled
     /// in; a player is picked.
     private func select(_ option: PlayerOption) {
-        if option.webAddress != nil { model.actions?.chooseMusicPlayer(option.bundleID) } else { clicked = option.bundleID }
+        if option.webAddress != nil { model.actions?.choosePlayer(option.bundleID) } else { clicked = option.bundleID }
     }
 
     private func continueTapped() {
-        if let picked { model.actions?.chooseMusicPlayer(picked) }
+        if let picked { model.actions?.choosePlayer(picked) }
     }
 
     /// Return in the search, which has the keyboard from the start and keeps

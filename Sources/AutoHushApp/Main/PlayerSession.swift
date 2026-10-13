@@ -128,6 +128,8 @@ final class PlayerSession {
     /// Between the Mac going to sleep and waking up: a monitoring started
     /// meanwhile (the player relaunched in a dark wake) knows it too.
     private var isAsleep = false
+    /// AutoHush is quitting: nothing starts any more (see `quit`).
+    private var hasQuit = false
 
     init(
         player: (any MusicPlayer)?,
@@ -275,8 +277,12 @@ final class PlayerSession {
     /// it's ignored, and so is one for another player than the one chosen by
     /// then. Every monitoring then stops, a faded-down player getting its
     /// volume back first: the task returned ends once that's done; `nil`
-    /// when nothing runs.
+    /// when nothing runs. Nothing starts from then on, and a start under way
+    /// gives up: a monitoring it made would run on with nothing to stop it.
     func quit(now: Date = Date()) -> Task<Void, Never>? {
+        hasQuit = true
+        startGeneration += 1
+        cancelRetry()
         handOverPauses(now: now)
         let monitoring = self.monitoring
         guard monitoring != nil || !heldPauses.isEmpty else { return nil }
@@ -313,6 +319,7 @@ final class PlayerSession {
     }
 
     private func start(retriesLeft: Int = 0) async {
+        guard !hasQuit else { return }
         startGeneration += 1
         let generation = startGeneration
         cancelRetry() // this start takes its place

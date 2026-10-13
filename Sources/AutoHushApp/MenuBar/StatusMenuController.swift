@@ -290,7 +290,7 @@ final class StatusMenuController: NSObject {
     /// can't be, and comes after those that are; a suggested web app opens
     /// "Add a Web App" filled in.
     private func playerRow(for option: PlayerOption) -> NSMenuItem {
-        let row = item(option.name, #selector(chooseMusicPlayer(_:)), payload: Payload(option.bundleID))
+        let row = item(option.name, #selector(choosePlayer(_:)), payload: Payload(option.bundleID))
         row.shownImage = option.icon(size: 16)
         row.state = option.bundleID == status.chosenPlayerID ? .on : .off
         if option.isUntested {
@@ -365,9 +365,9 @@ final class StatusMenuController: NSObject {
 
     @objc private func useAntiDotMode() { settings.setDetectionMethod(.playbackSignals) }
 
-    @objc private func chooseMusicPlayer(_ sender: NSMenuItem) {
+    @objc private func choosePlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }
-        actions?.chooseMusicPlayer(payload.value)
+        actions?.choosePlayer(payload.value)
     }
 
     @objc private func toggleIgnored(_ sender: NSMenuItem) {

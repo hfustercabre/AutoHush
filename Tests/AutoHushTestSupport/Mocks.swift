@@ -27,6 +27,9 @@ package actor MockMusicPlayer: MusicPlayer {
     /// Runs inside every state query before it answers, so a test can hold a
     /// query while it changes something.
     package var beforeStateAnswer: (@Sendable () async -> Void)?
+    /// Runs inside every access check before it answers, so a test can hold
+    /// a start there while it changes something.
+    package var beforeVerify: (@Sendable () async -> Void)?
 
     package init(
         bundleID: String = "com.example.jukebox",
@@ -54,6 +57,7 @@ package actor MockMusicPlayer: MusicPlayer {
 
     package func verifyControlAccess() async throws {
         verifyCallCount += 1
+        if let beforeVerify { await beforeVerify() }
         if let error = failVerifyWith { throw error }
     }
 
@@ -73,6 +77,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package func setFailVerify(_ error: Error?) { failVerifyWith = error }
 
     package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
+    package func setBeforeVerify(_ hook: (@Sendable () async -> Void)?) { beforeVerify = hook }
 
     /// The player's volume; `nil` (the default) means it has none, so no fades.
     package var volumeLevel: Int?
