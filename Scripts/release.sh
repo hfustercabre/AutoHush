@@ -47,7 +47,7 @@ if [[ -z "$(team_requirement "$IDENTITY")" ]]; then
     if [[ "$IDENTITY" == "-" ]]; then
         found="the identity is ad hoc (no valid Apple Development certificate was found or selected)"
     else
-        found="\"$IDENTITY\" has no developer team"
+        found="\"$(identity_name "$IDENTITY")\" has no developer team"
     fi
     fail "releases must be signed with the maintainer's Apple Development certificate (its developer team), but $found; installed copies would refuse the update. If the certificate expired, renew it in Xcode (Settings → Accounts → Manage Certificates)."
 fi
@@ -86,7 +86,7 @@ echo ""
 echo "Release $VERSION prepared:"
 echo "  disk image     $DMG_PATH"
 echo "  SHA-256        $SHA256"
-echo "  signed with    $IDENTITY (not notarized: Gatekeeper asks users to confirm the first launch)"
+echo "  signed with    $(identity_name "$IDENTITY") (not notarized: Gatekeeper asks users to confirm the first launch)"
 echo "  developer team ${TEAM:-none} (must be the last release's)"
 echo "  release notes  $NOTES_PATH"
 echo ""

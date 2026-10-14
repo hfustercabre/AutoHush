@@ -1,6 +1,5 @@
 import AppKit
 import OSLog
-import AutoHushKit
 
 // UpdateController: the update window.
 extension UpdateController {

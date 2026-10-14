@@ -32,7 +32,7 @@ extension AppHealthState {
 
     /// The chosen music player is no longer installed.
     static func playerNotInstalled(_ playerName: String) -> AppHealthState {
-        .degraded(String(localized: "\(playerName) is not installed",
+        .degraded(String(localized: "\(playerName) isn’t installed",
                          comment: "Status line; %@ is the media player, e.g. Spotify"))
     }
 
@@ -44,10 +44,10 @@ extension AppHealthState {
         case .accessibilityPermissionDenied:
             self = .needsPermission(.accessibility(player: playerName))
         case .playerNotRunning:
-            self = .degraded(String(localized: "\(playerName) is not running",
+            self = .degraded(String(localized: "\(playerName) isn’t running",
                                     comment: "Status line; %@ is the media player, e.g. Spotify"))
         case .playerNotResponding:
-            self = .retrying(String(localized: "\(playerName) is not responding",
+            self = .retrying(String(localized: "\(playerName) isn’t responding",
                                     comment: "Status line; %@ is the media player, e.g. Spotify"))
         case .playerCommandFailed, .stillLearning: // stillLearning: never at startup, learning happens while it runs
             self = .retrying(Self.cantControl(playerName))

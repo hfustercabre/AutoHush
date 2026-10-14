@@ -1,7 +1,6 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: what the menu's items do.
 extension AppDelegate {
@@ -56,5 +55,21 @@ extension AppDelegate {
     /// as with its Done button.
     func followWelcomeClosed() {
         if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
+    }
+
+    /// Edit → Find… (⌘F): opens Settings → Apps' search, or puts the
+    /// keyboard in the search of the window in front (the welcome window's,
+    /// Apps' once open). Elsewhere it does nothing.
+    func find() {
+        guard let window = NSApp.keyWindow else { return }
+        if window === settingsWindowController?.window {
+            guard settingsWindowController?.shownPage == .apps else { return }
+            // Closed, it opens, taking the keyboard as it appears.
+            guard settingsModel.appSearch != nil else {
+                settingsModel.appSearch = ""
+                return
+            }
+        }
+        if let field = window.contentView?.firstEditableTextField { window.makeFirstResponder(field) }
     }
 }

@@ -10,12 +10,11 @@ import AutoHushKit
 /// the button says: a read of one element, which the page answers. The state
 /// observer's reads, about once a second, ask it less while the web app is
 /// silent (`polledState`). After a reload every element is new, so the
-/// button is looked for again. While it doesn't know
-/// the button, it learns it from the user saying when the music plays, and
-/// the page once paused: AutoHush pauses it itself with the keyboard's
-/// Play/Pause key, or, when that doesn't take, the user does and says so
-/// (`PlayPauseLearner`). Meanwhile it reports the music as playing while
-/// the app's sound is on.
+/// button is looked for again. While it doesn't know the button, it learns
+/// it from the user saying when the music plays, and the page once paused:
+/// AutoHush pauses it itself with the keyboard's Play/Pause key, or, when
+/// that doesn't take, the user does and says so (`PlayPauseLearner`).
+/// Meanwhile it reports the music as playing while the app's sound is on.
 ///
 /// When the web app is heard but the button can't be found for a minute
 /// (the site changed), it learns again, keeping what it knew: if the button
@@ -56,7 +55,7 @@ final class WebAppControl: @unchecked Sendable {
     /// windows are checked for one that plays.
     static let otherWindowsInterval: TimeInterval = 2
     /// After the Play/Pause key, how long the page gets to change its
-    /// button's words (YouTube Music in the VM: within 3 s), how often it's
+    /// button's words (YouTube Music: within 3 s, measured), how often it's
     /// read meanwhile, and how long a change gets to settle: a song's own
     /// button can change before the player bar's.
     static let keyWait: TimeInterval = 3

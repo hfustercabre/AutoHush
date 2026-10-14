@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushTestSupport
 
 @Suite("DiagnosticsReport")
 struct DiagnosticsReportTests {
@@ -57,7 +56,7 @@ struct DiagnosticsReportTests {
             Silence threshold: -60 dB
 
             Permissions
-            Audio recording: Allowed
+            Audio Recording: Allowed
             Automation for Jukebox: Allowed
             Notifications: Allowed
 
@@ -136,7 +135,7 @@ struct DiagnosticsReportTests {
             return try #require(snapshot.sections.first { $0.kind == .permissions }).rows
         }
         #expect(try rows { _ in } == [
-            .init(label: "Audio recording", value: "Allowed", mark: .ok),
+            .init(label: "Audio Recording", value: "Allowed", mark: .ok),
             .init(label: "Automation for Jukebox", value: "Allowed", mark: .ok),
             .init(label: "Notifications", value: "Allowed", mark: .ok),
         ])
@@ -146,7 +145,7 @@ struct DiagnosticsReportTests {
             $0.playerPermissionGranted = false
             $0.notificationsOff = true
         } == [
-            .init(label: "Audio recording", value: "Not allowed", mark: .problem),
+            .init(label: "Audio Recording", value: "Not allowed", mark: .problem),
             .init(label: "Accessibility for Jukebox", value: "Not allowed", mark: .problem),
             .init(label: "Notifications", value: "Off", mark: .neutral),
         ])
@@ -172,7 +171,7 @@ struct DiagnosticsReportTests {
             $0.lastUpdateCheck = nil
         })
         #expect(snapshot.appsSummary == "None")
-        #expect(snapshot.text.contains("Apps with Sound\nNo foreign audio output currently detected."))
+        #expect(snapshot.text.contains("Apps with Sound\nNo other app is playing sound right now."))
         #expect(snapshot.text.contains("Player: None chosen"))
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode

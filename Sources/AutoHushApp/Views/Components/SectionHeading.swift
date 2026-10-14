@@ -44,5 +44,6 @@ struct SectionHeading: View {
         SectionLabel(title)
             .padding(.leading, 4)
             .padding(.top, isFirst ? 0 : 6)
+            .accessibilityAddTraits(.isHeader)
     }
 }

@@ -23,14 +23,16 @@ extension StatePresentation {
     }
 
     /// While something needs the user: VoiceOver says what the status line
-    /// does ("AutoHush: Spotify is not running").
+    /// does ("AutoHush: Spotify isn't running").
     static func needingAttention(_ line: String) -> StatePresentation {
-        StatePresentation(
-            icon: .attention,
-            label: String(localized: "AutoHush: \(line)",
-                          comment: "VoiceOver label of the menu bar icon while something needs the user; %@ is the menu's status line, e.g. “Spotify is not running” or “Choose a media player”"),
-            line: line
-        )
+        StatePresentation(icon: .attention, label: iconLabel(line), line: line)
+    }
+
+    /// The menu bar icon's VoiceOver label that says the status line: while
+    /// something needs the user, and while Auto-Pause is off.
+    static func iconLabel(_ line: String) -> String {
+        String(localized: "AutoHush: \(line)",
+               comment: "VoiceOver label of the menu bar icon while something needs the user or Auto-Pause is off; %@ is the menu's status line, e.g. “Spotify isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”")
     }
 }
 
@@ -69,12 +71,8 @@ extension PlaybackState {
                              comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
             )
         case .pauseFailed:
-            return StatePresentation(
-                icon: .attention,
-                label: String(localized: "AutoHush: couldn’t pause your player", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Couldn’t pause — \(Self.describePlaying(playing))",
-                             comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”")
-            )
+            return .needingAttention(String(localized: "Couldn’t pause — \(Self.describePlaying(playing))",
+                                            comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”"))
         }
     }
 

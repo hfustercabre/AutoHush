@@ -3,9 +3,9 @@ import Foundation
 /// While AutoHush's windows are open, follows once a second what they show
 /// that macOS doesn't announce (see GLOSSARY.md): the permissions, whether
 /// notifications are on, launch at login, Diagnostics, and the players
-/// installed while none is chosen. Each window says once what it needs; each second the watch
-/// refreshes what the open ones need, together, and it stops when none is
-/// open. A window that opens wakes it.
+/// installed while none is chosen. Each window says once what it needs;
+/// each second the watch refreshes what the open ones need, together, and
+/// it stops when none is open. A window that opens wakes it.
 @MainActor
 final class WindowWatch {
     /// What a window shows that needs following, refreshed in this order.

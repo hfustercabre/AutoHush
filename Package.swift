@@ -5,7 +5,7 @@ import PackageDescription
 //
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
-//          ├─ AutoHushPlayers   the supported music players
+//          ├─ AutoHushPlayers   the supported media players
 //          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport…
 //          │    │                   one <App>Support target per player, all in
 //          │    │                   Sources/PlayersSupport/: what's special about it
@@ -25,10 +25,10 @@ import PackageDescription
 //                               VLCSupport, AutoHushKit: whether and how AutoHush
 //                               could control an app, checked with AutoHush's own code
 //
-// Code inside a module is grouped by domain. Types shared between modules use
-// `package` access: visible inside this package, not to anyone else. Bundle
-// metadata lives in Resources/ and is assembled into AutoHush.app by
-// Scripts/build-app.sh.
+// Code inside a module is sorted by kind of code first (Models, Services,
+// Views…), then by area. Types shared between modules use `package` access:
+// visible inside this package, not to anyone else. Bundle metadata lives in
+// Resources/ and is assembled into AutoHush.app by Scripts/build-app.sh.
 let package = Package(
     name: "AutoHush",
     platforms: [

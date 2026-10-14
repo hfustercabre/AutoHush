@@ -1,5 +1,7 @@
 #!/bin/bash
 # Shared settings and helpers for the build and release scripts (sourced).
+# The settings are used by the scripts that source this file, not here:
+# shellcheck disable=SC2034
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP_NAME="AutoHush"
@@ -42,18 +44,48 @@ has_identity() {
         | grep -qF "\"$1\""
 }
 
-# The first "Apple Development" identity in the keychain, or nothing. Only
-# trusted identities count (-v), so an expired certificate, or one whose Apple
-# intermediate certificate is missing, is skipped.
+# The "Apple Development" identity to sign with, by its SHA-1 hash, or
+# nothing. Only trusted identities count (-v), so an expired certificate, or
+# one whose Apple intermediate certificate is missing, is skipped. Of several
+# (a renewed certificate beside the old one), the one valid longest: they
+# share a name, which codesign refuses as ambiguous.
 apple_development_identity() {
-    local identities
+    local identities hash end best="" best_end=0
     identities="$(security find-identity -v -p codesigning ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null)" || true
-    sed -n 's/^[^"]*"\(Apple Development:[^"]*\)".*/\1/p' <<<"$identities" | sed -n 1p
+    while read -r hash; do
+        end="$(certificate_pem "$hash" | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)"
+        end="$(date -j -u -f "%b %e %H:%M:%S %Y %Z" "$end" +%s 2>/dev/null)" || continue
+        if (( end > best_end )); then
+            best="$hash"
+            best_end="$end"
+        fi
+    done < <(sed -n 's/^ *[0-9]*) \([0-9A-F]\{40\}\) "Apple Development:.*/\1/p' <<<"$identities")
+    echo "$best"
+}
+
+# The PEM certificate of an identity: its SHA-1 hash, or its name.
+certificate_pem() {
+    local identity="$1"
+    if [[ "$identity" =~ ^[0-9A-F]{40}$ ]]; then
+        security find-certificate -a -Z -p ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null \
+            | awk -v hash="$identity" '/^SHA-1 hash:/ { mine = ($3 == hash) } mine { print } mine && /END CERTIFICATE/ { exit }' \
+            | sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p'
+    else
+        security find-certificate -c "$identity" -p ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null
+    fi
+}
+
+# An identity's name, for messages: its own name when given by SHA-1 hash.
+identity_name() {
+    local name
+    name="$(security find-identity -v -p codesigning ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null \
+        | sed -n "s/^ *[0-9]*) $1 \"\([^\"]*\)\".*/\1/p" | sed -n 1p)"
+    echo "${name:-$1}"
 }
 
 # Code signing identity, in order of preference:
 #   1. $SIGNING_IDENTITY ("-" forces ad-hoc signing)
-#   2. the first "Apple Development" identity in the keychain
+#   2. the keychain's "Apple Development" identity (the one valid longest)
 #   3. the "AutoHush Self-Signed" certificate
 #   4. ad hoc ("-")
 # The app is identified by its certificate rather than its content hash only
@@ -86,7 +118,8 @@ resolve_signing_identity() {
 team_requirement() {
     local identity="$1" cert details team
     [[ "$identity" != "-" ]] || return 0
-    cert="$(security find-certificate -c "$identity" -p ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null)" || return 0
+    cert="$(certificate_pem "$identity")"
+    [[ -n "$cert" ]] || return 0
     details="$(openssl x509 -noout -subject -issuer -nameopt RFC2253 <<<"$cert" 2>/dev/null)" || return 0
     # "anchor apple generic" holds only for a certificate issued by Apple.
     grep -q '^issuer=.*O=Apple Inc' <<<"$details" || return 0

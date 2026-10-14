@@ -24,7 +24,11 @@ struct UpdatesSettingsView: View {
                         // A copy that can't install itself can only notify.
                         selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
                         onSelect: { model.updates.setMode($0) },
-                        onUnavailableClick: { model.flashNotificationsNote() }
+                        onUnavailableClick: {
+                            model.flashNotificationsNote()
+                            AccessibilityNotification.Announcement(Self.notificationsOffNote).post()
+                        },
+                        unavailableNote: Self.notificationsOffNote
                     )
                     .disabled(model.updateInstallNote != nil)
                     Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
@@ -32,8 +36,7 @@ struct UpdatesSettingsView: View {
                 // Shown even with checks off: AutoHush turns them off when notifications go off.
                 if model.notificationsOff {
                     // Blinks bright after a click on a choice that needs notifications.
-                    Text("Notifications are off for AutoHush, so it can’t tell you about updates.",
-                         comment: "Settings → Updates, under the update choices, while notifications are off for AutoHush")
+                    Text(verbatim: Self.notificationsOffNote)
                         .font(.appCaption)
                         .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
@@ -53,6 +56,15 @@ struct UpdatesSettingsView: View {
                 }
             }
         }
+    }
+}
+
+extension UpdatesSettingsView {
+    /// Under the update choices while notifications are off; also what
+    /// VoiceOver says for the choices that need them.
+    static var notificationsOffNote: String {
+        String(localized: "Notifications are off for AutoHush, so it can’t tell you about updates.",
+               comment: "Settings → Updates, under the update choices, while notifications are off for AutoHush")
     }
 }
 

@@ -108,6 +108,7 @@ struct StatusCardView: View {
                 Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.appSecondary)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)

@@ -129,6 +129,7 @@ struct AppsSettingsView: View {
                 .font(.appCaption)
                 .foregroundStyle(.appSecondary)
                 .fixedSize() // on one line, in every language
+                .accessibilityHidden(true) // the pop-up says it, as its label
             Picker(selection: Binding(
                 get: { order.criterion },
                 set: { model.setAppListOrder(AppListOrder(criterion: $0)) }

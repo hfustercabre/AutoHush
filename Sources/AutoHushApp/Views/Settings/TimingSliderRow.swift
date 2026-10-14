@@ -32,7 +32,11 @@ struct TimingSliderRow: View {
                 ),
                 in: range,
                 step: step
-            )
+            ) {
+                title // what VoiceOver says for it; the row shows it above
+            }
+            .labelsHidden()
+            .accessibilityValue(Text(verbatim: format(model.timings[keyPath: keyPath])))
             help.captionStyle()
         }
     }

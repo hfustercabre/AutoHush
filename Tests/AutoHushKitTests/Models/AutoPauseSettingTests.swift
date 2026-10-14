@@ -3,8 +3,8 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("AutoPause")
-struct AutoPauseTests {
+@Suite("AutoPauseSetting")
+struct AutoPauseSettingTests {
     @Test("enabled without snooze is active; disabled is not")
     func enabledState() {
         let now = TestDates.date(2, 12)

@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import AutoHushKit
 
 /// What `AppDelegate` needs of the window; tests stand in for it.
 @MainActor

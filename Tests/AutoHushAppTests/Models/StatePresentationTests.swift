@@ -4,8 +4,8 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("StatusPresentation")
-struct StatusPresentationTests {
+@Suite("StatePresentation")
+struct StatePresentationTests {
 
     // MARK: - States
 
@@ -44,8 +44,8 @@ struct StatusPresentationTests {
     @Test("each health state has its icon, label and status line; problems show their message, which VoiceOver says too", arguments: [
         (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
         (.needsPlayer("Choose a media player"), .attention, "AutoHush: Choose a media player", "Choose a media player"),
-        (.degraded("Jukebox is not running"), .attention, "AutoHush: Jukebox is not running", "Jukebox is not running"),
-        (.retrying("Jukebox is not responding"), .attention, "AutoHush: Jukebox is not responding", "Jukebox is not responding"),
+        (.degraded("Jukebox isn’t running"), .attention, "AutoHush: Jukebox isn’t running", "Jukebox isn’t running"),
+        (.retrying("Jukebox isn’t responding"), .attention, "AutoHush: Jukebox isn’t responding", "Jukebox isn’t responding"),
         (.needsPermission(.automation(player: "Jukebox")), .attention,
          "AutoHush: Allow Automation access to control Jukebox", "Allow Automation access to control Jukebox"),
         (.needsPermission(.accessibility(player: "Jukebox")), .attention,

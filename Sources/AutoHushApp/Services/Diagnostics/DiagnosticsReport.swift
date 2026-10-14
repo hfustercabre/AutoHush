@@ -38,7 +38,7 @@ enum DiagnosticsReport {
 
     /// Said when no app has its sound on.
     static var noAudio: String {
-        String(localized: "No foreign audio output currently detected.", comment: "Diagnostics")
+        String(localized: "No other app is playing sound right now.", comment: "Diagnostics")
     }
 
     static var appsTitle: String {
@@ -80,7 +80,7 @@ enum DiagnosticsReport {
     private static func player(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         let title = String(localized: "Media Player", comment: "Settings → Diagnostics: heading")
         guard let player = status.chosenPlayer else {
-            let none = String(localized: "None chosen", comment: "Diagnostics: no media player chosen")
+            let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,
                          rows: [Row(label: playerLabel, value: none, mark: .problem)])
         }
@@ -146,7 +146,7 @@ enum DiagnosticsReport {
     private static func permissions(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         var rows: [Row] = []
         let antiDot = facts.detectionMethod != .audioLevels
-        let audio = String(localized: "Audio recording", comment: "Diagnostics: the System Audio Recording permission")
+        let audio = String(localized: "Audio Recording", comment: "Welcome window and Diagnostics: the System Audio Recording permission (macOS’s name for it)")
         switch facts.audioRecording {
         case .granted?:
             rows.append(Row(label: audio, value: allowed, mark: .ok))
@@ -291,7 +291,7 @@ enum DiagnosticsReport {
         case .pending:
             return String(localized: "Audio levels (starting)", comment: "Diagnostics: audio levels, before the first is measured")
         case .unavailable:
-            return String(localized: "Open audio streams (no audio recording access)",
+            return String(localized: "Open audio streams (no Audio Recording access)",
                           comment: "Diagnostics: the detection used while the audio recording permission is missing")
         case .playbackSignals: return DetectionMethod.playbackSignals.title
         case .disabled:        return DetectionMethod.openStreams.title

@@ -26,7 +26,7 @@ its translations, contributing and releases. For using AutoHush, see the
 
 **The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and the player playing here or paused by us), with a 2 s release delay. The player itself is never tapped, except to prove the permission works when TCC can't be read.
 
-**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
+**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/Utilities/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
 
 ## Architecture
 
@@ -53,7 +53,7 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
                                                                       ├── pauses the player on the first app
                                                                       ├── resumes after all apps stop
                                                                       ├── VolumeFader: logarithmic fades around both
-                                                                      └── MusicPlayer (ScriptablePlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility)
+                                                                      └── MusicPlayer (ScriptablePlayer and VLCPlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility)
 ```
 
 AutoHush is a Swift package of several modules, so the compiler keeps the layers apart:
@@ -89,26 +89,26 @@ Sources/
                          SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
                          the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
                          UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
-                         LearningNote, LearningPauseMode
+                         LearningNote, LearningPauseMode, MonitoringSettings (what the monitoring follows)
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
-                         DockPresence, in the Dock while a window is open), Playback/ (PlayerSession, the chosen player from its
-                         start until AutoHush quits; MonitoringPipeline, the engine for each start;
-                         HeldPauses), Settings/ (UserSettings, LaunchAtLoginController), Permissions/
-                         (PermissionCenter), Updates/ (UpdateController, UpdateChecker, UpdateInstaller:
-                         download, signature check, swap; UpdateDownloads, UpdateNotifier, ReleaseNotes),
-                         WebApps/ (LearningSession, learning a web app's controls with the user;
-                         FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
-                         (Shortcuts' actions and their choices, the two App Shortcuts, the Focus filter, and FocusAutoPause,
-                         which notes Auto-Pause as a Focus starts and puts it back as it ends; they reach
-                         Auto-Pause through AutoPauseControlling, registered at launch by
+                         DockPresence, in the Dock while a window is open), Playback/ (PlayerSession,
+                         the chosen player from its start until AutoHush quits; MonitoringPipeline, the
+                         engine for each start; HeldPauses), Settings/ (UserSettings, LaunchAtLoginController),
+                         Permissions/ (PermissionCenter), Updates/ (UpdateController, UpdateChecker,
+                         UpdateInstaller: download, signature check, swap; UpdateDownloads, UpdateNotifier,
+                         ReleaseNotes), WebApps/ (LearningSession, learning a web app's controls with the
+                         user; FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
+                         (Shortcuts' actions and their choices, the two App Shortcuts, the Focus filter, and
+                         FocusAutoPause, which notes Auto-Pause as a Focus starts and puts it back as it ends;
+                         they reach Auto-Pause through AutoPauseControlling, registered at launch by
                          IntentDependencies)
     Controllers/         AppKit's window and menu controllers: StatusMenuController, SettingsWindowController,
                          PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base)
-    Views/               SwiftUI views, by area: Components/ (what several places show, one component
-                         per file: Font+AutoHush holds the text sizes, AppearanceStyle the colors;
-                         ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
+    Views/               SwiftUI views, by area: Components/ (what several places show, one component and
+                         its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
+                         colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
                          ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
                          views, its drawn rows (NSMenuItem+PlayerList, MenuContentWidth) and MenuBarIcon,
                          drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
@@ -136,8 +136,9 @@ Sources/
                          TidalSupport, PodcastsSupport and VLCSupport: each player's profile or controller,
                          and its placeholder icon; WebAppPlayers: Safari web apps (finding them, learning
                          their button, controlling them)
-Tests/                   a test module per module, mirroring its folders (only the player modules' tests
-                         name a player), plus AutoHushTestSupport (shared fakes)
+Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
+                         fakes); only the players' code names a player, but any test may use real apps
+                         (VLC, Spotify…) as test data
 Tools/                   tools for measuring the fades and checking apps, never part of the app or its disk
                          image; each has a README.md saying what it does and how (Tools/README.md lists them)
   MeasureVolumeCurve/    measures a player's volume curve
@@ -152,7 +153,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 
 **Where things go:**
 
-- **`AutoHushKit`** has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushKit`** has no user interface (no windows or views; AppKit only for `NSRunningApplication`, the shared `running(_:)` helper) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
 - **`AutoHushApp`** is sorted by kind of code first, then by area: `App/` starts things and wires them together; `Models/` holds the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show); `Services/` does the work; `Controllers/` are AppKit's window and menu controllers; `Views/` are SwiftUI's, with what several places show in `Views/Components/`; `Utilities/` are small helpers. A file holds one kind of code and is named after its main type; a large type is split by topic into `Type+Topic.swift` files beside it (`PlaybackArbiter+Pausing.swift`, `AppDelegate+Player.swift`).
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
 - **`Utilities/PrivateAPI/`** (in the engine) is the only place that calls undocumented macOS functions.

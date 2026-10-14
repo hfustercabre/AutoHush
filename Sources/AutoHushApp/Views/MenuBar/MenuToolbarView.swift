@@ -12,7 +12,9 @@ struct MenuToolbarView: View {
                 // As the menu used to offer it: ⌥ turns Settings into Diagnostics.
                 NSEvent.modifierFlags.contains(.option) ? .showDiagnostics : .openSettings
             }
-            button(Text("Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"), symbol: model.status.updateOffer == nil ? "arrow.down.circle" : "arrow.down.circle.fill",
+            button(model.isCheckingForUpdates ? Text(verbatim: UpdateOffer.checkingTitle)
+                       : Text("Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"),
+                   symbol: model.status.updateOffer == nil ? "arrow.down.circle" : "arrow.down.circle.fill",
                    tint: model.status.updateOffer == nil ? nil : .accentColor) { .updates }
             button(Text("About", comment: "Menu: button at the bottom; shows About AutoHush"), symbol: "info.circle") { .showAbout }
             button(Text("Quit", comment: "Menu: button at the bottom; quits AutoHush"), symbol: "power") { .quit }
@@ -29,6 +31,7 @@ struct MenuToolbarView: View {
                 Image(systemName: symbol)
                     .font(.system(size: 15))
                     .foregroundStyle(tint.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary))
+                    .accessibilityHidden(true) // the title says it
                 title
                     .font(.appCaption)
                     .foregroundStyle(.appSecondary)

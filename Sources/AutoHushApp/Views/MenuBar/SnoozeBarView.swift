@@ -9,6 +9,7 @@ struct SnoozeBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             SectionLabel(Text("Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while"))
+                .accessibilityAddTraits(.isHeader)
             HStack(spacing: 6) {
                 ForEach(AutoPauseSnooze.allCases, id: \.self) { snooze in
                     Button { model.perform(.snooze(snooze)) } label: {

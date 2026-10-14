@@ -12,7 +12,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies
-  before 0.13.0 accept only their old certificate, so they can't install
+  before 1.0.0 accept only their old certificate, so they can't install
   this version themselves and say they couldn't install the update.
   Download it once from the [releases
   page](https://github.com/hfustercabre/AutoHush/releases) (**Open Release
@@ -27,6 +27,27 @@ This project follows [Semantic Versioning](https://semver.org/).
   - If AutoHush says a permission is missing while System Settings shows
     AutoHush switched on, that switch belongs to the old copy: select
     AutoHush there, remove it with **−**, then allow it again.
+- **Learning a web app asks you to play something.** Its first step said
+  to play a song; it now says "Play something in" the web app, since a
+  podcast or a video does just as well.
+- **"Learn Controls…" and "Learn Again…"** now end with an ellipsis, as
+  buttons that open a window do.
+- **The step that asks for a permission is the step to do now.** While the
+  permission is missing, it shows as the current step, so it's clear what
+  comes first.
+- **Suggested web apps say "Click to add" in the menu too.** The menu
+  marked them "Not installed", like a missing app; it now says what their
+  tiles in Settings and the welcome window say.
+- **Settings → General says "None chosen"** while no media player is
+  chosen, where it showed "AutoHush".
+- **The menu's Updates button says "Checking…".** The menu stays open
+  while AutoHush checks, then closes for the alert with the result.
+- **Status lines use contractions,** as the rest of AutoHush does:
+  "Spotify isn't running", "isn't responding", "isn't installed".
+- **Clearer words.** With no other app making sound, Diagnostics says "No
+  other app is playing sound right now."; the permission is called "Audio
+  Recording" there, as in System Settings; and Settings → Updates says
+  "AutoHush's version is unknown." rather than "the app's".
 
 ### Added
 
@@ -45,6 +66,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   in System Settings → Focus, choose the Focus, then **Add Filter…** under
   Focus Filters and **AutoHush**. When the Focus ends, Auto-Pause goes back
   to how it was, unless you changed it meanwhile.
+- **More of the Mac's keyboard shortcuts.** ⌘M minimizes the welcome, Add
+  a Web App and learning windows, as it does Settings. Return presses the
+  blue button of the step to do now (It's Playing, It's Paused, Add to
+  Dock, Try Again). Edit → Find… (⌘F) opens the search, or puts the cursor
+  in it, in Settings → Apps and the welcome window.
 
 ### Fixed
 
@@ -61,7 +87,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   their section. A web app's icon now carries Safari's, wherever it shows.
 - **VoiceOver said "degraded" or "failed".** While something needs you, the
   menu bar icon now says what the menu's status line does ("AutoHush:
-  Spotify is not running"), and a web app named as an app is reads as a
+  Spotify isn't running"), and a web app named as an app is reads as a
   Safari web app where you choose your player.
 - **VoiceOver said nothing while a window waited for a permission.** When
   Accessibility is missing, the Add a Web App and learning windows now
@@ -80,6 +106,31 @@ This project follows [Semantic Versioning](https://semver.org/).
   chose another player while AutoHush held yours paused, that player
   played again once the other apps stopped, but it was back at full volume
   in a fraction of a second. It now fades back in as any resume does.
+- **AntiDot mode could leave the purple recording indicator on.** A pause
+  AutoHush held on the player you chose before kept its audio taps after
+  AntiDot mode was turned on, and with them the purple indicator. It now
+  follows the detection method, as your chosen player does.
+- **A disabled blue button was hard to read in light mode.** Disabled, it
+  loses most of its blue, and its white text could barely be seen; its
+  text is now grey, as on the other disabled buttons.
+- **Add a Web App could stop without a word.** When macOS listed a web app
+  just made a little late, the window stopped there. It now looks for the
+  new web app again for a few seconds, then, if it's still not found, says
+  it was added but can't be found yet, and Continue tries again.
+- **VoiceOver:**
+  - the timing sliders in Detection and Fades say what they set, and their
+    value;
+  - while Auto-Pause is off, the menu bar icon says so, as the menu's
+    status line does ("AutoHush: Auto-Pause is off until 15:30");
+  - section headings, and the menu's "Turn off for" and "Playing Now", are
+    headings;
+  - Add a Web App says why it couldn't take an address;
+  - the update choices that need notifications say why they're
+    unavailable while notifications are off;
+  - Diagnostics' headings say whether their part is expanded or
+    collapsed, and "Copied" is said after Copy Report;
+  - symbols beside their text, such as the menu toolbar's, are no longer
+    read on their own.
 
 ## [0.12.1] — 2026-10-11
 

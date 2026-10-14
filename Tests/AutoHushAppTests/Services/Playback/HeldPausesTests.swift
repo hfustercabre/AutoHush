@@ -34,7 +34,7 @@ struct HeldPausesTests {
         held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
         monitoring.beginResume() // the other apps stopped: it plays, fading in
         #expect(held.takes(.playback(.musicPlaying), from: token))
-        try? await Task.sleep(for: .milliseconds(50)) // time to stop, which it mustn't yet
+        await TestWait.until { monitoring.isWaitingForResume } // it stops only once that wait is over
         #expect(monitoring.stops == 0 && !held.isEmpty)
         #expect(held.bundleIDs.isEmpty) // its pause is over: not handed over at a quit
         #expect(held.takes(.playback(.musicPlaying), from: token)) // still its own

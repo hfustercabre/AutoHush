@@ -40,6 +40,8 @@ final class StatusMenuModel {
     var isChoosingPlayer = false
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
+    /// An update check asked from the menu runs: its Updates button says so.
+    var isCheckingForUpdates = false
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
 
     init(status: AppStatus) {

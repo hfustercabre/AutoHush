@@ -140,8 +140,8 @@ extension WebAppControl {
 
     /// The page's buttons, unless it has no window or none of its buttons
     /// has words: a window macOS restores at login can show its buttons
-    /// without their words (measured in the VM). A small page with a few
-    /// named buttons is read. Seen without words, it's looked at once more
+    /// without their words (measured). A small page with a few named
+    /// buttons is read. Seen without words, it's looked at once more
     /// after `firstLookWait` (`looksAgain`), in case that was its first look.
     private func readablePage(pid: pid_t, looksAgain: Bool = true) -> [PageButton]? {
         func look() -> [PageButton]? {

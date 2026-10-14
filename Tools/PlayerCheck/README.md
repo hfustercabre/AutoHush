@@ -147,7 +147,6 @@ names the one that announced both.
 | Flutter (Spotube) | the window's own elements | `AXEnhancedUserInterface` |
 | A Chromium browser's web app (Chrome's, Brave's) | a web page, served by the browser | `AXEnhancedUserInterface`, set on the browser |
 
-| A Chromium browser's web app (Chrome's, Brave's) | a web page, served by the browser | `AXEnhancedUserInterface`, set on the browser |
 A switch the tool turned on is turned back off at the end (one found on is
 set back on). When no switch shows the page in 4 s, a check brings the app
 forward a moment, once; a press never does. Electron takes presses only
@@ -198,12 +197,12 @@ desktop for it. Coming back, the tool shows that desktop with Control-arrow
 when bringing the app forward doesn't. Before each state, the window is
 brought back to visible (a window on another desktop that Accessibility
 can't reach is reached by showing its desktop with Control-arrow), and the
-state is read back: one it doesn't reach is
-“not tested”, with why. At the end it's put back as it was: its state,
-place and desktop (a minimized or hidden window on its own desktop), the
-windows of other apps that covered it raised again, and the app it was run
-from in front. With no window open the ways are tried once; with one
-desktop, the two desktop states aren't tested.
+state is read back: one it doesn't reach is “not tested”, with why. At the
+end it's put back as it was: its state, place and desktop (a minimized or
+hidden window on its own desktop), the windows of other apps that covered
+it raised again, and the app it was run from in front. With no window open
+the ways are tried once; with one desktop, the two desktop states aren't
+tested.
 
 ## Blocking the mouse and keyboard (`--block-input`)
 
@@ -275,9 +274,9 @@ log: only administrators can read it, and its wording isn't an API.
 
 `--now-playing-reasons` gives, per app, why it can be in Now Playing (the
 frameworks its binaries link: MediaPlayer, through Electron or CEF too;
-MediaRemote; AVKit; WebKit; Chromium, for a browser's web app), the framework
-that hides its interface, and
-the switches a check turns on, so Player Check lists apps by the same rule.
+MediaRemote; AVKit; WebKit; Chromium, for a browser's web app), the
+framework that hides its interface, and the switches a check turns on, so
+Player Check lists apps by the same rule.
 
 ## Example
 

@@ -96,8 +96,9 @@ package struct ProcessTapError: LocalizedError {
 
 /// A tap on some processes, read by a private aggregate device whose IO block
 /// records their peak and average level. Unmuted, it only listens. Muted, the
-/// processes can't be heard while it runs: macOS mutes a tap's processes only
-/// while something reads it, so a tap alone mutes nothing (heard 2026-10-07).
+/// processes can't be heard while it runs: macOS mutes a tap's processes
+/// only while something reads it, so a tap alone mutes nothing (heard on
+/// macOS 27).
 ///
 /// Its owner creates, reads and invalidates it one call at a time; the levels
 /// are locked.

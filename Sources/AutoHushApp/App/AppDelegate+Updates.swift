@@ -1,7 +1,5 @@
 import AppKit
 import OSLog
-import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: the updates.
 extension AppDelegate {

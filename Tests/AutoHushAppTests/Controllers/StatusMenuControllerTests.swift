@@ -186,7 +186,7 @@ struct StatusMenuControllerTests {
         #expect((heading.view?.frame.height ?? 0) > 20) // the note under it too
         let row = sut.menu.items[4]
         #expect(row.isEnabled)
-        #expect(row.subtitle == "Not installed")
+        #expect(row.subtitle == "Click to add") // as its tile says
         #expect(row.image?.isTemplate == true)
         try perform(row)
         #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
@@ -360,17 +360,35 @@ struct StatusMenuControllerTests {
     func buttons() async {
         let sut = makeController()
         defer { sut.remove() }
-        let commands: [StatusMenuCommand] = [.snooze(.oneHour), .openSettings, .showDiagnostics, .updates, .showAbout,
+        let commands: [StatusMenuCommand] = [.snooze(.oneHour), .openSettings, .showDiagnostics, .showAbout,
                                              .showControlError, .quit]
         commands.forEach(sut.perform)
         #expect(log.calls.isEmpty) // not yet: the menu closes first
         #expect(settings.state.autoPause == .on)
         await wait(for: commands.count - 1, in: log)
-        #expect(log.calls == ["settings", "diagnostics", "checkUpdates", "about", "why", "quit"])
+        #expect(log.calls == ["settings", "diagnostics", "about", "why", "quit"])
         guard case .snoozed = settings.state.autoPause else {
             Issue.record("not snoozed: \(settings.state.autoPause)")
             return
         }
+    }
+
+    @Test("Updates checks with the menu open, its button saying Checking… until the result; asked again meanwhile, nothing more")
+    func updatesChecksInTheMenu() async {
+        let sut = makeController()
+        defer { sut.remove() }
+        sut.status = readyStatus()
+        updates.holdsChecks = true
+        sut.perform(.updates)
+        #expect(sut.model.isCheckingForUpdates)
+        await wait(for: 1, in: log)
+        sut.perform(.updates) // a second click while it checks
+        #expect(log.calls == ["checkNow"])
+
+        updates.finishCheck()
+        await TestWait.until { !sut.model.isCheckingForUpdates }
+        #expect(!sut.model.isCheckingForUpdates)
+        #expect(log.calls == ["checkNow"])
     }
 
     @Test("once an update is found, Updates shows it instead of checking again")
@@ -401,7 +419,7 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
-        status.setHealth(.retrying("Jukebox is not responding"))
+        status.setHealth(.retrying("Jukebox isn’t responding"))
         status.ignoredApps = [vlc]
         let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
         status.updateOffer = UpdateOffer(release: release, state: .available)

@@ -75,4 +75,7 @@ package enum WebAppMakingError: Error, Equatable, Sendable {
     case accessibilityDenied
     /// The browser didn't open the page, offer to add it, or make the app.
     case browserFailed(String)
+    /// The web app `name` was made, but isn't found as installed yet
+    /// (Launch Services hasn't caught up): it can't be chosen.
+    case notFound(name: String)
 }

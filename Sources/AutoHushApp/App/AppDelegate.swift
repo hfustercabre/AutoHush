@@ -56,6 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.
     let learnedWindowDelay: Duration
+    /// Between two looks for a web app just made that isn't listed yet.
+    let madeWebAppWait: Duration
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -112,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         },
         learnedWindowDelay: Duration = .seconds(1.5),
+        madeWebAppWait: Duration = .milliseconds(500),
         currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         retries: PlayerSession.Retries = PlayerSession.Retries(),
@@ -126,6 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
         self.learnedWindowDelay = learnedWindowDelay
+        self.madeWebAppWait = madeWebAppWait
         self.webAppMaker = webAppMaker
         self.makeAddWebAppWindow = makeAddWebAppWindow
         self.openApp = openApp
@@ -165,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onStatus: { [weak self] in self?.showUpdateStatus($0) },
             onSettingsChange: { [weak self] in self?.showUpdateSettings() }
         )
+        updates.beforePresenting = { [weak self] in await self?.statusMenu?.closeMenu() }
         settingsModel = SettingsModel(
             state: appState,
             settings: userSettings,

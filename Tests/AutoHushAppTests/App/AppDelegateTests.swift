@@ -55,7 +55,7 @@ struct AppDelegateTests {
             return URL(fileURLWithPath: "\(folder)/\(bundleID).app")
         }
 
-        func watch(_ folder: URL, onChange: @escaping @MainActor () -> Void) -> AnyObject? {
+        func watch(_: URL, onChange: @escaping @MainActor () -> Void) -> AnyObject? {
             onFolderChange = onChange
             return NSObject()
         }
@@ -104,6 +104,7 @@ struct AppDelegateTests {
             makeAddWebAppWindow: { _, _ in scratch.addWindow },
             openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
+            madeWebAppWait: .zero,
             currentVersion: AppVersion("0.2.0"),
             retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
@@ -142,7 +143,7 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(webApp.bundleID)
         #expect(scratch.learningWindow.isOpen)
-        #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
+        #expect(sut.status.learning == .learning(hasPlayed: false))
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
 
         webApp.set(.learning(hasPlayed: true))
@@ -305,7 +306,7 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.health == .degraded("YT Music is not running") }
+        await waitFor { sut.status.health == .degraded("YT Music isn’t running") }
         #expect(scratch.learningWindow.isOpen)
     }
 
@@ -338,6 +339,31 @@ struct AppDelegateTests {
         webApp.set(.learned)
         await waitFor { !scratch.addWindow.isOpen }
         #expect(!scratch.addWindow.isOpen)
+    }
+
+    @MainActor
+    @Test("a web app made but not listed yet is looked for a few times; still missing, the add window says so and Continue tries again")
+    func addedWebAppNotFound() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
+        let found = FoundPlayers() // macOS doesn't list it
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        scratch.installed.insert(webApp.bundleID)
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
+        let (sut, _) = makeSUT(scratch)
+
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebAppModel.addTapped()
+        await waitFor { sut.addWebAppModel.problem != nil }
+        #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
+        #expect(sut.addWebAppModel.phase == .entering)
+        #expect(sut.addWebAppModel.address == "play.qobuz.com") // Continue tries again
+        #expect(sut.status.chosenPlayerID != webApp.bundleID)
+        #expect(scratch.addWindow.isOpen)
     }
 
     @MainActor
@@ -430,9 +456,10 @@ struct AppDelegateTests {
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
         await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        let adding = sut.addingWebApp
         sut.addWebAppModel.windowClosed()
         #expect(sut.addWebAppModel.phase == .entering)
-        try? await Task.sleep(for: .milliseconds(50))
+        await adding?.value // the cancelled add is over
         #expect(!made.withLock { $0 })
         #expect(scratch.opened.isEmpty)
     }
@@ -564,7 +591,7 @@ struct AppDelegateTests {
 
         #expect(sut.status.health == .starting)
         sut.handleApplicationDidLaunch(bundleIdentifier: "org.videolan.vlc")
-        try? await Task.sleep(for: .milliseconds(50))
+        await sut.session.waitUntilIdle()
         #expect(sut.status.health == .starting)
         #expect(monitorings.made.isEmpty)
     }
@@ -576,7 +603,7 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await waitFor { sut.status.health == .degraded("First is not running") }
+        await waitFor { sut.status.health == .degraded("First isn’t running") }
 
         await scratch.first.setFailVerify(nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
@@ -592,7 +619,7 @@ struct AppDelegateTests {
         await start(sut)
 
         sut.handleApplicationDidLaunch(bundleIdentifier: nil)
-        try? await Task.sleep(for: .milliseconds(50))
+        await sut.session.waitUntilIdle()
         #expect(sut.status.health == .ready)
         #expect(monitorings.made.count == 1)
     }
@@ -651,7 +678,7 @@ struct AppDelegateTests {
         #expect(monitorings.made.map(\.bundleID) == [Players.second])
 
         sut.chooseMusicPlayer(Players.second)
-        try? await Task.sleep(for: .milliseconds(50))
+        await sut.session.waitUntilIdle()
         #expect(monitorings.made.count == 1)
 
         sut.chooseMusicPlayer(Players.first)
@@ -686,7 +713,7 @@ struct AppDelegateTests {
         scratch.installed.insert(Players.second)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
         #expect(sut.status.playerOptions.map(\.isInstalled) == [true, true])
-        try? await Task.sleep(for: .milliseconds(50))
+        await sut.session.waitUntilIdle()
         #expect(sut.status.health == .ready)
         #expect(monitorings.made.count == 1)
     }
@@ -771,7 +798,7 @@ struct AppDelegateTests {
         sut.refreshDiagnostics()
         let diagnostics = sut.settingsModel.diagnostics
         #expect(diagnostics?.apps.isEmpty == true) // nothing is monitored in tests
-        #expect(diagnostics?.text.contains("Apps with Sound\nNo foreign audio output currently detected.") == true)
+        #expect(diagnostics?.text.contains("Apps with Sound\nNo other app is playing sound right now.") == true)
         #expect(diagnostics?.sections.first?.rows.first?.value.hasPrefix("First") == true)
         #expect(diagnostics?.text.contains("Automation for First") == true)
     }
@@ -804,7 +831,7 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         await TestWait.until { sut.status.health != .starting }
-        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.health == .degraded("First isn’t installed"))
 
         // Installed again: it's controlled afresh as soon as AutoHush notices.
         scratch.installed = [Players.first]
@@ -848,7 +875,7 @@ struct AppDelegateTests {
         scratch.installed = []
         scratch.changeFolder()
         await TestWait.until { sut.status.health != .ready }
-        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.health == .degraded("First isn’t installed"))
         #expect(sut.status.playback == .unknown)
         #expect(monitorings.made[0].isStopped)
 
@@ -866,16 +893,16 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await waitFor { sut.status.health == .degraded("First is not running") }
+        await waitFor { sut.status.health == .degraded("First isn’t running") }
 
         scratch.installed = []
         sut.refreshPlayerOptions() // what opening the menu or Settings does
-        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.health == .degraded("First isn’t installed"))
         #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == false)
 
         // Asked again, it stays as it is.
         sut.refreshPlayerOptions()
-        #expect(sut.status.health == .degraded("First is not installed"))
+        #expect(sut.status.health == .degraded("First isn’t installed"))
         #expect(monitorings.made.isEmpty)
     }
 

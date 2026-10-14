@@ -52,6 +52,9 @@ final class FakeMonitoring: SessionMonitoring {
         resumeWaiters = nil
     }
 
+    /// Something waits for the resume under way to end.
+    var isWaitingForResume: Bool { resumeWaiters?.isEmpty == false }
+
     func waitForResume() async {
         if resumeWaiters != nil { await withCheckedContinuation { resumeWaiters?.append($0) } }
         resumeWaitsOver += 1

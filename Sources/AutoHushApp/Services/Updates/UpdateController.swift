@@ -62,6 +62,9 @@ final class UpdateController {
     var failedAutomaticInstall: AppVersion?
     /// The notification permission last seen, to notice a reset.
     var lastPermission: NotificationPermission?
+    /// Runs before a check's result shows in an alert: the menu, open while
+    /// it checks, closes first.
+    var beforePresenting: @MainActor () async -> Void = {}
     let logger = Logger(category: "Updates")
 
     init(

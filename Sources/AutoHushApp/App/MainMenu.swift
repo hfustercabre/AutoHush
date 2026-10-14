@@ -6,11 +6,13 @@ import AppKit
 /// ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in text fields.
 @MainActor
 enum MainMenu {
-    /// `about` and `settings` open those pages of Settings.
-    static func make(about: @escaping @MainActor () -> Void, settings: @escaping @MainActor () -> Void) -> NSMenu {
+    /// `about` and `settings` open those pages of Settings; `find` opens or
+    /// focuses the search of the window in front.
+    static func make(about: @escaping @MainActor () -> Void, settings: @escaping @MainActor () -> Void,
+                     find: @escaping @MainActor () -> Void = {}) -> NSMenu {
         let bar = NSMenu()
         bar.addItem(submenu(appMenu(about: about, settings: settings), title: "AutoHush"))
-        bar.addItem(submenu(editMenu(), title: editTitle))
+        bar.addItem(submenu(editMenu(find: find), title: editTitle))
         let window = windowMenu()
         bar.addItem(submenu(window, title: windowTitle))
         NSApplication.shared.windowsMenu = window
@@ -45,7 +47,7 @@ enum MainMenu {
         String(localized: "Edit", comment: "The menu bar: the Edit menu (cut, copy, paste); macOS's own word")
     }
 
-    private static func editMenu() -> NSMenu {
+    private static func editMenu(find: @escaping @MainActor () -> Void) -> NSMenu {
         let menu = NSMenu(title: editTitle)
         menu.addItem(item(String(localized: "Undo", comment: "The menu bar's Edit menu (⌘Z); macOS's own word"), Selector(("undo:")), key: "z"))
         menu.addItem(item(String(localized: "Redo", comment: "The menu bar's Edit menu (⇧⌘Z); macOS's own word"), Selector(("redo:")), key: "z",
@@ -56,6 +58,9 @@ enum MainMenu {
         menu.addItem(item(String(localized: "Paste", comment: "The menu bar's Edit menu (⌘V); macOS's own word"), #selector(NSText.paste(_:)), key: "v"))
         menu.addItem(item(String(localized: "Delete", comment: "The menu bar's Edit menu: deletes the selected text; macOS's own word"), #selector(NSText.delete(_:))))
         menu.addItem(item(String(localized: "Select All", comment: "The menu bar's Edit menu (⌘A); macOS's own words"), #selector(NSText.selectAll(_:)), key: "a"))
+        menu.addItem(.separator())
+        menu.addItem(item(String(localized: "Find…", comment: "The menu bar's Edit menu: opens or focuses the search of the window in front (⌘F); macOS's own word"),
+                          key: "f", perform: find))
         return menu
     }
 

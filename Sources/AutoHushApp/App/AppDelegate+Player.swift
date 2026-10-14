@@ -1,7 +1,6 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: choosing and following the music player.
 extension AppDelegate {

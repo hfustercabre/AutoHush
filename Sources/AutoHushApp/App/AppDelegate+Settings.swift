@@ -1,7 +1,6 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: the user's settings and the updates' settings.
 extension AppDelegate {

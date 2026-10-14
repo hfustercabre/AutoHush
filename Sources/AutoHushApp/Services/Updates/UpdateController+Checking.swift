@@ -8,6 +8,10 @@ extension UpdateController {
         Task { await check(userInitiated: true) }
     }
 
+    func checkNow() async {
+        await check(userInitiated: true)
+    }
+
     /// Asks GitHub for the latest release. A check asked for while one is
     /// under way (a double click, the automatic one) doesn't start another:
     /// the one under way answers, and shows its result if anyone asked.
@@ -20,10 +24,10 @@ extension UpdateController {
             resultWanted = false
         }
         guard let currentVersion else {
-            onStatus(String(localized: "The app’s version is unknown.", comment: "Update status in Settings"))
+            onStatus(String(localized: "AutoHush’s version is unknown.", comment: "Update status in Settings"))
             return
         }
-        onStatus(String(localized: "Checking…", comment: "Update status in Settings: a check is running"))
+        onStatus(UpdateOffer.checkingTitle)
         do {
             let result = try await checker.check(currentVersion: currentVersion)
             preferences.lastUpdateCheck = now()
@@ -49,11 +53,15 @@ extension UpdateController {
             case .noReleases:
                 onStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
             }
-            if resultWanted { present(result) }
+            if resultWanted {
+                await beforePresenting()
+                present(result)
+            }
         } catch {
             logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
             onStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
             if resultWanted {
+                await beforePresenting()
                 let title = String(localized: "Couldn’t Check for Updates", comment: "Alert title")
                 InfoAlert.show(title, error.localizedDescription)
             }

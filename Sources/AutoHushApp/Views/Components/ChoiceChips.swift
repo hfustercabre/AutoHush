@@ -15,6 +15,8 @@ struct ChoiceChips<Value: Hashable>: View {
     let onSelect: (Value) -> Void
     /// A click on an unavailable option.
     var onUnavailableClick: () -> Void = {}
+    /// Why an option is unavailable, for VoiceOver (sighted users see it dimmed).
+    var unavailableNote: String?
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
@@ -35,6 +37,7 @@ struct ChoiceChips<Value: Hashable>: View {
                 // A disabled group is dimmed already: once is enough.
                 .opacity(option.isAvailable || !isEnabled ? 1 : 0.45)
                 .accessibilityAddTraits(option.value == selection ? .isSelected : [])
+                .accessibilityHint(option.isAvailable ? Text(verbatim: "") : Text(verbatim: unavailableNote ?? ""))
             }
         }
         .fixedSize(horizontal: false, vertical: true)

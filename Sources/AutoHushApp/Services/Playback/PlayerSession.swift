@@ -102,6 +102,8 @@ final class PlayerSession {
     let heldPauses = HeldPauses()
     /// Each start has its number; one that finds a newer one started gives up.
     var startGeneration = 0
+    /// The starts requested and not over yet (`requestStart`).
+    var startTasks: [UUID: Task<Void, Never>] = [:]
     var retryTimer: Timer?
     /// Failed starts in a row, for the delay before the next one.
     var failedStarts = 0

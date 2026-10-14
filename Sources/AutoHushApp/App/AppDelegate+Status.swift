@@ -1,7 +1,6 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: what the menu and the windows show.
 extension AppDelegate {

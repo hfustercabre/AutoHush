@@ -1,7 +1,6 @@
 import ServiceManagement
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
 import AutoHushTestSupport
 
 @Suite("LaunchAtLoginController")

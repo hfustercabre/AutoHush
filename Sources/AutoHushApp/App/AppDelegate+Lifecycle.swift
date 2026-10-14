@@ -1,14 +1,14 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: launching, quitting, sleep and wake.
 extension AppDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
-                                       settings: { [weak self] in self?.openSettings() })
+                                       settings: { [weak self] in self?.openSettings() },
+                                       find: { [weak self] in self?.find() })
         showStatusMenu()
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()

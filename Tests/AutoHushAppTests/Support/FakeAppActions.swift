@@ -36,6 +36,20 @@ final class FakeUpdateCommands: UpdateCommands {
     init(log: CallLog = CallLog()) { self.log = log }
 
     func checkFromUser() { log.calls.append("checkUpdates") }
+
+    /// `checkNow` waits for `finishCheck()` while this is set.
+    var holdsChecks = false
+    private var heldCheck: CheckedContinuation<Void, Never>?
+
+    func checkNow() async {
+        log.calls.append("checkNow")
+        if holdsChecks { await withCheckedContinuation { heldCheck = $0 } }
+    }
+
+    func finishCheck() {
+        heldCheck?.resume()
+        heldCheck = nil
+    }
     func presentAvailableUpdate() { log.calls.append("update") }
     func setChecksAutomatically(_ enabled: Bool) { log.calls.append("autoUpdate \(enabled)") }
     func setMode(_ mode: AutomaticUpdates) { log.calls.append("updates \(mode.rawValue)") }

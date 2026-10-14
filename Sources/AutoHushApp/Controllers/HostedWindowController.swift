@@ -2,7 +2,8 @@ import AppKit
 import Observation
 import SwiftUI
 
-/// A window around SwiftUI content, sized to it: closable, and kept when
+/// A window around SwiftUI content, sized to it: closable, minimizable (⌘M),
+/// and kept when
 /// closed, so it shows again at once. Its title bar is part of it, as in
 /// Settings (no band, no line), with the title in bold as a Settings page's
 /// name. It's shown in front, and centered when it comes on screen, or,
@@ -25,7 +26,7 @@ class HostedWindowController: NSWindowController {
     /// Settings' title bar: the content runs under it, without its band or
     /// line, and an empty toolbar shows the title in bold.
     private static func styleTitleBar(of window: NSWindow) {
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
         let toolbar = NSToolbar(identifier: "AutoHushWindow")

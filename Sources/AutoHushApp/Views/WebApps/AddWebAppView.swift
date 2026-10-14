@@ -87,6 +87,10 @@ struct AddWebAppView: View {
         }
         .frame(width: 440)
         .font(.appBody)
+        // VoiceOver hears why the last try failed, as it shows under the field.
+        .onChange(of: model.problemText) { _, problem in
+            if let problem { AccessibilityNotification.Announcement(problem).post() }
+        }
     }
 
     /// Over the card of steps, here and in the learning window.
@@ -116,6 +120,7 @@ struct AddWebAppView: View {
                 Text(verbatim: model.exampleAddress ?? "")
             }
             .textFieldStyle(.plain)
+            .accessibilityLabel(Text("Address", comment: "Add a Web App window: the heading over the field for the website's address"))
             .disabled(model.phase != .entering)
             .onSubmit { if !needsAccessibility { model.continueTapped() } } // Return, as Continue
         }

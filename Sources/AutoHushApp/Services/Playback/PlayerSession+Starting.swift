@@ -5,7 +5,17 @@ import AutoHushKit
 // PlayerSession: starting the player's monitoring.
 extension PlayerSession {
     func requestStart(retries: Int = 0) {
-        Task { await start(retriesLeft: retries) }
+        let id = UUID()
+        startTasks[id] = Task {
+            await start(retriesLeft: retries)
+            startTasks[id] = nil
+        }
+    }
+
+    /// Returns once no start and no access check is under way: tests use it
+    /// to see that nothing more happens.
+    func waitUntilIdle() async {
+        while let task = startTasks.values.first ?? accessCheck { await task.value }
     }
 
     /// Errors that mean the player is not ready yet rather than a lasting problem.

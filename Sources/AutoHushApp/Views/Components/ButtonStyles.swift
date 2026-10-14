@@ -65,7 +65,9 @@ struct ChipButtonStyle: ButtonStyle {
 
         var body: some View {
             label
-                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                // Disabled, the glass loses most of its tint: white text on it
+                // can't be read in light mode, the primary color (dimmed) can.
+                .foregroundStyle(isSelected && isEnabled ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .glassEffect(isSelected ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: shape)
                 .contentShape(shape)
                 .opacity(isEnabled ? 1 : 0.45)
@@ -83,7 +85,7 @@ struct ChipButtonStyle: ButtonStyle {
 
         var body: some View {
             label
-                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                .foregroundStyle(isSelected && isEnabled ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .background(RoundedRectangle(cornerRadius: cornerRadius).fill(fill))
                 .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
                 .opacity(isEnabled ? 1 : 0.45)

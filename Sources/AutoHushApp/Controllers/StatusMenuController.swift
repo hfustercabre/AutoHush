@@ -11,7 +11,7 @@ import AutoHushKit
 /// │ ────────────────────────────────────────── │
 /// │ Media player              [icon] Spotify ⌄ │  unfolds the players under it
 /// │ ────────────────────────────────────────── │
-/// │ Controls                  [Learn Controls] │  (a web app: whether its
+/// │ Controls                [Learn Controls…] │  (a web app: whether its
 /// │ Not learned yet: …                         │  controls are learned)
 /// ╰────────────────────────────────────────────╯
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
@@ -300,7 +300,7 @@ final class StatusMenuController: NSObject {
         }
         if !option.isInstalled {
             row.isEnabled = option.isClickable
-            row.subtitle = PlayerOption.notInstalledLabel
+            row.subtitle = option.webAddress != nil ? PlayerOption.clickToAddLabel : PlayerOption.notInstalledLabel
         }
         // VoiceOver can't see the web app's Safari badge: one named as an app is says so.
         let spoken = option.spokenName(among: status.playerOptions)
@@ -334,6 +334,15 @@ final class StatusMenuController: NSObject {
             searchPlayers(search)
         case .retry:
             session.retry() // the card shows how it goes
+        case .updates where status.updateOffer == nil:
+            // The menu stays open, its button saying "Checking…", until the
+            // result: its alert closes the menu first (`closeMenu`).
+            guard !model.isCheckingForUpdates else { return }
+            model.isCheckingForUpdates = true
+            Task { [weak self] in
+                await self?.updates.checkNow()
+                self?.model.isCheckingForUpdates = false
+            }
         case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
@@ -348,13 +357,22 @@ final class StatusMenuController: NSObject {
         case .snooze(let snooze): settings.snooze(snooze)
         case .openSettings:       actions?.openSettings(page: nil)
         case .showDiagnostics:    actions?.openSettings(page: .diagnostics)
-        case .updates:            status.updateOffer == nil ? updates.checkFromUser() : updates.presentAvailableUpdate()
+        case .updates:            updates.presentAvailableUpdate() // checking keeps the menu open: `perform`
         case .showAbout:          actions?.openSettings(page: .about)
         case .showControlError:   actions?.showControlError()
         case .learnControls:      actions?.learnControlsAgain()
         case .quit:               actions?.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
         }
+    }
+
+    /// Closes the menu if it's open, and returns once it has: an alert, such
+    /// as an update check's result, can't show over it.
+    func closeMenu() async {
+        guard isMenuOpen else { return }
+        menu.cancelTracking()
+        let deadline = ContinuousClock.now + .seconds(1)
+        while isMenuOpen, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(20)) }
     }
 
     @objc private func showAvailableUpdate() { updates.presentAvailableUpdate() }
@@ -410,19 +428,12 @@ private final class KeyboardTakingHostingView<Content: View>: NSHostingView<Cont
         // run loop's common modes: the main queue waits until it closes.
         RunLoop.main.perform(inModes: [.common]) { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, let field = editableTextField(in: self), window.makeFirstResponder(field) else { return }
+                guard let self, let field = self.firstEditableTextField, window.makeFirstResponder(field) else { return }
                 // The text it edits shows on the field's own background.
                 (field.currentEditor() as? NSTextView)?.drawsBackground = false
             }
         }
     }
-}
-
-/// The first text field one can type into, in `view` or under it.
-@MainActor
-private func editableTextField(in view: NSView) -> NSTextField? {
-    if let field = view as? NSTextField, field.isEditable { return field }
-    return view.subviews.lazy.compactMap(editableTextField).first
 }
 
 private extension NSMenuItem {

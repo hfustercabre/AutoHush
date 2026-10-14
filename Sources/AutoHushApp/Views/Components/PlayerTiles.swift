@@ -145,7 +145,7 @@ struct PlayerTiles: View {
 
     @ViewBuilder private func note(_ option: PlayerOption) -> some View {
         if option.webAddress != nil {
-            Text("Click to add", comment: "Under a suggested Safari web app's tile (Settings → General, the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine")
+            Text(verbatim: PlayerOption.clickToAddLabel)
                 .font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
         } else if option.isUntested {
             HeadingBadge(text: PlayerOption.untestedBadge)

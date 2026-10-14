@@ -1,7 +1,8 @@
 import Foundation
 
 /// Where AutoHush lives on GitHub (update checks, Settings → About), and
-/// where people can support it (Settings → About and → General).
+/// where people can support it (Settings → About, and the foot of Settings'
+/// sidebar).
 enum ProjectInfo {
     static let repository = "hfustercabre/AutoHush"
     static let homepage = URL(string: "https://github.com/\(repository)")!

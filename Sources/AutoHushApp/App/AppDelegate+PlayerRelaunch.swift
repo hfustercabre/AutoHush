@@ -1,7 +1,6 @@
 import AppKit
 import OSLog
 import AutoHushKit
-import AutoHushPlayers
 
 // AppDelegate: the player quitting and opening again.
 extension AppDelegate {

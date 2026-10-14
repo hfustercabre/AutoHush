@@ -218,6 +218,9 @@ final class AddWebAppModel {
                    comment: "Add a Web App window, when the Accessibility permission is missing")
         case .browserFailed?:
             String(localized: "Safari didn’t add it. Try again.", comment: "Add a Web App window, when Safari didn't make the web app")
+        case .notFound(let name)?:
+            String(localized: "\(name) was added, but AutoHush can’t find it yet. Click Continue to try again.",
+                   comment: "Add a Web App window, when the web app was made but macOS doesn't list it yet; %@ is the web app's name; Continue is the window's button")
         case nil:
             nil
         }

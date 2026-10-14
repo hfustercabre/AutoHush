@@ -75,15 +75,21 @@ struct LearningPermissionStep: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: "circle")
-                .foregroundStyle(.appSecondary)
+            // The step to do now, as a checklist marks it (`StepSymbol`).
+            Image(systemName: "arrow.forward.circle.fill")
+                .foregroundStyle(Color.accentColor)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: permission.statusLine)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(verbatim: Self.note(name))
-                    .captionStyle()
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(verbatim: permission.statusLine)
+                        .fontWeight(.semibold)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: Self.note(name))
+                        .captionStyle()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityValue(Text(verbatim: StepState.current.voiceOverValue))
                 PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
                     .padding(.top, 2)
             }

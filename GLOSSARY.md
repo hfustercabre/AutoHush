@@ -37,8 +37,8 @@ icons: the status line, its orange, the menu bar icon.
 writes it; Settings and the welcome, learning and Add a Web App windows
 read it part by part, each window drawn again only when a part it shows
 changes; the menu gets a copy each time it changes (its card follows it
-while open, its rows when it next opens). _Avoid_: model (Settings' model is the windows' own: what they
-alone show, and their actions).
+while open, its rows when it next opens). _Avoid_: model (Settings' model
+is the windows' own: what they alone show, and their actions).
 
 **Learning session** (`LearningSession`): learning the chosen web app's
 controls with the user, from choosing it until it's learned, and again
@@ -52,8 +52,9 @@ _Avoid_: learner (that's the player's own part, which reads the page).
 follows once a second what they show that macOS doesn't announce: the
 permissions, whether notifications are on, launch at login, Diagnostics,
 and the players installed while none is chosen (once one is, the
-Applications folders are watched instead). Each window says what it needs; the watch refreshes
-only what the open ones need, and stops when none is open.
+Applications folders are watched instead). Each window says what it
+needs; the watch refreshes only what the open ones need, and stops when
+none is open.
 
 **User settings** (`UserSettings`): the user's own settings and what
 follows from them: Auto-Pause and its snooze, the apps ignored and the

@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import AutoHushKit
 
 /// What `AppDelegate` needs of the learning window; tests stand in for it,
 /// so they never put a window on screen.

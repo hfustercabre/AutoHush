@@ -17,10 +17,10 @@ struct ChecklistStepTests {
     func learning() {
         let fresh = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false)
         #expect(fresh.map(\.state) == [.current, .todo])
-        #expect(fresh.map(\.title) == ["Play a song in YT Music", "Let AutoHush pause it"])
+        #expect(fresh.map(\.title) == ["Play something in YT Music", "Let AutoHush pause it"])
         #expect(fresh[0].notes == [LearningText.playTip("YT Music")] && fresh[1].notes.isEmpty)
         #expect(fresh.map(\.button) == [.itsPlaying, nil])
-        #expect(fresh.currentAnnouncement == "Play a song in YT Music")
+        #expect(fresh.currentAnnouncement == "Play something in YT Music")
 
         let played = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 44.2,
                                          pauseMode: .byHand)
@@ -132,7 +132,7 @@ struct ChecklistStepTests {
         let made = AddWebAppModel.Phase.learning(name: "YT Music", alreadyThere: false)
         let toPlay = AddWebAppView.steps(for: made, siteAsked: true, learning: .learning(hasPlayed: false))
         #expect(toPlay.map(\.title) == ["Check the address", "Open it in Safari", "Answer the site in Safari",
-                                        "Add it to the Dock as “YT Music”", "Play a song in YT Music", "Let AutoHush pause it"])
+                                        "Add it to the Dock as “YT Music”", "Play something in YT Music", "Let AutoHush pause it"])
         #expect(toPlay.map(\.state) == [.done, .done, .done, .done, .current, .todo])
         #expect(toPlay[4].button == .itsPlaying)
 
@@ -159,7 +159,7 @@ struct ChecklistStepTests {
         let byHand = AddWebAppView.stepGroups(for: made, learning: .learning(hasPlayed: true), pauseMode: .byHand)
         #expect(byHand.adding.last?.title == "Add it to the Dock as “YT Music”")
         #expect(byHand.learning.count == 3) // paused by hand: a step more
-        #expect(byHand.learning.first?.title == "Play a song in YT Music")
+        #expect(byHand.learning.first?.title == "Play something in YT Music")
 
         let adding = AddWebAppView.stepGroups(for: .adding, learning: nil)
         #expect(adding.learning.isEmpty) // nothing to learn before it's made

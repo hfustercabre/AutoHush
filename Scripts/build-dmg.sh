@@ -26,7 +26,8 @@ DMGBUILD_REQUIREMENTS="$PROJECT_DIR/Scripts/lib/dmgbuild-requirements.txt"
 # Prints the path of dmgbuild, installing it first if needed: into a Python
 # environment of its own in .build/, from the pinned, hash-checked files.
 dmgbuild_tool() {
-    local venv="$PROJECT_DIR/.build/dmgbuild-$(shasum -a 256 "$DMGBUILD_REQUIREMENTS" | cut -c1-12)"
+    local venv
+    venv="$PROJECT_DIR/.build/dmgbuild-$(shasum -a 256 "$DMGBUILD_REQUIREMENTS" | cut -c1-12)"
     if [[ ! -x "$venv/bin/dmgbuild" ]]; then
         local python="" candidate
         for candidate in "${PYTHON:-}" python3 /opt/homebrew/bin/python3; do

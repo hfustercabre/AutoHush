@@ -2755,633 +2755,6 @@
         }
       }
     },
-    "%@ is not installed" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ غير مثبّت"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no està instal·lat"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikace %@ není nainstalovaná"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ er ikke installeret"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ist nicht installiert"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Το %@ δεν είναι εγκατεστημένο"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no está instalado"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no está instalado"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ei ole asennettu"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ n’est pas installé"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ n’est pas installé"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ इंस्टॉल नहीं है"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ nije instalirana"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A(z) %@ nincs telepítve"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tidak terinstal"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ non è installato"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@がインストールされていません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 설치되지 않음"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ er ikke installert"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ is niet geïnstalleerd"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacja %@ nie jest zainstalowana"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está instalado"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está instalado"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ nu este instalat"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не установлен"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apka %@ nie je nainštalovaná"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ ni nameščena"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ är inte installerad"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ yüklü değil"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не встановлено"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ chưa được cài đặt"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未安裝"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未安装"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未安裝"
-          }
-        }
-      }
-    },
-    "%@ is not responding" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ لا يستجيب"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no respon"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikace %@ nereaguje"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ svarer ikke"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ reagiert nicht"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Το %@ δεν αποκρίνεται"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no responde"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no responde"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ei vastaa"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ne répond pas"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ne répond pas"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ जवाब नहीं दे रहा"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ ne odgovara"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A(z) %@ nem válaszol"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tidak merespons"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ non risponde"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@が応答しません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 응답 없음"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ svarer ikke"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ reageert niet"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacja %@ nie odpowiada"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está respondendo"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está a responder"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ nu răspunde"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не отвечает"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apka %@ nereaguje"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ se ne odziva"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ svarar inte"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ yanıt vermiyor"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не відповідає"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ không phản hồi"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 沒有回應"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 没有响应"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 沒有回應"
-          }
-        }
-      }
-    },
-    "%@ is not running" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ لا يعمل"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no s’està executant"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikace %@ neběží"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kører ikke"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ läuft nicht"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Το %@ δεν εκτελείται"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no se está ejecutando"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no se está ejecutando"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ei ole käynnissä"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ n’est pas ouvert"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ n’est pas ouvert"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ नहीं चल रहा"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ nije pokrenuta"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A(z) %@ nem fut"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tidak berjalan"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ non è aperto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@が起動していません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 실행 중이 아님"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kjører ikke"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ is niet actief"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacja %@ nie jest uruchomiona"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está aberto"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ não está aberto"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ nu rulează"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не запущен"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apka %@ nie je spustená"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacija %@ ne teče"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ körs inte"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ çalışmıyor"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ не запущено"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ không chạy"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未在執行"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未在运行"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 未在執行"
-          }
-        }
-      }
-    },
     "%@ is playing" : {
       "comment" : "Completes “Paused — %@”; %@ is an app",
       "localizations" : {
@@ -4015,6 +3388,424 @@
         }
       }
     },
+    "%@ isn’t installed" : {
+      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ غير مثبّت"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no està instal·lat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ není nainstalovaná"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ er ikke installeret"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist nicht installiert"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το %@ δεν είναι εγκατεστημένο"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no está instalado"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no está instalado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ei ole asennettu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas installé"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas installé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ इंस्टॉल नहीं है"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ nije instalirana"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ nincs telepítve"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tidak terinstal"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non è installato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がインストールされていません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 설치되지 않음"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ er ikke installert"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is niet geïnstalleerd"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ nie jest zainstalowana"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está instalado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está instalado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ nu este instalat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не установлен"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ nie je nainštalovaná"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ ni nameščena"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ är inte installerad"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ yüklü değil"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не встановлено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ chưa được cài đặt"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未安裝"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未安装"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未安裝"
+          }
+        }
+      }
+    },
+    "%@ isn’t responding" : {
+      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ لا يستجيب"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no respon"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ nereaguje"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ svarer ikke"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ reagiert nicht"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το %@ δεν αποκρίνεται"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no responde"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no responde"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ei vastaa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne répond pas"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne répond pas"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ जवाब नहीं दे रहा"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ ne odgovara"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ nem válaszol"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tidak merespons"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non risponde"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が応答しません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 응답 없음"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ svarer ikke"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ reageert niet"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ nie odpowiada"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está respondendo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está a responder"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ nu răspunde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не отвечает"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ nereaguje"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ se ne odziva"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ svarar inte"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ yanıt vermiyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не відповідає"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ không phản hồi"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有回應"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有响应"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 沒有回應"
+          }
+        }
+      }
+    },
     "%@ isn’t responding." : {
       "comment" : "Why the media player couldn't be controlled; %@ is the player",
       "localizations" : {
@@ -4220,6 +4011,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 沒有回應。"
+          }
+        }
+      }
+    },
+    "%@ isn’t running" : {
+      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ لا يعمل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no s’està executant"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ neběží"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kører ikke"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ läuft nicht"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το %@ δεν εκτελείται"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se está ejecutando"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no se está ejecutando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ei ole käynnissä"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas ouvert"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas ouvert"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ नहीं चल रहा"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ nije pokrenuta"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ nem fut"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tidak berjalan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ non è aperto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が起動していません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 실행 중이 아님"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kjører ikke"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is niet actief"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ nie jest uruchomiona"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está aberto"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não está aberto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ nu rulează"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не запущен"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ nie je spustená"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ ne teče"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ körs inte"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ çalışmıyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не запущено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ không chạy"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未在執行"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未在运行"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未在執行"
           }
         }
       }
@@ -5056,6 +5056,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 表示此頁面不存在。請檢查網址。"
+          }
+        }
+      }
+    },
+    "%@ was added, but AutoHush can’t find it yet. Click Continue to try again." : {
+      "comment" : "Add a Web App window, when the web app was made but macOS doesn't list it yet; %@ is the web app's name; Continue is the window's button",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمت إضافة %@، لكن AutoHush لا يعثر عليه بعد. انقر على «متابعة» للمحاولة مرة أخرى."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S’ha afegit %@, però l’AutoHush encara no la troba. Fes clic a «Continua» per tornar-ho a provar."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikace %@ byla přidána, ale AutoHush ji zatím nemůže najít. Klikněte na „Pokračovat“ a zkuste to znovu."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ blev tilføjet, men AutoHush kan ikke finde den endnu. Klik på ”Fortsæt” for at prøve igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wurde hinzugefügt, aber AutoHush findet die App noch nicht. Klicke auf „Fortfahren“, um es erneut zu versuchen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η εφαρμογή %@ προστέθηκε, αλλά το AutoHush δεν τη βρίσκει ακόμα. Κάντε κλικ στο «Συνέχεια» για να προσπαθήσετε ξανά."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se ha añadido, pero AutoHush aún no la encuentra. Haz clic en «Continuar» para volver a intentarlo."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ se agregó, pero AutoHush aún no la encuentra. Haz clic en «Continuar» para volver a intentarlo."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lisättiin, mutta AutoHush ei vielä löydä sitä. Yritä uudelleen osoittamalla ”Jatka”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a été ajoutée, mais AutoHush ne la trouve pas encore. Cliquez sur « Continuer » pour réessayer."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a été ajoutée, mais AutoHush ne la trouve pas encore. Cliquez sur « Continuer » pour réessayer."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ जोड़ दिया गया, लेकिन AutoHush उसे अभी ढूँढ नहीं पा रहा। फिर से कोशिश करने के लिए “जारी रखें” पर क्लिक करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ je dodana, ali je AutoHush još ne može pronaći. Kliknite „Nastavi” da biste pokušali ponovno."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ hozzáadva, de az AutoHush még nem találja. Kattintson a „Folytatás” gombra az újrapróbálkozáshoz."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sudah ditambahkan, tetapi AutoHush belum bisa menemukannya. Klik “Lanjutkan” untuk mencoba lagi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ è stata aggiunta, ma AutoHush non la trova ancora. Fai clic su «Continua» per riprovare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は追加されましたが、AutoHushはまだ見つけられません。もう一度試すには「続ける」をクリックしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@이(가) 추가되었지만 AutoHush가 아직 찾지 못합니다. 다시 시도하려면 ‘계속’을 클릭하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ble lagt til, men AutoHush finner den ikke ennå. Klikk på «Fortsett» for å prøve igjen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is toegevoegd, maar AutoHush kan de app nog niet vinden. Klik op ‘Ga door’ om het opnieuw te proberen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ została dodana, ale AutoHush jeszcze jej nie znajduje. Kliknij „Dalej”, aby spróbować ponownie."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ foi adicionado, mas o AutoHush ainda não o encontra. Clique em “Continuar” para tentar de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ foi adicionada, mas o AutoHush ainda não a encontra. Clique em “Continuar” para tentar novamente."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicația %@ a fost adăugată, dar AutoHush nu o găsește încă. Faceți clic pe „Continuați” pentru a încerca din nou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приложение %@ добавлено, но AutoHush пока не может его найти. Нажмите «Продолжить», чтобы попробовать снова."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apka %@ bola pridaná, ale AutoHush ju zatiaľ nenachádza. Kliknite na „Pokračovať“ a skúste to znova."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija %@ je dodana, vendar je AutoHush še ne najde. Kliknite »Nadaljuj«, da poskusite znova."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lades till, men AutoHush hittar den inte ännu. Klicka på ”Fortsätt” för att försöka igen."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ eklendi ancak AutoHush onu henüz bulamıyor. Yeniden denemek için “Devam Et” düğmesine tıklayın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Програму %@ додано, але AutoHush ще не може її знайти. Натисніть «Продовжити», щоб спробувати ще раз."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã thêm %@, nhưng AutoHush chưa tìm thấy. Hãy bấm “Tiếp tục” để thử lại."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已加入，但 AutoHush 暫時找不到它。按一下「繼續」以再試一次。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已添加，但 AutoHush 暂时找不到它。点按“继续”以重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已加入，但 AutoHush 暫時找不到它。按一下「繼續」以再試一次。"
           }
         }
       }
@@ -7580,211 +7789,211 @@
         }
       }
     },
-    "A minute went by without the pause. Play the song again, then click It’s Playing." : {
-      "comment" : "Under the step “Play a song in %@” once learning went back to it: “It’s Paused” wasn't clicked within a minute",
+    "A minute went by without the pause. Play it again, then click It’s Playing." : {
+      "comment" : "Under the step “Play something in %@” once learning went back to it: “It’s Paused” wasn't clicked within a minute",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "مرّت دقيقة دون إيقاف مؤقت. شغّل الأغنية مرة أخرى، ثم انقر على «قيد التشغيل»."
+            "value" : "مرّت دقيقة دون إيقاف مؤقت. شغّله مرة أخرى، ثم انقر على «قيد التشغيل»."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ha passat un minut sense la pausa. Torna a reproduir la cançó i fes clic a «Està sonant»."
+            "value" : "Ha passat un minut sense la pausa. Torna-ho a reproduir i fes clic a «Està sonant»."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uplynula minuta bez pozastavení. Pusťte skladbu znovu a klikněte na „Hraje“."
+            "value" : "Uplynula minuta bez pozastavení. Pusťte to znovu a klikněte na „Hraje“."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der gik et minut uden pausen. Afspil sangen igen, og klik på ”Afspiller”."
+            "value" : "Der gik et minut uden pausen. Afspil det igen, og klik på ”Afspiller”."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eine Minute ist ohne Pause vergangen. Spiele den Song erneut ab und klicke auf „Es läuft“."
+            "value" : "Eine Minute ist ohne Pause vergangen. Spiele es erneut ab und klicke auf „Es läuft“."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Πέρασε ένα λεπτό χωρίς την παύση. Αναπαραγάγετε ξανά το τραγούδι και κάντε κλικ στο «Παίζει»."
+            "value" : "Πέρασε ένα λεπτό χωρίς την παύση. Αναπαραγάγετέ το ξανά και κάντε κλικ στο «Παίζει»."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ha pasado un minuto sin la pausa. Vuelve a reproducir la canción y haz clic en «Está sonando»."
+            "value" : "Ha pasado un minuto sin la pausa. Vuelve a reproducirlo y haz clic en «Está sonando»."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ha pasado un minuto sin la pausa. Vuelve a reproducir la canción y haz clic en «Está sonando»."
+            "value" : "Ha pasado un minuto sin la pausa. Vuelve a reproducirlo y haz clic en «Está sonando»."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minuutti kului ilman taukoa. Toista kappale uudelleen ja osoita ”Soi nyt”."
+            "value" : "Minuutti kului ilman taukoa. Toista se uudelleen ja osoita ”Soi nyt”."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une minute s’est écoulée sans la pause. Relancez la chanson, puis cliquez sur « Lecture en cours »."
+            "value" : "Une minute s’est écoulée sans la pause. Relancez la lecture, puis cliquez sur « Lecture en cours »."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une minute s’est écoulée sans la pause. Relancez la chanson, puis cliquez sur « Lecture en cours »."
+            "value" : "Une minute s’est écoulée sans la pause. Relancez la lecture, puis cliquez sur « Lecture en cours »."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "पॉज़ के बिना एक मिनट बीत गया। गाना फिर से चलाएँ, फिर “चल रहा है” पर क्लिक करें।"
+            "value" : "पॉज़ के बिना एक मिनट बीत गया। इसे फिर से चलाएँ, फिर “चल रहा है” पर क्लिक करें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prošla je minuta bez pauze. Ponovno reproducirajte pjesmu i kliknite „Svira”."
+            "value" : "Prošla je minuta bez pauze. Ponovno to reproducirajte i kliknite „Svira”."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eltelt egy perc szüneteltetés nélkül. Játssza le újra a dalt, majd kattintson a „Szól” gombra."
+            "value" : "Eltelt egy perc szüneteltetés nélkül. Játssza le újra, majd kattintson a „Szól” gombra."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Semenit berlalu tanpa jeda. Putar lagunya lagi, lalu klik “Sedang Diputar”."
+            "value" : "Semenit berlalu tanpa jeda. Putar lagi, lalu klik “Sedang Diputar”."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "È passato un minuto senza la pausa. Riproduci di nuovo il brano, poi fai clic su «In riproduzione»."
+            "value" : "È passato un minuto senza la pausa. Riproducilo di nuovo, poi fai clic su «In riproduzione»."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一時停止しないまま1分が経過しました。もう一度曲を再生してから、「再生中」をクリックしてください。"
+            "value" : "一時停止しないまま1分が経過しました。もう一度再生してから、「再生中」をクリックしてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "일시 정지 없이 1분이 지났습니다. 노래를 다시 재생한 다음 ‘재생 중’을 클릭하십시오."
+            "value" : "일시 정지 없이 1분이 지났습니다. 다시 재생한 다음 ‘재생 중’을 클릭하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Det gikk et minutt uten pausen. Spill av sangen igjen, og klikk på «Spiller»."
+            "value" : "Det gikk et minutt uten pausen. Spill det av igjen, og klikk på «Spiller»."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er is een minuut verstreken zonder pauze. Speel het nummer opnieuw af en klik op ‘Speelt af’."
+            "value" : "Er is een minuut verstreken zonder pauze. Speel het opnieuw af en klik op ‘Speelt af’."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minęła minuta bez wstrzymania. Odtwórz utwór ponownie i kliknij „Gra”."
+            "value" : "Minęła minuta bez wstrzymania. Odtwórz to ponownie i kliknij „Gra”."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Passou um minuto sem a pausa. Reproduza a música de novo e clique em “Está tocando”."
+            "value" : "Passou um minuto sem a pausa. Reproduza de novo e clique em “Está tocando”."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Passou um minuto sem a pausa. Volte a reproduzir a música e clique em “A reproduzir”."
+            "value" : "Passou um minuto sem a pausa. Volte a reproduzir e clique em “A reproduzir”."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A trecut un minut fără pauză. Redați din nou melodia, apoi faceți clic pe „Se redă”."
+            "value" : "A trecut un minut fără pauză. Redați din nou, apoi faceți clic pe „Se redă”."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Прошла минута без паузы. Снова включите песню и нажмите «Играет»."
+            "value" : "Прошла минута без паузы. Снова включите воспроизведение и нажмите «Играет»."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uplynula minúta bez pozastavenia. Pustite skladbu znova a kliknite na „Hrá“."
+            "value" : "Uplynula minúta bez pozastavenia. Pustite to znova a kliknite na „Hrá“."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minila je minuta brez premora. Znova predvajajte skladbo in kliknite »Predvaja se«."
+            "value" : "Minila je minuta brez premora. Znova predvajajte in kliknite »Predvaja se«."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En minut gick utan paus. Spela upp låten igen och klicka på ”Spelas upp”."
+            "value" : "En minut gick utan paus. Spela upp det igen och klicka på ”Spelas upp”."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Duraklatılmadan bir dakika geçti. Şarkıyı yeniden çalın, sonra “Çalıyor” düğmesine tıklayın."
+            "value" : "Duraklatılmadan bir dakika geçti. Yeniden çalın, sonra “Çalıyor” düğmesine tıklayın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Минула хвилина без паузи. Увімкніть пісню знову й натисніть «Грає»."
+            "value" : "Минула хвилина без паузи. Увімкніть відтворення знову й натисніть «Грає»."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Đã qua một phút mà không tạm dừng. Hãy phát lại bài hát, rồi bấm “Đang phát”."
+            "value" : "Đã qua một phút mà không tạm dừng. Hãy phát lại, rồi bấm “Đang phát”."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一分鐘內未暫停。請再次播放這首歌，然後按一下「正在播放」。"
+            "value" : "一分鐘內未暫停。請再次播放，然後按一下「正在播放」。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一分钟内未暂停。请再次播放这首歌，然后点按“正在播放”。"
+            "value" : "一分钟内未暂停。请再次播放，然后点按“正在播放”。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一分鐘內未暫停。請再次播放這首歌，然後按一下「正在播放」。"
+            "value" : "一分鐘內未暫停。請再次播放，然後按一下「正在播放」。"
           }
         }
       }
@@ -14478,7 +14687,7 @@
       }
     },
     "Audio Recording" : {
-      "comment" : "Welcome window, the System Audio Recording permission (macOS's name for it)",
+      "comment" : "Welcome window and Diagnostics: the System Audio Recording permission (macOS’s name for it)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -15100,215 +15309,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "音訊音量（正在啟動）"
-          }
-        }
-      }
-    },
-    "Audio recording" : {
-      "comment" : "Diagnostics: the System Audio Recording permission",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تسجيل الصوت"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gravació d’àudio"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nahrávání zvuku"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lydoptagelse"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Audioaufnahme"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εγγραφή ήχου"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grabación de audio"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grabación de audio"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Äänen tallennus"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enregistrement audio"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enregistrement audio"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ऑडियो रिकॉर्डिंग"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Snimanje zvuka"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hangfelvétel"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rekaman audio"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Registrazione audio"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーディオ録音"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오디오 녹음"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lydopptak"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Audio-opname"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nagrywanie dźwięku"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gravação de áudio"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gravação de áudio"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Înregistrare audio"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Запись звука"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nahrávanie zvuku"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Snemanje zvoka"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ljudinspelning"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ses kaydı"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Записування звуку"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ghi âm thanh"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "錄音"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "录音"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "錄音"
           }
         }
       }
@@ -18448,217 +18448,217 @@
         }
       }
     },
-    "AutoHush can’t hear %@ yet. Play a song, then click It’s Playing again." : {
-      "comment" : "Under the step “Play a song in %@” after “It’s Playing” was clicked while the web app was silent; %@ is the web app",
+    "AutoHush can’t hear %@ yet. Play something, then click It’s Playing again." : {
+      "comment" : "Under the step “Play something in %@” after “It’s Playing” was clicked while the web app was silent; %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يسمع AutoHush %@ بعد. شغّل أغنية، ثم انقر على «قيد التشغيل» مرة أخرى."
+            "value" : "لا يسمع AutoHush %@ بعد. شغّل شيئًا، ثم انقر على «قيد التشغيل» مرة أخرى."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush encara no sent %@. Reprodueix una cançó i torna a fer clic a «Està sonant»."
+            "value" : "L’AutoHush encara no sent %@. Reprodueix alguna cosa i torna a fer clic a «Està sonant»."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush aplikaci %@ zatím neslyší. Pusťte skladbu a znovu klikněte na „Hraje“."
+            "value" : "AutoHush aplikaci %@ zatím neslyší. Pusťte něco a znovu klikněte na „Hraje“."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush kan ikke høre %@ endnu. Afspil en sang, og klik på ”Afspiller” igen."
+            "value" : "AutoHush kan ikke høre %@ endnu. Afspil noget, og klik på ”Afspiller” igen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush hört %@ noch nicht. Spiele einen Song ab und klicke erneut auf „Es läuft“."
+            "value" : "AutoHush hört %@ noch nicht. Spiele etwas ab und klicke erneut auf „Es läuft“."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Το AutoHush δεν ακούει ακόμα την εφαρμογή %@. Αναπαραγάγετε ένα τραγούδι και κάντε ξανά κλικ στο «Παίζει»."
+            "value" : "Το AutoHush δεν ακούει ακόμα την εφαρμογή %@. Αναπαραγάγετε κάτι και κάντε ξανά κλικ στο «Παίζει»."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush aún no oye %@. Reproduce una canción y vuelve a hacer clic en «Está sonando»."
+            "value" : "AutoHush aún no oye %@. Reproduce algo y vuelve a hacer clic en «Está sonando»."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush aún no oye %@. Reproduce una canción y vuelve a hacer clic en «Está sonando»."
+            "value" : "AutoHush aún no oye %@. Reproduce algo y vuelve a hacer clic en «Está sonando»."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ei vielä kuule appia %@. Toista kappale ja osoita uudelleen ”Soi nyt”."
+            "value" : "AutoHush ei vielä kuule appia %@. Toista jotain ja osoita uudelleen ”Soi nyt”."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush n’entend pas encore %@. Lancez une chanson, puis cliquez à nouveau sur « Lecture en cours »."
+            "value" : "AutoHush n’entend pas encore %@. Lancez quelque chose, puis cliquez à nouveau sur « Lecture en cours »."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush n’entend pas encore %@. Lancez une chanson, puis cliquez à nouveau sur « Lecture en cours »."
+            "value" : "AutoHush n’entend pas encore %@. Lancez quelque chose, puis cliquez à nouveau sur « Lecture en cours »."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush को अभी %@ सुनाई नहीं दे रहा। कोई गाना चलाएँ, फिर दोबारा “चल रहा है” पर क्लिक करें।"
+            "value" : "AutoHush को अभी %@ सुनाई नहीं दे रहा। कुछ चलाएँ, फिर दोबारा “चल रहा है” पर क्लिक करें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush još ne čuje aplikaciju %@. Reproducirajte pjesmu i ponovno kliknite „Svira”."
+            "value" : "AutoHush još ne čuje aplikaciju %@. Reproducirajte nešto i ponovno kliknite „Svira”."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az AutoHush még nem hallja a(z) %@ appot. Játsszon le egy dalt, majd kattintson újra a „Szól” gombra."
+            "value" : "Az AutoHush még nem hallja a(z) %@ appot. Játsszon le valamit, majd kattintson újra a „Szól” gombra."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush belum bisa mendengar %@. Putar lagu, lalu klik “Sedang Diputar” lagi."
+            "value" : "AutoHush belum bisa mendengar %@. Putar sesuatu, lalu klik “Sedang Diputar” lagi."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush non sente ancora %@. Riproduci un brano, poi fai di nuovo clic su «In riproduzione»."
+            "value" : "AutoHush non sente ancora %@. Riproduci qualcosa, poi fai di nuovo clic su «In riproduzione»."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHushにはまだ%@の音が聞こえません。曲を再生してから、もう一度「再生中」をクリックしてください。"
+            "value" : "AutoHushにはまだ%@の音が聞こえません。何かを再生してから、もう一度「再生中」をクリックしてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush가 아직 %@의 소리를 듣지 못합니다. 노래를 재생한 다음 ‘재생 중’을 다시 클릭하십시오."
+            "value" : "AutoHush가 아직 %@의 소리를 듣지 못합니다. 무언가를 재생한 다음 ‘재생 중’을 다시 클릭하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush hører ikke %@ ennå. Spill av en sang, og klikk på «Spiller» igjen."
+            "value" : "AutoHush hører ikke %@ ennå. Spill av noe, og klikk på «Spiller» igjen."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush hoort %@ nog niet. Speel een nummer af en klik opnieuw op ‘Speelt af’."
+            "value" : "AutoHush hoort %@ nog niet. Speel iets af en klik opnieuw op ‘Speelt af’."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush jeszcze nie słyszy aplikacji %@. Odtwórz utwór i ponownie kliknij „Gra”."
+            "value" : "AutoHush jeszcze nie słyszy aplikacji %@. Odtwórz coś i ponownie kliknij „Gra”."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush ainda não ouve %@. Reproduza uma música e clique em “Está tocando” de novo."
+            "value" : "O AutoHush ainda não ouve %@. Reproduza algo e clique em “Está tocando” de novo."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush ainda não ouve %@. Reproduza uma música e volte a clicar em “A reproduzir”."
+            "value" : "O AutoHush ainda não ouve %@. Reproduza algo e volte a clicar em “A reproduzir”."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush nu aude încă aplicația %@. Redați o melodie, apoi faceți clic din nou pe „Se redă”."
+            "value" : "AutoHush nu aude încă aplicația %@. Redați ceva, apoi faceți clic din nou pe „Se redă”."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush пока не слышит %@. Включите песню и снова нажмите «Играет»."
+            "value" : "AutoHush пока не слышит %@. Включите что-нибудь и снова нажмите «Играет»."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush apku %@ zatiaľ nepočuje. Pustite skladbu a znova kliknite na „Hrá“."
+            "value" : "AutoHush apku %@ zatiaľ nepočuje. Pustite niečo a znova kliknite na „Hrá“."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush aplikacije %@ še ne sliši. Predvajajte skladbo in znova kliknite »Predvaja se«."
+            "value" : "AutoHush aplikacije %@ še ne sliši. Predvajajte nekaj in znova kliknite »Predvaja se«."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush hör inte %@ ännu. Spela upp en låt och klicka på ”Spelas upp” igen."
+            "value" : "AutoHush hör inte %@ ännu. Spela upp något och klicka på ”Spelas upp” igen."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush henüz %@ uygulamasını duyamıyor. Bir şarkı çalın, sonra yeniden “Çalıyor” düğmesine tıklayın."
+            "value" : "AutoHush henüz %@ uygulamasını duyamıyor. Bir şey çalın, sonra yeniden “Çalıyor” düğmesine tıklayın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ще не чує програму %@. Увімкніть пісню та знову натисніть «Грає»."
+            "value" : "AutoHush ще не чує програму %@. Увімкніть щось і знову натисніть «Грає»."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush chưa nghe thấy %@. Hãy phát một bài hát, rồi bấm lại “Đang phát”."
+            "value" : "AutoHush chưa nghe thấy %@. Hãy phát nội dung nào đó, rồi bấm lại “Đang phát”."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 還聽不到 %@。請播放一首歌，然後再按一下「正在播放」。"
+            "value" : "AutoHush 還聽不到 %@。請播放一些內容，然後再按一下「正在播放」。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 还听不到 %@。请播放一首歌，然后再次点按“正在播放”。"
+            "value" : "AutoHush 还听不到 %@。请播放一些内容，然后再次点按“正在播放”。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush 還聽不到 %@。請播放一首歌，然後再按一下「正在播放」。"
+            "value" : "AutoHush 還聽不到 %@。請播放一些內容，然後再按一下「正在播放」。"
           }
         }
       }
     },
     "AutoHush can’t see %@’s page. Open its window, or close it and open it again, then click It’s Playing again." : {
-      "comment" : "Under the step “Play a song in %@” when AutoHush couldn't read the web app's page (not running, no window, or a window restored without its buttons' names); %@ is the web app",
+      "comment" : "Under the step “Play something in %@” when AutoHush couldn't read the web app's page (not running, no window, or a window restored without its buttons' names); %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -22211,7 +22211,7 @@
       }
     },
     "AutoHush: %@" : {
-      "comment" : "VoiceOver label of the menu bar icon while something needs the user; %@ is the menu's status line, e.g. “Spotify is not running” or “Choose a media player”",
+      "comment" : "VoiceOver label of the menu bar icon while something needs the user or Auto-Pause is off; %@ is the menu's status line, e.g. “Spotify isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -22415,215 +22415,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush：%@"
-          }
-        }
-      }
-    },
-    "AutoHush: couldn’t pause your player" : {
-      "comment" : "VoiceOver label of the menu bar icon",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: تعذّر إيقاف مشغّلك مؤقتًا"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: no s’ha pogut posar en pausa el reproductor"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: přehrávač nelze pozastavit"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: din afspiller kunne ikke sættes på pause"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: dein Player konnte nicht pausiert werden"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: δεν ήταν δυνατή η παύση της εφαρμογής αναπαραγωγής"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: no se ha podido pausar tu reproductor"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: no se pudo pausar tu reproductor"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: soittimesi keskeyttäminen epäonnistui"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush : impossible de mettre votre lecteur en pause"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush : impossible de mettre votre lecteur en pause"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: आपका प्लेयर पॉज़ नहीं हो सका"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: nije moguće pauzirati vaš reproduktor"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: nem sikerült szüneteltetni a lejátszót"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: tidak dapat menjeda pemutar Anda"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: impossibile mettere in pausa il lettore"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: プレーヤーを一時停止できませんでした"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: 플레이어를 일시 정지할 수 없음"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: kunne ikke sette spilleren din på pause"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: kan je speler niet pauzeren"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: nie można wstrzymać odtwarzacza"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: não foi possível pausar seu player"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: não foi possível pôr o seu leitor em pausa"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: playerul nu a putut fi pus pe pauză"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: не удалось приостановить плеер"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: prehrávač nie je možné pozastaviť"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: predvajalnika ni bilo mogoče zaustaviti"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: kunde inte pausa din spelare"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: oynatıcınız duraklatılamadı"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: не вдалося призупинити програвач"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush: không thể tạm dừng trình phát của bạn"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush：無法暫停你的播放器"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush：无法暂停你的播放器"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush：無法暫停你的播放器"
           }
         }
       }
@@ -23669,6 +23460,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush：你的播放器正在其他裝置上播放"
+          }
+        }
+      }
+    },
+    "AutoHush’s version is unknown." : {
+      "comment" : "Update status in Settings",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إصدار AutoHush غير معروف."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es desconeix la versió de l’AutoHush."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze aplikace AutoHush není známá."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushs version er ukendt."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Version von AutoHush ist unbekannt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η έκδοση του AutoHush είναι άγνωστη."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se desconoce la versión de AutoHush."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se desconoce la versión de AutoHush."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushin versio on tuntematon."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version d’AutoHush est inconnue."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version d’AutoHush est inconnue."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush का संस्करण अज्ञात है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzija aplikacije AutoHush nije poznata."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush verziója ismeretlen."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi AutoHush tidak diketahui."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione di AutoHush è sconosciuta."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushのバージョンが不明です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 버전을 알 수 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush-versjonen er ukjent."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De versie van AutoHush is onbekend."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja aplikacji AutoHush jest nieznana."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão do AutoHush é desconhecida."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão do AutoHush é desconhecida."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiunea AutoHush este necunoscută."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версия AutoHush неизвестна."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzia apky AutoHush nie je známa."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Različica aplikacije AutoHush ni znana."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushs version är okänd."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush’ın sürümü bilinmiyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версія AutoHush невідома."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không rõ phiên bản của AutoHush."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 的版本不明。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 的版本未知。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 的版本不明。"
           }
         }
       }
@@ -26182,7 +26182,7 @@
       }
     },
     "Checking…" : {
-      "comment" : "Update status in Settings: a check is running",
+      "comment" : "While an update check runs: the update status in Settings, and the menu's Updates button (keep it short there)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -28063,7 +28063,7 @@
       }
     },
     "Click to add" : {
-      "comment" : "Under a suggested Safari web app's tile (Settings → General, the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine",
+      "comment" : "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → General and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -29103,6 +29103,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "關閉搜尋"
+          }
+        }
+      }
+    },
+    "Collapsed" : {
+      "comment" : "VoiceOver, Settings → Diagnostics: a part's heading while the part is folded away (a click shows it)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مطوي"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sbaleno"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjult"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeklappt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Συμπτυγμένο"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraído"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraído"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiivistetty"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संक्षिप्त"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sažeto"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Összecsukva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diciutkan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compresso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "折りたたみ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "접힘"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjult"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samengevouwen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwinięte"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolhido"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recolhido"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restrâns"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свернуто"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zbalené"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strnjeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hopfällt"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daraltıldı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Згорнуто"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã thu gọn"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已收合"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已折叠"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已收合"
           }
         }
       }
@@ -35586,6 +35795,215 @@
         }
       }
     },
+    "Expanded" : {
+      "comment" : "VoiceOver, Settings → Diagnostics: a part's heading while the part shows (a click folds it away)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "موسّع"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplegat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozbaleno"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Udvidet"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeklappt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αναπτυγμένο"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplegado"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplegado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laajennettu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "विस्तृत"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prošireno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kibontva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diluaskan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espanso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "펼쳐짐"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utvidet"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uitgevouwen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozwinięte"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandido"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expandido"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extins"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Развернуто"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozbalené"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razširjeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utfällt"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genişletildi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Розгорнуто"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã mở rộng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已展開"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已展开"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已展開"
+          }
+        }
+      }
+    },
     "Experimental" : {
       "comment" : "Badge after the “Safari Web Apps” heading where media players are offered: web apps may not work as expected",
       "localizations" : {
@@ -37049,6 +37467,215 @@
         }
       }
     },
+    "Find…" : {
+      "comment" : "The menu bar's Edit menu: opens or focuses the search of the window in front (⌘F); macOS's own word",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بحث…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Najít…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søg…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchen …"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εύρεση…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ढूँढें…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traži…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keresés…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cari…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trova…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検索…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찾기…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søk…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź…"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurar…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Найти…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Najdi …"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bul…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Знайти…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找…"
+          }
+        }
+      }
+    },
     "General" : {
       "comment" : "Settings: a page in the sidebar",
       "localizations" : {
@@ -37676,7 +38303,7 @@
         }
       }
     },
-    "GitHub’s release information could not be read." : {
+    "GitHub’s release information couldn’t be read." : {
       "comment" : "Update check error",
       "localizations" : {
         "ar" : {
@@ -42484,7 +43111,7 @@
       }
     },
     "It’s Playing" : {
-      "comment" : "Button under the step “Play a song in %@” while AutoHush learns a web app's controls: the song itself plays now",
+      "comment" : "Button under the step “Play something in %@” while AutoHush learns a web app's controls: what the user chose plays now, not an ad",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44364,420 +44991,420 @@
         }
       }
     },
-    "Learn Again" : {
+    "Learn Again…" : {
       "comment" : "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window; what was learned keeps working until the user clicks “It’s Playing” there",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "إعادة التعلّم"
+            "value" : "إعادة التعلّم…"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Torna a aprendre"
+            "value" : "Torna a aprendre…"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naučit znovu"
+            "value" : "Naučit znovu…"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lær igen"
+            "value" : "Lær igen…"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erneut lernen"
+            "value" : "Erneut lernen …"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Νέα εκμάθηση"
+            "value" : "Νέα εκμάθηση…"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Volver a aprender"
+            "value" : "Volver a aprender…"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Volver a aprender"
+            "value" : "Volver a aprender…"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opeta uudelleen"
+            "value" : "Opeta uudelleen…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Réapprendre"
+            "value" : "Réapprendre…"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Réapprendre"
+            "value" : "Réapprendre…"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "फिर से सिखाएँ"
+            "value" : "फिर से सिखाएँ…"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ponovno nauči"
+            "value" : "Ponovno nauči…"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Újratanítás"
+            "value" : "Újratanítás…"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajari Ulang"
+            "value" : "Ajari Ulang…"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Riapprendi"
+            "value" : "Riapprendi…"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "再学習"
+            "value" : "再学習…"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다시 학습"
+            "value" : "다시 학습…"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lær på nytt"
+            "value" : "Lær på nytt…"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opnieuw leren"
+            "value" : "Opnieuw leren…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naucz ponownie"
+            "value" : "Naucz ponownie…"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reaprender"
+            "value" : "Reaprender…"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reaprender"
+            "value" : "Reaprender…"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reînvățați"
+            "value" : "Reînvățați…"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Обучить заново"
+            "value" : "Обучить заново…"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naučiť znova"
+            "value" : "Naučiť znova…"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Znova nauči"
+            "value" : "Znova nauči …"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lär igen"
+            "value" : "Lär igen…"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yeniden Öğret"
+            "value" : "Yeniden Öğret…"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Навчити знову"
+            "value" : "Навчити знову…"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Học lại"
+            "value" : "Học lại…"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新學習"
+            "value" : "重新學習…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新学习"
+            "value" : "重新学习…"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新學習"
+            "value" : "重新學習…"
           }
         }
       }
     },
-    "Learn Controls" : {
+    "Learn Controls…" : {
       "comment" : "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تعلّم عناصر التحكم"
+            "value" : "تعلّم عناصر التحكم…"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprèn els controls"
+            "value" : "Aprèn els controls…"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naučit ovládání"
+            "value" : "Naučit ovládání…"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lær betjeningen"
+            "value" : "Lær betjeningen…"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Steuerung lernen"
+            "value" : "Steuerung lernen …"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Εκμάθηση"
+            "value" : "Εκμάθηση…"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprender controles"
+            "value" : "Aprender controles…"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprender controles"
+            "value" : "Aprender controles…"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opeta säätimet"
+            "value" : "Opeta säätimet…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apprendre"
+            "value" : "Apprendre…"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apprendre"
+            "value" : "Apprendre…"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "नियंत्रण सिखाएँ"
+            "value" : "नियंत्रण सिखाएँ…"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nauči upravljanje"
+            "value" : "Nauči upravljanje…"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Megtanítás"
+            "value" : "Megtanítás…"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajari Kontrol"
+            "value" : "Ajari Kontrol…"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impara i controlli"
+            "value" : "Impara i controlli…"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "操作を学習"
+            "value" : "操作を学習…"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "컨트롤 학습"
+            "value" : "컨트롤 학습…"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lær kontrollene"
+            "value" : "Lær kontrollene…"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Leer bediening"
+            "value" : "Leer bediening…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naucz sterowania"
+            "value" : "Naucz sterowania…"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprender controles"
+            "value" : "Aprender controles…"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aprender controlos"
+            "value" : "Aprender controlos…"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Învățați comenzile"
+            "value" : "Învățați comenzile…"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Обучить"
+            "value" : "Обучить…"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Naučiť ovládanie"
+            "value" : "Naučiť ovládanie…"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nauči upravljanje"
+            "value" : "Nauči upravljanje …"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lär in reglage"
+            "value" : "Lär in reglage…"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Denetimleri Öğret"
+            "value" : "Denetimleri Öğret…"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Навчити"
+            "value" : "Навчити…"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Học điều khiển"
+            "value" : "Học điều khiển…"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "學習控制方式"
+            "value" : "學習控制方式…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "学习控制方式"
+            "value" : "学习控制方式…"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "學習控制方式"
+            "value" : "學習控制方式…"
           }
         }
       }
@@ -44992,7 +45619,7 @@
       }
     },
     "Learned. Learn them again if AutoHush gets them wrong." : {
-      "comment" : "The menu's card and Settings → General, under “Controls”: the web app's controls (its Play/Pause button) are learned, and what to do if AutoHush gets them wrong; “Learn Again” follows",
+      "comment" : "The menu's card and Settings → General, under “Controls”: the web app's controls (its Play/Pause button) are learned, and what to do if AutoHush gets them wrong; “Learn Again…” follows",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45201,7 +45828,7 @@
       }
     },
     "Let AutoHush pause it" : {
-      "comment" : "The step after “Play a song in %@” while AutoHush learns a web app's controls: AutoHush pauses the web app itself (with the keyboard's Play/Pause key) to see which button changes",
+      "comment" : "The step after “Play something in %@” while AutoHush learns a web app's controls: AutoHush pauses the web app itself (with the keyboard's Play/Pause key) to see which button changes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45409,211 +46036,211 @@
         }
       }
     },
-    "Log in first if %@ asks you to. Ads don’t count: wait for the song itself. Then click It’s Playing." : {
-      "comment" : "Under the step “Play a song in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it",
+    "Log in first if %@ asks you to. Ads don’t count: wait for what you chose to play. Then click It’s Playing." : {
+      "comment" : "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "سجّل الدخول أولًا إذا طلب %@ ذلك. الإعلانات لا تُحتسب: انتظر الأغنية نفسها. ثم انقر على «قيد التشغيل»."
+            "value" : "سجّل الدخول أولًا إذا طلب %@ ذلك. الإعلانات لا تُحتسب: انتظر ما اخترت تشغيله. ثم انقر على «قيد التشغيل»."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicia la sessió primer si %@ t’ho demana. Els anuncis no compten: espera la cançó. Després fes clic a «Està sonant»."
+            "value" : "Inicia la sessió primer si %@ t’ho demana. Els anuncis no compten: espera el que has triat per reproduir. Després fes clic a «Està sonant»."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pokud vás %@ vyzve, nejdřív se přihlaste. Reklamy se nepočítají: počkejte na samotnou skladbu. Pak klikněte na „Hraje“."
+            "value" : "Pokud vás %@ vyzve, nejdřív se přihlaste. Reklamy se nepočítají: počkejte na to, co jste si vybrali. Pak klikněte na „Hraje“."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Log først ind, hvis %@ beder om det. Reklamer tæller ikke: Vent på selve sangen. Klik derefter på ”Afspiller”."
+            "value" : "Log først ind, hvis %@ beder om det. Reklamer tæller ikke: Vent på det, du valgte at afspille. Klik derefter på ”Afspiller”."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Melde dich zuerst an, wenn %@ danach fragt. Werbung zählt nicht: Warte auf den Song selbst. Klicke dann auf „Es läuft“."
+            "value" : "Melde dich zuerst an, wenn %@ danach fragt. Werbung zählt nicht: Warte auf das, was du ausgewählt hast. Klicke dann auf „Es läuft“."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Συνδεθείτε πρώτα αν σας το ζητήσει η εφαρμογή %@. Οι διαφημίσεις δεν μετράνε: περιμένετε το ίδιο το τραγούδι. Μετά κάντε κλικ στο «Παίζει»."
+            "value" : "Συνδεθείτε πρώτα αν σας το ζητήσει η εφαρμογή %@. Οι διαφημίσεις δεν μετράνε: περιμένετε αυτό που επιλέξατε να παίξει. Μετά κάντε κλικ στο «Παίζει»."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicia sesión primero si %@ te lo pide. Los anuncios no cuentan: espera a que suene la canción. Luego haz clic en «Está sonando»."
+            "value" : "Inicia sesión primero si %@ te lo pide. Los anuncios no cuentan: espera a que suene lo que has elegido. Luego haz clic en «Está sonando»."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicia sesión primero si %@ te lo pide. Los anuncios no cuentan: espera a que suene la canción. Luego haz clic en «Está sonando»."
+            "value" : "Inicia sesión primero si %@ te lo pide. Los anuncios no cuentan: espera a que suene lo que elegiste. Luego haz clic en «Está sonando»."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kirjaudu ensin sisään, jos %@ pyytää. Mainoksia ei lasketa: odota itse kappaletta. Osoita sitten ”Soi nyt”."
+            "value" : "Kirjaudu ensin sisään, jos %@ pyytää. Mainoksia ei lasketa: odota, että valitsemasi alkaa soida. Osoita sitten ”Soi nyt”."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez-vous d’abord si %@ le demande. Les pubs ne comptent pas : attendez la chanson elle-même. Cliquez ensuite sur « Lecture en cours »."
+            "value" : "Connectez-vous d’abord si %@ le demande. Les pubs ne comptent pas : attendez ce que vous avez choisi. Cliquez ensuite sur « Lecture en cours »."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez-vous d’abord si %@ le demande. Les pubs ne comptent pas : attendez la chanson elle-même. Cliquez ensuite sur « Lecture en cours »."
+            "value" : "Connectez-vous d’abord si %@ le demande. Les pubs ne comptent pas : attendez ce que vous avez choisi. Cliquez ensuite sur « Lecture en cours »."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "अगर %@ कहे, तो पहले लॉग इन करें। विज्ञापन नहीं गिने जाते: गाने के शुरू होने का इंतज़ार करें। फिर “चल रहा है” पर क्लिक करें।"
+            "value" : "अगर %@ कहे, तो पहले लॉग इन करें। विज्ञापन नहीं गिने जाते: आपने जो चुना है उसके चलने का इंतज़ार करें। फिर “चल रहा है” पर क्लिक करें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prvo se prijavite ako %@ to zatraži. Oglasi se ne računaju: pričekajte samu pjesmu. Zatim kliknite „Svira”."
+            "value" : "Prvo se prijavite ako %@ to zatraži. Oglasi se ne računaju: pričekajte ono što ste odabrali. Zatim kliknite „Svira”."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Előbb jelentkezzen be, ha a(z) %@ kéri. A reklámok nem számítanak: várja meg magát a dalt. Ezután kattintson a „Szól” gombra."
+            "value" : "Előbb jelentkezzen be, ha a(z) %@ kéri. A reklámok nem számítanak: várja meg, amit kiválasztott. Ezután kattintson a „Szól” gombra."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Masuk dulu jika %@ memintanya. Iklan tidak dihitung: tunggu lagunya sendiri. Lalu klik “Sedang Diputar”."
+            "value" : "Masuk dulu jika %@ memintanya. Iklan tidak dihitung: tunggu yang Anda pilih untuk diputar. Lalu klik “Sedang Diputar”."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Accedi prima, se %@ te lo chiede. Gli annunci non contano: aspetta il brano vero e proprio. Poi fai clic su «In riproduzione»."
+            "value" : "Accedi prima, se %@ te lo chiede. Gli annunci non contano: aspetta ciò che hai scelto di riprodurre. Poi fai clic su «In riproduzione»."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@でログインを求められたら先にログインしてください。広告は対象外です。曲そのものが始まるまで待ってから、「再生中」をクリックします。"
+            "value" : "%@でログインを求められたら先にログインしてください。広告は対象外です。選んだものが始まるまで待ってから、「再生中」をクリックします。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@에서 로그인을 요청하면 먼저 로그인하십시오. 광고는 포함되지 않습니다. 노래 자체가 시작될 때까지 기다린 다음 ‘재생 중’을 클릭하십시오."
+            "value" : "%@에서 로그인을 요청하면 먼저 로그인하십시오. 광고는 포함되지 않습니다. 선택한 항목이 재생될 때까지 기다린 다음 ‘재생 중’을 클릭하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Logg på først hvis %@ ber om det. Reklamer teller ikke: Vent på selve sangen. Klikk deretter på «Spiller»."
+            "value" : "Logg på først hvis %@ ber om det. Reklamer teller ikke: Vent på det du valgte å spille av. Klikk deretter på «Spiller»."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Log eerst in als %@ daarom vraagt. Advertenties tellen niet: wacht op het nummer zelf. Klik dan op ‘Speelt af’."
+            "value" : "Log eerst in als %@ daarom vraagt. Advertenties tellen niet: wacht op wat je hebt gekozen. Klik dan op ‘Speelt af’."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najpierw się zaloguj, jeśli %@ o to poprosi. Reklamy się nie liczą: poczekaj na sam utwór. Następnie kliknij „Gra”."
+            "value" : "Najpierw się zaloguj, jeśli %@ o to poprosi. Reklamy się nie liczą: poczekaj, aż zacznie grać to, co wybrano. Następnie kliknij „Gra”."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicie a sessão primeiro se %@ pedir. Anúncios não contam: espere a própria música. Depois clique em “Está tocando”."
+            "value" : "Inicie a sessão primeiro se %@ pedir. Anúncios não contam: espere o que você escolheu começar a tocar. Depois clique em “Está tocando”."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicie sessão primeiro se %@ o pedir. Os anúncios não contam: aguarde pela própria música. Depois clique em “A reproduzir”."
+            "value" : "Inicie sessão primeiro se %@ o pedir. Os anúncios não contam: aguarde pelo que escolheu reproduzir. Depois clique em “A reproduzir”."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Autentificați-vă mai întâi dacă vi se cere în %@. Reclamele nu contează: așteptați melodia propriu-zisă. Apoi faceți clic pe „Se redă”."
+            "value" : "Autentificați-vă mai întâi dacă vi se cere în %@. Reclamele nu contează: așteptați ce ați ales să redați. Apoi faceți clic pe „Se redă”."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сначала войдите, если %@ попросит. Реклама не считается: дождитесь самой песни. Затем нажмите «Играет»."
+            "value" : "Сначала войдите, если %@ попросит. Реклама не считается: дождитесь того, что вы выбрали. Затем нажмите «Играет»."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ak vás %@ vyzve, najprv sa prihláste. Reklamy sa nepočítajú: počkajte na samotnú skladbu. Potom kliknite na „Hrá“."
+            "value" : "Ak vás %@ vyzve, najprv sa prihláste. Reklamy sa nepočítajú: počkajte na to, čo ste si vybrali. Potom kliknite na „Hrá“."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najprej se prijavite, če %@ to zahteva. Oglasi ne štejejo: počakajte na samo skladbo. Nato kliknite »Predvaja se«."
+            "value" : "Najprej se prijavite, če %@ to zahteva. Oglasi ne štejejo: počakajte na to, kar ste izbrali. Nato kliknite »Predvaja se«."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Logga in först om %@ ber om det. Reklam räknas inte: vänta på själva låten. Klicka sedan på ”Spelas upp”."
+            "value" : "Logga in först om %@ ber om det. Reklam räknas inte: vänta på det du valde att spela upp. Klicka sedan på ”Spelas upp”."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ isterse önce giriş yapın. Reklamlar sayılmaz: şarkının kendisini bekleyin. Sonra “Çalıyor” düğmesine tıklayın."
+            "value" : "%@ isterse önce giriş yapın. Reklamlar sayılmaz: seçtiğiniz içeriği bekleyin. Sonra “Çalıyor” düğmesine tıklayın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Спершу ввійдіть, якщо %@ попросить. Реклама не рахується: дочекайтеся самої пісні. Потім натисніть «Грає»."
+            "value" : "Спершу ввійдіть, якщо %@ попросить. Реклама не рахується: дочекайтеся того, що ви вибрали. Потім натисніть «Грає»."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Đăng nhập trước nếu %@ yêu cầu. Quảng cáo không tính: hãy đợi chính bài hát. Sau đó bấm “Đang phát”."
+            "value" : "Đăng nhập trước nếu %@ yêu cầu. Quảng cáo không tính: hãy đợi nội dung bạn đã chọn. Sau đó bấm “Đang phát”."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果 %@ 要求登入，請先登入。廣告不算：請等待歌曲本身開始播放。然後按一下「正在播放」。"
+            "value" : "如果 %@ 要求登入，請先登入。廣告不算：請等待你選擇的內容開始播放。然後按一下「正在播放」。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果 %@ 要求登录，请先登录。广告不算：请等歌曲本身开始播放。然后点按“正在播放”。"
+            "value" : "如果 %@ 要求登录，请先登录。广告不算：请等你选择的内容开始播放。然后点按“正在播放”。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果 %@ 要求登入，請先登入。廣告不算：請等待歌曲本身開始播放。然後按一下「正在播放」。"
+            "value" : "如果 %@ 要求登入，請先登入。廣告不算：請等待你選擇的內容開始播放。然後按一下「正在播放」。"
           }
         }
       }
@@ -48753,211 +49380,211 @@
         }
       }
     },
-    "No foreign audio output currently detected." : {
+    "No other app is playing sound right now." : {
       "comment" : "Diagnostics",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لم يُكتشف حاليًا أي خرج صوتي من تطبيقات أخرى."
+            "value" : "لا يوجد تطبيق آخر يشغّل صوتًا الآن."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ara no es detecta àudio d’altres apps."
+            "value" : "Ara cap altra app no reprodueix so."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Momentálně nebyl zjištěn žádný zvukový výstup jiných aplikací."
+            "value" : "Právě teď nepřehrává zvuk žádná jiná aplikace."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der registreres i øjeblikket ingen lydudgang fra andre apps."
+            "value" : "Ingen anden app afspiller lyd lige nu."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Derzeit wird kein Audio anderer Apps erkannt."
+            "value" : "Gerade spielt keine andere App Ton ab."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Δεν εντοπίζεται αυτή τη στιγμή έξοδος ήχου από άλλες εφαρμογές."
+            "value" : "Καμία άλλη εφαρμογή δεν αναπαράγει ήχο αυτή τη στιγμή."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ahora no se detecta audio de otras apps."
+            "value" : "Ahora ninguna otra app está reproduciendo sonido."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ahora no se detecta audio de otras apps."
+            "value" : "Ahora ninguna otra app está reproduciendo sonido."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muiden appien äänilähtöä ei tällä hetkellä havaittu."
+            "value" : "Mikään muu appi ei toista ääntä juuri nyt."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun son d’une autre app détecté pour le moment."
+            "value" : "Aucune autre app ne lit de son pour le moment."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun son d’une autre app détecté pour le moment."
+            "value" : "Aucune autre app ne lit de son pour le moment."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "अभी किसी दूसरे ऐप का ऑडियो आउटपुट नहीं मिला।"
+            "value" : "अभी कोई दूसरा ऐप आवाज़ नहीं चला रहा।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trenutačno nije otkriven zvučni izlaz drugih aplikacija."
+            "value" : "Trenutačno nijedna druga aplikacija ne reproducira zvuk."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jelenleg nem érzékelhető más appok hangkimenete."
+            "value" : "Jelenleg egyetlen más app sem játszik le hangot."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saat ini tidak terdeteksi output audio dari app lain."
+            "value" : "Saat ini tidak ada app lain yang memutar suara."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Al momento non viene rilevato audio da altre app."
+            "value" : "Al momento nessun’altra app sta riproducendo audio."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "現在、ほかのAppのオーディオは検出されていません。"
+            "value" : "現在、サウンドを再生しているほかのAppはありません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "현재 다른 앱의 오디오가 감지되지 않습니다."
+            "value" : "현재 사운드를 재생하는 다른 앱이 없습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen lydutgang fra andre apper oppdages akkurat nå."
+            "value" : "Ingen annen app spiller av lyd akkurat nå."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er is momenteel geen audio-uitvoer van andere apps gevonden."
+            "value" : "Er speelt nu geen andere app geluid af."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Obecnie nie wykryto wyjścia dźwięku z innych aplikacji."
+            "value" : "Żadna inna aplikacja nie odtwarza teraz dźwięku."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nenhum áudio de outros apps detectado no momento."
+            "value" : "Nenhum outro app está reproduzindo som agora."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "De momento, não é detetado áudio de outras apps."
+            "value" : "Nenhuma outra app está a reproduzir som neste momento."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Momentan nu este detectată nicio ieșire audio de la alte aplicații."
+            "value" : "În acest moment nicio altă aplicație nu redă sunet."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сейчас звук других приложений не обнаружен."
+            "value" : "Сейчас никакое другое приложение не воспроизводит звук."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Momentálne nebol zistený žiadny zvukový výstup iných apiek."
+            "value" : "Momentálne neprehráva zvuk žiadna iná apka."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trenutno ni zaznan noben zvočni izhod drugih aplikacij."
+            "value" : "Trenutno nobena druga aplikacija ne predvaja zvoka."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen ljudutgång från andra appar upptäcks just nu."
+            "value" : "Ingen annan app spelar upp ljud just nu."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Şu anda başka bir uygulamanın ses çıkışı algılanmadı."
+            "value" : "Şu anda başka hiçbir uygulama ses çalmıyor."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Зараз не виявлено звукового виходу інших програм."
+            "value" : "Зараз жодна інша програма не відтворює звук."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hiện không phát hiện âm thanh từ ứng dụng khác."
+            "value" : "Hiện không có ứng dụng nào khác đang phát âm thanh."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目前沒有偵測到其他 App 的音訊。"
+            "value" : "目前沒有其他 App 在播放聲音。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目前未检测到其他 App 的音频。"
+            "value" : "目前没有其他 App 在播放声音。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目前沒有偵測到其他 App 的音訊。"
+            "value" : "目前沒有其他 App 在播放聲音。"
           }
         }
       }
@@ -50008,7 +50635,7 @@
       }
     },
     "None chosen" : {
-      "comment" : "Diagnostics: no media player chosen",
+      "comment" : "Settings → General and Diagnostics: no media player chosen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -51053,7 +51680,7 @@
       }
     },
     "Not learned yet: AutoHush can’t pause %@ until it has." : {
-      "comment" : "The menu's card and Settings → General, under “Controls”, while AutoHush hasn't learned the web app's Play/Pause button (the learning window was closed); “Learn Controls” follows; %@ is the web app's name",
+      "comment" : "The menu's card and Settings → General, under “Controls”, while AutoHush hasn't learned the web app's Play/Pause button (the learning window was closed); “Learn Controls…” follows; %@ is the web app's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55232,7 +55859,7 @@
         }
       }
     },
-    "Open audio streams (no audio recording access)" : {
+    "Open audio streams (no Audio Recording access)" : {
       "comment" : "Diagnostics: the detection used while the audio recording permission is missing",
       "localizations" : {
         "ar" : {
@@ -58994,211 +59621,211 @@
         }
       }
     },
-    "Play a song in %@" : {
+    "Play something in %@" : {
       "comment" : "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "شغّل أغنية في %@"
+            "value" : "شغّل شيئًا في %@"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reprodueix una cançó a %@"
+            "value" : "Reprodueix alguna cosa a %@"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pusťte skladbu v aplikaci %@"
+            "value" : "Pusťte něco v aplikaci %@"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Afspil en sang i %@"
+            "value" : "Afspil noget i %@"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spiele einen Song in %@ ab"
+            "value" : "Spiele etwas in %@ ab"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Αναπαραγάγετε ένα τραγούδι στην εφαρμογή %@"
+            "value" : "Αναπαραγάγετε κάτι στην εφαρμογή %@"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproduce una canción en %@"
+            "value" : "Reproduce algo en %@"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproduce una canción en %@"
+            "value" : "Reproduce algo en %@"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toista kappale apissa %@"
+            "value" : "Toista jotain apissa %@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lancez une chanson dans %@"
+            "value" : "Lancez quelque chose dans %@"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lancez une chanson dans %@"
+            "value" : "Lancez quelque chose dans %@"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ में कोई गाना चलाएँ"
+            "value" : "%@ में कुछ चलाएँ"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproducirajte pjesmu u aplikaciji %@"
+            "value" : "Reproducirajte nešto u aplikaciji %@"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Játsszon le egy dalt a(z) %@ appban"
+            "value" : "Játsszon le valamit a(z) %@ appban"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Putar lagu di %@"
+            "value" : "Putar sesuatu di %@"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Riproduci un brano in %@"
+            "value" : "Riproduci qualcosa in %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@で曲を再生"
+            "value" : "%@で何かを再生"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@에서 노래 재생하기"
+            "value" : "%@에서 무언가 재생하기"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spill av en sang i %@"
+            "value" : "Spill av noe i %@"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Speel een nummer af in %@"
+            "value" : "Speel iets af in %@"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odtwórz utwór w aplikacji %@"
+            "value" : "Odtwórz coś w aplikacji %@"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproduza uma música em %@"
+            "value" : "Reproduza algo em %@"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproduza uma música em %@"
+            "value" : "Reproduza algo em %@"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Redați o melodie în aplicația %@"
+            "value" : "Redați ceva în aplicația %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Включите песню в приложении %@"
+            "value" : "Включите что-нибудь в приложении %@"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pustite skladbu v apke %@"
+            "value" : "Pustite niečo v apke %@"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Predvajajte skladbo v aplikaciji %@"
+            "value" : "Predvajajte nekaj v aplikaciji %@"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spela upp en låt i %@"
+            "value" : "Spela upp något i %@"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ uygulamasında bir şarkı çalın"
+            "value" : "%@ uygulamasında bir şey çalın"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Увімкніть пісню в програмі %@"
+            "value" : "Увімкніть щось у програмі %@"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Phát một bài hát trong %@"
+            "value" : "Phát nội dung nào đó trong %@"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 %@ 中播放一首歌"
+            "value" : "在 %@ 中播放一些內容"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 %@ 中播放一首歌"
+            "value" : "在 %@ 中播放一些内容"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 %@ 中播放一首歌"
+            "value" : "在 %@ 中播放一些內容"
           }
         }
       }
@@ -69440,215 +70067,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這不是網址。請嘗試類似 %@ 的網址。"
-          }
-        }
-      }
-    },
-    "The app’s version is unknown." : {
-      "comment" : "Update status in Settings",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إصدار التطبيق غير معروف."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Es desconeix la versió de l’app."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verze aplikace není známá."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appens version er ukendt."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Version der App ist unbekannt."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Η έκδοση της εφαρμογής είναι άγνωστη."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se desconoce la versión de la app."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se desconoce la versión de la app."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apin versio on tuntematon."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La version de l’app est inconnue."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La version de l’app est inconnue."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ऐप का संस्करण अज्ञात है।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verzija aplikacije nije poznata."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az app verziója ismeretlen."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Versi app tidak diketahui."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La versione dell’app è sconosciuta."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appのバージョンが不明です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱 버전을 알 수 없습니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appens versjon er ukjent."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De versie van de app is onbekend."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wersja aplikacji jest nieznana."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A versão do app é desconhecida."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A versão da app é desconhecida."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Versiunea aplicației este necunoscută."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Версия приложения неизвестна."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verzia apky nie je známa."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Različica aplikacije ni znana."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appens version är okänd."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uygulamanın sürümü bilinmiyor."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Версія програми невідома."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không rõ phiên bản của ứng dụng."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App 的版本不明。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App 的版本未知。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App 的版本不明。"
           }
         }
       }

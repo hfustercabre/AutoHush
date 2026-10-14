@@ -16,14 +16,14 @@ import SwiftUI
 /// What learning a player's controls says.
 enum LearningText {
     static func playStep(_ name: String) -> String {
-        String(localized: "Play a song in \(name)",
+        String(localized: "Play something in \(name)",
                comment: "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; %@ is the web app")
     }
 
     /// The step after it plays: AutoHush pauses it itself.
     static var autoPauseStep: String {
         String(localized: "Let AutoHush pause it",
-               comment: "The step after “Play a song in %@” while AutoHush learns a web app's controls: AutoHush pauses the web app itself (with the keyboard's Play/Pause key) to see which button changes")
+               comment: "The step after “Play something in %@” while AutoHush learns a web app's controls: AutoHush pauses the web app itself (with the keyboard's Play/Pause key) to see which button changes")
     }
 
     /// The step the user does when AutoHush couldn't pause it.
@@ -36,8 +36,8 @@ enum LearningText {
     /// plays nothing until you log in, and during an ad the player's own
     /// button may say it's paused (some sites' do).
     static func playTip(_ name: String) -> String {
-        String(localized: "Log in first if \(name) asks you to. Ads don’t count: wait for the song itself. Then click It’s Playing.",
-               comment: "Under the step “Play a song in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it")
+        String(localized: "Log in first if \(name) asks you to. Ads don’t count: wait for what you chose to play. Then click It’s Playing.",
+               comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it")
     }
 
     /// Under AutoHush's pause step while it pauses the player.
@@ -85,24 +85,24 @@ enum LearningText {
     /// Under the row's title, until they're learned.
     static func notLearnedNote(_ name: String) -> String {
         String(localized: "Not learned yet: AutoHush can’t pause \(name) until it has.",
-               comment: "The menu's card and Settings → General, under “Controls”, while AutoHush hasn't learned the web app's Play/Pause button (the learning window was closed); “Learn Controls” follows; %@ is the web app's name")
+               comment: "The menu's card and Settings → General, under “Controls”, while AutoHush hasn't learned the web app's Play/Pause button (the learning window was closed); “Learn Controls…” follows; %@ is the web app's name")
     }
 
     /// Under the row's title, once they're learned.
     static var learnedNote: String {
         String(localized: "Learned. Learn them again if AutoHush gets them wrong.",
-               comment: "The menu's card and Settings → General, under “Controls”: the web app's controls (its Play/Pause button) are learned, and what to do if AutoHush gets them wrong; “Learn Again” follows")
+               comment: "The menu's card and Settings → General, under “Controls”: the web app's controls (its Play/Pause button) are learned, and what to do if AutoHush gets them wrong; “Learn Again…” follows")
     }
 
     /// The row's button, until they're learned.
     static var learnButton: String {
-        String(localized: "Learn Controls",
+        String(localized: "Learn Controls…",
                comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
     }
 
     /// The row's button, once they're learned.
     static var learnAgainButton: String {
-        String(localized: "Learn Again",
+        String(localized: "Learn Again…",
                comment: "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window; what was learned keeps working until the user clicks “It’s Playing” there")
     }
 }

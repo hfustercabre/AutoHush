@@ -181,6 +181,17 @@ struct PlayerOption: Equatable, Identifiable {
         String(localized: "Not installed", comment: "Under a media player that isn't on this Mac")
     }
 
+    /// Under a suggested web app, wherever players are offered: a click adds it.
+    static var clickToAddLabel: String {
+        String(localized: "Click to add", comment: "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → General and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine")
+    }
+
+    /// Where the chosen player is shown while none is (Settings → General,
+    /// Diagnostics).
+    static var noneChosenLabel: String {
+        String(localized: "None chosen", comment: "Settings → General and Diagnostics: no media player chosen")
+    }
+
     /// Shown in Settings and the welcome window while no supported player is
     /// installed.
     static var noneInstalledWarning: String {

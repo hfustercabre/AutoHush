@@ -1,7 +1,6 @@
 import Foundation
 import Testing
 @testable import AutoHushKit
-import AutoHushTestSupport
 
 @Suite("PowerAssertionReader")
 struct PowerAssertionReaderTests {

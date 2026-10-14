@@ -166,7 +166,7 @@ struct UpdateControllerTests {
     func unknownVersion() async {
         let h = Harness(checker: .offline, currentVersion: nil)
         await h.controller.check(userInitiated: false)
-        #expect(h.statuses == ["The app’s version is unknown."])
+        #expect(h.statuses == ["AutoHush’s version is unknown."])
     }
 
     // MARK: - Notify me

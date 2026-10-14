@@ -11,7 +11,7 @@ final class SteppedSleep: @unchecked Sendable {
     /// How many sleeps wait for the next step now.
     var sleeping: Int { lock.withLock { waiting.count } }
 
-    @Sendable func sleep(_ duration: Duration) async {
+    @Sendable func sleep(_: Duration) async {
         let id = UUID()
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in

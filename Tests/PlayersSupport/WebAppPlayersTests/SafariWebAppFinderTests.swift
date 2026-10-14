@@ -3,8 +3,8 @@ import Testing
 @testable import WebAppPlayers
 import AutoHushKit
 
-@Suite("SafariWebApps")
-struct SafariWebAppsTests {
+@Suite("SafariWebAppFinder")
+struct SafariWebAppFinderTests {
     @Test("a web app is offered by the page's name, without its slogan")
     func shortName() {
         #expect(SafariWebApp.shortName("Amazon Music Unlimited | Escucha millones de canciones") == "Amazon Music Unlimited")

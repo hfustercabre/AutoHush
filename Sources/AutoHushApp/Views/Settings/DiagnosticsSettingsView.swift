@@ -9,6 +9,10 @@ import SwiftUI
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
     @State private var copied = false
+    /// The height of the parts, and of the room they have: the line above
+    /// the foot shows only while they scroll under it, as on Apps.
+    @State private var partsHeight: CGFloat = 0
+    @State private var roomHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +33,9 @@ struct DiagnosticsSettingsView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { partsHeight = $0 }
             }
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { roomHeight = $0 }
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,6 +104,8 @@ struct DiagnosticsSettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityValue(isOpen ? Self.expanded : Self.collapsed)
             .padding(.top, 6)
             if isOpen { content() }
         }
@@ -153,6 +161,20 @@ struct DiagnosticsSettingsView: View {
         }
     }
 
+    /// Said after Copy Report; VoiceOver hears it too.
+    private static var copiedText: String {
+        String(localized: "Copied", comment: "Settings → Diagnostics: after Copy Report")
+    }
+
+    /// What VoiceOver says of a part's heading: open or folded away.
+    private static var expanded: Text {
+        Text("Expanded", comment: "VoiceOver, Settings → Diagnostics: a part's heading while the part shows (a click folds it away)")
+    }
+
+    private static var collapsed: Text {
+        Text("Collapsed", comment: "VoiceOver, Settings → Diagnostics: a part's heading while the part is folded away (a click shows it)")
+    }
+
     private func symbol(for kind: DiagnosticsSnapshot.Section.Kind) -> String {
         switch kind {
         case .player:      return "music.note"
@@ -166,10 +188,10 @@ struct DiagnosticsSettingsView: View {
     // MARK: - Copy Report
 
     private var footer: some View {
-        BottomBar {
+        BottomBar(showsDivider: partsHeight > roomHeight + 1) {
             if copied {
                 Label {
-                    Text("Copied", comment: "Settings → Diagnostics: after Copy Report")
+                    Text(verbatim: Self.copiedText)
                 } icon: {
                     Image(systemName: "checkmark")
                 }
@@ -196,6 +218,7 @@ struct DiagnosticsSettingsView: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
         copied = true
+        AccessibilityNotification.Announcement(Self.copiedText).post()
         Task {
             try? await Task.sleep(for: .seconds(2))
             copied = false

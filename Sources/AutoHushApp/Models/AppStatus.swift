@@ -141,7 +141,11 @@ struct AppStatus: Equatable {
     }
 
     var icon: MenuBarIcon { presentation.icon }
-    var iconAccessibilityLabel: String { presentation.label }
+    /// While Auto-Pause is off, the icon is dimmed: VoiceOver says the
+    /// status line, which says so ("AutoHush: Auto-Pause is off").
+    var iconAccessibilityLabel: String {
+        isReady && autoPause != .on ? StatePresentation.iconLabel(statusLine) : presentation.label
+    }
 
     /// The menu bar icon is dimmed while auto-pause is off.
     var dimsIcon: Bool { isReady && autoPause != .on }

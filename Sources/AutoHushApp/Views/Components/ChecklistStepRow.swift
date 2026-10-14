@@ -24,8 +24,8 @@ extension View {
 }
 
 /// A checklist step's button: blue, as the window's next thing to do, under
-/// the step's lines. Outside the step's VoiceOver element, so it's reached
-/// as a button of its own.
+/// the step's lines; Return presses it, as a window's main button. Outside
+/// the step's VoiceOver element, so it's reached as a button of its own.
 struct StepActionButton: View {
     let button: StepButton
     /// Grey, as the other way on beside the blue one.
@@ -38,6 +38,7 @@ struct StepActionButton: View {
                 .fixedSize() // one line: two that don't fit go one under the other
         }
         .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary, padded: true))
+        .keyboardShortcut(secondary ? nil : .defaultAction)
         .padding(.top, 2)
     }
 }

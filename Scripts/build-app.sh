@@ -193,7 +193,7 @@ IDENTITY="$(resolve_signing_identity)"
 if [[ "$IDENTITY" == "-" ]]; then
     step "Signing ad hoc (hardened runtime)"
 else
-    step "Signing with \"$IDENTITY\" (hardened runtime)"
+    step "Signing with \"$(identity_name "$IDENTITY")\" (hardened runtime)"
 fi
 sign_app "$IDENTITY"
 codesign --verify --strict "$APP_BUNDLE"

@@ -149,7 +149,7 @@ struct PlayerSessionTests {
         session.launch()
         await TestWait.until { await bench.second.verifyCallCount >= 3 }
         #expect(await bench.second.verifyCallCount >= 3)
-        #expect(session.state.health == .retrying("Second is not responding"))
+        #expect(session.state.health == .retrying("Second isn’t responding"))
     }
 
     @MainActor
@@ -160,13 +160,13 @@ struct PlayerSessionTests {
         let session = bench.makeSession(bench.second)
         session.launch()
         await TestWait.until { session.state.health != .starting }
-        try? await Task.sleep(for: .milliseconds(200))
+        await session.waitUntilIdle()
         #expect(await bench.second.verifyCallCount == 1)
-        #expect(session.state.health == .degraded("Second is not running"))
+        #expect(session.state.health == .degraded("Second isn’t running"))
 
         session.playerLaunched(Players.first)
         session.playerLaunched("org.videolan.vlc")
-        #expect(session.state.health == .degraded("Second is not running"))
+        #expect(session.state.health == .degraded("Second isn’t running"))
 
         await bench.second.setFailVerify(nil)
         session.playerLaunched(Players.second)
@@ -235,7 +235,7 @@ struct PlayerSessionTests {
         let session = bench.makeSession(bench.first)
         session.launch()
         await TestWait.until { session.state.health != .starting }
-        #expect(session.state.health == .degraded("First is not installed"))
+        #expect(session.state.health == .degraded("First isn’t installed"))
         #expect(await bench.first.verifyCallCount == 0)
 
         bench.installed = [Players.first]
@@ -245,7 +245,7 @@ struct PlayerSessionTests {
         monitoring.send(.playback(.musicPlaying))
 
         session.setPlayerInstalled(false)
-        #expect(session.state.health == .degraded("First is not installed"))
+        #expect(session.state.health == .degraded("First isn’t installed"))
         #expect(session.state.playback == .unknown)
         #expect(monitoring.isStopped)
         session.setPlayerInstalled(false) // told again: nothing changes
@@ -296,7 +296,7 @@ struct PlayerSessionTests {
         await TestWait.until { await bench.first.verifyCallCount == 2 }
         // Still playing: not checked again.
         monitoring.send(.activeSources([Self.safari, Self.vlc]))
-        try? await Task.sleep(for: .milliseconds(50))
+        await session.waitUntilIdle()
         #expect(await bench.first.verifyCallCount == 2)
         #expect(session.state.health == .ready)
 
@@ -314,7 +314,7 @@ struct PlayerSessionTests {
         let bench = Bench()
         let session = bench.makeSession(bench.first)
         session.checkAccess() // not monitoring yet
-        try? await Task.sleep(for: .milliseconds(30))
+        await session.waitUntilIdle()
         #expect(await bench.first.verifyCallCount == 0)
 
         session.launch()
@@ -324,7 +324,7 @@ struct PlayerSessionTests {
             let calls = await bench.first.verifyCallCount
             session.checkAccess()
             await TestWait.until { await bench.first.verifyCallCount > calls }
-            try? await Task.sleep(for: .milliseconds(30))
+            await session.waitUntilIdle()
         }
         #expect(session.state.health == .ready)
         #expect(!bench.monitorings.made[0].isStopped)
@@ -498,7 +498,7 @@ struct PlayerSessionTests {
         checking.timeIsUp()
         session.retry()
         session.playerLaunched(Players.first)
-        try? await Task.sleep(for: .milliseconds(50))
+        await session.waitUntilIdle()
         #expect(bench.monitorings.made.isEmpty)
         #expect(await bench.first.verifyCallCount == 1)
     }

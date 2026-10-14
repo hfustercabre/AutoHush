@@ -73,8 +73,19 @@ extension AppDelegate {
                 // picked there; this window's work is done.
                 let fromWelcome = self.isShowingPlayerChooser
                 self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
+                // macOS may list a new web app a little later: looked for again
+                // for a few seconds, then the window says so.
+                var lookups = 0
+                while self.player?.bundleID != made.bundleID, lookups < Self.madeWebAppLookups,
+                      model.attempt == attempt, !Task.isCancelled {
+                    lookups += 1
+                    try? await Task.sleep(for: self.madeWebAppWait)
+                    self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
+                }
+                guard model.attempt == attempt, !Task.isCancelled else { return }
                 guard self.player?.bundleID == made.bundleID else {
                     self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
+                    model.fail(.notFound(name: made.name))
                     return
                 }
                 if fromWelcome {
@@ -96,6 +107,10 @@ extension AppDelegate {
             }
         }
     }
+
+    /// How many times a web app just made is looked for again, `madeWebAppWait`
+    /// apart, before the window says it can't be found.
+    static let madeWebAppLookups = 10
 
     /// Stops the add under way; a step it reports later is ignored.
     func cancelAddingWebApp() {
@@ -131,6 +146,7 @@ private extension WebAppMakingError {
         case .pageNotFound: "the page doesn't exist"
         case .accessibilityDenied: "no Accessibility permission"
         case .browserFailed: "Safari didn't do it"
+        case .notFound: "the web app isn't found as installed"
         }
     }
 }

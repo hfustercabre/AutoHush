@@ -15,7 +15,7 @@ enum PermissionText {
 
     static var audioTitle: String {
         String(localized: "Audio Recording",
-               comment: "Welcome window, the System Audio Recording permission (macOS's name for it)")
+               comment: "Welcome window and Diagnostics: the System Audio Recording permission (macOS’s name for it)")
     }
 
     /// Under the player's control permission, as it stands.

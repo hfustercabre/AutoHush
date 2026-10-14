@@ -38,7 +38,7 @@ enum StepButton: Equatable, Sendable {
         switch self {
         case .itsPlaying:
             String(localized: "It’s Playing",
-                   comment: "Button under the step “Play a song in %@” while AutoHush learns a web app's controls: the song itself plays now")
+                   comment: "Button under the step “Play something in %@” while AutoHush learns a web app's controls: what the user chose plays now, not an ad")
         case .itsPaused:
             String(localized: "It’s Paused",
                    comment: "Button under the step “Pause it yourself” while AutoHush learns a web app's controls: the user has paused it")

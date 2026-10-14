@@ -18,12 +18,12 @@ struct AppHealthStateTests {
 
     @Test("a player that isn't running is degraded")
     func playerNotRunning() {
-        #expect(health(MusicPlayerError.playerNotRunning) == .degraded("Jukebox is not running"))
+        #expect(health(MusicPlayerError.playerNotRunning) == .degraded("Jukebox isn’t running"))
     }
 
     @Test("an unresponsive player is retried")
     func playerNotResponding() {
-        #expect(health(MusicPlayerError.playerNotResponding) == .retrying("Jukebox is not responding"))
+        #expect(health(MusicPlayerError.playerNotResponding) == .retrying("Jukebox isn’t responding"))
     }
 
     @Test("a failed player command is retried; the line says AutoHush can't control it, the menu tells why")
@@ -49,7 +49,7 @@ struct AppHealthStateTests {
     @Test("messages name the player")
     func namesThePlayer() {
         #expect(AppHealthState(startupError: MusicPlayerError.playerNotRunning, playerName: "Music")
-            == .degraded("Music is not running"))
+            == .degraded("Music isn’t running"))
     }
 
     @Test("while no player is chosen, the status asks for one, or says none is installed")
@@ -63,7 +63,7 @@ struct AppHealthStateTests {
 
     @Test("a chosen player that isn't installed is degraded")
     func playerNotInstalled() {
-        #expect(AppHealthState.playerNotInstalled("Jukebox") == .degraded("Jukebox is not installed"))
+        #expect(AppHealthState.playerNotInstalled("Jukebox") == .degraded("Jukebox isn’t installed"))
     }
 
     @Test("any other error fails; the menu tells why, in the error's own words")

@@ -44,15 +44,18 @@ screens that already exist, then macOS's own conventions
 - **Calm.** Nothing is red. Things move only when they change: rows that
   reorder slide into place. Besides that, only what shows AutoHush at work
   moves: a spinner while it does a step itself, and a countdown while time
-  runs out.
+  runs out; and a note that answers a click blinks for a moment (see
+  `ChoiceChips`).
 
 The shared files are in `Sources/AutoHushApp/Views/Components/`, one
-component per file: `Font+AutoHush.swift` holds the text sizes, `AppearanceStyle.swift`
-the colors and `View+CaptionStyle.swift` the caption style;
-`ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`, `SwitchRow.swift`,
-`ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`, `WindowHeader.swift`,
-`ChecklistStepRow.swift`, `PermissionButton.swift`, `NoteLabel.swift` and
-`SearchField.swift` the components.
+component and its small parts per file: `Font+AutoHush.swift` holds the
+text sizes, `AppearanceStyle.swift` the colors and `View+CaptionStyle.swift`
+the caption style; `ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`,
+`SwitchRow.swift`, `ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`,
+`WindowHeader.swift`, `ChecklistStepRow.swift`, `PermissionButton.swift`,
+`NoteLabel.swift`, `SearchField.swift`, `IconChipButton.swift`,
+`SymbolTile.swift`, `SupportLine.swift` and `WebAppsHeading.swift` the
+components.
 
 ## Layout
 
@@ -61,13 +64,14 @@ the colors and `View+CaptionStyle.swift` the caption style;
 | Settings window | Laid out as System Settings: a sidebar of pages (`SettingsSidebar`) beside the page shown, whose name is the window's title, in the toolbar. No back or forward buttons. The user resizes it: **715 to 875 pt** wide and **560 to 900 pt** tall, opening at **760 × 620** the first time; it keeps its place and size between launches. The sidebar stays **235 pt**; the page grows from **480 to 640 pt**, with **16 pt** margins. Cards are **8 pt** apart. |
 | Settings pages | General, Apps · Detection, Fades · Diagnostics, Updates, About, a gap between the groups. Each page fills the window and scrolls when it's taller (`SettingsPageScroll`). |
 | Pages with a list | The heading and its controls stay at the top, and the buttons stay at the window's foot in a [`BottomBar`](#components); only the list between them scrolls (Apps, Diagnostics). |
-| Other windows | The welcome, Add a Web App and learning windows (`HostedWindowController`) look like a Settings page: the title bar is part of the window (no band, no line), with the window's title in it in bold, as a page's name; the welcome window's title is its page's ("Choose Your Media Player", "Allow AutoHush to Work"). The content starts **2 pt** under the title bar with a [`WindowHeader`](#components) (the icon and what the window is for), has **20 pt** margins (`windowMargins`), groups under `SectionHeading`s in cards **8 pt** apart, and ends with the buttons in a [`BottomBar`](#components) across the window, the main one blue at the right. Their height follows their content; their width is fixed (below: the welcome window and the guiding windows). |
+| Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. After **Copy Report**, the foot says "Copied", with a check, for 2 s, in place of "Updated as it happens." |
+| Other windows | The welcome, Add a Web App and learning windows (`HostedWindowController`) look like a Settings page: the title bar is part of the window (no band, no line), with the window's title in it in bold, as a page's name; the welcome window's title is its page's ("Choose Your Media Player", "Allow AutoHush to Work"). The content starts **2 pt** under the title bar with a [`WindowHeader`](#components) (the icon and what the window is for), has **20 pt** margins (`windowMargins`), groups under `SectionHeading`s in cards **8 pt** apart, and ends with the buttons in a [`BottomBar`](#components) across the window, the main one blue at the right. Their height follows their content; their width is fixed (below: the welcome window and the guiding windows). Like any window, each can be minimized (⌘M, or its yellow button). |
 | Welcome window | Both pages **540 pt** wide, so the window keeps its width and its `PlayerTiles` go three a row as in Settings. Past **five rows** of tiles (the apps' and the web apps' together), they scroll inside their card. |
 | The Dock | AutoHush lives in the menu bar, with no Dock icon, except while one of its windows is open, minimized ones included (`DockPresence`): then it's in the Dock and the app switcher, with the Mac's standard menu bar (`MainMenu`, see [Keyboard](#keyboard)), so its window keeps its place when the user leaves its desktop and comes back. |
-| Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font; the players come under "Supported Apps" (`NSMenuItem.supportedAppsHeading`), then the web apps under `WebAppsHeading`. A menu row's image is set with `shownImage`: from macOS 27, AppKit hides menu items' images unless the item asks to show it (`preferredImageVisibility = .visible`). |
+| Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font; the players come under "Supported Apps" (`NSMenuItem.supportedAppsHeading`), then the web apps under `WebAppsHeading`. A menu row's image is set with `shownImage`: from macOS 27, AppKit hides menu items' images unless the item asks to show it (`preferredImageVisibility = .visible`). The toolbar's **Updates** checks in place: it says "Checking…" and the menu stays open until the result, then closes for the alert that tells it. |
 | Guiding windows | **440 pt** wide. A window that walks the user through other apps (Add a Web App, learning a web app: Safari and the web app come in front meanwhile) floats above every app (`floatsInCorner`), in the top-right corner of the screen the pointer is on, **16 pt** from its edges, keeping its top edge as its steps come and go. Other windows open centered, at the normal level. |
-| About | Centered. Every gap between its parts shows **24 pt**. |
-| Section headings | **4 pt** in from the card's edge, in line with its text, with **6 pt** above (none for the first one on a page). |
+| About | Centered, under AutoHush's icon at **96 pt**. Every gap between its parts shows **24 pt**. |
+| Section headings | **4 pt** in from the card's edge, in line with its text, with **6 pt** above (none for the first one on a page). In the other windows a heading has **8 pt** more above it than in Settings, so its group stands apart from the header and its notes. |
 
 ## Text sizes
 
@@ -121,7 +125,9 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity. A control that's dimmed twice,
-  inside a dimmed group, stays at 45%.
+  inside a dimmed group, stays at 45%. A disabled main (blue) button has
+  grey text (the primary color, dimmed), not white: disabled, it loses most
+  of its blue, and white text would be unreadable in light mode.
 - **Settings that only matter while a switch is on** show only then, under
   it in the same card (the fades' lengths under "Fade playback"). What the
   user can't change at all, because of the chosen player, is dimmed
@@ -136,7 +142,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `SectionLabel` | A small grey label: the menu's headings ("Playing Now") and lead-ins above a control ("When an update is found"). |
 | `RowTitle` | A row's title, with an optional description under it. |
 | `SwitchRow` + `PillToggleStyle` | An on/off setting: the title on the left, the switch on the right. Switches are 36 × 21 pt; in lists of apps, 30 × 18 pt. |
-| `ChoiceChips` | One choice among two to four options, as chips. The chosen one is filled with the accent color. |
+| `ChoiceChips` | One choice among two to four options, as chips. The chosen one is filled with the accent color. An option that's unavailable for now stays in its place, dimmed, and says why: a click on it makes the note that explains it blink for a few seconds (Settings → Updates: the choices that need notifications, while they're off, and the note that they're off), and VoiceOver hears that note as its hint, and again after the click (`unavailableNote`). |
 | `.chip` button | Actions: "Check Now", "Reset List…". Corner 8; on macOS 26 and later a Liquid Glass capsule. |
 | `ChipButtonStyle(filled: true)` | Chips in a row, such as the menu's durations ("5 min"). On macOS 26 and later Liquid Glass (corner 12), interactive, and tinted with the accent color when selected (`ChoiceChips`). |
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the players' tiles, the player search's rows. |
@@ -165,7 +171,8 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 missing, say what's missing in a `NoteLabel` (`.warning`) with its
 `PermissionButton` right under it, and keep the main action disabled
 (Continue, Done) or its steps locked (`lock.circle`, grey) until it's
-allowed. Follow the permission while the window shows (about once a
+allowed. In a checklist, the step that asks for the permission is the step
+to do now meanwhile (semibold, with its arrow). Follow the permission while the window shows (about once a
 second), so it unlocks by itself; never ask the user to click again.
 Audio Recording always offers "Use AntiDot Mode Instead" beside it.
 
@@ -179,6 +186,7 @@ where they appear:
 | 24 pt | Settings lists: Apps, Diagnostics; the players' tiles (`PlayerTiles`) |
 | 36 pt | The menu card's player |
 | 56 pt | The chosen player in Settings → General; a `WindowHeader`'s icon |
+| 96 pt | AutoHush's own icon in About |
 
 A Safari web app's icon carries Safari's at its lower right, a little over
 half its size (`AppIcon.webAppImage`, through `PlayerOption.icon`), wherever
@@ -209,10 +217,10 @@ their download symbol.
   - **The headings** ("Supported Apps", "Safari Web Apps") line up with the
     rows' icons in menus, and with the cards' text among tiles. A search
     keeps the web apps' heading only while a web app matches.
-  - **Suggested web apps** (the tested sites not added yet) are marked "Not
-    installed" in menus ("Click to add" on a tile), like a missing app but
-    not dimmed, with the `arrow.down.circle` symbol for an icon: a click
-    opens "Add a Web App" filled in with the address.
+  - **Suggested web apps** (the tested sites not added yet) are marked
+    "Click to add", in menus as on a tile, like a missing app but not
+    dimmed, with the `arrow.down.circle` symbol for an icon: a click opens
+    "Add a Web App" filled in with the address.
   - **A service with its own site in some countries** (Amazon Music,
     `CountrySites`) is suggested on the site for the Mac's region. While
     the address is one of its sites, Add a Web App's address card adds a
@@ -228,9 +236,9 @@ their download symbol.
 - **A web app's controls** have one place: a `ControlsRow` ("Controls",
   whether they're learned, and a `.chip`) at the foot of the menu's card and
   on Settings → General's player card, nowhere else. The button says
-  **Learn Controls** until they're learned and **Learn Again** after; it
-  opens a new learning window that starts from the first step, closing one
-  still open. What was learned keeps working, and the row keeps saying it's
+  **Learn Controls…** until they're learned and **Learn Again…** after,
+  with an ellipsis since it opens a window: a new learning window that
+  starts from the first step, closing one still open. What was learned keeps working, and the row keeps saying it's
   learned, until **It's Playing** is taken there; closing the window before
   that keeps it. Meanwhile the window leaves out its "presses nothing on the
   page" line, untrue then. Once learned, the row says only "Learned." and
@@ -249,10 +257,10 @@ their download symbol.
   learning window).
   - **A step the user says is done** (It's Playing, It's Paused, Add to Dock)
     has its button under its caption while it's the one to do: a blue chip
-    (`StepActionButton`), outside the step's VoiceOver element. Its caption
-    ends by naming the button ("Then click It’s Paused."). The same steps
-    and buttons show in both windows that show them (learning, Add a Web
-    App).
+    (`StepActionButton`), outside the step's VoiceOver element, and Return
+    presses it. Its caption ends by naming the button ("Then click It’s
+    Paused."). The same steps and buttons show in both windows that show
+    them (learning, Add a Web App).
   - **A time limit** shows as a `CountdownBanner`, a whole sentence that
     counts down ("You have 0:45 to pause it and click It’s Paused.").
   - **A click that couldn't be taken** says why in a `NoteLabel` under that
@@ -269,6 +277,8 @@ their download symbol.
   - The window keeps its height while you type.
   - With no match, the list says so in its own words: "No apps match “…”."
   - A search starts empty again when its window or menu opens again.
+  - **Edit → Find…** (⌘F) opens the search, or puts the cursor in it, in
+    Settings → Apps and the welcome window.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Apps): a click on a row, anywhere but
@@ -290,11 +300,14 @@ their download symbol.
 | Buttons and menu items: "Check Now", "Ignore Another App…" | Lead-ins that read into their control: "Turn off for", "Sort by", "When an update is found" |
 | Pop-up items: "Last Played" | Choice chips: "Notify me", "Install it automatically" |
 | Section headings: "Pauses Playback", "Playing Now", "Apps with Sound" | Descriptions, notes and status lines |
-| Alert titles: "Couldn’t Install the Update" | Tooltips and VoiceOver labels: "Search by name", "Reverse order" |
+| Alert titles: "Couldn’t Install the Update" | Tooltips and VoiceOver labels: "Search by name", "Reverse order"; notification titles: "AutoHush 1.0.0 is available" |
 | Shortcuts action names and their choices, App Shortcut titles: "Turn Off Auto-Pause For", "15 Minutes", "Auto-Pause Off" | An action's summary and an App Shortcut's phrase: "Turn off Auto-Pause for 15 Minutes", "Turn on Auto-Pause in AutoHush" |
 
 - **Title case** follows Apple's rules: capitalize every word except
   articles, and conjunctions and prepositions of four letters or fewer.
+- **Notifications and alerts differ:** a notification's title is in
+  sentence case, as macOS's own are ("Couldn’t update AutoHush to 1.0.0"),
+  while an alert's title is in title case ("Couldn’t Install the Update").
 - **Feature names** keep their capitals, even mid-sentence: **Auto-Pause**,
   **AntiDot mode**.
 
@@ -314,15 +327,15 @@ their download symbol.
   only in names (Apple Music, YouTube Music).
 - **Permissions:** you "allow" them, never "grant" them. Use the names macOS
   gives them: Automation, Accessibility, Audio Recording.
-- **Contractions:** use them: couldn’t, can’t, isn’t, it’s, don’t. Never
-  "could not".
+- **Contractions:** use them everywhere, status lines and errors included:
+  couldn’t, can’t, isn’t, it’s, don’t. Never "could not" or "is not".
 - **Apostrophes** are curly (’), as macOS writes them: "can’t", "Spotify’s",
   in English and in every language that has them ("l’app", "Mac’te"). A
   straight ' never shows; a test checks every catalog.
 - **Ellipsis** (`…`, a single character) ends a button or menu item that
-  asks for something more before it acts (a panel, a dialog, another
-  window), and a state in progress ("Checking…"). A button that acts at once
-  has none.
+  opens a window or asks for something more before it acts (a panel, a
+  dialog): "Learn Controls…", "Reset List…". It also ends a state in
+  progress ("Checking…"). A button that acts at once has none.
 - **Em dash with spaces** joins a state and its reason: "Paused — Safari is
   playing", "Ignored — your player keeps playing".
 - **Quotation marks** are curly in English (“ ”). Each language uses its own
@@ -417,13 +430,26 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   - A control whose state the symbol shows also says it as its value, e.g.
     the sort arrow's "Newest first".
   - The menu bar icon says "AutoHush: " and what's happening; while
-    something needs the user, the menu's status line ("AutoHush: Spotify is
-    not running"), never a word of AutoHush's own like "degraded".
+    something needs the user, or while Auto-Pause is off (the icon dimmed),
+    the menu's status line ("AutoHush: Spotify isn’t running", "AutoHush:
+    Auto-Pause is off until 15:30"), never a word of AutoHush's own like
+    "degraded".
+  - A slider says what it sets (Detection's and Fades' timings: the row's
+    title) and its value as the row shows it ("0.5 s").
+  - An unavailable choice says why as its hint (`ChoiceChips`'
+    `unavailableNote`).
   - What an image alone tells is said in words: a web app whose name is
     also an app's reads "Spotify, Safari web app" where players are offered
     (`PlayerOption.spokenName`), as its icon's Safari badge shows.
-- **Decorative images** (app icons beside their names, symbols beside text)
-  are hidden from VoiceOver.
+- **Decorative images** (app icons beside their names, symbols beside text,
+  the menu toolbar's symbols, the card's chevron) are hidden from VoiceOver.
+- **Headings:** `SectionHeading`s, the menu's "Turn off for" and "Playing
+  Now", and Diagnostics' headings carry the heading trait, so VoiceOver can
+  move from one to the next. A heading that folds its part away
+  (Diagnostics) says "Expanded" or "Collapsed" as its value.
+- **What changes away from VoiceOver's cursor is announced:** "Copied"
+  after Copy Report, why Add a Web App couldn't take the address, and the
+  note an unavailable choice points to once it's clicked.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
   does this).
 - **Chosen items** carry the "selected" trait.
@@ -444,12 +470,17 @@ standard ones**:
 - **The menu bar** (`MainMenu`), while a window is open: the AutoHush menu
   (About, Settings… ⌘,, Services, Hide ⌘H, Hide Others ⌥⌘H, Show All,
   Quit ⌘Q), Edit (Undo ⌘Z, Redo ⇧⌘Z, Cut ⌘X, Copy ⌘C, Paste ⌘V, Delete,
-  Select All ⌘A) and Window (Close ⌘W, Minimize ⌘M, Zoom, Bring All to
-  Front), in macOS's own words in every language. The Edit menu is what
-  makes text fields take ⌘V and the rest.
+  Select All ⌘A, Find… ⌘F) and Window (Close ⌘W, Minimize ⌘M, Zoom, Bring
+  All to Front), in macOS's own words in every language. The Edit menu is
+  what makes text fields take ⌘V and the rest. **Find…** opens the search,
+  or puts the cursor in it, in Settings → Apps and the welcome window.
+  **Minimize** works in every window: Settings, the welcome window and the
+  guiding windows (Add a Web App, learning).
 - **Return** presses a window's main, blue button
   (`.keyboardShortcut(.defaultAction)`: Continue, Done) and an alert's
-  first one; in Add a Web App's address field it's Continue. A search
+  first one; in a checklist, it presses the blue button of the step to do
+  now (It’s Playing, It’s Paused, Add to Dock); in Add a Web App's address
+  field it's Continue. A search
   field keeps Return from the window's button (SwiftUI gives it to the
   focused field): with nothing typed it's the main button (Continue); with
   a search, it picks the one item the search narrowed down to (the welcome

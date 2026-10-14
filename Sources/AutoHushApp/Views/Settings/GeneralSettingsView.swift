@@ -60,7 +60,7 @@ struct GeneralSettingsView: View {
                 playerIcon
                 VStack(alignment: .leading, spacing: 2) {
                     SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
-                    Text(verbatim: model.chosenPlayerName ?? "AutoHush")
+                    Text(verbatim: model.chosenPlayerName ?? PlayerOption.noneChosenLabel)
                         .font(.appHeadline)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(verbatim: model.statusLine)

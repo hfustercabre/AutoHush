@@ -36,9 +36,8 @@ package enum SupportedPlayers {
     )
 
     /// The music services' web players AutoHush has been tested with (live,
-    /// 2026-10-06; SoundCloud 2026-10-09, and taking Now Playing as it plays
-    /// 2026-10-10), the most subscribed first: Spotify, YouTube Music (125
-    /// million subscribers), Amazon Music, Deezer (about 10 million), then
+    /// on macOS 27, also taking Now Playing as it plays), the most subscribed
+    /// first: Spotify, YouTube Music (125 million subscribers), Amazon Music, Deezer (about 10 million), then
     /// SoundCloud, most of whose listeners don't subscribe. Their web apps
     /// are offered first, and suggested until added; any other web app is
     /// offered after them, marked untested.
@@ -62,8 +61,8 @@ package enum SupportedPlayers {
     /// Germany's, Ireland the United Kingdom's); the others use
     /// music.amazon.com. A sign-in on another country's site doesn't carry
     /// over, so the web app opens the Mac's own, and Add a Web App offers the
-    /// others. Checked 2026-10-10: music.amazon.ae, .sa and .eg answer with
-    /// an empty page (Amazon Music isn't offered there).
+    /// others. Checked: music.amazon.ae, .sa and .eg answer with an empty
+    /// page (Amazon Music isn't offered there).
     package static let amazonMusicSites = CountrySites(
         name: "Amazon Music",
         byRegion: [
