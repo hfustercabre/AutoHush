@@ -46,11 +46,12 @@ screens that already exist, then macOS's own conventions
   moves: a spinner while it does a step itself, and a countdown while time
   runs out.
 
-The shared files are in `Sources/AutoHushApp/Views/Components/`: `CardStyles.swift`
-holds the text sizes, the colors and the small components (cards, chips,
-switches, headings); each larger component has its own file there
-(`PlayerTiles.swift`, `WindowHeader.swift`, `ChecklistStep.swift`,
-`PermissionButton.swift`, `NoteLabel.swift`, `SearchField.swift`…).
+The shared files are in `Sources/AutoHushApp/Views/Components/`, one
+component per file: `CardStyles.swift` holds the text sizes and the colors;
+`ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`, `SwitchRow.swift`,
+`ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`, `WindowHeader.swift`,
+`ChecklistStepRow.swift`, `PermissionButton.swift`, `NoteLabel.swift` and
+`SearchField.swift` the components.
 
 ## Layout
 

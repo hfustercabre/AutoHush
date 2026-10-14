@@ -1,38 +1,6 @@
 import Foundation
 import OSLog
 
-// MARK: - Debounce scheduling
-
-/// Waits before a deferred decision (a resume tried again, or a pause once
-/// auto-pause is back on): the real one sleeps, tests complete it by hand.
-package protocol PlaybackArbiterDebounceScheduling: Sendable {
-    /// A task that finishes after `delay` seconds.
-    func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never>
-}
-
-/// Waits with `Task.sleep`.
-package struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
-    package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
-        Task { try? await Task.sleep(for: .seconds(delay)) }
-    }
-}
-
-// MARK: - Playback arbiting protocol
-
-/// Takes AudioMonitor's events. Each call returns promptly: whatever it leads
-/// to (a pause with its fade-out) runs on its own, so the next event is never
-/// held up by it.
-package protocol PlaybackArbiting: Actor {
-    /// `heardSince`: for a start, when the app was first heard (before it
-    /// counted as playing); `nil` when that isn't known.
-    func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date?) async
-    /// Whether the player's audio currently comes out of this Mac (as opposed
-    /// to another device, e.g. through Spotify Connect).
-    func handleLocalPlaybackChange(_ isLocal: Bool) async
-}
-
-// MARK: - Playback arbiter
-
 /// Decides when to pause and resume the music player. Rule: pause when any
 /// foreign source starts; resume when ALL foreign sources have stopped (each
 /// counts as stopped once silent for its stop grace), but only music it
@@ -53,62 +21,62 @@ package protocol PlaybackArbiting: Actor {
 /// source that stops during the fade-out brings the music back up, and one
 /// that starts during a fade-in fades it out again.
 package actor PlaybackArbiter: PlaybackArbiting {
-    private let player: any MusicPlayer
+    let player: any MusicPlayer
     /// Fades the player out before pausing and back in after playing.
-    private let fader: VolumeFader
+    let fader: VolumeFader
     /// True while the music fades out ahead of a pause.
-    private var isFadingOut = false
+    var isFadingOut = false
     private var configuration: AppConfiguration
-    private let debounceScheduler: PlaybackArbiterDebounceScheduling
-    private let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
-    private let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
+    let debounceScheduler: PlaybackArbiterDebounceScheduling
+    let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
+    let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
     /// Why the music couldn't be paused, then `nil` once that's over.
     private let onPauseFailure: @Sendable (MusicPlayerError?) -> Void
     /// The last pause failed, while other apps play: the music plays on.
     /// Over once they stop, a pause works, or the player stops playing.
-    private var pauseFailure: MusicPlayerError? {
+    var pauseFailure: MusicPlayerError? {
         didSet { if pauseFailure != oldValue { onPauseFailure(pauseFailure) } }
     }
-    private var publishedAudioLevelsNeeded: Bool?
-    private let logger = Logger(category: "PlaybackArbiter")
+    var publishedAudioLevelsNeeded: Bool?
+    let logger = Logger(category: "PlaybackArbiter")
 
-    private var pausedByUs = false
+    var pausedByUs = false
     /// When the player was seen to stop playing here, as far as the arbiter
     /// knows: it went from playing on this Mac to paused. `nil` while it plays.
-    private var stoppedPlayingAt: Date?
+    var stoppedPlayingAt: Date?
     /// The latest app to start playing: when it was first heard, and when it
     /// counted as playing.
-    private var latestStart: (heard: Date, counted: Date)?
-    private let clock: @Sendable () -> Date
-    private var isShutDown = false
+    var latestStart: (heard: Date, counted: Date)?
+    let clock: @Sendable () -> Date
+    var isShutDown = false
     /// While the Mac sleeps, nothing is paused or resumed (see `setAsleep`).
-    private var isAsleep = false
+    var isAsleep = false
     /// A pause held when the Mac went to sleep, forgotten: the player is
     /// told once the Mac is awake.
-    private var forgotPauseInSleep = false
+    var forgotPauseInSleep = false
     /// The number of the latest sleep or wake applied (see `setAsleep`).
     private var sleepChange = 0
-    private var playerState: PlayerState = .unknown
+    var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
-    private var playsLocally = true
-    private var autoPauseEnabled: Bool
-    private var activeSources: Set<String> = []
-    private var pendingResumeTask: Task<Void, Never>?
-    private var pendingResumeID: UUID?
+    var playsLocally = true
+    var autoPauseEnabled: Bool
+    var activeSources: Set<String> = []
+    var pendingResumeTask: Task<Void, Never>?
+    var pendingResumeID: UUID?
     /// The resume under way: the player plays and fades back in
     /// (`waitForResume`).
-    private var resumeTask: Task<Void, Never>?
+    var resumeTask: Task<Void, Never>?
     /// A pause waiting for apps tracked while auto-pause was off to be
     /// measured again (see `setAutoPauseEnabled`).
-    private var pendingPauseTask: Task<Void, Never>?
-    private var pendingPauseID: UUID?
+    var pendingPauseTask: Task<Void, Never>?
+    var pendingPauseID: UUID?
     /// The pause under way: the player's state is checked, then the music
     /// fades out and pauses.
-    private var pauseTask: Task<Void, Never>?
+    var pauseTask: Task<Void, Never>?
     /// The debounce the pending resume and pause wait on before they run;
     /// `nil` for one that runs at once (`waitUntilIdle`).
-    private var pendingResumeWait: Task<Void, Never>?
-    private var pendingPauseWait: Task<Void, Never>?
+    var pendingResumeWait: Task<Void, Never>?
+    var pendingPauseWait: Task<Void, Never>?
 
     /// A resume is retried this often, this far apart, while the player does
     /// not answer, or doesn't do what it was told (a page that didn't follow
@@ -353,7 +321,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         logger.debug("[arbiter] \(change, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
     }
 
-    private func livePlayerState() async -> PlayerState {
+    func livePlayerState() async -> PlayerState {
         let state = await player.playerState()
         if state != .unknown {
             noteStoppedPlaying(state)
@@ -373,309 +341,6 @@ package actor PlaybackArbiter: PlaybackArbiting {
             stoppedPlayingAt = nil
         case .unknown:
             break
-        }
-    }
-
-    /// Pauses the music in a task of its own, unless a pause is already
-    /// under way: that one sees the new sources too.
-    private func startPause() {
-        guard pauseTask == nil else { return }
-        pauseTask = Task {
-            await pauseMusicIfNeeded()
-            pauseTask = nil
-            publishPlaybackState()
-        }
-    }
-
-    /// Waits until no pause is under way. Tests use it to see a pause's outcome.
-    package func waitForPause() async {
-        while let pauseTask { await pauseTask.value }
-    }
-
-    /// Waits until no resume is under way, the music fading back in
-    /// included. A held pause's monitoring stops only then: stopping
-    /// sooner would cut the fade-in short.
-    package func waitForResume() async {
-        while let resumeTask { await resumeTask.value }
-    }
-
-    /// Waits until nothing is left running: the pause under way, and a
-    /// pending resume or pause whose debounce is over or that had none. One
-    /// still waiting on its debounce doesn't count. Tests use it before
-    /// checking what happened, or that nothing did; their manual scheduler
-    /// ends a debounce by cancelling it.
-    package func waitUntilIdle() async {
-        var finished: Set<Task<Void, Never>> = []
-        while true {
-            let running = [
-                pauseTask,
-                Self.isOver(pendingResumeWait) ? pendingResumeTask : nil,
-                Self.isOver(pendingPauseWait) ? pendingPauseTask : nil,
-            ].compactMap { $0 }.filter { !finished.contains($0) }
-            guard let next = running.first else { return }
-            await next.value
-            finished.insert(next)
-        }
-    }
-
-    private static func isOver(_ debounce: Task<Void, Never>?) -> Bool {
-        debounce?.isCancelled ?? true
-    }
-
-    /// Pauses after `delay` if other apps are still playing then. A newer
-    /// pause, an app starting or auto-pause going off calls it off.
-    private func schedulePause(after delay: TimeInterval) {
-        cancelPendingPause()
-        let id = UUID()
-        pendingPauseID = id
-        let wait = debounceScheduler.scheduleDebounce(after: delay)
-        pendingPauseWait = wait
-        pendingPauseTask = Task { [weak self] in
-            _ = await wait.value
-            await self?.pauseIfStillPending(id: id)
-        }
-    }
-
-    private func pauseIfStillPending(id: UUID) {
-        guard pendingPauseID == id else { return }
-        pendingPauseTask = nil
-        pendingPauseWait = nil
-        pendingPauseID = nil
-        if !activeSources.isEmpty { startPause() }
-    }
-
-    private func cancelPendingPause() {
-        pendingPauseTask?.cancel()
-        pendingPauseTask = nil
-        pendingPauseWait = nil
-        pendingPauseID = nil
-    }
-
-    private func cancelPendingResume() {
-        pendingResumeTask?.cancel()
-        pendingResumeTask = nil
-        pendingResumeWait = nil
-        pendingResumeID = nil
-    }
-
-    private func pauseMusicIfNeeded() async {
-        guard autoPauseEnabled, !isAsleep else { return }
-        let checked = clock()
-        guard playsLocally else {
-            // A player paused here closes its output a few seconds later,
-            // maybe before the app that paused it counts as playing.
-            if mayBeStartingAppsPause(checkedAt: checked),
-               takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
-                return
-            }
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
-            return
-        }
-        let state = await livePlayerState()
-        guard state == .playing else {
-            if await muteIfPlayingAnyway(saying: state) { return }
-            if takeOverPauseOfStartingApp(state, checkedAt: checked) { return }
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
-            return
-        }
-        // Found playing: a pause from now on (the user's, during the fade-out)
-        // is no app's doing.
-        latestStart = nil
-        // Things may have changed while the player answered.
-        guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
-        isFadingOut = true
-        let paused: Bool
-        do {
-            paused = try await fader.fadeOutAndPause()
-        } catch MusicPlayerError.stillLearning {
-            isFadingOut = false
-            logger.debug("[arbiter] \(self.player.name, privacy: .public)'s controls aren't learned yet — not pausing")
-            return
-        } catch {
-            isFadingOut = false
-            logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-            // Unless every app stopped meanwhile: then there's nothing to say.
-            if !activeSources.isEmpty, autoPauseEnabled, !isAsleep {
-                pauseFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)
-            }
-            return
-        }
-        isFadingOut = false
-        if paused { pauseFailure = nil }
-        guard paused else {
-            logger.debug("[arbiter] pause called off during the fade-out")
-            // Another app may have started while the music came back up.
-            if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
-            return
-        }
-        playerState = .paused
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
-        guard holdPause() else { return }
-        if !autoPauseEnabled {
-            // Auto-pause was turned off while we were pausing: undo it.
-            scheduleResume(after: nil)
-        } else if activeSources.isEmpty, !isShutDown {
-            // Every app stopped while we were pausing, too late to call it off.
-            scheduleResume(after: nil)
-        }
-    }
-
-    /// A player that says it's paused or stopped while it plays here (a web
-    /// app's ad, during which its button reads "Play") is muted instead, if it
-    /// can be: that's our pause, and resuming lifts the mute.
-    private func muteIfPlayingAnyway(saying state: PlayerState) async -> Bool {
-        guard state == .paused || state == .stopped, let muting = player as? any MutingMusicPlayer,
-              await muting.muteIfPlayingAnyway() else { return false }
-        pauseFailure = nil
-        playerState = .paused
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted")
-        // Things may have changed while it was measured.
-        if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
-        return true
-    }
-
-    /// The player was found paused by the check an app's start called for,
-    /// having stopped playing as that app started: the app paused it (VLC
-    /// does, by default, with Spotify and Music). That pause counts as ours,
-    /// so the music comes back once the apps stop, as if AutoHush had paused
-    /// it. A pause from before the app was heard, or more than
-    /// `startPauseWindow` after, is the user's, and stays.
-    private func takeOverPauseOfStartingApp(_ state: PlayerState, checkedAt checked: Date) -> Bool {
-        guard state == .paused, !isShutDown, autoPauseEnabled, mayBeStartingAppsPause(checkedAt: checked) else {
-            return false
-        }
-        pauseFailure = nil
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop")
-        // Things may have changed while the player answered.
-        if holdPause(), !isShutDown, activeSources.isEmpty { scheduleResume(after: nil) }
-        return true
-    }
-
-    /// Whether, by timing alone, the player's stop could be the doing of the
-    /// latest app to start, in a check `checked` at most `startCheckWindow`
-    /// after it counted as playing: the stop came surely after the app was
-    /// first heard (give or take `hearingDelay`) and at most
-    /// `startPauseWindow` after. Its report may come late
-    /// (`MusicPlayer.stateReportDelay`), so a stop reported by a player read
-    /// once a second can't be placed that precisely, and never counts.
-    private func mayBeStartingAppsPause(checkedAt checked: Date) -> Bool {
-        guard !pausedByUs, let start = latestStart, let stopped = stoppedPlayingAt,
-              checked.timeIntervalSince(start.counted) <= Self.startCheckWindow else { return false }
-        let earliest = stopped.addingTimeInterval(-player.stateReportDelay)
-        return earliest.timeIntervalSince(start.heard) >= -Self.hearingDelay
-            && stopped.timeIntervalSince(start.heard) <= Self.startPauseWindow
-    }
-
-    /// The music is paused, or muted, by us now. When the Mac went to sleep
-    /// while that was under way (the fade-out or the listening took that
-    /// long), the pause is forgotten at once, as any pause held then (see
-    /// `setAsleep`): `false`.
-    private func holdPause() -> Bool {
-        guard isAsleep else {
-            pausedByUs = true
-            return true
-        }
-        forgotPauseInSleep = true
-        logger.debug("[arbiter] paused as the Mac went to sleep: \(self.player.name, privacy: .public) stays paused")
-        return false
-    }
-
-    /// Resumes the music in a task of its own: after `delay`, or right away
-    /// when it is `nil`. A newer resume or a source starting calls it off.
-    private func scheduleResume(after delay: TimeInterval?, retriesLeft: Int = PlaybackArbiter.resumeRetries) {
-        cancelPendingResume()
-        let id = UUID()
-        pendingResumeID = id
-        let debounceTask = delay.map { debounceScheduler.scheduleDebounce(after: $0) }
-        pendingResumeWait = debounceTask
-        pendingResumeTask = Task { [weak self] in
-            _ = await debounceTask?.value
-            await self?.resumeIfStillPending(id: id, retriesLeft: retriesLeft)
-        }
-    }
-
-    private func resumeIfStillPending(id: UUID, retriesLeft: Int) async {
-        guard pendingResumeID == id, !isShutDown, !isAsleep else { return }
-        // With auto-pause off, music we paused comes back even while others play.
-        guard activeSources.isEmpty || !autoPauseEnabled else { return }
-        guard pausedByUs else {
-            publishPlaybackState()
-            return
-        }
-        await resumeNow(id: id, retriesLeft: retriesLeft)
-    }
-
-    /// Resumes the player after re-checking its live state: if the user manually
-    /// paused, resumed, or quit it while the source was active, respect
-    /// that and do not override their intent. Gives up when the pending
-    /// resume `id` was cancelled or replaced while the player was queried.
-    private func resumeNow(id: UUID, retriesLeft: Int) async {
-        let currentState = await livePlayerState()
-        guard !isShutDown, pendingResumeID == id else { return }
-        if currentState == .unknown, retriesLeft > 0 {
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
-            scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
-            return
-        }
-        guard currentState == .paused else {
-            logger.debug("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
-            pausedByUs = false
-            publishPlaybackState()
-            return
-        }
-
-        // Forget the pending resume without cancelling it: this may be running
-        // inside it, and a cancelled task would rush the fade-in's steps.
-        let resuming = pendingResumeTask
-        resumeTask = resuming
-        pendingResumeTask = nil
-        pendingResumeWait = nil
-        pendingResumeID = nil
-        pausedByUs = false
-        do {
-            try await fader.playAndFadeIn()
-            playerState = .playing
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) resumed")
-        } catch {
-            logger.error("[arbiter] resume failed: \(error.localizedDescription, privacy: .public)")
-            // Still ours to resume, unless something called it off meanwhile.
-            if retriesLeft > 0, !isShutDown, !isAsleep, pendingResumeID == nil,
-               activeSources.isEmpty || !autoPauseEnabled {
-                pausedByUs = true
-                scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
-            }
-        }
-        publishPlaybackState()
-        if resumeTask == resuming { resumeTask = nil } // unless a newer resume started meanwhile
-    }
-
-    private func publishPlaybackState() {
-        onPlaybackStateChange(mapPlaybackState())
-
-        let needed = audioLevelsNeeded
-        if needed != publishedAudioLevelsNeeded {
-            publishedAudioLevelsNeeded = needed
-            onAudioLevelsNeededChange(needed)
-        }
-    }
-
-    /// Audio levels only matter while they can change a decision: whether to
-    /// pause a player playing on this Mac, or when to resume one we paused.
-    /// Otherwise the monitor captures nothing (no recording indicator).
-    private var audioLevelsNeeded: Bool {
-        guard autoPauseEnabled, !isShutDown else { return false }
-        return pausedByUs || (playerState == .playing && playsLocally)
-    }
-
-    private func mapPlaybackState() -> PlaybackState {
-        if pausedByUs, !activeSources.isEmpty { return .pausedByMonitor }
-        if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
-        if playerState == .playing, !playsLocally { return .playingElsewhere }
-
-        switch playerState {
-        case .playing:                       return .musicPlaying
-        case .paused, .stopped, .notRunning: return .musicIdle
-        case .unknown:                       return .unknown
         }
     }
 }

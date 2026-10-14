@@ -45,7 +45,7 @@ import os
 /// ignores are still tracked and published, but never reach the arbiter.
 package final class AudioMonitor: @unchecked Sendable {
     /// What the monitor tells the arbiter, in order.
-    private enum ArbiterEvent: Sendable {
+    enum ArbiterEvent: Sendable {
         /// `heardSince`: for a start, when the app was first heard, if known.
         case source(id: String, isPlaying: Bool, heardSince: Date?)
         case localPlayback(Bool)
@@ -56,70 +56,70 @@ package final class AudioMonitor: @unchecked Sendable {
     /// The player playing but its tap silent for this long means level detection
     /// is unavailable. Long enough to outlast the open-but-silent stream a player
     /// keeps for a while after playback moves to another device.
-    private static let verificationWindow: TimeInterval = 15
+    static let verificationWindow: TimeInterval = 15
     /// How often the System Audio Recording permission is re-read from TCC.
-    private static let permissionRecheckInterval: TimeInterval = 5
+    static let permissionRecheckInterval: TimeInterval = 5
     /// After a HAL change, keep re-reading processes at the active rate for this
     /// long: a process's output flag can flip shortly after the notification.
-    private static let postChangeRefreshWindow: TimeInterval = 1
+    static let postChangeRefreshWindow: TimeInterval = 1
 
     /// Queue-confined; replaced live by `setConfiguration(_:)`.
-    private var configuration: AppConfiguration
-    private let snapshotProvider: any AudioProcessSnapshotProviding
-    private let levelMeter: (any AudioLevelMetering)?
-    private let permission: (any AudioCapturePermissionChecking)?
-    private let sourceIdentifier: (any AudioSourceIdentifying)?
-    private let onAssertionsLearned: @Sendable (String, AnnouncedAssertions) -> Void
-    private let clock: @Sendable () -> Date
-    private let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
-    private let onDetectionModeChange: @Sendable (DetectionMode) -> Void
-    private let logger = Logger(category: "AudioMonitor")
-    private let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
-    private let events: AsyncStream<ArbiterEvent>.Continuation
+    var configuration: AppConfiguration
+    let snapshotProvider: any AudioProcessSnapshotProviding
+    let levelMeter: (any AudioLevelMetering)?
+    let permission: (any AudioCapturePermissionChecking)?
+    let sourceIdentifier: (any AudioSourceIdentifying)?
+    let onAssertionsLearned: @Sendable (String, AnnouncedAssertions) -> Void
+    let clock: @Sendable () -> Date
+    let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
+    let onDetectionModeChange: @Sendable (DetectionMode) -> Void
+    let logger = Logger(category: "AudioMonitor")
+    let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
+    let events: AsyncStream<ArbiterEvent>.Continuation
     private let forwardingTask: Task<Void, Never>
     /// What the latest tick found, for Diagnostics; read from any thread.
     /// Its entries are worked out only when Diagnostics asks.
-    private let latestReport = OSAllocatedUnfairLock<ActiveAudioReport?>(initialState: nil)
+    let latestReport = OSAllocatedUnfairLock<ActiveAudioReport?>(initialState: nil)
 
     // Queue-confined state.
-    private var isStarted = false
-    private var timer: DispatchSourceTimer?
-    private var timerInterval: TimeInterval?
-    private var candidates: [AudioProcessInfo] = []
+    var isStarted = false
+    var timer: DispatchSourceTimer?
+    var timerInterval: TimeInterval?
+    var candidates: [AudioProcessInfo] = []
     /// The candidates that play the music player's audio: its own processes
     /// and the ones it owns.
-    private var playerProcesses: Set<AudioObjectID> = []
+    var playerProcesses: Set<AudioObjectID> = []
     /// Owning app of each candidate process.
-    private var sourceOfProcess: [AudioObjectID: AudioSource] = [:]
+    var sourceOfProcess: [AudioObjectID: AudioSource] = [:]
     /// IDs of the apps in `sourceOfProcess`.
-    private var presentSourceIDs: Set<String> = []
+    var presentSourceIDs: Set<String> = []
     /// Every source seen while it is tracked, so active sources keep their
     /// names during the stop grace period after their process is gone.
-    private var knownSources: [String: AudioSource] = [:]
-    private var ignoredSourceIDs: Set<String>
-    private var needsRefresh = true
-    private var lastRefresh: Date?
-    private var lastHALChange: Date?
-    private var tracker: SourceActivityTracker
-    private var publishedActive: [AudioSource]?
-    private var detectionMode: DetectionMode = .pending
-    private var playerPlayingSince: Date?
-    private var playerTapSince: Date?
+    var knownSources: [String: AudioSource] = [:]
+    var ignoredSourceIDs: Set<String>
+    var needsRefresh = true
+    var lastRefresh: Date?
+    var lastHALChange: Date?
+    var tracker: SourceActivityTracker
+    var publishedActive: [AudioSource]?
+    var detectionMode: DetectionMode = .pending
+    var playerPlayingSince: Date?
+    var playerTapSince: Date?
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
-    private var permissionStatus: AudioCapturePermission?
-    private var lastPermissionCheck: Date?
-    private var hasRequestedPermission = false
+    var permissionStatus: AudioCapturePermission?
+    var lastPermissionCheck: Date?
+    var hasRequestedPermission = false
     /// How playing apps are detected (Settings → Detection → AntiDot mode).
-    private var detectionMethod: DetectionMethod
+    var detectionMethod: DetectionMethod
     /// AntiDot mode's judge, and what it learned about how apps announce playback.
-    private var signals: PlaybackSignals
+    var signals: PlaybackSignals
     /// Whether levels can currently change a pause or resume decision.
-    private var audioLevelsNeeded: Bool
+    var audioLevelsNeeded: Bool
     /// Taps are released this long after levels stop being needed, so brief
     /// gaps (the player's output restarting after a resume) don't recreate them.
     private let audioLevelsReleaseDelay: TimeInterval
-    private var audioLevelsRelease: DispatchWorkItem?
-    private var publishedLocalPlayback: Bool?
+    var audioLevelsRelease: DispatchWorkItem?
+    var publishedLocalPlayback: Bool?
 
     package init(
         configuration: AppConfiguration,
@@ -275,321 +275,5 @@ package final class AudioMonitor: @unchecked Sendable {
     /// How each app with its sound on is judged, for Diagnostics (thread-safe).
     package func activeAudioReport() -> [ActiveAudioReport.Entry] {
         latestReport.withLock { $0 }?.entries ?? []
-    }
-
-    // MARK: - Lifecycle
-
-    private func startOnQueue() {
-        guard !isStarted else { return }
-        isStarted = true
-
-        let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.setEventHandler { [weak self] in self?.tick() }
-        timer.resume()
-        self.timer = timer
-
-        snapshotProvider.startObserving(on: queue) { [weak self] in
-            guard let self else { return }
-            self.needsRefresh = true
-            self.lastHALChange = self.clock()
-            self.tick()
-        }
-        needsRefresh = true
-        tick()
-    }
-
-    private func stopOnQueue() {
-        guard isStarted else { return }
-        isStarted = false
-
-        timer?.cancel()
-        timer = nil
-        timerInterval = nil
-        audioLevelsRelease?.cancel()
-        audioLevelsRelease = nil
-        snapshotProvider.stopObserving()
-        levelMeter?.stopAll()
-
-        candidates = []
-        playerProcesses = []
-        sourceOfProcess = [:]
-        presentSourceIDs = []
-        knownSources = [:]
-        tracker.reset()
-        signals.forgetAnnouncements()
-        lastRefresh = nil
-        lastHALChange = nil
-        playerTapSince = nil
-        lastPermissionCheck = nil
-        publishedLocalPlayback = nil
-        publishActiveSources()
-        latestReport.withLock { $0 = nil }
-    }
-
-    // MARK: - Tick
-
-    private func tick() {
-        guard isStarted else { return }
-        let now = clock()
-        checkPermission(at: now)
-        if needsRefresh || recentlyChanged(at: now)
-            || lastRefresh.map({ now.timeIntervalSince($0) >= configuration.idleSampleInterval }) ?? true {
-            refreshCandidates(at: now)
-        }
-        evaluate(at: now)
-        rescheduleTimer(at: now)
-    }
-
-    private func recentlyChanged(at now: Date) -> Bool {
-        lastHALChange.map { now.timeIntervalSince($0) < Self.postChangeRefreshWindow } ?? false
-    }
-
-    private func refreshCandidates(at now: Date) {
-        needsRefresh = false
-        lastRefresh = now
-        let ownPID = getpid()
-        candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID }
-        playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
-        sourceOfProcess = [:]
-        // A process without a bundle ID (a command-line player such as afplay
-        // or mpv) counts as the app that owns it, e.g. Terminal; one no app
-        // owns (a system daemon) is left with an empty ID and doesn't count.
-        for process in candidates where process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) {
-            let source = sourceIdentifier?.source(for: process)
-                ?? AudioSource(id: process.bundleID, name: process.bundleID)
-            if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }
-            // An excluded owner (e.g. the music player's helper) excludes its processes too.
-            guard configuration.isMediaSource(source.id) else { continue }
-            sourceOfProcess[process.objectID] = source
-            knownSources[source.id] = source
-        }
-        presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
-        updateMeteredProcesses(at: now)
-    }
-
-    /// Re-reads the System Audio Recording permission (at most every few
-    /// seconds) and derives the detection mode from it when it is known.
-    private func checkPermission(at now: Date) {
-        guard detectionMethod == .audioLevels else {
-            setDetectionMode(detectionMethod == .playbackSignals ? .playbackSignals : .disabled)
-            return
-        }
-        guard let permission else { return }
-        if let lastPermissionCheck,
-           now.timeIntervalSince(lastPermissionCheck) < Self.permissionRecheckInterval { return }
-        lastPermissionCheck = now
-
-        let status = permission.status()
-        let changed = status != permissionStatus
-        permissionStatus = status
-        switch status {
-        case .granted:
-            setDetectionMode(.audioLevel)
-        case .denied:
-            setDetectionMode(.unavailable)
-        case .notDetermined:
-            setDetectionMode(.pending)
-            requestPermissionOnce(permission)
-        case nil:
-            break
-        }
-        if changed {
-            logger.info("[monitor] System Audio Recording permission: \(status.map { "\($0)" } ?? "unknown", privacy: .public)")
-            updateMeteredProcesses(at: now)
-        }
-    }
-
-    private func requestPermissionOnce(_ permission: any AudioCapturePermissionChecking) {
-        guard !hasRequestedPermission else { return }
-        hasRequestedPermission = true
-        permission.request { [weak self] _ in
-            guard let monitor = self else { return }
-            monitor.queue.async {
-                monitor.lastPermissionCheck = nil // re-read right away
-                monitor.tick()
-            }
-        }
-    }
-
-    /// Taps are created only when they matter (see the type comment) and can
-    /// deliver samples: with the permission granted, or when it cannot be
-    /// read (then samples decide).
-    private var shouldMeterLevels: Bool {
-        detectionMethod == .audioLevels && audioLevelsNeeded
-            && (permissionStatus == nil || permissionStatus == .granted)
-    }
-
-    private func updateMeteredProcesses(at now: Date) {
-        guard let levelMeter else { return }
-        // The player is tapped only to prove the permission when TCC cannot be read.
-        let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
-        let metered = shouldMeterLevels ? candidates.filter {
-            sourceOfProcess[$0.objectID] != nil || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
-        } : []
-        let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
-        playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
-        // May block while macOS shows the System Audio Recording prompt.
-        levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
-    }
-
-    private func evaluate(at now: Date) {
-        let peaks = levelMeter?.drainPeaks() ?? [:]
-        updateDetectionMode(peaks: peaks, at: now)
-
-        var audible: Set<String> = []
-        var levels: [String: Float] = [:]
-        let judgement = judgePlaybackSignals(at: now)
-        /// The verdicts that decided: only for what wasn't measured.
-        var verdicts: [String: Bool] = [:]
-        for process in candidates {
-            guard let source = sourceOfProcess[process.objectID] else { continue }
-            let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
-            if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
-            let verdict = peak == nil ? judgement?.verdicts[source.id] : nil
-            if let verdict { verdicts[source.id] = verdict }
-            if isAudible(peak: peak, verdict: verdict) {
-                audible.insert(source.id)
-            }
-        }
-
-        // Before source events, so a pause decision in this tick sees it.
-        updateLocalPlayback()
-
-        // AntiDot mode: sound without video must last longer (see the type comment).
-        let slowStarts = detectionMethod != .playbackSignals ? [:] : judgement.map { judgement in
-            Dictionary(uniqueKeysWithValues: audible.subtracting(judgement.showingVideo).map {
-                ($0, configuration.startConfirmationWithoutVideo)
-            })
-        } ?? [:]
-        let (started, stopped) = tracker.update(audible: audible, at: now, startConfirmations: slowStarts)
-        if !started.isEmpty || !stopped.isEmpty {
-            logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
-        }
-        for id in started.sorted() where !ignoredSourceIDs.contains(id) {
-            events.yield(.source(id: id, isPlaying: true, heardSince: tracker.firstHeard(id)))
-        }
-        for id in stopped.sorted() where !ignoredSourceIDs.contains(id) {
-            events.yield(.source(id: id, isPlaying: false, heardSince: nil))
-        }
-
-        // Forget sources that are neither tracked nor currently present.
-        knownSources = knownSources.filter { tracker.isTracking($0.key) || presentSourceIDs.contains($0.key) }
-
-        publishActiveSources()
-        publishReport(audible: audible, levels: levels, verdicts: verdicts)
-    }
-
-    /// Whether one process of a source counts as audible in this tick: by its
-    /// level when measured, else by what its app tells macOS, else by its open
-    /// output stream.
-    private func isAudible(peak: Float?, verdict: Bool?) -> Bool {
-        if let peak { return peak >= configuration.audibleThreshold }
-        if let verdict { return verdict }
-        return true
-    }
-
-    /// What the apps with their sound on tell macOS, as AntiDot mode judges
-    /// it; not with "Open audio streams only". Saves what it learned.
-    private func judgePlaybackSignals(at now: Date) -> PlaybackSignals.Judgement? {
-        guard detectionMethod != .openStreams else { return nil }
-        var appOfProcess: [pid_t: String] = [:]
-        for process in candidates {
-            if let source = sourceOfProcess[process.objectID] { appOfProcess[process.pid] = source.id }
-        }
-        let holding = signals.assertions(among: presentSourceIDs) { pid in
-            appOfProcess[pid] ?? sourceIdentifier?.sourceID(forPID: pid)
-        }
-        let judgement = signals.judge(present: presentSourceIDs, holding: holding, at: now)
-        for (id, assertions) in judgement.learned.sorted(by: { $0.key < $1.key }) {
-            // Names are the app's own words, so they stay private in the log.
-            logger.info("[monitor] \(id, privacy: .public) keeps awake while playing: system \(assertions.system.sorted()), display \(assertions.display.sorted())")
-            onAssertionsLearned(id, assertions)
-        }
-        return judgement
-    }
-
-    /// Infers the permission from samples; only used when TCC cannot be read.
-    private func updateDetectionMode(peaks: [AudioObjectID: Float], at now: Date) {
-        guard permissionStatus == nil else { return }
-        if detectionMode != .audioLevel, peaks.values.contains(where: { $0 > 0 }) {
-            setDetectionMode(.audioLevel)
-            updateMeteredProcesses(at: now) // verification taps on the player are no longer needed
-        } else if detectionMode == .pending,
-                  let playingSince = playerPlayingSince,
-                  let tapSince = playerTapSince,
-                  now.timeIntervalSince(max(playingSince, tapSince)) >= Self.verificationWindow {
-            setDetectionMode(.unavailable)
-        }
-    }
-
-    /// The player plays on this Mac when a process of its own has output
-    /// running. Its output is not tapped: that would keep the recording
-    /// indicator on for as long as the music plays.
-    private func updateLocalPlayback() {
-        let isLocal = !playerProcesses.isEmpty
-        guard isLocal != publishedLocalPlayback else { return }
-        publishedLocalPlayback = isLocal
-        logger.debug("[monitor] music player output on this Mac: \(isLocal, privacy: .public)")
-        events.yield(.localPlayback(isLocal))
-    }
-
-    private func setDetectionMode(_ mode: DetectionMode) {
-        guard mode != detectionMode else { return }
-        detectionMode = mode
-        logger.info("[monitor] detection: \(String(describing: mode), privacy: .public)")
-        onDetectionModeChange(mode)
-    }
-
-    private func rescheduleTimer(at now: Date) {
-        let interval = Self.tickInterval(
-            otherAppsRunning: !sourceOfProcess.isEmpty,
-            isTracking: !tracker.isIdle,
-            recentlyChanged: recentlyChanged(at: now),
-            configuration: configuration
-        )
-        guard interval != timerInterval else { return }
-        timerInterval = interval
-        timer?.schedule(
-            deadline: .now() + interval,
-            repeating: interval,
-            leeway: .milliseconds(Int(interval * 100))
-        )
-    }
-
-    /// The active rate while another app has its audio running, a source is
-    /// tracked, or the process list just changed; otherwise the idle rate.
-    /// The music player playing alone leaves nothing to judge, and a new app
-    /// starting is announced by a HAL change, which ticks at once.
-    static func tickInterval(
-        otherAppsRunning: Bool, isTracking: Bool, recentlyChanged: Bool, configuration: AppConfiguration
-    ) -> TimeInterval {
-        otherAppsRunning || isTracking || recentlyChanged
-            ? configuration.activeSampleInterval
-            : configuration.idleSampleInterval
-    }
-
-    // MARK: - Publication
-
-    private func publishActiveSources() {
-        let active = tracker.activeSources
-            .map { knownSources[$0] ?? AudioSource(id: $0, name: $0) }
-            .sortedByName()
-        guard active != publishedActive else { return }
-        publishedActive = active
-        onActiveSourcesChange(active)
-    }
-
-    private func publishReport(audible: Set<String>, levels: [String: Float], verdicts: [String: Bool]) {
-        let report = ActiveAudioReport(
-            present: presentSourceIDs,
-            playing: tracker.activeSources,
-            audible: audible,
-            levels: levels,
-            ignored: ignoredSourceIDs,
-            announcing: Set(verdicts.filter { $0.value }.keys),
-            notAnnouncing: Set(verdicts.filter { !$0.value }.keys),
-            sources: knownSources
-        )
-        latestReport.withLock { $0 = report }
     }
 }

@@ -42,4 +42,17 @@ extension AppDelegate {
             await self.refreshPermissions()
         }
     }
+
+    /// The user went to allow Audio Recording in System Settings: macOS
+    /// applies it only from the next launch, so the menu offers to reopen.
+    func noteAudioRecordingAllowedInSettings() {
+        status.awaitsReopenForAudioRecording = true
+    }
+
+    /// The info button after the card's line: why the player couldn't be
+    /// controlled (also in Settings → Diagnostics, as "Last error").
+    func showControlError() {
+        guard let alert = status.controlErrorAlert else { return }
+        InfoAlert.show(alert.title, alert.message)
+    }
 }
