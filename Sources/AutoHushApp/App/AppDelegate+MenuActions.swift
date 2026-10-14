@@ -19,7 +19,8 @@ extension AppDelegate {
     /// Settings (a reset is asked about again), a permission allowed (a
     /// window waiting for one goes on by itself), and the players installed
     /// while none is chosen (once one is, the folder watch follows them:
-    /// `refreshPlayerOptions`).
+    /// `refreshPlayerOptions`) or while Add a Web App waits for the one it
+    /// made to be listed.
     func registerWatchedWindows() {
         windowWatch.register(isOpen: { [weak self] in self?.settingsWindowController?.window?.isOpen == true }) { [weak self] in
             var needs: Set<WindowWatch.Refresh> = [.notifications, .launchAtLogin, .permissions]
@@ -31,7 +32,10 @@ extension AppDelegate {
             self?.player == nil ? [.players, .notifications, .permissions] : [.notifications, .permissions]
         }
         windowWatch.register(isOpen: { [weak self] in self?.learningWindow?.isOpen == true }) { [.permissions] }
-        windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [.permissions] }
+        // While it says a web app it made can't be found, the players too.
+        windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [weak self] in
+            self?.webAppAwaitingListing == nil ? [.permissions] : [.permissions, .players]
+        }
     }
 
     /// One of the window watch's refreshes.
@@ -57,19 +61,47 @@ extension AppDelegate {
         if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
     }
 
-    /// Edit → Find… (⌘F): opens Settings → Apps' search, or puts the
-    /// keyboard in the search of the window in front (the welcome window's,
-    /// Apps' once open). Elsewhere it does nothing.
+    /// Edit → Find… (⌘F): opens Settings → Apps' search while it lists
+    /// apps, or puts the keyboard in a search already open there or in the
+    /// welcome window's over its players. The item is dimmed elsewhere.
     func find() {
-        guard let window = NSApp.keyWindow else { return }
-        if window === settingsWindowController?.window {
-            guard settingsWindowController?.shownPage == .apps else { return }
-            // Closed, it opens, taking the keyboard as it appears.
-            guard settingsModel.appSearch != nil else {
-                settingsModel.appSearch = ""
-                return
-            }
+        guard let target = findTarget else { return }
+        if target == .appsSearch, settingsModel.appSearch == nil {
+            settingsModel.appSearch = "" // it opens, taking the keyboard as it appears
+        } else if let window = NSApp.keyWindow, let field = window.contentView?.firstEditableTextField {
+            window.makeFirstResponder(field)
         }
-        if let field = window.contentView?.firstEditableTextField { window.makeFirstResponder(field) }
+    }
+
+    /// Where Find… goes in the window in front; `nil` where there's no search.
+    var findTarget: FindTarget? {
+        guard let window = NSApp.keyWindow else { return nil }
+        let front: FindTarget.Window = window === settingsWindowController?.window ? .settings
+            : window.windowController is PlayerChooserWindowController ? .welcome : .other
+        return FindTarget(window: front, settingsPage: settingsWindowController?.shownPage, hasApps: !settingsModel.apps.isEmpty,
+                          welcomeShowsPlayers: !settingsModel.welcomeAsksPermissions,
+                          playersSearchable: settingsModel.playerOptions.isSearchable)
+    }
+}
+
+/// The search Edit → Find… (⌘F) goes to in the window in front.
+enum FindTarget: Equatable {
+    /// Settings → Apps' search, which Find opens.
+    case appsSearch
+    /// The welcome window's search over its players.
+    case welcomeSearch
+
+    enum Window { case settings, welcome, other }
+
+    /// Settings on Apps while it lists apps (its magnifier is dimmed
+    /// otherwise), or the welcome window on its players while they're many
+    /// enough for a search; `nil` anywhere else.
+    init?(window: Window, settingsPage: SettingsWindowController.Page?, hasApps: Bool,
+          welcomeShowsPlayers: Bool, playersSearchable: Bool) {
+        switch window {
+        case .settings where settingsPage == .apps && hasApps: self = .appsSearch
+        case .welcome where welcomeShowsPlayers && playersSearchable: self = .welcomeSearch
+        default: return nil
+        }
     }
 }

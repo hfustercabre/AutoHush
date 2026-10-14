@@ -34,4 +34,33 @@ struct MainMenuTests {
         #expect(opened == ["about", "settings", "find"])
         #expect(NSApp.windowsMenu === bar.items[2].submenu)
     }
+
+    @Test("Find… is dimmed while the window in front has no search")
+    func findDimmed() throws {
+        _ = NSApplication.shared
+        final class Search { var shows = false }
+        let search = Search()
+        let bar = MainMenu.make(about: {}, settings: {}, canFind: { search.shows })
+        let find = try #require(bar.items[1].submenu?.items.first { $0.title == "Find…" })
+        let target = try #require(find.target as? NSMenuItemValidation)
+        #expect(!target.validateMenuItem(find))
+        search.shows = true
+        #expect(target.validateMenuItem(find))
+    }
+
+    @Test("Find… goes to Settings → Apps' search while it lists apps, or the welcome window's over many players; nowhere else")
+    func findTargets() {
+        func target(_ window: FindTarget.Window, page: SettingsWindowController.Page? = nil, hasApps: Bool = true,
+                    showsPlayers: Bool = true, searchable: Bool = true) -> FindTarget? {
+            FindTarget(window: window, settingsPage: page, hasApps: hasApps, welcomeShowsPlayers: showsPlayers,
+                       playersSearchable: searchable)
+        }
+        #expect(target(.settings, page: .apps) == .appsSearch)
+        #expect(target(.settings, page: .apps, hasApps: false) == nil) // its magnifier is dimmed too
+        #expect(target(.settings, page: .general) == nil)
+        #expect(target(.welcome) == .welcomeSearch)
+        #expect(target(.welcome, searchable: false) == nil)
+        #expect(target(.welcome, showsPlayers: false) == nil) // the permissions page
+        #expect(target(.other) == nil) // Add a Web App's address isn't a search; learning has none
+    }
 }

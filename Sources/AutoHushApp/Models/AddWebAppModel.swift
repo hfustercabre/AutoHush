@@ -50,6 +50,8 @@ final class AddWebAppModel {
     /// Safari's Add to Dock dialog was closed without adding: the Add to
     /// Dock step says so, until it's opened again.
     private(set) var closedWithoutAdding = false
+    /// The web app the last try made (or found already there), once it has.
+    private(set) var madeBundleID: String?
     /// Resumed by Add to Dock (`true`), or once the add is cancelled.
     @ObservationIgnored private var addConfirmation: CheckedContinuation<Bool, Never>?
     /// The `attempt` of the add waiting in `addConfirmation`.
@@ -114,6 +116,7 @@ final class AddWebAppModel {
         problem = nil
         siteAsked = false
         closedWithoutAdding = false
+        madeBundleID = nil
         resumeAdd(false)
     }
 
@@ -122,6 +125,7 @@ final class AddWebAppModel {
         problem = nil
         siteAsked = false
         closedWithoutAdding = false
+        madeBundleID = nil
         phase = .checking
         start(address)
     }
@@ -187,6 +191,7 @@ final class AddWebAppModel {
         case .notAdded:                 closedWithoutAdding = true
         case .made(let app):
             closedWithoutAdding = false
+            madeBundleID = app.bundleID
             phase = .learning(name: app.name, alreadyThere: app.alreadyThere)
         }
     }

@@ -105,7 +105,7 @@ struct DiagnosticsSettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isHeader)
-            .accessibilityValue(isOpen ? Self.expanded : Self.collapsed)
+            .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)
             .padding(.top, 6)
             if isOpen { content() }
         }
@@ -164,15 +164,6 @@ struct DiagnosticsSettingsView: View {
     /// Said after Copy Report; VoiceOver hears it too.
     private static var copiedText: String {
         String(localized: "Copied", comment: "Settings → Diagnostics: after Copy Report")
-    }
-
-    /// What VoiceOver says of a part's heading: open or folded away.
-    private static var expanded: Text {
-        Text("Expanded", comment: "VoiceOver, Settings → Diagnostics: a part's heading while the part shows (a click folds it away)")
-    }
-
-    private static var collapsed: Text {
-        Text("Collapsed", comment: "VoiceOver, Settings → Diagnostics: a part's heading while the part is folded away (a click shows it)")
     }
 
     private func symbol(for kind: DiagnosticsSnapshot.Section.Kind) -> String {

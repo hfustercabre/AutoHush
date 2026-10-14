@@ -88,7 +88,11 @@ struct LearningPermissionStep: View {
                         .captionStyle()
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .accessibilityElement(children: .combine)
+                // As a checklist step: its words as the label, where it
+                // stands as the value (a combined text's words are its value).
+                .accessibilityElement(children: .ignore)
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityLabel(Text(verbatim: Self.announcement(permission, name: name)))
                 .accessibilityValue(Text(verbatim: StepState.current.voiceOverValue))
                 PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
                     .padding(.top, 2)

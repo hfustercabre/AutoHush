@@ -23465,7 +23465,7 @@
       }
     },
     "AutoHush’s version is unknown." : {
-      "comment" : "Update status in Settings",
+      "comment" : "Update status in Settings, and the alert after a check asked for from the menu or Settings",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26193,7 +26193,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "S’està comprovant…"
+            "value" : "Comprovant…"
           }
         },
         "cs" : {
@@ -26277,7 +26277,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Controllo in corso…"
+            "value" : "Controllo…"
           }
         },
         "ja" : {
@@ -29108,7 +29108,7 @@
       }
     },
     "Collapsed" : {
-      "comment" : "VoiceOver, Settings → Diagnostics: a part's heading while the part is folded away (a click shows it)",
+      "comment" : "VoiceOver: a heading or button while what's under it is hidden (Settings → Diagnostics' parts, the players under the menu's card); a click shows it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -35796,7 +35796,7 @@
       }
     },
     "Expanded" : {
-      "comment" : "VoiceOver, Settings → Diagnostics: a part's heading while the part shows (a click folds it away)",
+      "comment" : "VoiceOver: a heading or button while what's under it shows (Settings → Diagnostics' parts, the players under the menu's card); a click hides it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

@@ -42,6 +42,9 @@ final class StatusMenuModel {
     var playerSearch = ""
     /// An update check asked from the menu runs: its Updates button says so.
     var isCheckingForUpdates = false
+    /// Retry was clicked: VoiceOver hears the card's line once the start is
+    /// over, as it shows how it went.
+    @ObservationIgnored var announcesRetryOutcome = false
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
 
     init(status: AppStatus) {

@@ -91,6 +91,8 @@ struct AddWebAppView: View {
         .onChange(of: model.problemText) { _, problem in
             if let problem { AccessibilityNotification.Announcement(problem).post() }
         }
+        // And why Continue waits, as the window opens and when it starts to.
+        .announcesCurrentStep(needsAccessibility ? Self.accessibilityNeeded : nil, atOnce: true)
     }
 
     /// Over the card of steps, here and in the learning window.
@@ -172,6 +174,7 @@ struct AddWebAppView: View {
     private func stepList(remaining: TimeInterval?) -> some View {
         let locked = learningLocked
         let groups = Self.stepGroups(for: model.phase, siteAsked: model.siteAsked, closedWithoutAdding: model.closedWithoutAdding,
+                                     madeIsChosen: model.madeBundleID == settings.chosenPlayerID,
                                      learning: settings.learning,
                                      remaining: remaining, note: settings.learningNote, pauseMode: settings.learningPauseMode,
                                      locked: locked)
@@ -184,8 +187,6 @@ struct AddWebAppView: View {
         var announcement = steps.currentAnnouncement
         if locked, let control = settings.permissions.control, case .learning(let name, _) = model.phase {
             announcement = LearningPermissionStep.announcement(control, name: name)
-        } else if needsAccessibility {
-            announcement = Self.accessibilityNeeded
         }
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(before, id: \.title) { step($0, locked: false) }
@@ -194,7 +195,7 @@ struct AddWebAppView: View {
                 ForEach(after, id: \.title) { step($0, locked: true) }
             }
         }
-        .announcesCurrentStep(announcement, atOnce: locked || needsAccessibility)
+        .announcesCurrentStep(announcement, atOnce: locked)
     }
 
     /// Once the web app is chosen, learning it needs its control permission
@@ -220,9 +221,12 @@ struct AddWebAppView: View {
 
     /// `steps(for:…)` in two: adding the web app, then learning it, once
     /// it's made (none before): a missing permission locks the learning
-    /// ones, however many there are (pausing it by hand adds one).
+    /// ones, however many there are (pausing it by hand adds one). Until the
+    /// web app made is the chosen player (`madeIsChosen`: macOS may list it
+    /// a moment later), "Learn its controls" stays the step to do, since
+    /// `learning` is still the previous player's.
     static func stepGroups(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, closedWithoutAdding: Bool = false,
-                           learning: LearningStatus?,
+                           madeIsChosen: Bool = true, learning: LearningStatus?,
                            remaining: TimeInterval? = nil, note: LearningNote? = nil,
                            pauseMode: LearningPauseMode = .automatic, locked: Bool = false)
         -> (adding: [ChecklistStep], learning: [ChecklistStep]) {
@@ -231,19 +235,24 @@ struct AddWebAppView: View {
         let opened = ChecklistStep(title: openStep, state: .done)
         let answered = siteAsked ? [ChecklistStep(title: answerStep, state: .done)] : []
         let learnLater = ChecklistStep(title: learnStepTitle, state: .todo)
+        let learnSteps = { (name: String) in
+            madeIsChosen ? Self.learningSteps(name, learning: learning, remaining: remaining, note: note,
+                                              pauseMode: pauseMode, locked: locked)
+                : [ChecklistStep(title: learnStepTitle, state: .current)]
+        }
         switch phase {
         case .learning(let name, true):
             return ([check,
                      ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
                                                  comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
                                    state: .done)],
-                    learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked))
+                    learnSteps(name))
         case .learning(let name, false):
             return ([check, opened] + answered
                         + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
                                                        comment: "Add a Web App window: a step done; %@ is the web app's name"),
                                          state: .done)],
-                    learningSteps(name, learning: learning, remaining: remaining, note: note, pauseMode: pauseMode, locked: locked))
+                    learnSteps(name))
         case .siteAsks(let shown, let site):
             return ([check, opened,
                     ChecklistStep(title: answerStep,

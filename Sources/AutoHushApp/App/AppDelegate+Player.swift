@@ -89,6 +89,7 @@ extension AppDelegate {
         let options = PlayerOption.list(players, locate: locateApp)
         status.playerOptions = options
         forgetDeletedWebApps(among: options)
+        pickUpListedWebApp(among: options)
         guard let player else {
             showSession() // waiting for a player, among these
             return

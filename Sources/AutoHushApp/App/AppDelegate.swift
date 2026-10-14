@@ -52,6 +52,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var addWebAppWindow: (any AddWebAppPresenting)?
     let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
     var addingWebApp: Task<Void, Never>?
+    /// A web app made but not found as installed yet, and the address it was
+    /// made from, while the add window says so (`pickUpListedWebApp`).
+    var webAppAwaitingListing: (bundleID: String, address: String)?
     /// Opens an app (the web app just added, so it can be played).
     let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.

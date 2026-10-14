@@ -268,7 +268,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 
 - AutoHush **never records, saves or sends audio**, and never uses the microphone.
 - With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away. It does the same, for half a second, with a web app that can be heard while its button says it's paused (an ad). In AntiDot mode it doesn't look at any sound at all.
-- It only goes online to check GitHub for a new version once a day, to download that version from GitHub, and to check a website you add as a web app (below). You can turn off both (see [Updates](#updates)). Neither leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
+- It only goes online to check GitHub for a new version once a day, to download that version from GitHub, and to check a website you add as a web app (below). You can turn off the first two (see [Updates](#updates)). None of them leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
 - Its only notifications are about updates.
 - While it learns a web app's controls, it asks macOS which app is Now Playing, only to know whether its Play/Pause key would reach the web app.
 - It controls only the media player you chose: Spotify, Apple Music and VLC through the standard macOS automation mechanism, TIDAL and Apple Podcasts by pressing Play/Pause in their Playback or Controls menu, and a Safari web app by pressing the site's own Play/Pause button.

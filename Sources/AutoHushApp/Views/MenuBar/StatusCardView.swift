@@ -63,6 +63,12 @@ struct StatusCardView: View {
         .padding(.top, 4)
         .padding(.bottom, 2)
         .frame(width: menuContentWidth)
+        // After Retry, VoiceOver hears how it went, once the start is over.
+        .onChange(of: status.statusLine) { _, line in
+            guard model.announcesRetryOutcome, status.health != .starting else { return }
+            model.announcesRetryOutcome = false
+            AccessibilityNotification.Announcement(line).post()
+        }
     }
 
     /// The status line, in orange when something needs the user; with an
@@ -114,6 +120,7 @@ struct StatusCardView: View {
             .padding(.vertical, 3)
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 6))
+        .accessibilityValue(model.isChoosingPlayer ? AccessibilityText.expanded : AccessibilityText.collapsed)
         .padding(.trailing, -6)
     }
 

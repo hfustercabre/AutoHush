@@ -41,10 +41,11 @@ struct ChecklistStepTests {
         #expect(locked.currentAnnouncement == nil)
     }
 
-    @Test("a click that couldn't be taken says why under the step it's about")
+    @Test("a click that couldn't be taken says why under the step it's about, and VoiceOver hears it with the step")
     func learningNotes() {
         let notHeard = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .notHeard)
         #expect(notHeard[0].warning == LearningNote.notHeard.text("YT Music"))
+        #expect(notHeard.currentAnnouncement == "Play something in YT Music\n" + LearningNote.notHeard.text("YT Music"))
         let timedOut = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .timedOut)
         #expect(timedOut[0].warning == LearningNote.timedOut.text("YT Music"))
         let cantSee = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .cantSeePage)
@@ -69,7 +70,7 @@ struct ChecklistStepTests {
         #expect(failed.map(\.state) == [.done, .failed])
         #expect(failed[1].warning == LearningText.autoPauseFailed("YT Music"))
         #expect(failed[1].button == .tryAgain && failed[1].secondaryButton == .pauseManually)
-        #expect(failed.currentAnnouncement == "Let AutoHush pause it")
+        #expect(failed.currentAnnouncement == "Let AutoHush pause it\n" + LearningText.autoPauseFailed("YT Music"))
 
         let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false, pauseMode: .trying)
         #expect(learned.map(\.state) == [.done, .done])

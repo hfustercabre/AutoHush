@@ -18,12 +18,17 @@ extension AppDelegate {
 
     /// Quits normally on SIGTERM (from an AutoHush opened after this one,
     /// `kill`, or the system) instead of stopping at once, so the volume is
-    /// restored and a pause handed over.
+    /// restored and a pause handed over. An alert open (an update's, say)
+    /// closes first: the quit waits for it otherwise, and an AutoHush opened
+    /// after this one forces it after a few seconds.
     func quitOnTerminationSignal() {
         signal(SIGTERM, SIG_IGN)
         let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         source.setEventHandler { [weak self] in
-            MainActor.assumeIsolated { self?.quitFromRunLoop() }
+            MainActor.assumeIsolated {
+                if NSApp.modalWindow != nil { NSApp.abortModal() }
+                self?.quitFromRunLoop()
+            }
         }
         source.resume()
         terminationSignal = source

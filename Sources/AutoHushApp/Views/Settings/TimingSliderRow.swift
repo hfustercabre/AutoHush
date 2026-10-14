@@ -21,6 +21,7 @@ struct TimingSliderRow: View {
                     .monospacedDigit()
                     .foregroundStyle(.appSecondary)
             }
+            .accessibilityHidden(true) // the slider says both, as its label and value
             Slider(
                 value: Binding(
                     get: { model.timings[keyPath: keyPath] },

@@ -41,13 +41,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Settings → General says "None chosen"** while no media player is
   chosen, where it showed "AutoHush".
 - **The menu's Updates button says "Checking…".** The menu stays open
-  while AutoHush checks, then closes for the alert with the result.
+  while AutoHush checks, then closes for the alert with the result, also
+  when a check was already under way. When AutoHush's version is unknown,
+  so it can't check, the alert says so.
 - **Status lines use contractions,** as the rest of AutoHush does:
   "Spotify isn't running", "isn't responding", "isn't installed".
 - **Clearer words.** With no other app making sound, Diagnostics says "No
-  other app is playing sound right now."; the permission is called "Audio
-  Recording" there, as in System Settings; and Settings → Updates says
-  "AutoHush's version is unknown." rather than "the app's".
+  other app is playing sound right now.", and "Starting…" until it knows
+  your player's state, rather than "Working normally"; the permission is
+  called "Audio Recording" there, as in System Settings; and Settings →
+  Updates says "AutoHush's version is unknown." rather than "the app's".
 
 ### Added
 
@@ -69,8 +72,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **More of the Mac's keyboard shortcuts.** ⌘M minimizes the welcome, Add
   a Web App and learning windows, as it does Settings. Return presses the
   blue button of the step to do now (It's Playing, It's Paused, Add to
-  Dock, Try Again). Edit → Find… (⌘F) opens the search, or puts the cursor
-  in it, in Settings → Apps and the welcome window.
+  Dock, Try Again). Edit → Find… (⌘F) opens Settings → Apps' search while
+  it lists apps, and puts the cursor in the welcome window's player search
+  when it has one; elsewhere it's dimmed. In Settings → Apps, Tab reaches
+  the apps' rows (with keyboard navigation on) and Space selects one, so
+  Remove works from the keyboard too.
 
 ### Fixed
 
@@ -87,7 +93,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   their section. A web app's icon now carries Safari's, wherever it shows.
 - **VoiceOver said "degraded" or "failed".** While something needs you, the
   menu bar icon now says what the menu's status line does ("AutoHush:
-  Spotify isn't running"), and a web app named as an app is reads as a
+  Spotify isn't running"), and a web app named like an app now reads as a
   Safari web app where you choose your player.
 - **VoiceOver said nothing while a window waited for a permission.** When
   Accessibility is missing, the Add a Web App and learning windows now
@@ -115,20 +121,37 @@ This project follows [Semantic Versioning](https://semver.org/).
   text is now grey, as on the other disabled buttons.
 - **Add a Web App could stop without a word.** When macOS listed a web app
   just made a little late, the window stopped there. It now looks for the
-  new web app again for a few seconds, then, if it's still not found, says
-  it was added but can't be found yet, and Continue tries again.
+  new web app again for a few seconds, with "Learn its controls" still the
+  step to do; if it's still not found, it says it was added but can't be
+  found yet, and takes it by itself once macOS lists it. A player you pick
+  in the menu meanwhile is kept.
+- **An open update alert held AutoHush up.** While an alert about updates
+  was open (up to date, couldn't check, available, couldn't install), the
+  menu and Settings stopped updating, and AutoHush heard that you played
+  or paused your player only once it closed. The alerts no longer hold
+  anything up.
+- **Quitting with an alert open skipped the clean-up.** When another
+  AutoHush opened, or an update installed, while the running one showed an
+  alert, it was stopped without setting your player's volume back or
+  handing over a pause it held. It now closes the alert and quits as
+  usual.
 - **VoiceOver:**
   - the timing sliders in Detection and Fades say what they set, and their
-    value;
+    value, and each row is read once;
   - while Auto-Pause is off, the menu bar icon says so, as the menu's
     status line does ("AutoHush: Auto-Pause is off until 15:30");
   - section headings, and the menu's "Turn off for" and "Playing Now", are
     headings;
   - Add a Web App says why it couldn't take an address;
+  - a step's warning is said when it shows (AutoHush can't hear the web
+    app, nothing changed, the minute ran out…), and the card's line after
+    Retry; a step that asks for a permission reads its words, not only
+    where it stands;
+  - an untested web app says "Untested" in the menu;
   - the update choices that need notifications say why they're
     unavailable while notifications are off;
-  - Diagnostics' headings say whether their part is expanded or
-    collapsed, and "Copied" is said after Copy Report;
+  - Diagnostics' headings and the card's player button say whether their
+    part is expanded or collapsed, and "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer
     read on their own.
 

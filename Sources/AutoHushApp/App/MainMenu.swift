@@ -7,12 +7,14 @@ import AppKit
 @MainActor
 enum MainMenu {
     /// `about` and `settings` open those pages of Settings; `find` opens or
-    /// focuses the search of the window in front.
+    /// focuses the search of the window in front, and is dimmed unless
+    /// `canFind` (a window without a search).
     static func make(about: @escaping @MainActor () -> Void, settings: @escaping @MainActor () -> Void,
-                     find: @escaping @MainActor () -> Void = {}) -> NSMenu {
+                     find: @escaping @MainActor () -> Void = {},
+                     canFind: @escaping @MainActor () -> Bool = { true }) -> NSMenu {
         let bar = NSMenu()
         bar.addItem(submenu(appMenu(about: about, settings: settings), title: "AutoHush"))
-        bar.addItem(submenu(editMenu(find: find), title: editTitle))
+        bar.addItem(submenu(editMenu(find: find, canFind: canFind), title: editTitle))
         let window = windowMenu()
         bar.addItem(submenu(window, title: windowTitle))
         NSApplication.shared.windowsMenu = window
@@ -47,7 +49,7 @@ enum MainMenu {
         String(localized: "Edit", comment: "The menu bar: the Edit menu (cut, copy, paste); macOS's own word")
     }
 
-    private static func editMenu(find: @escaping @MainActor () -> Void) -> NSMenu {
+    private static func editMenu(find: @escaping @MainActor () -> Void, canFind: @escaping @MainActor () -> Bool) -> NSMenu {
         let menu = NSMenu(title: editTitle)
         menu.addItem(item(String(localized: "Undo", comment: "The menu bar's Edit menu (⌘Z); macOS's own word"), Selector(("undo:")), key: "z"))
         menu.addItem(item(String(localized: "Redo", comment: "The menu bar's Edit menu (⇧⌘Z); macOS's own word"), Selector(("redo:")), key: "z",
@@ -60,7 +62,7 @@ enum MainMenu {
         menu.addItem(item(String(localized: "Select All", comment: "The menu bar's Edit menu (⌘A); macOS's own words"), #selector(NSText.selectAll(_:)), key: "a"))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Find…", comment: "The menu bar's Edit menu: opens or focuses the search of the window in front (⌘F); macOS's own word"),
-                          key: "f", perform: find))
+                          key: "f", isEnabled: canFind, perform: find))
         return menu
     }
 
@@ -92,9 +94,10 @@ enum MainMenu {
         return item
     }
 
-    /// An item that runs `perform`.
-    private static func item(_ title: String, key: String = "", perform: @escaping @MainActor () -> Void) -> NSMenuItem {
-        let target = Target(perform)
+    /// An item that runs `perform`, enabled while `isEnabled`.
+    private static func item(_ title: String, key: String = "", isEnabled: @escaping @MainActor () -> Bool = { true },
+                             perform: @escaping @MainActor () -> Void) -> NSMenuItem {
+        let target = Target(perform, isEnabled: isEnabled)
         let item = NSMenuItem(title: title, action: #selector(Target.run), keyEquivalent: key)
         item.target = target
         item.representedObject = target // a menu item holds its target weakly
@@ -108,13 +111,17 @@ enum MainMenu {
     }
 
     @MainActor
-    private final class Target: NSObject {
+    private final class Target: NSObject, NSMenuItemValidation {
         let perform: @MainActor () -> Void
+        let isEnabled: @MainActor () -> Bool
 
-        init(_ perform: @escaping @MainActor () -> Void) {
+        init(_ perform: @escaping @MainActor () -> Void, isEnabled: @escaping @MainActor () -> Bool) {
             self.perform = perform
+            self.isEnabled = isEnabled
         }
 
         @objc func run() { perform() }
+
+        func validateMenuItem(_ menuItem: NSMenuItem) -> Bool { isEnabled() }
     }
 }

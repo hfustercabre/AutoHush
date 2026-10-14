@@ -27,7 +27,7 @@ enum StepState: Equatable {
 }
 
 /// What the user clicks in a checklist step while it's the one to do, to say
-/// it's done (learning: the song plays, it's paused) or to go on (adding).
+/// it's done (learning: it plays, it's paused) or to go on (adding).
 enum StepButton: Equatable, Sendable {
     case itsPlaying, itsPaused, addToDock
     /// AutoHush couldn't pause the web app itself: it tries again, or the
@@ -79,8 +79,12 @@ struct ChecklistStep: Equatable {
 
 extension [ChecklistStep] {
     /// What VoiceOver says about the step to do now (or, with none, the one
-    /// that failed, which offers what to do next); `nil` when there's none.
+    /// that failed, which offers what to do next), then its warning: a
+    /// warning that appears under the same step (AutoHush can't hear it,
+    /// say) changes it, so it's said too. `nil` when there's none.
     var currentAnnouncement: String? {
-        (first { $0.state == .current } ?? first { $0.state == .failed }).map { $0.announcement ?? $0.title }
+        (first { $0.state == .current } ?? first { $0.state == .failed }).map { step in
+            [step.announcement ?? step.title, step.warning].compactMap { $0 }.joined(separator: "\n")
+        }
     }
 }

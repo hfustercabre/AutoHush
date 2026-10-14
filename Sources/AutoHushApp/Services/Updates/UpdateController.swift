@@ -48,8 +48,8 @@ final class UpdateController {
     /// by itself (`adapt(toNotificationsOff:)`).
     let onSettingsChange: @MainActor () -> Void
     var timer: Timer?
-    /// A check is under way; one asked for meanwhile is answered by it.
-    var isChecking = false
+    /// The check under way: one asked for meanwhile is answered by it.
+    var checking: Task<Void, Never>?
     /// Someone asked for the check under way, so its result is shown.
     var resultWanted = false
     /// An update is being downloaded to keep.
@@ -65,6 +65,14 @@ final class UpdateController {
     /// Runs before a check's result shows in an alert: the menu, open while
     /// it checks, closes first.
     var beforePresenting: @MainActor () async -> Void = {}
+    /// Shows an alert from the run loop, once the work that asked for it is
+    /// done. Run from inside a main-actor task (a check, an install, a
+    /// notification's click), an alert's modal loop would hold up every
+    /// other main-actor job until it closes: the menu, Settings, the
+    /// player's state reports. Tests replace it.
+    var showAlert: @MainActor (@escaping @MainActor () -> Void) -> Void = { show in
+        RunLoop.main.perform(inModes: [.common]) { MainActor.assumeIsolated(show) }
+    }
     let logger = Logger(category: "Updates")
 
     init(

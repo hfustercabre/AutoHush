@@ -179,7 +179,7 @@ enum ListenToFades {
             mono[frame] = sum / Double(channels)
         }
         let music = notch(notch(mono, frequency: beep, rate: rate), frequency: beep, rate: rate)
-        let meter = Meter(music: music, rate: rate, start: start)
+        let meter = Meter(music: music, rate: rate)
         let end = start.addingTimeInterval(Double(frames) / rate)
         let events = (log.flatMap { try? String(contentsOfFile: $0, encoding: .utf8) } ?? logShow(from: start, to: end))
             .split(separator: "\n").compactMap(event).filter { $0.time >= start && $0.time <= end }
@@ -218,10 +218,9 @@ enum ListenToFades {
     /// The music's level, 5 ms at a time.
     struct Meter {
         let levels: [Double] // dB, one per 5 ms (10 ms windows)
-        let start: Date
         static let hop = 0.005
 
-        init(music: [Double], rate: Double, start: Date) {
+        init(music: [Double], rate: Double) {
             let hop = Int(rate * Self.hop), window = 2 * hop
             var levels: [Double] = []
             var index = 0
@@ -232,7 +231,6 @@ enum ListenToFades {
                 index += hop
             }
             self.levels = levels
-            self.start = start
         }
 
         func index(_ seconds: Double) -> Int { Int((seconds / Self.hop).rounded()) }

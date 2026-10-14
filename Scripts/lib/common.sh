@@ -24,6 +24,9 @@ SELF_SIGNED_IDENTITY="AutoHush Self-Signed"
 GITHUB_REPO="hfustercabre/AutoHush"
 # Homebrew tap with the AutoHush cask; Scripts/update-tap.sh updates it.
 TAP_REPO="hfustercabre/homebrew-tap"
+# The developer team every release is signed by. Installed copies accept an
+# update only from it (their designated requirement names it): it never changes.
+RELEASE_TEAM="BNT2VN4LH5"
 
 step() { echo "==> $*"; }
 note() { echo "    $*"; }
@@ -46,17 +49,21 @@ has_identity() {
 
 # The "Apple Development" identity to sign with, by its SHA-1 hash, or
 # nothing. Only trusted identities count (-v), so an expired certificate, or
-# one whose Apple intermediate certificate is missing, is skipped. Of several
-# (a renewed certificate beside the old one), the one valid longest: they
-# share a name, which codesign refuses as ambiguous.
+# one whose Apple intermediate certificate is missing, is skipped. One of
+# $RELEASE_TEAM comes before any other team's; of several (a renewed
+# certificate beside the old one), the one valid longest: they share a name,
+# which codesign refuses as ambiguous.
 apple_development_identity() {
-    local identities hash end best="" best_end=0
+    local identities hash end rank best="" best_rank=-1 best_end=0
     identities="$(security find-identity -v -p codesigning ${SIGNING_KEYCHAIN:+"$SIGNING_KEYCHAIN"} 2>/dev/null)" || true
     while read -r hash; do
         end="$(certificate_pem "$hash" | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)"
         end="$(date -j -u -f "%b %e %H:%M:%S %Y %Z" "$end" +%s 2>/dev/null)" || continue
-        if (( end > best_end )); then
+        rank=0
+        [[ "$(identity_team "$hash")" == "$RELEASE_TEAM" ]] && rank=1
+        if (( rank > best_rank || (rank == best_rank && end > best_end) )); then
             best="$hash"
+            best_rank="$rank"
             best_end="$end"
         fi
     done < <(sed -n 's/^ *[0-9]*) \([0-9A-F]\{40\}\) "Apple Development:.*/\1/p' <<<"$identities")
@@ -109,21 +116,28 @@ resolve_signing_identity() {
     fi
 }
 
-# The designated requirement for an identity issued by Apple: the app's
-# identifier and the developer's team (the OU of the certificate's subject),
-# not the certificate itself. A renewed certificate has another name and
-# fingerprint but the same team, so permissions and self-updates carry over.
-# Prints nothing for ad hoc ("-") and self-signed identities, and for a
-# certificate that has no team: codesign's default requirement stays.
-team_requirement() {
-    local identity="$1" cert details team
+# The developer team of an identity issued by Apple (the OU of its
+# certificate's subject); nothing for ad hoc ("-"), self-signed identities
+# and a certificate without a team.
+identity_team() {
+    local identity="$1" cert details
     [[ "$identity" != "-" ]] || return 0
     cert="$(certificate_pem "$identity")"
     [[ -n "$cert" ]] || return 0
     details="$(openssl x509 -noout -subject -issuer -nameopt RFC2253 <<<"$cert" 2>/dev/null)" || return 0
     # "anchor apple generic" holds only for a certificate issued by Apple.
     grep -q '^issuer=.*O=Apple Inc' <<<"$details" || return 0
-    team="$(sed -n 's/^subject=\(.*,\)\{0,1\}OU=\([A-Za-z0-9]*\).*/\2/p' <<<"$details")"
+    sed -n 's/^subject=\(.*,\)\{0,1\}OU=\([A-Za-z0-9]*\).*/\2/p' <<<"$details"
+}
+
+# The designated requirement for an identity issued by Apple: the app's
+# identifier and the developer's team, not the certificate itself. A renewed
+# certificate has another name and fingerprint but the same team, so
+# permissions and self-updates carry over. Prints nothing for an identity
+# without a team (see identity_team): codesign's default requirement stays.
+team_requirement() {
+    local team
+    team="$(identity_team "$1")"
     [[ -n "$team" ]] || return 0
     echo "designated => identifier \"$BUNDLE_ID\" and anchor apple generic and certificate leaf[subject.OU] = \"$team\""
 }

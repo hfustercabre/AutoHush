@@ -66,7 +66,7 @@ enum LearningText {
     }
 
     /// Under the user's pause step, standing out: how long is left before
-    /// learning starts over from “Play a song in …”.
+    /// learning starts over from “Play something in …”.
     static func countdown(_ remaining: TimeInterval) -> String {
         let time = Duration.seconds(Int(remaining.rounded(.up))).formatted(.time(pattern: .minuteSecond))
         return String(localized: "You have \(time) to pause it and click It’s Paused.",

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// How the pause goes once the song plays: AutoHush tries it itself first.
+/// How the pause goes once it plays: AutoHush tries it itself first.
 enum LearningPauseMode: Equatable, Sendable {
     /// AutoHush pauses it itself, once it plays.
     case automatic

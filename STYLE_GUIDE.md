@@ -50,7 +50,9 @@ screens that already exist, then macOS's own conventions
 The shared files are in `Sources/AutoHushApp/Views/Components/`, one
 component and its small parts per file: `Font+AutoHush.swift` holds the
 text sizes, `AppearanceStyle.swift` the colors and `View+CaptionStyle.swift`
-the caption style; `ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`,
+the caption style, `AccessibilityText.swift` what VoiceOver says of a
+control that shows or hides what's under it (Expanded, Collapsed);
+`ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`,
 `SwitchRow.swift`, `ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`,
 `WindowHeader.swift`, `ChecklistStepRow.swift`, `PermissionButton.swift`,
 `NoteLabel.swift`, `SearchField.swift`, `IconChipButton.swift`,
@@ -172,9 +174,10 @@ missing, say what's missing in a `NoteLabel` (`.warning`) with its
 `PermissionButton` right under it, and keep the main action disabled
 (Continue, Done) or its steps locked (`lock.circle`, grey) until it's
 allowed. In a checklist, the step that asks for the permission is the step
-to do now meanwhile (semibold, with its arrow). Follow the permission while the window shows (about once a
-second), so it unlocks by itself; never ask the user to click again.
-Audio Recording always offers "Use AntiDot Mode Instead" beside it.
+to do now meanwhile (semibold, with its arrow). Follow the permission while
+the window shows (about once a second), so it unlocks by itself; never ask
+the user to click again. Audio Recording always offers "Use AntiDot Mode
+Instead" beside it.
 
 **App icons** come from `AppIcon` (or `PlayerOption.icon`), at the size for
 where they appear:
@@ -238,11 +241,12 @@ their download symbol.
   on Settings → General's player card, nowhere else. The button says
   **Learn Controls…** until they're learned and **Learn Again…** after,
   with an ellipsis since it opens a window: a new learning window that
-  starts from the first step, closing one still open. What was learned keeps working, and the row keeps saying it's
-  learned, until **It's Playing** is taken there; closing the window before
-  that keeps it. Meanwhile the window leaves out its "presses nothing on the
-  page" line, untrue then. Once learned, the row says only "Learned." and
-  how to learn them again, so it fits the menu. In the menu its text is
+  starts from the first step, closing one still open. What was learned
+  keeps working, and the row keeps saying it's learned, until
+  **It's Playing** is taken there; closing the window before that keeps
+  it. Meanwhile the window leaves out its "presses nothing on the page"
+  line, untrue then. Once learned, the row says only "Learned." and how to
+  learn them again, so it fits the menu. In the menu its text is
   `appCallout`, as the menu's chips'.
 - **Learning steps show only in a window** (the learning window, or Add a
   Web App once it made the web app), never in the menu or Settings.
@@ -277,18 +281,21 @@ their download symbol.
   - The window keeps its height while you type.
   - With no match, the list says so in its own words: "No apps match “…”."
   - A search starts empty again when its window or menu opens again.
-  - **Edit → Find…** (⌘F) opens the search, or puts the cursor in it, in
-    Settings → Apps and the welcome window.
+  - **Edit → Find…** (⌘F) opens Settings → Apps' search while it lists
+    apps, and puts the cursor in the welcome window's player search when it
+    has one. Elsewhere it's dimmed: it only ever acts on a search.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Apps): a click on a row, anywhere but
   its switch, selects it, behind a `.selectedRowFill` rounded rectangle; a
-  second click deselects it. **Remove** sits in the bottom bar after the
-  button that adds, disabled while nothing is selected. Removing something
-  whose loss changes what AutoHush does (an app turned off would pause the
-  player again) asks first, as **Reset List…** does; one that changes nothing
-  goes at once. The row's right-click menu offers the same (**Remove from
-  List**), and VoiceOver gets it as an action.
+  second click deselects it. From the keyboard, Tab reaches the rows (with
+  keyboard navigation on) and Space selects the focused one. **Remove** sits
+  in the bottom bar after the button that adds, disabled while nothing is
+  selected. Removing something whose loss changes what AutoHush does (an
+  app turned off would pause the player again) asks first, as
+  **Reset List…** does; one that changes nothing goes at once. The row's
+  right-click menu offers the same (**Remove from List**), and VoiceOver
+  gets it as an action.
 
 ## Writing
 
@@ -308,6 +315,8 @@ their download symbol.
 - **Notifications and alerts differ:** a notification's title is in
   sentence case, as macOS's own are ("Couldn’t update AutoHush to 1.0.0"),
   while an alert's title is in title case ("Couldn’t Install the Update").
+- **A confirmation's title phrased as a question** keeps sentence case:
+  "Reset the list of apps?", "Remove … from the list?".
 - **Feature names** keep their capitals, even mid-sentence: **Auto-Pause**,
   **AntiDot mode**.
 
@@ -435,21 +444,27 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     Auto-Pause is off until 15:30"), never a word of AutoHush's own like
     "degraded".
   - A slider says what it sets (Detection's and Fades' timings: the row's
-    title) and its value as the row shows it ("0.5 s").
+    title) and its value as the row shows it ("0.5 s"); the row's own text
+    is hidden from VoiceOver, so it's read once.
   - An unavailable choice says why as its hint (`ChoiceChips`'
     `unavailableNote`).
   - What an image alone tells is said in words: a web app whose name is
     also an app's reads "Spotify, Safari web app" where players are offered
-    (`PlayerOption.spokenName`), as its icon's Safari badge shows.
+    (`PlayerOption.spokenName`), as its icon's Safari badge shows, and an
+    untested web app's menu row, whose "Untested" badge is drawn into its
+    title, reads "Untested" after its name.
 - **Decorative images** (app icons beside their names, symbols beside text,
   the menu toolbar's symbols, the card's chevron) are hidden from VoiceOver.
 - **Headings:** `SectionHeading`s, the menu's "Turn off for" and "Playing
   Now", and Diagnostics' headings carry the heading trait, so VoiceOver can
-  move from one to the next. A heading that folds its part away
-  (Diagnostics) says "Expanded" or "Collapsed" as its value.
+  move from one to the next. A heading or button that folds a part away
+  (Diagnostics' headings, the menu card's player button) says "Expanded"
+  or "Collapsed" as its value.
 - **What changes away from VoiceOver's cursor is announced:** "Copied"
-  after Copy Report, why Add a Web App couldn't take the address, and the
-  note an unavailable choice points to once it's clicked.
+  after Copy Report, why Add a Web App couldn't take the address, the note
+  an unavailable choice points to once it's clicked, a step's warning when
+  it shows or changes, the card's line after Retry, and why a window waits
+  for a permission, when it opens and when it locks.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
   does this).
 - **Chosen items** carry the "selected" trait.
@@ -458,9 +473,9 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   notes, warning and countdown as its label, and where it stands as its
   value, "Completed", "In progress", "To do" or "Failed", never the
   "selected" trait. The element sets its own label instead of combining its
-  texts: combined, a value of its own would replace their words. A window's
-  checklist announces the step to do now each time it changes
-  (`announcesCurrentStep`).
+  texts (the step that asks for a permission too): combined, a value of its
+  own would replace their words. A window's checklist announces the step to
+  do now each time it changes (`announcesCurrentStep`).
 - **Contrast:** text in light mode keeps at least 4.5:1.
 
 ## Keyboard
@@ -472,27 +487,35 @@ standard ones**:
   Quit ⌘Q), Edit (Undo ⌘Z, Redo ⇧⌘Z, Cut ⌘X, Copy ⌘C, Paste ⌘V, Delete,
   Select All ⌘A, Find… ⌘F) and Window (Close ⌘W, Minimize ⌘M, Zoom, Bring
   All to Front), in macOS's own words in every language. The Edit menu is
-  what makes text fields take ⌘V and the rest. **Find…** opens the search,
-  or puts the cursor in it, in Settings → Apps and the welcome window.
-  **Minimize** works in every window: Settings, the welcome window and the
-  guiding windows (Add a Web App, learning).
+  what makes text fields take ⌘V and the rest. **Find…** opens Settings →
+  Apps' search while it lists apps, and puts the cursor in the welcome
+  window's player search when it has one; it's dimmed wherever there's no
+  search. **Minimize** works in every window: Settings, the welcome window
+  and the guiding windows (Add a Web App, learning).
 - **Return** presses a window's main, blue button
   (`.keyboardShortcut(.defaultAction)`: Continue, Done) and an alert's
   first one; in a checklist, it presses the blue button of the step to do
-  now (It’s Playing, It’s Paused, Add to Dock); in Add a Web App's address
-  field it's Continue. A search
-  field keeps Return from the window's button (SwiftUI gives it to the
-  focused field): with nothing typed it's the main button (Continue); with
-  a search, it picks the one item the search narrowed down to (the welcome
-  window's players), if just one; items that share a name count as one
-  (the Spotify app and the suggested Spotify web app: the app).
+  now (It’s Playing, It’s Paused, Add to Dock, Try Again); in Add a Web
+  App's address field it's Continue. A step's blue permission button (the
+  learning and Add a Web App windows) doesn't take Return: it opens System
+  Settings. A search field keeps Return from the window's button (SwiftUI
+  gives it to the focused field): with nothing typed it's the main button
+  (Continue); with a search, it picks the one item the search narrowed
+  down to (the welcome window's players), if just one; items that share a
+  name count as one (the Spotify app and the suggested Spotify web app: the
+  app).
+- **Tab and Space** move and press as macOS's keyboard navigation does
+  (when it's on). Settings → Apps' rows take the focus too, and Space
+  selects the focused one, so **Remove** can be reached.
 - **Escape** presses Cancel or Later (`.cancelAction`, or
   `keyEquivalent = "\u{1b}"` on an alert's Later).
 - **Never a shortcut Apple doesn't define**, and none on the status menu's
   rows. ⌥-clicking Settings in the menu opens Diagnostics.
 
 A field in the open status menu needs AppKit to give it the keyboard (see
-`StatusMenuController`).
+`StatusMenuController`). The menu's own SwiftUI rows (the card's switch
+and buttons, Turn off for, Playing Now, the toolbar) are for the pointer
+and VoiceOver: an open menu gives SwiftUI no keyboard focus.
 
 ## Checking a change
 

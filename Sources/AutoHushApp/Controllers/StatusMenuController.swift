@@ -11,7 +11,7 @@ import AutoHushKit
 /// │ ────────────────────────────────────────── │
 /// │ Media player              [icon] Spotify ⌄ │  unfolds the players under it
 /// │ ────────────────────────────────────────── │
-/// │ Controls                [Learn Controls…] │  (a web app: whether its
+/// │ Controls                 [Learn Controls…] │  (a web app: whether its
 /// │ Not learned yet: …                         │  controls are learned)
 /// ╰────────────────────────────────────────────╯
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
@@ -122,6 +122,7 @@ final class StatusMenuController: NSObject {
         model.listedSources = status.activeSources
         model.isChoosingPlayer = false
         model.playerSearch = ""
+        model.announcesRetryOutcome = false
         playerSearchItem = nil
         playerRows = []
         menu.removeAllItems()
@@ -304,7 +305,7 @@ final class StatusMenuController: NSObject {
         }
         // VoiceOver can't see the web app's Safari badge: one named as an app is says so.
         let spoken = option.spokenName(among: status.playerOptions)
-        if spoken != option.name {
+        if spoken != option.name || option.isUntested {
             row.setAccessibilityLabel(option.isUntested ? "\(spoken), \(PlayerOption.untestedBadge)" : spoken)
         }
         return row
@@ -333,6 +334,7 @@ final class StatusMenuController: NSObject {
         case .searchPlayers(let search):
             searchPlayers(search)
         case .retry:
+            model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
         case .updates where status.updateOffer == nil:
             // The menu stays open, its button saying "Checking…", until the
@@ -424,8 +426,8 @@ private final class KeyboardTakingHostingView<Content: View>: NSHostingView<Cont
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         guard let window else { return }
-        // Once SwiftUI has put its field in. The menu is tracking, so in the
-        // run loop's common modes: the main queue waits until it closes.
+        // Once SwiftUI has put its field in: on the run loop's next turn, in
+        // its common modes, which include the open menu's tracking.
         RunLoop.main.perform(inModes: [.common]) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, let field = self.firstEditableTextField, window.makeFirstResponder(field) else { return }

@@ -96,16 +96,18 @@ struct DiagnosticsReportTests {
         ])
     }
 
-    @Test("the card on top: working, needs attention, auto-pause off, starting")
+    @Test("the card on top: working, needs attention, auto-pause off, starting (until the player's state is known too)")
     func overview() {
         var attention = workingStatus()
         attention.setHealth(.needsPermission(.automation(player: "Jukebox")))
         var snoozed = workingStatus()
         snoozed.autoPause = .snoozed("until 15:30")
-        let kinds = [workingStatus(), attention, snoozed, AppStatus()].map {
+        var unknownState = workingStatus()
+        unknownState.playback = .unknown
+        let kinds = [workingStatus(), attention, snoozed, AppStatus(), unknownState].map {
             DiagnosticsReport.snapshot(activeAudio: [], status: $0, facts: facts()).overview
         }
-        #expect(kinds.map(\.kind) == [.working, .attention, .off, .starting])
+        #expect(kinds.map(\.kind) == [.working, .attention, .off, .starting, .starting])
         #expect(kinds[1].detail == "Allow Automation access to control Jukebox")
         #expect(kinds[2].title == "Auto-Pause is off until 15:30")
     }

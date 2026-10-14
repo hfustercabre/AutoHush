@@ -44,10 +44,13 @@ extension AppDelegate {
     /// until the web app is made.
     func addWebApp(from address: String) {
         guard addingWebApp == nil else { return }
+        webAppAwaitingListing = nil
         let model = addWebAppModel
         let maker = webAppMaker
         model.attempt += 1
         let attempt = model.attempt
+        // Another player chosen while it's added (the user's, from the menu) stays.
+        let before = player?.bundleID
         addingWebApp = Task { [weak self] in
             defer { if model.attempt == attempt { self?.addingWebApp = nil } }
             do {
@@ -72,20 +75,26 @@ extension AppDelegate {
                 // and the learning window follows its Done, as for a web app
                 // picked there; this window's work is done.
                 let fromWelcome = self.isShowingPlayerChooser
+                guard self.player?.bundleID == before else { return }
                 self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
                 // macOS may list a new web app a little later: looked for again
                 // for a few seconds, then the window says so.
                 var lookups = 0
-                while self.player?.bundleID != made.bundleID, lookups < Self.madeWebAppLookups,
+                while self.player?.bundleID == before, before != made.bundleID, lookups < Self.madeWebAppLookups,
                       model.attempt == attempt, !Task.isCancelled {
                     lookups += 1
                     try? await Task.sleep(for: self.madeWebAppWait)
+                    guard self.player?.bundleID == before else { break }
                     self.chooseMusicPlayer(made.bundleID, showsLearningWindow: fromWelcome)
                 }
                 guard model.attempt == attempt, !Task.isCancelled else { return }
                 guard self.player?.bundleID == made.bundleID else {
+                    guard self.player?.bundleID == before else { return } // the user chose another one
                     self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
                     model.fail(.notFound(name: made.name))
+                    // Picked up by itself once it's listed (`pickUpListedWebApp`).
+                    self.webAppAwaitingListing = (made.bundleID, address)
+                    self.windowWatch.wake()
                     return
                 }
                 if fromWelcome {
@@ -112,6 +121,24 @@ extension AppDelegate {
     /// apart, before the window says it can't be found.
     static let madeWebAppLookups = 10
 
+    /// The web app made but not found as installed, while the add window
+    /// says so: once it's listed (the window watch checks the players each
+    /// second meanwhile), it's added again as it stands, which chooses it,
+    /// without waiting for Continue. Not once the address was changed.
+    func pickUpListedWebApp(among options: [PlayerOption]) {
+        guard let awaiting = webAppAwaitingListing else { return }
+        guard case .notFound? = addWebAppModel.problem, addWebAppModel.phase == .entering,
+              addWebAppModel.address == awaiting.address, addWebAppWindow?.isOpen == true else {
+            webAppAwaitingListing = nil
+            return
+        }
+        guard players.player(bundleID: awaiting.bundleID) != nil,
+              options.contains(where: { $0.bundleID == awaiting.bundleID && $0.isInstalled }) else { return }
+        webAppAwaitingListing = nil
+        logger.notice("The web app made is listed now: adding it again")
+        addWebAppModel.continueTapped()
+    }
+
     /// Stops the add under way; a step it reports later is ignored.
     func cancelAddingWebApp() {
         guard let task = addingWebApp else { return }
@@ -123,7 +150,7 @@ extension AppDelegate {
 
     /// The window that asks to play and pause the chosen player once. As it
     /// opens, the player is opened too when it isn't running, as after adding
-    /// it: the first step is to play a song there.
+    /// it: the first step is to play something there.
     func showLearningWindow() {
         let opening = learningWindow?.isOpen != true
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }

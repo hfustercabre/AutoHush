@@ -163,7 +163,8 @@ struct AppsSettingsView: View {
 
     /// The app's icon and name, whether it pauses the music, and its switch.
     /// A click selects the row anywhere but on the switch, which keeps its
-    /// own clicks.
+    /// own clicks; from the keyboard, Space selects the row in focus (Tab
+    /// reaches it with keyboard navigation on), so Remove is reachable too.
     private func appRow(_ row: SettingsModel.AppRow) -> some View {
         HStack(spacing: 8) {
             HStack(spacing: 8) {
@@ -194,6 +195,11 @@ struct AppsSettingsView: View {
             }
         }
         .contentShape(Rectangle())
+        .focusable(interactions: .activate) // as a button: Tab, not a click, gives it focus
+        .onKeyPress(.space) {
+            model.toggleSelection(of: row.id)
+            return .handled
+        }
         .accessibilityAddTraits(row.id == model.selectedAppID ? .isSelected : [])
         .accessibilityAction(named: Text("Remove from List", comment: "Settings → Apps: item of an app's contextual menu that forgets it")) { model.remove(row) }
         .contextMenu {

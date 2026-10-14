@@ -58,7 +58,8 @@ extension UpdateController {
             onStatus(String(localized: "Couldn’t install version \(version).",
                             comment: "Update status in Settings; %@ is a version number"))
             if userInitiated {
-                presentInstallError(error, release: release)
+                let reason = error.localizedDescription
+                showAlert { self.presentInstallError(reason, release: release) }
             } else {
                 failedAutomaticInstall = release.version
                 announce(.installFailed(release.version))

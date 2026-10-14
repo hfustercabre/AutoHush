@@ -10,7 +10,7 @@ extension UpdateController {
             checkFromUser()
             return
         }
-        present(.available(release))
+        showAlert { self.present(.available(release)) }
     }
 
     func canInstall(_ release: AppRelease) -> Bool {
@@ -107,12 +107,12 @@ extension UpdateController {
         return scrollView
     }
 
-    /// Says why `release` couldn't be installed, and offers its page to
-    /// install it by hand.
-    func presentInstallError(_ error: any Error, release: AppRelease) {
+    /// Says why `release` couldn't be installed (`reason`), and offers its
+    /// page to install it by hand.
+    func presentInstallError(_ reason: String, release: AppRelease) {
         let alert = NSAlert()
         alert.messageText = String(localized: "Couldn’t Install the Update", comment: "Alert title")
-        alert.informativeText = error.localizedDescription
+        alert.informativeText = reason
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
         alert.addButton(withTitle: String(localized: "Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)"))
             .keyEquivalent = "\u{1b}" // Escape; Return opens the page

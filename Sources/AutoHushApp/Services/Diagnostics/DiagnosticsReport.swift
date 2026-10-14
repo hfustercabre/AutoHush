@@ -48,7 +48,8 @@ enum DiagnosticsReport {
     // MARK: - How AutoHush is doing
 
     private static func overview(status: AppStatus) -> DiagnosticsSnapshot.Overview {
-        if status.health == .starting {
+        // Ready, but the player's state not known yet: still starting.
+        if status.health == .starting || status.isReady && status.playback == .unknown {
             return .init(kind: .starting,
                          title: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting"),
                          detail: status.statusLine)

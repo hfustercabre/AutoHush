@@ -8,7 +8,8 @@ extension AppDelegate {
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() },
-                                       find: { [weak self] in self?.find() })
+                                       find: { [weak self] in self?.find() },
+                                       canFind: { [weak self] in self?.findTarget != nil })
         showStatusMenu()
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()

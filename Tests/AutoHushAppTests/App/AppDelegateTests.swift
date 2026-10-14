@@ -82,7 +82,8 @@ struct AppDelegateTests {
         chosenPlayer: String? = Players.first,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
-        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        madeWebAppWait: Duration = .zero
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let sut = AppDelegate(
@@ -104,7 +105,7 @@ struct AppDelegateTests {
             makeAddWebAppWindow: { _, _ in scratch.addWindow },
             openApp: { scratch.opened.append($0) },
             learnedWindowDelay: .zero,
-            madeWebAppWait: .zero,
+            madeWebAppWait: madeWebAppWait,
             currentVersion: AppVersion("0.2.0"),
             retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
@@ -364,6 +365,36 @@ struct AppDelegateTests {
         #expect(sut.addWebAppModel.address == "play.qobuz.com") // Continue tries again
         #expect(sut.status.chosenPlayerID != webApp.bundleID)
         #expect(scratch.addWindow.isOpen)
+
+        // Once macOS lists it, it's added again by itself, which finds it there and chooses it.
+        found.players = [webApp]
+        scratch.maker.result = .success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true))
+        sut.refreshPlayerOptions() // as the window watch does each second meanwhile
+        await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
+        #expect(sut.addWebAppModel.problem == nil)
+        #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: true))
+    }
+
+    @MainActor
+    @Test("a player chosen while a web app just made is looked for stays chosen, and nothing says the web app is missing")
+    func playerChosenWhileLookingForWebApp() async {
+        let scratch = Scratch()
+        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
+        let found = FoundPlayers() // macOS doesn't list it
+        scratch.players = MusicPlayerCatalog(players: [scratch.first, scratch.second], found: { found.players })
+        scratch.installed.insert(webApp.bundleID)
+        let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true)))
+        let (sut, _) = makeSUT(scratch, madeWebAppWait: .milliseconds(30))
+
+        sut.showAddWebApp()
+        sut.addWebAppModel.address = "play.qobuz.com"
+        sut.addWebAppModel.continueTapped()
+        await waitFor { sut.addWebAppModel.madeBundleID == webApp.bundleID }
+        sut.chooseMusicPlayer(Players.second) // from the menu, meanwhile
+        await waitFor { sut.addingWebApp == nil }
+        #expect(sut.status.chosenPlayerID == Players.second)
+        #expect(sut.addWebAppModel.problem == nil)
     }
 
     @MainActor

@@ -264,8 +264,9 @@ struct UpdateInstaller: UpdateInstalling {
     }
 
     /// The running app's designated requirement, such as `identifier
-    /// "com.autohush.AutoHush" and certificate leaf = H"085e…"`, or nil when
-    /// it isn't signed with a certificate (ad hoc or not at all).
+    /// "com.autohush.AutoHush" and anchor apple generic and certificate
+    /// leaf[subject.OU] = "BNT2VN4LH5"` (its developer team), or nil when it
+    /// isn't signed with a certificate (ad hoc or not at all).
     static func runningAppRequirement() -> String? {
         var running: SecCode?
         var code: SecStaticCode?
