@@ -33,6 +33,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A line under the menu's card in light mode.** On macOS 26 and later,
   the card's shadow was cut off in a straight line where its row of the
   menu ends. The card is now of clear glass, which casts no shadow.
+- **A pause kept for a player you left came back too fast.** When you
+  chose another player while AutoHush held yours paused, that player
+  played again once the other apps stopped, but it was back at full volume
+  in a fraction of a second. It now fades back in as any resume does.
 
 ## [0.12.1] — 2026-10-11
 

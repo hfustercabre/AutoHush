@@ -73,8 +73,8 @@ mode).
 
 **Held pause** (`HeldPauses`): a pause AutoHush made on a player that the
 user then left for another. That player's monitoring runs on only to end
-the pause, as it would have, and stops once the player plays again or the
-user takes it over.
+the pause, as it would have, and stops once the player has played again
+and faded back in, or the user takes it over.
 
 **Hand-over** (`PauseHandover`): the pauses AutoHush holds as it quits,
 written down so that the AutoHush opened next (an update, a reopen) ends

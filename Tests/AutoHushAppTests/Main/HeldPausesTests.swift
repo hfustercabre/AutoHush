@@ -1,13 +1,14 @@
 import Foundation
 import Testing
 import AutoHushKit
+import AutoHushTestSupport
 @testable import AutoHushApp
 
 @Suite("HeldPauses")
 @MainActor
 struct HeldPausesTests {
     @Test("a held pause's monitoring runs on while its player is paused by it, and stops once it plays again")
-    func stopsOncePlaying() {
+    func stopsOncePlaying() async {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
@@ -20,8 +21,43 @@ struct HeldPausesTests {
         #expect(monitoring.stops == 0 && !held.isEmpty)
 
         #expect(held.takes(.playback(.musicPlaying), from: token)) // the other apps stopped: it plays again
+        await TestWait.until { monitoring.stops == 1 }
         #expect(monitoring.stops == 1 && held.isEmpty)
         #expect(!held.takes(.playback(.musicPlaying), from: token)) // no longer kept
+    }
+
+    @Test("a held pause's monitoring stops only once its player has faded back in, which stopping would cut short")
+    func stopsAfterFadeIn() async {
+        let held = HeldPauses()
+        let monitoring = FakeMonitoring()
+        let token = UUID()
+        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        monitoring.beginResume() // the other apps stopped: it plays, fading in
+        #expect(held.takes(.playback(.musicPlaying), from: token))
+        try? await Task.sleep(for: .milliseconds(50)) // time to stop, which it mustn't yet
+        #expect(monitoring.stops == 0 && !held.isEmpty)
+        #expect(held.bundleIDs.isEmpty) // its pause is over: not handed over at a quit
+        #expect(held.takes(.playback(.musicPlaying), from: token)) // still its own
+
+        monitoring.endResume()
+        await TestWait.until { monitoring.stops == 1 }
+        #expect(monitoring.stops == 1 && held.isEmpty)
+    }
+
+    @Test("a player chosen again while it fades back in is taken back at once, and its monitoring stopped once")
+    func takenBackWhileFadingIn() async {
+        let held = HeldPauses()
+        let monitoring = FakeMonitoring()
+        let token = UUID()
+        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        monitoring.beginResume()
+        _ = held.takes(.playback(.musicPlaying), from: token)
+        #expect(held.takeBack("org.videolan.vlc"))
+        #expect(monitoring.stops == 1 && held.isEmpty)
+
+        monitoring.endResume()
+        await TestWait.until { monitoring.resumeWaitsOver == 1 }
+        #expect(monitoring.stops == 1)
     }
 
     @Test("not holding a pause, the monitoring left isn't kept")
@@ -33,7 +69,7 @@ struct HeldPausesTests {
     }
 
     @Test("monitoring started for a handed-over pause ignores the state it first finds, until it has taken the pause over")
-    func awaitingTakeOver() {
+    func awaitingTakeOver() async {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
@@ -42,6 +78,7 @@ struct HeldPausesTests {
         #expect(monitoring.stops == 0)
         #expect(held.takes(.playback(.pausedByMonitor), from: token)) // taken over
         _ = held.takes(.playback(.musicPlaying), from: token) // then played again
+        await TestWait.until { monitoring.stops == 1 }
         #expect(monitoring.stops == 1 && held.isEmpty)
 
         // Nothing to take over (played or quit meanwhile): dropped.
@@ -53,7 +90,7 @@ struct HeldPausesTests {
     }
 
     @Test("the user taking the player over stops it too; an unknown state doesn't")
-    func stopsWhenTakenOver() {
+    func stopsWhenTakenOver() async {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
@@ -61,6 +98,7 @@ struct HeldPausesTests {
         _ = held.takes(.playback(.unknown), from: token)
         #expect(monitoring.stops == 0)
         _ = held.takes(.playback(.musicIdle), from: token) // the user stopped or quit it
+        await TestWait.until { monitoring.stops == 1 }
         #expect(monitoring.stops == 1)
     }
 

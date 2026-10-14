@@ -409,6 +409,7 @@ struct PlayerSessionTests {
         held.send(.activeSources([Self.vlc])) // its own: not the session's state
         #expect(session.state.activeSources.isEmpty)
         held.send(.playback(.musicPlaying))
+        await TestWait.until { held.isStopped }
         #expect(held.isStopped)
         #expect(!session.isHoldingPause)
     }

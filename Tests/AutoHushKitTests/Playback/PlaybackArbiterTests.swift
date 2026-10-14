@@ -440,6 +440,39 @@ struct PlaybackArbiterTests {
         #expect(await rushedSteps.value == 0)
     }
 
+    @Test("waiting for the resume returns once the music has faded back in, and at once with none under way")
+    func waitForResumeWaitsForFadeIn() async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let fadeInStarted = Gate()
+        let fadingIn = Gate()
+        let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in
+                                          // Only the fade-in, once played, is held.
+                                          guard await player.playCallCount > 0 else { return }
+                                          await fadeInStarted.open()
+                                          await fadingIn.wait()
+                                      })
+        await arbiter.waitForResume() // none under way
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await fadeInStarted.wait()
+        let waitsOver = Counter()
+        Task {
+            await arbiter.waitForResume()
+            await waitsOver.increment()
+        }
+        await settle()
+        #expect(await waitsOver.value == 0) // still fading in
+        #expect((await player.volumeLevel ?? 0) < 60)
+
+        await fadingIn.open()
+        await waitUntil { await waitsOver.value == 1 }
+        #expect(await player.volumeLevel == 60)
+    }
+
     @Test("an app that stops during the fade-out leaves the music playing")
     func stopDuringFadeOut() async {
         let player = MockMusicPlayer()

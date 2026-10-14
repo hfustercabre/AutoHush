@@ -22,6 +22,11 @@ final class FakeMonitoring: SessionMonitoring {
     private(set) var asleep: [Bool] = []
     private(set) var configurations: [AppConfiguration] = []
     private(set) var detectionMethods: [DetectionMethod] = []
+    /// A resume under way (its player fading back in), from `beginResume()`
+    /// to `endResume()`: `waitForResume` waits for it.
+    private var resumeWaiters: [CheckedContinuation<Void, Never>]?
+    /// How many waits for a resume are over.
+    private(set) var resumeWaitsOver = 0
 
     init(bundleID: String? = nil, setup: PlayerSession.MonitoringSetup? = nil, findsPause: Bool = false,
          onUpdate: (@MainActor (MonitoringPipeline.StatusUpdate) -> Void)? = nil) {
@@ -39,6 +44,18 @@ final class FakeMonitoring: SessionMonitoring {
     }
 
     func send(_ update: MonitoringPipeline.StatusUpdate) { onUpdate?(update) }
+
+    func beginResume() { resumeWaiters = [] }
+
+    func endResume() {
+        resumeWaiters?.forEach { $0.resume() }
+        resumeWaiters = nil
+    }
+
+    func waitForResume() async {
+        if resumeWaiters != nil { await withCheckedContinuation { resumeWaiters?.append($0) } }
+        resumeWaitsOver += 1
+    }
 
     func stop() { stops += 1 }
     func stopAndRestoreVolume() async { restoredStops += 1 }

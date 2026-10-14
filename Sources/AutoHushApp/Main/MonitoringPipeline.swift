@@ -167,6 +167,12 @@ final class MonitoringPipeline {
         await shutdown?.value
     }
 
+    /// Returns once no resume is under way, the music fading back in
+    /// included (see `PlaybackArbiter.waitForResume`).
+    func waitForResume() async {
+        await arbiter.waitForResume()
+    }
+
     func setAutoPauseEnabled(_ enabled: Bool) {
         arbiterCommands.yield(.autoPause(enabled))
     }

@@ -7,6 +7,8 @@ protocol HeldMonitoring: AnyObject {
     func stop()
     /// Stops, and waits until a faded-down player has its volume back.
     func stopAndRestoreVolume() async
+    /// Returns once no resume is under way, the music fading back in included.
+    func waitForResume() async
     func setAutoPauseEnabled(_ enabled: Bool)
     func setIgnoredSources(_ ids: Set<String>)
 }
@@ -14,10 +16,11 @@ protocol HeldMonitoring: AnyObject {
 /// The monitoring of players AutoHush held paused when the user chose
 /// another. Each runs on only to end its own pause, as it would have (the
 /// other apps stop: its player plays again), and stops once its player is
-/// anything but paused by it: played again, or taken over by the user. A
-/// player chosen again is taken back (`choose`, `takesBack`); the Mac
-/// sleeping forgets them all (`stopAll`), as any pause then (decision S2);
-/// quitting hands them over (`bundleIDs`, `stopAndRestoreAll`).
+/// anything but paused by it: played again (once faded back in), or taken
+/// over by the user. A player chosen again is taken back at once (`choose`,
+/// `takesBack`); the Mac sleeping forgets them all (`stopAll`), as any
+/// pause then (decision S2); quitting hands them over (`bundleIDs`,
+/// `stopAndRestoreAll`).
 @MainActor
 final class HeldPauses {
     private struct Held {
@@ -27,15 +30,19 @@ final class HeldPauses {
         /// Started to take a handed-over pause over: what it reports before
         /// it has (the player's state as it found it) doesn't count.
         var awaitingTakeOver = false
+        /// Its player is no longer paused by it: it stops once the resume
+        /// under way is over (`end`).
+        var isEnding = false
     }
 
     private var held: [Held] = []
     /// The player taken back, whose next monitoring takes its pause over.
     private var pendingTakeBack: String?
 
+    /// None kept, a pause still ending (its player fading back in) included.
     var isEmpty: Bool { held.isEmpty }
-    /// The players held paused.
-    var bundleIDs: [String] { held.map(\.bundleID) }
+    /// The players held paused: not those whose pause is ending.
+    var bundleIDs: [String] { held.filter { !$0.isEnding }.map(\.bundleID) }
 
     /// The user chooses `bundleID` while `current` (its updates come with
     /// `token`) monitors `leaving`, holding its player paused when
@@ -69,7 +76,8 @@ final class HeldPauses {
         held.append(Held(token: token, bundleID: bundleID, monitoring: monitoring, awaitingTakeOver: awaitingTakeOver))
     }
 
-    /// The monitoring with `token` found no pause to take over: it stops.
+    /// The monitoring with `token` found no pause to take over, or its pause
+    /// is over: it stops, unless it was stopped already.
     func drop(_ token: UUID) {
         guard let index = held.firstIndex(where: { $0.token == token }) else { return }
         held.remove(at: index).monitoring.stop()
@@ -87,12 +95,26 @@ final class HeldPauses {
         }
         switch update {
         case .playback(let state) where state != .pausedByMonitor && state != .unknown:
-            held.remove(at: index).monitoring.stop()
+            end(index)
             return true
         case .learnedAssertions:
             return false
         default:
             return true
+        }
+    }
+
+    /// The monitoring at `index` no longer pauses its player: it stops once
+    /// the player has faded back in, since stopping cuts a fade short (the
+    /// user's volume back at once). It's kept meanwhile, so choosing the
+    /// player again, sleep or quitting still stops it at once.
+    private func end(_ index: Int) {
+        guard !held[index].isEnding else { return }
+        held[index].isEnding = true
+        let (token, monitoring) = (held[index].token, held[index].monitoring)
+        Task { [weak self] in
+            await monitoring.waitForResume()
+            self?.drop(token)
         }
     }
 

@@ -95,6 +95,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
     private var activeSources: Set<String> = []
     private var pendingResumeTask: Task<Void, Never>?
     private var pendingResumeID: UUID?
+    /// The resume under way: the player plays and fades back in
+    /// (`waitForResume`).
+    private var resumeTask: Task<Void, Never>?
     /// A pause waiting for apps tracked while auto-pause was off to be
     /// measured again (see `setAutoPauseEnabled`).
     private var pendingPauseTask: Task<Void, Never>?
@@ -389,6 +392,13 @@ package actor PlaybackArbiter: PlaybackArbiting {
         while let pauseTask { await pauseTask.value }
     }
 
+    /// Waits until no resume is under way, the music fading back in
+    /// included. A held pause's monitoring stops only then: stopping
+    /// sooner would cut the fade-in short.
+    package func waitForResume() async {
+        while let resumeTask { await resumeTask.value }
+    }
+
     /// Waits until nothing is left running: the pause under way, and a
     /// pending resume or pause whose debounce is over or that had none. One
     /// still waiting on its debounce doesn't count. Tests use it before
@@ -616,6 +626,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
         // Forget the pending resume without cancelling it: this may be running
         // inside it, and a cancelled task would rush the fade-in's steps.
+        let resuming = pendingResumeTask
+        resumeTask = resuming
         pendingResumeTask = nil
         pendingResumeWait = nil
         pendingResumeID = nil
@@ -634,6 +646,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             }
         }
         publishPlaybackState()
+        if resumeTask == resuming { resumeTask = nil } // unless a newer resume started meanwhile
     }
 
     private func publishPlaybackState() {
