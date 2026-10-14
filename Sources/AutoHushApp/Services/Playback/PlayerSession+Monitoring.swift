@@ -53,7 +53,10 @@ extension PlayerSession {
             heldPauses.setIgnoredSources(settings.ignored)
         }
         if settings.timings != old.timings { monitoring?.setConfiguration(configuration(for: player)) }
-        if settings.detection != old.detection { monitoring?.setDetectionMethod(settings.detection) }
+        if settings.detection != old.detection {
+            monitoring?.setDetectionMethod(settings.detection)
+            heldPauses.setDetectionMethod(settings.detection)
+        }
     }
 
     /// Without a monitoring nothing is known about the music: a state it left

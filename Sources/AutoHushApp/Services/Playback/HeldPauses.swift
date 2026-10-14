@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 
 /// A player's monitoring, as `HeldPauses` keeps it: a `MonitoringPipeline`
 /// (see `SessionMonitoring`).
@@ -11,6 +12,7 @@ protocol HeldMonitoring: AnyObject {
     func waitForResume() async
     func setAutoPauseEnabled(_ enabled: Bool)
     func setIgnoredSources(_ ids: Set<String>)
+    func setDetectionMethod(_ method: DetectionMethod)
 }
 
 /// The monitoring of players AutoHush held paused when the user chose
@@ -107,11 +109,14 @@ final class HeldPauses {
     /// The monitoring at `index` no longer pauses its player: it stops once
     /// the player has faded back in, since stopping cuts a fade short (the
     /// user's volume back at once). It's kept meanwhile, so choosing the
-    /// player again, sleep or quitting still stops it at once.
+    /// player again, sleep or quitting still stops it at once. It pauses
+    /// nothing any more: an app starting during the fade-in would have it
+    /// pause a player that isn't chosen, then stop with that pause held.
     private func end(_ index: Int) {
         guard !held[index].isEnding else { return }
         held[index].isEnding = true
         let (token, monitoring) = (held[index].token, held[index].monitoring)
+        monitoring.setAutoPauseEnabled(false)
         Task { [weak self] in
             await monitoring.waitForResume()
             self?.drop(token)
@@ -119,9 +124,14 @@ final class HeldPauses {
     }
 
     /// The settings a held pause follows, as the chosen player's monitoring
-    /// does: Auto-Pause off, or the playing app ignored, ends it at once.
-    func setAutoPauseEnabled(_ enabled: Bool) { held.forEach { $0.monitoring.setAutoPauseEnabled(enabled) } }
+    /// does: Auto-Pause off, or the playing app ignored, ends it at once. One
+    /// whose pause is ending keeps Auto-Pause off (`end`). The detection
+    /// method too, so AntiDot mode leaves no audio taps behind.
+    func setAutoPauseEnabled(_ enabled: Bool) {
+        held.filter { !$0.isEnding }.forEach { $0.monitoring.setAutoPauseEnabled(enabled) }
+    }
     func setIgnoredSources(_ ids: Set<String>) { held.forEach { $0.monitoring.setIgnoredSources(ids) } }
+    func setDetectionMethod(_ method: DetectionMethod) { held.forEach { $0.monitoring.setDetectionMethod(method) } }
 
     /// `bundleID`'s player is chosen again: its held monitoring stops, and
     /// `true` says the new one takes the pause back over.

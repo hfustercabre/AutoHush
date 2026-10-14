@@ -50,8 +50,9 @@ _Avoid_: learner (that's the player's own part, which reads the page).
 
 **Window watch** (`WindowWatch`): while AutoHush's windows are open,
 follows once a second what they show that macOS doesn't announce: the
-players installed, the permissions, whether notifications are on, launch
-at login, Diagnostics. Each window says what it needs; the watch refreshes
+permissions, whether notifications are on, launch at login, Diagnostics,
+and the players installed while none is chosen (once one is, the
+Applications folders are watched instead). Each window says what it needs; the watch refreshes
 only what the open ones need, and stops when none is open.
 
 **User settings** (`UserSettings`): the user's own settings and what

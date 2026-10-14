@@ -44,6 +44,26 @@ struct HeldPausesTests {
         #expect(monitoring.stops == 1 && held.isEmpty)
     }
 
+    @Test("a held pause that is ending pauses nothing more, whatever Auto-Pause is set to meanwhile")
+    func endingPausesNothing() async {
+        let held = HeldPauses()
+        let monitoring = FakeMonitoring()
+        let token = UUID()
+        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        held.setAutoPauseEnabled(true)
+        #expect(monitoring.autoPause == true)
+        monitoring.beginResume() // the other apps stopped: it plays, fading in
+        _ = held.takes(.playback(.musicPlaying), from: token)
+        // An app starting now would have it pause a player that isn't chosen.
+        #expect(monitoring.autoPause == false)
+        held.setAutoPauseEnabled(true) // the user turns Auto-Pause on meanwhile
+        #expect(monitoring.autoPause == false)
+
+        monitoring.endResume()
+        await TestWait.until { monitoring.stops == 1 }
+        #expect(monitoring.stops == 1 && held.isEmpty)
+    }
+
     @Test("a player chosen again while it fades back in is taken back at once, and its monitoring stopped once")
     func takenBackWhileFadingIn() async {
         let held = HeldPauses()
@@ -129,14 +149,16 @@ struct HeldPausesTests {
         #expect(!held.takesBack("org.videolan.vlc"))
     }
 
-    @Test("Auto-Pause and the ignored apps reach held monitoring; keeping a player again stops its earlier monitoring")
+    @Test("Auto-Pause, the ignored apps and the detection method reach held monitoring; keeping a player again stops its earlier monitoring")
     func settingsAndReplacing() {
         let held = HeldPauses()
         let first = FakeMonitoring()
         held.keep(first, token: UUID(), bundleID: "org.videolan.vlc")
         held.setAutoPauseEnabled(false)
         held.setIgnoredSources(["com.example.video"])
+        held.setDetectionMethod(.playbackSignals)
         #expect(first.autoPause == false && first.ignored == ["com.example.video"])
+        #expect(first.detectionMethods == [.playbackSignals])
 
         let second = FakeMonitoring()
         held.keep(second, token: UUID(), bundleID: "org.videolan.vlc")

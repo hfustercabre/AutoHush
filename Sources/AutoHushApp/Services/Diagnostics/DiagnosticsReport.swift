@@ -1,44 +1,6 @@
 import Foundation
 import AutoHushKit
 
-/// What the app knows besides the apps with sound, for Diagnostics: the
-/// player, the permissions, AutoHush's settings and the Mac. The app
-/// delegate gathers it; the report only words it.
-struct DiagnosticsFacts: Equatable {
-    /// The chosen player's version, when it's installed.
-    var playerVersion: String?
-    var playerCanFade = true
-    /// What controlling the chosen player needs, and whether it's allowed
-    /// (`nil`: not known until AutoHush has tried).
-    var playerPermission: Permission?
-    var playerPermissionGranted: Bool?
-    /// Whether AutoHush has learned the chosen player's Play/Pause button;
-    /// `nil` for a player it doesn't have to learn.
-    var playerLearned: Bool?
-    /// Whether the chosen player's windows on other Spaces can be reached
-    /// (a private function); `nil` for a player that has no need to.
-    var reachesOtherSpaces: Bool?
-    /// Whether the chosen player's own words for Play and Pause could be
-    /// read from its app; `nil` for a player that doesn't need them.
-    var playerWordsRead: Bool?
-    /// `nil` when macOS can't be asked.
-    var audioRecording: AudioCapturePermission?
-    var notificationsOff = false
-    var detectionMethod: DetectionMethod = .audioLevels
-    var timings: TimingSettings = .defaults
-    /// E.g. "0.6.1 (19)".
-    var appVersion = ""
-    var launchAtLogin = false
-    var checksForUpdates = true
-    var automaticUpdates: AutomaticUpdates = .install
-    var lastUpdateCheck: Date?
-    /// E.g. "27.0.1 (26A434)".
-    var macOS = ""
-    /// "Apple silicon" or "Intel".
-    var processor = ""
-    var now = Date()
-}
-
 /// What Settings → Diagnostics shows: how AutoHush is doing, every app with
 /// its sound on and how AutoHush judges it, then a section each for the
 /// music player, the detection, the permissions, AutoHush and the Mac; and
@@ -370,58 +332,4 @@ enum DiagnosticsReport {
             return String(localized: "silence", comment: "Diagnostics: the level of an app that makes no sound")
         }
     }
-}
-
-/// Settings → Diagnostics, as it is now.
-struct DiagnosticsSnapshot: Equatable {
-    /// How AutoHush is doing, at the top.
-    struct Overview: Equatable {
-        enum Kind: Equatable { case working, attention, off, starting }
-        let kind: Kind
-        let title: String
-        let detail: String
-    }
-
-    /// An app with its sound on.
-    struct App: Equatable, Identifiable {
-        let id: String
-        let name: String
-        let bundlePath: String?
-        /// How AutoHush judges it, e.g. "Playing, ignored".
-        let judgement: String
-        /// What the judgement rests on, e.g. "-20 dBFS".
-        let evidence: String?
-    }
-
-    /// A label and its value, with a mark for permissions and problems.
-    struct Row: Equatable {
-        enum Mark: Equatable { case ok, problem, neutral }
-        let label: String
-        let value: String
-        var mark: Mark?
-    }
-
-    /// A section below the apps; folded, it shows `summary`.
-    struct Section: Equatable, Identifiable {
-        enum Kind: Hashable { case player, detection, permissions, autoHush, mac }
-        let kind: Kind
-        let title: String
-        let summary: String
-        let rows: [Row]
-        var id: Kind { kind }
-    }
-
-    /// A part that folds away under its heading: the apps, or a section.
-    enum Part: Hashable {
-        case apps
-        case section(Section.Kind)
-    }
-
-    let overview: Overview
-    let apps: [App]
-    /// The apps' names, shown while their section is folded.
-    let appsSummary: String
-    let sections: [Section]
-    /// The whole report, for Copy Report.
-    let text: String
 }

@@ -57,7 +57,7 @@ trap 'rm -rf "${WORK:?}"' EXIT
 
 note "drawing the window background"
 # Built with the app's menu bar icon, which the background shows.
-swiftc -O -parse-as-library "$PROJECT_DIR/Sources/AutoHushApp/Utilities/MenuBarIcon.swift" \
+swiftc -O -parse-as-library "$PROJECT_DIR/Sources/AutoHushApp/Views/MenuBar/MenuBarIcon.swift" \
     "$PROJECT_DIR/Scripts/lib/dmg-background.swift" -o "$WORK/dmg-background"
 "$WORK/dmg-background" "$WORK/background.png" 1
 "$WORK/dmg-background" "$WORK/background@2x.png" 2

@@ -986,7 +986,7 @@ struct AppDelegateTests {
     // MARK: - The window watch
 
     @MainActor
-    @Test("while the welcome window shows, the players installed and the permissions are followed; closed while it asked for them, it's done")
+    @Test("while the welcome window shows with no player chosen, the players installed and the permissions are followed; closed while it asked for them, it's done")
     func watchFollowsWelcome() async {
         let scratch = Scratch()
         scratch.installed = [Players.first]
@@ -1004,6 +1004,12 @@ struct AppDelegateTests {
 
         sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
         #expect(sut.settingsModel.welcomeAsksPermissions)
+        // A player is chosen: the folder watch follows the players, the window watch no longer.
+        await waitFor { clock.sleeping == 1 }
+        scratch.installed.remove(Players.first)
+        clock.step()
+        await waitFor { clock.sleeping == 1 }
+        #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true)
         scratch.chooser.close() // closed instead of Done: the same
         clock.step()
         await waitFor { !sut.settingsModel.welcomeAsksPermissions }

@@ -12,7 +12,6 @@ protocol SessionMonitoring: HeldMonitoring {
     func start(takingOverPause: Bool, asleep: Bool) async -> Bool
     func setAsleep(_ asleep: Bool)
     func setConfiguration(_ configuration: AppConfiguration)
-    func setDetectionMethod(_ method: DetectionMethod)
     func activeAudioReport() -> [ActiveAudioReport.Entry]
 }
 
@@ -79,7 +78,8 @@ final class PlayerSession {
     /// Called each time `state` changes.
     var didChange: @MainActor (State) -> Void = { _ in }
     /// What monitoring follows; each change goes to the monitorings that
-    /// follow it. Held pauses follow Auto-Pause and the ignored apps only.
+    /// follow it. Held pauses follow Auto-Pause, the ignored apps and the
+    /// detection method, not the timings.
     var settings: MonitoringSettings {
         didSet { follow(settings, from: oldValue) }
     }

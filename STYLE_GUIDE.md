@@ -47,7 +47,8 @@ screens that already exist, then macOS's own conventions
   runs out.
 
 The shared files are in `Sources/AutoHushApp/Views/Components/`, one
-component per file: `CardStyles.swift` holds the text sizes and the colors;
+component per file: `Font+AutoHush.swift` holds the text sizes, `AppearanceStyle.swift`
+the colors and `View+CaptionStyle.swift` the caption style;
 `ButtonStyles.swift`, `Card.swift`, `SectionHeading.swift`, `SwitchRow.swift`,
 `ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`, `WindowHeader.swift`,
 `ChecklistStepRow.swift`, `PermissionButton.swift`, `NoteLabel.swift` and

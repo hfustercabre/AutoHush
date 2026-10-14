@@ -244,12 +244,20 @@ package final class SafariWebAppPlayers: Sendable {
     /// web app that was renamed or moved gets a new one.
     package func current() -> [SafariWebAppPlayer] {
         let apps = finder.webApps().map(named).sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
+        // New players are made outside the lock: each reads its learned
+        // button from the preferences as it's made.
+        let known = players.withLock { $0 }
+        let made = Dictionary(apps.filter { known[$0.bundleID]?.app != $0 }.map { app in
+            (app.bundleID, makePlayer(app, !tested.contains { $0.isAdded(as: app) }))
+        }, uniquingKeysWith: { first, _ in first })
         return players.withLock { players in
-            let kept = players
+            // A player another call kept meanwhile wins, so each app has one.
+            let latest = players
             players = [:]
-            return apps.map { app in
-                let player = kept[app.bundleID].flatMap { $0.app == app ? $0 : nil }
-                    ?? makePlayer(app, !tested.contains { $0.isAdded(as: app) })
+            return apps.compactMap { app in
+                guard let player = [latest[app.bundleID], known[app.bundleID], made[app.bundleID]]
+                    .lazy.compactMap({ $0 }).first(where: { $0.app == app })
+                else { return nil } // never: a known player matches, or one was made
                 players[app.bundleID] = player
                 return player
             }

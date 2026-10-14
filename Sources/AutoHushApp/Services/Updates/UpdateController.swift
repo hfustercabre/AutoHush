@@ -115,3 +115,6 @@ final class UpdateController {
     /// Why this copy of AutoHush can't install updates, or nil when it can.
     var installUnavailability: UpdateInstallUnavailability? { installer.unavailability }
 }
+
+/// What Settings and the menu ask of the updates.
+extension UpdateController: UpdateCommands {}

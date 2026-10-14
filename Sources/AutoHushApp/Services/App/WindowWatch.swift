@@ -1,16 +1,17 @@
 import Foundation
 
 /// While AutoHush's windows are open, follows once a second what they show
-/// that macOS doesn't announce (see GLOSSARY.md): the players installed,
-/// the permissions, whether notifications are on, launch at login,
-/// Diagnostics. Each window says once what it needs; each second the watch
+/// that macOS doesn't announce (see GLOSSARY.md): the permissions, whether
+/// notifications are on, launch at login, Diagnostics, and the players
+/// installed while none is chosen. Each window says once what it needs; each second the watch
 /// refreshes what the open ones need, together, and it stops when none is
 /// open. A window that opens wakes it.
 @MainActor
 final class WindowWatch {
     /// What a window shows that needs following, refreshed in this order.
     enum Refresh: Int, CaseIterable, Comparable {
-        /// The players installed (the window lists them).
+        /// The players installed (the window lists them), while none is
+        /// chosen: once one is, the Applications folders are watched.
         case players
         /// What AutoHush sees (Settings → Diagnostics).
         case diagnostics

@@ -17,16 +17,19 @@ extension AppDelegate {
     /// What each window shows that the window watch follows while it's open
     /// (Settings counts as open minimized too). macOS doesn't announce a
     /// change to these: notifications turned on or off, or reset, in System
-    /// Settings (a reset is asked about again), the players installed, a
-    /// permission allowed (a window waiting for one goes on by itself).
+    /// Settings (a reset is asked about again), a permission allowed (a
+    /// window waiting for one goes on by itself), and the players installed
+    /// while none is chosen (once one is, the folder watch follows them:
+    /// `refreshPlayerOptions`).
     func registerWatchedWindows() {
         windowWatch.register(isOpen: { [weak self] in self?.settingsWindowController?.window?.isOpen == true }) { [weak self] in
-            var needs: Set<WindowWatch.Refresh> = [.players, .notifications, .launchAtLogin, .permissions]
+            var needs: Set<WindowWatch.Refresh> = [.notifications, .launchAtLogin, .permissions]
             if self?.settingsWindowController?.shownPage == .diagnostics { needs.insert(.diagnostics) }
+            if self?.player == nil { needs.insert(.players) }
             return needs
         }
-        windowWatch.register(isOpen: { [weak self] in self?.isShowingPlayerChooser == true }) {
-            [.players, .notifications, .permissions]
+        windowWatch.register(isOpen: { [weak self] in self?.isShowingPlayerChooser == true }) { [weak self] in
+            self?.player == nil ? [.players, .notifications, .permissions] : [.notifications, .permissions]
         }
         windowWatch.register(isOpen: { [weak self] in self?.learningWindow?.isOpen == true }) { [.permissions] }
         windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [.permissions] }

@@ -63,22 +63,6 @@ enum UpdateInstallError: LocalizedError, Equatable {
     }
 }
 
-/// An update downloaded, checked and ready to take the running app's place.
-struct PreparedUpdate: Equatable, Sendable {
-    let version: AppVersion
-    /// The checked AutoHush.app, on the same volume as the installed one.
-    let app: URL
-    /// The private folder holding it; removed once installed or discarded.
-    let folder: URL
-}
-
-/// A release's disk image downloaded earlier and kept, with the SHA-256 it
-/// had then.
-struct KeptImage: Equatable, Sendable {
-    let file: URL
-    let sha256: String
-}
-
 /// Installs updates. `UpdateInstaller` is the real one; tests stand in for it.
 protocol UpdateInstalling: Sendable {
     /// Why this copy can't update itself, or nil when it can.

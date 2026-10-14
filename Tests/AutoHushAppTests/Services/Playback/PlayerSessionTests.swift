@@ -338,7 +338,7 @@ struct PlayerSessionTests {
     // MARK: - Settings and sleep
 
     @MainActor
-    @Test("settings reach the chosen player's monitoring and the held pauses, which follow only Auto-Pause and the ignored apps")
+    @Test("settings reach the chosen player's monitoring and the held pauses, which follow all but the timings")
     func settingsReachMonitorings() async {
         let bench = Bench()
         let session = await bench.holdingFirst()
@@ -354,7 +354,9 @@ struct PlayerSessionTests {
         #expect(current.configurations.first?.sourceStopGrace == 4)
         session.settings.detection = .playbackSignals
         #expect(current.detectionMethods == [.playbackSignals])
-        #expect(held.configurations.isEmpty && held.detectionMethods.isEmpty)
+        // AntiDot mode leaves no audio taps behind in a held pause.
+        #expect(held.detectionMethods == [.playbackSignals])
+        #expect(held.configurations.isEmpty)
 
         let unchanged = session.settings
         session.settings = unchanged // nothing changed: nothing sent

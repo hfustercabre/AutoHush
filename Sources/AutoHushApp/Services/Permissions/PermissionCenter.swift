@@ -18,9 +18,7 @@ final class PermissionCenter {
         var automation: @Sendable (pid_t, _ ask: Bool) async -> OSStatus = { pid, ask in
             await PermissionCenter.queue.run { AutomationPermission.check(pid: pid, ask: ask) }
         }
-        var runningPID: @MainActor (String) -> pid_t? = { bundleID in
-            NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first { !$0.isTerminated }?.processIdentifier
-        }
+        var runningPID: @MainActor (String) -> pid_t? = { NSRunningApplication.running($0)?.processIdentifier }
         var audio: @MainActor () -> AudioCapturePermission? = { TCCAudioCapturePermission().status() }
         var requestAudio: @MainActor (@escaping @Sendable (Bool) -> Void) -> Void = { TCCAudioCapturePermission().request(completion: $0) }
         var openPane: @MainActor (SystemSettingsPane) -> Void = { $0.open() }

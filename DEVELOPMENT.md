@@ -85,9 +85,11 @@ Sources/
                          show, with UpdateOffer), SettingsModel (what only the windows show, and their
                          actions), StatePresentation (the status's icons and text), AppHealthState,
                          StatusMenuModel, AddWebAppModel, PlayerOption (each player and whether it's
-                         installed), AppActions (what only AppDelegate does), PermissionsState,
-                         ChecklistStep (a step of the windows' checklists), AppRelease, UpdatePrompt,
-                         UpdateNotice, LearningNote, LearningPauseMode
+                         installed), AppActions (what only AppDelegate does), UpdateCommands,
+                         SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
+                         the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
+                         UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
+                         LearningNote, LearningPauseMode
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open), Playback/ (PlayerSession, the chosen player from its
@@ -105,10 +107,11 @@ Sources/
                          PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base)
     Views/               SwiftUI views, by area: Components/ (what several places show, one component
-                         per file: CardStyles holds the text sizes and colors; ButtonStyles, Card,
-                         SectionHeading, SwitchRow, ChoiceChips, BottomBar, ChecklistStepRow, NoteLabel,
-                         SearchField, PlayerTiles, …), MenuBar/ (the menu's views and MenuBarIcon, drawn
-                         in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
+                         per file: Font+AutoHush holds the text sizes, AppearanceStyle the colors;
+                         ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
+                         ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
+                         views, its drawn rows (NSMenuItem+PlayerList, MenuContentWidth) and MenuBarIcon,
+                         drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
                          WebApps/ (Add a Web App, the learning window and LearningSteps)
     Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, …
   AutoHushKit/           the engine, by kind of code too
@@ -237,7 +240,7 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 | `Scripts/create-signing-certificate.sh` | Creates the self-signed certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`: a drag-to-Applications window in AutoHush's colours, with a first-launch note, drawn by `Scripts/lib/dmg-background.swift` and laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild) (`Scripts/lib/dmg-settings.py`), without Finder. dmgbuild is installed on first use into `.build/`, pinned and hash-checked (`Scripts/lib/dmgbuild-requirements.txt`); it needs Python 3.10 or later (`PYTHON` picks one) |
-| `Scripts/release.sh <version>` | Prepares a release: tests, version and changelog, signed build, DMG and release notes. It refuses any build not signed with an Apple developer team (self-signed or ad hoc) and never commits, tags or publishes |
+| `Scripts/release.sh <version>` | Prepares a release: tests, signed build and DMG, then version and changelog (a failed build changes neither), and release notes. It refuses any build not signed with an Apple developer team (self-signed or ad hoc) and never commits, tags or publishes |
 | `Scripts/update-tap.sh <version>` | Points the Homebrew tap at a published release: checks that the DMG on GitHub is the one in `dist/`, then commits the new version and checksum to the tap's cask and pushes it |
 
 The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise the first valid "Apple Development" identity in the keychain, otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.

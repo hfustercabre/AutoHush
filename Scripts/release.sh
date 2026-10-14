@@ -5,12 +5,14 @@
 #
 # Steps:
 #   1. runs the test suite, before anything changes
-#   2. sets the version in Resources/Info.plist (build number + 1) and turns
-#      CHANGELOG.md's [Unreleased] section into [<version>] — <date>
-#   3. builds the app, signed with the maintainer's Apple Development
-#      certificate under the developer team's requirement (hardened runtime)
-#   4. packages dist/AutoHush-<version>.dmg
-#   5. writes the release notes into dist/release-notes-<version>.md
+#   2. builds the app with the new version (build number + 1), signed with
+#      the maintainer's Apple Development certificate under the developer
+#      team's requirement (hardened runtime), and packages
+#      dist/AutoHush-<version>.dmg
+#   3. only then sets the version in Resources/Info.plist and turns
+#      CHANGELOG.md's [Unreleased] section into [<version>] — <date>, so a
+#      failed build leaves both as they were
+#   4. writes the release notes into dist/release-notes-<version>.md
 #
 # Once the GitHub release is published, Scripts/update-tap.sh points the
 # Homebrew tap at it.
@@ -55,17 +57,20 @@ step "Running tests"
 # Every test, the slow ones too, even where quick runs are the default.
 env -u AUTOHUSH_QUICK_TESTS swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
 
-# 2. Version and changelog ---------------------------------------------------
+# 2. App and disk image -------------------------------------------------------
+# The bundle gets the new version and build number (build-app.sh sets them in
+# its own Info.plist); Resources/Info.plist and the CHANGELOG change only
+# once it's built.
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))
+SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
+
+# 3. Version and changelog ---------------------------------------------------
 step "Setting version $VERSION ($BUILD_NUMBER)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST"
 sed -i '' "s/^## \[Unreleased\]$/## [$VERSION] — $(date +%Y-%m-%d)/" "$CHANGELOG"
 
-# 3–4. App and disk image -----------------------------------------------------
-SIGNING_IDENTITY="$IDENTITY" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
-
-# 5. Release notes -----------------------------------------------------------
+# 4. Release notes -----------------------------------------------------------
 SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
 # The team the built app is signed with, so an identity from the wrong
 # keychain shows before anything is published.
