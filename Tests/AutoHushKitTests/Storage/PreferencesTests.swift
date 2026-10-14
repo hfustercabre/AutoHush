@@ -40,6 +40,27 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).autoPause == AutoPauseSetting(isEnabled: false))
     }
 
+    @Test("a Focus's note of Auto-Pause persists with its timed turn off; nil removes it")
+    func focusAutoPauseNote() {
+        let scratch = Scratch()
+        let until = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        #expect(Preferences(store: scratch.defaults).focusAutoPause == nil)
+
+        let note = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: true, snoozedUntil: until), applied: false)
+        Preferences(store: scratch.defaults).focusAutoPause = note
+        #expect(Preferences(store: scratch.defaults).focusAutoPause == note)
+
+        let other = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: false), applied: true)
+        Preferences(store: scratch.defaults).focusAutoPause = other
+        #expect(Preferences(store: scratch.defaults).focusAutoPause == other)
+
+        Preferences(store: scratch.defaults).focusAutoPause = nil
+        #expect(Preferences(store: scratch.defaults).focusAutoPause == nil)
+        for key in ["focusNotedAutoPauseEnabled", "focusNotedAutoPauseSnoozedUntil", "focusAppliedAutoPause"] {
+            #expect(scratch.defaults.object(forKey: key) == nil)
+        }
+    }
+
     @Test("ignored apps persist with their names, sorted by name")
     func ignoredAppsPersist() {
         let scratch = Scratch()

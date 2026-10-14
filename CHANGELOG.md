@@ -7,6 +7,45 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
+  is now signed with an Apple developer certificate, because macOS runs an
+  app's Shortcuts actions only when a developer team signed it. Copies
+  before 0.13.0 accept only their old certificate, so they can't install
+  this version themselves and say they couldn't install the update.
+  Download it once from the [releases
+  page](https://github.com/hfustercabre/AutoHush/releases) (**Open Release
+  Page** goes there), quit AutoHush and drag the new one onto Applications,
+  replacing the old one (`brew upgrade --cask autohush` does it too). Later
+  versions update themselves as before. After this install:
+  - macOS asks you once more to confirm opening it, as on your first
+    install: **Open Anyway**, in System Settings → Privacy & Security
+    (Homebrew handles this).
+  - macOS may ask again for AutoHush's permissions: Audio Recording, and
+    Accessibility if your player needs it.
+  - If AutoHush says a permission is missing while System Settings shows
+    AutoHush switched on, that switch belongs to the old copy: select
+    AutoHush there, remove it with **−**, then allow it again.
+
+### Added
+
+- **Shortcuts actions for Auto-Pause.** The Shortcuts app offers three:
+  **Set Auto-Pause** turns it **On** or **Off**, or switches it with
+  **Toggle** (Off lasts until it's turned on again); **Turn Off Auto-Pause
+  For** turns it off for one of the menu's durations, 5 Minutes to 24
+  Hours, after which it comes back on by itself; **Get Auto-Pause** tells
+  whether it's on now. They act on the running AutoHush, so the menu shows
+  the change at once; if AutoHush isn't running, macOS opens it in the
+  background first.
+- **Two ready-made shortcuts,** "Turn off Auto-Pause in AutoHush" and "Turn
+  on Auto-Pause in AutoHush", work in Shortcuts, Spotlight and Siri with
+  nothing to set up.
+- **A Focus filter.** A Focus can turn Auto-Pause on or off while it's on:
+  in System Settings → Focus, choose the Focus, then **Add Filter…** under
+  Focus Filters and **AutoHush**. When the Focus ends, Auto-Pause goes back
+  to how it was, unless you changed it meanwhile.
+
 ### Fixed
 
 - **A web app's window on another desktop could go unfound.** AutoHush

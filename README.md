@@ -48,6 +48,7 @@ Yes, this whole app exists because of a yellow dot.
 - [Install](#install)
 - [First launch](#first-launch)
 - [Using AutoHush](#using-autohush)
+- [Shortcuts and Focus](#shortcuts-and-focus)
 - [The purple dot and AntiDot mode](#the-purple-dot-and-antidot-mode)
 - [Tips and troubleshooting](#tips-and-troubleshooting)
 - [Privacy](#privacy)
@@ -207,6 +208,19 @@ AutoHush speaks 35 languages: English, Spanish (Spain and Latin America), Catala
 > [!WARNING]
 > Only English, Spanish (Spain) and Catalan have been checked by a native speaker. The other languages were translated automatically, so they may contain mistakes or odd wording. If you spot one, please [report it](https://github.com/hfustercabre/AutoHush/issues/new?template=translation.yml) with the text and a better wording.
 
+## Shortcuts and Focus
+
+AutoHush's **Auto-Pause** switch can also be set from the Shortcuts app and by a Focus:
+
+- **Three actions** in the Shortcuts app:
+  - **Set Auto-Pause** turns it **On** or **Off**, or switches it with **Toggle**. Off lasts until it's turned on again, and On also ends a **Turn off for**.
+  - **Turn Off Auto-Pause For** turns it off for 5 Minutes, 15 Minutes, 30 Minutes, 1 Hour or 24 Hours, as the menu's buttons do, and it comes back on by itself.
+  - **Get Auto-Pause** tells whether it's on now: it isn't while it's off or turned off for a while.
+- **Ready-made shortcuts:** "Turn off Auto-Pause in AutoHush" and "Turn on Auto-Pause in AutoHush" work in Shortcuts, Spotlight and Siri with nothing to set up.
+- **A Focus filter:** in System Settings → Focus, choose a Focus, click **Add Filter…** under **Focus Filters**, choose **AutoHush** and set **Auto-Pause** to On or Off. While that Focus is on, Auto-Pause follows it. When the Focus ends, Auto-Pause goes back to how it was, unless you changed it meanwhile. That works even if AutoHush quit or the Mac restarted during the Focus.
+
+The actions change the running AutoHush, and the menu shows the change at once; if AutoHush isn't running, macOS opens it in the background first. They need no permission. A copy you build from the source code lists them, but runs them only when it's signed with an Apple developer certificate (see [DEVELOPMENT.md](DEVELOPMENT.md#signing-and-releases)).
+
 ## The purple dot and AntiDot mode
 
 To hear whether another app is *really* playing, AutoHush has to measure its sound level. Whenever an app does that, macOS shows a **purple dot** in the menu bar. It's a privacy feature that no app can hide, and that's a good thing.
@@ -248,6 +262,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - **Your player stays paused after a video ends.** Some apps keep their sound switched on after playback. Allow audio recording, or in AntiDot mode close the app or tab.
 - **Something looks off?** **Settings → Diagnostics** shows what AutoHush sees (hold **⌥ Option** and click **Settings** in the menu to go straight there), and **Copy Report** copies it for a bug report.
 - **"Spotify is not running", a permission warning, or "not responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access (audio recording: once you reopen AutoHush), or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
+- **A permission AutoHush asks for is already switched on in System Settings?** That can happen once, after you replace AutoHush 0.12.1 or earlier with 0.13.0 or later by hand: from 0.13.0 AutoHush is signed with another certificate, and the switch belongs to the old copy. In **System Settings → Privacy & Security**, open that permission's list (Accessibility, say), select AutoHush, remove it with **−**, then allow AutoHush again.
 
 ## Privacy
 
@@ -276,11 +291,11 @@ Until it's installed, the menu's **Updates** button turns blue and a row above i
 
 **Downloads** wait in `~/Library/Caches/com.autohush.AutoHush/Updates`, one at a time. A download is deleted once it's installed or out of date, when you change the choice or turn automatic checks off, or after 7 days (the menu still offers the update). Automatic downloads wait while Low Data Mode is on.
 
-**Before installing**, AutoHush checks that the download matches the checksum GitHub lists for it, that it's the version GitHub announced, that a kept download hasn't changed since, and that the app inside is signed with the same certificate as your copy (the check macOS itself uses to keep AutoHush's permissions), so nothing but a genuine AutoHush gets installed this way.
+**Before installing**, AutoHush checks that the download matches the checksum GitHub lists for it, that it's the version GitHub announced, that a kept download hasn't changed since, and that the app inside is signed by the same developer team as your copy (the check macOS itself uses to keep AutoHush's permissions), so nothing but a genuine AutoHush gets installed this way.
 
 **Updates** in the menu, or **Check Now** in Settings, checks right away; turn off automatic checks to only check when you ask.
 
-AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account; Settings tells you when it can't. Then update by hand: `brew upgrade --cask autohush`, or download the new version and replace the old one. Versions up to 0.2.0 can't update themselves: update those once by hand.
+AutoHush can only update itself from a folder it can write to, such as Applications on an administrator account; Settings tells you when it can't. Then update by hand: `brew upgrade --cask autohush`, or download the new version and replace the old one. Versions up to 0.2.0 can't update themselves: update those once by hand. Versions up to 0.12.1 can't install 0.13.0 or later, which are signed with another certificate: they say they couldn't install the update, and **Open Release Page** leads to it. Update those once by hand too; macOS then asks for **Open Anyway** again (see [By hand](#by-hand)) and may ask for some permissions again (see [Tips and troubleshooting](#tips-and-troubleshooting)).
 
 ## Uninstall
 

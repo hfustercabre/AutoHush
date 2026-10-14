@@ -104,10 +104,10 @@ protocol UpdateInstalling: Sendable {
 ///    after checking it's unchanged);
 /// 2. copies AutoHush.app out of it, onto the installed app's volume;
 /// 3. accepts that copy only when its signature is intact and satisfies the
-///    running app's designated requirement, which names AutoHush's
-///    certificate, and when it is the release's version. This is the test
-///    macOS uses to keep AutoHush's permissions, and nothing but AutoHush
-///    signed with its certificate passes it;
+///    running app's designated requirement, which for a release names
+///    AutoHush's bundle ID and its developer team, and when it is the
+///    release's version. This is the test macOS uses to keep AutoHush's
+///    permissions, and nothing but AutoHush signed by its team passes it;
 /// 4. swaps it in for the running app, and has it opened as soon as this one
 ///    quits.
 ///

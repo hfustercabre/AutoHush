@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let session: PlayerSession
     /// The user's settings: Auto-Pause, the apps, the timings, detection.
     let userSettings: UserSettings
+    /// Turns Auto-Pause on or off during a Focus with AutoHush's filter, and
+    /// back after it.
+    let focusAutoPause: FocusAutoPause
     let preferences: Preferences
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
@@ -129,6 +132,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
         userSettings = UserSettings(preferences: preferences)
+        focusAutoPause = FocusAutoPause(control: userSettings, preferences: preferences)
+        // Before launch finishes: macOS may open AutoHush just to run an action.
+        IntentDependencies.register(control: userSettings, focus: focusAutoPause)
         session = PlayerSession(
             player: players.player(bundleID: preferences.musicPlayer),
             players: players,
@@ -197,6 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
         registerSleepObservers()
+        followFocusAtLaunch()
         // Opened last, this copy is the one that runs: any opened before it
         // quits first, handing over a pause it held, so they never both pause
         // and resume the music.
@@ -209,6 +216,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
+    }
+
+    /// Follows the Focus filter macOS reports now, which catches a Focus's
+    /// start or end missed while AutoHush was quit (macOS doesn't open it for
+    /// either). A failed read leaves Auto-Pause as it is.
+    private func followFocusAtLaunch() {
+        Task {
+            do {
+                focusAutoPause.followAtLaunch(try await AutoPauseFocusFilter.currentChoice())
+            } catch {
+                logger.error("Couldn't read the Focus filter: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 
     /// Puts AutoHush's menu in the menu bar: it shows the status, and its

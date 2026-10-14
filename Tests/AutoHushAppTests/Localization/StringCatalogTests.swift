@@ -3,7 +3,7 @@ import Testing
 
 /// The String Catalogs in Resources/Localization/, AutoHush's text in every language.
 /// `Scripts/build-app.sh` adds the strings the code uses to
-/// Localizable.xcstrings and compiles both catalogs into the app.
+/// Localizable.xcstrings and compiles every catalog into the app.
 @Suite("String catalogs")
 struct StringCatalogTests {
     private static let resources = URL(fileURLWithPath: #filePath)
@@ -14,7 +14,7 @@ struct StringCatalogTests {
         .appending(path: "Resources")
     private static let catalogs = resources.appending(path: "Localization")
 
-    @Test("every translation keeps its text's placeholders", arguments: ["Localizable", "InfoPlist"])
+    @Test("every translation keeps its text's placeholders", arguments: ["Localizable", "InfoPlist", "AppShortcuts"])
     func placeholders(table: String) throws {
         let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
         for (key, entry) in catalog.strings {
@@ -32,7 +32,7 @@ struct StringCatalogTests {
         }
     }
 
-    @Test("apostrophes are curly, in English and every translation, as macOS writes them", arguments: ["Localizable", "InfoPlist"])
+    @Test("apostrophes are curly, in English and every translation, as macOS writes them", arguments: ["Localizable", "InfoPlist", "AppShortcuts"])
     func curlyApostrophes(table: String) throws {
         let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
         for (key, entry) in catalog.strings {
@@ -75,7 +75,7 @@ struct StringCatalogTests {
 }
 
 /// The parts of a String Catalog (.xcstrings) these tests read.
-private struct StringCatalog: Decodable {
+struct StringCatalog: Decodable {
     struct Entry: Decodable {
         var localizations: [String: Localization]?
     }

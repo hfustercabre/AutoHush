@@ -83,3 +83,20 @@ them. One older than a minute is ignored.
 **Take over, take back**: a monitoring that starts treats a pause as its
 own. It takes over a pause from the hand-over, and takes back a held pause
 when its player is chosen again.
+
+**Shortcuts action** (`SetAutoPauseIntent`, `TurnOffAutoPauseForIntent`,
+`GetAutoPauseIntent`): something the Shortcuts app can ask AutoHush to do
+with Auto-Pause: set it on or off or toggle it, turn it off for one of the
+menu's durations, or tell whether it's on now. It acts on the running
+AutoHush through `AutoPauseControlling`. _Avoid_: intent (Apple's name for
+the code behind one, an App Intent).
+
+**App Shortcut** (`AutoHushShortcuts`): a ready-made shortcut that runs a
+Shortcuts action with nothing to set up, offered in Shortcuts, Spotlight
+and Siri. AutoHush has two: turn Auto-Pause off, and turn it on. Each
+phrase names the app, as Siri requires.
+
+**Focus filter** (`AutoPauseFocusFilter`): a Focus's setting for
+Auto-Pause, On or Off, added in System Settings → Focus. While that Focus
+is on, Auto-Pause follows it; when it ends, `FocusAutoPause` puts back how
+Auto-Pause was, unless the user changed it meanwhile.

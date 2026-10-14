@@ -290,6 +290,7 @@ their download symbol.
 | Pop-up items: "Last Played" | Choice chips: "Notify me", "Install it automatically" |
 | Section headings: "Pauses Playback", "Playing Now", "Apps with Sound" | Descriptions, notes and status lines |
 | Alert titles: "Couldn’t Install the Update" | Tooltips and VoiceOver labels: "Search by name", "Reverse order" |
+| Shortcuts action names and their choices, App Shortcut titles: "Turn Off Auto-Pause For", "15 Minutes", "Auto-Pause Off" | An action's summary and an App Shortcut's phrase: "Turn off Auto-Pause for 15 Minutes", "Turn on Auto-Pause in AutoHush" |
 
 - **Title case** follows Apple's rules: capitalize every word except
   articles, and conjunctions and prepositions of four letters or fewer.
@@ -316,7 +317,7 @@ their download symbol.
   "could not".
 - **Apostrophes** are curly (’), as macOS writes them: "can’t", "Spotify’s",
   in English and in every language that has them ("l’app", "Mac’te"). A
-  straight ' never shows; a test checks both catalogs.
+  straight ' never shows; a test checks every catalog.
 - **Ellipsis** (`…`, a single character) ends a button or menu item that
   asks for something more before it acts (a panel, a dialog, another
   window), and a state in progress ("Checking…"). A button that acts at once
@@ -329,6 +330,12 @@ their download symbol.
   none: subtitles ("Pauses your player"), status lines, labels and buttons.
 - **Numbers** are digits, with units in the user's format: "0.5 s",
   "−60 dB", "5 min".
+- **Shortcuts** read like Apple's own actions: a name that says what the
+  action does ("Set Auto-Pause", "Get Auto-Pause"), a summary that reads as
+  a sentence with the choices in it ("Turn Auto-Pause On"), and a full
+  sentence for the description. An App Shortcut's phrase names the app
+  ("… in AutoHush"), as Siri requires: every translation keeps
+  `${applicationName}`, and a test checks.
 
 ## Translations
 

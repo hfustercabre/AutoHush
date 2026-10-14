@@ -100,6 +100,11 @@ Sources/
                          About; SettingsSidebar)
     Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
                          UpdateDownloads (the kept download), UpdateNotifier, the update window
+    Shortcuts/           Shortcuts' actions (AutoPauseIntents), the two App Shortcuts (AutoHushShortcuts), the
+                         Focus filter (AutoPauseFocusFilter) and FocusAutoPause (notes Auto-Pause as a Focus
+                         starts and puts it back as it ends); they reach Auto-Pause through
+                         AutoPauseControlling, which UserSettings implements, registered at launch
+                         (IntentDependencies)
     General/             what several features show: PlayerOption (each player and whether it's installed),
                          PlayerTiles (the players as tiles), WebAppsHeading (the web apps' heading, its badges
                          and note), LearningSteps (the steps of learning a player, in the windows, and the
@@ -175,6 +180,8 @@ The tests use mock CoreAudio, level meter, power assertion and player implementa
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 
+Shortcuts and System Settings' Focus filters find AutoHush's actions, App Shortcuts and Focus filter in `Contents/Resources/Metadata.appintents`, which Xcode writes and SwiftPM doesn't. So `build-app.sh`, after `swift build` and before signing, runs Xcode's `appintentsmetadataprocessor` on AutoHushApp: it reads them from the module's sources and the constant values the compiler recorded for them, so their texts must be literals, and lists the actions' summaries for the String Catalog. With Xcode, a build that writes no metadata fails; without it, the app builds without the actions, with a warning. macOS indexes the actions once the app has run, and runs them only for an app signed by a developer team (see [Signing and releases](#signing-and-releases)).
+
 ## Style guide
 
 [STYLE_GUIDE.md](STYLE_GUIDE.md) describes how AutoHush looks and reads: its layout, text sizes, colors and shared components, how to write its text, and how to check a visible change. Follow it, and update it when a change adds a new pattern.
@@ -192,9 +199,9 @@ English is the source language and the fallback; [Language](README.md#language) 
 
 A variant must translate every string: a missing one shows in English, not in the other variant.
 
-- **Where the text lives:** in `Resources/Localization/`. `Localizable.xcstrings` is a String Catalog with all of the app's text, keyed by the English text; `InfoPlist.xcstrings` has the permission prompts and the copyright line from `Info.plist`. Both names are fixed: `Localizable` is the table macOS reads by default, and macOS translates `Info.plist` only from `InfoPlist`.
-- **New text** needs no extra step: write it as `String(localized: "…", comment: "…")` or as a SwiftUI text. `build-app.sh` adds new strings to `Localizable.xcstrings` and marks those no longer used as stale, as Xcode does, then compiles each language into the app. Delete stale strings once you're sure they're gone for good: they are still translated and shipped.
-- **Adding a language:** open both catalogs in Xcode, add the language and translate (or edit the JSON), then build. Use the words macOS itself uses in that language (Ajustes, Einstellungen, Réglages…) and its typography (French spaces before `:` and `?`), and keep each `comment` in mind: it says where the text appears. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`) and that `InfoPlist.xcstrings` matches `Info.plist`.
+- **Where the text lives:** in `Resources/Localization/`. `Localizable.xcstrings` is a String Catalog with all of the app's text, keyed by the English text; `InfoPlist.xcstrings` has the permission prompts and the copyright line from `Info.plist`; `AppShortcuts.xcstrings` has the App Shortcuts' phrases, with `${applicationName}` where the app's name goes. The three names are fixed: `Localizable` is the table macOS reads by default, macOS translates `Info.plist` only from `InfoPlist`, and App Shortcuts' phrases only from `AppShortcuts`.
+- **New text** needs no extra step: write it as `String(localized: "…", comment: "…")` or as a SwiftUI text. `build-app.sh` adds new strings to `Localizable.xcstrings` (the Shortcuts actions' summaries from the App Intents step) and marks those no longer used as stale, as Xcode does, then compiles each catalog into the app, one folder per language. Delete stale strings once you're sure they're gone for good: they are still translated and shipped. An App Shortcut's phrase is the exception: add it to `AppShortcuts.xcstrings` yourself.
+- **Adding a language:** open the three catalogs in Xcode, add the language and translate (or edit the JSON), then build. Use the words macOS itself uses in that language (Ajustes, Einstellungen, Réglages…) and its typography (French spaces before `:` and `?`), and keep each `comment` in mind: it says where the text appears. Text not translated yet shows in English. The tests check that every translation keeps its placeholders (`%@`, `%lld`), that every App Shortcut phrase keeps `${applicationName}` (Siri runs a phrase only when it names the app), and that `InfoPlist.xcstrings` matches `Info.plist`.
 - **Trying a language:** quit AutoHush, then start it with `AutoHush.app/Contents/MacOS/AutoHush -AppleLanguages '(es)'`.
 - **Not translated:** logs, the measuring tools and the disk image's background stay in English.
 
@@ -211,26 +218,30 @@ To report a problem or suggest something, [open an issue](https://github.com/hfu
 
 ## Signing and releases
 
-macOS remembers permissions per signing certificate. An unsigned ("ad hoc") build looks like a new app every time, and users would have to grant everything again. So AutoHush is signed with a stable self-signed certificate, **"AutoHush Self-Signed"**, and the hardened runtime.
+macOS remembers permissions per signing certificate. An unsigned ("ad hoc") build looks like a new app every time, and users would have to grant everything again. So AutoHush is signed with a stable certificate and the hardened runtime.
 
-**One-time setup:**
+Releases are signed with the maintainer's Apple Development certificate, under a designated requirement that names the app's bundle ID and the certificate's team, not the certificate itself. A renewed certificate has the same team, so macOS keeps the permissions and installed copies keep updating. The scripts add this requirement to any Apple identity, reading the team from its certificate.
+
+Your own build doesn't need that certificate. A self-signed or ad hoc build works the same, except that Shortcuts actions don't run: macOS runs them only for an app signed with a team. The self-signed certificate below keeps your permissions across your own rebuilds.
+
+**One-time setup** (a self-signed certificate for your builds):
 
 ```bash
 bash Scripts/create-signing-certificate.sh
 ```
 
-This creates the certificate (valid 10 years) in your login keychain. The first build asks to let `codesign` use the key: choose **Always Allow**. Then **back it up**: in Keychain Access, open **login → My Certificates**, right-click "AutoHush Self-Signed", choose **Export…** and save a password-protected `.p12`. If you lose it, installed copies refuse to update themselves to a version signed with another certificate. Everyone would have to update by hand once, and grant the permissions again.
+This creates the certificate (valid 10 years) in your login keychain. The first build asks to let `codesign` use the key: choose **Always Allow**. Then **back it up**: in Keychain Access, open **login → My Certificates**, right-click "AutoHush Self-Signed", choose **Export…** and save a password-protected `.p12`. If you lose it, a build signed with a new certificate counts as another app: macOS asks for the permissions again.
 
 | Script | What it does |
 |---|---|
-| `Scripts/create-signing-certificate.sh` | Creates the signing certificate (once) |
+| `Scripts/create-signing-certificate.sh` | Creates the self-signed certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`: a drag-to-Applications window in AutoHush's colours, with a first-launch note, drawn by `Scripts/lib/dmg-background.swift` and laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild) (`Scripts/lib/dmg-settings.py`), without Finder. dmgbuild is installed on first use into `.build/`, pinned and hash-checked (`Scripts/lib/dmgbuild-requirements.txt`); it needs Python 3.10 or later (`PYTHON` picks one) |
-| `Scripts/release.sh <version>` | Prepares a release: tests, version and changelog, signed build, DMG and release notes. It refuses unsigned builds and never commits, tags or publishes |
+| `Scripts/release.sh <version>` | Prepares a release: tests, version and changelog, signed build, DMG and release notes. It refuses any build not signed with an Apple developer team (self-signed or ad hoc) and never commits, tags or publishes |
 | `Scripts/update-tap.sh <version>` | Points the Homebrew tap at a published release: checks that the DMG on GitHub is the one in `dist/`, then commits the new version and checksum to the tap's cask and pushes it |
 
-The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
+The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise the first valid "Apple Development" identity in the keychain, otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
 
-**Publishing a release:** releases are made on the `wip` branch. Run `bash Scripts/release.sh <version>` there and follow the steps it prints: commit `Resources/Info.plist` and `CHANGELOG.md` and tag `v<version>` on `wip`, move `main` to that commit (a fast-forward), push both branches and the tag, create the GitHub release with the DMG and the generated notes, then run `bash Scripts/update-tap.sh <version>` for Homebrew. Installed copies find the release at their next daily check: they compare its tag with their own version and install `AutoHush-<version>.dmg`. So the tag must match the app's version, and the DMG must keep its name and be signed with the same certificate.
+**Publishing a release:** releases are made on the `wip` branch. Run `bash Scripts/release.sh <version>` there and follow the steps it prints: commit `Resources/Info.plist` and `CHANGELOG.md` and tag `v<version>` on `wip`, move `main` to that commit (a fast-forward), push both branches and the tag, create the GitHub release with the DMG and the generated notes, then run `bash Scripts/update-tap.sh <version>` for Homebrew. Installed copies find the release at their next daily check: they compare its tag with their own version and install `AutoHush-<version>.dmg`. So the tag must match the app's version, and the DMG must keep its name and be signed with the same team.
 
 The Mac App Store and Homebrew's official cask repository aren't options: both require Apple notarization, and the App Store would also reject the private functions AutoHush relies on.

@@ -52,6 +52,16 @@ struct UserSettingsTests {
         #expect(preferences.autoPause.snoozedUntil == nil)
     }
 
+    @Test("a noted setting comes back; a 'turn off for' that ran out comes back as on")
+    func restoreAutoPause() {
+        let settings = UserSettings.inMemory()
+        let now = Date()
+        settings.restoreAutoPause(AutoPauseSetting(isEnabled: true, snoozedUntil: now.addingTimeInterval(600)), now: now)
+        #expect(!settings.isAutoPauseActive && settings.autoPauseSetting.snoozedUntil != nil)
+        settings.restoreAutoPause(AutoPauseSetting(isEnabled: true, snoozedUntil: now.addingTimeInterval(-1)), now: now)
+        #expect(settings.isAutoPauseActive && settings.autoPauseSetting == AutoPauseSetting())
+    }
+
     @Test("ignoring and un-ignoring an app is stored, and what the monitoring follows changes with it")
     func ignoreApp() {
         let preferences = Preferences(store: InMemoryPreferenceStore())

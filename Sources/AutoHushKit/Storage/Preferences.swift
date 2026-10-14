@@ -15,6 +15,9 @@ package final class Preferences {
     private enum Key {
         static let autoPauseEnabled = "autoPauseEnabled"
         static let autoPauseSnoozedUntil = "autoPauseSnoozedUntil"
+        static let focusNotedAutoPauseEnabled = "focusNotedAutoPauseEnabled"
+        static let focusNotedAutoPauseSnoozedUntil = "focusNotedAutoPauseSnoozedUntil"
+        static let focusAppliedAutoPause = "focusAppliedAutoPause"
         static let ignoredApps = "ignoredApps"
         static let seenApps = "seenApps"
         static let appListOrder = "appListOrder"
@@ -76,6 +79,27 @@ package final class Preferences {
         set {
             defaults.set(newValue.isEnabled, forKey: Key.autoPauseEnabled)
             defaults.set(newValue.snoozedUntil, forKey: Key.autoPauseSnoozedUntil)
+        }
+    }
+
+    /// What a Focus noted of Auto-Pause, until the Focus ends; `nil` when
+    /// none is on. Saved so a quit or a restart during the Focus still ends
+    /// with Auto-Pause put back. Setting `nil` removes it.
+    package var focusAutoPause: FocusAutoPauseNote? {
+        get {
+            guard let applied = defaults.object(forKey: Key.focusAppliedAutoPause) as? Bool else { return nil }
+            return FocusAutoPauseNote(
+                noted: AutoPauseSetting(
+                    isEnabled: defaults.object(forKey: Key.focusNotedAutoPauseEnabled) as? Bool ?? true,
+                    snoozedUntil: defaults.object(forKey: Key.focusNotedAutoPauseSnoozedUntil) as? Date
+                ),
+                applied: applied
+            )
+        }
+        set {
+            defaults.set(newValue?.noted.isEnabled, forKey: Key.focusNotedAutoPauseEnabled)
+            defaults.set(newValue?.noted.snoozedUntil, forKey: Key.focusNotedAutoPauseSnoozedUntil)
+            defaults.set(newValue?.applied, forKey: Key.focusAppliedAutoPause)
         }
     }
 

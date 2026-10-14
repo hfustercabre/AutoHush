@@ -10,7 +10,7 @@ import AutoHushKit
 /// detection and the list's order) here; the rest through the app state.
 @MainActor
 @Observable
-final class UserSettings {
+final class UserSettings: AutoPauseControlling {
     /// What the menu, Settings and the monitoring show or follow of it.
     struct State: Equatable {
         /// Auto-Pause as the menu and Settings say it: on, off, or off until.
@@ -56,6 +56,10 @@ final class UserSettings {
 
     // MARK: - Auto-Pause
 
+    var isAutoPauseActive: Bool { state.autoPauseActive }
+
+    var autoPauseSetting: AutoPauseSetting { preferences.autoPause }
+
     func toggleAutoPause(now: Date = Date()) {
         let isActive = preferences.autoPause.isActive(at: now)
         // Turning it on also ends a snooze; turning it off is indefinite.
@@ -71,6 +75,14 @@ final class UserSettings {
     func setAutoPause(_ on: Bool) {
         preferences.autoPause = AutoPauseSetting(isEnabled: on, snoozedUntil: nil)
         applyAutoPause()
+    }
+
+    /// Puts back a setting noted earlier, when a Focus with AutoHush's filter
+    /// ends (`FocusAutoPause`); a "turn off for" that has run out comes back
+    /// as on.
+    func restoreAutoPause(_ setting: AutoPauseSetting, now: Date = Date()) {
+        preferences.autoPause = setting
+        applyAutoPause(now: now)
     }
 
     /// Derives the effective Auto-Pause from the preferences, clearing an

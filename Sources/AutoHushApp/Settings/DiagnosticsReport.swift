@@ -249,7 +249,7 @@ enum DiagnosticsReport {
                      summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version"),
                      rows: [
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
-                        Row(label: String(localized: "Auto-Pause", comment: "The switch that turns auto-pause on and off: its label in the menu's card and Settings → General, and a Diagnostics row"), value: autoPause),
+                        Row(label: String(localized: "Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"), value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
                         Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"), value: updates),
@@ -292,8 +292,8 @@ enum DiagnosticsReport {
 
     // MARK: - Words
 
-    private static var on: String { String(localized: "On", comment: "Diagnostics: a setting that is on") }
-    private static var off: String { String(localized: "Off", comment: "Diagnostics: a setting that is off") }
+    private static var on: String { String(localized: "On", comment: "A setting that is on: in Diagnostics, and the choice that turns Auto-Pause on in Shortcuts (it reads “Turn Auto-Pause On”) and in the Focus filter") }
+    private static var off: String { String(localized: "Off", comment: "A setting that is off: in Diagnostics, and the choice that turns Auto-Pause off in Shortcuts (it reads “Turn Auto-Pause Off”) and in the Focus filter") }
     private static var yes: String { String(localized: "Yes", comment: "Diagnostics: yes") }
     private static var no: String { String(localized: "No", comment: "Diagnostics: no") }
     private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics and the welcome window: a permission that is granted") }

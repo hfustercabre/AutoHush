@@ -24,6 +24,20 @@ package struct AutoPauseSetting: Equatable, Sendable {
     }
 }
 
+/// What a Focus with AutoHush's filter noted of Auto-Pause, kept until the
+/// Focus ends.
+package struct FocusAutoPauseNote: Equatable, Sendable {
+    /// How Auto-Pause stood before the first Focus.
+    package var noted: AutoPauseSetting
+    /// What the latest Focus set: on or off.
+    package var applied: Bool
+
+    package init(noted: AutoPauseSetting, applied: Bool) {
+        self.noted = noted
+        self.applied = applied
+    }
+}
+
 /// The "Turn Off For" choices of the menu, in menu order (the app has their text).
 package enum AutoPauseSnooze: CaseIterable, Sendable {
     case fiveMinutes

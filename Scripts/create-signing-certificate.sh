@@ -8,8 +8,11 @@
 # The certificate does not make Gatekeeper trust the app; that needs Apple's
 # paid Developer ID.
 #
-# Sign every release with the same certificate, or users lose their permissions
-# on update: back it up (see the end of this script's output).
+# Releases are signed with the maintainer's Apple Development certificate (its
+# developer team), not this one. This certificate is for your own builds: it
+# keeps your permissions across your own rebuilds. Back it up (see the end of
+# this script's output): a build signed with a new certificate counts as
+# another app, and macOS asks for the permissions again.
 #
 # Usage: bash Scripts/create-signing-certificate.sh
 # Environment: SIGNING_KEYCHAIN to import into another keychain (default: login).
@@ -57,4 +60,5 @@ echo "The first build may ask to let codesign use the key: choose Always Allow."
 echo ""
 echo "Back it up now: Keychain Access → login → My Certificates → right-click"
 echo "\"$SELF_SIGNED_IDENTITY\" → Export… → save the .p12 with a password somewhere safe."
-echo "Without it, future releases cannot keep users' permissions."
+echo "If you lose it, a build signed with a new certificate counts as another app:"
+echo "macOS asks for the permissions again."

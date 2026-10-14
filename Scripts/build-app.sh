@@ -15,10 +15,11 @@ BUILD_CONFIG="${1:-release}"
 # A release runs on Apple silicon and Intel Macs alike (macOS 15 and 26 still
 # run on Intel); a debug build only on this Mac's kind.
 case "$BUILD_CONFIG" in
-    release) PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Release"; ARCH_FLAGS=(--arch arm64 --arch x86_64) ;;
-    debug)   PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/Debug"; ARCH_FLAGS=() ;;
+    release) CONFIG_DIR=Release; ARCH_FLAGS=(--arch arm64 --arch x86_64) ;;
+    debug)   CONFIG_DIR=Debug; ARCH_FLAGS=() ;;
     *)       fail "unknown configuration '$BUILD_CONFIG' (use release or debug)" ;;
 esac
+PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/$CONFIG_DIR"
 # Where the compiler lists each source file's localizable strings.
 STRINGS_DIR="$PROJECT_DIR/.build/localized-strings/$BUILD_CONFIG"
 
@@ -74,6 +75,76 @@ else
     note "warning: actool not found (it comes with Xcode); the app keeps the generic icon"
 fi
 
+# Shortcuts and System Settings' Focus filters find the app's actions, its App
+# Shortcuts and its Focus filter in Contents/Resources/Metadata.appintents,
+# which Xcode writes and SwiftPM doesn't. appintentsmetadataprocessor reads
+# them from AutoHushApp's sources and the constant values the compiler
+# recorded for them (so their texts must be literals), and lists the texts
+# only it sees, the actions' summaries, for the string catalog below. macOS
+# indexes the actions once the app has run. It comes with Xcode.
+INTENTS_STRINGSDATA=""
+if PROCESSOR="$(xcrun --find appintentsmetadataprocessor 2>/dev/null)"; then
+    step "Extracting App Intents metadata"
+    # The compiler's map of AutoHushApp's sources to what it made of them,
+    # the constant values among them: one file per source in a debug build,
+    # one for the module in a release. Read from the map, a renamed or
+    # deleted source's old file never counts. One kind of Mac's is enough,
+    # as both give the same metadata: Apple silicon's, which a release always
+    # has, or else Intel's (a debug build on an Intel Mac has only that).
+    OBJECTS_DIR="$PROJECT_DIR/.build/out/Intermediates.noindex/AutoHush.build/$CONFIG_DIR/AutoHushApp-t.build/Objects-normal"
+    INTENTS_ARCH=""
+    for arch in arm64 x86_64; do
+        if [[ -f "$OBJECTS_DIR/$arch/AutoHushApp-OutputFileMap.json" ]]; then
+            INTENTS_ARCH="$arch"
+            break
+        fi
+    done
+    [[ -n "$INTENTS_ARCH" ]] \
+        || fail "the compiler's output map for AutoHushApp is missing (${OBJECTS_DIR#"$PROJECT_DIR/"}/arm64 or x86_64/AutoHushApp-OutputFileMap.json)"
+    OUTPUT_MAP="$OBJECTS_DIR/$INTENTS_ARCH/AutoHushApp-OutputFileMap.json"
+    INTENTS_DIR="$PROJECT_DIR/.build/app-intents/$BUILD_CONFIG"
+    rm -rf "${INTENTS_DIR:?}"
+    mkdir -p "$INTENTS_DIR"
+    jq -r 'keys[] | select(. != "")' "$OUTPUT_MAP" > "$INTENTS_DIR/AutoHushApp.SwiftFileList"
+    jq -r '.[]["const-values"] // empty' "$OUTPUT_MAP" > "$INTENTS_DIR/AutoHushApp.SwiftConstValuesFileList"
+    # The modules AutoHushApp uses have no App Intents of their own.
+    : > "$INTENTS_DIR/AutoHushApp.DependencyMetadataFileList"
+    : > "$INTENTS_DIR/AutoHushApp.DependencyStaticMetadataFileList"
+    # The App Shortcuts' phrases have a catalog of their own
+    # (AppShortcuts.xcstrings), so, as Xcode does then, the processor isn't
+    # told they're untranslated (--no-app-shortcuts-localization).
+    if ! INTENTS_LOG="$(xcrun appintentsmetadataprocessor \
+            --toolchain-dir "${PROCESSOR%/usr/bin/appintentsmetadataprocessor}" \
+            --module-name AutoHushApp \
+            --sdk-root "$(xcrun --sdk macosx --show-sdk-path)" \
+            --xcode-version "$(xcodebuild -version | awk '/Build version/ {print $3}')" \
+            --platform-family macOS \
+            --deployment-target "$MIN_MACOS" \
+            --bundle-identifier "$BUNDLE_ID" \
+            --output "$APP_BUNDLE/Contents/Resources" \
+            --target-triple "$INTENTS_ARCH-apple-macos$MIN_MACOS" \
+            --binary-file "$APP_BUNDLE/Contents/MacOS/$APP_NAME" \
+            --stringsdata-file "$INTENTS_DIR/ExtractedAppShortcutsMetadata.stringsdata" \
+            --source-file-list "$INTENTS_DIR/AutoHushApp.SwiftFileList" \
+            --metadata-file-list "$INTENTS_DIR/AutoHushApp.DependencyMetadataFileList" \
+            --static-metadata-file-list "$INTENTS_DIR/AutoHushApp.DependencyStaticMetadataFileList" \
+            --swift-const-vals-list "$INTENTS_DIR/AutoHushApp.SwiftConstValuesFileList" \
+            --force --compile-time-extraction --deployment-aware-processing 2>&1)"; then
+        echo "$INTENTS_LOG" >&2
+        fail "appintentsmetadataprocessor could not extract the App Intents metadata"
+    fi
+    ACTIONS_DATA="$APP_BUNDLE/Contents/Resources/Metadata.appintents/extract.actionsdata"
+    if [[ ! -f "$ACTIONS_DATA" ]]; then
+        echo "$INTENTS_LOG" >&2
+        fail "appintentsmetadataprocessor wrote no ${ACTIONS_DATA#"$APP_BUNDLE/"}"
+    fi
+    INTENTS_STRINGSDATA="$INTENTS_DIR/ExtractedAppShortcutsMetadata.stringsdata"
+    note "actions: $(jq -r '.actions | keys | join(" ")' "$ACTIONS_DATA");" \
+         "App Shortcuts: $(jq '.autoShortcuts | length' "$ACTIONS_DATA")"
+else
+    note "warning: appintentsmetadataprocessor not found (it comes with Xcode); Shortcuts won't offer the app's actions"
+fi
+
 # Text people read lives in String Catalogs (Resources/Localization/). As Xcode
 # does, each build adds the strings the code uses to Localizable.xcstrings and
 # marks those it no longer uses as stale; then each translated language is
@@ -95,6 +166,12 @@ if xcrun --find xcstringstool >/dev/null 2>&1; then
             UNLISTED+=("${source#"$PROJECT_DIR/"}")
         fi
     done < <(find "$PROJECT_DIR/Sources" -name '*.swift' | sort)
+    # The actions' summaries are only in the App Intents step's list.
+    if [[ -f "$INTENTS_STRINGSDATA" ]]; then
+        STRINGSDATA+=(--stringsdata "$INTENTS_STRINGSDATA")
+    else
+        UNLISTED+=("the Shortcuts actions' summaries")
+    fi
     if [[ ${#UNLISTED[@]} -eq 0 ]]; then
         xcrun xcstringstool sync "$STRING_CATALOG" "${STRINGSDATA[@]}"
         note "$(xcrun xcstringstool print "$STRING_CATALOG" | grep -c .) strings in ${STRING_CATALOG#"$PROJECT_DIR/"}"
