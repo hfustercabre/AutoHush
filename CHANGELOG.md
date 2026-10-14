@@ -63,6 +63,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   menu bar icon now says what the menu's status line does ("AutoHush:
   Spotify is not running"), and a web app named as an app is reads as a
   Safari web app where you choose your player.
+- **VoiceOver said nothing while a window waited for a permission.** When
+  Accessibility is missing, the Add a Web App and learning windows now
+  announce why they wait (the line they show), when they open and when
+  they lock.
 - **Report an Issue opened an empty issue.** Settings → About's button now
   opens the bug report form, which asks for what helps fix it: the
   version, macOS, your player and Diagnostics' report.

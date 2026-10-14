@@ -80,6 +80,7 @@ struct LearningWindowView: View {
                     }
                     LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
                                   locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
+                                  lockedAnnouncement: state.control.map { LearningPermissionStep.announcement($0, name: name) },
                                   deadline: model.learningPauseDeadline, note: model.learningNote,
                                   pauseMode: model.learningPauseMode, action: { model.learningSession.step($0) })
                     // Learning again, the controls it learned still work
@@ -125,8 +126,7 @@ struct LearningPermissionStep: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: permission.statusLine)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(String(localized: "AutoHush needs it to see \(name)’s buttons. The steps below unlock once it’s allowed.",
-                            comment: "The learning window, under the permission it needs first; %@ is the web app"))
+                Text(verbatim: Self.note(name))
                     .captionStyle()
                     .fixedSize(horizontal: false, vertical: true)
                 PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
@@ -134,5 +134,16 @@ struct LearningPermissionStep: View {
             }
         }
         .accessibilityElement(children: .contain)
+    }
+
+    /// Why the steps wait, under the permission.
+    static func note(_ name: String) -> String {
+        String(localized: "AutoHush needs it to see \(name)’s buttons. The steps below unlock once it’s allowed.",
+               comment: "The learning window, under the permission it needs first; %@ is the web app")
+    }
+
+    /// What VoiceOver announces while the steps wait: the permission, then why.
+    static func announcement(_ permission: Permission, name: String) -> String {
+        [permission.statusLine, note(name)].joined(separator: "\n")
     }
 }

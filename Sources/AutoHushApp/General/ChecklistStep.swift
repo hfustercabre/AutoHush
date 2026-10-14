@@ -98,9 +98,10 @@ extension View {
     }
 
     /// Announces the step to do now whenever it changes, so VoiceOver users
-    /// hear the checklist move on. The windows' checklists announce.
-    func announcesCurrentStep(_ announcement: String?) -> some View {
-        onChange(of: announcement) { _, announcement in
+    /// hear the checklist move on. The windows' checklists announce. `atOnce`
+    /// also announces it as the window appears: a locked window says why.
+    func announcesCurrentStep(_ announcement: String?, atOnce: Bool = false) -> some View {
+        onChange(of: announcement, initial: atOnce) { _, announcement in
             guard let announcement else { return }
             AccessibilityNotification.Announcement(announcement).post()
         }

@@ -190,6 +190,8 @@ struct LearningSteps: View {
     var locked = false
     /// Tells VoiceOver when the next step comes (in the learning window).
     var announces = false
+    /// What VoiceOver hears while locked: the permission and why.
+    var lockedAnnouncement: String?
     /// Once it plays: when learning starts over without the pause.
     var deadline: Date?
     var note: LearningNote?
@@ -214,7 +216,8 @@ struct LearningSteps: View {
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(steps, id: \.title) { step($0) }
         }
-        .announcesCurrentStep(announces ? steps.currentAnnouncement : nil)
+        .announcesCurrentStep(announces ? (locked ? lockedAnnouncement : steps.currentAnnouncement) : nil,
+                              atOnce: announces && locked)
     }
 
     /// Play, then AutoHush pauses it: the one to do now has its tip, its

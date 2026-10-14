@@ -282,8 +282,7 @@ struct AddWebAppView: View {
                 // window says so first, and Continue waits until it's allowed.
                 if needsAccessibility {
                     VStack(alignment: .leading, spacing: 8) {
-                        NoteLabel(String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
-                                         comment: "Add a Web App window, while the Accessibility permission is missing"))
+                        NoteLabel(Self.accessibilityNeeded)
                         PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
                     }
                 }
@@ -355,6 +354,12 @@ struct AddWebAppView: View {
 
     private static let safariAccess = Permission.accessibility(player: "Safari")
 
+    /// Why adding waits, over the address; VoiceOver announces it too.
+    private static var accessibilityNeeded: String {
+        String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
+               comment: "Add a Web App window, while the Accessibility permission is missing")
+    }
+
     private var addressField: some View {
         HStack(spacing: 6) {
             Image(systemName: "globe")
@@ -423,6 +428,13 @@ struct AddWebAppView: View {
         // unlocks.
         let before = locked ? groups.adding : steps
         let after = locked ? groups.learning : []
+        // Waiting for a permission, VoiceOver hears why instead of a step.
+        var announcement = steps.currentAnnouncement
+        if locked, let control = settings.permissions.control, case .learning(let name, _) = model.phase {
+            announcement = LearningPermissionStep.announcement(control, name: name)
+        } else if needsAccessibility {
+            announcement = Self.accessibilityNeeded
+        }
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(before, id: \.title) { step($0, locked: false) }
             if locked, let control = settings.permissions.control, case .learning(let name, _) = model.phase {
@@ -430,7 +442,7 @@ struct AddWebAppView: View {
                 ForEach(after, id: \.title) { step($0, locked: true) }
             }
         }
-        .announcesCurrentStep(steps.currentAnnouncement)
+        .announcesCurrentStep(announcement, atOnce: locked || needsAccessibility)
     }
 
     /// Once the web app is chosen, learning it needs its control permission
