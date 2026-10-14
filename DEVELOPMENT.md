@@ -77,56 +77,54 @@ playercheck (tool, in Tools/) → ScriptablePlayers, MenuPlayers, WebAppPlayers,
 ```text
 Sources/
   AutoHush/              AutoHushMain (starts AutoHushApp)
-  AutoHushApp/
-    Main/                AppDelegate (wiring; its web app, permission and Diagnostics parts in
-                         AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
-                         player from its start until AutoHush quits), LearningSession (learning a web
-                         app's controls with the user), WindowWatch (what the open windows show,
-                         followed once a second), UserSettings (the user's settings), AppActions (what only
-                         AppDelegate does, for the windows and the menu), MonitoringPipeline
-                         (the engine for each start), the app-wide state: AppState, which holds AppStatus (what
-                         the menu and the windows show, with UpdateOffer), and SettingsModel (what only
-                         Settings and the other windows show, and their actions), then
-                         StatusPresentation (the status's icons and text), AppHealthState, PermissionCenter
-                         (reads and asks for the permissions), OtherInstances (quits the copies opened before it),
-                         MainMenu (the Mac's standard menu bar, while a window is open), HeldPauses (a player
-                         left mid-pause keeps its monitoring until that pause ends)
-    MenuBar/             StatusMenuController, StatusMenuModel and Views/ (the menu), MenuBarIcon (drawn in code)
-    PlayerChoice/        the welcome window, Learning (the window for a player AutoHush learns, a Safari
-                         web app) and AddWebApp (the Add a Web App window)
-    Settings/            SettingsWindowController (the window, its pages and their sidebar),
-                         LaunchAtLoginController, DiagnosticsReport (the Diagnostics page, and Copy Report's
-                         text), Views/ (one per page: General, Apps, Detection, Fades, Diagnostics, Updates,
-                         About; SettingsSidebar)
-    Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
-                         UpdateDownloads (the kept download), UpdateNotifier, the update window
-    Shortcuts/           Shortcuts' actions (AutoPauseIntents), the two App Shortcuts (AutoHushShortcuts), the
-                         Focus filter (AutoPauseFocusFilter) and FocusAutoPause (notes Auto-Pause as a Focus
-                         starts and puts it back as it ends); they reach Auto-Pause through
-                         AutoPauseControlling, which UserSettings implements, registered at launch
-                         (IntentDependencies)
-    General/             what several features show: PlayerOption (each player and whether it's installed),
-                         PlayerTiles (the players as tiles), WebAppsHeading (the web apps' heading, its badges
-                         and note), LearningSteps (the steps of learning a player, in the windows, and the
-                         Controls row of the menu's card and Settings), PermissionButton, ChecklistStep,
-                         CardStyles (the look the menu and Settings share), HostedWindowController and
-                         WindowHeader (the welcome, learning and Add a Web App windows, in Settings' look),
-                         DockPresence (in the Dock while a window is open), AppVersion, AppIcon, InfoAlert, …
-  AutoHushKit/
-    AudioDetection/      AudioMonitor, SourceActivityTracker, PlaybackSignals (AntiDot mode's judge),
-                         ActiveAudioReport (what Diagnostics shows), CoreAudio/ (process list, taps, levels)
-    Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (the setting and snoozes)
-    MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
+  AutoHushApp/            by kind of code first, then by area
+    App/                 AutoHushApplication, AppDelegate (wiring; its web app, permission and Diagnostics
+                         parts in AppDelegate+WebApps, +Permissions and +Diagnostics), MainMenu (the Mac's
+                         standard menu bar, while a window is open), OtherInstances (quits the copies opened
+                         before it), WindowWatch (what the open windows show, followed once a second)
+    Models/              the app-wide state: AppState, which holds AppStatus (what the menu and the windows
+                         show, with UpdateOffer), SettingsModel (what only the windows show, and their
+                         actions), StatusPresentation (the status's icons and text), AppHealthState,
+                         StatusMenuModel, AddWebAppModel, PlayerOption (each player and whether it's
+                         installed), AppActions (what only AppDelegate does), UpdatePrompt, LearningModes
+    Services/            what does the work, by area: Playback/ (PlayerSession, the chosen player from its
+                         start until AutoHush quits; MonitoringPipeline, the engine for each start;
+                         HeldPauses), Settings/ (UserSettings, LaunchAtLoginController), Permissions/
+                         (PermissionCenter), Updates/ (UpdateController, UpdateChecker, UpdateInstaller:
+                         download, signature check, swap; UpdateDownloads, UpdateNotifier, ReleaseNotes),
+                         WebApps/ (LearningSession, learning a web app's controls with the user;
+                         FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
+                         (Shortcuts' actions, the two App Shortcuts, the Focus filter, and FocusAutoPause,
+                         which notes Auto-Pause as a Focus starts and puts it back as it ends; they reach
+                         Auto-Pause through AutoPauseControlling, registered at launch by
+                         IntentDependencies)
+    Controllers/         AppKit's window and menu controllers: StatusMenuController, SettingsWindowController,
+                         PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
+                         LearningWindowController, HostedWindowController (their shared base)
+    Views/               SwiftUI views, by area: Components/ (what several places show: CardStyles,
+                         ChecklistStep, NoteLabel, SearchField, SupportLine, WindowHeader,
+                         PermissionButton, PlayerTiles, WebAppsHeading), MenuBar/, Settings/ (one per
+                         page, SettingsSidebar), Welcome/, WebApps/ (Add a Web App, the learning window
+                         and LearningSteps)
+    Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, MenuBarIcon (drawn in code),
+                         DockPresence (in the Dock while a window is open), InfoAlert, …
+  AutoHushKit/           the engine, by kind of code too
+    Models/              values and settings: AutoPause (the setting and snoozes), PlaybackState,
+                         DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),
+                         AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates
+    Services/            Audio/ (AudioMonitor, SourceActivityTracker, PlaybackSignals: AntiDot mode's judge;
+                         CoreAudio/: process list, taps, levels), Playback/ (PlaybackArbiter, VolumeFader,
+                         PauseHandover)
+    Players/             MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
                          PolledStateObserver (for players that announce nothing), WebAppMaking (making a
                          web app from an address, and the suggested ones), WebAddress (an address as
                          typed, and whether a page is its site), CountrySites (a service's site by
                          country), PlayerIconPlaceholder (a player's icon while it isn't installed)
     Permissions/         what's needed and where to grant it
-    PrivateAPI/          TCC, ProcessResponsibility, AccessibilityWindows, NowPlayingApp: undocumented macOS
-                         functions, resolved at runtime with fallbacks; check them after every major macOS
-                         release
-    Configuration/       AppConfiguration, TimingSettings, AutomaticUpdates
-    Storage/, General/   Preferences; logging and small helpers
+    Storage/             Preferences
+    Utilities/           logging and small helpers; PrivateAPI/ (TCC, ProcessResponsibility,
+                         AccessibilityWindows, NowPlayingApp: undocumented macOS functions, resolved at
+                         runtime with fallbacks; check them after every major macOS release)
   AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
   PlayersSupport/        ScriptablePlayers and MenuPlayers (shared), SpotifySupport, AppleMusicSupport,
                          TidalSupport, PodcastsSupport and VLCSupport: each player's profile or controller,
@@ -149,11 +147,10 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 **Where things go:**
 
 - **`AutoHushKit`** has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
-- **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show). Features may use the engine, `General/` and that state, not each other: what several of them show lives in `General/`.
+- **`AutoHushApp`** is sorted by kind of code first, then by area: `App/` starts things and wires them together; `Models/` holds the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show); `Services/` does the work; `Controllers/` are AppKit's window and menu controllers; `Views/` are SwiftUI's, with what several places show in `Views/Components/`; `Utilities/` are small helpers. A file holds one kind of code.
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
-- **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
-- **Text people read** lives in the app, never in the engine: mostly in `Main/StatusPresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
-- **`General/`** folders hold only what several parts of a module need.
+- **`Utilities/PrivateAPI/`** (in the engine) is the only place that calls undocumented macOS functions.
+- **Text people read** lives in the app, never in the engine: mostly in `Models/StatusPresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 
 **Adding a media player:** first check that the app can be controlled, and how: [PlayerCheck](Tools/PlayerCheck) (or [Player Check](Tools/PlayerCheckApp), in a window) reads its scripting dictionary, playback menu and page, tries pausing and playing it, and says which kind of player it would be. The app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
@@ -165,7 +162,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 
 A website needs none of this: added to the Dock from Safari, it's offered as a player, and AutoHush learns its Play/Pause button. `MusicPlayerCatalog` takes such players besides the built-in ones (`found`) and the sites it suggests adding (`suggested`); a player that has to learn implements `LearningMusicPlayer`, whose status the app shows, and one that may mute itself implements `MutingMusicPlayer`. Once a website has been tested live, add it to `SupportedPlayers.testedWebApps`: its web app is then offered first and suggested until added, instead of being marked untested.
 
-Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Configuration/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
+Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Models/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 
 ## Build and test
 
