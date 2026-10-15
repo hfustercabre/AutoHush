@@ -136,13 +136,7 @@ package actor MenuPlayer: MusicPlayer {
     /// Presses Play/Pause if the app is in `state`; does nothing if it's
     /// already in the other one.
     private func press(from state: PlayerState) async throws {
-        let current = await playerState()
-        guard current == state else {
-            if current == .notRunning { throw MusicPlayerError.playerNotRunning }
-            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
-            if current == .stopped { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
-            return
-        }
+        guard try await playerState().needsToggle(from: state) else { return }
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let menu = menu
         guard await queue.run({ menu.pressToggle(pid: pid) }) else {

@@ -116,7 +116,3 @@ enum AppIcon {
     /// The tile of dark app icons, from top to bottom, as macOS draws it.
     private static let darkTile = [PlayerIconPlaceholder.RGB(0x262626).cgColor, PlayerIconPlaceholder.RGB(0x101010).cgColor]
 }
-
-private extension NSAppearance {
-    var isDark: Bool { bestMatch(from: [.aqua, .darkAqua]) == .darkAqua }
-}

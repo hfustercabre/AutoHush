@@ -9,7 +9,7 @@ struct TimingSliderRow: View {
     let keyPath: WritableKeyPath<TimingSettings, Double>
     let range: ClosedRange<Double>
     let step: Double
-    var format: (Double) -> String = TimingSliderRow.seconds
+    var format: (Double) -> String = \.secondsText
     let help: Text
 
     var body: some View {
@@ -40,11 +40,6 @@ struct TimingSliderRow: View {
             .accessibilityValue(Text(verbatim: format(model.timings[keyPath: keyPath])))
             help.captionStyle()
         }
-    }
-
-    nonisolated static func seconds(_ value: Double) -> String {
-        let number = value.formatted(.number.precision(.fractionLength(0...2)))
-        return String(localized: "\(number) s", comment: "A duration in seconds")
     }
 }
 

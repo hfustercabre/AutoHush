@@ -60,18 +60,21 @@ extension AppDelegate {
         // Learned (both steps ticked), or nothing to learn: the windows go.
         let delay = learningStatus == .learned ? learnedWindowDelay : .zero
         if let window = learningWindow, window.isOpen {
-            Task { [weak self] in
-                try? await Task.sleep(for: delay)
-                guard let self, self.status.learning == learningStatus else { return }
-                window.close()
-            }
+            closeLater(after: delay, ifStill: learningStatus) { window.close() }
         }
         if let window = addWebAppWindow, window.isOpen, case .learning = addWebAppModel.phase {
-            Task { [weak self] in
-                try? await Task.sleep(for: delay)
-                guard let self, self.status.learning == learningStatus else { return }
-                window.close()
-            }
+            closeLater(after: delay, ifStill: learningStatus) { window.close() }
+        }
+    }
+
+    /// Closes a window that shows the learning steps once `delay` is over,
+    /// if learning is still at `learningStatus` then.
+    private func closeLater(after delay: Duration, ifStill learningStatus: LearningStatus?,
+                            _ close: @escaping @MainActor () -> Void) {
+        Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard let self, self.status.learning == learningStatus else { return }
+            close()
         }
     }
 

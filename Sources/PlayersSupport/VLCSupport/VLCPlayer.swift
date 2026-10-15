@@ -115,14 +115,9 @@ package actor VLCPlayer: MusicPlayer {
     package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     /// Sends Play/Pause if VLC is in `state`; does nothing if it's already in
-    /// the other one.
+    /// the other one. Stopped (no item), it has nothing to play.
     private func toggle(from state: PlayerState) async throws {
-        let current = await playerState()
-        guard current == state else {
-            if current == .notRunning { throw MusicPlayerError.playerNotRunning }
-            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
-            return
-        }
+        guard try await playerState().needsToggle(from: state) else { return }
         let pid = try channel.runningProcessIdentifier()
         _ = try await channel.send({
             ScriptablePlayer.makeCommandEvent(suite: Code.suite, Code.playPause, processIdentifier: $0)

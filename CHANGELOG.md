@@ -80,6 +80,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **VLC with nothing loaded counted as resumed.** Asked to play while
+  stopped, VLC did nothing, yet the menu said "Playing" for a moment. Now
+  AutoHush knows it has nothing to play, as with TIDAL and Apple Podcasts.
 - **A web app's window on another desktop could go unfound.** AutoHush
   reaches windows on other desktops by trying the app's element numbers,
   only the first thousand. An app that makes its window again later can

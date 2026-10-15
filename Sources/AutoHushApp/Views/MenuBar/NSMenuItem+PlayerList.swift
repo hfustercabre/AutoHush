@@ -55,7 +55,7 @@ extension NSMenuItem {
     @MainActor
     func setTitle(_ name: String, badge: String, font: NSFont, maxWidth: CGFloat) {
         let title = NSMutableAttributedString()
-        let dark = NSApplication.shared.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let dark = NSApplication.shared.effectiveAppearance.isDark
         let renderer = ImageRenderer(content: HeadingBadge(text: badge).environment(\.colorScheme, dark ? .dark : .light))
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let gap = NSAttributedString(string: "  ", attributes: [.font: font])

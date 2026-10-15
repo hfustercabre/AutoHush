@@ -129,14 +129,14 @@ enum DiagnosticsReport {
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
             Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
-            Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"), value: seconds(facts.timings.startConfirmation)),
+            Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"), value: facts.timings.startConfirmation.secondsText),
         ]
         if facts.detectionMethod == .playbackSignals {
             rows.append(Row(label: String(localized: "Pause playback after, without video",
                                           comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
-                            value: seconds(AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo)))
+                            value: AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo.secondsText))
         }
-        rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes"), value: seconds(facts.timings.stopGrace)))
+        rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes"), value: facts.timings.stopGrace.secondsText))
         if !antiDot {
             rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
@@ -266,11 +266,6 @@ enum DiagnosticsReport {
     /// "playing, ignored" as a row's subtitle: "Playing, ignored".
     private static func sentenceCase(_ text: String) -> String {
         text.prefix(1).localizedUppercase + text.dropFirst()
-    }
-
-    private static func seconds(_ value: Double) -> String {
-        let number = value.formatted(.number.precision(.fractionLength(0...2)))
-        return String(localized: "\(number) s", comment: "A duration in seconds")
     }
 
     /// The music player's state, as Diagnostics shows it.
