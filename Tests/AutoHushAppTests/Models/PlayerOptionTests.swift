@@ -52,6 +52,21 @@ struct PlayerOptionTests {
         #expect(PlayerOption.webAppsWarning.hasPrefix("Web apps are experimental."))
     }
 
+    @Test("apps added through a check come after the supported apps and before the web apps, under their heading")
+    func checkedAppsBetween() {
+        var webApp = option("YT Music", installed: true)
+        webApp.kind = .safariWebApp
+        var checked = option("Deezer", installed: true)
+        checked.kind = .checkedApp
+        let options = [webApp, checked, option("A", installed: false), option("B", installed: true)]
+        #expect(options.offered.map(\.name) == ["B", "A", "Deezer", "YT Music"])
+        #expect(options.offered.otherAppsStart == 2)
+        #expect(options.offered.webAppsStart == 3)
+        #expect(options.offered.matching("yt").otherAppsStart == nil)
+        #expect(PlayerOption.checkedByYouBadge == "Checked by you")
+        #expect(PlayerOption.addAppTitle == "Add an App…")
+    }
+
     @Test("VoiceOver says a web app is one only when an app has its name")
     func spokenName() {
         let app = PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: URL(fileURLWithPath: "/Applications/Spotify.app"))

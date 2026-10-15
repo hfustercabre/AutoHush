@@ -31,7 +31,8 @@ struct GeneralSettingsView: View {
         SettingsPageScroll {
             playerCard
             PlayerTiles(options: model.playerOptions.offered, selection: model.chosenPlayerID,
-                        onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() })
+                        onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() },
+                        onAddApp: { model.actions?.openAddApp() })
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
             }

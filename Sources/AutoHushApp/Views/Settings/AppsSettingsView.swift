@@ -175,7 +175,8 @@ struct AppsSettingsView: View {
                 RowTitle(
                     Text(verbatim: row.source.name),
                     subtitle: row.isIgnored ? Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Apps: under an app that is ignored, so your player keeps playing while it plays")
-                        : Text("Pauses your player", comment: "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays")
+                        : Text(verbatim: PlayerOption.interruptsLabel(
+                            mutes: model.playerOptions.first { $0.bundleID == model.chosenPlayerID }?.pausesByMuting == true))
                 )
                 Spacer(minLength: 8)
             }

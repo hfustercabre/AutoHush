@@ -28,6 +28,13 @@ struct SupportedPlayersTests {
         #expect(catalog.players.allSatisfy { !$0.isUntested && $0.installedURL == nil })
     }
 
+    @Test("Add an App never offers the 14 Apple apps that are no players, and none of them is a supported player")
+    func notPlayers() {
+        #expect(SupportedPlayers.notPlayers.count == 14)
+        #expect(SupportedPlayers.notPlayers.allSatisfy { $0.hasPrefix("com.apple.") })
+        #expect(SupportedPlayers.catalog.all.allSatisfy { !SupportedPlayers.notPlayers.contains($0.bundleID) })
+    }
+
     @Test("every player has a placeholder icon, its mark on its tile")
     func iconPlaceholders() throws {
         let tile = CGRect(x: 0, y: 0, width: PlayerIconPlaceholder.tileSide, height: PlayerIconPlaceholder.tileSide)

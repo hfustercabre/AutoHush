@@ -1,6 +1,6 @@
 # Player Check
 
-A window over [PlayerCheck](../PlayerCheck): it lists the apps on your Mac
+A window over [PlayerCheck](../../Sources/PlayerCheck): it lists the apps on your Mac
 that can be in macOS's Now Playing list, and checks the one you pick for
 the ways AutoHush could control it. It can also play and pause the apps
 with a known way, to try each way by hand.

@@ -262,29 +262,34 @@ final class StatusMenuController: NSObject {
         showPlayerRows(status.playerOptions.offered.matching(search), at: menu.index(of: playerSearchItem) + 1)
     }
 
-    /// Inserts a row for each of `options` at `index`, with a heading over
-    /// the apps and one over the Safari web apps, and "Add a Web App…" last;
-    /// a note when there's none, because the search matched none.
+    /// Inserts a row for each of `options` at `index`: the supported apps
+    /// under their heading; the apps added through a check under theirs,
+    /// then "Add an App…" (E3); the Safari web apps under theirs, and "Add a
+    /// Web App…" last. A note first when the search matched none.
     private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
-        playerRows = options.map(playerRow)
-        if let start = options.webAppsStart {
-            playerRows.insert(.webAppsHeading(width: menuContentWidth), at: start)
-        }
-        if options.first?.kind == .app {
-            playerRows.insert(.supportedAppsHeading(width: menuContentWidth), at: 0)
-        }
-        if playerRows.isEmpty {
+        let apps = options.filter { $0.kind == .app }
+        let checked = options.filter { $0.kind == .checkedApp }
+        let webApps = options.filter { $0.kind == .safariWebApp }
+        var rows: [NSMenuItem] = []
+        if options.isEmpty {
             let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
             note.isEnabled = false
-            playerRows = [note]
+            rows.append(note)
         }
-        playerRows.append(addWebAppRow())
+        if !apps.isEmpty { rows += [.supportedAppsHeading(width: menuContentWidth)] + apps.map(playerRow) }
+        // While a search narrows the players, the heading shows only over a match.
+        if !checked.isEmpty || model.playerSearch.isEmpty { rows.append(.otherAppsHeading(width: menuContentWidth)) }
+        rows += checked.map(playerRow) + [addRow(PlayerOption.addAppTitle, #selector(addApp))]
+        if !webApps.isEmpty { rows += [.webAppsHeading(width: menuContentWidth)] + webApps.map(playerRow) }
+        rows.append(addRow(PlayerOption.addWebAppTitle, #selector(addWebApp)))
+        playerRows = rows
         for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
     }
 
-    /// Last under the players: makes a website a Safari web app.
-    private func addWebAppRow() -> NSMenuItem {
-        let row = item(PlayerOption.addWebAppTitle, #selector(addWebApp))
+    /// "Add an App…" after the apps added through a check; "Add a Web App…"
+    /// last under the players.
+    private func addRow(_ title: String, _ action: Selector) -> NSMenuItem {
+        let row = item(title, action)
         row.shownImage = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil)
         return row
     }
@@ -304,6 +309,8 @@ final class StatusMenuController: NSObject {
         if !option.isInstalled {
             row.isEnabled = option.isClickable
             row.subtitle = option.webAddress != nil ? PlayerOption.clickToAddLabel : PlayerOption.notInstalledLabel
+        } else if option.pausesByMuting {
+            row.subtitle = PlayerOption.mutedInsteadLabel
         }
         // VoiceOver can't see the web app's Safari badge: one named as an app is says so.
         let spoken = option.spokenName(among: status.playerOptions)
@@ -347,7 +354,8 @@ final class StatusMenuController: NSObject {
                 await self?.updates.checkNow()
                 self?.model.isCheckingForUpdates = false
             }
-        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .quit:
+        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .reopenPlayer,
+             .unmutePlayer, .quit:
             menu.cancelTracking()
             // Once the menu has closed, as for its own rows.
             RunLoop.main.perform(inModes: [.default]) { [weak self] in
@@ -365,6 +373,8 @@ final class StatusMenuController: NSObject {
         case .showAbout:          actions?.openSettings(page: .about)
         case .showControlError:   actions?.showControlError()
         case .learnControls:      actions?.learnControlsAgain()
+        case .reopenPlayer:       actions?.reopenPlayer()
+        case .unmutePlayer:       actions?.unmutePlayer()
         case .quit:               actions?.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
         }
@@ -382,6 +392,7 @@ final class StatusMenuController: NSObject {
     @objc private func showAvailableUpdate() { updates.presentAvailableUpdate() }
 
     @objc private func addWebApp() { actions?.openAddWebApp() }
+    @objc private func addApp() { actions?.openAddApp() }
 
     @objc private func reopen() { actions?.reopenAutoHush() }
 

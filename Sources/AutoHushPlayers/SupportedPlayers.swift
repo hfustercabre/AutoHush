@@ -3,6 +3,7 @@ import AutoHushKit
 import ScriptablePlayers
 import MenuPlayers
 import WebAppPlayers
+import CheckedPlayers
 import SpotifySupport
 import AppleMusicSupport
 import TidalSupport
@@ -31,7 +32,8 @@ package enum SupportedPlayers {
         // Shown in Add a Web App's address field and its "not a web address" note.
         exampleWebAddress: "music.youtube.com",
         countrySites: testedWebApps.compactMap(\.countrySites),
-        found: { webApps.current() },
+        // The Safari web apps, then the apps added through Player Check (never a built-in player's).
+        found: { webApps.current() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
         suggested: { webApps.suggestions() }
     )
 
@@ -47,6 +49,26 @@ package enum SupportedPlayers {
         TestedWebApp(countrySites: amazonMusicSites, region: Locale.current.region?.identifier),
         TestedWebApp(name: "Deezer", address: "deezer.com"),
         TestedWebApp(name: "SoundCloud", address: "soundcloud.com"),
+    ]
+
+    /// Apple's apps that can show or play something but are no media players,
+    /// which Add an App never offers (the user's pick, 2026-10-15): App Store,
+    /// Clock, Dictionary, Freeform, Home, Journal, Mail, Maps, Notes, Photo
+    /// Booth, Reminders, TestFlight, Tips and Xcode. Other App… can still
+    /// pick one.
+    package static let notPlayers: Set<String> = [
+        "com.apple.AppStore", "com.apple.clock", "com.apple.Dictionary", "com.apple.freeform", "com.apple.Home",
+        "com.apple.journal", "com.apple.mail", "com.apple.Maps", "com.apple.Notes", "com.apple.PhotoBooth",
+        "com.apple.reminders", "com.apple.TestFlight", "com.apple.helpviewer", "com.apple.dt.Xcode",
+    ]
+
+    /// The apps added through Player Check, each kept while its setup stays.
+    package static let checkedPlayers = CheckedPlayers()
+
+    /// The built-in players' bundle IDs: a check never stands in for one.
+    private static let builtIn: Set<String> = [
+        ScriptablePlayerProfile.spotify.bundleID, ScriptablePlayerProfile.appleMusic.bundleID, VLCPlayer.appBundleID,
+        MenuPlayerProfile.applePodcasts.bundleID, MenuPlayerProfile.tidal.bundleID,
     ]
 
     /// The Safari web apps in the Applications folders, looked for once for

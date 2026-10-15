@@ -30,6 +30,8 @@ struct StatusCardView: View {
                         statusLine(withInfo: false)
                     }
                     if status.canRetry { retryButton }
+                    if status.playerNeedsReopen && status.isReady { reopenButton }
+                    if status.offersUnmute { unmuteButton }
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 3) {
@@ -95,6 +97,41 @@ struct StatusCardView: View {
                 Text("Retry", comment: "Menu: button on the card that tries starting again after a problem")
             } icon: {
                 Image(systemName: "arrow.clockwise")
+            }
+            .font(.appCallout)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+        }
+        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .padding(.top, 4)
+    }
+
+    /// Reopens the player with what it needs (its launch option); the menu
+    /// closes, and the card shows how it went next time.
+    private var reopenButton: some View {
+        Button { model.perform(.reopenPlayer) } label: {
+            Label {
+                Text(verbatim: AddAppText.reopenTitle(status.playerName))
+            } icon: {
+                Image(systemName: "arrow.clockwise")
+            }
+            .font(.appCallout)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+        }
+        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .padding(.top, 4)
+        .help(AddAppText.reopenReason(status.playerName))
+        .accessibilityHint(Text(verbatim: AddAppText.reopenReason(status.playerName)))
+    }
+
+    /// Lifts the mute until the other apps stop, as playing it yourself does.
+    private var unmuteButton: some View {
+        Button { model.perform(.unmutePlayer) } label: {
+            Label {
+                Text("Unmute", comment: "Menu: button on the card while the media player (one that can only be muted) is muted for another app: it's heard again until the other apps stop")
+            } icon: {
+                Image(systemName: "speaker.wave.2")
             }
             .font(.appCallout)
             .padding(.horizontal, 8)

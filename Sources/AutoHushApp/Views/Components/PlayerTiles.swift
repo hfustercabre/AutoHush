@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// The media players as tiles, three a row, in one card: the apps under
-/// "Supported Apps", then the Safari web apps under their heading, with a
-/// tile that adds one. A tile is a chip: the player's icon, then its name
+/// "Supported Apps", the apps added through a check under "Other Apps" (E3),
+/// then the Safari web apps under their heading; each of the last two groups
+/// with a tile that adds one. A tile is a chip: the player's icon, then its name
 /// with what a row would say under it. The chosen (or picked) player's
 /// tile is tinted and outlined with the accent color. Settings → General and
 /// the welcome window show them; the menu keeps its rows.
@@ -20,6 +21,8 @@ struct PlayerTiles: View {
     /// opens "Add a Web App" filled in).
     let onSelect: (PlayerOption) -> Void
     let onAddWebApp: () -> Void
+    /// "Add an App…": checks an app and adds it.
+    var onAddApp: () -> Void = {}
     var maxVisibleRows: Int?
     var holdsHeight = false
     /// What was typed, for the note when nothing matches.
@@ -33,12 +36,17 @@ struct PlayerTiles: View {
     static let iconSize: CGFloat = 24
 
     @State private var appsTop: CGFloat = 0
+    @State private var otherAppsTop: CGFloat = 0
     @State private var webAppsTop: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
     @State private var heldHeight: CGFloat?
 
     private var apps: [PlayerOption] { options.filter { $0.kind == .app } }
-    private var webApps: [PlayerOption] { options.filter { $0.kind != .app } }
+    private var checkedApps: [PlayerOption] { options.filter { $0.kind == .checkedApp } }
+    private var webApps: [PlayerOption] { options.filter { $0.kind == .safariWebApp } }
+
+    /// What an add tile adds.
+    private enum Adds { case app, webApp }
 
     var body: some View {
         Card {
@@ -59,44 +67,54 @@ struct PlayerTiles: View {
 
     private nonisolated static let space = "PlayerTiles"
 
-    /// The apps' and the web apps' tiles under their headings, spaced as a
-    /// card's rows.
+    /// The groups' tiles under their headings, spaced as a card's rows.
     private var groups: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if apps.isEmpty && webApps.isEmpty && !search.isEmpty {
+            if apps.isEmpty && checkedApps.isEmpty && webApps.isEmpty && !search.isEmpty {
                 Text(verbatim: PlayerOption.noMatchNote(search)).foregroundStyle(.appSecondary)
             }
             if !apps.isEmpty {
                 SectionLabel(Text(verbatim: PlayerOption.supportedAppsHeading))
                     .accessibilityAddTraits(.isHeader)
-                grid(apps, adds: false)
+                grid(apps, adds: nil)
                     .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .named(Self.space)).minY }) { appsTop = $0 }
                 CardDivider()
             }
+            OtherAppsHeading()
+            grid(checkedApps, adds: .app)
+                .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .named(Self.space)).minY }) { otherAppsTop = $0 }
+            CardDivider()
             WebAppsHeading()
-            grid(webApps, adds: true)
+            grid(webApps, adds: .webApp)
                 .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .named(Self.space)).minY }) { webAppsTop = $0 }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func grid(_ options: [PlayerOption], adds: Bool) -> some View {
+    private func grid(_ options: [PlayerOption], adds: Adds?) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: Self.columns), spacing: Self.rowSpacing) {
             ForEach(options) { tile($0) }
-            if adds { addTile }
+            if let adds { addTile(adds) }
         }
     }
 
-    /// The tiles as tall as their first `rows` rows, counting the apps' then
-    /// the web apps' (with their heading between), a little of the next
-    /// row's room under them; all of them when there are no more.
+    /// The tiles as tall as their first `rows` rows, counting each group's
+    /// in turn (with their headings between), a little of the next row's
+    /// room under them; all of them when there are no more.
     private func visibleHeight(rows: Int) -> CGFloat {
-        let appRows = Self.rowCount(apps.count)
-        let webAppRows = Self.rowCount(webApps.count + 1) // the add tile
-        guard appRows + webAppRows > rows, contentHeight > 0 else { return contentHeight }
-        let bottom = appRows >= rows
-            ? appsTop + Self.height(ofRows: rows)
-            : webAppsTop + Self.height(ofRows: rows - appRows)
+        let groups = (apps.isEmpty ? [] : [(rows: Self.rowCount(apps.count), top: appsTop)])
+            + [(rows: Self.rowCount(checkedApps.count + 1), top: otherAppsTop), // the add tiles
+               (rows: Self.rowCount(webApps.count + 1), top: webAppsTop)]
+        guard groups.map(\.rows).reduce(0, +) > rows, contentHeight > 0 else { return contentHeight }
+        var left = rows
+        var bottom = contentHeight
+        for group in groups {
+            if left <= group.rows {
+                bottom = group.top + Self.height(ofRows: left)
+                break
+            }
+            left -= group.rows
+        }
         return min(contentHeight, bottom + Self.rowSpacing + 12)
     }
 
@@ -151,21 +169,24 @@ struct PlayerTiles: View {
             HeadingBadge(text: PlayerOption.untestedBadge)
         } else if !option.isInstalled {
             Text(verbatim: PlayerOption.notInstalledLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+        } else if option.pausesByMuting {
+            Text(verbatim: PlayerOption.mutedInsteadLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
         }
     }
 
     /// The room inside a tile, before its icon.
     private static let inset: CGFloat = 6
 
-    /// The last tile: adds a Safari web app.
-    private var addTile: some View {
-        Button(action: onAddWebApp) {
+    /// The last tile of the other apps (checks an app and adds it) and of
+    /// the Safari web apps (adds one).
+    private func addTile(_ adds: Adds) -> some View {
+        Button(action: adds == .app ? onAddApp : onAddWebApp) {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .medium))
                     .frame(width: Self.iconSize, height: Self.iconSize)
                     .accessibilityHidden(true)
-                Text("Add…", comment: "The last of the Safari web apps' tiles (Settings → General, the welcome window): adds a website as a web app")
+                Text("Add…", comment: "The last tile of the Safari web apps and of the other apps (Settings → General, the welcome window): adds a website as a web app, or checks an app and adds it")
                     .font(.appCallout)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -177,6 +198,6 @@ struct PlayerTiles: View {
             .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10))
-        .accessibilityLabel(Text(verbatim: PlayerOption.addWebAppTitle))
+        .accessibilityLabel(Text(verbatim: adds == .app ? PlayerOption.addAppTitle : PlayerOption.addWebAppTitle))
     }
 }

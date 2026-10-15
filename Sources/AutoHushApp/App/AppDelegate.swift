@@ -53,6 +53,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var addWebAppWindow: (any AddWebAppPresenting)?
     let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
     var addingWebApp: Task<Void, Never>?
+    /// Checks an app and adds it ("Add an App…"); made when first opened.
+    var addAppModel: AddAppModel?
+    var addAppWindow: AddAppWindowController?
+    /// The list of apps Add an App's first step opens.
+    var appChooserWindow: AppChooserWindowController?
+    /// Shown before a check starts.
+    var checkWarningWindow: CheckWarningWindowController?
+    /// The check's progress, at the bottom right of the screen while it runs.
+    let checkPanel = CheckPanelController()
     /// A web app made but not found as installed yet, and the address it was
     /// made from, while the add window says so (`pickUpListedWebApp`).
     var webAppAwaitingListing: (bundleID: String, address: String)?
@@ -194,6 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showChosenPlayer()
         refreshPlayerOptions()
         showUserSettings(userSettings.state)
+        followPlayerReopen() // the chosen player may be running without what it needs
         learning.follow(player) // as the session does, from the start (`setChosenPlayer`)
         addWebAppModel.exampleAddress = players.exampleWebAddress
         addWebAppModel.countrySites = players.countrySites
@@ -208,6 +218,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: AppActions {
     func choosePlayer(_ bundleID: String) { chooseMusicPlayer(bundleID) }
     func openAddWebApp() { showAddWebApp() }
+    func openAddApp() { showAddApp() }
+    func reopenPlayer() { reopenChosenPlayer() }
+    func unmutePlayer() {
+        guard let player else { return }
+        logger.notice("\(player.name, privacy: .public) unmuted from the menu, until the other apps stop")
+        Task { try? await player.play() } // its state then reads as playing: the user's, as a resume by hand
+    }
     func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }
     func showLogs() {

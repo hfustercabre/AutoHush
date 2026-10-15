@@ -44,7 +44,7 @@ enum StepButton: Equatable, Sendable {
                    comment: "Button under the step “Pause it yourself” while AutoHush learns a web app's controls: the user has paused it")
         case .tryAgain:
             String(localized: "Try Again",
-                   comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: it tries again")
+                   comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: it tries again; and under Add an App's “Play something in %@” once the app didn't play in time")
         case .pauseManually:
             String(localized: "Pause It Manually",
                    comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: the user pauses it instead (a step “Pause it yourself” follows)")

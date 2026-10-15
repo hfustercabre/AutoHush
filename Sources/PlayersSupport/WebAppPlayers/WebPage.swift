@@ -1,4 +1,6 @@
+import AppKit
 import ApplicationServices
+import os
 import AutoHushKit
 
 /// One of a page's buttons, the same between looks while the page isn't
@@ -45,7 +47,7 @@ package struct ButtonStanding: Equatable, Sendable {
 
 /// Where a button is on its page, to find it again after a reload, when
 /// every element is new.
-package struct ButtonPlace: Equatable, Sendable {
+package struct ButtonPlace: Codable, Equatable, Sendable {
     /// The kinds of element around it, its parent first, up to the page:
     /// e.g. "AXGroup", "AXToolbar", "AXGroup:AXLandmarkComplementary". Never
     /// their names, which are in the site's language and can change.
@@ -84,10 +86,29 @@ package protocol WebPage: Sendable {
     /// Whether the app's sound is on: a process it's responsible for (its
     /// WebKit process) has output running.
     func isPlayingSound(pid: pid_t) -> Bool
+    /// Whether its page's words are current now: a WebKit page's always; a
+    /// Chromium or Flutter page's only while one of its windows can be seen.
+    func wordsAreCurrent(pid: pid_t) -> Bool
+    /// Turns back off the switch it turned on to show the app's page, now
+    /// that the app is no longer the player.
+    func release()
+    /// The page's word was current and said whether it plays: a Chromium web
+    /// app's page counts its browser's other playing pages then, to tell its
+    /// own sound from theirs while its word isn't current.
+    func noteState(playing: Bool, pid: pid_t)
+}
+
+extension WebPage {
+    package func wordsAreCurrent(pid: pid_t) -> Bool { true }
+    package func release() {}
+    package func noteState(playing: Bool, pid: pid_t) {}
 }
 
 /// The real pages, through the Accessibility API, which WebKit offers for
-/// every page without any setting.
+/// every page without any setting. Another app's page (`PageAccess`: an
+/// Electron, CEF or Flutter app's, a Chromium browser's web app's) shows once
+/// its switch for assistive tools is on: it's turned on before the first
+/// look, on the process that serves the page, and kept on until `release`.
 ///
 /// Windows on another Space are reached through `AccessibilityWindows`, a
 /// private function; the public list has only the current Space's.
@@ -108,8 +129,18 @@ package struct AccessibilityWebPage: WebPage {
     private static let controlsReadLimit = 500
     /// The web app's own audio processes, kept between checks of its sound.
     private let audioProcesses = OwnedAudioProcesses()
+    /// How the app shows its page.
+    package let access: PageAccess
+    /// The processes whose switch this page turned on, and whether each was
+    /// on before.
+    private let switched = OSAllocatedUnfairLock<[pid_t: Bool]>(initialState: [:])
+    /// A Chromium web app's browser's other playing pages, counted when the
+    /// web app's state was last known; `nil` until then, and once they changed.
+    private let otherPages = OSAllocatedUnfairLock<Int?>(initialState: nil)
 
-    package init() {}
+    package init(access: PageAccess = .webKit) {
+        self.access = access
+    }
 
     package func isTrusted(prompt: Bool) -> Bool {
         AccessibilityPermission.isTrusted(prompt: prompt)
@@ -120,13 +151,14 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     package func buttons(pid: pid_t) -> [PageButton]? {
+        showPage(pid: pid)
         let windows = windows(of: pid)
         guard !windows.isEmpty else { return nil }
         let search: [String: Any] = [
             "AXSearchKey": "AXButtonSearchKey", "AXResultsLimit": 2000, "AXDirection": "AXDirectionNext",
             "AXVisibleOnly": false, "AXImmediateDescendantsOnly": false,
         ]
-        return windows.flatMap { Self.webAreas(in: $0) }.flatMap { area -> [PageButton] in
+        return windows.flatMap { access.pageIsWindow ? [$0] : Self.webAreas(in: $0) }.flatMap { area -> [PageButton] in
             var result: CFTypeRef?
             guard AXUIElementCopyParameterizedAttributeValue(
                 area, "AXUIElementsForSearchPredicate" as CFString, search as CFDictionary, &result
@@ -208,7 +240,69 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     package func isPlayingSound(pid: pid_t) -> Bool {
-        audioProcesses.isPlayingSound(appPID: pid)
+        guard access.browserID != nil else { return audioProcesses.isPlayingSound(appPID: pid) }
+        // A Chromium web app's sound is its browser's, shared with its tabs:
+        // its own is one "Playing audio" assertion more than its other pages'.
+        let browser = switchTarget(pid)
+        let total = PlayingPages.count(ofBrowser: browser)
+        if let others = otherPages.withLock({ $0 }) {
+            if let plays = PlayingPages.webAppPlays(total: total, others: others) { return plays }
+            otherPages.withLock { $0 = nil } // another page started or stopped
+        }
+        return audioProcesses.isPlayingSound(appPID: browser)
+    }
+
+    package func noteState(playing: Bool, pid: pid_t) {
+        guard access.browserID != nil else { return }
+        let total = PlayingPages.count(ofBrowser: switchTarget(pid))
+        otherPages.withLock { $0 = playing ? max(total - 1, 0) : total }
+    }
+
+    package func wordsAreCurrent(pid: pid_t) -> Bool {
+        guard !access.wordsCurrentOutOfSight else { return true }
+        // Seen: the app isn't hidden, and a window of it on this desktop isn't minimized.
+        guard NSRunningApplication(processIdentifier: pid)?.isHidden == false else { return false }
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, Self.timeout)
+        return app.elements(kAXWindowsAttribute).contains { $0.value(kAXMinimizedAttribute) as? Bool != true }
+    }
+
+    package func release() {
+        guard let attribute = access.switchAttribute else { return }
+        let turnedOn = switched.withLock { switched in
+            defer { switched = [:] }
+            return switched.filter { !$0.value }.map(\.key)
+        }
+        for pid in turnedOn {
+            let app = AXUIElementCreateApplication(pid)
+            AXUIElementSetMessagingTimeout(app, Self.timeout)
+            AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanFalse)
+        }
+    }
+
+    // MARK: - The switch
+
+    /// Turns its switch on, on the process that serves its page, once per
+    /// process (the app opened again is a new one): Chromium builds the page
+    /// for assistive tools from then on, and Electron takes presses about 2 s
+    /// later. Kept on: a press that turned it on and off again would lose
+    /// the page out of sight (Player Check, 2026-10-12).
+    private func showPage(pid: pid_t) {
+        guard let attribute = access.switchAttribute else { return }
+        let target = switchTarget(pid)
+        guard switched.withLock({ $0[target] == nil }) else { return }
+        let app = AXUIElementCreateApplication(target)
+        AXUIElementSetMessagingTimeout(app, Self.timeout)
+        let wasOn = app.value(attribute) as? Bool ?? false
+        if !wasOn { AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanTrue) }
+        switched.withLock { $0[target] = wasOn }
+    }
+
+    /// The process its switch is set on: a Chromium web app's browser (its
+    /// own process serves the page), else the app.
+    private func switchTarget(_ pid: pid_t) -> pid_t {
+        guard let browserID = access.browserID, let browser = NSRunningApplication.running(browserID) else { return pid }
+        return browser.processIdentifier
     }
 
     // MARK: - Windows and pages

@@ -97,6 +97,13 @@ struct AppStatus: Equatable {
     /// macOS applies it only from the next launch, so the menu then offers to
     /// reopen AutoHush instead of asking again.
     var awaitsReopenForAudioRecording = false
+    /// The chosen player runs without what it needs to be controlled
+    /// wherever its window is (`MusicPlayer.needsReopen`): the card says so,
+    /// with a button that reopens it.
+    var playerNeedsReopen = false
+    /// The chosen player is muted instead of paused (`MusicPlayer.pausesByMuting`):
+    /// the card says "Muted", with Unmute.
+    var playerMutes = false
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
     mutating func setHealth(_ health: AppHealthState) {
@@ -123,7 +130,18 @@ struct AppStatus: Equatable {
 
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
-        health.presentation ?? playback.presentation(playing: pausingSources.map(\.name))
+        health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
+            : playerMutes && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name))
+            : playback.presentation(playing: pausingSources.map(\.name)))
+    }
+
+    /// The card offers Unmute: the player is muted for other apps.
+    var offersUnmute: Bool { isReady && playerMutes && playback == .pausedByMonitor }
+
+    /// The status line while the player needs reopening.
+    static func needsReopenLine(_ player: String) -> String {
+        String(localized: "\(player) needs reopening",
+               comment: "Status line: the media player (an app added through a check) was opened without an option it needs, so AutoHush can pause it only while its window can be seen; a button under it reopens it; %@ is the player")
     }
 
     /// The card's title at the top of the menu: the chosen player, or
@@ -135,7 +153,7 @@ struct AppStatus: Equatable {
     var needsAttention: Bool {
         switch health {
         case .starting:                                          return false
-        case .ready:                                             return playback == .pauseFailed && autoPause == .on
+        case .ready:                                             return playerNeedsReopen || (playback == .pauseFailed && autoPause == .on)
         case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
         }
     }
@@ -159,7 +177,7 @@ struct AppStatus: Equatable {
 
     /// The line under the card's title: what's happening.
     var statusLine: String {
-        guard isReady else { return presentation.line }
+        guard isReady, !playerNeedsReopen else { return presentation.line }
         switch autoPause {
         case .off:
             return String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")

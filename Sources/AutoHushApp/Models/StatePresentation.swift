@@ -24,6 +24,16 @@ extension StatePresentation {
 
     /// While something needs the user: VoiceOver says what the status line
     /// does ("AutoHush: Spotify isn't running").
+    /// A player that's muted instead of paused, while `playing` play.
+    static func muted(playing: [String]) -> StatePresentation {
+        StatePresentation(
+            icon: .pausedForApp,
+            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted) is muted for another app"),
+            line: String(localized: "Muted — \(PlaybackState.describePlaying(playing))",
+                         comment: "At the top of the menu, under the media player (an app added with Add an App that can only be muted); %@ says which apps play, e.g. “Safari is playing”")
+        )
+    }
+
     static func needingAttention(_ line: String) -> StatePresentation {
         StatePresentation(icon: .attention, label: iconLabel(line), line: line)
     }
@@ -47,7 +57,7 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .playing,
                 label: String(localized: "AutoHush: your player is playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing")
+                line: String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
             )
         case .pausedByMonitor:
             return StatePresentation(
@@ -166,6 +176,9 @@ extension ControlFailure {
         case .pressIgnored:
             String(localized: "\(player) didn’t respond to its Play/Pause.",
                    comment: "Why the media player couldn't be controlled: a press didn't change it; %@ is the player")
+        case .muteUnavailable:
+            String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
+                   comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled; %@ is the player")
         case .appleEventError(let number, _):
             String(localized: "\(player) answered with an error (\(String(number))).",
                    comment: "Why the media player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")

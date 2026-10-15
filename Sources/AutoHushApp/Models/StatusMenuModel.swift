@@ -14,6 +14,11 @@ enum StatusMenuCommand: Equatable, Sendable {
     case searchPlayers(String)
     /// Tries starting again after a failed start.
     case retry
+    /// Reopens the player as it needs to be opened (`AppStatus.playerNeedsReopen`).
+    case reopenPlayer
+    /// Lifts the mute of a player that's muted instead of paused, until the
+    /// other apps stop (`AppStatus.offersUnmute`).
+    case unmutePlayer
     /// Learns the chosen web app's controls in a new learning window.
     case learnControls
     case openSettings

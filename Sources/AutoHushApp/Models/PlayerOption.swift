@@ -11,7 +11,8 @@ struct PlayerOption: Equatable, Identifiable {
     let appURL: URL?
     /// Shown in place of its icon while it isn't installed.
     var iconPlaceholder: PlayerIconPlaceholder?
-    /// An app, or a Safari web app: they're offered apart.
+    /// A supported app, an app added through a check, or a Safari web app:
+    /// they're offered apart.
     var kind: MusicPlayerKind = .app
     /// A suggested web app's address: it isn't added yet, and a click opens
     /// "Add a Web App" filled in with it.
@@ -19,6 +20,9 @@ struct PlayerOption: Equatable, Identifiable {
     /// A web app of a site AutoHush hasn't been tested with: offered last,
     /// marked "Untested".
     var isUntested = false
+    /// An app added with Add an App that's muted instead of paused: said
+    /// under its name.
+    var pausesByMuting = false
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
@@ -28,7 +32,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// A player's placeholder is its own, so it doesn't tell options apart.
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
-            && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested
+            && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested && lhs.pausesByMuting == rhs.pausesByMuting
     }
 
     /// A suggested web app, not added yet.
@@ -76,7 +80,8 @@ struct PlayerOption: Equatable, Identifiable {
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
         catalog.all.map {
             PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: $0.installedURL ?? locate($0.bundleID),
-                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested)
+                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested,
+                         pausesByMuting: $0.pausesByMuting)
         } + catalog.webAppSuggestions.map(suggestion)
     }
 
@@ -89,16 +94,19 @@ struct PlayerOption: Equatable, Identifiable {
         if appURL == nil, let iconPlaceholder {
             return AppIcon.image(placeholder: iconPlaceholder, id: bundleID, size: size)
         }
-        return kind == .app ? AppIcon.image(bundlePath: appURL?.path, size: size)
-            : AppIcon.webAppImage(bundlePath: appURL?.path, size: size)
+        switch kind {
+        case .safariWebApp: return AppIcon.webAppImage(bundlePath: appURL?.path, size: size)
+        case .checkedApp: return AppIcon.appImage(bundlePath: appURL?.path, size: size) // a browser's web app badged
+        case .app: return AppIcon.image(bundlePath: appURL?.path, size: size)
+        }
     }
 
     /// What VoiceOver says for it where players are offered: a web app
     /// named as one of `options`' apps is says it's one ("Spotify, Safari
     /// web app"), as its icon's Safari badge shows.
     func spokenName(among options: [PlayerOption]) -> String {
-        guard kind != .app,
-              options.contains(where: { $0.kind == .app && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame })
+        guard kind == .safariWebApp,
+              options.contains(where: { $0.kind != .safariWebApp && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame })
         else { return name }
         return String(localized: "\(name), Safari web app",
                       comment: "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name, e.g. Spotify")
@@ -139,6 +147,31 @@ struct PlayerOption: Equatable, Identifiable {
                comment: "Where media players are offered: heading over the websites added to the Dock from Safari")
     }
 
+    /// Over the apps added through a check, after the supported apps,
+    /// wherever players are offered.
+    static var otherAppsHeading: String {
+        String(localized: "Other Apps",
+               comment: "Where media players are offered (the menu, Settings → General, the welcome window): heading over the apps added through a check (Add an App…), after the “Supported Apps”")
+    }
+
+    /// After `otherAppsHeading`, as a `HeadingBadge`.
+    static var checkedByYouBadge: String {
+        String(localized: "Checked by you",
+               comment: "Badge after the “Other Apps” heading where media players are offered: these apps were added through a check the user ran, not supported by AutoHush itself")
+    }
+
+    /// Under `otherAppsHeading` wherever players are offered.
+    static var otherAppsNote: String {
+        String(localized: "Controlled the ways a check found to work.",
+               comment: "Where media players are offered, under the “Other Apps” heading and its “Checked by You” badge")
+    }
+
+    /// Where players are offered: the entry that checks an app and adds it.
+    static var addAppTitle: String {
+        String(localized: "Add an App…",
+               comment: "Menu item and button where media players are offered: checks how AutoHush can pause and play an app it doesn't support yet, and adds it")
+    }
+
     /// Where players are offered: the entry that adds a Safari web app.
     static var addWebAppTitle: String {
         String(localized: "Add a Web App…",
@@ -174,6 +207,19 @@ struct PlayerOption: Equatable, Identifiable {
     static func noMatchNote(_ search: String) -> String {
         String(localized: "No players match “\(search)”.",
                comment: "Where media players are offered, when the search finds none; %@ is what was typed")
+    }
+
+    /// Under an app added with Add an App that's muted instead of paused,
+    /// wherever players are offered.
+    static var mutedInsteadLabel: String {
+        String(localized: "Muted instead of paused", comment: "Under an app added with Add an App that no way could pause, so AutoHush mutes it while other apps play (the menu's rows, the tiles in Settings → General and the welcome window)")
+    }
+
+    /// Under an app that pauses the player while it plays (the menu's Playing
+    /// Now, Settings → Apps), or mutes it, for one muted instead of paused.
+    static func interruptsLabel(mutes: Bool) -> String {
+        mutes ? String(localized: "Mutes your player", comment: "The menu's Playing Now and Settings → Apps: under an app that mutes your player while it plays (a player added with Add an App that can only be muted)")
+            : String(localized: "Pauses your player", comment: "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays")
     }
 
     /// Under a player that isn't installed, wherever players are offered.
@@ -213,16 +259,23 @@ struct PlayerOption: Equatable, Identifiable {
 }
 
 extension [PlayerOption] {
-    /// How players are offered: the apps, installed ones first, then the
-    /// Safari web apps (`PlayerOption.webAppsHeading` goes over them): those
-    /// of tested sites, the tested sites not added yet, then the untested
-    /// ones; each group in the catalog's order.
+    /// How players are offered: the supported apps, installed ones first,
+    /// then the apps added through a check (`PlayerOption.otherAppsHeading`
+    /// goes over them), then the Safari web apps (`PlayerOption.webAppsHeading`):
+    /// those of tested sites, the tested sites not added yet, then the
+    /// untested ones; each group in the catalog's order.
     var offered: [PlayerOption] {
         let apps = filter { $0.kind == .app }
         let webApps = filter { $0.kind == .safariWebApp }
-        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled }
+        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled } + filter { $0.kind == .checkedApp }
             + webApps.filter { $0.webAddress == nil && !$0.isUntested } + webApps.filter { $0.webAddress != nil }
             + webApps.filter(\.isUntested)
+    }
+
+    /// Where the apps added through a check start, for their heading; `nil`
+    /// without any.
+    var otherAppsStart: Int? {
+        firstIndex { $0.kind == .checkedApp }
     }
 
     /// Where the Safari web apps start, for their heading; `nil` without any.

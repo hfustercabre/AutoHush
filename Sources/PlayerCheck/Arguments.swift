@@ -10,9 +10,18 @@ enum Action: String { case play, pause }
 /// The ways to control an app, as --via names them, in the order a check tries them.
 enum Way: String, CaseIterable { case script, menu, page, panel }
 
-/// The app: the argument that's neither an option nor --via's way, wherever it comes.
+/// The options followed by a value of their own.
+let optionsWithValues: Set<String> = ["--via", "--result", "--logs"]
+
+/// The value after `option`, if it's given.
+func value(of option: String) -> String? {
+    guard let index = arguments.firstIndex(of: option), index + 1 < arguments.count else { return nil }
+    return arguments[index + 1]
+}
+
+/// The app: the argument that's neither an option nor an option's value, wherever it comes.
 let target: String = {
-    guard let index = arguments.indices.first(where: { !arguments[$0].hasPrefix("--") && ($0 == 0 || arguments[$0 - 1] != "--via") }) else {
+    guard let index = arguments.indices.first(where: { !arguments[$0].hasPrefix("--") && ($0 == 0 || !optionsWithValues.contains(arguments[$0 - 1])) }) else {
         fail("usage: playercheck <app name, bundle ID or path> [--block-input | --read-only | --play | --pause [--via script|menu|page|panel]]")
     }
     return arguments[index]
@@ -33,6 +42,17 @@ let via: Way? = {
 }()
 /// The test: each way to control it is tried, pausing it and playing it again.
 let testing = !readOnly && action == nil
+/// --result <file>: where a check writes what it found, for AutoHush's Add
+/// an App… (`CheckResult`, as JSON), once it's done.
+let resultFile = value(of: "--result").map { URL(fileURLWithPath: $0) }
+/// --logs <folder>: where the run's log goes, instead of ~/Library/Logs/PlayerCheck
+/// (AutoHush keeps its checks' with its own log).
+let logsFolder = value(of: "--logs").map { URL(fileURLWithPath: $0, isDirectory: true) }
+/// --partial: a test goes on without Audio Recording (the app isn't muted,
+/// whether it plays is told by other signs) or Automation (its AppleScript
+/// isn't tried); only Accessibility is needed. AutoHush's Add an App… says
+/// what's missing first, and passes it.
+let partial = arguments.contains("--partial")
 /// --block-input: while the test moves the window and presses, whoever runs
 /// it can't click, scroll or type (`InputBlock`). Player Check passes it; a
 /// shell has no panel to stop from, and Ctrl-C would be blocked.

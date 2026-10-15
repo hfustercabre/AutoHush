@@ -374,6 +374,21 @@ final class ReportedState: @unchecked Sendable {
     }
 }
 
+/// Set once its level heard it while its report said it wasn't playing:
+/// an app may report only while it's the Now Playing app (Qobuz's said
+/// “Paused” for half an hour while it played, Spotify holding Now Playing,
+/// 2026-10-15), and a report that stale counts no more in this run (sound
+/// heard is surer than a report of a pause; silence isn't: a quiet passage).
+@MainActor var reportIsStale = false
+
+/// Its report says it isn't playing while it's heard: the report is stale
+/// from then on (`reportIsStale`), said once.
+@MainActor func noteHeard(against reported: String?) {
+    guard !reportIsStale, let reported, playerState(reported: reported) != .playing else { return }
+    reportIsStale = true
+    say("  its Now Playing report says “\(reported.lowercased())” while it's heard playing: taken as stale, its level is judged instead")
+}
+
 @MainActor var reportedTracker: ReportedState?
 @MainActor var reportedTrackerMade = false
 
@@ -384,7 +399,7 @@ final class ReportedState: @unchecked Sendable {
 /// most. Nil for an app that can't report to Now Playing, when the log
 /// can't be read (not an administrator), or while it reported nothing since then.
 @MainActor func reportedState() -> String? {
-    guard canBeNowPlaying, isAdministrator, let running else { return nil }
+    guard canBeNowPlaying, isAdministrator, !reportIsStale, let running else { return nil }
     if !reportedTrackerMade {
         reportedTrackerMade = true
         reportedTracker = ReportedState(appID: bundleID, since: max(running.launchDate ?? .distantPast, Date().addingTimeInterval(-3600)))

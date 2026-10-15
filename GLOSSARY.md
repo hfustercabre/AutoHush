@@ -102,3 +102,34 @@ phrase names the app, as Siri requires.
 Auto-Pause, On or Off, added in System Settings → Focus. While that Focus
 is on, Auto-Pause follows it; when it ends, `FocusAutoPause` puts back how
 Auto-Pause was, unless the user changed it meanwhile.
+
+**Check** (playercheck, `PlayerCheckRun`): finding out how AutoHush can
+pause and play an app it has no support of its own for: its AppleScript,
+its playback menu, its page's Play/Pause and its row in the Now Playing
+panel are each tried, pausing the app and playing it again, with its window
+in each window state. AutoHush runs it in its helper, playercheck
+(`Contents/Helpers`), from Add an App; Player Check runs the same in a
+window. _Avoid_: test (that's the code's tests), scan.
+
+**Way** (`PlayerSetup.Way`, `CheckResult.WayKind`): one means of pausing
+and playing an app: its script, its menu, its page or the panel; or, when
+none works and the user chooses it, muting it while other apps play
+(`.mute`, its state kept by `MuteState`). A check
+says how each did: in every window state, in some, in none, not there, not
+tried or not checked. _Avoid_: method.
+
+**Window state**: where an app's window is while a check presses it: in
+view ("seen"), covered, on another desktop, covered there, full screen,
+minimized or hidden. A way that works in every state works wherever the
+user leaves the window.
+
+**Checked app** (`CheckedPlayer`, kind `.checkedApp`): an app added with
+Add an App, offered under "Other Apps" with its "Checked by you" badge, and
+controlled the ways its check found, the surest first, a press handed to
+the next way when one fails. What the check found is kept as its
+**player setup** (`PlayerSetup`). _Avoid_: custom player.
+
+**Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,
+but was opened without what it needs to be controlled wherever its window
+is (an Electron app's launch option); `reopen()` quits it and opens it
+again as it needs. The menu says so, with a Reopen button.

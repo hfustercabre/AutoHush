@@ -20,23 +20,33 @@ case "$BUILD_CONFIG" in
     *)       fail "unknown configuration '$BUILD_CONFIG' (use release or debug)" ;;
 esac
 PRODUCTS_DIR="$PROJECT_DIR/.build/out/Products/$CONFIG_DIR"
+# The helper Add an App… runs the check in, inside the app.
+HELPER_NAME=playercheck
+HELPER="$APP_BUNDLE/Contents/Helpers/$HELPER_NAME"
 # Where the compiler lists each source file's localizable strings.
 STRINGS_DIR="$PROJECT_DIR/.build/localized-strings/$BUILD_CONFIG"
 
 step "Building $BUILD_CONFIG"
 cd "$PROJECT_DIR"
-HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
-    swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$APP_NAME" ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} \
-        -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$STRINGS_DIR"
+# The app, then the helper Add an App… runs the check in (Sources/PlayerCheck),
+# with the same flags, so the second build only compiles the helper's own code.
+for product in "$APP_NAME" "$HELPER_NAME"; do
+    HOME=/tmp SWIFTPM_CONFIG_HOME=/tmp/swiftpm CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
+        swift build -c "$BUILD_CONFIG" --scratch-path .build --product "$product" ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} \
+            -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$STRINGS_DIR"
+done
 
 step "Assembling $APP_NAME.app"
 rm -rf "${APP_BUNDLE:?}"
-mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
+mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources" "$APP_BUNDLE/Contents/Helpers"
 cp "$PRODUCTS_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+cp "$PRODUCTS_DIR/$HELPER_NAME" "$HELPER"
 if [[ "$BUILD_CONFIG" == release ]]; then
-    ARCHS=" $(lipo -archs "$APP_BUNDLE/Contents/MacOS/$APP_NAME") "
-    [[ "$ARCHS" == *" arm64 "* && "$ARCHS" == *" x86_64 "* ]] \
-        || fail "the release build isn't for both Apple silicon and Intel (it's for:$ARCHS)"
+    for binary in "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$HELPER"; do
+        ARCHS=" $(lipo -archs "$binary") "
+        [[ "$ARCHS" == *" arm64 "* && "$ARCHS" == *" x86_64 "* ]] \
+            || fail "the release build of $(basename "$binary") isn't for both Apple silicon and Intel (it's for:$ARCHS)"
+    done
 fi
 # SwiftPM's build system records the oldest macOS the app runs on as the SDK
 # it was built with, and macOS 26 and later then draw it the old way, without
@@ -44,8 +54,9 @@ fi
 # it. Signing comes after.
 MIN_MACOS="$(plist_value "$INFO_PLIST" LSMinimumSystemVersion)"
 SDK_VERSION="$(xcrun --show-sdk-version)"
-xcrun vtool -set-build-version macos "$MIN_MACOS" "$SDK_VERSION" -replace \
-    -output "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+for binary in "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$HELPER"; do
+    xcrun vtool -set-build-version macos "$MIN_MACOS" "$SDK_VERSION" -replace -output "$binary" "$binary"
+done
 note "for macOS $MIN_MACOS and later, built with the macOS $SDK_VERSION SDK"
 cp "$INFO_PLIST" "$APP_BUNDLE/Contents/Info.plist"
 if [[ -n "${VERSION:-}" ]]; then
@@ -195,6 +206,8 @@ if [[ "$IDENTITY" == "-" ]]; then
 else
     step "Signing with \"$(identity_name "$IDENTITY")\" (hardened runtime)"
 fi
+# The helper first: the app's signature seals it as nested code.
+sign_app "$IDENTITY" "$HELPER"
 sign_app "$IDENTITY"
 codesign --verify --strict "$APP_BUNDLE"
 

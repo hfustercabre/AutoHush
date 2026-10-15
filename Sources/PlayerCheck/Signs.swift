@@ -71,17 +71,25 @@ struct Look {
     let toggle = menu == nil ? nil : menuToggle(pid: pid)
     // A browser's web app's sound is its browser's (its launcher has none).
     let sounding = !soundProcesses(of: soundOwner(pid)).isEmpty
+    let heard = level ? audible(pid) : nil
+    var reported = state == nil && !barShowsState ? reportedState() : nil
+    if heard == true {
+        noteHeard(against: reported)
+        if reportIsStale { reported = nil }
+    }
     return Look(menuTitle: toggle?.title, menuState: toggle.flatMap(menuState), state: state,
-                reported: state == nil && !barShowsState ? reportedState() : nil,
+                reported: reported,
                 pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid), pageCurrent: pageWordCurrent,
-                sounding: sounding, audible: level ? audible(pid) : nil, awake: awake(pid, sounding: sounding))
+                sounding: sounding, audible: heard, awake: awake(pid, sounding: sounding))
 }
 
 /// A look for a press's `Sign`: its level is measured (half a second) only
 /// when nothing surer shows the state, so presses stay quick.
 @MainActor func lookForSign(_ pid: pid_t) -> Look {
     let quick = look(pid)
-    guard levelsAllowed, [SignKind.script, .report, .page].allSatisfy({ quick.says($0) == nil }) else { return quick }
+    // A report of a pause is checked against its level once: it may be stale.
+    let reportOfPause = quick.surest == .report && quick.says(.report) != .playing
+    guard levelsAllowed, reportOfPause || [SignKind.script, .report, .page].allSatisfy({ quick.says($0) == nil }) else { return quick }
     return look(pid, level: true)
 }
 
@@ -95,6 +103,11 @@ struct Look {
         if kind == .level {
             if let heard = audible(pid) { return heard }
         } else if let said = now.says(kind) {
+            // A report of a pause may be stale: heard, it plays.
+            if kind == .report, said != .playing, audible(pid) == true {
+                noteHeard(against: now.reported)
+                return true
+            }
             return said == .playing
         }
     }

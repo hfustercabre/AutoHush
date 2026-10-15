@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// How to find a web app's Play/Pause button, learned by watching the user
 /// play and pause it once (`PlayPauseLearner`).
-package struct PlayPauseRecipe: Equatable, Sendable {
+package struct PlayPauseRecipe: Codable, Equatable, Sendable {
     /// What the button says while the music is paused, e.g. "Play" or
     /// "Reproducir": the site's own word, in its language.
     package let playLabel: String

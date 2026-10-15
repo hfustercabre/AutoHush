@@ -191,7 +191,11 @@ final class WebAppControl: @unchecked Sendable {
                     logger.notice("\(self.name, privacy: .public)'s Play/Pause button is back")
                     status.send(relearning ? .relearning : .learned)
                 }
-                return Self.state(of: found, recipe: recipe)
+                // A Chromium or Flutter page out of sight keeps an old word: its sound tells instead.
+                guard page.wordsAreCurrent(pid: pid) else { return page.isPlayingSound(pid: pid) ? .playing : .paused }
+                let state = Self.state(of: found, recipe: recipe)
+                if state == .playing || state == .paused { page.noteState(playing: state == .playing, pid: pid) }
+                return state
             case .noWindow:
                 hasWindow = false
             case .missing(let looked):

@@ -5,7 +5,8 @@
 // CEF app's, or a Flutter app's interface, once a switch for assistive tools
 // is on), then lists the ways it could be controlled and says which kind of
 // player it could be: scriptable, a menu player, or one that learns its
-// page's button. Tools/PlayerCheckApp runs it from a window.
+// page's button. AutoHush's Add an App… runs it (it's inside AutoHush.app),
+// and Tools/PlayerCheckApp from a window.
 //   playercheck <app name, bundle ID or path>          checks it, and tests each way to control it: pauses
 //                                                      and plays it once by each (asking for it to be
 //                                                      started first when it isn't playing), with its window
@@ -15,6 +16,9 @@
 //   playercheck <app> --block-input                    the same, blocking clicks, scrolling and keys while it moves
 //                                                      the window and presses (Escape stops the check)
 //   playercheck <app> --read-only                      checks it without pressing anything
+//   playercheck <app> … --result <file> [--logs <folder>]
+//                                                      also writes what it found as JSON (CheckResult), for AutoHush's
+//                                                      Add an App…, and its log in that folder
 //   playercheck <app> --play|--pause [--via script|menu|page|panel]
 //                                                      just plays or pauses it, by that way (reading only what it
 //                                                      needs) or the first that works
@@ -72,5 +76,6 @@ MainActor.assumeIsolated {
     if let action { press(action) }
     reportWays()
     reportVerdict()
+    writeResult()
     reportSwitchesBack()
 }

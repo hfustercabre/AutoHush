@@ -1,4 +1,5 @@
 import AppKit
+import CheckedPlayers
 import SwiftUI
 import AutoHushKit
 
@@ -47,16 +48,37 @@ enum AppIcon {
     static func webAppImage(bundlePath: String?, size: CGFloat) -> NSImage {
         let key = "webapp:\(bundlePath ?? "")#\(size)"
         if let cached = cache[key] { return cached }
-        let icon = image(bundlePath: bundlePath, size: size)
-        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
-            icon.draw(in: rect)
-            // A little past the corner: only Safari's icon's empty margin is cut off.
-            let side = (size * 0.55).rounded()
-            safari.draw(in: NSRect(x: rect.maxX - side + size * 0.06, y: rect.minY - size * 0.06, width: side, height: side))
-            return true
-        }
+        let image = badged(image(bundlePath: bundlePath, size: size), with: safari, size: size)
         cache[key] = image
         return image
+    }
+
+    /// An app's icon; a Chromium browser's web app's (a Chrome app, a Brave
+    /// app…) with its browser's at its lower right, as a Safari web app's has
+    /// Safari's: it tells it from the same site's web app of another browser.
+    /// Add an App's list and the apps added through a check show it.
+    static func appImage(bundlePath: String?, size: CGFloat) -> NSImage {
+        let key = "app:\(bundlePath ?? "")#\(size)"
+        if let cached = cache[key] { return cached }
+        let icon = image(bundlePath: bundlePath, size: size)
+        var shown = icon
+        if let path = bundlePath, let browser = CheckedAppTraits.browser(ofAppAt: URL(filePath: path)),
+           let browserURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser) {
+            shown = badged(icon, with: NSWorkspace.shared.icon(forFile: browserURL.path), size: size)
+        }
+        cache[key] = shown
+        return shown
+    }
+
+    /// `icon` with `badge` at its lower right, a little over half its size,
+    /// a little past the corner: only the badge's empty margin is cut off.
+    private static func badged(_ icon: NSImage, with badge: NSImage, size: CGFloat) -> NSImage {
+        NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            icon.draw(in: rect)
+            let side = (size * 0.55).rounded()
+            badge.draw(in: NSRect(x: rect.maxX - side + size * 0.06, y: rect.minY - size * 0.06, width: side, height: side))
+            return true
+        }
     }
 
     /// A stand-in for the icon of a player that isn't installed, `id` being

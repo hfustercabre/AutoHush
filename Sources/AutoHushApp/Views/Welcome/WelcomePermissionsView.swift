@@ -72,7 +72,7 @@ struct WelcomePermissionsView: View {
             case .allowed:
                 // Green is for the symbol only: as text it's too faint in light mode.
                 Label {
-                    Text("Allowed", comment: "Diagnostics and the welcome window: a permission that is granted")
+                    Text("Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")
                 } icon: {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.appSuccess)

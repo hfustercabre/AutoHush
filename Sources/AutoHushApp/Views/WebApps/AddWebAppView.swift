@@ -70,14 +70,14 @@ struct AddWebAppView: View {
                         // later, from the menu's or Settings' Controls row.
                         Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
                     } else {
-                        Text("Cancel", comment: "Add a Web App window: stops adding the website and closes the window")
+                        Text("Cancel", comment: "Add a Web App and Add an App windows: stops adding and closes the window; and the alert that asks to reopen the media player")
                     }
                 }
                 .buttonStyle(.chip)
                 .keyboardShortcut(.cancelAction)
                 if model.phase == .entering {
                     Button { model.continueTapped() } label: {
-                        Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
+                        Text("Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                     }
                     .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
                     .keyboardShortcut(.defaultAction)

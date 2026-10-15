@@ -1,4 +1,4 @@
-// Player Check: a window over Tools/PlayerCheck. It lists the apps in the
+// Player Check: a window over Sources/PlayerCheck. It lists the apps in the
 // Applications folders (/Applications, ~/Applications, /System/Applications,
 // with their subfolders: Safari web apps included) that can be in macOS's
 // Now Playing list, those macOS lists now first (playercheck's

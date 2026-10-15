@@ -13,6 +13,8 @@ protocol AppActions: AnyObject {
     func choosePlayer(_ bundleID: String)
     /// Opens the "Add a Web App" window.
     func openAddWebApp()
+    /// Opens the "Add an App" window, which checks an app and adds it.
+    func openAddApp()
     /// Learns the chosen player's controls afresh, in a new learning window.
     func learnControlsAgain()
     /// A missing permission's button: macOS's prompt, System Settings,
@@ -25,6 +27,12 @@ protocol AppActions: AnyObject {
     /// The menu is about to open: a last chance to bring what it shows up
     /// to date (e.g. which players are installed) before it's built.
     func menuWillOpen()
+    /// Quits the chosen player and opens it again with what it needs
+    /// (`AppStatus.playerNeedsReopen`).
+    func reopenPlayer()
+    /// Lifts the mute of a player that's muted instead of paused, until the
+    /// other apps stop: as if the user played it (AutoHush leaves it alone).
+    func unmutePlayer()
     /// Quits and opens AutoHush again, so macOS applies System Audio
     /// Recording (see `AppStatus.offersReopen`).
     func reopenAutoHush()

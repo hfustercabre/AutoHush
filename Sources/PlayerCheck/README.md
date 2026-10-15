@@ -5,7 +5,9 @@ plays, then play it again), and which kind of player it would be, so it can
 be added as DEVELOPMENT.md's [Adding a media
 player](../../DEVELOPMENT.md#architecture) says. It reads the app from outside,
 as AutoHush would, then tests each way to control it, with the app's window
-in each state a player's window can be in. [Player Check](../PlayerCheckApp)
+in each state a player's window can be in. AutoHush itself runs it, as a
+helper inside AutoHush.app (`Contents/Helpers/playercheck`), for **Add an
+App…**, and keeps what worked as the app's setup. [Player Check](../../Tools/PlayerCheckApp)
 does all of this from a window.
 
 It's a target of AutoHush's package and runs AutoHush's own code wherever
@@ -24,6 +26,10 @@ cd .build/release
 ./playercheck Spotify                    # by name, bundle ID or path: checks it and tests each way
 ./playercheck Spotify --block-input      # the same, blocking clicks, scrolling and keys while it moves the window and presses
 ./playercheck Spotify --read-only        # checks it without pressing anything
+./playercheck Deezer --block-input --partial --result out.json --logs ~/Library/Logs/AutoHush/Checks
+                                         # as Add an App runs it: goes on without Audio Recording or Automation
+                                         # (only Accessibility is needed), writes what it found as JSON (CheckResult)
+                                         # and its log in that folder
 ./playercheck Spotify --pause            # just pauses it (--play: plays it), by the first way that works
 ./playercheck Deezer --play --via page   # by that way only: script, menu, page or panel
 ./playercheck --now-playing-list         # the apps macOS keeps in Now Playing now

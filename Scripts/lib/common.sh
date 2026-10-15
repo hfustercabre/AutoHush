@@ -136,23 +136,29 @@ identity_team() {
 # permissions and self-updates carry over. Prints nothing for an identity
 # without a team (see identity_team): codesign's default requirement stays.
 team_requirement() {
-    local team
+    local team identifier="${2:-$BUNDLE_ID}"
     team="$(identity_team "$1")"
     [[ -n "$team" ]] || return 0
-    echo "designated => identifier \"$BUNDLE_ID\" and anchor apple generic and certificate leaf[subject.OU] = \"$team\""
+    echo "designated => identifier \"$identifier\" and anchor apple generic and certificate leaf[subject.OU] = \"$team\""
 }
 
-# Signs the app bundle with the hardened runtime and its entitlements, under
-# the team requirement when the identity has one.
+# Signs the app bundle (or a helper inside it, given its path) with the
+# hardened runtime and the app's entitlements, under the team requirement
+# when the identity has one.
 sign_app() {
-    local identity="$1" requirement
+    local identity="$1" target="${2:-$APP_BUNDLE}" identifier="$BUNDLE_ID" requirement
     local args=(--force --sign "$identity" --timestamp=none
         --options runtime --entitlements "$ENTITLEMENTS")
-    requirement="$(team_requirement "$identity")"
+    # A helper inside the app gets an identifier under the app's.
+    if [[ "$target" != "$APP_BUNDLE" ]]; then
+        identifier="$BUNDLE_ID.$(basename "$target")"
+        args+=(--identifier "$identifier")
+    fi
+    requirement="$(team_requirement "$identity" "$identifier")"
     if [[ -n "$requirement" ]]; then
         # codesign reads text after "=" as the requirement itself, not a file.
         args+=("-r=$requirement")
     fi
     # shellcheck disable=SC2046
-    codesign "${args[@]}" $(keychain_args) "$APP_BUNDLE"
+    codesign "${args[@]}" $(keychain_args) "$target"
 }

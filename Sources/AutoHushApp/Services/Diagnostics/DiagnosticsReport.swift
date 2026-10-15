@@ -259,7 +259,7 @@ enum DiagnosticsReport {
     private static var off: String { String(localized: "Off", comment: "A setting that is off: in Diagnostics, and the choice that turns Auto-Pause off in Shortcuts (it reads “Turn Auto-Pause Off”) and in the Focus filter") }
     private static var yes: String { String(localized: "Yes", comment: "Diagnostics: yes") }
     private static var no: String { String(localized: "No", comment: "Diagnostics: no") }
-    private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics and the welcome window: a permission that is granted") }
+    private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted") }
     private static var notAllowed: String { String(localized: "Not allowed", comment: "Diagnostics: a permission that isn't granted") }
     private static var unknown: String { String(localized: "Unknown", comment: "Diagnostics: something AutoHush can't tell") }
 
@@ -271,7 +271,7 @@ enum DiagnosticsReport {
     /// The music player's state, as Diagnostics shows it.
     private static func describe(_ playback: PlaybackState) -> String {
         switch playback {
-        case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing")
+        case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")

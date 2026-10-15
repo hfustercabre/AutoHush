@@ -96,7 +96,7 @@ struct PermissionButton: View {
             PermissionText.reopen
         case .notAsked, .denied:
             long ? permission.grantTitle
-                : String(localized: "Allow…", comment: "Welcome window: button that asks for a permission (macOS's prompt, or System Settings)")
+                : String(localized: "Allow…", comment: "Welcome window and Add an App window: button that asks for a permission (macOS's prompt, or System Settings)")
         }
     }
 }

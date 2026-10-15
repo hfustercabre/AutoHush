@@ -24,7 +24,9 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package nonisolated var bundleID: String { app.bundleID }
     package nonisolated var name: String { app.name }
-    package nonisolated var kind: MusicPlayerKind { .safariWebApp }
+    /// A Safari web app, or an app whose page it controls the same way
+    /// (`PageAccess`: an Electron, CEF or Flutter app, a Chromium web app).
+    package nonisolated let kind: MusicPlayerKind
     /// A press is checked here: one the page refuses mutes it instead (`WebAppControl`).
     package nonisolated var checksItsPresses: Bool { true }
     package nonisolated var installedURL: URL? { app.url }
@@ -53,8 +55,10 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     package init(
         app: SafariWebApp,
+        kind: MusicPlayerKind = .safariWebApp,
         isUntested: Bool = false,
         page: any WebPage = AccessibilityWebPage(),
+        canMute: Bool = true,
         store: any PlayPauseRecipeStore = DefaultsRecipeStore(),
         muter: any AudioMuting = ProcessTapMuter(),
         levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
@@ -65,6 +69,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() }
     ) {
         self.app = app
+        self.kind = kind
         self.isUntested = isUntested
         self.page = page
         // Only a running app is ever controlled, so AutoHush never opens it.
@@ -72,7 +77,9 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
-                                muter: muter, levelProbe: levelProbe, mayMute: { [tapsAllowed] in tapsAllowed.withLock { $0 } },
+                                muter: muter, levelProbe: levelProbe,
+                                // A Chromium web app plays through its browser: muting it would mute every tab.
+                                mayMute: { [tapsAllowed] in canMute && tapsAllowed.withLock { $0 } },
                                 pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
         self.nowPlaying = nowPlaying
@@ -126,6 +133,13 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     /// Needs the app running and Accessibility, not the button learned: it's
     /// learned while the state is read.
+    /// Turns back off the switch its page needed (another app's page), now
+    /// that it's no longer the player.
+    package func releasePage() async {
+        let page = page
+        await queue.run { page.release() }
+    }
+
     package func verifyControlAccess() async throws {
         guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
         let prompt = !hasAskedForAccess

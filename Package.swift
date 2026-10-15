@@ -21,9 +21,10 @@ import PackageDescription
 //   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 //   listen-to-fades (developer tool, in Tools/): records a loopback device
 //                               and measures AutoHush's fades in it
-//   playercheck (tool, in Tools/) → ScriptablePlayers, MenuPlayers, WebAppPlayers,
-//                               VLCSupport, AutoHushKit: whether and how AutoHush
-//                               could control an app, checked with AutoHush's own code
+//   playercheck (AutoHush.app's helper, in Sources/) → ScriptablePlayers, MenuPlayers,
+//                               WebAppPlayers, CheckedPlayers, VLCSupport, AutoHushKit:
+//                               whether and how AutoHush could control an app, checked
+//                               with AutoHush's own code (Add an App… runs it)
 //
 // Code inside a module is sorted by kind of code first (Models, Services,
 // Views…), then by area. Types shared between modules use `package` access:
@@ -42,17 +43,24 @@ let package = Package(
     ],
     targets: [
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
-        .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers"]),
+        // CheckedPlayers for Add an App…: what a check found, and keeping it.
+        .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers", "CheckedPlayers"]),
         .target(
             name: "AutoHushPlayers",
             dependencies: [
-                "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers",
+                "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers",
                 "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport",
             ]
         ),
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
         .target(name: "MenuPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/MenuPlayers"),
         .target(name: "WebAppPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/WebAppPlayers"),
+        // Apps added through Player Check: controlled by the ways a check found.
+        .target(
+            name: "CheckedPlayers",
+            dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers"],
+            path: "Sources/PlayersSupport/CheckedPlayers"
+        ),
         .target(
             name: "SpotifySupport",
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
@@ -95,12 +103,14 @@ let package = Package(
 
         // Checks whether and how AutoHush could control an app, with AutoHush's
         // own code for what they share (Apple events, menus, learned page
-        // buttons, sound). A tool: never part of AutoHush.app. Its files are
-        // split by subject, with main.swift's top-level code running the steps.
+        // buttons, sound). AutoHush.app carries it as a helper, which Add an
+        // App… runs (its own process: a check that ends, or stops, takes its
+        // block on the mouse and keyboard with it). Its files are split by
+        // subject, with main.swift's top-level code running the steps.
         .executableTarget(
             name: "PlayerCheck",
-            dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "VLCSupport"],
-            path: "Tools/PlayerCheck",
+            dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers", "VLCSupport"],
+            path: "Sources/PlayerCheck",
             exclude: ["README.md"]
         ),
 
@@ -143,13 +153,18 @@ let package = Package(
             path: "Tests/PlayersSupport/PodcastsSupportTests"
         ),
         .testTarget(
+            name: "CheckedPlayersTests",
+            dependencies: ["CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
+            path: "Tests/PlayersSupport/CheckedPlayersTests"
+        ),
+        .testTarget(
             name: "VLCSupportTests",
             dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/VLCSupportTests"
         ),
         .testTarget(
             name: "AutoHushAppTests",
-            dependencies: ["AutoHushApp", "AutoHushKit", "AutoHushTestSupport"]
+            dependencies: ["AutoHushApp", "AutoHushKit", "CheckedPlayers", "AutoHushTestSupport"]
         ),
         .testTarget(
             name: "AutoHushPlayersTests",

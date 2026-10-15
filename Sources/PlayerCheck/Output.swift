@@ -24,11 +24,11 @@ func fail(_ line: String) -> Never {
 
 /// Each check or press of an app is also written, whole (the quiet parts of
 /// a press too) and with each line's time, to a file of its own in
-/// ~/Library/Logs/PlayerCheck, the last `kept` kept: a run whose result went
+/// ~/Library/Logs/PlayerCheck (or --logs' folder), the last `kept` kept: a run whose result went
 /// wrong can be read afterwards, though a later check replaced it in Player
 /// Check. A stop writes to it from another thread, so it's behind a lock.
 final class RunLog: @unchecked Sendable {
-    static let folder = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/PlayerCheck")
+    static let folder = logsFolder ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/PlayerCheck")
     static let kept = 50
     private let lock = NSLock()
     private var file: FileHandle?

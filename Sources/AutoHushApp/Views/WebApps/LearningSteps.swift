@@ -17,7 +17,7 @@ import SwiftUI
 enum LearningText {
     static func playStep(_ name: String) -> String {
         String(localized: "Play something in \(name)",
-               comment: "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; %@ is the web app")
+               comment: "The first step while AutoHush learns a web app's controls, ticked once the user clicks “It’s Playing”; and the Add an App window's step that waits for the app to play; %@ is the web app or app")
     }
 
     /// The step after it plays: AutoHush pauses it itself.

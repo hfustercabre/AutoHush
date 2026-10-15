@@ -56,6 +56,22 @@ package protocol MusicPlayer: Sendable {
     /// Reports the player's state changes (and its quitting) once started.
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving
+    /// AutoHush quits: whatever the player turned on in its app to control it
+    /// (an Electron or Chromium app's switch for assistive tools) goes back
+    /// off, when `releasesOnQuit`.
+    func release() async
+    var releasesOnQuit: Bool { get }
+    /// It's never paused, but muted while other apps play (an app added with
+    /// Add an App that no way pauses): the menu says "Muted", with Unmute.
+    var pausesByMuting: Bool { get }
+    /// It runs, but was opened without what it needs to be controlled
+    /// wherever its window is (an Electron app's launch option, without
+    /// which its page takes no presses while covered or on another desktop):
+    /// `reopen()` fixes that.
+    func needsReopen() async -> Bool
+    /// Quits it (never by force) and opens it again, in the background, as
+    /// it needs to be; whether it did.
+    func reopen() async -> Bool
     /// How late its observer can report a change, in seconds: 0 for a player
     /// that announces each one, `PolledStateObserver.reportDelay` for one
     /// whose state is read now and then. No default: a wrong 0 would make
@@ -73,6 +89,11 @@ extension MusicPlayer {
     package var isUntested: Bool { false }
     package var ownWordsRead: Bool? { nil }
     package var checksItsPresses: Bool { false }
+    package func release() async {}
+    package var releasesOnQuit: Bool { false }
+    package var pausesByMuting: Bool { false }
+    package func needsReopen() async -> Bool { false }
+    package func reopen() async -> Bool { false }
     /// Most players are scripted with Apple events.
     package var controlPermission: Permission { .automation(player: name) }
 }
@@ -83,6 +104,9 @@ package enum MusicPlayerKind: Sendable {
     case app
     /// A website added to the Dock from Safari (File → Add to Dock).
     case safariWebApp
+    /// An app AutoHush has no support of its own for, added through a check
+    /// (Add an App…): controlled the ways the check found to work.
+    case checkedApp
 }
 
 /// How a learning player's own pause went (`pauseByItself`).

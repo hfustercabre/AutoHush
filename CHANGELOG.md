@@ -65,6 +65,31 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Add any app that plays as your media player.** **Add an App…**, under
+  the new **Other Apps** among the players (in the menu, Settings → General
+  and the welcome window), checks how AutoHush can pause and play an app it
+  doesn't support itself, then makes it your player. Choose the app from a
+  list (or any app on your disk with **Other App…**), allow what the check
+  needs, play something in it, and AutoHush tries every way it finds: its
+  AppleScript, its playback menu, its page's Play/Pause button (for apps
+  built with Electron, Chromium or Flutter too, such as Deezer's app) and
+  its row in the menu bar's Now Playing panel, with its window in view,
+  covered, on another desktop, in full screen, minimized and hidden. A
+  window says first what the check does: for about 3 minutes it moves the
+  app's window, blocks the mouse and keyboard and dims the screen, except a
+  small panel with its progress and **Stop** (or Escape). Everything is put
+  back as it was. The app is then listed under Other Apps, marked **Checked
+  by you**, and controlled the ways that worked, the surest first.
+- **An app no way pauses can be muted instead.** When Add an App finds
+  no way to pause an app, **Mute It Instead** makes it your player all the
+  same: AutoHush mutes it while other apps play and lifts the mute when they
+  stop. The menu says it's muted, with **Unmute**; pausing it and playing it
+  again yourself unmutes it too. It needs Audio Recording.
+- **An app that must be opened with an option says so.** An app built with
+  Electron is pressed while its window is covered or on another desktop
+  only when opened with an option: Add an App asks before reopening it so,
+  and while it's your player and runs without it, the menu says it needs
+  reopening, with a **Reopen** button.
 - **Shortcuts actions for Auto-Pause.** The Shortcuts app offers three:
   **Set Auto-Pause** turns it **On** or **Off**, or switches it with
   **Toggle** (Off lasts until it's turned on again); **Turn Off Auto-Pause

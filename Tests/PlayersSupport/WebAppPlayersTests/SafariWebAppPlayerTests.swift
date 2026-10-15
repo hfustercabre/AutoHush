@@ -21,10 +21,10 @@ struct SafariWebAppPlayerTests {
         let nowPlaying = NowPlayingBox()
         let player: SafariWebAppPlayer
 
-        init(recipe: PlayPauseRecipe? = nil, running: Bool = true) {
+        init(recipe: PlayPauseRecipe? = nil, running: Bool = true, kind: MusicPlayerKind = .safariWebApp, canMute: Bool = true) {
             store = MemoryRecipeStore(recipe.map { [SafariWebAppPlayerTests.app.bundleID: $0] } ?? [:])
             player = SafariWebAppPlayer(
-                app: SafariWebAppPlayerTests.app, page: page, store: store, muter: muter, levelProbe: probe,
+                app: SafariWebAppPlayerTests.app, kind: kind, page: page, canMute: canMute, store: store, muter: muter, levelProbe: probe,
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
                 sleep: { [clock] in clock.advance(by: $0) },
@@ -403,6 +403,38 @@ struct SafariWebAppPlayerTests {
         setup.muter.canMute = false
         await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
         #expect(setup.page.presses == [1])
+    }
+
+    @Test("another app's page (Electron's, CEF's): it's an app, controlled the same way")
+    func otherAppsPage() async throws {
+        let setup = Setup(recipe: Self.learned, kind: .app)
+        #expect(setup.player.kind == .app)
+        setup.showPage("Pause")
+        try await setup.player.pause()
+        #expect(setup.page.presses == [1])
+    }
+
+    @Test("a Chromium or Flutter page out of sight keeps an old word: its sound tells instead")
+    func staleWords() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.wordsCurrent = false
+        setup.page.sound = false
+        #expect(await setup.player.playerState() == .paused)
+        setup.page.sound = true
+        #expect(await setup.player.playerState() == .playing)
+        setup.page.wordsCurrent = true
+        setup.page.set(1, label: "Play")
+        #expect(await setup.player.playerState() == .paused)
+    }
+
+    @Test("an app that plays through its browser (a Chromium web app) isn't muted: a refused pause is an error")
+    func noMutingThroughTheBrowser() async {
+        let setup = Setup(recipe: Self.learned, canMute: false)
+        setup.showPage("Pause")
+        setup.page.onPress = { _, _ in }
+        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        #expect(setup.muter.muted.isEmpty)
     }
 
     @Test("a pause that takes never mutes")

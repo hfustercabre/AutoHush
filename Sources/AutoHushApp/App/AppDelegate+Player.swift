@@ -32,6 +32,7 @@ extension AppDelegate {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
         }
         if fromWelcome { windowWatch.wake() }
+        followPlayerReopen(asking: true)
     }
 
     /// The welcome window is done: the player is chosen and what it needs
@@ -80,6 +81,7 @@ extension AppDelegate {
     /// Shows the chosen player in the menu and the windows.
     func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
+        status.playerMutes = player?.pausesByMuting ?? false
         settingsModel.playerCanFade = player?.canFade ?? true
     }
 
@@ -181,6 +183,7 @@ extension AppDelegate {
     /// since it opened.
     func menuWillOpen() {
         refreshPlayerOptions()
+        followPlayerReopen()
         session.checkAccess()
         if isShowingPlayerChooser { playerChooser?.bringForward() }
     }

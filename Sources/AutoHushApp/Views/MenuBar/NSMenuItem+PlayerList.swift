@@ -10,6 +10,14 @@ extension NSMenuItem {
                    WebAppsHeading(font: menuHeadingFont))
     }
 
+    /// The heading and note over the apps added through a check, as a row
+    /// of the menu's players.
+    @MainActor
+    static func otherAppsHeading(width: CGFloat?) -> NSMenuItem {
+        headingRow("otherAppsHeading", title: PlayerOption.otherAppsHeading, width: width,
+                   OtherAppsHeading(font: menuHeadingFont))
+    }
+
     /// "Supported Apps" over the apps among the menu's players, drawn as the
     /// web apps' heading is, so the two match.
     @MainActor

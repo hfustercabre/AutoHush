@@ -28,7 +28,8 @@ import AutoHushKit
 /// level, and the mute that keeps it silent meanwhile), and Automation for
 /// the app when it has AppleScript play or pause. Without all of them
 /// nothing more is done: no window moved, nothing pressed. Exit status 3
-/// says so to Player Check. Then the app is muted until the test ends.
+/// says so to Player Check. With --partial, only Accessibility is needed.
+/// Then the app is muted until the test ends.
 @MainActor func checkPermissions() {
     guard let running else { return }
     say()
@@ -61,6 +62,17 @@ import AutoHushKit
         }
         if answer == .denied || answer == .notAsked { missing.append("Automation for \(appName)") }
     }
+    // --partial: only Accessibility is needed; without the others, the
+    // check goes on with less (`partial`).
+    if partial, trusted, !missing.isEmpty || unanswered {
+        if !levelsAllowed { say("  without Audio Recording: \(appName) isn't muted, and whether it plays is told by other signs") }
+        if unanswered || missing.contains(where: { $0.hasPrefix("Automation") }) {
+            scriptProblem = "Automation for \(appName) isn't allowed, so its AppleScript isn't tried"
+            say("  without Automation: \(appName)'s AppleScript isn't tried")
+        }
+        missing = []
+        unanswered = false
+    }
     if !missing.isEmpty {
         let list = missing.count > 1 ? missing.dropLast().joined(separator: ", ") + " and " + missing.last! : missing[0]
         say()
@@ -76,6 +88,7 @@ import AutoHushKit
             + " or it's busy): check again in a moment.")
         exit(3)
     }
+    guard levelsAllowed else { return } // nothing to mute it with
     // A browser's web app plays through its browser: the whole browser is
     // muted (its tabs and other web apps too): its own sound can't be told apart.
     let mute = TestMute(pid: soundOwner(running.processIdentifier))

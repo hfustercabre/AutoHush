@@ -154,8 +154,9 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `ChipButtonStyle(cornerRadius: 6)` | Small buttons inside the menu card: the player button and Retry. |
 | The card's status line with `info.circle` | When the media player couldn't be controlled ("Can’t control TIDAL right now", "Couldn’t pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can’t Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
-| `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Untested" after an untested web app. |
-| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, or "Not installed" (dimmed). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
+| `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Checked by you" after "Other Apps", "Untested" after an untested web app, "Needed" after a permission a step can't go without. |
+| `BadgedHeading` | A heading with a `HeadingBadge` after it and a note under it, over a group of players: `WebAppsHeading` and `OtherAppsHeading` ("Other Apps", "Checked by you", "Controlled the ways a check found to work.") are made of it. |
+| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, or "Not installed" (dimmed). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
 | `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In the menu it's a drawn row (`NSMenuItem.webAppsHeading`), since a section header can't show a badge; "Supported Apps" over the apps is drawn the same way, so the two match. |
 | Pop-ups | The system's pop-up (`NSPopUpButton` or a SwiftUI `Picker` with `.menu`), always **without a border**: `isBordered = false` or `.buttonStyle(.borderless)`. |
 | `SearchField` | Every search. Its ✕ closes the search or, when the search can't close, clears it. |
@@ -168,6 +169,9 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `RestoreDefaultsButton` | Under a page's cards on the right: sets that page's settings back (Detection's timings, or the fades), dimmed while they're the defaults. |
 | `SupportLine` | "Would you like to support me?" with its link, in About and, compact, at the foot of Settings' sidebar. |
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
+| `NumberedStepRow` | A step of a window whose steps go in order and are few (Add an App): its number in a circle while it's to come (`N.circle`, `.appSecondary`), filled with the accent color while it's the one to do (`N.circle.fill`, title semibold), a check in `.appSuccess` once done (title in `.appSecondary`), a spinner while AutoHush does it, an orange `xmark.circle.fill` once it failed. All marks are 18 pt wide, so the titles line up. Under the title: its lines (`.captionStyle()`), what it needs (a list, permission rows, the ways found), a warning (`NoteLabel`), then its button, blue for the way forward (Return presses it), grey for another way on ("Skip"). The whole window shows every step from the start, so what's coming is clear before it begins. |
+| A warning window before a takeover | Before AutoHush takes over the Mac (Add an App's check): its own window, titled for what it does ("Check Deezer"), the app's 56 pt icon, what happens and for how long, pictures of it (`SymbolTile`s for the window's states, a drawn dimmed screen), then **Cancel** and the action in blue ("Start the Check"). Nothing starts until that button. |
+| A check's panel | While AutoHush takes over the Mac: a borderless panel at the bottom right of the main display, on every desktop, never taking the keyboard: the app's icon, "Checking <app>" (two lines at most) with what it does, **Stop**; what it asks of the user on an orange line with the time left; the window states as segments, the one under test and what's pressed; and, while the mouse and keyboard are blocked, a line saying so (`hand.raised`, orange). The screen dims (black at 50%) except the panel while input is blocked. |
 | `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It’s Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
 | `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs under "Permissions", a row each (a `SymbolTile`, `RowTitle`, then the `PermissionButton` or "Allowed" in `.appSecondary` after a check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done in the `BottomBar`. |
@@ -181,6 +185,14 @@ to do now meanwhile (semibold, with its arrow). Follow the permission while
 the window shows (about once a second), so it unlocks by itself; never ask
 the user to click again. Audio Recording always offers "Use AntiDot Mode
 Instead" beside it.
+
+**Permissions a step can partly go without** (Add an App's): each row says
+whether it's **Needed** (`HeadingBadge`) or *Optional* (grey caption) after
+its name, and what it's used for under it. While one that's needed is
+missing, a `NoteLabel` says why it's needed and there's no Continue. While
+only optional ones are missing, a `NoteLabel` says what happens without each,
+then "Allow it now, or go on without it.", with **Continue** (blue) under it;
+with everything allowed, the step goes on by itself.
 
 **App icons** come from `AppIcon` (or `PlayerOption.icon`), at the size for
 where they appear:
@@ -198,7 +210,11 @@ A Safari web app's icon carries Safari's at its lower right, a little over
 half its size (`AppIcon.webAppImage`, through `PlayerOption.icon`), wherever
 it shows: so a web app is never taken for an app of the same name and icon
 (Spotify's app and its website, both "Spotify"). Suggested web apps keep
-their download symbol.
+their download symbol. A web app made by Chrome, Brave or another Chromium
+browser carries that browser's icon the same way (`AppIcon.appImage`), in
+Add an App's list and once it's added under Other Apps, with "<browser> web
+app" under its name in the list: two web apps of one site, made by two
+browsers, are told apart.
 
 **Marking the chosen item:**
 - In a list that acts on a click, as menus and pop-ups do, the chosen item
@@ -235,8 +251,19 @@ their download symbol.
     and "Other Countries"; choosing one puts its site in the field. A
     caption under the card says why (a sign-in works only on the
     account's country's site).
+  - **Apps added through a check** come after the apps, under
+    `OtherAppsHeading`, then **Add an App…** (with `plus.circle`): in the
+    menu as a row, among `PlayerTiles` as an "Add…" tile. The heading shows
+    even with none added (Add an App… is under it), and during a search
+    only while one matches.
   - **Add a Web App…** (with `plus.circle`) comes last: the menu's last
     row, and the last tile (as "Add…") among `PlayerTiles`.
+  - **A long list to choose from** (Add an App's apps) opens in a window of
+    its own, from a step's "Choose an App…": a search, the list in a card
+    (those in Now Playing first, under small grey headings), the selection
+    on `.selectedTileFill`; **Choose** (blue, Return, or a double click),
+    **Cancel**, and **Other App…** at the left of the `BottomBar` for
+    anything not listed (the Finder's open panel, in Applications).
   - The Add a Web App and learning windows show the heading's warning as a
     `NoteLabel` under their header (`WindowHeader`).
 - **A web app's controls** have one place: a `ControlsRow` ("Controls",

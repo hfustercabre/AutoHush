@@ -62,7 +62,7 @@ struct PlayerChooserView: View {
             BottomBar(margin: HostedWindowController.margin) {
                 Spacer()
                 Button { continueTapped() } label: {
-                    Text("Continue", comment: "Button in the welcome window and the Add a Web App window: goes on with what's chosen or typed")
+                    Text("Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed")
                         .font(.appBody.weight(.semibold))
                         .padding(.horizontal, 6)
                 }
@@ -82,6 +82,7 @@ struct PlayerChooserView: View {
         PlayerTiles(options: model.playerOptions.offered.matching(search), selection: picked,
                     onSelect: select,
                     onAddWebApp: { model.actions?.openAddWebApp() },
+                    onAddApp: { model.actions?.openAddApp() },
                     maxVisibleRows: Self.visibleTileRows,
                     holdsHeight: !search.isEmpty, // typing doesn't shrink the window
                     search: search)
@@ -151,7 +152,7 @@ struct PlayerChooserView: View {
 
     /// Among tiles of one name: the app, an added web app, a suggested one.
     private static func pickOrder(_ option: PlayerOption) -> Int {
-        option.kind == .app ? 0 : option.isInstalled ? 1 : 2
+        option.kind != .safariWebApp ? 0 : option.isInstalled ? 1 : 2
     }
 
     /// A player is picked, and is still installed.

@@ -21,6 +21,29 @@ struct AppStatusTests {
         return status
     }
 
+    @Test("a player muted instead of paused says “Muted”, with Unmute, while another app plays")
+    func muted() {
+        var status = ready(.pausedByMonitor)
+        status.setActiveSources([chrome])
+        status.playerMutes = true
+        #expect(status.statusLine == "Muted — Google Chrome is playing")
+        #expect(status.icon == .pausedForApp && status.offersUnmute)
+        status.playback = .musicPlaying
+        #expect(!status.offersUnmute)
+    }
+
+    @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")
+    func needsReopen() {
+        var status = ready(.musicPlaying)
+        status.autoPause = .off
+        status.playerNeedsReopen = true
+        #expect(status.statusLine == "Jukebox needs reopening")
+        #expect(status.icon == .attention)
+        #expect(status.needsAttention)
+        status.playerNeedsReopen = false
+        #expect(status.statusLine == "Auto-Pause is off")
+    }
+
     @Test("a pause that failed while another app plays says so, in orange with the attention icon")
     func pauseFailed() {
         var status = ready(.pauseFailed)

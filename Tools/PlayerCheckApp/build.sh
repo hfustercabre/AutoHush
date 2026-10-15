@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds "Player Check.app" into a folder (default: the current one): the
-# window, with Tools/PlayerCheck's playercheck inside its Resources, built as
+# window, with Sources/PlayerCheck's playercheck inside its Resources, built as
 # the package's playercheck product (it uses AutoHush's own modules).
 #   sh Tools/PlayerCheckApp/build.sh [folder]
 #   SIGNING_IDENTITY="<certificate>" sh Tools/PlayerCheckApp/build.sh [folder]

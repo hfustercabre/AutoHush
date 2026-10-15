@@ -119,12 +119,17 @@ extension PlayerSession {
         cancelRetry()
         handOverPauses(now: now)
         let monitoring = self.monitoring
-        guard monitoring != nil || !heldPauses.isEmpty else { return nil }
+        let player = player
+        guard monitoring != nil || !heldPauses.isEmpty else {
+            guard let player, player.releasesOnQuit else { return nil }
+            return Task { await player.release() }
+        }
         self.monitoring = nil
         let heldPauses = heldPauses
         return Task {
             await monitoring?.stopAndRestoreVolume()
             await heldPauses.stopAndRestoreAll()
+            await player?.release()
         }
     }
 
