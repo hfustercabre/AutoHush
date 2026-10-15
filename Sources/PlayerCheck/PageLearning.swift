@@ -1,62 +1,18 @@
 import AppKit
+import PlayerCheckKit
 import AutoHushKit
 import WebAppPlayers
 
 // MARK: - Where the player bar's button was (a press goes straight to it)
 
-/// Where a player bar's button sits: the child indices from its page (an
-/// AXWebArea) or, in a Flutter app, its window, down to it, so a press walks
-/// straight to it instead of searching the page and hit-testing its buttons.
-struct ButtonPath: Codable, Equatable {
-    enum Root: String, Codable { case page, window }
-    var root: Root
-    var path: [Int]
-}
-
-/// What's kept of an app's page button between runs, per app (in
-/// ~/Library/Caches/PlayerCheck/button-places.json): its `ButtonPath`, and,
-/// once learned as AutoHush learns a web app's (`learnPageButton`), its
-/// `PlayPauseRecipe`: the site's own words for Play and Pause, and where the
-/// button is by the kinds of element around it and its distance from the
-/// window's bottom, up to 3 layouts, which finds it again after its page
-/// reloads (`PlayPauseRecipe.find`).
-struct SavedButton: Codable {
-    var path: ButtonPath?
-    var recipe: SavedRecipe?
-    /// The text of its row in the Now Playing panel, once a press of it
-    /// changed the app (`rememberPanelRow`).
-    var panelRow: String?
-}
-struct SavedRecipe: Codable {
-    struct Place: Codable { var path: [String]; var fromBottom: Double }
-    var play: String, pause: String, places: [Place]
-    init(_ recipe: PlayPauseRecipe) {
-        play = recipe.playLabel
-        pause = recipe.pauseLabel
-        places = recipe.places.map { Place(path: $0.path, fromBottom: $0.distanceFromBottom) }
-    }
-    var recipe: PlayPauseRecipe {
-        PlayPauseRecipe(playLabel: play, pauseLabel: pause, places: places.map { ButtonPlace(path: $0.path, distanceFromBottom: $0.fromBottom) })
-    }
-}
-let placesFile = FileManager.default.homeDirectoryForCurrentUser
-    .appendingPathComponent("Library/Caches/PlayerCheck/button-places.json")
-func savedButtons() -> [String: SavedButton] {
-    guard let data = try? Data(contentsOf: placesFile) else { return [:] }
-    if let all = try? JSONDecoder().decode([String: SavedButton].self, from: data) { return all }
-    // Before recipes: the paths alone.
-    return ((try? JSONDecoder().decode([String: ButtonPath].self, from: data)) ?? [:]).mapValues { SavedButton(path: $0) }
-}
-func saveButton(_ change: (inout SavedButton) -> Void) {
-    var all = savedButtons()
-    var mine = all[bundleID] ?? SavedButton()
-    change(&mine)
-    all[bundleID] = mine
-    try? FileManager.default.createDirectory(at: placesFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-    // Whole or not at all: a run stopped mid-write (`_exit`) would leave a
-    // cut file, read as empty, and the next save would keep only this app.
-    try? JSONEncoder().encode(all).write(to: placesFile, options: .atomic)
-}
+/// What's kept of the app's page button between runs (`SavedButton`): in
+/// button-places.json, in --caches' folder; a press goes straight to the
+/// player bar's button where it was last time (`ButtonPath`), and its
+/// learned recipe finds it again after its page reloads (`PlayPauseRecipe.find`).
+let placesFile = cachesFolder.appendingPathComponent("button-places.json")
+let savedButtonStore = SavedButtonStore(file: placesFile)
+func savedButtons() -> [String: SavedButton] { savedButtonStore.all() }
+func saveButton(_ change: (inout SavedButton) -> Void) { savedButtonStore.change(bundleID, change) }
 
 /// The button's place, climbing from it to its page or window.
 func placeOf(_ element: AXUIElement) -> ButtonPath? {
@@ -129,7 +85,7 @@ func rememberPlace(of element: AXUIElement) {
     barToggle = found.element
     pageRead = true
     pageNotChecked = nil
-    say("  its player bar's “\(found.label)”, " + (byPlace ? "found at its learned place (its page changed since)" : "where it was last time"))
+    say("  its player bar's \(shown(found.label)), " + (byPlace ? "found at its learned place (its page changed since)" : "where it was last time"))
     return true
 }
 
@@ -211,9 +167,9 @@ let outOfSightWhy = "its window is out of sight, where a Chromium or Flutter pag
     }
     let guess = page?.toggle
     let same = guess.map { CFEqual($0.element, element) }
-    say("    learned its page's Play/Pause, as AutoHush learns a web app's: “\(recipe.pauseLabel)” while it plays, “\(recipe.playLabel)”"
+    say("    learned its page's Play/Pause, as AutoHush learns a web app's: \(shown(recipe.pauseLabel)) while it plays, \(shown(recipe.playLabel))"
         + " while paused, \(Int(recipe.places[0].distanceFromBottom)) pt from the window's bottom"
-        + (same == true ? " (the button this tool found)" : guess.map { " (not “\($0.label)”, the one this tool found)" } ?? ""))
+        + (same == true ? " (the button this tool found)" : guess.map { " (not \(shown($0.label)), the one this tool found)" } ?? ""))
     if same != true {
         page = PageCheck(buttons: page?.buttons ?? buttons.count,
                          toggle: FoundButton(element: element, label: label(of: element), fromBottom: recipe.places[0].distanceFromBottom,

@@ -99,6 +99,8 @@ final class PlayerSession {
     /// The monitoring of players AutoHush held paused when the user chose
     /// another, running on to end those pauses (`HeldPauses`).
     let heldPauses = HeldPauses()
+    /// Players no longer chosen, released once their held pause is over.
+    var leftPlayers: [String: any MusicPlayer] = [:]
     /// Each start has its number; one that finds a newer one started gives up.
     var startGeneration = 0
     /// The starts requested and not over yet (`requestStart`).
@@ -139,6 +141,10 @@ final class PlayerSession {
         self.locateApp = locateApp
         self.retries = retries
         state = State(health: player == nil ? nil : .starting)
+        heldPauses.onEnded = { [weak self] bundleID in
+            guard let self, let left = self.leftPlayers.removeValue(forKey: bundleID) else { return }
+            self.releaseLeft(left)
+        }
     }
 
     /// Makes `MonitoringPipeline`s, whose processes are named by `hostedApp`

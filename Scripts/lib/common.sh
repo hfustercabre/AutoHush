@@ -92,7 +92,8 @@ identity_name() {
 
 # Code signing identity, in order of preference:
 #   1. $SIGNING_IDENTITY ("-" forces ad-hoc signing)
-#   2. the keychain's "Apple Development" identity (the one valid longest)
+#   2. the keychain's "Apple Development" identity ($RELEASE_TEAM's first;
+#      of several, the one valid longest)
 #   3. the "AutoHush Self-Signed" certificate
 #   4. ad hoc ("-")
 # The app is identified by its certificate rather than its content hash only

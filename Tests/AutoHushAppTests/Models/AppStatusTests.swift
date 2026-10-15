@@ -30,6 +30,7 @@ struct AppStatusTests {
         #expect(status.icon == .pausedForApp && status.offersUnmute)
         status.playback = .musicPlaying
         #expect(!status.offersUnmute)
+        #expect(AppStatus.unmuteTitle == "Unmute")
     }
 
     @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")
@@ -42,6 +43,7 @@ struct AppStatusTests {
         #expect(status.needsAttention)
         status.playerNeedsReopen = false
         #expect(status.statusLine == "Auto-Pause is off")
+        #expect(AppStatus.reopenPlayerTitle == "Reopen") // the line above names the player
     }
 
     @Test("a pause that failed while another app plays says so, in orange with the attention icon")

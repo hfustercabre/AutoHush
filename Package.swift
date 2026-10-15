@@ -12,8 +12,11 @@ import PackageDescription
 //          │    ├─ ScriptablePlayers  controls any app scripted with Apple events
 //          │    │                   (state, pause, play, volume, its notification)
 //          │    ├─ MenuPlayers      controls an app through its playback menu
-//          │    └─ WebAppPlayers    controls Safari web apps through the site's
-//          │                        own Play/Pause button, learned once
+//          │    ├─ WebAppPlayers    controls Safari web apps through the site's
+//          │    │                   own Play/Pause button, learned once
+//          │    └─ CheckedPlayers   controls an app added through a check, by
+//          │                        the ways that worked there (on the three above)
+//          ├─ CheckedPlayers    Add an App…'s check results and its report's lines
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
@@ -21,10 +24,14 @@ import PackageDescription
 //   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 //   listen-to-fades (developer tool, in Tools/): records a loopback device
 //                               and measures AutoHush's fades in it
-//   playercheck (AutoHush.app's helper, in Sources/) → ScriptablePlayers, MenuPlayers,
-//                               WebAppPlayers, CheckedPlayers, VLCSupport, AutoHushKit:
-//                               whether and how AutoHush could control an app, checked
-//                               with AutoHush's own code (Add an App… runs it)
+//   playercheck (AutoHush.app's helper, in Sources/PlayerCheck) → PlayerCheckKit,
+//                               ScriptablePlayers, MenuPlayers, WebAppPlayers,
+//                               CheckedPlayers, AutoHushKit: whether and how
+//                               AutoHush could control an app, checked with
+//                               AutoHush's own code (Add an App… runs it); it
+//                               names no player
+//     └─ PlayerCheckKit    its parts that need no app to check (in its Kit/
+//                          folder), so tests can reach them
 //
 // Code inside a module is sorted by kind of code first (Models, Services,
 // Views…), then by area. Types shared between modules use `package` access:
@@ -109,9 +116,16 @@ let package = Package(
         // subject, with main.swift's top-level code running the steps.
         .executableTarget(
             name: "PlayerCheck",
-            dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers", "VLCSupport"],
+            dependencies: ["PlayerCheckKit", "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers"],
             path: "Sources/PlayerCheck",
-            exclude: ["README.md"]
+            exclude: ["README.md", "Kit"]
+        ),
+        // The check's parts that need no app to check: reading its command
+        // line and an app's binaries, what its log leaves out, what it keeps.
+        .target(
+            name: "PlayerCheckKit",
+            dependencies: ["AutoHushKit", "WebAppPlayers", "CheckedPlayers", "ScriptablePlayers"],
+            path: "Sources/PlayerCheck/Kit"
         ),
 
         // Fakes shared by the test targets.
@@ -161,6 +175,13 @@ let package = Package(
             name: "VLCSupportTests",
             dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/VLCSupportTests"
+        ),
+        // AutoHushPlayers only for the supported players' names, which no
+        // file of Sources/PlayerCheck may hold.
+        .testTarget(
+            name: "PlayerCheckKitTests",
+            dependencies: ["PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushPlayers"],
+            path: "Tests/PlayerCheckKitTests"
         ),
         .testTarget(
             name: "AutoHushAppTests",

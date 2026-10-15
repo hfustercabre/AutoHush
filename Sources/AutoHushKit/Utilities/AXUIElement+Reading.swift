@@ -25,6 +25,12 @@ extension AXUIElement {
 
     package func string(_ attribute: String) -> String? { value(attribute) as? String }
 
+    /// The actions it offers (AXPress…).
+    package var actionNames: [String] {
+        var names: CFArray?
+        return AXUIElementCopyActionNames(self, &names) == .success ? names as? [String] ?? [] : []
+    }
+
     /// The elements in a value (an attribute's, a search's result).
     package static func elements(in value: CFTypeRef?) -> [AXUIElement] {
         (value as? [AnyObject] ?? []).compactMap { item in

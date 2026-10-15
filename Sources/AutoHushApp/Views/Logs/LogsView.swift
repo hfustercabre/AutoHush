@@ -19,10 +19,11 @@ struct LogsView: View {
                 Picker(selection: $model.range) {
                     ForEach(LogsModel.Range.allCases, id: \.self) { Text($0.title).tag($0) }
                 } label: {
-                    Text("Time Range", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
+                    Text("Time range", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .buttonStyle(.borderless)
                 .fixedSize()
                 Picker(selection: $model.levels) {
                     ForEach(LogsModel.Levels.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -31,6 +32,7 @@ struct LogsView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .buttonStyle(.borderless)
                 .fixedSize()
             }
             .padding(.horizontal, 20)
@@ -40,7 +42,7 @@ struct LogsView: View {
             lines
             BottomBar(margin: HostedWindowController.margin) {
                 Toggle(isOn: $model.followsNewEntries) { Text(verbatim: Self.followTitle) }
-                    .toggleStyle(PillToggleStyle(width: 30, height: 18))
+                    .toggleStyle(PillToggleStyle())
                 Text(verbatim: Self.followTitle)
                     .font(.appCallout)
                     .foregroundStyle(.appSecondary)
@@ -85,7 +87,9 @@ struct LogsView: View {
         let shown = model.shown
         return ScrollView {
             Card {
-                if shown.isEmpty {
+                if shown.isEmpty && model.isLoading {
+                    ProgressView().controlSize(.small).frame(maxWidth: .infinity)
+                } else if shown.isEmpty {
                     Text(verbatim: emptyNote).foregroundStyle(.appSecondary)
                 } else {
                     LazyVStack(alignment: .leading, spacing: 10) {

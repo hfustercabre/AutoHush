@@ -144,6 +144,20 @@ struct AppStatus: Equatable {
                comment: "Status line: the media player (an app added through a check) was opened without an option it needs, so AutoHush can pause it only while its window can be seen; a button under it reopens it; %@ is the player")
     }
 
+    /// The chip under `needsReopenLine` in the menu's card and on Settings →
+    /// General's player card: the line names the player, so it doesn't.
+    static var reopenPlayerTitle: String {
+        String(localized: "Reopen",
+               comment: "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Deezer needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs")
+    }
+
+    /// The chip under the status line in the menu's card and on Settings →
+    /// General's player card while the player is muted (`offersUnmute`).
+    static var unmuteTitle: String {
+        String(localized: "Unmute",
+               comment: "Button in the menu's card and on Settings → General's player card, under the status line, while the media player (one that can only be muted) is muted for another app: it's heard again until the other apps stop")
+    }
+
     /// The card's title at the top of the menu: the chosen player, or
     /// AutoHush while none is chosen.
     var cardTitle: String { chosenPlayer?.name ?? "AutoHush" }

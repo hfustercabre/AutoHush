@@ -37,6 +37,8 @@ extension AppDelegate {
     /// Whether the chosen player runs without what it needs to be controlled
     /// wherever its window is (`MusicPlayer.needsReopen`): the card says so.
     /// `asking` (it was just chosen): an alert first offers to reopen it.
+    /// One the user chose to reopen always (the alert's checkbox) is
+    /// reopened at once, whenever it's found so.
     func followPlayerReopen(asking: Bool = false) {
         guard let player else {
             status.playerNeedsReopen = false
@@ -45,11 +47,26 @@ extension AppDelegate {
         Task { [weak self] in
             let needs = await player.needsReopen()
             guard let self, self.player?.bundleID == player.bundleID else { return }
-            if needs, asking, Self.askToReopen(player.name) {
+            if needs, ReopenChoices.reopensAlways(player.bundleID) {
+                self.logger.notice("\(player.name, privacy: .public) runs without the option it needs: reopening it, as the user chose")
                 await self.reopen(player)
-            } else if self.status.playerNeedsReopen != needs {
+                return
+            }
+            if self.status.playerNeedsReopen != needs {
                 self.status.playerNeedsReopen = needs
                 if needs { self.logger.notice("\(player.name, privacy: .public) runs without the option it needs: it needs reopening") }
+            }
+            guard needs, asking else { return }
+            // From the run loop: run inside this task, the alert's modal loop
+            // would hold up every other main-actor job until it closes (the
+            // player's state reports, the menu, a quit asked for).
+            RunLoop.main.perform(inModes: [.common]) {
+                MainActor.assumeIsolated {
+                    guard self.player?.bundleID == player.bundleID, self.status.playerNeedsReopen else { return }
+                    let (reopens, always) = Self.askToReopen(player.name)
+                    if always { ReopenChoices.setReopensAlways(player.bundleID) }
+                    if reopens { Task { await self.reopen(player) } }
+                }
             }
         }
     }
@@ -68,21 +85,25 @@ extension AppDelegate {
     }
 
     /// The alert when a player that needs reopening is chosen: Reopen (Return)
-    /// or Cancel (Escape), which leaves the card saying so.
-    private static func askToReopen(_ name: String) -> Bool {
+    /// or Cancel (Escape), which leaves the card saying so; its checkbox
+    /// reopens it so from then on without asking.
+    private static func askToReopen(_ name: String) -> (reopens: Bool, always: Bool) {
         let alert = reopenAlert(name)
         NSApp.activate()
-        return alert.runModal() == .alertFirstButtonReturn
+        let reopens = alert.runModal() == .alertFirstButtonReturn
+        return (reopens, reopens && alert.suppressionButton?.state == .on)
     }
 
     static func reopenAlert(_ name: String) -> NSAlert {
         let alert = NSAlert()
         alert.messageText = String(localized: "Reopen \(name)?",
                                    comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player")
-        alert.informativeText = AddAppText.reopenReason(name) + " " + AddAppText.reopenStops
+        alert.informativeText = AddAppText.reopenAlertMessage(name)
         alert.alertStyle = .warning
         alert.addButton(withTitle: AddAppText.reopenTitle(name))
-        alert.addButton(withTitle: AddAppText.cancel)
+        alert.addButton(withTitle: AddAppText.cancel).keyEquivalent = "\u{1b}" // Escape; Return reopens
+        alert.showsSuppressionButton = true
+        alert.suppressionButton?.title = AddAppText.reopenAlways(name)
         return alert
     }
 

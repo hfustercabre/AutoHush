@@ -28,7 +28,7 @@ import AppKit
     var untested: [WindowState: String] = [:]
     /// Shows the app's page to Accessibility (its switch on) while its window
     /// is dragged, and hides it after: an Electron app's top bar has buttons
-    /// Accessibility sees only then (Deezer's avatar).
+    /// Accessibility sees only then (an account's avatar).
     var revealPage: ((Bool) -> Void)?
     var states: [WindowState] { WindowState.allCases.filter { untested[$0] == nil } }
 
@@ -71,7 +71,7 @@ import AppKit
     /// The app the test came from in front, until its window is on screen.
     /// Brought forward, macOS may leave another desktop shown: from a full
     /// screen app's, or anywhere for Player Check (`open` brought it forward
-    /// and stayed on VLC's desktop, and SkyLight's way can't run on macOS 27:
+    /// and stayed on the checked app's desktop, and SkyLight's way can't run on macOS 27:
     /// GetProcessForPID is gone), so its desktop is then shown with
     /// Control-arrow, as a person would, and it's brought forward there.
     private static func show(_ home: NSRunningApplication) {
@@ -98,10 +98,10 @@ import AppKit
             WindowStates.set(appElement, kAXHiddenAttribute, false)
             guard WindowStates.wait(3, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else { return "it couldn't be shown again" }
         }
-        // Out of sight and out of Accessibility's reach (VLC's window on
-        // another desktop: no element number answered): its desktop shown
+        // Out of sight and out of Accessibility's reach (a scriptable player's
+        // window on another desktop: no element number answered): its desktop shown
         // first, where its window can be reached; then it's dragged back here
-        // as any other. Bringing VLC forward didn't show that desktop (some of
+        // as any other. Bringing that app forward didn't show that desktop (some of
         // its hidden windows are on this one), so the desktop is shown with
         // Control-arrow, as a person would.
         if let (info, element) = WindowStates.main(of: pid), element == nil, info[kCGWindowIsOnscreen as String] as? Bool != true,
@@ -229,7 +229,7 @@ import AppKit
         guard let info = WindowStates.main(of: pid)?.info else { return "its window is gone" }
         let number = WindowStates.number(of: info)
         // Brought forward there; else that desktop shown with Control-arrow
-        // (VLC's coming forward didn't show it: `normalize`).
+        // (an app's coming forward didn't show it: `normalize`).
         if !WindowStates.activate(app, showing: number) {
             guard let there = Desktops.of(window: number), WindowStates.showDesktop(there) else { return "its desktop couldn't be shown" }
         }

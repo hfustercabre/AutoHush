@@ -107,11 +107,12 @@ struct StatusCardView: View {
     }
 
     /// Reopens the player with what it needs (its launch option); the menu
-    /// closes, and the card shows how it went next time.
+    /// closes, and the card shows how it went next time. The line above
+    /// names the player, so the chip doesn't.
     private var reopenButton: some View {
         Button { model.perform(.reopenPlayer) } label: {
             Label {
-                Text(verbatim: AddAppText.reopenTitle(status.playerName))
+                Text(verbatim: AppStatus.reopenPlayerTitle)
             } icon: {
                 Image(systemName: "arrow.clockwise")
             }
@@ -129,7 +130,7 @@ struct StatusCardView: View {
     private var unmuteButton: some View {
         Button { model.perform(.unmutePlayer) } label: {
             Label {
-                Text("Unmute", comment: "Menu: button on the card while the media player (one that can only be muted) is muted for another app: it's heard again until the other apps stop")
+                Text(verbatim: AppStatus.unmuteTitle)
             } icon: {
                 Image(systemName: "speaker.wave.2")
             }

@@ -21,6 +21,8 @@ reaches everyone with the next version.
 - **What AutoHush does with its permissions:** Accessibility, Automation
   and Audio Recording, and macOS's private interfaces it uses (with their
   fallbacks).
+- **Add an App's check:** AutoHush's helper (`Contents/Helpers/playercheck`)
+  and its block on the mouse and keyboard.
 - **The tools in `Tools/`**, Player Check's mouse and keyboard block
   included.
 

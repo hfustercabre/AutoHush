@@ -8,6 +8,9 @@ import CheckedPlayers
 /// screen dims (but for the panel), how long it takes; Start the Check.
 struct CheckWarningView: View {
     let app: CheckableApp
+    /// The app is muted during the check (Audio Recording allowed, AntiDot
+    /// mode off); else the user hears it pause and play.
+    var muted = true
     let start: () -> Void
     let cancel: () -> Void
 
@@ -43,7 +46,11 @@ struct CheckWarningView: View {
                 }
                 HStack(spacing: 14) {
                     Label(AddAppText.aboutThreeMinutes, systemImage: "clock")
-                    Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
+                    if muted {
+                        Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
+                    } else {
+                        Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
+                    }
                     Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
                 }
                 .font(.appCaption)
@@ -70,6 +77,8 @@ struct CheckWarningView: View {
     private func tile(_ state: CheckResult.WindowState) -> some View {
         VStack(spacing: 4) {
             SymbolTile(symbol: Self.symbol(state))
+                // Its arrow points the way the next desktop is, also right to left.
+                .flipsForRightToLeftLayoutDirection(state == .otherDesktop)
             Text(verbatim: AddAppText.stateLabel(state))
                 .font(.appCaption).foregroundStyle(.appSecondary).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -91,7 +100,9 @@ struct CheckWarningView: View {
     }
 }
 
-/// A screen while the check moves windows: dimmed, but for its panel.
+/// A screen while the check moves windows: dimmed, but for its panel. A
+/// drawing of a screen, in a wallpaper's colours (the style guide's
+/// exception for drawn pictures).
 private struct DimmedScreenPicture: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {

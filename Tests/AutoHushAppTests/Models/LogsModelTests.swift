@@ -7,11 +7,20 @@ import AutoHushTestSupport
 @Suite("LogsModel")
 @MainActor
 struct LogsModelTests {
-    /// A log in memory.
+    /// A log in memory; its reads can be held, as a long log's take a while.
     final class FakeLog: LogSource, @unchecked Sendable {
         var entries: [LogEntry] = []
         var handlers: [UUID: @Sendable (LogEntry) -> Void] = [:]
-        func entries(since date: Date) -> [LogEntry] { entries.filter { $0.date >= date } }
+        var holdsReads = false
+        var heldRead: CheckedContinuation<Void, Never>?
+        func entries(since date: Date) async -> [LogEntry] {
+            if holdsReads { await withCheckedContinuation { heldRead = $0 } }
+            return entries.filter { $0.date >= date }
+        }
+        func releaseRead() {
+            heldRead?.resume()
+            heldRead = nil
+        }
         func observe(_ handler: @escaping @Sendable (LogEntry) -> Void) -> UUID {
             let token = UUID()
             handlers[token] = handler
@@ -20,6 +29,10 @@ struct LogsModelTests {
         func stopObserving(_ token: UUID) { handlers[token] = nil }
         func log(_ entry: LogEntry) {
             entries.append(entry)
+            hear(entry)
+        }
+        /// Heard, but not in the log yet: written after a read.
+        func hear(_ entry: LogEntry) {
             handlers.values.forEach { $0(entry) }
         }
     }
@@ -31,28 +44,32 @@ struct LogsModelTests {
     }
 
     @Test("this launch, at most its last 24 hours; the last 24 hours, earlier launches too, never further")
-    func ranges() {
+    func ranges() async {
         let log = FakeLog()
         log.entries = [entry(hoursAgo: 30, "two days"), entry(hoursAgo: 20, "earlier launch"), entry(hoursAgo: 2, "this launch")]
         let model = LogsModel(source: log, launch: now.addingTimeInterval(-3 * 3600), now: { [now] in now })
         model.open()
+        await TestWait.until { !model.isLoading }
         #expect(model.shown.map(\.message) == ["this launch"])
         model.range = .last24Hours
+        await TestWait.until { !model.isLoading }
         #expect(model.shown.map(\.message) == ["earlier launch", "this launch"])
 
         // Open for more than a day: still only the last 24 hours.
         let longRunning = LogsModel(source: log, launch: now.addingTimeInterval(-40 * 3600), now: { [now] in now })
         longRunning.open()
+        await TestWait.until { !longRunning.isLoading }
         #expect(longRunning.shown.map(\.message) == ["earlier launch", "this launch"])
     }
 
     @Test("the problems only, and a search over the lines and their areas")
-    func filters() {
+    func filters() async {
         let log = FakeLog()
         log.entries = [entry(hoursAgo: 1, "Spotify paused"), entry(hoursAgo: 1, "Update check failed", level: .error, category: "Updates"),
                        entry(hoursAgo: 1, "Web app ready", category: "WebAppPlayer")]
         let model = LogsModel(source: log, launch: now.addingTimeInterval(-3600 * 2), now: { [now] in now })
         model.open()
+        await TestWait.until { !model.isLoading }
         model.levels = .problems
         #expect(model.shown.map(\.message) == ["Update check failed"])
         model.levels = .all
@@ -61,6 +78,41 @@ struct LogsModelTests {
         model.search = "PAUSED"
         #expect(model.shown.map(\.message) == ["Spotify paused"])
         #expect(model.text.hasSuffix("Notice  Player  Spotify paused"))
+        // A new line shows only if it matches too.
+        log.log(entry(hoursAgo: 0, "Spotify paused again"))
+        log.log(entry(hoursAgo: 0, "Update installed", category: "Updates"))
+        await TestWait.until { model.entries.count == 5 }
+        #expect(model.shown.map(\.message) == ["Spotify paused", "Spotify paused again"])
+    }
+
+    @Test("the search and the levels start again each time the window opens")
+    func startsAgain() async {
+        let model = LogsModel(source: FakeLog(), launch: now.addingTimeInterval(-3600), now: { [now] in now })
+        model.open()
+        model.search = "paused"
+        model.levels = .problems
+        model.close()
+        model.open()
+        #expect(model.search.isEmpty)
+        #expect(model.levels == .all)
+    }
+
+    @Test("the log is read off the main thread: lines logged meanwhile show at once, then once each, after the read's")
+    func readsMeanwhile() async {
+        let log = FakeLog()
+        log.entries = [entry(hoursAgo: 1, "before")]
+        log.holdsReads = true
+        let model = LogsModel(source: log, launch: now.addingTimeInterval(-7200), now: { [now] in now })
+        model.open()
+        await TestWait.until { log.heldRead != nil }
+        #expect(model.isLoading)
+        log.log(entry(hoursAgo: 0, "meanwhile")) // the read has it too
+        log.hear(entry(hoursAgo: 0, "after the read")) // the read misses it
+        await TestWait.until { model.entries.count == 2 }
+        #expect(model.shown.map(\.message) == ["meanwhile", "after the read"])
+        log.releaseRead()
+        await TestWait.until { !model.isLoading }
+        #expect(model.shown.map(\.message) == ["before", "meanwhile", "after the read"])
     }
 
     @Test("new lines show as they're logged, until the window closes")
@@ -68,6 +120,7 @@ struct LogsModelTests {
         let log = FakeLog()
         let model = LogsModel(source: log, launch: now.addingTimeInterval(-3600), now: { [now] in now })
         model.open()
+        await TestWait.until { !model.isLoading }
         log.log(entry(hoursAgo: 0, "new"))
         await TestWait.until { model.entries.count == 1 }
         #expect(model.shown.map(\.message) == ["new"])

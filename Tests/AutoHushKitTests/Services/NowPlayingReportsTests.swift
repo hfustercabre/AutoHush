@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import AutoHushKit
 
-@Suite("NowPlayingReports and PlayingPages")
+@Suite("NowPlayingReports")
 struct NowPlayingReportsTests {
     @Test("the daemon's lines: each client created, its state changes, removed")
     func lines() {
@@ -21,15 +21,43 @@ struct NowPlayingReportsTests {
         #expect(NowPlayingReports.state(reported: "Stopped") == .stopped)
     }
 
-    @Test("a browser's playing pages, and whether its web app is one of them")
-    func pages() {
-        let assertions: [[String: Any]] = [
-            ["AssertName": "Playing audio"], ["AssertName": "Playing audio"],
-            ["AssertName": "Playing audio", "AssertionOnBehalfOfPID": 42], ["AssertName": "Video Wake Lock"],
-        ]
-        #expect(PlayingPages.count(in: assertions) == 2)
-        #expect(PlayingPages.webAppPlays(total: 2, others: 1) == true)
-        #expect(PlayingPages.webAppPlays(total: 1, others: 1) == false)
-        #expect(PlayingPages.webAppPlays(total: 3, others: 1) == nil)
+    @Test("a client keeps its name, its report as the log says it, and when it came")
+    func reports() {
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        let at = Date(timeIntervalSince1970: 1_000)
+        NowPlayingReports.apply("[com.qobuz.QobuzDesktop (90) Qobuz ❯] PlaybackState changed from Playing to Interrupted", at: at, to: &clients)
+        #expect(clients[90]?.reported == "Interrupted")
+        #expect(clients[90]?.state == .paused)
+        #expect(clients[90]?.name == "Qobuz")
+        #expect(clients[90]?.pid == 90)
+        #expect(clients[90]?.changed == at)
+    }
+
+    @Test("the app's newest report, from a client that isn't removed and whose process still runs")
+    func latest() {
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        NowPlayingReports.apply("[com.example.app (10) App ❯] PlaybackState changed from Paused to Playing",
+                                at: Date(timeIntervalSince1970: 1), to: &clients)
+        NowPlayingReports.apply("[com.example.app (11) App ❯] PlaybackState changed from Playing to Paused",
+                                at: Date(timeIntervalSince1970: 2), to: &clients)
+        let running: Set<pid_t> = [10, 11]
+        #expect(NowPlayingReports.latest(of: "com.example.app", in: clients, stillRuns: running.contains)?.pid == 11)
+        // A crashed app's last report doesn't outlive it.
+        #expect(NowPlayingReports.latest(of: "com.example.app", in: clients, stillRuns: { $0 == 10 })?.pid == 10)
+        NowPlayingReports.apply("Removing nowPlayingClient com.example.app (10) App", to: &clients)
+        #expect(NowPlayingReports.latest(of: "com.example.app", in: clients, stillRuns: { $0 == 10 }) == nil)
+        #expect(NowPlayingReports.latest(of: "com.other", in: clients, stillRuns: running.contains) == nil)
+        #expect(NowPlayingReports.stillRuns(getpid()) && !NowPlayingReports.stillRuns(0))
+    }
+
+    @Test("reports given in place of the log are read at once, and only what still runs counts")
+    func given() {
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        NowPlayingReports.apply("[com.example.app (\(getpid())) App ❯] PlaybackState changed from Paused to Playing", to: &clients)
+        let reports = NowPlayingReports(clients: clients)
+        #expect(reports.isAvailable)
+        #expect(reports.state(of: "com.example.app") == .playing)
+        reports.stop()
+        #expect(reports.state(of: "com.example.app") == nil)
     }
 }

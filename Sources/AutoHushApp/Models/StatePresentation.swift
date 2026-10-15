@@ -22,8 +22,6 @@ extension StatePresentation {
         )
     }
 
-    /// While something needs the user: VoiceOver says what the status line
-    /// does ("AutoHush: Spotify isn't running").
     /// A player that's muted instead of paused, while `playing` play.
     static func muted(playing: [String]) -> StatePresentation {
         StatePresentation(
@@ -34,6 +32,8 @@ extension StatePresentation {
         )
     }
 
+    /// While something needs the user: VoiceOver says what the status line
+    /// does ("AutoHush: Spotify isn't running").
     static func needingAttention(_ line: String) -> StatePresentation {
         StatePresentation(icon: .attention, label: iconLabel(line), line: line)
     }

@@ -180,13 +180,78 @@ struct StatusMenuControllerTests {
         prepareToOpen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(7) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Checked", "Add an App…",
-                                             "Add a Web App…"])
+        #expect(rows(sut.menu).prefix(8) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Checked", "Remove Checked…",
+                                             "Add an App…", "Add a Web App…"])
         let heading = sut.menu.items[3]
         #expect(heading.title == "Other Apps")
         #expect(!heading.isEnabled)
+        // Option held: its row removes it, after asking (R5).
+        let remove = try item("Remove Checked…", in: sut.menu)
+        #expect(remove.isAlternate && remove.keyEquivalentModifierMask == .option)
+        try perform(remove)
         try perform(try item("Add an App…", in: sut.menu))
-        #expect(log.calls == ["menuWillOpen", "addApp"])
+        #expect(log.calls == ["menuWillOpen", "remove com.example.checked", "addApp"])
+    }
+
+    @Test("an app added through a check that isn't installed now stays under Other Apps, last, dimmed and “Not installed”; a Chromium browser's web app says whose")
+    func uninstalledCheckedApp() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        var chromeApp = PlayerOption(bundleID: "com.google.Chrome.app.sc", name: "SoundCloud",
+                                     appURL: URL(fileURLWithPath: "/Users/test/Applications/Chrome Apps.localized/SoundCloud.app"),
+                                     kind: .checkedApp)
+        chromeApp.browserName = "Google Chrome"
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            PlayerOption(bundleID: "com.example.gone", name: "Gone", appURL: nil, kind: .checkedApp),
+            chromeApp,
+        ]
+        status.chosenPlayerID = "com.example.gone"
+        sut.status = status
+        prepareToOpen(sut)
+
+        sut.perform(.togglePlayerList)
+        #expect(rows(sut.menu).prefix(9) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "SoundCloud",
+                                             "Remove SoundCloud…", "Gone", "Remove Gone…", "Add an App…"])
+        let gone = try item("Gone", in: sut.menu)
+        #expect(!gone.isEnabled && gone.state == .on)
+        #expect(gone.subtitle == "Not installed")
+        let soundCloud = try item("SoundCloud", in: sut.menu)
+        #expect(soundCloud.isEnabled)
+        #expect(soundCloud.accessibilityLabel() == "SoundCloud, Google Chrome web app")
+    }
+
+    @Test("an app that can only be muted says so; in AntiDot mode it's dimmed, saying why, and stays checked when chosen")
+    func mutedOnlyAppInAntiDotMode() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
+                                 kind: .checkedApp)
+        muted.pausesByMuting = true
+        status.playerOptions = [
+            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
+            muted,
+        ]
+        status.chosenPlayerID = muted.bundleID
+        sut.status = status
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        let row = try item("Muted", in: sut.menu)
+        #expect(row.isEnabled && row.state == .on)
+        #expect(row.subtitle == "Muted instead of paused")
+        #expect(row.toolTip == nil)
+
+        settings.setDetectionMethod(.playbackSignals)
+        prepareToOpen(sut)
+        sut.perform(.togglePlayerList)
+        let dimmed = try item("Muted", in: sut.menu)
+        #expect(!dimmed.isEnabled && dimmed.state == .on)
+        #expect(dimmed.subtitle == "Not in AntiDot mode")
+        #expect(dimmed.toolTip == PlayerOption.antiDotModeReason)
+        #expect(dimmed.accessibilityHelp() == PlayerOption.antiDotModeReason)
+        #expect(try item("First", in: sut.menu).isEnabled)
     }
 
     @Test("a suggested web app is offered after the web apps, can be clicked, and goes the way a player does")

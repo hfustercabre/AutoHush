@@ -9,7 +9,8 @@ import Testing
 @Suite("Bottom bars fit in every language")
 struct BottomBarFitTests {
     /// One item of a bar: a text, as a chip (`chip`) or plain, and the room a
-    /// chip's label adds itself (Continue and Done pad 6 pt a side).
+    /// chip's label adds itself (Continue and Done pad 6 pt a side); a switch
+    /// is its width alone, with no text.
     struct Item {
         let keys: [String] // a slot shows one of these (Later or Cancel): the widest counts
         var size: CGFloat = 14
@@ -36,7 +37,8 @@ struct BottomBarFitTests {
             Item(keys: ["Ignore Another App…"]), Item(keys: ["Remove"]), Item(keys: ["Reset List…"]),
         ], slots: 4),
         Bar(name: "Settings → Diagnostics", width: 480, margin: 16, items: [
-            Item(keys: ["Updated as it happens."], size: 13, chip: false), Item(keys: ["Copy Report"]),
+            // "Updated as it happens." is at the top of the page; "Copied" shows on the button.
+            Item(keys: ["Show Logs…"]), Item(keys: ["Copy Report", "Copied"]),
         ], slots: 3),
         Bar(name: "Welcome window, permissions", width: 540, margin: 20, items: [
             Item(keys: ["Back"]), Item(keys: ["Done"], weight: .semibold, extra: 12),
@@ -44,6 +46,16 @@ struct BottomBarFitTests {
         Bar(name: "Add a Web App", width: 440, margin: 20, items: [
             Item(keys: ["Later", "Cancel"]), Item(keys: ["Continue"], weight: .semibold, extra: 12),
         ], slots: 3),
+        Bar(name: "Choose an App", width: 460, margin: 20, items: [
+            Item(keys: ["Other App…"]), Item(keys: ["Cancel"]), Item(keys: ["Choose"], weight: .semibold, extra: 12),
+        ], slots: 4),
+        Bar(name: "The check's warning window", width: 460, margin: 20, items: [
+            Item(keys: ["Cancel"]), Item(keys: ["Start the Check"], weight: .semibold, extra: 12),
+        ], slots: 3),
+        Bar(name: "Logs window", width: 760, margin: 20, items: [
+            Item(keys: [], chip: false, extra: 36), // the switch
+            Item(keys: ["Follow new entries"], size: 13, chip: false), Item(keys: ["Save…"]), Item(keys: ["Copy Logs", "Copied"]),
+        ], slots: 5),
     ]
 
     /// Every key's value per language, English as the key.

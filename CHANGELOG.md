@@ -9,11 +9,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Every pause and play is checked.** After pausing or playing your
-  player, AutoHush reads its state for up to 3 seconds; one that didn't
-  take is made once more, and if the player still didn't follow, the menu
-  says it didn't respond, rather than AutoHush taking it as paused. Safari
-  web apps already checked theirs.
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies
@@ -32,6 +27,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   - If AutoHush says a permission is missing while System Settings shows
     AutoHush switched on, that switch belongs to the old copy: select
     AutoHush there, remove it with **−**, then allow it again.
+- **Every pause and play is checked.** After pausing or playing your
+  player, AutoHush reads its state for up to 3 seconds; one that didn't
+  take is made once more, and if the player still didn't follow, the menu
+  says it didn't respond, rather than AutoHush taking it as paused. Safari
+  web apps already checked theirs.
 - **Every update choice works with notifications off.** **Notify me** and
   **Download it and notify me** could only be chosen with notifications
   on, and turning them off moved the choice to **Install it
@@ -79,17 +79,22 @@ This project follows [Semantic Versioning](https://semver.org/).
   app's window, blocks the mouse and keyboard and dims the screen, except a
   small panel with its progress and **Stop** (or Escape). Everything is put
   back as it was. The app is then listed under Other Apps, marked **Checked
-  by you**, and controlled the ways that worked, the surest first.
+  by you**, and controlled the ways that worked, the surest first. The **×**
+  on its tile in Settings → General, or its row with **⌥ Option** held in
+  the menu, removes it, after asking.
 - **An app no way pauses can be muted instead.** When Add an App finds
   no way to pause an app, **Mute It Instead** makes it your player all the
   same: AutoHush mutes it while other apps play and lifts the mute when they
   stop. The menu says it's muted, with **Unmute**; pausing it and playing it
-  again yourself unmutes it too. It needs Audio Recording.
+  again yourself unmutes it too. It needs Audio Recording, so AntiDot
+  mode doesn't offer it: such an app is dimmed there, and while it's your
+  player the AntiDot mode switch is off.
 - **An app that must be opened with an option says so.** An app built with
   Electron is pressed while its window is covered or on another desktop
   only when opened with an option: Add an App asks before reopening it so,
   and while it's your player and runs without it, the menu says it needs
-  reopening, with a **Reopen** button.
+  reopening, with a **Reopen** button. Choosing it asks first, and **Always
+  reopen … this way** reopens it so from then on, without asking.
 - **Shortcuts actions for Auto-Pause.** The Shortcuts app offers three:
   **Set Auto-Pause** turns it **On** or **Off**, or switches it with
   **Toggle** (Off lasts until it's turned on again); **Turn Off Auto-Pause
@@ -110,9 +115,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   blue button of the step to do now (It's Playing, It's Paused, Add to
   Dock, Try Again). Edit → Find… (⌘F) opens Settings → Apps' search while
   it lists apps, and puts the cursor in the welcome window's player search
-  when it has one; elsewhere it's dimmed. In Settings → Apps, Tab reaches
-  the apps' rows (with keyboard navigation on) and Space selects one, so
-  Remove works from the keyboard too.
+  when it has one and in Add an App's list of apps; elsewhere it's dimmed.
+  In Settings → Apps, Tab reaches the apps' rows (with keyboard navigation
+  on) and Space selects one, so Remove works from the keyboard too.
 - **The menu bar icon shows when an update waits.** A small disc with a
   down arrow sits in the icon's corner, in the room around it, from when
   AutoHush finds an update until it's installed. VoiceOver adds "update
@@ -135,7 +140,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **No AutoHush window goes full screen.** The green button could make
   Settings fill the screen, in a space of its own; now it zooms the
   window instead, and no other AutoHush window goes full screen either.
-
 - **VLC with nothing loaded counted as resumed.** Asked to play while
   stopped, VLC did nothing, yet the menu said "Playing" for a moment. Now
   AutoHush knows it has nothing to play, as with TIDAL and Apple Podcasts.
@@ -207,8 +211,6 @@ This project follows [Semantic Versioning](https://semver.org/).
     Retry; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
-  - the update choices that need notifications say why they're
-    unavailable while notifications are off;
   - Diagnostics' headings and the card's player button say whether their
     part is expanded or collapsed, and "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer

@@ -1,4 +1,5 @@
 import AppKit
+import PlayerCheckKit
 
 // MARK: - Blocking whoever runs the check
 
@@ -8,12 +9,14 @@ import AppKit
 /// drops their keys (modifiers, media and function keys too), clicks, drags,
 /// scrolling and gestures. It lets through this tool's own events (marked
 /// with `marker`), the pointer's moves (except during a drag, which they
-/// would carry off), clicks on Player Check's panel (its Stop; during a drag,
-/// a click there is taken as Stop, as it can't reach the panel without
-/// letting go of the window), and Escape, which stops the check as Stop
-/// does. It's lifted while the check asks something of them; if the check
-/// writes nothing for `watchdog` seconds, it's lifted and the check stops at
-/// its next step. The tap goes with this process, however it ends.
+/// would carry off), clicks on the check's panel (`CheckPanelWindows`: its
+/// Stop; during a drag, a click there is taken as Stop, as it can't reach
+/// the panel without letting go of the window), and Escape, which stops the
+/// check as Stop does. It's lifted while the check asks something of them;
+/// if the check writes nothing for `watchdog` seconds (the block's own lines
+/// don't count), or doesn't reach its next step within `stopWait` of a stop,
+/// it's lifted and the check stops at its next step. The tap goes with this
+/// process, however it ends.
 /// The tap runs on a thread of its own: the main thread sleeps in waits,
 /// and a tap answered there would hold up their input until macOS turned it
 /// off.
@@ -21,6 +24,9 @@ final class InputBlock: @unchecked Sendable {
     /// In `kCGEventSourceUserData` of every event this tool posts.
     static let marker: Int64 = 0x50434B
     static let watchdog: TimeInterval = 60
+    /// How long a stop (Escape, Stop) waits for the check's next step before
+    /// the mouse and keyboard are freed anyway: a step can wait on a slow app.
+    static let stopWait: TimeInterval = 4
     /// Keys and modifiers, media keys (system-defined), every mouse button's
     /// down, up and drag, the pointer's moves, scrolling, tablets and the
     /// trackpad's gestures.
@@ -32,6 +38,9 @@ final class InputBlock: @unchecked Sendable {
     private var tap: CFMachPort?
     private var loop: CFRunLoop?
     private var active = false, paused = false, drag = false, stopAsked = false
+    /// Set by `end`: the thread's timer stops its run loop, in case `end`
+    /// came before the loop ran.
+    private var ended = false
     /// When the watchdog's minute starts: the last line the check wrote, or
     /// the block's start or resumption, whichever is later.
     private var since = Date()
@@ -65,15 +74,21 @@ final class InputBlock: @unchecked Sendable {
             }
             let loop = CFRunLoopGetCurrent()
             CFRunLoopAddSource(loop, CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
-            let timer = CFRunLoopTimerCreateWithHandler(nil, CFAbsoluteTimeGetCurrent(), 0.5, 0, 0) { _ in self.lookAround() }
+            let timer = CFRunLoopTimerCreateWithHandler(nil, CFAbsoluteTimeGetCurrent(), 0.5, 0, 0) { _ in
+                guard !self.lock.withLock({ self.ended }) else { return CFRunLoopStop(CFRunLoopGetCurrent()) }
+                self.lookAround()
+            }
             CFRunLoopAddTimer(loop, timer, .commonModes)
             lock.withLock {
                 self.tap = tap
                 self.loop = loop
                 active = true
+                ended = false
                 since = Date()
             }
-            made.signal()
+            // Said once the loop runs, so an `end` right after `start` stops it.
+            CFRunLoopPerformBlock(loop, CFRunLoopMode.commonModes.rawValue) { made.signal() }
+            CFRunLoopWakeUp(loop)
             CFRunLoopRun()
         }
         thread.name = "input block"
@@ -94,6 +109,7 @@ final class InputBlock: @unchecked Sendable {
         let (tap, loop) = lock.withLock { () -> (CFMachPort?, CFRunLoop?) in
             guard active else { return (nil, nil) }
             active = false
+            ended = true
             defer { self.tap = nil; self.loop = nil }
             return (self.tap, self.loop)
         }
@@ -158,41 +174,39 @@ final class InputBlock: @unchecked Sendable {
         }
     }
 
-    /// Every 0.5 s: where Player Check's panel is (its windows above the
-    /// ordinary ones, but not those covering a whole display: the shade it
-    /// dims the screen with), and whether the check still writes.
+    /// Every 0.5 s: where the check's panel is (`CheckPanelWindows`), whether
+    /// the check still writes, and whether a stop waits too long for it.
     private func lookAround() {
-        let parent = getppid()
         var count: UInt32 = 0
         var displays = [CGDirectDisplayID](repeating: 0, count: 16)
         CGGetActiveDisplayList(16, &displays, &count)
         let screens = displays.prefix(Int(count)).map(CGDisplayBounds)
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
-        let frames = windows.compactMap { info -> CGRect? in
-            guard (info[kCGWindowOwnerPID as String] as? Int).map({ pid_t($0) }) == parent,
-                  (info[kCGWindowLayer as String] as? Int ?? 0) > 0,
-                  let bounds = info[kCGWindowBounds as String] as? NSDictionary,
-                  let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
-                  !screens.contains(where: { $0.size == frame.size }) else { return nil }
-            return frame
-        }
-        let silent = lock.withLock { () -> Bool in
+        let frames = CheckPanelWindows.frames(in: windows, ownedBy: getppid(), screens: screens)
+        let stopSince = stopState.since
+        let why = lock.withLock { () -> String? in
             panels = frames
-            guard active, !paused else { return false }
+            guard active else { return nil }
+            if let stopSince, Date().timeIntervalSince(stopSince) > Self.stopWait {
+                return "the check is stopping, at its next step"
+            }
+            guard !paused else { return nil }
             return Date().timeIntervalSince(max(since, runLog.lastWrite)) > Self.watchdog
+                ? "the check wrote nothing for \(Int(Self.watchdog)) s, so it stops at its next step" : nil
         }
-        if silent, end() {
-            tell("  mouse and keyboard free again: the check wrote nothing for \(Int(Self.watchdog)) s, so it stops at its next step")
+        if let why, end() {
+            tell("  mouse and keyboard free again: \(why)")
             // Back, it would drag the window with their input free: it stops (and puts it back) instead.
             _ = stopState.request()
         }
     }
 
     /// A line of the report from this thread (the main one may be busy, or
-    /// stuck): only a test blocks input, and its report is never quiet.
+    /// stuck): only a test blocks input, and its report is never quiet. It
+    /// isn't the check's progress (`logAside`).
     private func tell(_ line: String) {
-        log(line)
-        print(line)
+        logAside(line)
+        print(PrivateText.redacted(line))
         fflush(nil)
     }
 }

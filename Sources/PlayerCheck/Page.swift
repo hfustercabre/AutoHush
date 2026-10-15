@@ -1,193 +1,50 @@
 import AppKit
+import CheckedPlayers
 import AutoHushKit
 import WebAppPlayers
 
 // MARK: - Page buttons (a web page in its windows, or a Flutter app's interface)
 
-/// The switches for assistive tools: attributes set on an app to have it
-/// show its interface to Accessibility. Electron's is documented
-/// (electronjs.org, Accessibility); VoiceOver's is the one VoiceOver sets.
-let manualAccessibility = "AXManualAccessibility"
-let enhancedUserInterface = "AXEnhancedUserInterface"
-func switchName(_ attribute: String, of interface: HiddenInterface? = hiddenInterface) -> String {
-    if attribute == manualAccessibility { return "Electron's switch" }
-    if case .chromiumWebApp(_, let browser)? = interface { return "\(browser)'s VoiceOver switch" }
-    return "VoiceOver's switch"
-}
-
-/// An interface the app keeps out of Accessibility until an assistive tool
-/// asks for it, by the framework in its bundle, with the switches that ask,
-/// in the order they're tried:
-/// - Electron: its own, `AXManualAccessibility`;
-/// - Chromium Embedded Framework (CEF; Spotify): none of its own, as each
-///   app decides: Electron's, else VoiceOver's `AXEnhancedUserInterface`,
-///   which CEF's sample app listens to (Spotify takes only that one);
-/// - Flutter (Spotube): VoiceOver's only (Flutter's engine listens for it);
-/// - a Chromium browser's web app (Chrome's, Brave's): VoiceOver's, set on
-///   the browser (`switchTarget`), whose own process serves the page shown
-///   in the web app's window; Chromium turns its complete mode on for all
-///   its windows and tabs 2 s later (chrome_browser_application_mac.mm).
-/// Electron's, CEF's and a browser's web app's interface is a web page, as a
-/// Safari web app's; Flutter's is the window's own elements. Any other app's
-/// web page (as in a Tauri app, Safari's WebKit) shows as it is.
-enum HiddenInterface {
-    case electron(version: String), cef, flutter
-    /// The web app's browser: its bundle ID and name.
-    case chromiumWebApp(browserID: String, browser: String)
-    var name: String {
-        switch self {
-        case .electron(let version): "Electron \(version)"
-        case .cef: "Chromium (CEF)"
-        case .flutter: "Flutter"
-        case .chromiumWebApp(_, let browser): "\(browser) web app"
-        }
-    }
-    var switches: [String] {
-        switch self {
-        case .electron: [manualAccessibility]
-        case .cef: [manualAccessibility, enhancedUserInterface]
-        case .flutter, .chromiumWebApp: [enhancedUserInterface]
-        }
-    }
-    /// The app's, by the frameworks in its bundle; a Chromium browser's web
-    /// app by its launcher's Info.plist, which names the site it opens and
-    /// the browser it belongs to (Chromium writes both for every browser).
-    static func of(_ appURL: URL) -> HiddenInterface? {
-        let info = NSDictionary(contentsOf: appURL.appendingPathComponent("Contents/Info.plist")) as? [String: Any] ?? [:]
-        if info["CrAppModeShortcutURL"] != nil, let browserID = info["CrBundleIdentifier"] as? String {
-            let browser = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browserID).flatMap { Bundle(url: $0)?.infoDictionary }
-                .flatMap { ($0["CFBundleDisplayName"] ?? $0["CFBundleName"]) as? String } ?? browserID
-            return .chromiumWebApp(browserID: browserID, browser: browser)
-        }
-        let frameworks = appURL.appendingPathComponent("Contents/Frameworks")
-        func framework(_ name: String) -> URL? {
-            let url = frameworks.appendingPathComponent("\(name).framework")
-            return FileManager.default.fileExists(atPath: url.path) ? url : nil
-        }
-        if let electron = framework("Electron Framework") {
-            return .electron(version: Bundle(url: electron)?.infoDictionary?["CFBundleVersion"] as? String ?? "?")
-        }
-        if framework("Chromium Embedded Framework") != nil { return .cef }
-        if framework("FlutterMacOS") != nil { return .flutter }
-        return nil
-    }
-}
-let hiddenInterface = HiddenInterface.of(appURL)
-var isFlutter: Bool { if case .flutter? = hiddenInterface { true } else { false } }
-var isElectron: Bool { if case .electron? = hiddenInterface { true } else { false } }
-/// A Chromium browser's web app: its browser's name; nil for any other app.
-var webAppBrowser: String? { if case .chromiumWebApp(_, let browser)? = hiddenInterface { browser } else { nil } }
-
-/// The process a switch is set on: a Chromium browser's web app's browser
-/// (its own process serves the page; set on the web app, nothing shows),
-/// else the app itself. Its sound and keep-awake assertions are the
-/// browser's too (`soundOwner`).
-func switchTarget(_ pid: pid_t) -> pid_t {
-    guard case .chromiumWebApp(let browserID, _)? = hiddenInterface,
-          let browser = NSRunningApplication.runningApplications(withBundleIdentifier: browserID).first else { return pid }
-    return browser.processIdentifier
-}
-
-/// Whether its page is Safari's WebKit: a Safari web app's, or the app's
-/// own (a Tauri app's, as Pake's YouTube Music), and not Chromium inside Qt
-/// (Qt WebEngine). Out of sight, WebKit keeps its words current: Pake's
-/// YouTube Music and SoundCloud's web app, on another desktop, showed each
-/// change within 0.5 s, also after minutes there.
-let pageIsWebKit: Bool = {
-    if isWebApp { return true }
-    guard hiddenInterface == nil, let binary = Bundle(url: appURL)?.executableURL,
-          linkedFrameworks(binary).contains("WebKit") else { return false }
-    let frameworks = (try? FileManager.default.contentsOfDirectory(atPath: appURL.appendingPathComponent("Contents/Frameworks").path)) ?? []
-    return !frameworks.contains { $0.hasPrefix("QtWebEngine") }
-}()
-
 /// A button of the app's page (a pressable item of a Flutter app's
-/// interface), named by `label(of:)`.
+/// interface), named by `label(of:)`, as AutoHush names it.
 struct FoundButton {
     let element: AXUIElement
     let label: String
     /// Points from its middle to its window's bottom; nil without a frame.
     let fromBottom: Double?
     /// Inside its window. One scrolled out of an Electron window is squeezed
-    /// to no height at the window's edge (Deezer's song tiles), so it isn't.
+    /// to no height at the window's edge (an Electron player's song tiles), so it isn't.
     let inSight: Bool
     /// In a window on screen (`isOnScreen`), so it can be hit-tested.
     let onScreen: Bool
 }
 
-/// Roles never walked into looking for a page: a native app's long lists
-/// (Music's songs) hold none.
-let listRoles: Set<String> = [kAXTableRole, kAXOutlineRole, kAXBrowserRole, kAXListRole, "AXGrid", kAXTextAreaRole]
-
-/// Walks an element's tree breadth first, reading at most `limit` elements
-/// and going at most `maxDepth` levels down; `visit` says whether to go
-/// into each one's children.
-func walkTree(from root: AXUIElement, limit: Int, maxDepth: Int, _ visit: (AXUIElement, Int) -> Bool) {
-    var queue: [(AXUIElement, Int)] = [(root, 0)], next = 0
-    while next < queue.count, next < limit {
-        let (element, depth) = queue[next]
-        next += 1
-        if visit(element, depth), depth < maxDepth { queue += element.children.map { ($0, depth + 1) } }
-    }
-}
-
-/// The web pages (AXWebArea) in a window, as AutoHush's web app reader
-/// finds them (up to 16 levels down), nearest first, reading at most 2,000
-/// of its elements, so a native app's window isn't read whole.
-func webAreas(in window: AXUIElement) -> [AXUIElement] {
-    var found: [AXUIElement] = []
-    walkTree(from: window, limit: 2000, maxDepth: 16) { element, _ in
-        let role = element.text(kAXRoleAttribute)
-        if role == "AXWebArea" {
-            found.append(element)
-            return false
-        }
-        return !listRoles.contains(role)
-    }
-    return found
-}
-
-/// A Flutter window's items that can be pressed (its buttons, and the texts
-/// and images it marks pressable), reading at most 3,000 of its elements;
-/// not the window's own close, minimize and full-screen buttons.
-func pressableItems(in window: AXUIElement) -> [AXUIElement] {
-    var found: [AXUIElement] = []
-    walkTree(from: window, limit: 3000, maxDepth: 40) { element, depth in
-        if depth == 1, element.text(kAXRoleAttribute) == kAXButtonRole { return false }
-        if depth > 0, element.actions.contains(kAXPressAction) { found.append(element) }
-        return true
-    }
-    return found
-}
+/// The web pages (AXWebArea) in a window, as AutoHush's page reader finds
+/// them (`AccessibilityWebPage.webAreas`): nearest first, at most 16 levels
+/// down, reading at most 2,000 of its elements and none inside a list, so a
+/// native app's window isn't read whole.
+func webAreas(in window: AXUIElement) -> [AXUIElement] { AccessibilityWebPage.webAreas(in: window) }
 
 /// Whether one of the app's windows holds a web page.
 @MainActor func hasWebPage(pid: pid_t) -> Bool {
     appWindows(of: pid).windows.contains { !webAreas(in: $0).isEmpty }
 }
 
-/// The buttons of the pages in the app's windows, found as AutoHush's web
-/// app reader finds them (each window's AXWebArea on this desktop, else on
-/// another, then AXUIElementsForSearchPredicate), or a Flutter app's
-/// pressable items; nil when it has no window.
+/// The buttons of the pages in the app's windows (on this desktop, else on
+/// another), or a Flutter app's pressable items, found as AutoHush's page
+/// reader finds them (`AccessibilityWebPage.pageElements`), so a page way
+/// that works here is one AutoHush can press; nil when it has no window.
 @MainActor func pageButtons(pid: pid_t) -> [FoundButton]? {
     let (windows, onThisDesktop) = appWindows(of: pid)
     guard !windows.isEmpty else { return nil }
     let app = AXUIElementCreateApplication(pid)
     AXUIElementSetMessagingTimeout(app, 1)
     let hidden = app.value(kAXHiddenAttribute) as? Bool == true
-    let search: [String: Any] = ["AXSearchKey": "AXButtonSearchKey", "AXResultsLimit": 2000, "AXDirection": "AXDirectionNext",
-                                 "AXVisibleOnly": false, "AXImmediateDescendantsOnly": false]
     return windows.flatMap { window -> [FoundButton] in
         AXUIElementSetMessagingTimeout(window, 1)
         guard let windowFrame = window.frame else { return [] }
         let onScreen = isOnScreen(window, onThisDesktop: onThisDesktop, appHidden: hidden)
-        let elements = isFlutter ? pressableItems(in: window) : webAreas(in: window).flatMap { area -> [AXUIElement] in
-            var result: CFTypeRef?
-            guard AXUIElementCopyParameterizedAttributeValue(area, "AXUIElementsForSearchPredicate" as CFString,
-                                                             search as CFDictionary, &result) == .success else { return [] }
-            return result as? [AXUIElement] ?? []
-        }
-        return elements.map { element in
+        return AccessibilityWebPage.pageElements(in: window, access: pageAccess).map { element in
             AXUIElementSetMessagingTimeout(element, 0.5)
             let frame = element.frame
             return FoundButton(element: element, label: label(of: element),
@@ -224,7 +81,7 @@ func playerBar(of element: AXUIElement) -> AXUIElement? {
 
 /// Whether nothing on its page sits over the button's middle: macOS's hit
 /// test there (within the app) finds the button or something inside it.
-/// Song tiles scrolled under a player bar (Deezer's, SoundCloud's) are in
+/// Song tiles scrolled under a player bar (an Electron app's, a web app's) are in
 /// the window, lower than the bar's own button, but covered. One hit test:
 /// `playerButton` asks Chromium's approximate misses again.
 func isUncovered(_ button: FoundButton, pid: pid_t) -> Bool {
@@ -258,11 +115,11 @@ func isUncovered(_ button: FoundButton, pid: pid_t) -> Bool {
         return found
     }
     // Each is hit-tested once. Chromium answers a hit test from its last one
-    // at first, then precisely a moment later (Spotify's bar button behind
+    // at first, then precisely a moment later (a CEF app's bar button behind
     // other windows: a group elsewhere, then the button), so the misses are
     // asked again together, once, 0.2 s later: only when one of them could
     // change which button wins, being lower than the first uncovered one with
-    // a player bar (Deezer's tiles under its bar can't).
+    // a player bar (song tiles under a bar can't).
     var open = candidates.map { isUncovered($0, pid: pid) }
     let firstBar = candidates.indices.first { open[$0] && hasBar($0) }
     if open.prefix(firstBar ?? candidates.count).contains(false) {
@@ -327,196 +184,6 @@ struct PageCheck {
 /// and a press doesn't bring it forward.
 @MainActor var pageOutOfView = false
 
-// MARK: - The switches for assistive tools
-
-/// Turns a switch on; whether the app took it. One this tool turned on is
-/// turned back off at the end, unless it may have been on before: VoiceOver's
-/// reads back, so one already on is left alone; Electron's reads back off
-/// even while it's on (Deezer), so with the page readable already (someone
-/// may have it on) a check leaves it on, and a stop sets it back on. A press
-/// always turns it off at the end: it leaves the app as it found it, and a
-/// page kept for later goes stale out of sight (Deezer's took no presses
-/// after minutes on another desktop).
-@MainActor func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
-    let app = AXUIElementCreateApplication(switchTarget(pid))
-    AXUIElementSetMessagingTimeout(app, 1)
-    if attribute == enhancedUserInterface, app.value(attribute) as? Bool == true {
-        say("  \(switchName(attribute)) (\(attribute)) is on already: VoiceOver or another tool turned it on, so it's left on")
-        changes.foundOn(attribute)
-        return true
-    }
-    guard setSwitch(attribute, true, pid: pid) else {
-        say("  \(switchName(attribute)) (\(attribute)): not taken")
-        return false
-    }
-    if attribute == manualAccessibility, pageReadable, action == nil {
-        say("  \(switchName(attribute)) on, and left on: VoiceOver or another tool may have it on")
-        changes.foundOn(attribute)
-    } else {
-        changes.switchesOn.append(attribute)
-    }
-    return true
-}
-
-/// An Electron app takes presses on its page only in its fuller
-/// accessibility mode, which starts 2 s after its switch last went on
-/// (Electron debounces the requests; an off sent meanwhile cancels it, and
-/// keeps a fuller mode already on: electron_application.mm). A press right
-/// after the switch goes on does nothing, though the page shows and the
-/// press is accepted. So before a press: at once when the switch reads back
-/// on (Electron says so only in that mode), else not before those 2 s. A
-/// Chromium browser's web app the same, the browser's complete mode 2 s
-/// after its switch (chrome_browser_application_mac.mm); its switch reads
-/// back on at once, so that tells nothing.
-func waitForFullerMode(pid: pid_t) {
-    let attribute: String
-    switch hiddenInterface {
-    case .electron?: attribute = manualAccessibility
-    case .chromiumWebApp?: attribute = enhancedUserInterface
-    default: return
-    }
-    guard let since = changes.switchSetOnAt(attribute) else { return }
-    if isElectron {
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, 1)
-        guard app.value(manualAccessibility) as? Bool != true else { return }
-    }
-    let wait = 2.2 - Date().timeIntervalSince(since)
-    guard wait > 0 else { return }
-    log(String(format: "  waited %.1f s for %@'s fuller mode: its page takes presses only 2 s after its switch goes on",
-               wait, webAppBrowser ?? "Electron"))
-    Thread.sleep(forTimeInterval: wait)
-}
-
-/// Turns on the app's `switches` in turn, each given 4 s for its page to
-/// show: whether a page showed (in `count`, after `shownAfter` s), nil when
-/// the app took none. A Chromium app builds its page only while its window
-/// can be seen (Deezer's, covered: none), and once built it stays readable
-/// covered, hidden or on another desktop; Spotify, on another desktop when
-/// its switch went on, and Spotube, behind other windows, showed nothing
-/// until the switch went on again in front. So when nothing shows, a check
-/// brings the app forward a moment, once, turns on there again each switch
-/// it took until one shows, then brings back the app that was in front. A
-/// press never does (the tool should be as unintrusive as possible): it says
-/// why the page can't be read, and the page way isn't used.
-@MainActor func showPage(with switches: [String], pid: pid_t, count: inout Int, shownAfter: inout TimeInterval?) -> Bool? {
-    /// Turns a switch this tool turned on back off.
-    func off(_ attribute: String) {
-        if changes.switchesOn.contains(attribute), setSwitch(attribute, false, pid: pid) {
-            changes.switchesOn.removeAll { $0 == attribute }
-        }
-    }
-    // The switches it took, and whether this tool turned each on (VoiceOver's
-    // may have been on already: left as it is).
-    var taken: [(attribute: String, ours: Bool)] = []
-    var shown: (attribute: String, waited: (count: Int, after: TimeInterval))?
-    for attribute in switches where shown == nil {
-        guard turnOn(attribute, pid: pid, pageReadable: false) else { continue }
-        taken.append((attribute, changes.switchesOn.contains(attribute)))
-        let waited = waitForPage(pid, seconds: 4)
-        if waited.count > 0 {
-            shown = (attribute, waited)
-        } else {
-            say("  \(switchName(attribute)) (\(attribute)) on, but nothing showed in 4 s")
-            off(attribute)
-        }
-    }
-    guard !taken.isEmpty else { return nil }
-    if shown == nil, action != nil { pageOutOfView = true }
-    if shown == nil, action == nil {
-        shown = inFront(pid: pid) {
-            for (attribute, ours) in taken {
-                if ours, !changes.switchesOn.contains(attribute), setSwitch(attribute, true, pid: pid) {
-                    changes.switchesOn.append(attribute)
-                }
-                let waited = waitForPage(pid, seconds: 6)
-                if waited.count > 0 { return (attribute, waited) }
-                off(attribute)
-            }
-            return nil
-        }
-        say("  its window was out of sight: brought it forward a moment, with "
-            + (taken.count == 1 ? "the switch" : "each switch") + " turned on again there"
-            + " (Chromium and Flutter apps may build their \(isFlutter ? "interface" : "page") only while their window can be seen)"
-            + (shown == nil ? "; nothing showed there either" : ""))
-    }
-    guard let (attribute, waited) = shown else { return false }
-    count = waited.count
-    shownAfter = waited.after
-    pageSwitch = attribute
-    return true
-}
-
-/// For a check: brings the app forward a moment for its page to be built,
-/// runs `build` there, then brings back the app that was in front.
-@MainActor func inFront<T>(pid: pid_t, _ build: () -> T) -> T {
-    let front = NSWorkspace.shared.frontmostApplication
-    if let front, front.processIdentifier != pid { changes.frontToRestore = front.bundleURL }
-    bringForward(appURL)
-    broughtForward = true
-    let result = build()
-    if let url = changes.frontToRestore {
-        bringForward(url)
-        changes.frontToRestore = nil
-        // Its desktop slides away for about half a second, and the
-        // frames read meanwhile are off (Spotify's Play: not in sight).
-        Thread.sleep(forTimeInterval: 1)
-    }
-    return result
-}
-
-/// Whether the page shows a player's Play/Pause: a button in sight named
-/// so, with a player's slider around it (no hit test: a quick look).
-@MainActor func showsPlayerBar(_ pid: pid_t) -> Bool {
-    (pageButtons(pid: pid) ?? []).contains { $0.inSight && named($0.label, playPauseWords) && playerBar(of: $0.element) != nil }
-}
-
-/// For a check that found the page readable already but with no player's
-/// Play/Pause in it: the page may be a leftover, so it's built again.
-/// Electron drops part of its page when its switch goes off, and doesn't
-/// keep it up to date out of sight: a first check of Deezer, on another
-/// desktop some ten minutes after a press had turned its switch off, found
-/// no page button, and later checks did. The switch goes off and on, and the
-/// player's bar is looked for up to 4 s; when it doesn't show, the app is
-/// brought forward a moment, as `showPage` does (once per check), the switch
-/// turned off and on there.
-@MainActor func rebuildPage(with attribute: String, pid: pid_t) {
-    func waitForBar(_ seconds: Double) -> Bool {
-        let deadline = Date().addingTimeInterval(seconds)
-        repeat {
-            Thread.sleep(forTimeInterval: 0.25)
-            if showsPlayerBar(pid) { return true }
-        } while Date() < deadline
-        return false
-    }
-    func switchAgain() {
-        _ = setSwitch(attribute, false, pid: pid)
-        _ = setSwitch(attribute, true, pid: pid)
-    }
-    say("  no player's Play/Pause in it: it may be a leftover, so it's built again (\(switchName(attribute)) turned off and on)")
-    let start = Date()
-    switchAgain()
-    if waitForBar(4) {
-        say(String(format: "  its player bar showed after %.1f s", Date().timeIntervalSince(start)))
-        return
-    }
-    let shown = inFront(pid: pid) {
-        switchAgain()
-        return waitForBar(6)
-    }
-    say("  not in place: brought it forward a moment, with the switch turned off and on there"
-        + (shown ? String(format: "; its player bar showed (%.1f s in all)", Date().timeIntervalSince(start))
-                 : "; still no player's Play/Pause"))
-}
-
-/// Why a press by the page didn't work, and what to try instead.
-func pagePressHint() -> String {
-    "; " + (webAppBrowser.map { "a \($0) web app" } ?? "an \(hiddenInterface.map { "app built with \($0.name)" } ?? "app")")
-        + " may build its page, or take presses on it, only while its"
-        + " window is in view: bring it into view and try again, or use another way (AppleScript, its menu, or the Now Playing panel"
-        + " as a last resort)"
-}
-
 // MARK: - Reading the page
 
 /// Reads the app's page: its buttons and its player's Play/Pause, turning on
@@ -540,7 +207,7 @@ func pagePressHint() -> String {
     // A press: the player bar's button where it was last time.
     if pressingOneWay, useRememberedBar(pid: pid) { return }
     guard let before = pageButtons(pid: pid) else {
-        // Deezer keeps playing with its window closed, and its page can't be
+        // An Electron player may keep playing with its window closed, and its page can't be
         // read then, not even through windows on other desktops.
         say("  not checked: no window open on any desktop; open it and run again (a closed window's page can't be read)")
         pageNotChecked = "no window open"
@@ -564,7 +231,7 @@ func pagePressHint() -> String {
             say("  opened with \(LaunchOption.occludedWindows): "
                 + (launchedWithOption ? "yes, so its page takes presses while its window is covered or on another desktop"
                                       : "no: its page takes no presses while its window is covered or on another desktop"
-                                        + " (the Player Check app can relaunch it with it)"))
+                                        + " (Add an App's Reopen, or the Player Check app's Relaunch, opens it with it)"))
         }
     case nil:
         say(isWebApp ? "  a Safari web app: WebKit shows its page as it is" : "  a web page in its windows: shown as it is")
@@ -584,8 +251,8 @@ func pagePressHint() -> String {
             return
         }
     } else if count == 0 {
-        // A web page fills in once something first asks for it (YouTube
-        // Music, just opened: 0 buttons at the first look, 36 a few
+        // A web page fills in once something first asks for it (a web
+        // app, just opened: 0 buttons at the first look, 36 a few
         // seconds later).
         let waited = waitForPage(pid, seconds: 8)
         count = waited.count
@@ -614,19 +281,20 @@ func pagePressHint() -> String {
             ?? "\(with)\(isFlutter ? "interface" : "page"): \(buttons.count) \(items)")
         + String(format: " (one read, as AutoHush reads a web app: %.0f ms)", readTime * 1000))
     if let (button, withControls) = toggle {
-        say(String(format: "  Play/Pause: “%@”, %.0f pt from the window's bottom, ", button.label, button.fromBottom ?? 0)
+        say(String(format: "  Play/Pause: %@, %.0f pt from the window's bottom, ", shown(button.label), button.fromBottom ?? 0)
             + (withControls ? "with a player's slider around it" : "the lowest in sight (no slider around any)"))
     } else {
-        let near = Set(buttons.map(\.label).filter { label in playPauseWords.contains { label.lowercased().contains($0) } })
+        // Named by their words only: the rest is what they play (a playlist, an album).
+        let near = Set(buttons.map(\.label).filter { label in playPauseWords.contains { label.lowercased().contains($0) } }.map(shown))
         say("  none in sight named just Play or Pause" + (near.isEmpty ? "" : "; with those words: "
-            + near.sorted().prefix(8).map { "“\($0)”" }.joined(separator: ", ")))
+            + near.sorted().prefix(8).joined(separator: ", ")))
     }
 }
 
 /// The page's section of the report: read, unless a press by another way doesn't need it.
 @MainActor func readPageButtons() {
     say()
-    say("Page Buttons")
+    say(CheckReportLine.Heading.page.rawValue)
     if !pressNeeds([.page]) {
         say(via == .panel ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
                           : "  not read: --via \(via!.rawValue) doesn't need it")
@@ -663,7 +331,7 @@ func pagePressHint() -> String {
 /// Whether a page button's words are current: a WebKit page keeps them so
 /// anywhere; a Chromium or Flutter page only while its window is on screen
 /// (this desktop, not hidden or minimized): out of sight an Electron page
-/// lags a state (Deezer's said Pause while paused). In a test's window
+/// lags a state (one said Pause while paused). In a test's window
 /// state other than visible, never (a button's `onScreen` is from the read).
 @MainActor func wordsCurrent(_ button: FoundButton) -> Bool {
     pageIsWebKit || (button.onScreen && (currentWindowState ?? .visible) == .visible)
@@ -686,7 +354,7 @@ func pagePressHint() -> String {
 /// instead, which a one-off press can't hold); `why` says so.
 @MainActor func pressPageButton(_ button: FoundButton, pausing: Bool, why: inout String?) -> Bool {
     if button.element.value(kAXEnabledAttribute) as? Bool == false {
-        why = "its page's “\(button.label)” is disabled (sites disable it during ads): not pressed"
+        why = "its page's \(shown(button.label)) is disabled (sites disable it during ads): not pressed"
             + (pausing ? "; AutoHush would mute it instead" : "")
         return false
     }

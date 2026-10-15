@@ -35,7 +35,7 @@ package struct CheckedAppTraits: Equatable, Sendable {
     /// The app at `url`'s.
     package static func of(appAt url: URL) -> CheckedAppTraits {
         let framework: Framework? = switch PageAccess.interface(ofAppAt: url) {
-        case .webKit: nil
+        case .webKit, .qtWebEngine: nil
         case .electron: .electron
         case .cef: .chromium
         case .flutter: .flutter
@@ -43,21 +43,5 @@ package struct CheckedAppTraits: Equatable, Sendable {
         }
         return CheckedAppTraits(scriptable: ScriptingDictionary.isInBundle(at: url), framework: framework,
                                 needsLaunchOption: framework == .electron)
-    }
-}
-
-extension PlayerSetup {
-    /// The option an Electron app is opened with so its page takes presses
-    /// while its window is covered or on another desktop.
-    package static let launchOption = "--disable-backgrounding-occluded-windows"
-}
-
-extension CheckedPlayers {
-    /// Keeps what a check found: the setup of the ways that worked, and its
-    /// page's Play/Pause as a web app's is kept. Nothing when none worked.
-    package func keep(_ result: CheckResult, recipes: any PlayPauseRecipeStore = DefaultsRecipeStore()) {
-        guard let setup = result.setup else { return }
-        if let button = result.pageButton { recipes.save(button, for: setup.bundleID) }
-        store.save(setup)
     }
 }

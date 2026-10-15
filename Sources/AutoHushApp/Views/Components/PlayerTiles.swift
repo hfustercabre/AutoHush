@@ -4,9 +4,11 @@ import SwiftUI
 /// "Supported Apps", the apps added through a check under "Other Apps" (E3),
 /// then the Safari web apps under their heading; each of the last two groups
 /// with a tile that adds one. A tile is a chip: the player's icon, then its name
-/// with what a row would say under it. The chosen (or picked) player's
-/// tile is tinted and outlined with the accent color. Settings → General and
-/// the welcome window show them; the menu keeps its rows.
+/// with what a row would say under it, shorter. The chosen (or picked)
+/// player's tile is tinted and outlined with the accent color, even while
+/// AntiDot mode keeps it from being chosen (an app that can only be muted).
+/// Settings → General and the welcome window show them; the menu keeps its
+/// rows.
 ///
 /// With `maxVisibleRows`, the card shows that many rows of tiles at most,
 /// counting both groups, and they scroll inside it past them (the card
@@ -23,6 +25,9 @@ struct PlayerTiles: View {
     let onAddWebApp: () -> Void
     /// "Add an App…": checks an app and adds it.
     var onAddApp: () -> Void = {}
+    /// An app added with Add an App: its × (under the pointer) removes it,
+    /// once the user confirms (R2, the user's pick, 2026-10-15).
+    var onRemove: ((PlayerOption) -> Void)?
     var maxVisibleRows: Int?
     var holdsHeight = false
     /// What was typed, for the note when nothing matches.
@@ -125,9 +130,31 @@ struct PlayerTiles: View {
     }
 
     /// A player: its icon, then its name with what a row would say under it
-    /// (Click to add, Untested, Not installed); tinted and outlined once
-    /// chosen. Dimmed while it can't be chosen.
-    private func tile(_ option: PlayerOption) -> some View {
+    /// (Click to add, Untested, Not installed, Muted only); tinted and
+    /// outlined once chosen. Dimmed while it can't be chosen; in AntiDot
+    /// mode, an app that can only be muted says why in its help tag and
+    /// VoiceOver hint. An app added with Add an App shows a × under the
+    /// pointer.
+    @ViewBuilder private func tile(_ option: PlayerOption) -> some View {
+        let button = tileButton(option)
+        let explained = Group {
+            if option.isInstalled && option.isUnavailableInAntiDotMode {
+                // Outside the disabled button, so the help tag still shows.
+                button
+                    .help(PlayerOption.antiDotModeReason)
+                    .accessibilityHint(Text(verbatim: PlayerOption.antiDotModeReason))
+            } else {
+                button
+            }
+        }
+        if option.kind == .checkedApp, let onRemove {
+            RemovableTile(name: option.name) { onRemove(option) } content: { explained }
+        } else {
+            explained
+        }
+    }
+
+    private func tileButton(_ option: PlayerOption) -> some View {
         let isSelected = option.bundleID == selection && option.isInstalled
         return Button { onSelect(option) } label: {
             HStack(spacing: 8) {
@@ -169,8 +196,10 @@ struct PlayerTiles: View {
             HeadingBadge(text: PlayerOption.untestedBadge)
         } else if !option.isInstalled {
             Text(verbatim: PlayerOption.notInstalledLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+        } else if option.isUnavailableInAntiDotMode {
+            Text(verbatim: PlayerOption.antiDotModeTileLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
         } else if option.pausesByMuting {
-            Text(verbatim: PlayerOption.mutedInsteadLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+            Text(verbatim: PlayerOption.mutedOnlyLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
         }
     }
 
@@ -199,5 +228,34 @@ struct PlayerTiles: View {
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10))
         .accessibilityLabel(Text(verbatim: adds == .app ? PlayerOption.addAppTitle : PlayerOption.addWebAppTitle))
+    }
+}
+
+/// An added app's tile with a × in its corner while the pointer is over it,
+/// which removes it once confirmed; VoiceOver has it as an action.
+private struct RemovableTile<Content: View>: View {
+    let name: String
+    let remove: () -> Void
+    @ViewBuilder let content: Content
+    @State private var isHovered = false
+
+    var body: some View {
+        content
+            .overlay(alignment: .topTrailing) {
+                if isHovered {
+                    Button(action: remove) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .appSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help(PlayerOption.removeTitle(name))
+                    .accessibilityLabel(Text(verbatim: PlayerOption.removeTitle(name)))
+                    .offset(x: 5, y: -5)
+                }
+            }
+            .onHover { isHovered = $0 }
+            .accessibilityAction(named: Text(verbatim: PlayerOption.removeTitle(name)), remove)
     }
 }

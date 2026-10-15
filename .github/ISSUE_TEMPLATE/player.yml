@@ -17,6 +17,7 @@ body:
     id: report
     attributes:
       label: The check's log
+      description: Pasted whole. It says what the check tried and how each way did, and leaves out your Mac account's name and what was playing; remove anything else you'd rather not share.
       render: text
   - type: textarea
     id: more

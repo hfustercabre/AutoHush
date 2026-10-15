@@ -23,16 +23,26 @@ struct PlayerOption: Equatable, Identifiable {
     /// An app added with Add an App that's muted instead of paused: said
     /// under its name.
     var pausesByMuting = false
+    /// An app added with Add an App that's a Chromium browser's web app (a
+    /// Chrome app, a Brave app…): its browser's name, e.g. "Google Chrome".
+    /// Its icon carries the browser's, and VoiceOver says it (`spokenName`).
+    var browserName: String?
+    /// AntiDot mode is on, and this app can only be muted: muting taps its
+    /// sound, which AntiDot mode never does, so it can't be chosen. It's
+    /// offered dimmed, saying why (`[PlayerOption].inAntiDotMode(_:)` sets it).
+    var isUnavailableInAntiDotMode = false
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
-    /// A click does something: chooses the player, or adds the suggested web app.
-    var isClickable: Bool { isInstalled || webAddress != nil }
+    /// A click does something: chooses the player, or adds the suggested web
+    /// app. Not in AntiDot mode for an app that can only be muted.
+    var isClickable: Bool { (isInstalled || webAddress != nil) && !isUnavailableInAntiDotMode }
 
     /// A player's placeholder is its own, so it doesn't tell options apart.
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
             && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested && lhs.pausesByMuting == rhs.pausesByMuting
+            && lhs.browserName == rhs.browserName && lhs.isUnavailableInAntiDotMode == rhs.isUnavailableInAntiDotMode
     }
 
     /// A suggested web app, not added yet.
@@ -75,13 +85,17 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// Every player in the catalog, the Safari web apps found included, in
     /// its order, and where it is installed (where the player says, else
-    /// where macOS knows it); then the suggested web apps not added yet.
+    /// where macOS knows it); then the suggested web apps not added yet. An
+    /// app added through a check that's a Chromium browser's web app has
+    /// its browser's name.
     @MainActor
     static func list(_ catalog: MusicPlayerCatalog, locate: Locate) -> [PlayerOption] {
         catalog.all.map {
-            PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: $0.installedURL ?? locate($0.bundleID),
-                         iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested,
-                         pausesByMuting: $0.pausesByMuting)
+            let appURL = $0.installedURL ?? locate($0.bundleID)
+            return PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: appURL,
+                                iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested,
+                                pausesByMuting: $0.pausesByMuting,
+                                browserName: $0.kind == .checkedApp ? appURL.flatMap(CheckableApp.browserName(ofAppAt:)) : nil)
         } + catalog.webAppSuggestions.map(suggestion)
     }
 
@@ -103,8 +117,14 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// What VoiceOver says for it where players are offered: a web app
     /// named as one of `options`' apps is says it's one ("Spotify, Safari
-    /// web app"), as its icon's Safari badge shows.
+    /// web app"), as its icon's Safari badge shows; an app added through a
+    /// check that's a Chromium browser's web app always says whose
+    /// ("SoundCloud, Google Chrome web app"), as its icon's badge shows.
     func spokenName(among options: [PlayerOption]) -> String {
+        if kind == .checkedApp, let browserName {
+            return String(localized: "\(name), \(browserName) web app",
+                          comment: "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, e.g. SoundCloud, the second the browser, e.g. Google Chrome")
+        }
         guard kind == .safariWebApp,
               options.contains(where: { $0.kind != .safariWebApp && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame })
         else { return name }
@@ -163,7 +183,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// Under `otherAppsHeading` wherever players are offered.
     static var otherAppsNote: String {
         String(localized: "Controlled the ways a check found to work.",
-               comment: "Where media players are offered, under the “Other Apps” heading and its “Checked by You” badge")
+               comment: "Where media players are offered, under the “Other Apps” heading and its “Checked by you” badge")
     }
 
     /// Where players are offered: the entry that checks an app and adds it.
@@ -210,9 +230,41 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// Under an app added with Add an App that's muted instead of paused,
-    /// wherever players are offered.
+    /// on its row in the menu (its tile says `mutedOnlyLabel`).
     static var mutedInsteadLabel: String {
-        String(localized: "Muted instead of paused", comment: "Under an app added with Add an App that no way could pause, so AutoHush mutes it while other apps play (the menu's rows, the tiles in Settings → General and the welcome window)")
+        String(localized: "Muted instead of paused", comment: "The menu's rows of media players: under an app added with Add an App that no way could pause, so AutoHush mutes it while other apps play; and Settings → Diagnostics, under “Controlled by”")
+    }
+
+    /// Under an app added with Add an App that's muted instead of paused,
+    /// on its tile (Settings → General, the welcome window): a short
+    /// `mutedInsteadLabel`.
+    static var mutedOnlyLabel: String {
+        String(localized: "Muted only", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)")
+    }
+
+    /// Under an app that can only be muted while AntiDot mode is on, on its
+    /// row in the menu: it can't be chosen (`antiDotModeReason` says why).
+    static var antiDotModeLabel: String {
+        String(localized: "Not in AntiDot mode", comment: "The menu's rows of media players: under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it (AntiDot mode, the detection that hides the purple recording indicator)")
+    }
+
+    /// The same on its tile (Settings → General, the welcome window): a
+    /// short `antiDotModeLabel`.
+    static var antiDotModeTileLabel: String {
+        String(localized: "Not in AntiDot", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it. Keep it short (about 14 characters at most)")
+    }
+
+    /// Where an app added with Add an App is removed: its tile's × (help tag,
+    /// VoiceOver action) and its row's alternate in the menu (Option).
+    static func removeTitle(_ name: String) -> String {
+        String(localized: "Remove \(name)…", comment: "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → General, the welcome window) as its help tag and VoiceOver action; %@ is the app")
+    }
+
+    /// Why an app that can only be muted can't be chosen in AntiDot mode:
+    /// the help tag and VoiceOver hint of its row and its tile.
+    static var antiDotModeReason: String {
+        String(localized: "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.",
+               comment: "Help tag and VoiceOver hint of an app added with Add an App that can only be muted, where media players are offered, dimmed while AntiDot mode is on")
     }
 
     /// Under an app that pauses the player while it plays (the menu's Playing
@@ -259,23 +311,31 @@ struct PlayerOption: Equatable, Identifiable {
 }
 
 extension [PlayerOption] {
-    /// How players are offered: the supported apps, installed ones first,
-    /// then the apps added through a check (`PlayerOption.otherAppsHeading`
-    /// goes over them), then the Safari web apps (`PlayerOption.webAppsHeading`):
-    /// those of tested sites, the tested sites not added yet, then the
-    /// untested ones; each group in the catalog's order.
+    /// How players are offered: the supported apps, then the apps added
+    /// through a check (`PlayerOption.otherAppsHeading` goes over them),
+    /// installed ones first in both; then the Safari web apps
+    /// (`PlayerOption.webAppsHeading`): those of tested sites, the tested
+    /// sites not added yet, then the untested ones; each group in the
+    /// catalog's order.
     var offered: [PlayerOption] {
         let apps = filter { $0.kind == .app }
+        let checkedApps = filter { $0.kind == .checkedApp }
         let webApps = filter { $0.kind == .safariWebApp }
-        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled } + filter { $0.kind == .checkedApp }
+        return apps.filter(\.isInstalled) + apps.filter { !$0.isInstalled }
+            + checkedApps.filter(\.isInstalled) + checkedApps.filter { !$0.isInstalled }
             + webApps.filter { $0.webAddress == nil && !$0.isUntested } + webApps.filter { $0.webAddress != nil }
             + webApps.filter(\.isUntested)
     }
 
-    /// Where the apps added through a check start, for their heading; `nil`
-    /// without any.
-    var otherAppsStart: Int? {
-        firstIndex { $0.kind == .checkedApp }
+    /// These players as offered with AntiDot mode `on` or off: while it's
+    /// on, the apps that can only be muted can't be chosen
+    /// (`PlayerOption.isUnavailableInAntiDotMode`).
+    func inAntiDotMode(_ on: Bool) -> [PlayerOption] {
+        map { option in
+            var option = option
+            option.isUnavailableInAntiDotMode = on && option.pausesByMuting
+            return option
+        }
     }
 
     /// Where the Safari web apps start, for their heading; `nil` without any.

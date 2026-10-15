@@ -18,7 +18,7 @@ struct LogFileTests {
     }
 
     @Test("entries are kept in order and read back as they were, line breaks and tabs included")
-    func roundTrip() {
+    func roundTrip() async {
         let scratch = Scratch()
         let log = scratch.file()
         let first = entry(scratch.now, "Spotify paused")
@@ -26,11 +26,32 @@ struct LogFileTests {
         log.append(first)
         log.append(second)
         log.flush()
-        let read = log.entries(since: scratch.now.addingTimeInterval(-60))
+        let read = await log.entries(since: scratch.now.addingTimeInterval(-60))
         #expect(read.map(\.message) == [first.message, second.message])
         #expect(read.map(\.level) == [.notice, .error])
         #expect(abs(read[0].date.timeIntervalSince(first.date)) < 0.001)
-        #expect(log.entries(since: scratch.now.addingTimeInterval(0.5)).map(\.message) == [second.message])
+        #expect(await log.entries(since: scratch.now.addingTimeInterval(0.5)).map(\.message) == [second.message])
+    }
+
+    @Test("past its most, the oldest lines go first: what's left is the newest that fit")
+    func keepsMaxBytes() throws {
+        let scratch = Scratch()
+        // 25 lines of about a twentieth of the most each, a second apart.
+        let long = String(repeating: "x", count: LogFile.maxBytes / 20)
+        let lines = (0..<25).map { LogFile.line(for: entry(scratch.now.addingTimeInterval(Double($0 - 25)), "\($0) \(long)")) }
+        try FileManager.default.createDirectory(at: scratch.url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(lines.joined().utf8).write(to: scratch.url)
+        scratch.file().flush() // trimmed as it opens
+        var size = 0
+        let fit = lines.reversed().prefix { line in
+            size += line.utf8.count
+            return size <= LogFile.maxBytes
+        }
+        #expect(fit.count < lines.count)
+        let text = try String(contentsOf: scratch.url, encoding: .utf8)
+        #expect(text.utf8.count <= LogFile.maxBytes)
+        let keptNewest = text == fit.reversed().joined() // not compared in #expect, which would print 4 MB
+        #expect(keptNewest)
     }
 
     @Test("nothing older than 24 hours is kept: dropped as it opens, then as it's written to")

@@ -14,40 +14,76 @@ import CheckedPlayers
 struct AddAppView: View {
     let model: AddAppModel
     let close: () -> Void
+    /// While AutoHush waits for the app to play, the window floats in the
+    /// top-right corner, above the app the user goes into (`true`), and
+    /// stays where it is after (`false`).
+    var floats: (Bool) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 WindowHeader(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.description))
-                SectionHeading(Text(verbatim: AddAppText.stepsHeading)).padding(.top, 8)
-                Card {
-                    VStack(alignment: .leading, spacing: 10) {
-                        ForEach(Array(model.steps.enumerated()), id: \.element) { index, step in
-                            if index > 0 { CardDivider() }
-                            row(step)
+                if model.services.hasHelper {
+                    SectionHeading(Text(verbatim: AddAppText.stepsHeading)).padding(.top, 8)
+                    Card {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(Array(model.steps.enumerated()), id: \.element) { index, step in
+                                if index > 0 { CardDivider() }
+                                row(step)
+                            }
                         }
                     }
+                } else {
+                    NoteLabel(AddAppText.helperMissing).padding(.top, 8)
                 }
             }
             .windowMargins()
             BottomBar(margin: HostedWindowController.margin) {
+                // While a check runs, Escape is its Stop (in the check's step).
                 Button { close() } label: { Text(verbatim: AddAppText.cancel) }
                     .buttonStyle(.chip)
-                    .keyboardShortcut(.cancelAction)
+                    .keyboardShortcut(model.stage == .checking ? nil : .cancelAction)
                 Spacer()
             }
         }
         .frame(width: 460)
         .font(.appBody)
         .announcesCurrentStep(announcement)
+        .onChange(of: isWaitingToPlay) { _, waiting in floats(waiting) }
     }
 
     private var appName: String? { model.chosen?.name }
 
-    /// What VoiceOver says as the step to do changes.
+    private var isWaitingToPlay: Bool {
+        if case .waitingToPlay = model.stage { true } else { false }
+    }
+
+    /// What VoiceOver says as the step to do changes, or fails, or warns:
+    /// its title, then why.
     private var announcement: String? {
         let step = model.currentStep
-        return model.mark(of: step) == .current ? title(step) : nil
+        let mark = model.mark(of: step)
+        guard mark == .current || mark == .failed else { return nil }
+        let why = warning(step, mark)
+        return why.map { "\(title(step))\n\($0)" } ?? title(step)
+    }
+
+    /// The warning or failure a step shows, if any.
+    private func warning(_ step: AddAppModel.Step, _ mark: AddAppModel.Mark) -> String? {
+        let app = appName ?? ""
+        switch step {
+        case .choose: return model.openFailed ? AddAppText.couldNotOpen(app) : nil
+        case .allow: return model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
+        case .reopen: return model.reopenFailed ? AddAppText.didNotQuit(app) : nil
+        case .play: return mark == .failed ? (model.appQuit ? AddAppText.appQuit(app) : AddAppText.didNotPlay(app)) : nil
+        case .check:
+            switch model.stage {
+            case .stopped: return AddAppText.stoppedNote
+            case .failed: return AddAppText.checkFailed(model.failureReason, app: app)
+            default: return nil
+            }
+        case .use: return model.result?.setup == nil ? model.result.map { _ in AddAppText.nothingWorked(app) } : nil
+        }
     }
 
     private func title(_ step: AddAppModel.Step) -> String {
@@ -63,14 +99,14 @@ struct AddAppView: View {
 
     private func row(_ step: AddAppModel.Step) -> some View {
         let mark = model.mark(of: step)
-        return NumberedStepRow(number: model.number(of: step), mark: mark, title: title(step)) {
+        return NumberedStepRow(number: model.number(of: step), count: model.steps.count, mark: mark, title: title(step)) {
             switch step {
             case .choose: chooseStep(mark)
             case .allow: allowStep(mark)
             case .reopen: reopenStep(mark)
             case .play: playStep(mark)
             case .check: checkStep(mark)
-            case .use: useStep(mark)
+            case .use: useStep()
             }
         }
     }
@@ -100,7 +136,7 @@ struct AddAppView: View {
         case .todo:
             StepNote(AddAppText.allowNote)
         case .done:
-            StepNote(AddAppText.allowed(automation: model.permissions.automation != nil))
+            StepNote(AddAppText.allowedSummary(model.permissions, antiDot: model.antiDot))
         default:
             if let app = appName {
                 if model.traits?.scriptable == false { StepNote(AddAppText.notScriptable(app)) }
@@ -108,12 +144,11 @@ struct AddAppView: View {
                 CheckPermissionRows(model: model, app: app).padding(.top, 4)
                 // Some not allowed: what the check does without them, then
                 // Continue once what's needed is (all allowed goes on by itself).
-                let missing = model.permissions.missingOptional
+                let missing = model.permissions.missingOptional(antiDot: model.antiDot)
                 if !model.permissions.neededAllowed {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
                 } else if !missing.isEmpty {
-                    NoteLabel(missing.map { AddAppText.without($0, app: app) }.joined(separator: " ") + " " + AddAppText.goOnWithout(missing.count))
-                        .padding(.top, 4)
+                    NoteLabel(AddAppText.withoutWarning(missing, app: app)).padding(.top, 4)
                     AddAppStepButton(AddAppText.continueButton) { model.continueWithoutAll() }
                 }
             }
@@ -127,14 +162,14 @@ struct AddAppView: View {
         case .busy:
             StepNote(AddAppText.reopening(appName ?? ""))
         case .current:
-            NoteLabel(AddAppText.reopenReason(appName ?? "") + " " + AddAppText.reopenStops).padding(.top, 2)
+            NoteLabel(AddAppText.reopenAlertMessage(appName ?? "")).padding(.top, 2)
             if model.reopenFailed { NoteLabel(AddAppText.didNotQuit(appName ?? "")).padding(.top, 2) }
             StepButtons {
                 AddAppStepButton(AddAppText.reopenTitle(appName ?? "")) { model.reopen() }
                 AddAppStepButton(AddAppText.skip, secondary: true) { model.skipReopen() }
             }
         default:
-            StepNote(AddAppText.reopenWhy + " " + AddAppText.reopenAsks)
+            StepNote(AddAppText.reopenPending)
         }
     }
 
@@ -145,9 +180,12 @@ struct AddAppView: View {
         case (.current, .waitingToPlay(let since)):
             StepNote(AddAppText.playNow(appName ?? ""))
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                CountdownBanner(text: AddAppText.timeLeft(AddAppModel.playWait - context.date.timeIntervalSince(since)))
+                CountdownBanner(text: AddAppText.timeToPlay(AddAppModel.playWait - context.date.timeIntervalSince(since)))
             }
             .padding(.top, 2)
+        case (.failed, _) where model.appQuit:
+            NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
+            AddAppStepButton(AddAppText.open(appName ?? "")) { model.openAppAgain() }
         case (.failed, _):
             StepNote(AddAppText.didNotPlay(appName ?? ""))
             AddAppStepButton(AddAppText.tryAgain) { model.waitForPlaying() }
@@ -156,21 +194,35 @@ struct AddAppView: View {
         }
     }
 
+    /// The app is muted during the check: Audio Recording is allowed and
+    /// AntiDot mode is off.
+    private var mutedInCheck: Bool { model.permissions.audio == .allowed && !model.antiDot }
+
     @ViewBuilder private func checkStep(_ mark: AddAppModel.Mark) -> some View {
         switch (mark, model.stage) {
         case (.done, _):
             StepNote(AddAppText.putBackNote)
         case (.busy, _):
-            StepNote(AddAppText.stage(model.progress.stage))
+            StepNote(model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
+            AddAppStepButton(AddAppText.stop, secondary: true, cancels: true) { model.stopCheck() }
         case (.failed, .stopped):
             StepNote(AddAppText.stoppedNote)
             AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
         case (.failed, _):
-            StepNote(AddAppText.failedNote)
-            AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+            StepNote(AddAppText.checkFailed(model.failureReason, app: appName ?? ""))
+            StepButtons {
+                AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+                if model.failureReason == .other {
+                    AddAppStepButton(AddAppText.showLog, secondary: true) { model.showLog() }
+                }
+            }
         default:
-            StepNote(AddAppText.checkNote(appName))
+            if let app = appName, !mutedInCheck {
+                StepNote(AddAppText.checkNoteHeard(app))
+            } else {
+                StepNote(AddAppText.checkNote(appName))
+            }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if mark == .current {
                 AddAppStepButton(AddAppText.continueToCheck) { model.continueToCheck() }
@@ -178,7 +230,7 @@ struct AddAppView: View {
         }
     }
 
-    @ViewBuilder private func useStep(_ mark: AddAppModel.Mark) -> some View {
+    @ViewBuilder private func useStep() -> some View {
         if let result = model.result, let app = appName {
             if result.setup == nil {
                 StepNote(AddAppText.nothingWorked(app))
@@ -189,10 +241,19 @@ struct AddAppView: View {
             if result.setup == nil {
                 // No way pauses it: it can be muted instead (the user, 2026-10-15).
                 StepNote(AddAppText.muteInstead(app)).padding(.top, 4)
-                if !model.canMute {
-                    NoteLabel(AddAppText.muteNeedsAudio).padding(.top, 2)
-                    Button { model.allowMuting() } label: { Text(verbatim: AddAppText.allowButton) }
-                        .buttonStyle(.chip)
+                if model.antiDot {
+                    NoteLabel(ControlFailure.muteUnavailable.text(player: app)).padding(.top, 2)
+                } else if !model.canMute {
+                    if model.audioAwaitsReopen {
+                        NoteLabel(AddAppText.audioAfterReopen).padding(.top, 2)
+                        Button { model.reopenAutoHush() } label: { Text(verbatim: PermissionText.reopen) }
+                            .buttonStyle(.chip)
+                    } else {
+                        NoteLabel(AddAppText.muteNeedsAudio).padding(.top, 2)
+                        Button { model.allowMuting() } label: { Text(verbatim: AddAppText.allowButton) }
+                            .buttonStyle(.chip)
+                            .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(PermissionText.audioTitle)))
+                    }
                 }
                 StepButtons {
                     AddAppStepButton(AddAppText.muteItInstead) { model.useMuting() }
@@ -225,11 +286,14 @@ private struct StepNote: View {
 private struct AddAppStepButton: View {
     let title: String
     var secondary = false
+    /// Escape presses it (the check's Stop).
+    var cancels = false
     let action: () -> Void
 
-    init(_ title: String, secondary: Bool = false, action: @escaping () -> Void) {
+    init(_ title: String, secondary: Bool = false, cancels: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.secondary = secondary
+        self.cancels = cancels
         self.action = action
     }
 
@@ -239,7 +303,7 @@ private struct AddAppStepButton: View {
                 .fixedSize()
         }
         .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary, padded: true))
-        .keyboardShortcut(secondary ? nil : .defaultAction)
+        .keyboardShortcut(cancels ? .cancelAction : secondary ? nil : .defaultAction)
         .padding(.top, 2)
     }
 }
@@ -256,7 +320,8 @@ private struct StepButtons<Content: View>: View {
 }
 
 /// Step 2's permissions: each one the chosen app's check needs, with what
-/// it's for and Allow… until it's allowed.
+/// it's for and Allow… until it's allowed. In AntiDot mode, Audio Recording
+/// isn't used; allowed in System Settings, it waits for AutoHush to reopen.
 private struct CheckPermissionRows: View {
     let model: AddAppModel
     let app: String
@@ -265,16 +330,23 @@ private struct CheckPermissionRows: View {
         VStack(alignment: .leading, spacing: 10) {
             row(symbol: "accessibility", title: AddAppText.accessibilityTitle, note: AddAppText.accessibilityUse(app),
                 allowed: model.permissions.accessibility, permission: .accessibility)
-            row(symbol: "waveform", title: PermissionText.audioTitle, note: AddAppText.audioUse(app),
-                allowed: model.permissions.audio == .allowed, permission: .audioRecording)
+            if model.antiDot {
+                row(symbol: "waveform", title: PermissionText.audioTitle, note: AddAppText.audioInAntiDot,
+                    allowed: nil, permission: .audioRecording)
+            } else {
+                row(symbol: "waveform", title: PermissionText.audioTitle,
+                    note: model.audioAwaitsReopen && model.permissions.audio != .allowed ? AddAppText.audioAfterReopen : AddAppText.audioUse(app),
+                    allowed: model.permissions.audio == .allowed, permission: .audioRecording)
+            }
             if let automation = model.permissions.automation {
-                row(symbol: "music.note", title: PermissionText.controlTitle(app), note: AddAppText.automationUse,
+                row(symbol: "music.note", title: AddAppText.automationTitle, note: AddAppText.automationUse,
                     allowed: automation == .allowed, permission: .automation)
             }
         }
     }
 
-    private func row(symbol: String, title: String, note: String, allowed: Bool, permission: CheckPermission) -> some View {
+    /// `allowed` nil: not used now (no button, nothing to allow).
+    private func row(symbol: String, title: String, note: String, allowed: Bool?, permission: CheckPermission) -> some View {
         HStack(spacing: 10) {
             SymbolTile(symbol: symbol)
             VStack(alignment: .leading, spacing: 2) {
@@ -283,7 +355,7 @@ private struct CheckPermissionRows: View {
                     // Accessibility is needed; the check goes on without the others.
                     if permission == .accessibility {
                         HeadingBadge(text: AddAppText.neededBadge)
-                    } else {
+                    } else if allowed != nil {
                         Text(verbatim: AddAppText.optionalLabel).font(.appCaption).foregroundStyle(.appSecondary)
                     }
                 }
@@ -291,7 +363,7 @@ private struct CheckPermissionRows: View {
             }
             .accessibilityElement(children: .combine)
             Spacer(minLength: 8)
-            if allowed {
+            if allowed == true {
                 Label {
                     Text(verbatim: AddAppText.allowedLabel)
                 } icon: {
@@ -300,10 +372,17 @@ private struct CheckPermissionRows: View {
                 .font(.appCallout)
                 .foregroundStyle(.appSecondary)
                 .fixedSize()
-            } else {
-                Button { model.request(permission) } label: { Text(verbatim: AddAppText.allowButton) }
-                    .buttonStyle(.chip)
-                    .fixedSize()
+            } else if allowed == false {
+                if permission == .audioRecording, model.audioAwaitsReopen {
+                    Button { model.reopenAutoHush() } label: { Text(verbatim: PermissionText.reopen) }
+                        .buttonStyle(.chip)
+                        .fixedSize()
+                } else {
+                    Button { model.request(permission) } label: { Text(verbatim: AddAppText.allowButton) }
+                        .buttonStyle(.chip)
+                        .fixedSize()
+                        .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(title)))
+                }
             }
         }
         .accessibilityElement(children: .contain)

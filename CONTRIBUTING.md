@@ -7,10 +7,11 @@ it helps to follow these few rules.
 
 [Open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose)
 with its form: a bug report (with Diagnostics' report: Settings →
-Diagnostics → Copy Report), a feature request, a player to support (when
-**Add an App…** found no way to control it, with its check's log) or a
-translation fix. A
-security problem goes privately, as [SECURITY.md](SECURITY.md) says.
+Diagnostics → Copy Report, and its logs: Show Logs… → Copy Logs), a
+feature request, a player to support (when **Add an App…** found no way to
+control it, with its check's log, which leaves out your Mac account's name
+and what was playing) or a translation fix. A security problem goes
+privately, as [SECURITY.md](SECURITY.md) says.
 
 ## Branches
 

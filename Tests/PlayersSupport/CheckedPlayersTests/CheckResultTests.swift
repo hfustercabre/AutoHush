@@ -26,8 +26,8 @@ struct CheckResultTests {
                                         CheckResult.WayResult(kind: .script, mark: .notThere)],
                                  setup: setup, pageButton: recipe)
         #expect(try JSONDecoder().decode(CheckResult.self, from: JSONEncoder().encode(result)) == result)
-        #expect(result.way(.page)?.worked == true)
-        #expect(result.way(.script)?.worked == false)
+        #expect(result.ways.first { $0.kind == .page }?.worked == true)
+        #expect(result.ways.first { $0.kind == .script }?.worked == false)
     }
 
     @Test("keeping it keeps the setup, and its page's button as a web app's; nothing when no way worked")
@@ -40,6 +40,18 @@ struct CheckResultTests {
         players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: recipes)
         #expect(store.setups() == [setup])
         #expect(recipes.recipe(for: setup.bundleID) == recipe)
+    }
+
+    @Test("removing an added app forgets its setup and its page's button; it's no longer offered")
+    func forgetting() {
+        let store = MemoryStore()
+        let recipes = Recipes()
+        let players = CheckedPlayers(store: store, locate: { _ in nil })
+        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: recipes)
+        #expect(players.current().map(\.bundleID) == [setup.bundleID])
+        players.forget(setup.bundleID, recipes: recipes)
+        #expect(store.setups().isEmpty && recipes.recipe(for: setup.bundleID) == nil)
+        #expect(players.current().isEmpty)
     }
 
     @Test("an app's traits come from its bundle: Electron's needs its launch option; a dictionary means scripting")

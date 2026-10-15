@@ -1,5 +1,7 @@
 import AppKit
 import AutoHushKit
+import CheckedPlayers
+import PlayerCheckKit
 
 // MARK: - Whether it plays
 
@@ -7,7 +9,7 @@ import AutoHushKit
 /// reports to Now Playing, its page's Play/Pause (while its word is current),
 /// its level (as AutoHush hears it), its keep-awake assertion (as AntiDot
 /// mode reads it), its menu's state (as AutoHush's MenuPlayer reads it).
-/// Deezer's menu word changes late by itself (it said Play while playing,
+/// A menu's word may change late by itself (one said Play while playing,
 /// then Pause a second later, with nothing pressed), so it comes last.
 enum SignKind: CaseIterable { case script, report, page, level, awake, menu }
 
@@ -36,7 +38,7 @@ struct Look {
     @MainActor func says(_ kind: SignKind) -> PlayerState? {
         switch kind {
         case .script: state
-        case .report: reported.map(playerState(reported:))
+        case .report: reported.map(NowPlayingReports.state(reported:))
         case .page: pageCurrent ? pageToggle.flatMap(wordSays) : nil
         case .level: audible.map { $0 ? .playing : .paused }
         case .awake: awake.map { $0 ? .playing : .paused }
@@ -47,13 +49,14 @@ struct Look {
     @MainActor var surest: SignKind? { SignKind.allCases.first { says($0) != nil } }
     /// Stopped, as its surest state tells it: its scripted state, else what
     /// it reports to Now Playing, else its menu's item (disabled). A track
-    /// that ends leaves it so (VLC's said stopped, not paused).
+    /// that ends leaves it so (one with a playing flag said stopped, not paused).
     @MainActor var stopped: Bool { [SignKind.script, .report, .menu].lazy.compactMap(says).first == .stopped }
 
-    var line: String {
-        [menuTitle.map { "menu “\($0)”" + (menuState == .stopped ? " (disabled)" : "") }, state.map { "state \($0.rawValue)" },
+    /// What it shows, its menu's and page's words only (`shown`).
+    @MainActor var line: String {
+        [menuTitle.map { "menu \(shown($0))" + (menuState == .stopped ? " (disabled)" : "") }, state.map { "state \($0.rawValue)" },
          reported.map { "reports \($0.lowercased())" },
-         pageToggle.map { "page “\($0)”" + (pageCurrent ? "" : " (out of sight: its word lags)") }, "sound \(sounding ? "on" : "off")",
+         pageToggle.map { "page \(shown($0))" + (pageCurrent ? "" : " (out of sight: its word lags)") }, "sound \(sounding ? "on" : "off")",
          audible.map { $0 ? "heard" : "silent" },
          awake.map { awake in
              // A browser's web app: the browser's "Playing audio" assertions, counted (`pagesSay`).
@@ -96,7 +99,7 @@ struct Look {
 /// Whether it plays, as far as can be seen, in `SignKind`'s order (its
 /// level measured only when it comes to it), else by its sound output
 /// (which an Electron app or a web app keeps a few seconds after a pause,
-/// VLC a minute).
+/// some players a minute).
 @MainActor func isPlaying(_ pid: pid_t) -> Bool {
     let now = look(pid)
     for kind in SignKind.allCases {
@@ -158,7 +161,7 @@ struct Sign {
         return true
     }
     countPagesBeforePlaying(pid, saying: true)
-    say("  waiting: start playing something in \(appName); the test goes on as soon as it plays (up to \(Int(seconds / 60)) minutes)"
+    say(CheckReportLine.waiting(.play, "start playing something in \(appName); the test goes on as soon as it plays", minutes: Int(seconds / 60))
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
     // Whoever runs the check may need the mouse and keyboard for it.
@@ -178,10 +181,6 @@ struct Sign {
 }
 
 // MARK: - A trial
-
-/// How a trial went: it paused and played again, it only paused, or it
-/// didn't pause.
-enum TrialResult { case worked, pausedOnly, didNotPause }
 
 /// Set by `trial` when, after its play, the app read stopped where its pause
 /// had left it paused: its track ended meanwhile, so the trial says nothing
@@ -210,12 +209,12 @@ enum TrialResult { case worked, pausedOnly, didNotPause }
     guard pause() else { say("    couldn't send it"); return .didNotPause }
     let after = waitFor(4, pid: pid, level: sign.byLevel, until: sign.paused)
     guard sign.paused(after) else {
-        say("    after the pause: \(after.line) → it didn't pause in 4 s")
+        say("\(CheckReportLine.afterPause): \(after.line) → it didn't pause in 4 s")
         announcementLine(since: pausedAt).map { say($0) }
         undo?()
         return .didNotPause
     }
-    say("    after the pause: \(after.line) → it paused")
+    say("\(CheckReportLine.afterPause): \(after.line) → it paused")
     announcementLine(since: pausedAt).map { say($0) }
     let pauseAnnounced = notifications?.announced(since: pausedAt).last.flatMap { $0.state == .playing ? nil : $0.name }
     whilePaused?()

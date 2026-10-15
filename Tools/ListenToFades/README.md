@@ -21,10 +21,10 @@ for the app that runs it (macOS asks once). Only that device is read
 ## How it works
 
 `record` reads the loopback device's input with Core Audio and writes a WAV
-file. `analyze` takes the fades' times from AutoHush's log: AutoHush logs
-fades at debug level, which macOS keeps only for a live `log stream`, so
-capture one during the test and pass it with `--log` (otherwise it asks
-`log show`, which may find none). For every fade it prints the music's
+file. `analyze` takes the fades' times from AutoHush's log: AutoHush gives
+macOS's log its lines at the debug level only, which macOS keeps only for a
+live `log stream`, so capture one during the test and pass it with `--log`
+(otherwise it asks `log show`, which finds none). For every fade it prints the music's
 level every 50 ms next to an ideal straight-line fade in decibels, the
 level every 5 ms around the moments AutoHush pauses and plays, and any
 dropouts or jumps.

@@ -1,6 +1,8 @@
 import AppKit
+import CheckedPlayers
+import PlayerCheckKit
 
-// MARK: - The menu bar's Now Playing panel
+// MARK: - The menu bar's Now Playing panel, as AutoHush reads and presses it
 
 let notNowPlaying = "nothing in it reports to Now Playing, so the Now Playing panel can't reach it"
 let panelNotNowPlaying = "nothing in it reports to Now Playing, so it has no row in the panel"
@@ -12,96 +14,28 @@ var noPanelItem: String {
         : "this tool (or the app running it) needs the Accessibility permission: the panel is found and pressed through it"
 }
 
-/// One app's row in the menu bar's Now Playing panel (Control Center's): its
-/// text ("Song, Artist – Album", or the app's name) and its Play/Pause.
-struct PanelRow {
-    let text: String
-    let button: AXUIElement
-    /// Read while the panel is open: its elements answer nothing once it closes.
-    let playing: Bool
-}
+/// One app's row in the open panel, with its Play/Pause, as AutoHush reads
+/// it (`AccessibilityNowPlayingPanel`): its text ("Song, Artist – Album", or
+/// the app's name) and whether it plays, read while the panel is open (its
+/// elements answer nothing once it closes).
+typealias ShownRow = AccessibilityNowPlayingPanel.ShownRow
 
 /// The menu bar's Now Playing item (macOS 26 on), found by hit-testing along
 /// the menu bar: the menu bar's own list doesn't name it.
-@MainActor func nowPlayingMenuItem() -> AXUIElement? {
-    let system = AXUIElementCreateSystemWide()
-    // The primary display's: hit-test coordinates start at its top left, and
-    // NSScreen.main is the one with the keyboard focus, maybe another.
-    let width = Float(NSScreen.screens.first?.frame.width ?? 1470)
-    var x = width - 20
-    while x > width / 3 {
-        var hit: AXUIElement?
-        if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit,
-           hit.text(kAXIdentifierAttribute) == "com.apple.menuextra.now-playing" { return hit }
-        x -= 6
-    }
-    return nil
-}
+func nowPlayingMenuItem() -> AXUIElement? { AccessibilityNowPlayingPanel.menuItem() }
 
-/// The open panel's rows, from Control Center's windows; none while it's closed.
-func panelRows() -> [PanelRow] {
-    guard let center = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.controlcenter").first else { return [] }
-    var found: [PanelRow] = []
-    func walk(_ element: AXUIElement, _ depth: Int) {
-        guard depth < 20 else { return }
-        let children = element.children
-        if let button = children.first(where: { ["play.fill", "pause.fill"].contains($0.text(kAXIdentifierAttribute)) }) {
-            let text = children.map { $0.text(kAXValueAttribute) }.filter { !$0.isEmpty }.joined(separator: " ")
-            found.append(PanelRow(text: text, button: button, playing: button.text(kAXIdentifierAttribute) == "pause.fill"))
-            return
-        }
-        children.forEach { walk($0, depth + 1) }
-    }
-    for window in AXUIElementCreateApplication(center.processIdentifier).value(kAXWindowsAttribute) as? [AXUIElement] ?? [] {
-        walk(window, 0)
-    }
-    return found
-}
+/// The open panel's rows; none while it's closed.
+func panelRows() -> [ShownRow] { AccessibilityNowPlayingPanel.rows() }
 
-/// Opens the panel with its menu bar item and waits up to 2 s for its
-/// rows; nil when the item didn't open. It shows under the menu bar, and
-/// takes the keyboard while it's open.
-func openPanel(_ item: AXUIElement) -> [PanelRow]? {
-    guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else { return nil }
-    var rows: [PanelRow] = []
-    let deadline = Date().addingTimeInterval(2)
-    while rows.isEmpty, Date() < deadline {
-        Thread.sleep(forTimeInterval: 0.05)
-        rows = panelRows()
-    }
-    return rows
-}
+/// Opens the panel and waits up to 2 s for its rows; nil when the item
+/// didn't open. It shows under the menu bar, and takes the keyboard.
+func openPanel(_ item: AXUIElement) -> [ShownRow]? { AccessibilityNowPlayingPanel.open(item) }
 
 /// Closes it, waiting up to 2 s for its rows to go.
-func closePanel(_ item: AXUIElement) {
-    _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
-    let deadline = Date().addingTimeInterval(2)
-    while !panelRows().isEmpty, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
-}
-
-/// A text in lowercase, its letters and digits only, one space between
-/// words: so "Song (Edit) - Artist" and "song edit artist" compare.
-func normalized(_ text: String) -> String {
-    text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
-}
-
-/// What a row's song can be: its text up to each ", " ahead of " – <album>",
-/// since the song and the artist may both hold commas ("…(JAKE DILE
-/// REWORK), Jake Dile - Mixes, Bootlegs, Mashups – "); the whole text
-/// without one ("QuickTime Player"). A session with no song shows its app's
-/// name ("TIDAL,  – ").
-func songs(ofRow text: String) -> [String] {
-    let end = text.range(of: " –", options: .backwards)?.lowerBound ?? text.endIndex
-    var songs: [String] = [], from = text.startIndex
-    while let comma = text.range(of: ", ", range: from..<end) {
-        songs.append(String(text[..<comma.lowerBound]))
-        from = comma.upperBound
-    }
-    return songs.isEmpty ? [text] : songs
-}
+func closePanel(_ item: AXUIElement) { AccessibilityNowPlayingPanel.close(item) }
 
 /// The texts of the page's player bar (the song and the artist, where
-/// SoundCloud's window keeps a generic title); none without a page or a bar.
+/// a web app's window may keep a generic title); none without a page or a bar.
 @MainActor func playerBarTexts(_ pid: pid_t) -> [String] {
     guard page?.toggle != nil, pageToggleLabel(pid) != nil, let toggle = barToggle, let bar = playerBar(of: toggle) else { return [] }
     var texts: [String] = [], reads = 500
@@ -116,49 +50,68 @@ func songs(ofRow text: String) -> [String] {
 }
 
 /// What the app plays, as its windows' titles, its page's player bar and
-/// its AppleScript current track or item show it: what tells its row.
-@MainActor func songTexts(_ pid: pid_t) -> [String] {
-    var texts = appWindows(of: pid).windows.map(\.title) + playerBarTexts(pid)
-    if let song = scriptedSong() { texts.append(song) }
-    return texts
+/// its AppleScript current track or item show it: what tells its row. Only
+/// matched, never written in the log.
+struct SongTexts {
+    var titles: [String] = []
+    var bar: [String] = []
+    var track: [String] = []
+    var all: [String] { titles + bar + track }
 }
 
-/// The rows that show what the app plays: their song found whole in
-/// `texts` (its windows' titles, its player bar, its current track), or,
-/// with no song, its name. A row isn't taken for a word in common: a paused
-/// Deezer's "Another One Bites The Dust" was pressed for SoundCloud for its
-/// "the".
-@MainActor func appRows(_ rows: [PanelRow], texts: [String]) -> [PanelRow] {
-    let own = normalized(appName)
-    // A session with no song shows its app's name: another app's.
-    let others = Set(NSWorkspace.shared.runningApplications.compactMap { $0.localizedName.map(normalized) }).subtracting([own])
-    let haystack = texts.map { " \(normalized($0)) " }
-    return rows.filter { row in
-        songs(ofRow: row.text).map(normalized).contains { shown in
-            if shown == own { return true }
-            guard shown.count >= 3, !others.contains(shown) else { return false }
-            return haystack.contains { $0.contains(" \(shown) ") }
-        }
-    }
+@MainActor func songTexts(_ pid: pid_t) -> SongTexts {
+    SongTexts(titles: appWindows(of: pid).windows.map(\.title), bar: playerBarTexts(pid), track: scriptedSong().map { [$0] } ?? [])
 }
 
-/// The row pressed last, to find it again; why the panel couldn't be used.
+/// The other running apps' names: a row naming one (a session with no song)
+/// is that app's, not this one's song.
+func otherAppNames() -> Set<String> { Set(NSWorkspace.shared.runningApplications.compactMap(\.localizedName)) }
+
+/// The rows that show what the app plays, as AutoHush tells them
+/// (`PanelRows.appRows`): their song found whole in `texts` (its windows'
+/// titles, its player bar, its current track), or, with no song, its name.
+/// A row isn't taken for a word in common: another app's paused "Another
+/// One Bites The Dust" was pressed for a web app for its "the".
+@MainActor func appRows(_ rows: [ShownRow], texts: SongTexts) -> [ShownRow] {
+    let mine = PanelRows.appRows(rows.map(\.row), appName: appName, otherApps: otherAppNames(), texts: texts.all)
+    return rows.filter { shown in mine.contains(shown.row) }
+}
+
+/// What told that `row` was the app's, for the log: where its song showed,
+/// or its name. Never the row's text, nor the song.
+@MainActor func rowFound(_ row: PanelRow, by texts: SongTexts) -> String {
+    if PanelRows.showsName(row, appName: appName) { return "showing \(appName)'s name" }
+    let others = otherAppNames().subtracting([appName])
+    let sources = [("its windows' titles", texts.titles), ("its player bar", texts.bar), ("what it plays, by AppleScript", texts.track)]
+    let found = sources.filter { PanelRows.showsSong(row, in: $0.1, otherApps: others) }.map(\.0)
+    return "its song found in " + (found.isEmpty ? "what it shows" : found.joined(separator: " and "))
+}
+
+/// The row pressed last, to find it again (only matched, never logged), and
+/// how the log names it (`PrivateText.row`); why the panel couldn't be used.
 @MainActor var panelRowText: String?
+@MainActor var panelRowSaid: String?
 @MainActor var panelProblem: String?
+
+/// Takes `row`, the `index`th of `count`, as the one pressed.
+@MainActor func notePanelRow(_ row: PanelRow, _ index: Int, of count: Int, why: String) {
+    panelRowText = row.text
+    panelRowSaid = PrivateText.row(index, of: count, why: why)
+}
 
 /// Keeps the row just pressed as the app's, between runs, once the app
 /// changed with it: a later press finds it by its text when nothing shows
 /// the app's song (a Play after a Pause, as a check's play does within one
-/// run; VLC's window on another desktop gives no title).
+/// run; a window on another desktop may give no title).
 @MainActor func rememberPanelRow() {
     guard let panelRowText, savedButtons()[bundleID]?.panelRow != panelRowText else { return }
     saveButton { $0.panelRow = panelRowText }
 }
 
 /// The one row whose text is the app's remembered row's, if exactly one is.
-func rememberedRow(_ rows: [PanelRow]) -> PanelRow? {
+func rememberedRow(_ rows: [ShownRow]) -> ShownRow? {
     guard let text = savedButtons()[bundleID]?.panelRow else { return nil }
-    let same = rows.filter { $0.text == text }
+    let same = rows.filter { $0.row.text == text }
     return same.count == 1 ? same[0] : nil
 }
 
@@ -187,7 +140,7 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
 /// trial, the app's own signs judge whether the row was its own.
 @MainActor func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> Bool {
     // Read before the panel opens: a page takes a moment.
-    let texts = choice == .lastOnly ? [] : songTexts(pid)
+    let texts = choice == .lastOnly ? SongTexts() : songTexts(pid)
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
         panelProblem = noPanelItem
@@ -197,24 +150,33 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
         panelProblem = "the Now Playing item didn't open"
         return false
     }
-    let candidates = rows.filter { $0.playing == pausing }
-    var row = choice == .app ? nil : candidates.first { $0.text == panelRowText }
-    var mine: [PanelRow] = []
+    let candidates = rows.filter { $0.row.playing == pausing }
+    var row = choice == .app ? nil : candidates.first { $0.row.text == panelRowText }
+    var why = "the row pressed before"
+    var mine: [ShownRow] = []
     if row == nil, choice != .lastOnly {
         mine = appRows(candidates, texts: texts)
         // Its song first; else the row it changed with before; else, pausing, the only one playing.
-        row = mine.count == 1 ? mine[0] : !mine.isEmpty ? nil
-            : rememberedRow(candidates) ?? (holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil)
+        if mine.count == 1 {
+            row = mine[0]
+            why = rowFound(mine[0].row, by: texts)
+        } else if mine.isEmpty, let remembered = rememberedRow(candidates) {
+            row = remembered
+            why = "the row it changed with before"
+        } else if mine.isEmpty, holdsNowPlaying, candidates.count == 1 {
+            row = candidates[0]
+            why = "the only row playing, while it holds Now Playing"
+        }
     }
     guard let row else {
         let state = pausing ? "Pause" : "Play"
         panelProblem = rows.isEmpty ? "the panel showed no rows"
-            : choice == .lastOnly ? "the row pressed before (“\(panelRowText ?? "")”) no longer shows \(state)"
+            : choice == .lastOnly ? "the row pressed before (\(panelRowSaid ?? "")) no longer shows \(state)"
             : noRowProblem(rows: candidates.count, mine: mine.count, showing: state)
         closePanel(item)
         return false
     }
-    panelRowText = row.text
+    notePanelRow(row.row, rows.firstIndex { $0.row == row.row } ?? 0, of: rows.count, why: why)
     let pressed = AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success
     closePanel(item)
     return pressed
@@ -224,12 +186,12 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
 enum PanelPress { case already, changed, pressed, notPressed }
 
 /// A press by the panel (`--via panel`). The app's row is found by its song
-/// in its windows' titles or what it plays by AppleScript (Deezer's title,
-/// Spotify's current track and VLC's current item name it), else as the row
+/// in its windows' titles or what it plays by AppleScript (a window's
+/// title, a current track or a current item may name it), else as the row
 /// it changed with before (`rememberedRow`); only when none matches is its
-/// page read, for its player bar's song (SoundCloud's title doesn't name
-/// it), since reading a page can take seconds (Deezer's is built anew each
-/// time). The row's own Play/Pause, as Now Playing knows the app, tells
+/// page read, for its player bar's song (a web app's title may not name
+/// it), since reading a page can take seconds (an Electron app's may be
+/// built anew each time). The row's own Play/Pause, as Now Playing knows the app, tells
 /// whether it's that way already, and shows the press take before the panel
 /// closes (2 s at most). A row told only by memory, or only by the app
 /// holding Now Playing, may be another app's showing the same: it's pressed
@@ -260,7 +222,7 @@ enum PanelPress { case already, changed, pressed, notPressed }
     if mine.isEmpty, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
         closePanel(item)
         readPage()
-        texts += playerBarTexts(pid)
+        texts.bar = playerBarTexts(pid)
         guard let again = openPanel(item) else {
             panelProblem = "the Now Playing item didn't open"
             return .notPressed
@@ -268,15 +230,16 @@ enum PanelPress { case already, changed, pressed, notPressed }
         rows = again
         mine = appRows(rows, texts: texts)
     }
+    func index(of shown: ShownRow) -> Int { rows.firstIndex { $0.row == shown.row } ?? 0 }
     if mine.count == 1 {
         let row = mine[0]
-        panelRowText = row.text
-        if row.playing != pausing {
+        notePanelRow(row.row, index(of: row), of: rows.count, why: byMemory ? "the row it changed with before" : rowFound(row.row, by: texts))
+        if row.row.playing != pausing {
             closePanel(item)
             // A remembered row that's that way already may be another app's:
             // the app itself must be so too.
             guard byMemory, isPlaying(pid) == pausing else { return .already }
-            panelProblem = "the row it changed with before (“\(row.text)”) shows another app's song now"
+            panelProblem = "the row it changed with before shows another app's song now"
             return .notPressed
         }
         guard AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success else {
@@ -288,14 +251,14 @@ enum PanelPress { case already, changed, pressed, notPressed }
         var changed = false
         while !changed, Date() < deadline {
             Thread.sleep(forTimeInterval: 0.05)
-            changed = panelRows().first { $0.text == row.text }?.playing == !pausing
+            changed = panelRows().first { $0.row.text == row.row.text }?.row.playing == !pausing
         }
         closePanel(item)
         return changed && !byMemory ? .changed : .pressed
     }
-    let candidates = rows.filter { $0.playing == pausing }
+    let candidates = rows.filter { $0.row.playing == pausing }
     if mine.isEmpty, pausing, candidates.count == 1, nowPlayingHolder(pid).isThisApp {
-        panelRowText = candidates[0].text
+        notePanelRow(candidates[0].row, index(of: candidates[0]), of: rows.count, why: "the only row playing, while it holds Now Playing")
         let pressed = AXUIElementPerformAction(candidates[0].button, kAXPressAction as CFString) == .success
         closePanel(item)
         return pressed ? .pressed : .notPressed

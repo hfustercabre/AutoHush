@@ -11,6 +11,8 @@ struct SearchField: View {
     var onClose: (() -> Void)?
     /// Return in it (which a window's main button then doesn't get).
     var onSubmit: (() -> Void)?
+    /// ↑ and ↓ in it, for a list under it whose selection they move (-1, 1).
+    var onMove: ((Int) -> Void)?
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -24,6 +26,8 @@ struct SearchField: View {
             .textFieldStyle(.plain)
             .focused($isFocused)
             .onSubmit { onSubmit?() }
+            .onKeyPress(.upArrow) { move(-1) }
+            .onKeyPress(.downArrow) { move(1) }
             if let onClose {
                 clearButton(Text("Close search", comment: "The button that closes a search"), action: onClose)
             } else if !text.isEmpty {
@@ -38,6 +42,12 @@ struct SearchField: View {
             // Once it's shown: a popover's field doesn't take it any sooner.
             if focusesOnAppear { DispatchQueue.main.async { isFocused = true } }
         }
+    }
+
+    private func move(_ step: Int) -> KeyPress.Result {
+        guard let onMove else { return .ignored }
+        onMove(step)
+        return .handled
     }
 
     private func clearButton(_ label: Text, action: @escaping () -> Void) -> some View {

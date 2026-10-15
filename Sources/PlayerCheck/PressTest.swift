@@ -1,4 +1,6 @@
 import AppKit
+import CheckedPlayers
+import PlayerCheckKit
 
 // MARK: - The test's results
 
@@ -46,7 +48,7 @@ import AppKit
     if onlyItsPage { readPageButtons() }
     if testing, let running, !onlyItsPage || pageOffersAPress {
         say()
-        say("Playing")
+        say(CheckReportLine.Heading.playing.rawValue)
         let pid = running.processIdentifier
         if isPlaying(pid) {
             playedFirst = true
@@ -59,7 +61,7 @@ import AppKit
     }
     if testing, let running, AXIsProcessTrusted() {
         say()
-        say("Window States")
+        say(CheckReportLine.Heading.windowStates.rawValue)
         if playedFirst != true {
             let why = playedFirst == false ? "it didn't play" : "nothing to press"
             windowStatesNote = why
@@ -69,7 +71,7 @@ import AppKit
             guard stopState.beginMoving() else { stopIfRequested("stopped: nothing was moved"); stopNow(143) }
             if blockInput {
                 say(inputBlock.start()
-                    ? "  your clicks, scrolling and keys are blocked until its window is put back (the pointer still moves;"
+                    ? CheckReportLine.blocked + " until its window is put back (the pointer still moves;"
                         + " Escape or the panel's Stop ends the check)"
                     : "  input not blocked: blocking it needs the Accessibility permission")
             }
@@ -108,7 +110,7 @@ import AppKit
         // The test stopped: its page isn't built (an Electron app's may be
         // brought forward for it) for nothing.
         say()
-        say("Page Buttons")
+        say(CheckReportLine.Heading.page.rawValue)
         say("  not read: \(appName) didn't play, so the check stopped")
         pageNotChecked = "it didn't play"
     } else {
@@ -122,7 +124,7 @@ import AppKit
 /// again by that way. Its window is put back as it was at the end.
 @MainActor func runPressTest() {
     say()
-    say("Press Test")
+    say(CheckReportLine.Heading.pressTest.rawValue)
     let script = scriptControls()
     guard let running else {
         say("  not run: the app isn't running")
@@ -140,6 +142,14 @@ import AppKit
         say("  not run: \(appName) didn't play")
         notTried = "not tried: it didn't play"
         return
+    }
+    // AppleScript that only toggles, with no state of its own: AutoHush sends
+    // it only when another sign tells its state, so with none it isn't tried.
+    if let script, script.toggles, scripting?.hasState != true, menu == nil, !pageOffersAPress,
+       !(canBeNowPlaying && isAdministrator), scriptProblem == nil {
+        scriptProblem = "only “\(script.pause)”, which toggles, and no state it can be read by: AutoHush couldn't tell when to send it,"
+            + " so it isn't tried"
+        say("  AppleScript: \(scriptProblem!)")
     }
     let pid = running.processIdentifier
     notifications = NotificationLog(bundleID: bundleID)
@@ -175,7 +185,7 @@ import AppKit
     /// own presses press it: its switch off between presses, each press
     /// turning it on, giving the page up to 4 s to show, and turning it off
     /// once it's seen whether it took. Kept on instead, a page built in view
-    /// stays usable out of view (Deezer's passed every state), which those
+    /// stays usable out of view (an Electron player's passed every state), which those
     /// presses don't get. The first state keeps it on, for learning the
     /// button. Only a switch this tool may turn off: Electron's, or one it
     /// turned on.
@@ -289,7 +299,7 @@ import AppKit
         stopIfRequested(trialRan ? nil : "stopped: its window is put back")
         state = next
         if let next, let windowTest {
-            say("  State \(index + 1) of \(states.count): \(next.title)")
+            say(CheckReportLine.windowState(index + 1, of: states.count, next))
             // Off, as between two presses, before the window goes.
             switchForPress(false)
             stopState.setInTrial(true)
@@ -297,7 +307,7 @@ import AppKit
             stopState.setInTrial(false)
             stopIfRequested()
             if let why {
-                say("    not tested: \(why)")
+                say("\(CheckReportLine.notTested): \(why)")
                 windowTest.untested[next] = why
                 continue
             }
@@ -307,7 +317,7 @@ import AppKit
         if let script, scriptProblem == nil, ready() {
             // A toggle is sent for the pause only while it plays, and again to play.
             record(.script, trialAgainIfEnded(.script) {
-                trial("by script (\(script.pause), \(script.play))", pid: pid,
+                trial(CheckReportLine.trial(.script, detail: "\(script.pause), \(script.play)"), pid: pid,
                       pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
                       whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil)
             })
@@ -316,7 +326,7 @@ import AppKit
         }
         if menu != nil, ready() {
             record(.menu, trialAgainIfEnded(.menu) {
-                trial("by its menu", pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
+                trial(CheckReportLine.trial(.menu), pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
                       whilePaused: first ? { learnPageButton(pid: pid) } : nil)
             })
             stopIfRequested()
@@ -331,8 +341,8 @@ import AppKit
                 // Its page is out of sight, where its words can't be learned: nobody is asked.
                 learnPageButton(pid: pid)
             } else {
-                say("  waiting: pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
-                    + " changes on it (up to 2 minutes)")
+                say(CheckReportLine.waiting(.pause, "pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
+                    + " changes on it", minutes: 2))
                 let deadline = Date().addingTimeInterval(120)
                 inputBlock.pause()
                 while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
@@ -349,7 +359,7 @@ import AppKit
         if page?.toggle != nil, ready() {
             let result = trialAgainIfEnded(.page) {
                 pressedPlayersPause = false
-                return trial("by its page's " + (learned == nil ? "button" : "learned button"), pid: pid,
+                return trial(CheckReportLine.trial(.page, learned: learned != nil), pid: pid,
                              pause: { switchForPress(true); return pressPage(pausing: true) },
                              play: { switchForPress(true); return pressPage(pausing: false) },
                              undo: { switchForPress(false) },
@@ -374,7 +384,7 @@ import AppKit
         } else if ready() {
             let result = trialAgainIfEnded(.panel) {
                 panelProblem = nil
-                return trial("by the Now Playing panel", pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
+                return trial(CheckReportLine.trial(.panel), pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
                              play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
                              undo: {
                                  // The row pressed may have been another app's: pressed again, that app plays on.
@@ -399,7 +409,7 @@ import AppKit
         let problem = windowTest.restore()
         stopState.setInTrial(false)
         currentWindowState = nil
-        if inputBlock.end() { say("  mouse and keyboard free again") }
+        if inputBlock.end() { say(CheckReportLine.free) }
         // Read again: another app's windows that covered it may be behind it now.
         let now = WindowStates.state(of: running)
         say(now == windowTest.original || problem != nil

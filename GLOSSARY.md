@@ -5,8 +5,9 @@ means one thing. Code names are in backticks. See
 [DEVELOPMENT.md](DEVELOPMENT.md) for how the parts work together.
 
 **Chosen player**: the media player the user picked for AutoHush to pause
-and resume: an app such as Spotify, or a Safari web app. There is one at a
-time, or none until the user picks one. In the code it's a `MusicPlayer`.
+and resume: an app such as Spotify, a Safari web app, or an app added with
+Add an App (a checked app). There is one at a time, or none until the user
+picks one. In the code it's a `MusicPlayer`.
 _Avoid_: music app, target.
 
 **Player session** (`PlayerSession`): the chosen player from its start
@@ -37,8 +38,11 @@ icons: the status line, its orange, the menu bar icon.
 writes it; Settings and the welcome, learning and Add a Web App windows
 read it part by part, each window drawn again only when a part it shows
 changes; the menu gets a copy each time it changes (its card follows it
-while open, its rows when it next opens). _Avoid_: model (Settings' model
-is the windows' own: what they alone show, and their actions).
+while open, its rows when it next opens). Add an App's windows (the window,
+Choose an App and the check's panel) read their own model instead,
+`AddAppModel`: its steps, from choosing the app to Use. _Avoid_: model
+(Settings' model is the windows' own: what they alone show, and their
+actions).
 
 **Learning session** (`LearningSession`): learning the chosen web app's
 controls with the user, from choosing it until it's learned, and again
@@ -132,4 +136,6 @@ the next way when one fails. What the check found is kept as its
 **Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,
 but was opened without what it needs to be controlled wherever its window
 is (an Electron app's launch option); `reopen()` quits it and opens it
-again as it needs. The menu says so, with a Reopen button.
+again as it needs. The menu and Settings → General say so, with a Reopen
+button; a player the user chose to reopen always (`ReopenChoices`) is
+reopened without asking.

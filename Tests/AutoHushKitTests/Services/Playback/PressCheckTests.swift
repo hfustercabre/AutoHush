@@ -53,6 +53,29 @@ struct PressCheckTests {
         #expect(await player.pauseCallCount == 1)
     }
 
+    @Test("the wait is the clock's: slow reads end it sooner than thirty reads would")
+    func clock() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setIgnoredPresses(2)
+        let clock = ManualClock(start: Date(timeIntervalSince1970: 0))
+        // Each read takes a second, as a slow app's answer.
+        await player.setBeforeStateAnswer { clock.advance(by: 1) }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) {
+            try await PressCheck(player: player, sleep: { _ in }, now: { clock.now }).press(to: .paused)
+        }
+        #expect(await player.stateQueryCount <= 10)
+    }
+
+    @Test("a press made by a closure is judged by another")
+    func closures() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        let check = PressCheck(name: "Jukebox", press: { target in
+            if target == .paused { try await player.pause() } else { try await player.play() }
+        }, state: { await player.playerState() }, sleep: { _ in })
+        try await check.press(to: .paused)
+        #expect(await player.commandLog == ["pause"])
+    }
+
     @Test("a player that checks its own presses isn't checked again")
     func checksItself() async throws {
         let player = SelfCheckingPlayer()

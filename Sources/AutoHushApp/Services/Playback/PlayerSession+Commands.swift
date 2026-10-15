@@ -25,11 +25,39 @@ extension PlayerSession {
             setHealth(nil)
             return
         }
+        let leaving = player
         holdPause(for: newPlayer.bundleID)
         player = newPlayer
+        if let leaving { releaseLeft(leaving) }
         failedStarts = 0
         setHealth(.starting)
         requestStart()
+    }
+
+    /// A player no longer chosen turns back off what it turned on in its app
+    /// (an Electron or Chromium app's switch for assistive tools, a mute),
+    /// once AutoHush holds no pause of it: at once, or when its held pause
+    /// is over (`HeldPauses.onEnded`). Chosen again meanwhile, it keeps them.
+    /// The same player object (any player AutoHush has is an actor or a
+    /// class); a value is the same by its app.
+    static func isSame(_ player: any MusicPlayer, _ other: (any MusicPlayer)?) -> Bool {
+        guard let other else { return false }
+        guard type(of: player as Any) is AnyClass, type(of: other as Any) is AnyClass else {
+            return player.bundleID == other.bundleID
+        }
+        return (player as AnyObject) === (other as AnyObject)
+    }
+
+    func releaseLeft(_ leaving: any MusicPlayer) {
+        // The same app chosen again (checked again: a new player) releases its old one.
+        guard leaving.releasesOnQuit, !Self.isSame(leaving, player) else { return }
+        if heldPauses.bundleIDs.contains(leaving.bundleID) {
+            leftPlayers[leaving.bundleID] = leaving
+            return
+        }
+        leftPlayers[leaving.bundleID] = nil
+        logger.info("\(leaving.name, privacy: .public) is no longer the player: what it turned on goes back off")
+        Task { await leaving.release() }
     }
 
     /// Starts over at once, with the waits between automatic tries back to
@@ -120,9 +148,13 @@ extension PlayerSession {
         handOverPauses(now: now)
         let monitoring = self.monitoring
         let player = player
+        // Those left with a pause held, which they then end with AutoHush.
+        let left = Array(leftPlayers.values)
+        leftPlayers = [:]
         guard monitoring != nil || !heldPauses.isEmpty else {
-            guard let player, player.releasesOnQuit else { return nil }
-            return Task { await player.release() }
+            let releasing = ([player].compactMap { $0 } + left).filter(\.releasesOnQuit)
+            guard !releasing.isEmpty else { return nil }
+            return Task { for each in releasing { await each.release() } }
         }
         self.monitoring = nil
         let heldPauses = heldPauses
@@ -130,6 +162,7 @@ extension PlayerSession {
             await monitoring?.stopAndRestoreVolume()
             await heldPauses.stopAndRestoreAll()
             await player?.release()
+            for each in left { await each.release() }
         }
     }
 

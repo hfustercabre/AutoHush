@@ -15,6 +15,9 @@ protocol AppActions: AnyObject {
     func openAddWebApp()
     /// Opens the "Add an App" window, which checks an app and adds it.
     func openAddApp()
+    /// Removes an app added with Add an App, once the user confirms (its
+    /// tile's ×, or Option in the menu).
+    func removeAddedApp(_ bundleID: String)
     /// Learns the chosen player's controls afresh, in a new learning window.
     func learnControlsAgain()
     /// A missing permission's button: macOS's prompt, System Settings,

@@ -131,15 +131,15 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         tapsAllowed.withLock { $0 = allowed }
     }
 
-    /// Needs the app running and Accessibility, not the button learned: it's
-    /// learned while the state is read.
     /// Turns back off the switch its page needed (another app's page), now
-    /// that it's no longer the player.
+    /// that it's no longer the player; turned on again at the next look.
     package func releasePage() async {
         let page = page
         await queue.run { page.release() }
     }
 
+    /// Needs the app running and Accessibility, not the button learned: it's
+    /// learned while the state is read.
     package func verifyControlAccess() async throws {
         guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
         let prompt = !hasAskedForAccess
@@ -154,7 +154,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
 
     /// The state for the observer, which reads it about once a second: it
     /// asks the page less while the web app is silent (see `polledState`).
-    func polledPlayerState() async -> PlayerState {
+    package func polledPlayerState() async -> PlayerState {
         await readState { $0.polledState(pid: $1) }
     }
 

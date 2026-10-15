@@ -9,13 +9,17 @@ extension AppDelegate {
     /// user is moving to another one. A player AutoHush must learn opens the
     /// learning window, unless another window shows the steps. A suggested
     /// web app opens "Add a Web App", filled in with its address.
-    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true) {
+    /// `replacing`: chosen again all the same, as an app checked again
+    /// (its new setup); `asksToReopen`: false right after the user skipped
+    /// reopening it in Add an App.
+    func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true, replacing: Bool = false,
+                           asksToReopen: Bool = true) {
         refreshPlayerOptions()
         if let address = status.playerOptions.first(where: { $0.bundleID == bundleID })?.webAddress {
             showAddWebApp(address: address)
             return
         }
-        guard bundleID != player?.bundleID,
+        guard bundleID != player?.bundleID || replacing,
               let chosen = players.player(bundleID: bundleID),
               let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
         else { return }
@@ -32,7 +36,7 @@ extension AppDelegate {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
         }
         if fromWelcome { windowWatch.wake() }
-        followPlayerReopen(asking: true)
+        followPlayerReopen(asking: asksToReopen)
     }
 
     /// The welcome window is done: the player is chosen and what it needs

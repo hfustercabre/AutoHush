@@ -116,8 +116,18 @@ package struct AccessibilityWebPage: WebPage {
     /// How long to wait for the app to answer, so a stuck page can't hold
     /// AutoHush up.
     package static let timeout: Float = 0.5
-    /// The page is this deep in a window at most (measured: 3 to 5).
+    /// The page is this deep in a window at most (measured: 3 to 5), and
+    /// found among this many of the window's elements, read breadth first,
+    /// not walking into lists: a native app's window isn't read whole.
     private static let webAreaDepth = 16
+    private static let webAreaReadLimit = 2000
+    /// A Flutter window's pressable items are this deep at most, among this
+    /// many of its elements.
+    private static let itemDepth = 40
+    private static let itemReadLimit = 3000
+    /// Roles never walked into looking for a page: a native app's long lists
+    /// (Music's songs) hold none.
+    private static let listRoles: Set<String> = [kAXTableRole, kAXOutlineRole, kAXBrowserRole, kAXListRole, "AXGrid", kAXTextAreaRole]
     /// A button is this deep in its page at most.
     private static let pathDepth = 60
     /// A player's controls are looked for in this many elements around a
@@ -154,21 +164,39 @@ package struct AccessibilityWebPage: WebPage {
         showPage(pid: pid)
         let windows = windows(of: pid)
         guard !windows.isEmpty else { return nil }
+        return windows.flatMap { Self.pageElements(in: $0, access: access) }.compactMap { element in
+            // Each element waits macOS's default 6 s otherwise.
+            AXUIElementSetMessagingTimeout(element, Self.timeout)
+            return button(ButtonHandle(element))
+        }
+    }
+
+    /// The buttons of the pages in `window` (each web area's, by
+    /// Accessibility's search for buttons), or a Flutter window's items that
+    /// can be pressed. Player Check finds a page's buttons with this, so a
+    /// check keeps only a page way AutoHush can press.
+    package static func pageElements(in window: AXUIElement, access: PageAccess) -> [AXUIElement] {
+        if access.pageIsWindow { return pressableItems(in: window) }
         let search: [String: Any] = [
             "AXSearchKey": "AXButtonSearchKey", "AXResultsLimit": 2000, "AXDirection": "AXDirectionNext",
             "AXVisibleOnly": false, "AXImmediateDescendantsOnly": false,
         ]
-        return windows.flatMap { access.pageIsWindow ? [$0] : Self.webAreas(in: $0) }.flatMap { area -> [PageButton] in
+        return webAreas(in: window).flatMap { area -> [AXUIElement] in
             var result: CFTypeRef?
             guard AXUIElementCopyParameterizedAttributeValue(
                 area, "AXUIElementsForSearchPredicate" as CFString, search as CFDictionary, &result
             ) == .success else { return [] }
-            return AXUIElement.elements(in: result).compactMap { element in
-                // Each element waits macOS's default 6 s otherwise.
-                AXUIElementSetMessagingTimeout(element, Self.timeout)
-                return button(ButtonHandle(element))
-            }
+            return AXUIElement.elements(in: result)
         }
+    }
+
+    /// What a page's button is called: what it says to VoiceOver (its
+    /// description), else its title; a Flutter app's item, else its value
+    /// (a pressable text keeps its words there).
+    package static func label(of element: AXUIElement, access: PageAccess) -> String {
+        [element.string(kAXDescriptionAttribute), element.string(kAXTitleAttribute),
+         access.pageIsWindow ? element.string(kAXValueAttribute) : nil]
+            .compactMap { $0 }.first { !$0.isEmpty } ?? ""
     }
 
     package func button(_ handle: ButtonHandle) -> PageButton? {
@@ -178,9 +206,9 @@ package struct AccessibilityWebPage: WebPage {
         case .invalidUIElement, .cannotComplete: return nil // gone, or not answering
         default: break
         }
-        let label = [description as? String, element.string(kAXTitleAttribute)]
-            .compactMap { $0 }.first { !$0.isEmpty } ?? ""
-        let enabled = element.value(kAXEnabledAttribute) as? Bool ?? false
+        let label = (description as? String).flatMap { $0.isEmpty ? nil : $0 } ?? Self.label(of: element, access: access)
+        // Only one that says so is disabled: a Flutter item may not say.
+        let enabled = element.value(kAXEnabledAttribute) as? Bool ?? true
         return PageButton(handle: handle, label: label, isEnabled: enabled)
     }
 
@@ -293,7 +321,11 @@ package struct AccessibilityWebPage: WebPage {
         guard switched.withLock({ $0[target] == nil }) else { return }
         let app = AXUIElementCreateApplication(target)
         AXUIElementSetMessagingTimeout(app, Self.timeout)
-        let wasOn = app.value(attribute) as? Bool ?? false
+        // Electron's reads back off even while it's on (Deezer): a page that
+        // shows already has it on, by another tool maybe, so it's left on at
+        // the end, as Player Check leaves it.
+        let wasOn = app.value(attribute) as? Bool == true
+            || (attribute == PageAccess.electronSwitch && windows(of: pid).contains { !Self.webAreas(in: $0).isEmpty })
         if !wasOn { AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanTrue) }
         switched.withLock { $0[target] = wasOn }
     }
@@ -318,10 +350,44 @@ package struct AccessibilityWebPage: WebPage {
         return windows
     }
 
-    private static func webAreas(in element: AXUIElement, depth: Int = 0) -> [AXUIElement] {
-        if element.string(kAXRoleAttribute) == "AXWebArea" { return [element] }
-        guard depth < webAreaDepth else { return [] }
-        return element.children.flatMap { webAreas(in: $0, depth: depth + 1) }
+    /// The web pages (AXWebArea) in a window, nearest first, reading at most
+    /// `webAreaReadLimit` of its elements and none inside a list.
+    package static func webAreas(in window: AXUIElement) -> [AXUIElement] {
+        var found: [AXUIElement] = []
+        walk(from: window, limit: webAreaReadLimit, maxDepth: webAreaDepth) { element, _ in
+            let role = element.string(kAXRoleAttribute) ?? ""
+            if role == "AXWebArea" {
+                found.append(element)
+                return false
+            }
+            return !listRoles.contains(role)
+        }
+        return found
+    }
+
+    /// A Flutter window's items that can be pressed (its buttons, and the
+    /// texts and images it marks pressable); not the window's own close,
+    /// minimize and full-screen buttons.
+    package static func pressableItems(in window: AXUIElement) -> [AXUIElement] {
+        var found: [AXUIElement] = []
+        walk(from: window, limit: itemReadLimit, maxDepth: itemDepth) { element, depth in
+            if depth == 1, element.string(kAXRoleAttribute) == kAXButtonRole { return false }
+            if depth > 0, element.actionNames.contains(kAXPressAction) { found.append(element) }
+            return true
+        }
+        return found
+    }
+
+    /// Walks an element's tree breadth first, reading at most `limit`
+    /// elements and going at most `maxDepth` levels down; `visit` says
+    /// whether to go into each one's children.
+    package static func walk(from root: AXUIElement, limit: Int, maxDepth: Int, _ visit: (AXUIElement, Int) -> Bool) {
+        var queue: [(AXUIElement, Int)] = [(root, 0)], next = 0
+        while next < queue.count, next < limit {
+            let (element, depth) = queue[next]
+            next += 1
+            if visit(element, depth), depth < maxDepth { queue += element.children.map { ($0, depth + 1) } }
+        }
     }
 
     // MARK: - Accessibility values

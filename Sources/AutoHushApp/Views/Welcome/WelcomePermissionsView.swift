@@ -31,7 +31,8 @@ struct WelcomePermissionsView: View {
                             note: PermissionText.audioNote(state.audio), access: state.audio) {
                             PermissionButton(model: model, permission: .systemAudioRecording, access: state.audio)
                         }
-                        if !state.audio.isSatisfied {
+                        // Not for a player that can only be muted: AntiDot mode can't mute it.
+                        if !state.audio.isSatisfied, model.antiDotUnavailableFor == nil {
                             HStack {
                                 Spacer()
                                 Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }

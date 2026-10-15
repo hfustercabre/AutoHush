@@ -40,6 +40,9 @@ final class HeldPauses {
     private var held: [Held] = []
     /// The player taken back, whose next monitoring takes its pause over.
     private var pendingTakeBack: String?
+    /// A player's held pause is over (not taken back): what it turned on
+    /// in its app can go back off (`PlayerSession.releaseLeft`).
+    var onEnded: @MainActor (String) -> Void = { _ in }
 
     /// None kept, a pause still ending (its player fading back in) included.
     var isEmpty: Bool { held.isEmpty }
@@ -82,7 +85,9 @@ final class HeldPauses {
     /// is over: it stops, unless it was stopped already.
     func drop(_ token: UUID) {
         guard let index = held.firstIndex(where: { $0.token == token }) else { return }
-        held.remove(at: index).monitoring.stop()
+        let ended = held.remove(at: index)
+        ended.monitoring.stop()
+        onEnded(ended.bundleID)
     }
 
     /// An update from the monitoring with `token`: `true` when it's one kept
@@ -142,9 +147,13 @@ final class HeldPauses {
     }
 
     func stopAll() {
-        held.forEach { $0.monitoring.stop() }
+        let ended = held
         held = []
         pendingTakeBack = nil
+        for each in ended {
+            each.monitoring.stop()
+            onEnded(each.bundleID)
+        }
     }
 
     /// AutoHush quits: each stops, its player's volume back first (one

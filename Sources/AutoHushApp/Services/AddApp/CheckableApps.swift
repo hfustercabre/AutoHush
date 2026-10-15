@@ -2,7 +2,8 @@ import AppKit
 
 /// The apps Add an App… offers: those in the Applications folders that can
 /// be in Now Playing (so they can play: playercheck tells by what they're
-/// built with), apart from the players AutoHush supports and its own; those
+/// built with), apart from those its caller excludes (the players AutoHush
+/// supports, Apple's apps that are no players) and AutoHush itself; those
 /// in macOS's Now Playing list first, the playing one first.
 enum CheckableApps {
     /// Where apps are looked for, and their folders one level down
@@ -14,8 +15,8 @@ enum CheckableApps {
     ]
 
     static func find(helper: PlayerCheckHelper?, excluding: Set<String>) async -> [CheckableApp] {
-        let installed = await Task.detached { installedApps(excluding: excluding) }.value
-        guard let helper else { return installed }
+        let installed = await Task.detached { installedApps(in: folders, excluding: excluding) }.value
+        guard let helper else { return order(installed) }
         async let playing = helper.canPlay(installed.map(\.url))
         async let nowPlaying = helper.nowPlaying()
         let (canPlay, listed) = await (playing, nowPlaying)
@@ -39,7 +40,7 @@ enum CheckableApps {
     /// Every app in `folders` (and their folders one level down), but those
     /// with a bundle ID in `excluding`, AutoHush and Safari web apps (added
     /// with Add a Web App…).
-    private static func installedApps(excluding: Set<String>) -> [CheckableApp] {
+    static func installedApps(in folders: [URL], excluding: Set<String>) -> [CheckableApp] {
         let files = FileManager.default
         var found: [String: CheckableApp] = [:]
         func look(in folder: URL, depth: Int) {
@@ -49,13 +50,10 @@ enum CheckableApps {
             for listed in items where !listed.lastPathComponent.hasPrefix(".") {
                 let item = listed.resolvingSymlinksInPath()
                 if item.pathExtension == "app" {
-                    guard let bundle = Bundle(url: item), let id = bundle.bundleIdentifier, found[id] == nil,
-                          !excluding.contains(id), id != Bundle.main.bundleIdentifier, !id.hasPrefix("com.autohush."),
-                          !id.hasPrefix("com.apple.Safari.WebApp.") else { continue }
-                    let info = bundle.localizedInfoDictionary ?? bundle.infoDictionary ?? [:]
-                    let name = (info["CFBundleDisplayName"] as? String) ?? (info["CFBundleName"] as? String)
-                        ?? item.deletingPathExtension().lastPathComponent
-                    found[id] = CheckableApp(bundleID: id, name: name, url: item, browserName: CheckableApp.browserName(ofAppAt: item))
+                    guard let app = CheckableApp.at(item), found[app.bundleID] == nil, !excluding.contains(app.bundleID),
+                          app.bundleID != Bundle.main.bundleIdentifier, !app.bundleID.hasPrefix("com.autohush."),
+                          !app.bundleID.hasPrefix("com.apple.Safari.WebApp.") else { continue }
+                    found[app.bundleID] = app
                 } else if depth > 0, (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
                     look(in: item, depth: depth - 1)
                 }

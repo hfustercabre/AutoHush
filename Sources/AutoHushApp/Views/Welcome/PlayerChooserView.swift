@@ -31,9 +31,10 @@ struct PlayerChooserView: View {
         return screen.visibleFrame.height - HostedWindowController.titleBarHeight - 2 * 20
     }
 
-    /// The clicked player or, until one is, the only installed one.
+    /// The clicked player or, until one is, the only installed one, when
+    /// it can be chosen.
     private var picked: String? {
-        clicked ?? model.playerOptions.onlyInstalled?.bundleID
+        clicked ?? model.offeredPlayers.onlyInstalled.flatMap { $0.isClickable ? $0.bundleID : nil }
     }
 
     var body: some View {
@@ -79,10 +80,11 @@ struct PlayerChooserView: View {
         if model.playerOptions.isSearchable {
             SearchField(text: $search, onSubmit: returnInSearch)
         }
-        PlayerTiles(options: model.playerOptions.offered.matching(search), selection: picked,
+        PlayerTiles(options: model.offeredPlayers.matching(search), selection: picked,
                     onSelect: select,
                     onAddWebApp: { model.actions?.openAddWebApp() },
                     onAddApp: { model.actions?.openAddApp() },
+                    onRemove: { model.actions?.removeAddedApp($0.bundleID) },
                     maxVisibleRows: Self.visibleTileRows,
                     holdsHeight: !search.isEmpty, // typing doesn't shrink the window
                     search: search)
@@ -133,7 +135,7 @@ struct PlayerChooserView: View {
     private func returnInSearch() {
         if search.trimmingCharacters(in: .whitespaces).isEmpty {
             if canContinue { continueTapped() }
-        } else if let only = Self.onlyMatch(of: model.playerOptions.offered, search: search) {
+        } else if let only = Self.onlyMatch(of: model.offeredPlayers, search: search) {
             select(only)
         }
     }
@@ -155,8 +157,8 @@ struct PlayerChooserView: View {
         option.kind != .safariWebApp ? 0 : option.isInstalled ? 1 : 2
     }
 
-    /// A player is picked, and is still installed.
+    /// A player is picked, and is still installed and can be chosen.
     private var canContinue: Bool {
-        model.playerOptions.contains { $0.bundleID == picked && $0.isInstalled }
+        model.offeredPlayers.contains { $0.bundleID == picked && $0.isInstalled && $0.isClickable }
     }
 }

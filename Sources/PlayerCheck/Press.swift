@@ -40,7 +40,7 @@ import AppKit
                 tried.append("no AppleScript play or pause")
                 continue
             }
-            // Its state answers when it has one (Spotify's, VLC's playing flag); else what shows.
+            // Its state answers when it has one (its player state or playing flag); else what shows.
             let isThere = { isPlaying(pid) != pausing }
             if isThere() { already() }
             let command = pausing ? script.pause : script.play
@@ -81,12 +81,12 @@ import AppKit
             }
             if within(done) {
                 learnFromPress(button, before: button.label, pausing: pausing)
-                say("\(pausing ? "Paused" : "Played") it with its page's “\(button.label)” button"
+                say("\(pausing ? "Paused" : "Played") it with its page's \(shown(button.label)) button"
                     + (pageSwitch.map { ", \(switchName($0)) on" } ?? "")
                     + (broughtForward ? " (brought forward a moment: Chromium and Flutter apps may build it only while their window can be seen)." : "."))
                 finish(0)
             }
-            tried.append("pressed its page's “\(button.label)”, but it didn't change in 6 s"
+            tried.append("pressed its page's \(shown(button.label)), but it didn't change in 6 s"
                 + (pausing ? " (AutoHush would mute it instead)" : "")
                 + (hiddenInterface != nil && !button.onScreen ? pagePressHint() : ""))
         case .menu:
@@ -96,8 +96,8 @@ import AppKit
             }
             // Its first item toggles, so it's pressed only when it's the
             // other way; judged as a test judges it (`Sign`): its menu's word
-            // counts only for an app with no surer sign, as Deezer's changes
-            // late by itself.
+            // counts only for an app with no surer sign, as a menu's word may
+            // change late by itself.
             let before = lookForSign(pid)
             let sign = Sign(before: before)
             let done = { (now: Look) in pausing ? sign.paused(now) : sign.playing(now) }
@@ -108,10 +108,10 @@ import AppKit
                 continue
             }
             if within({ done(look(pid, level: sign.byLevel)) }) {
-                say("\(pausing ? "Paused" : "Played") it with its “\(menu.title)” menu's “\(word)”.")
+                say("\(pausing ? "Paused" : "Played") it with its “\(menu.title)” menu's \(shown(word)).")
                 finish(0)
             }
-            tried.append("pressed its menu's “\(word)”, but nothing changed in 6 s")
+            tried.append("pressed its menu's \(shown(word)), but nothing changed in 6 s")
         case .panel:
             // Its row says whether it's that way already, and shows the press take.
             switch panelPress(pid: pid, pausing: pausing) {
@@ -119,7 +119,7 @@ import AppKit
                 already()
             case .changed:
                 rememberPanelRow()
-                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (“\(panelRowText ?? "")”).")
+                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (\(panelRowSaid ?? "its row")).")
                 finish(0)
             case .notPressed:
                 tried.append(panelProblem ?? "couldn't press its row in the Now Playing panel")
@@ -129,13 +129,13 @@ import AppKit
             }
             if within({ isPlaying(pid) != pausing }) {
                 rememberPanelRow()
-                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (“\(panelRowText ?? "")”).")
+                say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (\(panelRowSaid ?? "its row")).")
                 finish(0)
             }
             // That row changed and this app didn't: another app's after all, put back as it was.
-            let pressedRow = panelRowText ?? ""
+            let pressedRow = panelRowSaid ?? "a row"
             let putBack = pressInPanel(pid: pid, pausing: !pausing, choice: .lastOnly)
-            tried.append("pressed a row in the Now Playing panel (“\(pressedRow)”), but it didn't change in 6 s"
+            tried.append("pressed a row in the Now Playing panel (\(pressedRow)), but it didn't change in 6 s"
                 + (putBack ? "; that row had changed, so it was pressed again to put it back" : ""))
         }
     }

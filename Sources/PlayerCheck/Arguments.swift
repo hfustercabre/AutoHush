@@ -1,4 +1,5 @@
 import AppKit
+import PlayerCheckKit
 
 // MARK: - What to do, and to which app
 
@@ -10,21 +11,15 @@ enum Action: String { case play, pause }
 /// The ways to control an app, as --via names them, in the order a check tries them.
 enum Way: String, CaseIterable { case script, menu, page, panel }
 
-/// The options followed by a value of their own.
-let optionsWithValues: Set<String> = ["--via", "--result", "--logs"]
-
 /// The value after `option`, if it's given.
-func value(of option: String) -> String? {
-    guard let index = arguments.firstIndex(of: option), index + 1 < arguments.count else { return nil }
-    return arguments[index + 1]
-}
+func value(of option: String) -> String? { CommandLineOptions.value(of: option, in: arguments) }
 
 /// The app: the argument that's neither an option nor an option's value, wherever it comes.
 let target: String = {
-    guard let index = arguments.indices.first(where: { !arguments[$0].hasPrefix("--") && ($0 == 0 || !optionsWithValues.contains(arguments[$0 - 1])) }) else {
-        fail("usage: playercheck <app name, bundle ID or path> [--block-input | --read-only | --play | --pause [--via script|menu|page|panel]]")
+    guard let app = CommandLineOptions.app(in: arguments) else {
+        fail("usage: playercheck <app name, bundle ID or path> [--block-input | --read-only | --play | --pause [--via script|menu|page|panel]] [--developer]")
     }
-    return arguments[index]
+    return app
 }()
 
 /// --read-only: the checks without the test.
@@ -48,22 +43,35 @@ let resultFile = value(of: "--result").map { URL(fileURLWithPath: $0) }
 /// --logs <folder>: where the run's log goes, instead of ~/Library/Logs/PlayerCheck
 /// (AutoHush keeps its checks' with its own log).
 let logsFolder = value(of: "--logs").map { URL(fileURLWithPath: $0, isDirectory: true) }
+/// --caches <folder>: where what's kept between runs goes (the page buttons
+/// found and learned, the apps' own words), instead of ~/Library/Caches/PlayerCheck
+/// (AutoHush keeps its checks' in its own caches folder).
+let cachesFolder = value(of: "--caches").map { URL(fileURLWithPath: $0, isDirectory: true) }
+    ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/PlayerCheck", isDirectory: true)
 /// --partial: a test goes on without Audio Recording (the app isn't muted,
 /// whether it plays is told by other signs) or Automation (its AppleScript
 /// isn't tried); only Accessibility is needed. AutoHush's Add an App… says
-/// what's missing first, and passes it.
+/// what's missing first, and passes it whether anything is missing or not.
 let partial = arguments.contains("--partial")
+/// --no-taps: AntiDot mode's promise, no audio taps at all: its level isn't
+/// measured and it isn't muted during the test, as without Audio Recording
+/// (whether it plays is told by other signs), and Audio Recording isn't needed.
+let noTaps = arguments.contains("--no-taps")
 /// --block-input: while the test moves the window and presses, whoever runs
-/// it can't click, scroll or type (`InputBlock`). Player Check passes it; a
-/// shell has no panel to stop from, and Ctrl-C would be blocked.
+/// it can't click, scroll or type (`InputBlock`). AutoHush and the Player
+/// Check app pass it; a shell has no panel to stop from, and Ctrl-C would be blocked.
 let blockInput = testing && arguments.contains("--block-input")
+/// --developer: the report's lines for whoever adds a player to the code
+/// too (`forDevelopers`).
+let developer = arguments.contains(CommandLineOptions.developer)
 /// --play or --pause by one way: only what that way needs is read, and what
 /// shows whether the app plays (`isPlaying`), so a press starts sooner.
 let pressingOneWay = action != nil && via != nil
 
 /// The app's bundle: a path, a bundle ID, or a name in the Applications folders.
 func findApp(_ target: String) -> URL? {
-    // A path only when it looks like one: "Music" is also the ~/Music folder.
+    // A path only when it looks like one: an app's name may also be a
+    // folder's here (the home folder has some named so).
     if target.contains("/") || target.hasSuffix(".app"), FileManager.default.fileExists(atPath: target) {
         return URL(fileURLWithPath: target)
     }

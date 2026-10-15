@@ -103,7 +103,7 @@ struct AppsSettingsView: View {
     }
 
     private static var removeTitle: String {
-        String(localized: "Remove", comment: "Settings → Apps: the button under the list that removes the selected app, and the one confirming it for an app that's turned off")
+        String(localized: "Remove", comment: "A button that removes: under Settings → Apps' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed")
     }
 
     /// The heading, or the search while it's open, then "Sort by" with the

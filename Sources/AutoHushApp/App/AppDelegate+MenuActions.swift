@@ -62,8 +62,8 @@ extension AppDelegate {
 
     /// Edit → Find… (⌘F): opens Settings → Apps' search while it lists
     /// apps, or puts the keyboard in a search already open there, in the
-    /// welcome window's over its players or in the logs window's. The item
-    /// is dimmed elsewhere.
+    /// welcome window's over its players, in the logs window's or in Add an
+    /// App's list of apps. The item is dimmed elsewhere.
     func find() {
         guard let target = findTarget else { return }
         if target == .appsSearch, settingsModel.appSearch == nil {
@@ -78,6 +78,7 @@ extension AppDelegate {
         guard let window = NSApp.keyWindow else { return nil }
         let front: FindTarget.Window = window === settingsWindowController?.window ? .settings
             : window === logsWindowController?.window ? .logs
+            : window.windowController is AppChooserWindowController ? .appChooser
             : window.windowController is PlayerChooserWindowController ? .welcome : .other
         return FindTarget(window: front, settingsPage: settingsWindowController?.shownPage, hasApps: !settingsModel.apps.isEmpty,
                           welcomeShowsPlayers: !settingsModel.welcomeAsksPermissions,
@@ -93,18 +94,22 @@ enum FindTarget: Equatable {
     case welcomeSearch
     /// The logs window's search.
     case logsSearch
+    /// Add an App's list of apps to choose: its search.
+    case appChooserSearch
 
-    enum Window { case settings, welcome, logs, other }
+    enum Window { case settings, welcome, logs, appChooser, other }
 
     /// Settings on Apps while it lists apps (its magnifier is dimmed
     /// otherwise), the welcome window on its players while they're many
-    /// enough for a search, or the logs window; `nil` anywhere else.
+    /// enough for a search, the logs window, or Add an App's list of apps;
+    /// `nil` anywhere else.
     init?(window: Window, settingsPage: SettingsWindowController.Page?, hasApps: Bool,
           welcomeShowsPlayers: Bool, playersSearchable: Bool) {
         switch window {
         case .settings where settingsPage == .apps && hasApps: self = .appsSearch
         case .welcome where welcomeShowsPlayers && playersSearchable: self = .welcomeSearch
         case .logs: self = .logsSearch
+        case .appChooser: self = .appChooserSearch
         default: return nil
         }
     }

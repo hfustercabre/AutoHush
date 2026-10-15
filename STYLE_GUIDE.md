@@ -1,9 +1,10 @@
 # AutoHush Style Guide
 
 How AutoHush looks and reads, so every change fits in. It covers the menu,
-the Settings window, the other windows (welcome, Add a Web App, learning)
-and every text the app shows. When something isn't covered here, match the
-screens that already exist, then macOS's own conventions
+the Settings window, the other windows (welcome, Add a Web App, learning,
+Add an App and its own) and every text the app shows. When something isn't
+covered here, match the screens that already exist, then macOS's own
+conventions
 ([Apple's Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)).
 
 ## Contents
@@ -56,8 +57,8 @@ control that shows or hides what's under it (Expanded, Collapsed);
 `SwitchRow.swift`, `ChoiceChips.swift`, `BottomBar.swift`, `PlayerTiles.swift`,
 `WindowHeader.swift`, `ChecklistStepRow.swift`, `PermissionButton.swift`,
 `NoteLabel.swift`, `SearchField.swift`, `IconChipButton.swift`,
-`SymbolTile.swift`, `SupportLine.swift` and `WebAppsHeading.swift` the
-components.
+`SymbolTile.swift`, `SupportLine.swift`, `BadgedHeading.swift`,
+`WebAppsHeading.swift` and `OtherAppsHeading.swift` the components.
 
 ## Layout
 
@@ -66,11 +67,11 @@ components.
 | Settings window | Laid out as System Settings: a sidebar of pages (`SettingsSidebar`) beside the page shown, whose name is the window's title, in the toolbar. No back or forward buttons. The user resizes it: **715 to 875 pt** wide and **560 to 900 pt** tall, opening at **760 × 620** the first time; it keeps its place and size between launches. The sidebar stays **235 pt**; the page grows from **480 to 640 pt**, with **16 pt** margins. Cards are **8 pt** apart. |
 | Settings pages | General, Apps · Detection, Fades · Diagnostics, Updates, About, a gap between the groups. Each page fills the window and scrolls when it's taller (`SettingsPageScroll`). |
 | Pages with a list | The heading and its controls stay at the top, and the buttons stay at the window's foot in a [`BottomBar`](#components); only the list between them scrolls (Apps, Diagnostics). |
-| Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. After **Copy Report**, the foot says "Copied", with a check, for 2 s, in place of "Updated as it happens." **Show Logs…** sits left of Copy Report and opens the logs window. |
-| Other windows | The welcome, Add a Web App and learning windows (`HostedWindowController`) look like a Settings page: the title bar is part of the window (no band, no line), with the window's title in it in bold, as a page's name; the welcome window's title is its page's ("Choose Your Media Player", "Allow AutoHush to Work"). The content starts **2 pt** under the title bar with a [`WindowHeader`](#components) (the icon and what the window is for), has **20 pt** margins (`windowMargins`), groups under `SectionHeading`s in cards **8 pt** apart, and ends with the buttons in a [`BottomBar`](#components) across the window, the main one blue at the right. Their height follows their content; their width is fixed (below: the welcome window and the guiding windows). Like any window, each can be minimized (⌘M, or its yellow button). |
+| Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. "Updated as it happens." heads the page, in `captionStyle`, above the first part (beside the foot's buttons it left them too little room in several languages). After a click, **Copy Report** says "Copied" for 2 s, as Copy Logs does. **Show Logs…** sits left of Copy Report and opens the logs window. |
+| Other windows | The welcome, Add a Web App, learning and Add an App windows, and Add an App's Choose an App and warning windows (`HostedWindowController`), look like a Settings page: the title bar is part of the window (no band, no line), with the window's title in it in bold, as a page's name; the welcome window's title is its page's ("Choose Your Media Player", "Allow AutoHush to Work"). The content starts **2 pt** under the title bar with a [`WindowHeader`](#components) (the icon and what the window is for), has **20 pt** margins (`windowMargins`), groups under `SectionHeading`s in cards **8 pt** apart, and ends with the buttons in a [`BottomBar`](#components) across the window, the main one blue at the right. Their height follows their content; their width is fixed (below: the welcome window and the guiding windows; Add an App's three are **460 pt** wide and open centered, at the normal level, the Add an App window floating above other apps only while it waits for the app to play, so its steps stay in view). Like any window, each can be minimized (⌘M, or its yellow button). |
 | Welcome window | Both pages **540 pt** wide, so the window keeps its width and its `PlayerTiles` go three a row as in Settings. Past **five rows** of tiles (the apps' and the web apps' together), they scroll inside their card. |
 | The Dock | AutoHush lives in the menu bar, with no Dock icon, except while one of its windows is open, minimized ones included (`DockPresence`): then it's in the Dock and the app switcher, with the Mac's standard menu bar (`MainMenu`, see [Keyboard](#keyboard)), so its window keeps its place when the user leaves its desktop and comes back. |
-| Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font; the players come under "Supported Apps" (`NSMenuItem.supportedAppsHeading`), then the web apps under `WebAppsHeading`. A menu row's image is set with `shownImage`: from macOS 27, AppKit hides menu items' images unless the item asks to show it (`preferredImageVisibility = .visible`). The toolbar's **Updates** checks in place: it says "Checking…" and the menu stays open until the result, then closes for the alert that tells it. |
+| Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font; the players come under "Supported Apps" (`NSMenuItem.supportedAppsHeading`), then the apps added through a check under "Other Apps" (`NSMenuItem.otherAppsHeading`) with **Add an App…** after them, then the web apps under `WebAppsHeading` with **Add a Web App…** last. A menu row's image is set with `shownImage`: from macOS 27, AppKit hides menu items' images unless the item asks to show it (`preferredImageVisibility = .visible`). The toolbar's **Updates** checks in place: it says "Checking…" and the menu stays open until the result, then closes for the alert that tells it. |
 | Menu bar icon | `MenuBarIcon`: a 17 pt template image in the 22 pt square item, centered. While an update waits (found, downloaded or installing: while the menu offers it), the image is the item's full **22 pt**, the tile still centered, with a disc of **8 pt** in its bottom-right corner, reaching into the room around the tile, a down arrow cut out of it and a **1.2 pt** gap cut out of the tile around it; the item keeps its width, and the image is drawn as it is (`imageScaling = .scaleNone`). |
 | Guiding windows | **440 pt** wide. A window that walks the user through other apps (Add a Web App, learning a web app: Safari and the web app come in front meanwhile) floats above every app (`floatsInCorner`), in the top-right corner of the screen the pointer is on, **16 pt** from its edges, keeping its top edge as its steps come and go. Other windows open centered, at the normal level. |
 | About | Centered, under AutoHush's icon at **96 pt**. Every gap between its parts shows **24 pt**. |
@@ -103,14 +104,18 @@ Use the `Font` tokens. Never set a text's size by hand.
     permissions) is 16 pt semibold, on a 32 pt square;
   - a `WindowHeader`'s icon is 56 pt;
   - the "Add…" tile's `plus` is 14 pt medium;
-  - the menu's headings over its players ("Supported Apps", "Safari Web
-    Apps") use a menu section header's font: the small system size,
-    semibold.
+  - the logs window's dot (a notice's or an info line's) is 6 pt;
+  - the menu's headings over its players ("Supported Apps", "Other Apps",
+    "Safari Web Apps") use a menu section header's font: the small system
+    size, semibold.
 
 ## Colors
 
 Use the color tokens. A view never uses a raw color such as `.red` or
-`Color.gray`.
+`Color.gray`. The one exception is a drawing of something that isn't
+AutoHush's own interface, such as the warning window's dimmed screen with a
+wallpaper's colours (`CheckWarningView`'s `DimmedScreenPicture`): it shows
+that thing as it looks, in both modes.
 
 | Token | Light mode | Dark mode | For |
 |---|---|---|---|
@@ -151,19 +156,21 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `.chip` button | Actions: "Check Now", "Reset List…". Corner 8; on macOS 26 and later a Liquid Glass capsule. |
 | `ChipButtonStyle(filled: true)` | Chips in a row, such as the menu's durations ("5 min"). On macOS 26 and later Liquid Glass (corner 12), interactive, and tinted with the accent color when selected (`ChoiceChips`). |
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the players' tiles, the player search's rows. |
-| `ChipButtonStyle(cornerRadius: 6)` | Small buttons inside the menu card: the player button and Retry. |
+| `ChipButtonStyle(cornerRadius: 6)` | The small button inside the menu card that lights up only under the pointer: the player button. |
+| `ChipButtonStyle(filled: true, cornerRadius: 6)` | The small chips under the menu card's status line, each with its symbol: **Retry** (`arrow.clockwise`), **Reopen** (`arrow.clockwise`) and **Unmute** (`speaker.wave.2`). Settings → General's player card shows Reopen and Unmute too, as `.chip` buttons. |
 | The card's status line with `info.circle` | When the media player couldn't be controlled ("Can’t control TIDAL right now", "Couldn’t pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can’t Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
+| The card's Reopen and Unmute | A player that must be reopened to be controlled wherever its window is (an Electron app opened without its option) says "<player> needs reopening" in orange, with **Reopen** under it (the line names the player), whose tooltip says why. Choosing such a player asks first, in a warning alert: "Reopen <player>?", why, the checkbox "Always reopen <player> this way" (the alert's own suppression checkbox: from then on it's reopened without asking), then **Reopen <player>** (Return) and **Cancel** (Escape), which leaves the card saying so. A player muted instead of paused says "Muted — Safari is playing", with **Unmute**, which lets it be heard until the other apps stop. |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
 | `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Checked by you" after "Other Apps", "Untested" after an untested web app, "Needed" after a permission a step can't go without. |
 | `BadgedHeading` | A heading with a `HeadingBadge` after it and a note under it, over a group of players: `WebAppsHeading` and `OtherAppsHeading` ("Other Apps", "Checked by you", "Controlled the ways a check found to work.") are made of it. |
-| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, or "Not installed" (dimmed). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
+| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it, shorter where it must fit: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, "Not installed" (dimmed), or, for an app added through a check that can only be muted, "Muted only" (its menu row: "Muted instead of paused"). In AntiDot mode, which can't mute, such an app can't be chosen: it's dimmed, saying "Not in AntiDot" ("Not in AntiDot mode" on its menu row), with why in its tooltip and VoiceOver hint; chosen already, its tile stays outlined. The other way round, while it's the player, Settings → Detection's AntiDot mode switch is off and dimmed, with "Unavailable with <player>: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn't use it." under it, and no "Use AntiDot Mode Instead" is offered. Under the pointer, an added app's tile shows a × in its top-right corner (`xmark.circle.fill`, 16 pt, white on `.appSecondary`), its help tag "Remove <app>…" and a VoiceOver action of that name; it asks first (`PlayerAlerts.remove`). In the menu, holding Option turns each added app's row into "Remove <app>…" (an alternate item). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
 | `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In the menu it's a drawn row (`NSMenuItem.webAppsHeading`), since a section header can't show a badge; "Supported Apps" over the apps is drawn the same way, so the two match. |
 | Pop-ups | The system's pop-up (`NSPopUpButton` or a SwiftUI `Picker` with `.menu`), always **without a border**: `isBordered = false` or `.buttonStyle(.borderless)`. |
 | `SearchField` | Every search. Its ✕ closes the search or, when the search can't close, clears it. |
 | `NoteLabel` | A note with a symbol: `.warning` (orange triangle) or `.info` (grey "i"). |
 | `.captionStyle()` | A description or note under a card or a control: small, grey, wrapping. |
 | `BottomBar` | Buttons fixed at the foot of a Settings page with a list, with a line above them only while the list scrolls under them, and at the foot of the other windows, always with its line (`margin: 20`, the windows' margin). |
-| `WindowHeader` | The top of the welcome, Add a Web App and learning windows, under the title in the title bar: the icon (AutoHush's, the player's, Safari's; 56 pt) and what the window is for in `appBody`, `.appSecondary`, the icon centered on the text. |
+| `WindowHeader` | The top of the welcome, Add a Web App, learning, Add an App, Choose an App and warning windows, under the title in the title bar: the icon (AutoHush's, the player's, Safari's, the app to check's; 56 pt) and what the window is for in `appBody`, `.appSecondary`, the icon centered on the text. |
 | `SymbolTile` | A symbol in the accent color on a square tinted with it (`.symbolTileFill`, 32 pt, corner 8): Settings' sidebar pages, the welcome window's permissions. |
 | `SettingsSidebar` | Settings' pages as rows: the page's `SymbolTile`, its name in `appSidebarRow`, the page shown on a grey `.sidebarSelectionFill`. At its foot, under a line: "AutoHush" (`appSidebarName`), the version, and the compact `SupportLine`. |
 | `RestoreDefaultsButton` | Under a page's cards on the right: sets that page's settings back (Detection's timings, or the fades), dimmed while they're the defaults. |
@@ -171,7 +178,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
 | `NumberedStepRow` | A step of a window whose steps go in order and are few (Add an App): its number in a circle while it's to come (`N.circle`, `.appSecondary`), filled with the accent color while it's the one to do (`N.circle.fill`, title semibold), a check in `.appSuccess` once done (title in `.appSecondary`), a spinner while AutoHush does it, an orange `xmark.circle.fill` once it failed. All marks are 18 pt wide, so the titles line up. Under the title: its lines (`.captionStyle()`), what it needs (a list, permission rows, the ways found), a warning (`NoteLabel`), then its button, blue for the way forward (Return presses it), grey for another way on ("Skip"). The whole window shows every step from the start, so what's coming is clear before it begins. |
 | A warning window before a takeover | Before AutoHush takes over the Mac (Add an App's check): its own window, titled for what it does ("Check Deezer"), the app's 56 pt icon, what happens and for how long, pictures of it (`SymbolTile`s for the window's states, a drawn dimmed screen), then **Cancel** and the action in blue ("Start the Check"). Nothing starts until that button. |
-| A check's panel | While AutoHush takes over the Mac: a borderless panel at the bottom right of the main display, on every desktop, never taking the keyboard: the app's icon, "Checking <app>" (two lines at most) with what it does, **Stop**; what it asks of the user on an orange line with the time left; the window states as segments, the one under test and what's pressed; and, while the mouse and keyboard are blocked, a line saying so (`hand.raised`, orange). The screen dims (black at 50%) except the panel while input is blocked. |
+| A check's panel | While AutoHush takes over the Mac: a borderless panel at the bottom right of the main display, on every desktop, never taking the keyboard: the app's icon, "Checking <app>…" (two lines at most) with what it does, **Stop**; what it asks of the user on an orange line with the time left; the window states as segments, the one under test and what's pressed; and, while the mouse and keyboard are blocked, a line saying so (`hand.raised`, orange). The screen dims (black at 50%) except the panel while input is blocked. |
 | `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It’s Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
 | `WelcomePermissionsView` | The welcome window's second page: what the chosen player needs under "Permissions", a row each (a `SymbolTile`, `RowTitle`, then the `PermissionButton` or "Allowed" in `.appSecondary` after a check in `.appSuccess`), "Use AntiDot Mode Instead" under Audio Recording, Back and Done in the `BottomBar`. |
@@ -202,6 +209,7 @@ where they appear:
 | 16 pt | Menu rows and pop-up items |
 | 20 pt | Compact lists: Playing Now, the player search |
 | 24 pt | Settings lists: Apps, Diagnostics; the players' tiles (`PlayerTiles`) |
+| 34 pt | The app being checked, in a check's panel |
 | 36 pt | The menu card's player |
 | 56 pt | The chosen player in Settings → General; a `WindowHeader`'s icon |
 | 96 pt | AutoHush's own icon in About |
@@ -236,9 +244,10 @@ browsers, are told apart.
     name on a tile; in menus and pop-ups, after it:
     `NSMenuItem.setTitle(_:badge:font:maxWidth:)` draws it into the title,
     cutting a long name short with "…" so the badge always shows).
-  - **The headings** ("Supported Apps", "Safari Web Apps") line up with the
-    rows' icons in menus, and with the cards' text among tiles. A search
-    keeps the web apps' heading only while a web app matches.
+  - **The headings** ("Supported Apps", "Other Apps", "Safari Web Apps")
+    line up with the rows' icons in menus, and with the cards' text among
+    tiles. A search keeps the web apps' heading only while a web app
+    matches.
   - **Suggested web apps** (the tested sites not added yet) are marked
     "Click to add", in menus as on a tile, like a missing app but not
     dimmed, with the `arrow.down.circle` symbol for an icon: a click opens
@@ -313,8 +322,8 @@ browsers, are told apart.
   - A search starts empty again when its window or menu opens again.
   - **Edit → Find…** (⌘F) opens Settings → Apps' search while it lists
     apps, and puts the cursor in the welcome window's player search when it
-    has one and in the logs window's search. Elsewhere it's dimmed: it only
-    ever acts on a search.
+    has one, in the logs window's search and in Add an App's list of apps.
+    Elsewhere it's dimmed: it only ever acts on a search.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Apps): a click on a row, anywhere but
@@ -329,6 +338,10 @@ browsers, are told apart.
   gets it as an action.
 
 ## Writing
+
+**Short.** Every text is as short as it can be while it still makes sense:
+people don't read long texts. Say what matters to the user, leave out the
+rest; a title and one line usually do for an alert.
 
 ### Capitalization
 
@@ -360,10 +373,11 @@ browsers, are told apart.
   ("Choose Your Media Player", "Media player"); **playback** is for short
   labels about pausing, resuming and fading ("Pause playback after", "Fade
   playback", "Pauses Playback"); **your player** is for sentences about what
-  AutoHush does to that app ("Pauses your player", "Ignored — your player
-  keeps playing"); **what's playing** describes the content, naming the
-  media where it says what AutoHush does ("Pauses what's playing (music,
-  podcasts or videos)…"). The feature is just **Auto-Pause**. "Music" stays
+  AutoHush does to that app ("Pauses your player", or "Mutes your player"
+  where the player is muted instead of paused; "Ignored — your player keeps
+  playing"); **what's playing** describes the content, naming the media
+  where it says what AutoHush does ("Pauses what's playing (music, podcasts
+  or videos)…"). The feature is just **Auto-Pause**. "Music" stays
   only in names (Apple Music, YouTube Music).
 - **Permissions:** you "allow" them, never "grant" them. Use the names macOS
   gives them: Automation, Accessibility, Audio Recording.
@@ -479,9 +493,11 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     is hidden from VoiceOver, so it's read once.
   - What an image alone tells is said in words: a web app whose name is
     also an app's reads "Spotify, Safari web app" where players are offered
-    (`PlayerOption.spokenName`), as its icon's Safari badge shows, and an
-    untested web app's menu row, whose "Untested" badge is drawn into its
-    title, reads "Untested" after its name.
+    (`PlayerOption.spokenName`), as its icon's Safari badge shows; an app
+    added through a check that's a Chromium browser's web app always reads
+    whose it is ("SoundCloud, Google Chrome web app"), as its browser badge
+    shows; and an untested web app's menu row, whose "Untested" badge is
+    drawn into its title, reads "Untested" after its name.
 - **Decorative images** (app icons beside their names, symbols beside text,
   the menu toolbar's symbols, the card's chevron) are hidden from VoiceOver.
 - **Headings:** `SectionHeading`s, the menu's "Turn off for" and "Playing
@@ -490,9 +506,10 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   (Diagnostics' headings, the menu card's player button) says "Expanded"
   or "Collapsed" as its value.
 - **What changes away from VoiceOver's cursor is announced:** "Copied"
-  after Copy Report and Copy Logs, why Add a Web App couldn't take the address, a step's warning when
-  it shows or changes, the card's line after Retry, and why a window waits
-  for a permission, when it opens and when it locks.
+  after Copy Report and Copy Logs, why Add a Web App couldn't take the
+  address, a step's warning when it shows or changes, the card's line after
+  Retry, why a window waits for a permission, when it opens and when it
+  locks, and what a check's panel asks of the user, and that it stops.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
   does this).
 - **Chosen items** carry the "selected" trait.
@@ -504,6 +521,12 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   texts (the step that asks for a permission too): combined, a value of its
   own would replace their words. A window's checklist announces the step to
   do now each time it changes (`announcesCurrentStep`).
+- **Numbered steps** (`NumberedStepRow`, Add an App): each step's title is a
+  heading read with its number ("Step 2 of 6, …"), with where it stands as
+  its value ("Completed", "In progress", "To do", "Failed"), so VoiceOver
+  moves from step to step; its mark is hidden, and its lines and buttons
+  are read on their own. The window announces the step to do now, and a
+  step's warning or failure, as they come.
 - **Contrast:** text in light mode keeps at least 4.5:1.
 
 ## Keyboard
@@ -517,9 +540,10 @@ standard ones**:
   All to Front), in macOS's own words in every language. The Edit menu is
   what makes text fields take ⌘V and the rest. **Find…** opens Settings →
   Apps' search while it lists apps, and puts the cursor in the welcome
-  window's player search when it has one and in the logs window's search;
-  it's dimmed wherever there's no search. **Minimize** works in every window: Settings, the welcome window
-  and the guiding windows (Add a Web App, learning).
+  window's player search when it has one, in the logs window's search and
+  in Add an App's list of apps; it's dimmed wherever there's no search.
+  **Minimize** works in every window: Settings, the welcome window, the
+  guiding windows (Add a Web App, learning) and Add an App's windows.
 - **Return** presses a window's main, blue button
   (`.keyboardShortcut(.defaultAction)`: Continue, Done) and an alert's
   first one; in a checklist, it presses the blue button of the step to do
@@ -534,9 +558,12 @@ standard ones**:
   app).
 - **Tab and Space** move and press as macOS's keyboard navigation does
   (when it's on). Settings → Apps' rows take the focus too, and Space
-  selects the focused one, so **Remove** can be reached.
+  selects the focused one, so **Remove** can be reached. In Add an App's
+  list of apps, ↑ and ↓ in its search move the selection, and Return
+  chooses it.
 - **Escape** presses Cancel or Later (`.cancelAction`, or
-  `keyEquivalent = "\u{1b}"` on an alert's Later).
+  `keyEquivalent = "\u{1b}"` on an alert's Later or Cancel); while a check
+  runs, it's the check's Stop.
 - **Never a shortcut Apple doesn't define**, and none on the status menu's
   rows. ⌥-clicking Settings in the menu opens Diagnostics.
 

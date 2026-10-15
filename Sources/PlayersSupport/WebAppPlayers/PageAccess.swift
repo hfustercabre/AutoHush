@@ -20,6 +20,9 @@ package struct PageAccess: Codable, Equatable, Sendable {
         /// A Chromium browser's web app (Chrome's, Brave's): its page is
         /// served by the browser, `browserID`, which the switch is set on.
         case chromiumWebApp(browserID: String)
+        /// Chromium inside Qt (Qt WebEngine): shown as it is, but its words
+        /// current only while its window can be seen, as any Chromium page's.
+        case qtWebEngine
     }
 
     package var interface: Interface
@@ -42,7 +45,7 @@ package struct PageAccess: Codable, Equatable, Sendable {
     /// The switches to try for `interface`, in order.
     package static func switches(for interface: Interface) -> [String] {
         switch interface {
-        case .webKit: []
+        case .webKit, .qtWebEngine: []
         case .electron: [electronSwitch]
         case .cef: [electronSwitch, voiceOverSwitch]
         case .flutter, .chromiumWebApp: [voiceOverSwitch]
@@ -66,7 +69,8 @@ package struct PageAccess: Codable, Equatable, Sendable {
     /// The interface of the app at `url`, by the frameworks in its bundle; a
     /// Chromium browser's web app by its launcher's Info.plist, which names
     /// the site it opens and its browser (Chromium writes both). `.webKit`
-    /// for any other app: its page, if it has one, shows as it is.
+    /// for any other app: its page, if it has one, shows as it is. Player
+    /// Check tells an app's interface with this.
     package static func interface(ofAppAt url: URL) -> Interface {
         let info = NSDictionary(contentsOf: url.appendingPathComponent("Contents/Info.plist")) as? [String: Any] ?? [:]
         if info["CrAppModeShortcutURL"] != nil, let browserID = info["CrBundleIdentifier"] as? String {
@@ -79,6 +83,8 @@ package struct PageAccess: Codable, Equatable, Sendable {
         if has("Electron Framework") { return .electron }
         if has("Chromium Embedded Framework") { return .cef }
         if has("FlutterMacOS") { return .flutter }
+        let bundled = (try? FileManager.default.contentsOfDirectory(atPath: frameworks.path)) ?? []
+        if bundled.contains(where: { $0.hasPrefix("QtWebEngine") }) { return .qtWebEngine }
         return .webKit
     }
 }

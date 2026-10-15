@@ -8,7 +8,8 @@ import AutoHushKit
 /// opposite state), to its documents when they act on one (QuickTime
 /// Player's). Its state is its `player state`, its `playing` flag or its
 /// documents'; its notification follows it when the check saw one,
-/// otherwise it's read about once a second.
+/// otherwise it's read about once a second. One whose state can't be read
+/// by script toggles by `toggleState`, the app's other signs.
 package actor ScriptedAppPlayer: MusicPlayer {
     package nonisolated let bundleID: String
     package nonisolated let name: String
@@ -17,17 +18,25 @@ package actor ScriptedAppPlayer: MusicPlayer {
     /// `nil` when none did.
     package nonisolated let stateNotification: Notification.Name?
 
-    private let channel: AppleEventChannel
+    private let channel: any AppleEventSending
+    /// For a toggle without a scripted state: whether it plays, as the
+    /// app's other signs tell it (`.unknown`: nothing is sent).
+    private let toggleState: @Sendable () async -> PlayerState
     /// The documents its last pause paused, by name: its play plays them again.
     private var pausedDocuments: [String] = []
+    /// The last read's failure, logged once until a read works or fails otherwise.
+    private var lastFailure: String?
     private let logger = AutoHushLogger(category: "ScriptedAppPlayer")
 
-    package init(bundleID: String, name: String, setup: ScriptSetup, stateNotification: Notification.Name? = nil) {
+    /// `channel`: its Apple events; tests stand in for it.
+    package init(bundleID: String, name: String, setup: ScriptSetup, stateNotification: Notification.Name? = nil,
+                 toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: (any AppleEventSending)? = nil) {
         self.bundleID = bundleID
         self.name = name
         self.setup = setup
         self.stateNotification = stateNotification
-        channel = AppleEventChannel(bundleID: bundleID, label: name)
+        self.toggleState = toggleState
+        self.channel = channel ?? AppleEventChannel(bundleID: bundleID, label: name)
     }
 
     package nonisolated var canFade: Bool { setup.hasVolume }
@@ -40,24 +49,34 @@ package actor ScriptedAppPlayer: MusicPlayer {
     package func playerState() async -> PlayerState {
         guard let pid = channel.processIdentifier() else { return .notRunning }
         do {
-            switch setup.state {
-            case nil:
-                return .unknown
-            case .playerState:
-                return ScriptablePlayer.playerState(fromReply: try await channel.send(ScriptablePlayer.makeGetPlayerStateEvent(processIdentifier:), to: pid))
-            case .playingFlag(let property, let currentTime):
-                let playing = try await get(property, of: pid)
-                if playing.directObjectBoolean == true { return .playing }
-                // Not playing: -1 for its current time means nothing is loaded.
-                guard let currentTime, let time = try await get(currentTime, of: pid).directObjectInteger else { return .paused }
-                return time < 0 ? .stopped : .paused
-            case .documents:
-                let documents = try await documents(of: pid)
-                return documents.isEmpty ? .stopped : documents.contains(where: \.playing) ? .playing : .paused
-            }
+            let state = try await readState(of: pid)
+            lastFailure = nil
+            return state
         } catch {
-            logger.error("\(self.name, privacy: .public) playerState failed: \(error)")
+            // Polled once a second: a read that keeps failing (Automation
+            // denied, the app busy) is logged once, not every second.
+            let failure = String(describing: error)
+            if failure != lastFailure { logger.error("\(self.name, privacy: .public) playerState failed: \(error)") }
+            lastFailure = failure
             return .unknown
+        }
+    }
+
+    private func readState(of pid: pid_t) async throws -> PlayerState {
+        switch setup.state {
+        case nil:
+            return .unknown
+        case .playerState:
+            return ScriptablePlayer.playerState(fromReply: try await channel.send(ScriptablePlayer.makeGetPlayerStateEvent(processIdentifier:), to: pid))
+        case .playingFlag(let property, let currentTime):
+            let playing = try await get(property, of: pid)
+            if playing.directObjectBoolean == true { return .playing }
+            // Not playing: -1 for its current time means nothing is loaded.
+            guard let currentTime, let time = try await get(currentTime, of: pid).directObjectInteger else { return .paused }
+            return time < 0 ? .stopped : .paused
+        case .documents:
+            let documents = try await documents(of: pid)
+            return documents.isEmpty ? .stopped : documents.contains(where: \.playing) ? .playing : .paused
         }
     }
 
@@ -66,7 +85,7 @@ package actor ScriptedAppPlayer: MusicPlayer {
         case .pauseAndPlay(let pause, _):
             try await send(pause, pausing: true)
         case .toggle(let toggle):
-            guard try await playerState().needsToggle(from: .playing) else { return }
+            guard try await stateForToggle().needsToggle(from: .playing) else { return }
             try await send(toggle, pausing: true)
         }
     }
@@ -76,9 +95,14 @@ package actor ScriptedAppPlayer: MusicPlayer {
         case .pauseAndPlay(_, let play):
             try await send(play, pausing: false)
         case .toggle(let toggle):
-            guard try await playerState().needsToggle(from: .paused) else { return }
+            guard try await stateForToggle().needsToggle(from: .paused) else { return }
             try await send(toggle, pausing: false)
         }
+    }
+
+    /// Its state before a toggle: by script, else by its other signs.
+    private func stateForToggle() async -> PlayerState {
+        setup.state == nil ? await toggleState() : await playerState()
     }
 
     package func volume() async -> Int? {

@@ -17,9 +17,10 @@ import os
 /// test beep (523 Hz) and, for every fade, prints the music's level every
 /// 50 ms next to an ideal straight-line fade, the level every 5 ms around the
 /// moments AutoHush starts and stops playing the sound itself, and any
-/// dropouts or jumps. AutoHush logs fades at debug level, which macOS keeps
-/// only for a live `log stream`: capture one during the test and pass it
-/// with `--log` (compact style), else `log show` is asked, and may find none.
+/// dropouts or jumps. AutoHush gives macOS's log its lines at the debug
+/// level only, which macOS keeps only for a live `log stream`: capture one
+/// during the test and pass it with `--log` (compact style), else `log show`
+/// is asked, which finds none.
 @main
 enum ListenToFades {
     static let defaultDevice = "AutoHushLoopback_UID"

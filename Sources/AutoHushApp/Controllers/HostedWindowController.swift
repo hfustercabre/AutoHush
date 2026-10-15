@@ -7,8 +7,10 @@ import SwiftUI
 /// Settings (no band, no line), with the title in bold as a Settings page's
 /// name. It's shown in front, and centered when it comes on screen, or,
 /// floating above other apps, in the top-right corner (`floatsInCorner`).
-/// The welcome, learning and "Add a Web App" windows are these; the last
-/// two float.
+/// The welcome, learning, "Add a Web App", "Add an App", "Choose an App"
+/// and check warning windows are these; the learning and "Add a Web App"
+/// windows float. The logs window, which the user resizes, has its own
+/// (`LogsWindowController`).
 @MainActor
 class HostedWindowController: NSWindowController {
     /// The content's side and bottom margins (`windowMargins`).

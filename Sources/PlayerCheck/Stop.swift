@@ -1,18 +1,19 @@
 import AppKit
+import CheckedPlayers
 
 // MARK: - What the tool changed
 
 /// What this tool changed that a stop puts back, from whichever thread the
 /// stop arrives on: the switches it turned on (and those it found on, set
-/// back on), the app that was in front when it brought the checked one
-/// forward, and the `log stream` it follows Now Playing with.
+/// back on), and the app that was in front when it brought the checked one
+/// forward. (The `log stream` it follows Now Playing with ends with
+/// `nowPlayingReports.stop()`.)
 final class Changes: @unchecked Sendable {
     private let lock = NSLock()
     private var switches: [String] = []
     private var keptOn: Set<String> = []
     private var front: URL?
     private var setOnTimes: [String: Date] = [:]
-    private var stream: pid_t = 0
     private var pid: pid_t = 0
 
     /// The checked app's process (0: not running).
@@ -37,19 +38,14 @@ final class Changes: @unchecked Sendable {
     /// When this tool last turned `attribute` on (`waitForFullerMode`).
     func switchSetOn(_ attribute: String) { lock.withLock { setOnTimes[attribute] = Date() } }
     func switchSetOnAt(_ attribute: String) -> Date? { lock.withLock { setOnTimes[attribute] } }
-    /// The `log stream` this tool follows Now Playing with, ended with it.
-    var streamPID: pid_t {
-        get { lock.withLock { stream } }
-        set { lock.withLock { stream = newValue } }
-    }
 }
 let changes = Changes()
 
 /// Sets a switch on the app (a Chromium browser's web app's: on its
 /// browser, `switchTarget`); whether it took. An app may answer an error
-/// yet take it (Spotify, Spotube and Chrome answer -25208 to VoiceOver's
+/// yet take it (CEF and Flutter apps and Chrome answer -25208 to VoiceOver's
 /// switch, and read it back as set), or read one back as off while it's on
-/// (Deezer, Electron's): either sign counts.
+/// (Electron's): either sign counts.
 func setSwitch(_ attribute: String, _ on: Bool, pid: pid_t) -> Bool {
     let app = AXUIElementCreateApplication(switchTarget(pid))
     AXUIElementSetMessagingTimeout(app, 1)
@@ -81,8 +77,8 @@ func bringForward(_ url: URL) {
 
 // MARK: - Stopping
 
-/// A stop (Ctrl-C, the Player Check app's Stop, or Escape while input is
-/// blocked: `InputBlock`) arrives on another thread. While the app's window
+/// A stop (Ctrl-C, Stop in AutoHush's panel or the Player Check app, or
+/// Escape while input is blocked: `InputBlock`) arrives on another thread. While the app's window
 /// is away from where it was, and between a trial's pause and its play, it
 /// only asks: the check stops itself at its next step (`stopIfRequested`:
 /// after the trial, which plays the app again, the move or the page read
@@ -92,12 +88,22 @@ func bringForward(_ url: URL) {
 /// (`stopNow`).
 final class StopState: @unchecked Sendable {
     private let lock = NSLock()
-    private var inTrial = false, requested = false, away = false
+    private var inTrial = false, away = false
+    private var requestedAt: Date?
 
     func setInTrial(_ value: Bool) { lock.withLock { inTrial = value } }
     /// Records the stop; true when the check must stop itself: in a trial,
     /// or while the window is away (`beginMoving`).
-    func request() -> Bool { lock.withLock { requested = true; return inTrial || away } }
+    func request() -> Bool {
+        lock.withLock {
+            if requestedAt == nil { requestedAt = Date() }
+            return inTrial || away
+        }
+    }
+    /// When the first stop came, while the check is to stop itself
+    /// (`InputBlock` frees the mouse and keyboard if it takes long).
+    var since: Date? { lock.withLock { requestedAt } }
+    private var requested: Bool { requestedAt != nil }
     /// Before the window is first moved; false when a stop came first (then
     /// nothing may move).
     func beginMoving() -> Bool {
@@ -122,7 +128,7 @@ func stopNow(_ code: Int32) -> Never {
     inputBlock.end()
     switchesBackOff()
     if let front = changes.frontToRestore { bringForward(front) }
-    if changes.streamPID > 0 { kill(changes.streamPID, SIGTERM) }
+    nowPlayingReports.stop()
     fflush(nil)
     _exit(code)
 }
@@ -134,15 +140,15 @@ func stopNow(_ code: Int32) -> Never {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
     if stopState.isWindowAway { windowTest?.restore() }
-    if inputBlock.end() { say("  mouse and keyboard free again") }
+    if inputBlock.end() { say(CheckReportLine.free) }
     stopNow(143)
 }
 
 /// Kept for as long as the tool runs.
 @MainActor var stopWatches: [DispatchSourceProtocol] = []
 
-/// A stop: Ctrl-C, Player Check's Stop, or whoever ran it ending without a
-/// word (Player Check's window closed, or the app quit by force or
+/// A stop: Ctrl-C, Stop (AutoHush's panel, the Player Check app), or whoever
+/// ran it ending without a word (its window closed, or it quit by force or
 /// crashed). Its output then goes nowhere (and SIGPIPE is ignored), so it
 /// stops as for Ctrl-C when its parent ends, rather than going on unwatched.
 /// The handlers run on another thread, so they're `@Sendable`: a closure of
@@ -159,7 +165,12 @@ func stopNow(_ code: Int32) -> Never {
         stopWatches.append(source)
     }
     let parent = getppid()
-    guard parent > 1 else { return }
+    // Whoever ran it is gone already (this process went to launchd): a test
+    // would run on unwatched, with the mouse and keyboard blocked.
+    guard parent > 1 else {
+        if testing { stopNow(143) }
+        return
+    }
     let source = DispatchSource.makeProcessSource(identifier: parent, eventMask: .exit, queue: .global())
     source.setEventHandler { @Sendable in
         if stopState.request() { return }

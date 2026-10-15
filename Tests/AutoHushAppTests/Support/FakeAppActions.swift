@@ -18,6 +18,7 @@ final class FakeAppActions: AppActions {
     func choosePlayer(_ bundleID: String) { log.calls.append("player \(bundleID)") }
     func openAddWebApp() { log.calls.append("addWebApp") }
     func openAddApp() { log.calls.append("addApp") }
+    func removeAddedApp(_ bundleID: String) { log.calls.append("remove \(bundleID)") }
     func reopenPlayer() { log.calls.append("reopenPlayer") }
     func unmutePlayer() { log.calls.append("unmutePlayer") }
     func learnControlsAgain() { log.calls.append("learnAgain") }

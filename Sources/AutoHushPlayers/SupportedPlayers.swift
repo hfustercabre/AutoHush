@@ -32,7 +32,8 @@ package enum SupportedPlayers {
         // Shown in Add a Web App's address field and its "not a web address" note.
         exampleWebAddress: "music.youtube.com",
         countrySites: testedWebApps.compactMap(\.countrySites),
-        // The Safari web apps, then the apps added through Player Check (never a built-in player's).
+        // The Safari web apps, then the apps added through Player Check (never a
+        // built-in player's), those not installed now too, as the built-in ones are.
         found: { webApps.current() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
         suggested: { webApps.suggestions() }
     )
@@ -65,11 +66,9 @@ package enum SupportedPlayers {
     /// The apps added through Player Check, each kept while its setup stays.
     package static let checkedPlayers = CheckedPlayers()
 
-    /// The built-in players' bundle IDs: a check never stands in for one.
-    private static let builtIn: Set<String> = [
-        ScriptablePlayerProfile.spotify.bundleID, ScriptablePlayerProfile.appleMusic.bundleID, VLCPlayer.appBundleID,
-        MenuPlayerProfile.applePodcasts.bundleID, MenuPlayerProfile.tidal.bundleID,
-    ]
+    /// The built-in players' bundle IDs, the catalog's own: a check never
+    /// stands in for one (a player added to the catalog is one of them).
+    private static let builtIn: Set<String> = Set(catalog.players.map { $0.bundleID })
 
     /// The Safari web apps in the Applications folders, looked for once for
     /// the players, the suggestions and Add a Web App.

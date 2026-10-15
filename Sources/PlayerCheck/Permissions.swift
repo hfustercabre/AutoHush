@@ -1,4 +1,5 @@
 import AppKit
+import CheckedPlayers
 import AutoHushKit
 
 // MARK: - Permissions, before anything a test does
@@ -28,17 +29,19 @@ import AutoHushKit
 /// level, and the mute that keeps it silent meanwhile), and Automation for
 /// the app when it has AppleScript play or pause. Without all of them
 /// nothing more is done: no window moved, nothing pressed. Exit status 3
-/// says so to Player Check. With --partial, only Accessibility is needed.
+/// says so to whoever runs it. With --partial (AutoHush's), only
+/// Accessibility is needed; with --no-taps, Audio Recording isn't used.
 /// Then the app is muted until the test ends.
 @MainActor func checkPermissions() {
     guard let running else { return }
     say()
-    say("Permissions")
+    say(CheckReportLine.Heading.permissions.rawValue)
     let holder = NSRunningApplication(processIdentifier: responsible(getpid()))?.localizedName ?? "this tool"
     var missing: [String] = []
     if !AXIsProcessTrusted() {
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        say("  waiting: allow Accessibility for \(holder) in System Settings; the check goes on as soon as it's allowed (up to 2 minutes)")
+        say(CheckReportLine.waiting(.allowAccessibility, "allow Accessibility for \(holder) in System Settings; the check goes on as soon as it's allowed",
+                                    minutes: 2))
         let deadline = Date().addingTimeInterval(120)
         while !AXIsProcessTrusted(), Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
     }
@@ -46,8 +49,12 @@ import AutoHushKit
     say("  Accessibility: " + (trusted ? "allowed" : "not allowed"))
     if !trusted { missing.append("Accessibility") }
     setUpLevels(asking: true, saying: false)
-    say("  Audio Recording: " + (levelsAllowed ? "allowed" : "not allowed"))
-    if !levelsAllowed { missing.append("Audio Recording") }
+    if noTaps {
+        say("  Audio Recording: not used (AntiDot mode, no audio taps): \(appName) isn't muted, and whether it plays is told by other signs")
+    } else {
+        say("  Audio Recording: " + (levelsAllowed ? "allowed" : "not allowed"))
+        if !levelsAllowed { missing.append("Audio Recording") }
+    }
     var unanswered = false
     if scriptControls() != nil {
         let answer = askAutomation(pid: running.processIdentifier)

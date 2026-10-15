@@ -1,5 +1,6 @@
 import AppKit
 import AutoHushKit
+import CheckedPlayers
 
 /// Settings → Diagnostics: what AutoHush sees, kept up to date while the tab
 /// shows.
@@ -11,9 +12,12 @@ extension AppDelegate {
             settingsModel.apps.compactMap { app in app.source.bundlePath.map { (app.id, $0) } },
             uniquingKeysWith: { first, _ in first }
         )
+        // An app added through a check: the ways its player uses.
+        let checked = player as? CheckedPlayer
         let snapshot = DiagnosticsReport.snapshot(
             activeAudio: session.activeAudioReport(), status: status, facts: diagnosticsFacts(),
-            bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path }
+            bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path },
+            ways: { id in checked?.bundleID == id ? checked?.setup.ways : nil }
         )
         if settingsModel.diagnostics != snapshot { settingsModel.diagnostics = snapshot }
     }

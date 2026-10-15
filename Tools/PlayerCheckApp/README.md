@@ -103,7 +103,10 @@ to it and loses its permissions; one signed with a certificate keeps them.
   window state, an orange ⚠ in some, with the states it failed in and why
   under it, ✗ in none or not there, ? not tried, – not checked), "For
   AutoHush" (which kind of player it would be), and the full report, which
-  **Copy Report** copies.
+  **Copy Report** copies. It runs each check with `playercheck --developer`,
+  so the verdict also says how a built-in player of that kind would be made
+  (a `ScriptablePlayerProfile` with its suite, a `MenuPlayerProfile`, …),
+  which AutoHush's Add an App… leaves out.
 - **Play and Pause:** once a check found a way that works (✓ or ⚠), the app
   gets **Play** and **Pause** buttons above its results. Pressed, they read
   the state the app's window is in (`playercheck --window-state`) and use

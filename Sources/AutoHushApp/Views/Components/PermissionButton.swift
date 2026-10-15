@@ -91,7 +91,7 @@ struct PermissionButton: View {
         switch access {
         case .allowed, .notNeeded: nil
         case .playerNotRunning:
-            String(localized: "Open \(model.chosenPlayerName ?? "")", comment: "Button that opens the media player, so macOS can ask for Automation; %@ is the player")
+            AddAppText.open(model.chosenPlayerName ?? "")
         case .needsReopen:
             PermissionText.reopen
         case .notAsked, .denied:

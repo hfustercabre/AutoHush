@@ -1,4 +1,6 @@
 import AppKit
+import CheckedPlayers
+import PlayerCheckKit
 
 // MARK: - Ways to control it
 
@@ -47,11 +49,11 @@ import AppKit
 
 @MainActor func reportWays() {
     say()
-    say("Ways to Control It")
+    say(CheckReportLine.Heading.ways.rawValue)
     if let script = scriptControls() {
         let fits = scripting?.fitsScriptablePlayer == true
-        let kind = fits ? ", as Spotify and Apple Music"
-            : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")its own kind, as VLC: not the way ScriptablePlayers expects)"
+        let kind = fits ? ", as the supported scriptable players do"
+            : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")in a way of its own, unlike the supported scriptable players)"
         if let result = firstResults[.script] {
             triedWay(.script, "AppleScript", result, worked: "“\(script.pause)” and “\(script.play)” paused and played it\(kind)",
                      failed: result == .pausedOnly ? "“\(script.pause)” paused it, but “\(script.play)” didn't play it again"
@@ -59,9 +61,12 @@ import AppKit
         } else if let scriptProblem {
             way("✗", "AppleScript: \(scriptProblem)")
         } else if fits {
-            way("?", "AppleScript: pause, play and its state, as Spotify and Apple Music (\(notTried))")
+            way("?", "AppleScript: pause, play and its state, as the supported scriptable players have them (\(notTried))")
         } else {
-            way("?", "AppleScript: play or pause commands, but not as Spotify's (a player type of its own, as VLC) (\(notTried))")
+            // The Player Check app offers no AppleScript Play or Pause for
+            // this line until a check tried it: it looks for "not as the
+            // supported scriptable players".
+            way("?", "AppleScript: play or pause commands, but not as the supported scriptable players have them (\(notTried))")
         }
     } else {
         way("✗", "AppleScript: " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
@@ -71,11 +76,11 @@ import AppKit
     } else if !AXIsProcessTrusted() {
         way("–", "Playback menu: not checked (no Accessibility permission)")
     } else if let menu {
-        let found = "Playback menu “\(menu.title)”" + (menu.asAutoHushFindsIt ? "" : " (found by \(menu.arrows), not ⌘← ⌘→)")
+        let found = "Playback menu “\(menu.title)”" + (menu.arrows == "⌘← ⌘→" ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
         if let result = firstResults[.menu] {
             resultLine(.menu, found, result)
         } else {
-            way("?", "\(found): first item “\(menu.toggleTitle)” (\(notTried))")
+            way("?", "\(found): first item \(shown(menu.toggleTitle)) (\(notTried))")
         }
     } else {
         way("✗", "Playback menu: none with Play/Pause and Previous/Next")
@@ -85,8 +90,8 @@ import AppKit
     } else if let page {
         let kind = pageSwitch.map { "Page button, with \(switchName($0)) on" } ?? "Page button"
         if let toggle = page.toggle {
-            let found = "\(kind): " + (learned.map { "“\($0.recipe.pauseLabel)” / “\($0.recipe.playLabel)”, learned as AutoHush learns it" }
-                                       ?? "“\(toggle.label)”" + (page.withControls ? "" : ", but no player bar around it"))
+            let found = "\(kind): " + (learned.map { "\(shown($0.recipe.pauseLabel)) / \(shown($0.recipe.playLabel)), learned as AutoHush learns it" }
+                                       ?? shown(toggle.label) + (page.withControls ? "" : ", but no player bar around it"))
             if let result = firstResults[.page] {
                 resultLine(.page, found, result)
             } else {
@@ -97,7 +102,7 @@ import AppKit
         }
     }
     if let result = firstResults[.panel], canBeNowPlaying {
-        triedWay(.panel, "Now Playing panel", result, worked: "pressing its row (“\(panelRowText ?? "")”) paused and played it",
+        triedWay(.panel, "Now Playing panel", result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
                  failed: panelProblem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
     } else if running == nil {
         way("–", "Now Playing panel: not checked (it isn't running)")
@@ -114,64 +119,24 @@ import AppKit
 
 @MainActor func reportVerdict() {
     say()
-    say("Verdict")
-    if isWebApp {
-        say("  A Safari web app: AutoHush learns its page's Play/Pause button (WebAppPlayers).")
-        say("  Test the site live, then add it to SupportedPlayers.testedWebApps.")
-    } else if let browser = webAppBrowser {
-        say("  A \(browser) web app: AutoHush has no player for these yet. Its sound is \(browser)'s, shared with its tabs:")
-        say("  another page of \(browser) playing (a tab, a call, another web app) shows as one more “Playing audio” assertion.")
-    } else if let scripting, scripting.fitsScriptablePlayer, let suite = scripting.suite {
-        say("  Scriptable, like Spotify and Apple Music: a ScriptablePlayerProfile with suite fourCharCode(\"\(suite)\").")
-        say("  " + (scripting.hasVolume ? "It has a volume: measure its curve (swift run measure-volume-curve \(bundleID))."
-                                         : "No volume: it pauses without fading."))
-        let stateNotes = notifications?.seen.filter { $0.value.contains("Player State") }.keys.sorted() ?? []
-        if let announcingNotification {
-            say("  State notification: \(announcingNotification), which announced each pause and play (the profile's stateNotification).")
-        } else if !stateNotes.isEmpty {
-            say("  State notification: \(stateNotes.joined(separator: ", ")), but it didn't announce both a pause and a play in the test.")
-        } else if notifications == nil {
-            say("  Its state notification (with “Player State”) isn't known yet: check it again while it plays.")
-        } else {
-            say("  No state notification with “Player State” under the usual names: unless it has one under another,")
-            say("  its state must be read once a second (PolledStateObserver), so the profile needs that option.")
-        }
-        switch firstResults[.script] {
-        case .didNotPause?: say("  But its scripted pause didn't take: check it by hand before building on it.")
-        case .pausedOnly?: say("  But its scripted play didn't bring it back: check it by hand before building on it.")
-        default: break
-        }
-    } else if let menu {
-        switch firstResults[.menu] {
-        case .worked?:
-            say("  A menu player, like TIDAL and Apple Podcasts: a MenuPlayerProfile with menu “\(menu.title)”.")
-            say("  Its words for Play and Pause in every language must be read from the app (TidalWords, PodcastsWords).")
-            if !menu.asAutoHushFindsIt { say("  And AutoHush must find the menu by \(menu.arrows) as well as ⌘← ⌘→.") }
-        case .pausedOnly?:
-            say("  Its menu paused it, but pressing it again didn't play it: check it by hand before building on it.")
-        case .didNotPause?:
-            say("  Its menu has Play/Pause, but pressing it didn't take (as Deezer's menu): not controllable that way.")
-        case nil:
-            say("  Probably a menu player, like TIDAL and Apple Podcasts (menu “\(menu.title)”): confirm by testing it while it plays.")
-            if !menu.asAutoHushFindsIt { say("  AutoHush would also have to find the menu by \(menu.arrows), not only ⌘← ⌘→.") }
-        }
-        if let scripting, scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
-            say("  It's scriptable too, but not the way ScriptablePlayers expects (see above): maybe a player type of its own, as VLC.")
-        }
-    } else if let scripting, scripting.commands.values.contains(where: { ["play", "pause", "playpause"].contains($0.lowercased()) }) {
-        say("  Scriptable" + (scripting.playsDocuments ? " through its documents (its play and pause act on one)" : "")
-            + ", but not the way ScriptablePlayers expects: a player type of its own, as VLC (VLCSupport).")
-    } else if running == nil {
-        say("  No usable scripting; open it and run again to look for a playback menu and a page.")
-    } else if page?.toggle != nil {
-        say("  Neither scriptable nor with a playback menu.")
-    } else {
-        say("  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app.")
-    }
+    say(CheckReportLine.Heading.verdict.rawValue)
+    var facts = PlayerKindVerdict.Facts(bundleID: bundleID)
+    facts.isSafariWebApp = isWebApp
+    facts.webAppBrowser = webAppBrowser
+    facts.scripting = scripting
+    let stateNotes = notifications?.seen.filter { $0.value.contains("Player State") }.keys.sorted() ?? []
+    facts.stateNotification = announcingNotification.map { .announced($0) }
+        ?? (!stateNotes.isEmpty ? .seen(stateNotes) : notifications == nil ? .notFollowed : .noneSeen)
+    facts.scriptResult = firstResults[.script]
+    facts.menuResult = firstResults[.menu]
+    facts.menuTitle = menu?.title
+    facts.isRunning = running != nil
+    facts.pageHasPlayPause = page?.toggle != nil
+    PlayerKindVerdict.lines(facts, developer: developer).forEach { say($0) }
 
     // What the page showed. AutoHush has no player kind for apps' pages yet: a
-    // player that learns the page's button, as WebAppPlayers does for Safari
-    // web apps, would be one.
+    // player that learns the page's button, as it learns a Safari web app's,
+    // would be one.
     guard let page else { return }
     let pageWord = isFlutter ? "interface" : "page"
     let its = pageSwitch.map { "With \(switchName($0)) on, its \(pageWord)" } ?? "Its \(pageWord)"
@@ -184,15 +149,15 @@ import AppKit
             if isWebApp {
                 say("  Its page's Play/Pause works.")
             } else {
-                say("  \(its)'s Play/Pause works: it could be a player that learns that button,")
-                say("  as Safari web apps (WebAppPlayers), with no fades; AutoHush has no such player for apps yet.")
+                say("  \(its)'s Play/Pause works: Add an App can make it a player pressed there,")
+                say("  as Safari web apps are, with no fades.")
             }
         case .pausedOnly?:
             say("  \(its)'s Pause works, but its Play didn't bring it back: check by ear.")
         case .didNotPause?:
-            say("  \(its) has Play/Pause (“\(toggle.label)”), but pressing it didn't take: check by ear.")
+            say("  \(its) has Play/Pause (\(shown(toggle.label))), but pressing it didn't take: check by ear.")
         case nil:
-            say("  \(its) has Play/Pause (“\(toggle.label)”): confirm by testing it while it plays.")
+            say("  \(its) has Play/Pause (\(shown(toggle.label))): confirm by testing it while it plays.")
         }
         if let results = stateResults[.page], let summary = stateSummary(.page), summary.mark == "⚠" {
             let worked = results.filter { $0.result == .worked }.map(\.state.title)
@@ -206,7 +171,8 @@ import AppKit
             }
             if launchedWithOption == false, results.contains(where: { $0.result != .worked && WindowState.outOfView.contains($0.state) }) {
                 say("  Opened with \(LaunchOption.occludedWindows), Chromium keeps its page taking presses while its window is covered")
-                say("  or on another desktop: relaunch it with it (the Player Check app's Relaunch) and check again.")
+                say("  or on another desktop: relaunch it with that option (Add an App's Reopen, or the Player Check app's Relaunch)")
+                say("  and check again.")
             }
         }
         if !page.withControls {
@@ -216,7 +182,7 @@ import AppKit
     } else {
         say("  \(its) shows \(page.buttons) \(isFlutter ? "pressable items" : "buttons"), but none in sight is named Play or Pause:")
         say("  see them with Accessibility Inspector (in Xcode: Open Developer Tool; its language may not be one this tool")
-        say("  knows, its player may be hidden, or its buttons may have no names, as Spotube's player bar).")
+        say("  knows, its player may be hidden, or its buttons may have no names).")
     }
 }
 

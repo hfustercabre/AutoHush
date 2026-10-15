@@ -30,9 +30,10 @@ struct GeneralSettingsView: View {
     var body: some View {
         SettingsPageScroll {
             playerCard
-            PlayerTiles(options: model.playerOptions.offered, selection: model.chosenPlayerID,
+            PlayerTiles(options: model.offeredPlayers, selection: model.chosenPlayerID,
                         onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() },
-                        onAddApp: { model.actions?.openAddApp() })
+                        onAddApp: { model.actions?.openAddApp() },
+                        onRemove: { model.actions?.removeAddedApp($0.bundleID) })
             if model.playerOptions.noneInstalled {
                 NoteLabel(PlayerOption.noneInstalledWarning)
             }
@@ -52,9 +53,9 @@ struct GeneralSettingsView: View {
         }
     }
 
-    /// The chosen player with what it's doing and what works; what it lacks
-    /// and the way to allow it; a web app's controls; then the Auto-Pause
-    /// switch.
+    /// The chosen player with what it's doing (with Reopen or Unmute, as
+    /// the menu's card has them) and what works; what it lacks and the way
+    /// to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
         Card {
             HStack(alignment: .center, spacing: 12) {
@@ -68,6 +69,9 @@ struct GeneralSettingsView: View {
                         .font(.appSubheadline)
                         .foregroundStyle(model.statusNeedsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
+                    if model.offersReopenPlayer || model.offersUnmute {
+                        playerButtons.padding(.vertical, 4)
+                    }
                     checks.padding(.top, 2)
                 }
                 Spacer(minLength: 0)
@@ -92,6 +96,28 @@ struct GeneralSettingsView: View {
             )
             if let note = model.autoPauseNote {
                 Text(note).captionStyle()
+            }
+        }
+    }
+
+    /// Under the status line, as in the menu's card: Reopen while the player
+    /// needs reopening, Unmute while it's muted for another app.
+    private var playerButtons: some View {
+        HStack(spacing: 8) {
+            if model.offersReopenPlayer {
+                let reason = AddAppText.reopenReason(model.chosenPlayerName ?? "")
+                Button { model.actions?.reopenPlayer() } label: {
+                    Label { Text(verbatim: AppStatus.reopenPlayerTitle) } icon: { Image(systemName: "arrow.clockwise") }
+                }
+                .buttonStyle(.chip)
+                .help(reason)
+                .accessibilityHint(Text(verbatim: reason))
+            }
+            if model.offersUnmute {
+                Button { model.actions?.unmutePlayer() } label: {
+                    Label { Text(verbatim: AppStatus.unmuteTitle) } icon: { Image(systemName: "speaker.wave.2") }
+                }
+                .buttonStyle(.chip)
             }
         }
     }

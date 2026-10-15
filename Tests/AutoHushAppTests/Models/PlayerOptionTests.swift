@@ -60,11 +60,53 @@ struct PlayerOptionTests {
         checked.kind = .checkedApp
         let options = [webApp, checked, option("A", installed: false), option("B", installed: true)]
         #expect(options.offered.map(\.name) == ["B", "A", "Deezer", "YT Music"])
-        #expect(options.offered.otherAppsStart == 2)
         #expect(options.offered.webAppsStart == 3)
-        #expect(options.offered.matching("yt").otherAppsStart == nil)
         #expect(PlayerOption.checkedByYouBadge == "Checked by you")
         #expect(PlayerOption.addAppTitle == "Add an App…")
+    }
+
+    @Test("an app added through a check that isn't installed now stays under Other Apps, after the installed ones, dimmed: it can't be clicked")
+    func uninstalledCheckedApp() {
+        var gone = option("Gone", installed: false)
+        gone.kind = .checkedApp
+        var deezer = option("Deezer", installed: true)
+        deezer.kind = .checkedApp
+        var webApp = option("YT Music", installed: true)
+        webApp.kind = .safariWebApp
+        let options = [gone, webApp, deezer, option("A", installed: true)]
+        #expect(options.offered.map(\.name) == ["A", "Deezer", "Gone", "YT Music"])
+        #expect(!gone.isInstalled && !gone.isClickable && gone.webAddress == nil)
+        #expect(deezer.isClickable)
+    }
+
+    @Test("in AntiDot mode, an app that can only be muted can't be chosen; other players and other modes are left alone")
+    func antiDotMode() {
+        var muted = option("Muted", installed: true)
+        muted.kind = .checkedApp
+        muted.pausesByMuting = true
+        var paused = option("Paused", installed: true)
+        paused.kind = .checkedApp
+        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
+        let options = [option("A", installed: true), muted, paused, suggestion]
+
+        let antiDot = options.inAntiDotMode(true)
+        #expect(antiDot.map(\.isUnavailableInAntiDotMode) == [false, true, false, false])
+        #expect(antiDot.map(\.isClickable) == [true, false, true, true])
+        #expect(antiDot[1].isInstalled) // still installed, and shown as chosen
+        #expect(antiDot.inAntiDotMode(false) == options)
+        #expect(options.inAntiDotMode(false).map(\.isClickable) == [true, true, true, true])
+        #expect(PlayerOption.antiDotModeLabel == "Not in AntiDot mode")
+        #expect(PlayerOption.antiDotModeTileLabel == "Not in AntiDot")
+        #expect(PlayerOption.antiDotModeReason
+            == "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
+    }
+
+    @Test("an app that can only be muted says so in a short line on its tile and a longer one on its menu row")
+    func mutedLabels() {
+        #expect(PlayerOption.mutedOnlyLabel == "Muted only")
+        #expect(PlayerOption.mutedInsteadLabel == "Muted instead of paused")
+        #expect(PlayerOption.mutedOnlyLabel.count <= 12)
+        #expect(PlayerOption.antiDotModeTileLabel.count <= 14)
     }
 
     @Test("VoiceOver says a web app is one only when an app has its name")
@@ -79,6 +121,21 @@ struct PlayerOptionTests {
         #expect(app.spokenName(among: options) == "Spotify")
         #expect(other.spokenName(among: options) == "YT Music")
         #expect(webApp.spokenName(among: [webApp, other]) == "spotify")
+    }
+
+    @Test("VoiceOver says whose web app an app added through a check is, when a Chromium browser made it, as its icon's badge shows")
+    func spokenBrowserWebApp() {
+        var chromeApp = option("SoundCloud", installed: true)
+        chromeApp.kind = .checkedApp
+        chromeApp.browserName = "Google Chrome"
+        var plain = option("Deezer", installed: true)
+        plain.kind = .checkedApp
+        let options = [chromeApp, plain]
+        #expect(chromeApp.spokenName(among: options) == "SoundCloud, Google Chrome web app")
+        #expect(plain.spokenName(among: options) == "Deezer")
+        var unbadged = chromeApp
+        unbadged.browserName = nil
+        #expect(chromeApp != unbadged) // the browser tells them apart
     }
 
     @Test("suggested web apps come after the web apps, marked with a download symbol, and can be clicked though not installed")

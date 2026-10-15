@@ -20,7 +20,8 @@ extension CheckedPlayer {
             for _ in 0..<60 where !app.isTerminated { try? await Task.sleep(for: .milliseconds(250)) }
             guard app.isTerminated else { return false }
         }
-        let url = setup.appURL
+        // Where it is now: it may have been moved since its check.
+        let url = installedURL ?? setup.appURL
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.arguments = [PlayerSetup.launchOption]
         configuration.activates = false

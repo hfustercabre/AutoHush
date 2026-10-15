@@ -68,6 +68,22 @@ struct SettingsModelTests {
         #expect(!model.welcomeAsksPermissions)
     }
 
+    @Test("AntiDot mode can't be turned on while the player can only be muted: its switch is off, saying why")
+    func antiDotUnavailable() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
+                                 kind: .checkedApp)
+        muted.pausesByMuting = true
+        model.state.status.playerOptions = [muted]
+        #expect(model.antiDotUnavailableFor == nil) // not the player
+        model.state.status.chosenPlayerID = muted.bundleID
+        #expect(model.antiDotUnavailableFor == "Muted")
+        model.setAntiDotMode(true)
+        model.useAntiDotMode()
+        #expect(!model.isAntiDotMode)
+        #expect(DetectionSettingsView.unavailableNote("Muted") == "Unavailable with Muted: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.")
+    }
+
     @Test("reflects the login item's state")
     func reflectsLaunchAtLogin() {
         #expect(makeModel(MockLaunchAtLoginController(isEnabled: true)).launchAtLoginEnabled)
@@ -208,6 +224,49 @@ struct SettingsModelTests {
 
         model.state.status.learning = .learned
         #expect(model.learning == .learned && model.canLearnControlsAgain)
+    }
+
+    @Test("in AntiDot mode, Settings and the welcome window offer an app that can only be muted as one that can't be chosen")
+    func offeredPlayersInAntiDotMode() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
+                                 kind: .checkedApp)
+        muted.pausesByMuting = true
+        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
+                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
+        model.state.status.playerOptions = [muted, spotify]
+        #expect(model.offeredPlayers.map(\.name) == ["Spotify", "Muted"])
+        #expect(model.offeredPlayers.map(\.isClickable) == [true, true])
+
+        model.setAntiDotMode(true)
+        #expect(model.offeredPlayers.map(\.isClickable) == [true, false])
+        #expect(model.playerOptions == [muted, spotify]) // as the app's state has them
+    }
+
+    @Test("the player card offers Reopen and Unmute as the menu's card does, following the status as it changes")
+    func reopenAndUnmute() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Jukebox")
+        model.state.status.setHealth(.ready)
+        model.state.status.playback = .musicPlaying
+        #expect(!model.offersReopenPlayer && !model.offersUnmute)
+
+        let reopen = Changes()
+        withObservationTracking { _ = model.offersReopenPlayer } onChange: { reopen.count += 1 }
+        model.state.status.playerNeedsReopen = true
+        #expect(reopen.count == 1)
+        #expect(model.offersReopenPlayer)
+        model.state.status.playerNeedsReopen = false
+
+        let unmute = Changes()
+        withObservationTracking { _ = model.offersUnmute } onChange: { unmute.count += 1 }
+        model.state.status.playerMutes = true
+        model.state.status.setActiveSources([AudioSource(id: "com.apple.Safari", name: "Safari")])
+        model.state.status.playback = .pausedByMonitor
+        #expect(unmute.count == 1)
+        #expect(model.offersUnmute && !model.offersReopenPlayer)
+        model.state.status.playback = .musicPlaying
+        #expect(!model.offersUnmute)
     }
 
     @Test("a window follows only the parts it shows: the music's state leaves the apps alone, the apps leave the status line alone; the apps are ordered again as their order changes")

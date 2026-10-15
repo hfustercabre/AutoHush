@@ -67,6 +67,16 @@ struct SafariWebAppPlayerTests {
         #expect(!setup.player.isUntested)
     }
 
+    @Test("its page's switch is released when asked (it's no longer the player), and again each time")
+    func releasesPage() async {
+        let setup = Setup(recipe: SafariWebAppPlayerTests.learned)
+        #expect(setup.page.releases == 0)
+        await setup.player.releasePage()
+        #expect(setup.page.releases == 1)
+        await setup.player.releasePage()
+        #expect(setup.page.releases == 2)
+    }
+
     @Test("it learns the button from the user saying it plays, then that it's paused; then reads the state from it")
     func learns() async throws {
         let setup = Setup()

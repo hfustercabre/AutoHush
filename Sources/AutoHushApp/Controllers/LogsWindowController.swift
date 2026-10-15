@@ -48,10 +48,9 @@ final class LogsWindowController: NSWindowController, NSWindowDelegate {
                comment: "Title of the window that shows what AutoHush logged (opened from Settings → Diagnostics), and the name of the file its Save… writes")
     }
 
-    var isOpen: Bool { window?.isOpen == true }
-
     func show() {
-        model.open()
+        // Shown again while open (or minimized): the search stays.
+        if window?.isOpen != true { model.open() }
         if !isPlaced {
             window?.center()
             isPlaced = true

@@ -43,22 +43,30 @@ package final class LogFile: @unchecked Sendable {
         queue.async { self.trim() }
     }
 
-    /// Adds `entry`, and tells whoever follows the log.
+    /// Adds `entry`, and tells whoever follows the log once it's written.
     package func append(_ entry: LogEntry) {
+        let following = observers.withLock { Array($0.values) }
         queue.async {
             self.write(Self.line(for: entry))
+            for observer in following { observer(entry) }
             if self.lastTrim.map({ self.now().timeIntervalSince($0) >= Self.trimInterval }) ?? true { self.trim() }
         }
-        for observer in observers.withLock({ Array($0.values) }) { observer(entry) }
     }
 
-    /// The lines kept since `date`, oldest first.
-    package func entries(since date: Date) -> [LogEntry] {
-        queue.sync { read().filter { $0.date >= date } }
+    /// The lines kept since `date`, oldest first, read on the log's own
+    /// queue: never on the caller's thread, as the file holds up to a day.
+    package func entries(since date: Date) async -> [LogEntry] {
+        await withCheckedContinuation { continuation in
+            queue.async(qos: .userInitiated) {
+                continuation.resume(returning: self.read().filter { $0.date >= date })
+            }
+        }
     }
 
-    /// Calls `handler` with each entry appended from now on, on the thread
-    /// that logs it, until `stopObserving` with the token returned.
+    /// Calls `handler` with each entry appended from now on, on the log's
+    /// queue once it's written, until `stopObserving` with the token
+    /// returned. So an entry that `entries(since:)` reads was heard before
+    /// it returned, and one it doesn't is heard after.
     package func observe(_ handler: @escaping @Sendable (LogEntry) -> Void) -> UUID {
         let token = UUID()
         observers.withLock { $0[token] = handler }
@@ -98,14 +106,16 @@ package final class LogFile: @unchecked Sendable {
         lastTrim = now()
         guard let data = try? Data(contentsOf: url) else { return }
         let cutoff = now().addingTimeInterval(-Self.keptFor)
-        var lines = String(decoding: data, as: UTF8.self).split(separator: "\n")
+        let lines = String(decoding: data, as: UTF8.self).split(separator: "\n")
             .filter { Self.entry(from: $0).map { $0.date >= cutoff } ?? false }
         var size = lines.reduce(0) { $0 + $1.utf8.count + 1 }
-        while size > Self.maxBytes, !lines.isEmpty {
-            size -= lines.removeFirst().utf8.count + 1
+        var dropped = 0
+        while size > Self.maxBytes, dropped < lines.count {
+            size -= lines[dropped].utf8.count + 1
+            dropped += 1
         }
         guard size != data.count else { return }
-        try? Data(lines.map { $0 + "\n" }.joined().utf8).write(to: url, options: .atomic)
+        try? Data(lines.dropFirst(dropped).map { $0 + "\n" }.joined().utf8).write(to: url, options: .atomic)
     }
 
     // MARK: - Lines

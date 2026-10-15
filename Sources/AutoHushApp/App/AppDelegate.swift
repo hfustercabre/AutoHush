@@ -219,6 +219,7 @@ extension AppDelegate: AppActions {
     func choosePlayer(_ bundleID: String) { chooseMusicPlayer(bundleID) }
     func openAddWebApp() { showAddWebApp() }
     func openAddApp() { showAddApp() }
+    func removeAddedApp(_ bundleID: String) { removeAddedAppAfterAsking(bundleID) }
     func reopenPlayer() { reopenChosenPlayer() }
     func unmutePlayer() {
         guard let player else { return }

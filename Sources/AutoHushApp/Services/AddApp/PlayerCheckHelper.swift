@@ -4,7 +4,8 @@ import CheckedPlayers
 /// AutoHush's own playercheck (in Contents/Helpers), which Add an App…
 /// runs: a check of an app in a process of its own, so a check that ends,
 /// is stopped or crashes takes its block on the mouse and keyboard with it;
-/// and the questions it answers about apps.
+/// and the questions it answers about apps. Its logs and caches go in
+/// AutoHush's own folders.
 struct PlayerCheckHelper: Sendable {
     let url: URL
 
@@ -18,31 +19,54 @@ struct PlayerCheckHelper: Sendable {
 
     /// Where its checks' logs go: beside AutoHush's own.
     static let logsFolder = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Logs/AutoHush/Checks")
+    /// What it learns about apps (their page's button, their words), in
+    /// AutoHush's caches.
+    static let cachesFolder = FileManager.default.homeDirectoryForCurrentUser
+        .appending(path: "Library/Caches/\(Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush")/PlayerCheck")
+    /// The folders every run is given.
+    static var folderArguments: [String] { ["--logs", logsFolder.path, "--caches", cachesFolder.path] }
 
-    /// Runs it with `arguments` until it ends: what it printed, and how it ended.
-    func run(_ arguments: [String]) async -> (status: Int32, output: String) {
+    /// How far back the Now Playing list is read: enough for the apps used
+    /// lately, without reading back to the Mac's start.
+    static let nowPlayingHours = 24
+    /// How long a question may take before it's given up (a check itself
+    /// has none: it's stopped by the user, or ends with AutoHush).
+    static let questionTimeout: TimeInterval = 30
+
+    /// Runs it with `arguments` until it ends, or for `timeout` at most:
+    /// what it printed, and how it ended (-1 when it couldn't start or
+    /// took too long).
+    func run(_ arguments: [String], timeout: TimeInterval = PlayerCheckHelper.questionTimeout) async -> (status: Int32, output: String) {
         let url = url
         return await Task.detached {
             let process = Process()
             process.executableURL = url
-            process.arguments = arguments
+            process.arguments = arguments + Self.folderArguments
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = FileHandle.nullDevice
             do { try process.run() } catch { return (-1, "") }
+            let late = DispatchWorkItem { if process.isRunning { process.terminate() } }
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: late)
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
-            return (process.terminationStatus, String(decoding: data, as: UTF8.self))
+            late.cancel()
+            let timedOut = process.terminationReason == .uncaughtSignal
+            return (timedOut ? -1 : process.terminationStatus, String(decoding: data, as: UTF8.self))
         }.value
     }
 
     /// The apps macOS keeps in Now Playing (from its log, which only an
     /// administrator can read), by bundle ID: whether each plays.
     func nowPlaying() async -> [String: Bool] {
-        let (status, output) = await run(["--now-playing-list"])
-        guard status == 0 else { return [:] }
+        let (status, output) = await run(["--now-playing-list", String(Self.nowPlayingHours)])
+        return status == 0 ? Self.nowPlaying(fromList: output) : [:]
+    }
+
+    /// `--now-playing-list`'s lines: "<bundle ID>\t<pid>\t<state>\t<1 if
+    /// active>\t<name>", then "#active\t<pid>".
+    static func nowPlaying(fromList output: String) -> [String: Bool] {
         var apps: [String: Bool] = [:]
-        // "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>", then "#active\t<pid>".
         for line in output.split(separator: "\n") where !line.hasPrefix("#") {
             let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
             guard fields.count >= 3, !fields[0].isEmpty, fields[2] != "Removed" else { continue }
@@ -56,9 +80,13 @@ struct PlayerCheckHelper: Sendable {
     func canPlay(_ urls: [URL]) async -> Set<String> {
         guard !urls.isEmpty else { return [] }
         let (status, output) = await run(["--now-playing-reasons"] + urls.map(\.path))
-        guard status == 0 else { return [] }
-        // "<path>\t<reason>\t<framework>\t<switches>", each empty when none.
-        return Set(output.split(separator: "\n").compactMap { line in
+        return status == 0 ? Self.canPlay(fromReasons: output) : []
+    }
+
+    /// `--now-playing-reasons`' lines: "<path>\t<reason>\t<framework>\t<switches>",
+    /// each empty when none.
+    static func canPlay(fromReasons output: String) -> Set<String> {
+        Set(output.split(separator: "\n").compactMap { line in
             let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
             return fields.count >= 2 && !fields[1].isEmpty ? String(fields[0]) : nil
         })
@@ -68,8 +96,13 @@ struct PlayerCheckHelper: Sendable {
     /// it needs; `nil` when it needs none or isn't running.
     func runsWithLaunchOption(_ url: URL) async -> Bool? {
         let (status, output) = await run(["--launch-option", url.path])
+        return status == 0 ? Self.runsWithLaunchOption(fromAnswer: output) : nil
+    }
+
+    /// `--launch-option`'s answer: "<option>\t<yes|no|…>".
+    static func runsWithLaunchOption(fromAnswer output: String) -> Bool? {
         let fields = output.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\t")
-        guard status == 0, fields.count == 2, !fields[0].isEmpty else { return nil }
+        guard fields.count == 2, !fields[0].isEmpty else { return nil }
         return fields[1] == "yes" ? true : fields[1] == "no" ? false : nil
     }
 
@@ -77,96 +110,34 @@ struct PlayerCheckHelper: Sendable {
     /// background, with the launch option it needs; or opens it so when it
     /// isn't running. Whether it did.
     func reopenWithLaunchOption(_ url: URL) async -> Bool {
-        await run(["--relaunch", url.path]).status == 0
+        await run(["--relaunch", url.path], timeout: 60).status == 0
     }
 
-    /// Starts a check of the app at `url`, blocking the mouse and keyboard
-    /// while it moves the app's window (Escape stops it): each line of its
-    /// report to `onLine` as it comes, its result once it ends.
+    /// Starts a check of the app at `appURL`, blocking the mouse and
+    /// keyboard while it moves the app's window (Escape stops it): each line
+    /// of its report to `onLine` as it comes, its result once it ends.
+    /// `taps`: false in AntiDot mode, which taps no sound (the app isn't
+    /// muted, and whether it plays is told by other signs).
     @MainActor
-    func check(_ appURL: URL, onLine: @escaping @MainActor @Sendable (String) -> Void) throws -> PlayerCheckRun {
+    func check(_ appURL: URL, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) throws -> PlayerCheckRun {
         let result = FileManager.default.temporaryDirectory.appending(path: "AutoHush check \(UUID().uuidString).json")
         try? FileManager.default.createDirectory(at: Self.logsFolder, withIntermediateDirectories: true)
-        return try PlayerCheckRun(executable: url, appURL: appURL, result: result, logs: Self.logsFolder, onLine: onLine)
+        return try PlayerCheckRun(executable: url, arguments: Self.checkArguments(appURL, result: result, taps: taps),
+                                  result: result, onLine: onLine)
     }
-}
 
-/// How a check ended.
-enum PlayerCheckEnd: Equatable {
-    /// It went through: what it found (`nil` if it wrote nothing).
-    case finished(CheckResult?)
-    /// Stopped (Stop, Escape, or its window closed): what it changed is put back.
-    case stopped
-    /// It didn't start: a permission it needs is missing (it checks them
-    /// all before doing anything).
-    case permissionMissing
-    /// It ended otherwise, with this exit status.
-    case failed(Int32)
-}
+    /// A check's arguments. --partial: the window said what's missing, and
+    /// the check goes on without what isn't needed.
+    static func checkArguments(_ appURL: URL, result: URL, taps: Bool) -> [String] {
+        [appURL.path, "--block-input", "--partial", "--result", result.path] + folderArguments + (taps ? [] : ["--no-taps"])
+    }
 
-/// A check running in the helper: its lines as they come, Stop, its end.
-@MainActor
-final class PlayerCheckRun {
-    private let process = Process()
-    private let resultFile: URL
-    private var stopped = false
-    private var ended: CheckedContinuation<PlayerCheckEnd, Never>?
-    private var end: PlayerCheckEnd?
-
-    init(executable: URL, appURL: URL, result: URL, logs: URL, onLine: @escaping @MainActor @Sendable (String) -> Void) throws {
-        resultFile = result
-        process.executableURL = executable
-        // --partial: the window said what's missing, and the user went on without it.
-        process.arguments = [appURL.path, "--block-input", "--partial", "--result", result.path, "--logs", logs.path]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        try process.run()
-        // Its lines, then its end, each on the main queue in turn, so the
-        // end never comes before the last line.
-        let handle = pipe.fileHandleForReading
-        let process = process
-        Thread.detachNewThread { [weak self] in
-            var pending = Data()
-            while case let data = handle.availableData, !data.isEmpty {
-                pending.append(data)
-                while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
-                    let line = String(decoding: pending[..<newline], as: UTF8.self)
-                    pending.removeSubrange(...newline)
-                    DispatchQueue.main.async { MainActor.assumeIsolated { onLine(line) } }
-                }
-            }
-            process.waitUntilExit()
-            let status = process.terminationStatus
-            DispatchQueue.main.async { MainActor.assumeIsolated { self?.finish(status) } }
+    /// The newest check's log, to show after a check couldn't finish.
+    static var newestLog: URL? {
+        let files = (try? FileManager.default.contentsOfDirectory(at: logsFolder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        return files.max { lhs, rhs in
+            let date = { (url: URL) in (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
+            return date(lhs) < date(rhs)
         }
-    }
-
-    /// Stops it: it plays the app again if a test paused it, and puts its
-    /// window and switches back, first.
-    func stop() {
-        guard process.isRunning else { return }
-        stopped = true
-        process.terminate()
-    }
-
-    /// How it ended, once it has.
-    func waitForEnd() async -> PlayerCheckEnd {
-        if let end { return end }
-        return await withCheckedContinuation { ended = $0 }
-    }
-
-    private func finish(_ status: Int32) {
-        let end: PlayerCheckEnd
-        switch status {
-        case 0:
-            end = .finished((try? Data(contentsOf: resultFile)).flatMap { try? JSONDecoder().decode(CheckResult.self, from: $0) })
-        case 3: end = .permissionMissing
-        default: end = stopped || status == 143 || status == 130 ? .stopped : .failed(status)
-        }
-        try? FileManager.default.removeItem(at: resultFile)
-        self.end = end
-        ended?.resume(returning: end)
-        ended = nil
     }
 }

@@ -29,6 +29,15 @@ struct PageAccessTests {
         #expect(PageAccess.interface(ofAppAt: webApp) == .chromiumWebApp(browserID: "com.google.Chrome"))
     }
 
+    @Test("Chromium inside Qt shows its page as it is, but its words are current only in sight")
+    func qtWebEngine() throws {
+        let qt = try app(frameworks: ["QtWebEngineCore"])
+        defer { try? FileManager.default.removeItem(at: qt) }
+        #expect(PageAccess.interface(ofAppAt: qt) == .qtWebEngine)
+        #expect(PageAccess.switches(for: .qtWebEngine).isEmpty)
+        #expect(!PageAccess(interface: .qtWebEngine, switchAttribute: nil).wordsCurrentOutOfSight)
+    }
+
     @Test("the switches tried for each, in order, and what each page is like")
     func switches() {
         #expect(PageAccess.switches(for: .webKit).isEmpty)

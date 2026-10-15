@@ -4,7 +4,7 @@ import AutoHushKit
 
 /// Where the logs window reads AutoHush's log: `LogFile`; tests stand in.
 protocol LogSource: AnyObject, Sendable {
-    func entries(since date: Date) -> [LogEntry]
+    func entries(since date: Date) async -> [LogEntry]
     func observe(_ handler: @escaping @Sendable (LogEntry) -> Void) -> UUID
     func stopObserving(_ token: UUID)
 }
@@ -14,6 +14,7 @@ extension LogFile: LogSource {}
 /// What the logs window shows: AutoHush's log since this launch, or over
 /// the last 24 hours (earlier launches too), never further back; all of it
 /// or only the problems, narrowed by a search, new lines added as they come.
+/// The log is read off the main thread; what's shown stays meanwhile.
 @MainActor
 @Observable
 final class LogsModel {
@@ -33,17 +34,30 @@ final class LogsModel {
     var range = Range.thisLaunch {
         didSet { if range != oldValue { reload() } }
     }
-    var levels = Levels.all
-    var search = ""
+    var levels = Levels.all {
+        didSet { if levels != oldValue { refilter() } }
+    }
+    var search = "" {
+        didSet { if search != oldValue { refilter() } }
+    }
     /// The list scrolls to each new line as it comes.
     var followsNewEntries = true
     private(set) var entries: [LogEntry] = []
+    /// The lines shown: the problems only when asked, matching the search.
+    /// Filtered again only when the filters change; a new line is added.
+    private(set) var shown: [LogEntry] = []
+    /// The log is being read.
+    private(set) var isLoading = false
 
     /// When this copy of AutoHush opened.
     @ObservationIgnored let launch: Date
     @ObservationIgnored private let source: (any LogSource)?
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var observation: UUID?
+    /// Counts the reads, so only the last one started is shown.
+    @ObservationIgnored private var reads = 0
+    /// Lines heard while the log is read: kept, unless the read has them.
+    @ObservationIgnored private var heardMeanwhile: [LogEntry] = []
 
     init(source: (any LogSource)? = LogFile.shared, launch: Date = LogsModel.launchDate, now: @escaping () -> Date = { Date() }) {
         self.source = source
@@ -60,23 +74,17 @@ final class LogsModel {
         return range == .thisLaunch ? max(launch, dayAgo) : dayAgo
     }
 
-    /// The lines shown: the problems only when asked, matching the search.
-    var shown: [LogEntry] {
-        let query = search.trimmingCharacters(in: .whitespaces)
-        return entries.filter { entry in
-            (levels == .all || entry.level.isProblem)
-                && (query.isEmpty || entry.message.localizedStandardContains(query)
-                    || Self.area(of: entry.category).localizedStandardContains(query))
-        }
-    }
-
-    /// The window opens: its lines, then each new one as it's logged.
+    /// The window opens: the search empty and every level again, its
+    /// lines, then each new one as it's logged.
     func open() {
-        reload()
-        guard observation == nil, let source else { return }
-        observation = source.observe { [weak self] entry in
-            Task { @MainActor in self?.append(entry) }
+        search = ""
+        levels = .all
+        if observation == nil, let source {
+            observation = source.observe { [weak self] entry in
+                Task { @MainActor in self?.append(entry) }
+            }
         }
+        reload()
     }
 
     /// The window closes: no more following.
@@ -85,16 +93,52 @@ final class LogsModel {
         observation = nil
     }
 
+    /// Reads the lines since `since` off the main thread, then shows them
+    /// with those logged meanwhile that the read missed.
     func reload() {
-        entries = source?.entries(since: since) ?? []
+        guard let source else { return }
+        let since = since
+        if !isLoading { heardMeanwhile = [] }
+        reads += 1
+        let read = reads
+        isLoading = true
+        Task {
+            let lines = await source.entries(since: since)
+            guard read == reads else { return } // a later read shows instead
+            let missed = heardMeanwhile.filter { heard in
+                heard.date >= since && !lines.reversed().contains { $0.isSameLine(as: heard) }
+            }
+            entries = lines + missed
+            heardMeanwhile = []
+            isLoading = false
+            refilter()
+        }
     }
 
     /// A line just logged; those older than `since` go meanwhile.
     func append(_ entry: LogEntry) {
         let since = since
         guard entry.date >= since else { return }
-        if let first = entries.first, first.date < since { entries.removeAll { $0.date < since } }
+        if isLoading { heardMeanwhile.append(entry) }
+        if let first = entries.first, first.date < since {
+            entries.removeAll { $0.date < since }
+            shown.removeAll { $0.date < since }
+        }
         entries.append(entry)
+        if matches(entry, query: query) { shown.append(entry) }
+    }
+
+    private var query: String { search.trimmingCharacters(in: .whitespaces) }
+
+    private func refilter() {
+        let query = query
+        shown = entries.filter { matches($0, query: query) }
+    }
+
+    private func matches(_ entry: LogEntry, query: String) -> Bool {
+        (levels == .all || entry.level.isProblem)
+            && (query.isEmpty || entry.message.localizedStandardContains(query)
+                || Self.area(of: entry.category).localizedStandardContains(query))
     }
 
     /// The lines shown, as text to copy or save: the date and time, the
@@ -135,5 +179,14 @@ final class LogsModel {
         if category.contains("Update") { return "Updates" }
         if category == AutoHushLogger.settings.category || category.contains("LaunchAtLogin") { return "Settings" }
         return "App"
+    }
+}
+
+private extension LogEntry {
+    /// The same line as `other`, as read back from the file, which keeps
+    /// times to the millisecond.
+    func isSameLine(as other: LogEntry) -> Bool {
+        abs(date.timeIntervalSince(other.date)) < 0.001 && level == other.level
+            && category == other.category && message == other.message
     }
 }

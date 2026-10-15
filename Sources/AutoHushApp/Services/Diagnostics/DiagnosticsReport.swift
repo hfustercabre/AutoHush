@@ -1,17 +1,20 @@
 import Foundation
 import AutoHushKit
+import CheckedPlayers
 
 /// What Settings → Diagnostics shows: how AutoHush is doing, every app with
 /// its sound on and how AutoHush judges it, then a section each for the
 /// music player, the detection, the permissions, AutoHush and the Mac; and
 /// all of it as text, for Copy Report.
 enum DiagnosticsReport {
-    /// `bundlePath` finds an app's bundle, for its icon.
+    /// `bundlePath` finds an app's bundle, for its icon; `ways`, the ways an
+    /// app added with Add an App is controlled by (its kept setup's).
     static func snapshot(
         activeAudio: [ActiveAudioReport.Entry],
         status: AppStatus,
         facts: DiagnosticsFacts,
-        bundlePath: (String) -> String? = { _ in nil }
+        bundlePath: (String) -> String? = { _ in nil },
+        ways: (String) -> [PlayerSetup.Way]? = DiagnosticsReport.keptWays
     ) -> DiagnosticsSnapshot {
         let apps = activeAudio.map { entry in
             DiagnosticsSnapshot.App(
@@ -23,7 +26,7 @@ enum DiagnosticsReport {
             )
         }
         let overview = overview(status: status)
-        let sections = sections(status: status, facts: facts)
+        let sections = sections(status: status, facts: facts, ways: ways)
         let appsSummary = apps.isEmpty
             ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps")
             : apps.map(\.name).formatted(.list(type: .and, width: .narrow))
@@ -73,12 +76,14 @@ enum DiagnosticsReport {
 
     private typealias Row = DiagnosticsSnapshot.Row
 
-    private static func sections(status: AppStatus, facts: DiagnosticsFacts) -> [DiagnosticsSnapshot.Section] {
-        [player(status: status, facts: facts), detection(status: status, facts: facts),
+    private static func sections(status: AppStatus, facts: DiagnosticsFacts,
+                                 ways: (String) -> [PlayerSetup.Way]?) -> [DiagnosticsSnapshot.Section] {
+        [player(status: status, facts: facts, ways: ways), detection(status: status, facts: facts),
          permissions(facts: facts), autoHush(status: status, facts: facts), mac(facts: facts)]
     }
 
-    private static func player(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
+    private static func player(status: AppStatus, facts: DiagnosticsFacts,
+                               ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
         let title = String(localized: "Media Player", comment: "Settings → Diagnostics: heading")
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
@@ -88,7 +93,7 @@ enum DiagnosticsReport {
         let name = player.isInstalled
             ? [player.name, facts.playerVersion].compactMap { $0 }.joined(separator: " ")
             : "\(player.name) · \(PlayerOption.notInstalledLabel)"
-        let state = describe(status.playback)
+        let state = describe(status.playback, mutes: player.pausesByMuting)
         var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
             Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
@@ -96,6 +101,12 @@ enum DiagnosticsReport {
             Row(label: String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player"),
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
+        // An app added with Add an App: its ways, the first tried first.
+        if player.kind == .checkedApp, let ways = ways(player.bundleID), !ways.isEmpty {
+            rows.append(Row(label: String(localized: "Controlled by",
+                                          comment: "Diagnostics: how AutoHush pauses and plays the media player, an app added with Add an App: the ways its check found, one a line, the first tried first (AppleScript, Its playback menu…), or “Muted instead of paused”"),
+                            value: ways.map(describe).joined(separator: "\n")))
+        }
         if let learned = facts.playerLearned {
             rows.append(Row(label: String(localized: "Play/Pause button learned",
                                           comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
@@ -268,16 +279,37 @@ enum DiagnosticsReport {
         text.prefix(1).localizedUppercase + text.dropFirst()
     }
 
-    /// The music player's state, as Diagnostics shows it.
-    private static func describe(_ playback: PlaybackState) -> String {
+    /// The music player's state, as Diagnostics shows it; `mutes`: muted
+    /// instead of paused.
+    private static func describe(_ playback: PlaybackState, mutes: Bool) -> String {
         switch playback {
         case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
+        case .pausedByMonitor where mutes:
+            return String(localized: "Muted by AutoHush", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted)")
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
         case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }
+    }
+
+    /// A way an app added with Add an App is controlled by, as its check
+    /// names it.
+    private static func describe(_ way: PlayerSetup.Way) -> String {
+        switch way {
+        case .script: AddAppText.wayTitle(.script)
+        case .menu: AddAppText.wayTitle(.menu)
+        case .page: AddAppText.wayTitle(.page)
+        case .panel: AddAppText.wayTitle(.panel)
+        case .mute: PlayerOption.mutedInsteadLabel
+        }
+    }
+
+    /// The ways the app with `bundleID` is controlled by, as kept when it
+    /// was added; `nil` for any other player.
+    static func keptWays(_ bundleID: String) -> [PlayerSetup.Way]? {
+        DefaultsPlayerSetupStore().setups().first { $0.bundleID == bundleID }?.ways
     }
 
     /// How AutoHush tells that apps play, right now.

@@ -56,10 +56,14 @@ package protocol MusicPlayer: Sendable {
     /// Reports the player's state changes (and its quitting) once started.
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving
-    /// AutoHush quits: whatever the player turned on in its app to control it
-    /// (an Electron or Chromium app's switch for assistive tools) goes back
-    /// off, when `releasesOnQuit`.
+    /// It's no longer the player (AutoHush quits, or another player is
+    /// chosen and AutoHush holds no pause in it): whatever it turned on in
+    /// its app to control it (an Electron or Chromium app's switch for
+    /// assistive tools) goes back off, and a mute it holds is lifted, when
+    /// `releasesOnQuit`. It can be called at any time; chosen again, the
+    /// player turns on what it needs again.
     func release() async
+    /// Whether `release` has anything to undo.
     var releasesOnQuit: Bool { get }
     /// It's never paused, but muted while other apps play (an app added with
     /// Add an App that no way pauses): the menu says "Muted", with Unmute.

@@ -18,6 +18,10 @@ struct DiagnosticsSettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
+                    // At the top, not beside the buttons at its foot: there
+                    // it left them too little room in several languages.
+                    Text("Updated as it happens.", comment: "Settings → Diagnostics, at the top of the page: what it shows is kept up to date")
+                        .captionStyle()
                     if let diagnostics = model.diagnostics {
                         overview(diagnostics.overview)
                         part(.apps, title: DiagnosticsReport.appsTitle, symbol: "speaker.wave.2", summary: diagnostics.appsSummary) {
@@ -181,28 +185,20 @@ struct DiagnosticsSettingsView: View {
 
     private var footer: some View {
         BottomBar(showsDivider: partsHeight > roomHeight + 1) {
-            if copied {
-                Label {
-                    Text(verbatim: Self.copiedText)
-                } icon: {
-                    Image(systemName: "checkmark")
-                }
-                .font(.appCallout)
-                .foregroundStyle(.appSecondary)
-            } else {
-                Text("Updated as it happens.", comment: "Settings → Diagnostics, beside Copy Report")
-                    .font(.appCallout)
-                    .foregroundStyle(.appSecondary)
-            }
             Spacer()
             Button { model.actions?.showLogs() } label: {
                 Text("Show Logs…", comment: "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs")
             }
             .buttonStyle(.chip)
+            // "Copied" for a moment after a click, as the logs window's Copy Logs.
             Button {
                 copyReport()
             } label: {
-                Text("Copy Report", comment: "Settings → Diagnostics: puts the report on the clipboard")
+                if copied {
+                    Text(verbatim: Self.copiedText)
+                } else {
+                    Text("Copy Report", comment: "Settings → Diagnostics: puts the report on the clipboard")
+                }
             }
             .buttonStyle(.chip)
             .disabled(model.diagnostics == nil)

@@ -1,4 +1,5 @@
 import AppKit
+import PlayerCheckKit
 import AutoHushKit
 import MenuPlayers
 import WebAppPlayers
@@ -7,12 +8,12 @@ import WebAppPlayers
 
 /// The app's own words for Play and Pause, in every language it has, as
 /// AutoHush finds them in any app (`PlayPauseWords.found`). Read once per
-/// copy and version (kept in ~/Library/Caches/PlayerCheck/words.json); nil
-/// when none show.
+/// copy and version (kept in words.json, in --caches' folder); nil when
+/// none show.
 func appWords(of url: URL) -> (words: PlayPauseWords, source: String)? {
     struct Kept: Codable { var play: [String]; var pause: [String]; var source: String }
     let files = FileManager.default
-    let cacheFile = files.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/PlayerCheck/words.json")
+    let cacheFile = cachesFolder.appendingPathComponent("words.json")
     let key = "\(url.path)#\(Bundle(url: url)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")"
     var cache = (try? JSONDecoder().decode([String: Kept?].self, from: Data(contentsOf: cacheFile))) ?? [:]
     if let kept = cache[key] {
@@ -48,18 +49,26 @@ func appWords(of url: URL) -> (words: PlayPauseWords, source: String)? {
 @MainActor var playPauseWords: Set<String> { playWords.union(pauseWords) }
 
 /// Whether a button's name is one of `words`, alone or first ("Pause
-/// current", SoundCloud's player bar; "Play Chill House", a tile, also
+/// current", a web app's player bar; "Play Chill House", a tile, also
 /// matches: the bar wins by its slider).
 func named(_ label: String, _ words: Set<String>) -> Bool {
     let label = label.lowercased()
     return words.contains { label == $0 || label.hasPrefix($0 + " ") }
 }
 
-/// What an element is called: as AutoHush names a web app's button, its
-/// description, else its title; else its value (a Flutter app's pressable
-/// text keeps its words there).
-func label(of element: AXUIElement) -> String {
-    [element.text(kAXDescriptionAttribute), element.title, element.text(kAXValueAttribute)].first { !$0.isEmpty } ?? ""
+/// What an element is called, as AutoHush names a page's button
+/// (`AccessibilityWebPage.label`): its description, else its title; a
+/// Flutter app's item, else its value (a pressable text keeps its words there).
+func label(of element: AXUIElement) -> String { AccessibilityWebPage.label(of: element, access: pageAccess) }
+
+/// A button's or a menu item's label as the log shows it: its Play or Pause
+/// word only (`PrivateText.label`), from this tool's lists, the app's own
+/// words and the site's learned ones; never what it plays.
+@MainActor func shown(_ label: String) -> String {
+    let learnedWords = [learned?.recipe, savedRecipe].compactMap { $0 }.flatMap { [$0.playLabel, $0.pauseLabel] }
+        .filter { !$0.contains(" ") }
+    let own = (ownWords?.play ?? []).union(ownWords?.pause ?? [])
+    return PrivateText.label(label, words: playPauseWords.union(own).union(learnedWords))
 }
 
 /// What a page button's words say of the state: by the learned recipe (the

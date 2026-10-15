@@ -50,6 +50,12 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     }
 }
 
+extension PlayerSetup {
+    /// The option an Electron app is opened with so its page takes presses
+    /// while its window is covered or on another desktop.
+    package static let launchOption = "--disable-backgrounding-occluded-windows"
+}
+
 extension PlayerSetup.Way {
     package var isPanel: Bool { if case .panel = self { true } else { false } }
 }
@@ -61,33 +67,52 @@ package protocol PlayerSetupStore: Sendable {
     func forget(_ bundleID: String)
 }
 
+extension PlayerSetupStore {
+    /// Changes the kept setup of `bundleID`, if one is kept (a setup the
+    /// user removed isn't added back).
+    package func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
+        guard var setup = setups().first(where: { $0.bundleID == bundleID }) else { return }
+        change(&setup)
+        save(setup)
+    }
+}
+
 /// The setups in AutoHush's preferences, each as JSON by bundle ID.
 package struct DefaultsPlayerSetupStore: PlayerSetupStore {
     package static let key = "checkedPlayerSetups"
     private static let lock = NSLock()
+    /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
+    private let suiteName: String?
 
-    package init() {}
+    package init(suiteName: String? = nil) {
+        self.suiteName = suiteName
+    }
 
+    private var defaults: UserDefaults { suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
+
+    /// The setups that can be read, by name; one that can't is left out.
     package func setups() -> [PlayerSetup] {
-        let stored = UserDefaults.standard.dictionary(forKey: Self.key) as? [String: Data] ?? [:]
+        let stored = defaults.dictionary(forKey: Self.key) as? [String: Data] ?? [:]
         return stored.values.compactMap { try? JSONDecoder().decode(PlayerSetup.self, from: $0) }
             .sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
     }
 
     package func save(_ setup: PlayerSetup) {
         guard let data = try? JSONEncoder().encode(setup) else { return }
+        let defaults = defaults
         Self.lock.withLock {
-            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
             stored[setup.bundleID] = data
-            UserDefaults.standard.set(stored, forKey: Self.key)
+            defaults.set(stored, forKey: Self.key)
         }
     }
 
     package func forget(_ bundleID: String) {
+        let defaults = defaults
         Self.lock.withLock {
-            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
             guard stored.removeValue(forKey: bundleID) != nil else { return }
-            UserDefaults.standard.set(stored, forKey: Self.key)
+            defaults.set(stored, forKey: Self.key)
         }
     }
 }

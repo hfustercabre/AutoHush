@@ -38,6 +38,8 @@ package actor VLCPlayer: MusicPlayer {
     /// The last volume read, in VLC's numbers and AutoHush's, so setting it
     /// back restores VLC's exact number rather than a rounded one.
     private var lastVolume: (vlc: Int, volume: Int)?
+    /// The last read's failure, logged once until a read works or fails otherwise.
+    private var lastFailure: String?
 
     /// `channel`: VLC's Apple events; tests stand in for it.
     package init(channel: (any AppleEventSending)? = nil) {
@@ -54,11 +56,18 @@ package actor VLCPlayer: MusicPlayer {
         guard let pid = channel.processIdentifier() else { return .notRunning }
         do {
             let playing = try await get(Code.playingProperty, from: pid).directObjectBoolean
-            guard playing == false else { return playing == true ? .playing : .unknown }
+            guard playing == false else {
+                lastFailure = nil
+                return playing == true ? .playing : .unknown
+            }
             let time = try await get(Code.currentTimeProperty, from: pid).directObjectInteger
+            lastFailure = nil
             return Self.state(playing: false, currentTime: time)
         } catch {
-            logger.error("VLC playerState failed: \(error)")
+            // Polled once a second: a read that keeps failing is logged once.
+            let failure = String(describing: error)
+            if failure != lastFailure { logger.error("VLC playerState failed: \(error)") }
+            lastFailure = failure
             return .unknown
         }
     }

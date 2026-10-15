@@ -16,9 +16,13 @@
 //   playercheck <app> --block-input                    the same, blocking clicks, scrolling and keys while it moves
 //                                                      the window and presses (Escape stops the check)
 //   playercheck <app> --read-only                      checks it without pressing anything
-//   playercheck <app> … --result <file> [--logs <folder>]
-//                                                      also writes what it found as JSON (CheckResult), for AutoHush's
-//                                                      Add an App…, and its log in that folder
+//   playercheck <app> … --result <file>                also writes what it found as JSON (CheckResult), for AutoHush's
+//                                                      Add an App…
+//   playercheck <app> … --partial [--no-taps]          goes on without Audio Recording or Automation (Accessibility is
+//                                                      enough); --no-taps (AntiDot mode) taps no sound at all
+//   playercheck <app> … --developer                    the report also says how a built-in player of its kind would be
+//                                                      made, with AutoHush's own types (the Player Check app passes it;
+//                                                      Add an App… doesn't, so its report ends with what was found)
 //   playercheck <app> --play|--pause [--via script|menu|page|panel]
 //                                                      just plays or pauses it, by that way (reading only what it
 //                                                      needs) or the first that works
@@ -32,7 +36,11 @@
 //                                                      runs with it: "<option or nothing>\t<yes|no|not running>"
 //   playercheck --relaunch <app>                       quits it, then opens it again with that option, in the background
 //   playercheck --window-state <app>                   the state its main window is in now (visible, covered, …)
-// Each check, press or relaunch is also logged in ~/Library/Logs/PlayerCheck (the last 50).
+//   any of them … [--logs <folder>] [--caches <folder>]
+//                                                      where its log and what it keeps between runs go (AutoHush passes
+//                                                      its own folders), instead of ~/Library/Logs/PlayerCheck and
+//                                                      ~/Library/Caches/PlayerCheck
+// Each check, press or relaunch is also logged (the last 50), never with the home folder's path or what was playing.
 // A target of AutoHush's package, using AutoHush's own code wherever the two
 // do the same thing (Apple events, menus, learned page buttons, sound).
 // Build: swift build -c release --product playercheck
@@ -43,7 +51,10 @@ import AutoHushKit
 // writing then fails quietly, and a test that paused the app still plays
 // it again and puts back what it changed, instead of being killed.
 signal(SIGPIPE, SIG_IGN)
-atexit { log("(ended)") }
+atexit {
+    nowPlayingReports.stop()
+    log("(ended)")
+}
 
 MainActor.assumeIsolated {
     switch CommandLine.arguments.dropFirst().first {

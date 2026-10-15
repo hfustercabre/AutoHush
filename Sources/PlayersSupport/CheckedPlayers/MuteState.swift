@@ -8,7 +8,8 @@ import AutoHushKit
 /// paused it: a gap between songs is shorter) and plays again, the user
 /// played it to hear it: the mute is lifted and it reads as playing, as a
 /// player the user resumes, which AutoHush then leaves alone until the other
-/// apps stop. After a sleep (`forget`), the mute is lifted once it stops.
+/// apps stop. After a sleep (`forget`), the mute is lifted once it has
+/// stopped for `stopTime`.
 struct MuteState: Sendable, Equatable {
     static let stopTime: TimeInterval = 3
 
@@ -27,7 +28,8 @@ struct MuteState: Sendable, Equatable {
     }
 
     /// AutoHush no longer holds the pause the mute stands for (the Mac
-    /// slept): it's lifted once the app stops, never while it plays on.
+    /// slept): it's lifted once the app has stopped for `stopTime`, never
+    /// while it plays on.
     mutating func forget() {
         if isMuted { forgotten = true }
     }

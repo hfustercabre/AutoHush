@@ -9,23 +9,25 @@ import CheckedPlayers
 @MainActor
 private final class FakeCheckRun: CheckRunning {
     var stopped = false
+    /// Stopped, it ends at once; else it puts things back first, until `finish`.
+    var endsWhenStopped = true
     private var end: PlayerCheckEnd?
-    private var waiting: CheckedContinuation<PlayerCheckEnd, Never>?
+    private var waiting: [CheckedContinuation<PlayerCheckEnd, Never>] = []
 
     func stop() {
         stopped = true
-        finish(.stopped)
+        if endsWhenStopped { finish(.stopped) }
     }
 
     func finish(_ end: PlayerCheckEnd) {
         self.end = end
-        waiting?.resume(returning: end)
-        waiting = nil
+        waiting.forEach { $0.resume(returning: end) }
+        waiting = []
     }
 
     func waitForEnd() async -> PlayerCheckEnd {
         if let end { return end }
-        return await withCheckedContinuation { waiting = $0 }
+        return await withCheckedContinuation { waiting.append($0) }
     }
 }
 
@@ -44,10 +46,18 @@ private final class World {
     var reopened = 0
     var warnings = 0
     var used: [CheckResult] = []
+    var asksToReopen: [Bool] = []
     var closed = 0
     var choosers = 0
+    var warningsClosed = 0
     var panel: [String] = []
-    let run = FakeCheckRun()
+    var antiDot = false
+    var taps: [Bool] = []
+    var audioRequests = 0
+    var exists = true
+    var run = FakeCheckRun()
+    var runs = 0
+    let kept = KeptCheckStore(defaults: UserDefaults(suiteName: "AddAppModelTests-\(UUID().uuidString)")!)
 
     var services: AddAppServices {
         AddAppServices(
@@ -59,6 +69,7 @@ private final class World {
             showChooser: { self.choosers += 1 },
             traits: { _ in self.traits },
             isRunning: { _ in self.running },
+            exists: { _ in self.exists },
             open: { app, option in
                 self.opened.append((app.bundleID, option))
                 self.running = true
@@ -74,16 +85,24 @@ private final class World {
                 if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
                 return permissions
             },
-            request: { _, _, _ in },
+            request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
+            antiDot: { self.antiDot },
             isPlaying: { _, _ in self.playing },
-            startCheck: { _, onLine in
+            startCheck: { _, taps, onLine in
+                self.taps.append(taps)
+                self.runs += 1
                 onLine("Press Test")
                 return self.run
             },
             showWarning: { self.warnings += 1 },
+            closeWarning: { self.warningsClosed += 1 },
             checkStarted: { _ in self.panel.append("shown") },
             checkEnded: { self.panel.append("hidden") },
-            use: { self.used.append($0) },
+            keptChecks: kept,
+            use: { result, asks in
+                self.used.append(result)
+                self.asksToReopen.append(asks)
+            },
             close: { self.closed += 1 },
             now: { self.now },
             sleep: { _ in await Task.yield() }
@@ -99,9 +118,10 @@ struct AddAppModelTests {
         setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                            ways: [.panel(rememberedRow: nil)]))
 
-    /// A model at its first step, its apps read.
+    /// A model at its first step, its window open, its apps read.
     private func model(_ world: World) async -> AddAppModel {
         let model = AddAppModel(services: world.services)
+        model.reset()
         await model.loadApps()
         return model
     }
@@ -171,7 +191,7 @@ struct AddAppModelTests {
         let model = await model(world)
         model.continueWithApp()
         await TestWait.until { model.stage == .allowing && model.permissions.audio == .denied }
-        #expect(!model.permissions.neededAllowed && model.permissions.missingOptional == [.audioRecording])
+        #expect(!model.permissions.neededAllowed && model.permissions.missingOptional(antiDot: false) == [.audioRecording])
         model.continueWithoutAll()
         #expect(model.stage == .allowing)
         world.permissions.accessibility = true
@@ -247,13 +267,14 @@ struct AddAppModelTests {
         #expect(world.warnings == 1 && model.stage == .ready)
         model.startCheck()
         #expect(model.stage == .checking && model.mark(of: .check) == .busy)
-        #expect(model.progress.stage == .testing && world.panel == ["shown"])
+        await TestWait.until { world.panel == ["shown"] }
+        #expect(model.progress.stage == .testing && world.taps == [true])
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
         #expect(world.panel == ["shown", "hidden"])
         #expect(model.mark(of: .check) == .done && model.mark(of: .use) == .current)
         model.use()
-        #expect(world.used == [result] && world.closed == 1)
+        #expect(world.used == [result] && world.closed == 1 && world.asksToReopen == [true])
     }
 
     @Test("a stopped check can run again; a check that found no way says so")
@@ -261,6 +282,7 @@ struct AddAppModelTests {
         let world = World()
         let model = await ready(world)
         model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
         model.stopCheck()
         await TestWait.until { model.stage == .stopped }
         #expect(world.run.stopped && model.mark(of: .check) == .failed)
@@ -270,6 +292,7 @@ struct AddAppModelTests {
         let none = World()
         let empty = await ready(none)
         empty.startCheck()
+        await TestWait.until { none.panel == ["shown"] }
         none.run.finish(.finished(CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .notThere)], setup: nil)))
         await TestWait.until { empty.result != nil }
         #expect(empty.mark(of: .use) == .failed)
@@ -282,6 +305,7 @@ struct AddAppModelTests {
         let world = World()
         let model = await ready(world)
         model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
         world.permissions.audio = .denied
         world.run.finish(.permissionMissing)
         await TestWait.until { model.stage == .allowing }
@@ -293,6 +317,7 @@ struct AddAppModelTests {
         let world = World()
         let model = await ready(world)
         model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
         world.permissions.audio = .denied
         world.run.finish(.finished(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .none)], setup: nil)))
         await TestWait.until { model.result != nil && !model.canMute }
@@ -310,8 +335,145 @@ struct AddAppModelTests {
         let world = World()
         let model = await ready(world)
         model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
         model.windowClosed()
         #expect(world.run.stopped)
         await TestWait.until { world.panel == ["shown", "hidden"] }
+    }
+
+    @Test("closing the window closes the warning, and its Start then runs nothing")
+    func closingWithTheWarning() async {
+        let world = World()
+        let model = await ready(world)
+        model.continueToCheck()
+        model.windowClosed()
+        #expect(world.warningsClosed == 1)
+        model.startCheck()
+        #expect(model.stage == .ready && world.runs == 0)
+    }
+
+    @Test("a check stopped by closing the window puts things back before the next starts; its end hides the panel only then")
+    func overlappingChecks() async {
+        let world = World()
+        let model = await ready(world)
+        let first = world.run
+        first.endsWhenStopped = false
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        model.windowClosed()
+        #expect(first.stopped && model.isEndingLastCheck)
+        // Opened again, the next check waits for the first.
+        world.run = FakeCheckRun()
+        model.reset()
+        await model.loadApps()
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await Task.yield()
+        #expect(model.stage == .checking && world.runs == 1)
+        first.finish(.stopped)
+        await TestWait.until { world.runs == 2 }
+        await TestWait.until { !model.isEndingLastCheck }
+        #expect(world.panel.filter { $0 == "shown" }.count == 2 && world.panel.last == "shown")
+    }
+
+    @Test("the app quitting while it's waited for says so; Open opens it and waits again")
+    func appQuits() async {
+        let world = World()
+        let model = await model(world)
+        model.continueWithApp()
+        await TestWait.until { model.currentStep == .play }
+        world.running = false
+        await TestWait.until { model.stage == .playTimedOut }
+        #expect(model.appQuit && model.mark(of: .play) == .failed)
+        model.openAppAgain()
+        await TestWait.until { model.currentStep == .play && !model.appQuit }
+        #expect(world.opened.count == 1)
+    }
+
+    @Test("a check that couldn't finish says why: the app quit, it's gone, or the log")
+    func failureReasons() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.running = false
+        world.run.finish(.failed(1))
+        await TestWait.until { model.stage == .failed }
+        #expect(model.failureReason == .appQuit)
+
+        let other = World()
+        let failing = await ready(other)
+        failing.startCheck()
+        await TestWait.until { other.panel == ["shown"] }
+        other.run.finish(.failed(1))
+        await TestWait.until { failing.stage == .failed }
+        #expect(failing.failureReason == .other)
+    }
+
+    @Test("a finished check is kept until it's used: the window opened again shows it")
+    func keptResult() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(result))
+        await TestWait.until { model.result != nil }
+        model.windowClosed()
+        let again = AddAppModel(services: world.services)
+        again.reset()
+        #expect(again.result == result && again.chosen?.bundleID == "com.example.player")
+        again.use()
+        #expect(world.kept.load() == nil && world.used == [result])
+    }
+
+    @Test("after Skip at the Reopen step, Use doesn't ask to reopen it")
+    func skippedReopen() async {
+        let world = World()
+        world.traits.needsLaunchOption = true
+        world.runsWithOption = false
+        world.playing = true
+        let model = await model(world)
+        model.continueWithApp()
+        await TestWait.until { model.stage == .reopenAsked }
+        model.skipReopen()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(result))
+        await TestWait.until { model.result != nil }
+        model.use()
+        #expect(world.asksToReopen == [false])
+    }
+
+    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and nothing can be muted")
+    func antiDot() async {
+        let world = World()
+        world.antiDot = true
+        world.permissions = CheckPermissions(accessibility: true, audio: .denied)
+        world.playing = true
+        let model = await model(world)
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready } // all it uses is allowed
+        #expect(model.permissions.missingOptional(antiDot: true).isEmpty)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        #expect(world.taps == [false])
+        world.permissions.audio = .allowed
+        world.run.finish(.finished(CheckResult(ways: [], setup: nil)))
+        await TestWait.until { model.result != nil }
+        #expect(!model.canMute)
+    }
+
+    @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen")
+    func audioAfterReopen() async {
+        let world = World()
+        world.permissions = CheckPermissions(accessibility: true, audio: .denied)
+        let model = await model(world)
+        model.continueWithApp()
+        await TestWait.until { model.stage == .allowing && model.permissions.audio == .denied }
+        #expect(!model.audioAwaitsReopen)
+        model.request(.audioRecording)
+        #expect(model.audioAwaitsReopen)
     }
 }

@@ -59,6 +59,19 @@ package struct CheckResult: Codable, Equatable, Sendable {
         self.setup = setup
         self.pageButton = pageButton
     }
+}
 
-    package func way(_ kind: WayKind) -> WayResult? { ways.first { $0.kind == kind } }
+extension CheckResult.WindowState {
+    /// As the check's report names it (`CheckReportLine`).
+    package var title: String {
+        switch self {
+        case .visible: "visible"
+        case .covered: "covered"
+        case .otherDesktop: "on another desktop"
+        case .otherDesktopCovered: "covered on another desktop"
+        case .fullScreen: "full screen"
+        case .minimized: "minimized"
+        case .hidden: "hidden"
+        }
+    }
 }

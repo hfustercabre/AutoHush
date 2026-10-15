@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
+import CheckedPlayers
 
 @Suite("DiagnosticsReport")
 struct DiagnosticsReportTests {
@@ -191,6 +192,27 @@ struct DiagnosticsReportTests {
         let rows = try #require(snapshot.sections.first { $0.kind == .player }).rows
         #expect(rows.first == .init(label: "Player", value: "Jukebox · Not installed", mark: .problem))
         #expect(rows.last?.value == "No")
+    }
+
+    @Test("an app added with Add an App says the ways it's controlled by, in order; one muted instead says so")
+    func checkedApp() throws {
+        func player(_ ways: [PlayerSetup.Way], mutes: Bool = false) throws -> DiagnosticsSnapshot.Section {
+            var status = workingStatus()
+            status.playerOptions = [PlayerOption(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
+                                                 kind: .checkedApp, pausesByMuting: mutes)]
+            let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts(), ways: { $0 == "com.example.jukebox" ? ways : nil })
+            return try #require(snapshot.sections.first { $0.kind == .player })
+        }
+        let paused = try player([.menu(menuName: "Controls"), .panel(rememberedRow: nil)])
+        #expect(paused.rows.contains(.init(label: "State", value: "Paused by AutoHush")))
+        #expect(paused.rows.contains(.init(label: "Controlled by", value: "Its playback menu\nThe menu bar’s Now Playing panel")))
+        let muted = try player([.mute], mutes: true)
+        #expect(muted.summary == "Jukebox · Muted by AutoHush")
+        #expect(muted.rows.contains(.init(label: "State", value: "Muted by AutoHush")))
+        #expect(muted.rows.contains(.init(label: "Controlled by", value: "Muted instead of paused")))
+        // A supported player has no such row.
+        let supported = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(), ways: { _ in [.mute] })
+        #expect(try #require(supported.sections.first { $0.kind == .player }).rows.allSatisfy { $0.label != "Controlled by" })
     }
 
     @Test("fades turned off in Settings read Off; a player that can't fade still reads No")

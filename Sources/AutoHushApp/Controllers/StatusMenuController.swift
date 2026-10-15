@@ -5,18 +5,21 @@ import AutoHushKit
 /// Owns the menu bar item and its menu, and renders an `AppStatus` into them.
 ///
 /// ```text
-/// ╭────────────────────────────────────────────╮
-/// │ [icon] Spotify                         (●) │  the card: the player, what's
-/// │        Paused — Safari is playing Auto-Pause │  happening, the Auto-Pause switch
-/// │ ────────────────────────────────────────── │
-/// │ Media player              [icon] Spotify ⌄ │  unfolds the players under it
-/// │ ────────────────────────────────────────── │
-/// │ Controls                 [Learn Controls…] │  (a web app: whether its
-/// │ Not learned yet: …                         │  controls are learned)
-/// ╰────────────────────────────────────────────╯
+/// ╭────────────────────────────────────────────────╮
+/// │ [icon] Spotify                             (●) │  the card: the player, what's
+/// │        Paused — Safari is playing   Auto-Pause │  happening, the Auto-Pause switch;
+/// │        [Retry] · [Reopen] · [Unmute]           │  a chip when one helps (below)
+/// │ ────────────────────────────────────────────── │
+/// │ Media player                  [icon] Spotify ⌄ │  unfolds the players under it
+/// │ ────────────────────────────────────────────── │
+/// │ Controls                     [Learn Controls…] │  (a web app: whether its
+/// │ Not learned yet: …                             │  controls are learned)
+/// ╰────────────────────────────────────────────────╯
 /// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
 ///   Supported Apps                                   (while unfolded)
 /// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)
+///   Other Apps  Checked by you · [icon] Deezer …     (the apps added through a check)
+///   ⊕ Add an App…                                    (checks an app and adds it)
 ///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
 ///   ⊕ Add a Web App…                                 (makes a website one)
 /// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
@@ -32,6 +35,10 @@ import AutoHushKit
 ///   Install AutoHush 0.3.8…              (once one is found; Installing… while it installs)
 ///   [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
 /// ```
+///
+/// The card's chips: Retry after a failed start, Reopen while the player
+/// needs reopening (an app added through a check), Unmute while a player
+/// that can only be muted is muted for another app.
 ///
 /// The card, the duration buttons, the playing apps and the toolbar are
 /// SwiftUI views; they follow `status` even while the menu is open. The
@@ -134,7 +141,8 @@ final class StatusMenuController: NSObject {
         menu.addItem(card)
         if let warning = status.warning {
             menu.addItem(warningItem(for: warning))
-            if warning == .systemAudioRecording {
+            // Not for a player that can only be muted: AntiDot mode can't mute it.
+            if warning == .systemAudioRecording, !status.playerMutes {
                 // Its title lines up with the warning's, after its symbol.
                 let antiDot = item(PermissionText.useAntiDot, #selector(useAntiDotMode))
                 antiDot.shownImage = NSImage(size: menu.items.last?.image?.size ?? .zero)
@@ -241,7 +249,7 @@ final class StatusMenuController: NSObject {
             playerRows = []
             model.playerSearch = ""
         } else if let cardItem {
-            let options = status.playerOptions.offered
+            let options = offeredPlayers
             var first = menu.index(of: cardItem) + 1
             if options.isSearchable {
                 let search = hostedItem("playerSearch", PlayerSearchRow(model: model), takesKeyboard: true)
@@ -259,7 +267,13 @@ final class StatusMenuController: NSObject {
         guard let playerSearchItem else { return } // folded meanwhile
         model.playerSearch = search
         playerRows.forEach(menu.removeItem)
-        showPlayerRows(status.playerOptions.offered.matching(search), at: menu.index(of: playerSearchItem) + 1)
+        showPlayerRows(offeredPlayers.matching(search), at: menu.index(of: playerSearchItem) + 1)
+    }
+
+    /// The players as the menu offers them: in AntiDot mode, the apps that
+    /// can only be muted can't be chosen.
+    private var offeredPlayers: [PlayerOption] {
+        status.playerOptions.inAntiDotMode(settings.state.detection != .audioLevels).offered
     }
 
     /// Inserts a row for each of `options` at `index`: the supported apps
@@ -279,7 +293,7 @@ final class StatusMenuController: NSObject {
         if !apps.isEmpty { rows += [.supportedAppsHeading(width: menuContentWidth)] + apps.map(playerRow) }
         // While a search narrows the players, the heading shows only over a match.
         if !checked.isEmpty || model.playerSearch.isEmpty { rows.append(.otherAppsHeading(width: menuContentWidth)) }
-        rows += checked.map(playerRow) + [addRow(PlayerOption.addAppTitle, #selector(addApp))]
+        rows += checked.flatMap { [playerRow(for: $0), removeRow(for: $0)] } + [addRow(PlayerOption.addAppTitle, #selector(addApp))]
         if !webApps.isEmpty { rows += [.webAppsHeading(width: menuContentWidth)] + webApps.map(playerRow) }
         rows.append(addRow(PlayerOption.addWebAppTitle, #selector(addWebApp)))
         playerRows = rows
@@ -296,7 +310,9 @@ final class StatusMenuController: NSObject {
 
     /// A player to choose, checked when chosen. One that isn't installed
     /// can't be, and comes after those that are; a suggested web app opens
-    /// "Add a Web App" filled in.
+    /// "Add a Web App" filled in. In AntiDot mode, an app that can only be
+    /// muted can't be either, and says why (still checked when chosen: the
+    /// card says it can't be controlled).
     private func playerRow(for option: PlayerOption) -> NSMenuItem {
         let row = item(option.name, #selector(choosePlayer(_:)), payload: Payload(option.bundleID))
         row.shownImage = option.icon(size: 16)
@@ -306,17 +322,32 @@ final class StatusMenuController: NSObject {
             // the menu's edge.
             row.setTitle(option.name, badge: PlayerOption.untestedBadge, font: Self.rowFont, maxWidth: menuContentWidth - 56)
         }
+        row.isEnabled = option.isClickable
         if !option.isInstalled {
-            row.isEnabled = option.isClickable
             row.subtitle = option.webAddress != nil ? PlayerOption.clickToAddLabel : PlayerOption.notInstalledLabel
+        } else if option.isUnavailableInAntiDotMode {
+            row.subtitle = PlayerOption.antiDotModeLabel
+            row.toolTip = PlayerOption.antiDotModeReason
+            row.setAccessibilityHelp(PlayerOption.antiDotModeReason)
         } else if option.pausesByMuting {
             row.subtitle = PlayerOption.mutedInsteadLabel
         }
-        // VoiceOver can't see the web app's Safari badge: one named as an app is says so.
+        // VoiceOver can't see an icon's badge: a Safari web app named as an
+        // app is says so, as a Chromium browser's web app says whose it is.
         let spoken = option.spokenName(among: status.playerOptions)
         if spoken != option.name || option.isUntested {
             row.setAccessibilityLabel(option.isUntested ? "\(spoken), \(PlayerOption.untestedBadge)" : spoken)
         }
+        return row
+    }
+
+    /// An added app's row while Option is held: removes it, after asking
+    /// (R5, the user's pick, 2026-10-15; macOS's alternate menu items).
+    private func removeRow(for option: PlayerOption) -> NSMenuItem {
+        let row = item(PlayerOption.removeTitle(option.name), #selector(removeAddedApp(_:)), payload: Payload(option.bundleID))
+        row.shownImage = option.icon(size: 16)
+        row.isAlternate = true
+        row.keyEquivalentModifierMask = .option
         return row
     }
 
@@ -397,6 +428,11 @@ final class StatusMenuController: NSObject {
     @objc private func reopen() { actions?.reopenAutoHush() }
 
     @objc private func useAntiDotMode() { settings.setDetectionMethod(.playbackSignals) }
+
+    @objc private func removeAddedApp(_ sender: NSMenuItem) {
+        guard let payload = sender.representedObject as? Payload<String> else { return }
+        actions?.removeAddedApp(payload.value)
+    }
 
     @objc private func choosePlayer(_ sender: NSMenuItem) {
         guard let payload = sender.representedObject as? Payload<String> else { return }

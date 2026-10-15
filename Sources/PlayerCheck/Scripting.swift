@@ -1,7 +1,7 @@
 import AppKit
+import CheckedPlayers
 import AutoHushKit
 import ScriptablePlayers
-import VLCSupport
 
 // MARK: - Scripting dictionary
 
@@ -33,7 +33,7 @@ typealias Scripting = ScriptingDictionary
 
 @MainActor func reportScripting() {
     say()
-    say("Scripting Dictionary")
+    say(CheckReportLine.Heading.scripting.rawValue)
     if let scripting {
         let playLike = scripting.commands.filter { ["play", "pause", "playpause", "stop"].contains($0.value.lowercased()) }
         say("  commands: " + (playLike.isEmpty ? "no play or pause" : playLike.sorted { $0.key < $1.key }.map { "\($0.value) (\($0.key))" }.joined(separator: ", ")))
@@ -54,7 +54,7 @@ typealias Scripting = ScriptingDictionary
 
 /// Its AppleScript commands to pause and play it: pause and play in its own
 /// suite (what ScriptablePlayers needs), else commands named so, else one
-/// that toggles (playpause, or VLC's play, which toggles).
+/// that toggles (playpause, or a play that toggles).
 @MainActor func scriptControls() -> (pause: String, play: String, toggles: Bool)? {
     guard let scripting else { return nil }
     if let suite = scripting.suite, let pause = scripting.commands[suite + "Paus"], let play = scripting.commands[suite + "Play"] {
@@ -83,8 +83,8 @@ typealias Scripting = ScriptingDictionary
 /// suites', and the keywords of events, replies and object specifiers.
 typealias EventCode = ScriptablePlayer.Code
 
-/// A code read from a dictionary at run time as a number ("spfy" →
-/// 0x73706679): ScriptablePlayers' `fourCharCode` takes only literals.
+/// A code read from a dictionary at run time as a number ("abcd" →
+/// 0x61626364): ScriptablePlayers' `fourCharCode` takes only literals.
 func osType(_ text: String) -> FourCharCode {
     text.utf8.prefix(4).reduce(0) { $0 << 8 | FourCharCode($1) }
 }
@@ -195,7 +195,7 @@ func eventError(_ error: NSError) -> String {
     }
 }
 
-/// One of its dictionary's commands by code ("spfyPaus": suite, then
+/// One of its dictionary's commands by code ("abcdPaus": suite, then
 /// command), as AutoHush sends pause and play (`ScriptablePlayer.makeCommandEvent`),
 /// told which document to act on when it needs one; nil once sent.
 @MainActor func sendCommand(_ code: String, to target: NSAppleEventDescriptor? = nil) -> NSError? {
@@ -239,7 +239,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     return descriptor.numberOfItems > 0 ? (1...descriptor.numberOfItems).compactMap { descriptor.atIndex($0) } : []
 }
 
-/// Its open documents by script (QuickTime Player's), front first: each
+/// Its open documents by script (an app that plays documents), front first: each
 /// one's name and whether it's playing.
 @MainActor func scriptedDocuments() -> Result<[(name: String, playing: Bool)], NSError> {
     guard let playing = scripting?.documentPlaying else { return .success([]) }
@@ -262,14 +262,14 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 @MainActor var unknownStatesSaid: Set<FourCharCode> = []
 
 /// The app's state by script, when its dictionary has it and it answers:
-/// its `player state` (stopped, playing, paused, as Spotify's, read as
-/// AutoHush reads it: `ScriptablePlayer.playerState(fromEnumCode:)`, which
-/// counts Music's fast forwarding and rewinding as playing), else its
-/// `playing` flag (VLC's: playing or paused), else its documents'
-/// (QuickTime Player's: playing while one is, stopped with none open),
+/// its `player state` (stopped, playing, paused, read as AutoHush reads it:
+/// `ScriptablePlayer.playerState(fromEnumCode:)`, which counts fast
+/// forwarding and rewinding as playing), else its `playing` flag (with its
+/// `current time` telling stopped from paused, `ScriptSetup.State.playingFlag`),
+/// else its documents' (playing while one is, stopped with none open),
 /// asked by Apple event. Only macOS refusing it (-1743: no Automation
 /// permission for whatever runs this tool) stops the asking; another error
-/// (a timeout, -1712, from a busy VLC) counts for that look only.
+/// (a timeout, -1712, from a busy app) counts for that look only.
 @MainActor func scriptedState() -> PlayerState? {
     guard let scripting, scripting.hasState, !scriptRefused else { return nil }
     func failed(_ error: NSError) -> PlayerState? {
@@ -295,13 +295,13 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
         guard let result else { return nil }
         guard scripting.hasPlayerState else {
             if result.booleanValue { return .playing }
-            // Not playing: VLC's `current time` is -1 with no item, so it's
-            // stopped, else paused, as AutoHush's VLCPlayer tells them apart.
+            // Not playing: a `current time` of -1 means nothing is loaded, so
+            // it's stopped, else paused, as AutoHush tells them apart for an
+            // app added with a playing flag (`ScriptSetup.State.playingFlag`).
             guard let time = scripting.properties.first(where: { $0.value == "current time" })?.key,
                   case .success(let reply?) = getProperty(time)
             else { return .paused }
-            let state = VLCPlayer.state(playing: false, currentTime: Int(reply.int32Value))
-            return state == .unknown ? .paused : state
+            return reply.int32Value < 0 ? .stopped : .paused
         }
         let code = result.enumCodeValue
         let state = ScriptablePlayer.playerState(fromEnumCode: code)
@@ -313,10 +313,10 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 }
 
 /// The name of what it plays, by Apple event, when its dictionary has a
-/// `current track` (Spotify's, Music's, TV's), else a `name of current item`
-/// (VLC's). It stays while paused, where a window's title may not (a paused
-/// Spotify's says "Spotify Premium"), and it's read wherever its window is
-/// (VLC's on another desktop can't be reached by Accessibility).
+/// `current track`, else a `name of current item`. It stays while paused,
+/// where a window's title may not (a paused app's may say just its name),
+/// and it's read wherever its window is (one on another desktop may be out
+/// of Accessibility's reach).
 /// Nil without one, or when it doesn't answer (nothing loaded).
 @MainActor func scriptedSong() -> String? {
     guard let scripting, scripting.namesItsSong, !scriptRefused else { return nil }
@@ -333,7 +333,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 
 /// Sends the app one of its dictionary's commands (by name: "pause", "play",
 /// "playpause"), as an Apple event; false (and why) when it fails. One that
-/// acts on a document (QuickTime Player's) goes to each playing one for a
+/// acts on a document goes to each playing one for a
 /// pause or stop, and for a play to those a test paused, else the front one.
 @MainActor func sendScript(_ command: String) -> Bool {
     guard let code = scripting?.commandCode(command) else {
@@ -377,11 +377,11 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 }
 
 /// Whether its volume can be read and set as fades need it, checked once
-/// while a test has it paused (silent): its `sound volume` (Spotify's,
-/// Music's), else its `audio volume` (VLC's, 0–512), set one step away and
-/// read back, then put back. An app that reads back another number than it
-/// was set to (Spotify: one less) needs the profile's `readVolume`, or each
-/// fade restoring the volume it read loses a step. It's put back however
+/// while a test has it paused (silent): its `sound volume` (pVol, 0–100),
+/// else its `audio volume` (a scale of its own), set one step away and read
+/// back, then put back. An app that reads back another number than it was
+/// set to (one less, say) needs its reading made up for (a profile's
+/// `readVolume`), or each fade restoring the volume it read loses a step. It's put back however
 /// the change went: a change refused or not read back may still have taken.
 @MainActor var volumeChecked = false
 @MainActor func checkVolume() {
@@ -397,7 +397,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     guard let start = read() else { say("    volume (“\(name)”): can't be read: no fades"); return }
     let target = start > 1 ? start - 1 : start + 1
     let setError = setProperty(code, to: target)
-    // Music drops a change that follows another within a moment (measured:
+    // An app may drop a change that follows another within a moment (measured:
     // set 99 then 100 at once, it stays at 99; 0.2 s apart, it takes both).
     Thread.sleep(forTimeInterval: 0.3)
     let back = read()
@@ -418,16 +418,16 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     guard let back else { say("    volume (“\(name)”): set to \(target), then can't be read: no fades" + putBack); return }
     say("    volume (“\(name)”): \(start); set to \(target), it reads \(back): "
         + (offset == 0 ? "reads back as set, so it can fade"
-           : "reads \(abs(offset)) \(offset < 0 ? "less" : "more") than set (as Spotify, one less): the profile needs readVolume")
+           : "reads \(abs(offset)) \(offset < 0 ? "less" : "more") than set" + forDevelopers(": a ScriptablePlayerProfile needs readVolume"))
         + putBack
-        + (name == "audio volume" ? " (its own scale: VLC's goes to 512)" : ""))
+        + (name == "audio volume" ? " (a scale of its own" + (start > 100 ? ", above 100: it read \(start)" : "") + ")" : ""))
 }
 
 // MARK: - State notifications
 
-/// The usual names of a player's state notification: Spotify's
-/// `<bundle ID>.PlaybackStateChanged`, Music's `<bundle ID>.playerInfo`, and
-/// their likely variants. macOS delivers a distributed notification only to
+/// The usual names of a player's state notification: the supported
+/// scriptable players' (`<bundle ID>.PlaybackStateChanged`,
+/// `<bundle ID>.playerInfo`) and their likely variants. macOS delivers a distributed notification only to
 /// observers that name it (one with no name gets nothing, measured on macOS
 /// 27), so a name outside this list can't be seen.
 let stateNotificationSuffixes = ["PlaybackStateChanged", "playbackStateChanged", "playerInfo", "PlayerInfo",
@@ -465,8 +465,8 @@ final class NotificationLog: NSObject, @unchecked Sendable {
     func announced(since date: Date) -> [(name: String, state: PlayerState, at: Date)] {
         lock.withLock { announcements.filter { $0.at >= date } }
     }
-    /// The last state announced since `date`; Music posts each change twice,
-    /// the state before, then the new one.
+    /// The last state announced since `date`; a player may post each change
+    /// twice, the state before, then the new one.
     func lastState(since date: Date) -> PlayerState? { announced(since: date).last?.state }
 }
 

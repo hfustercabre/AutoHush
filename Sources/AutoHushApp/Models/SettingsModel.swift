@@ -41,6 +41,9 @@ final class SettingsModel {
     // From the app's state.
     /// The music players to choose from (also in the welcome window).
     var playerOptions: [PlayerOption] { state.playerOptions }
+    /// The players as Settings → General and the welcome window offer
+    /// them: in AntiDot mode, the apps that can only be muted can't be chosen.
+    var offeredPlayers: [PlayerOption] { playerOptions.inAntiDotMode(isAntiDotMode).offered }
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String? { state.chosenPlayerID }
     /// The chosen player as it's offered.
@@ -65,6 +68,22 @@ final class SettingsModel {
     /// something needs the user.
     var statusLine: String { state.statusLine }
     var statusNeedsAttention: Bool { state.needsAttention }
+    /// The chosen player needs reopening: the player card offers Reopen,
+    /// as the menu's card does. The windows don't follow the whole status
+    /// this is read from, so it's followed through the status line, which
+    /// says so whenever it is ("Deezer needs reopening").
+    var offersReopenPlayer: Bool {
+        _ = state.statusLine
+        return state.status.isReady && state.status.playerNeedsReopen
+    }
+    /// The chosen player is muted for another app: the player card offers
+    /// Unmute, as the menu's card does. Followed as `offersReopenPlayer` is,
+    /// through the status line, which says so ("Muted — …") while
+    /// Auto-Pause is on.
+    var offersUnmute: Bool {
+        _ = state.statusLine
+        return state.autoPause == .on && state.status.offersUnmute
+    }
     var isAutoPauseOn: Bool { state.autoPause == .on }
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String? { state.autoPause.settingsNote }
@@ -268,8 +287,17 @@ final class SettingsModel {
         settings.setTimings(timings.clamped)
     }
 
+    /// AntiDot mode isn't turned on while the player can only be muted,
+    /// which AntiDot mode can't do (its switch is off and dimmed then).
     func setDetectionMethod(_ method: DetectionMethod) {
+        if method != .audioLevels, !isAntiDotMode, antiDotUnavailableFor != nil { return }
         settings.setDetectionMethod(method)
+    }
+
+    /// The chosen player, when it can only be muted (an app added with Add
+    /// an App): AntiDot mode can't be turned on while it's the player.
+    var antiDotUnavailableFor: String? {
+        state.status.playerOptions.first { $0.bundleID == chosenPlayerID && $0.pausesByMuting }?.name
     }
 
     /// On: judges apps by what they tell macOS (the indicator-free method

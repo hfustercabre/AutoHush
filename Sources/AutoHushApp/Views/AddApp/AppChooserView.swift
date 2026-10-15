@@ -4,7 +4,9 @@ import SwiftUI
 /// The window the first step of Add an App opens (the user, 2026-10-15:
 /// the list can be long): every app found that can play, those in macOS's
 /// Now Playing list first, with a search; Other App… picks one on the disk.
-/// Choose (Return, or a double click) goes on with the one selected.
+/// Choose (Return, or a double click) goes on with the one selected, or
+/// with the only one the search left; ↑ and ↓ in the search move the
+/// selection.
 struct AppChooserView: View {
     @Bindable var model: AddAppModel
     let otherApp: () -> Void
@@ -14,7 +16,7 @@ struct AppChooserView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 WindowHeader(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.chooserDescription))
-                SearchField(text: $model.search, focusesOnAppear: true, onSubmit: chooseSelected)
+                SearchField(text: $model.search, focusesOnAppear: true, onSubmit: chooseSelected, onMove: moveSelection)
                     .padding(.top, 8)
                 Card { list }
                 if let problem = model.otherAppProblem { NoteLabel(AddAppText.otherAppProblem(problem)) }
@@ -37,11 +39,24 @@ struct AppChooserView: View {
         }
         .frame(width: 460)
         .font(.appBody)
+        // VoiceOver hears why a pick on the disk can't be checked.
+        .onChange(of: model.otherAppProblem) { _, problem in
+            if let problem { AccessibilityNotification.Announcement(AddAppText.otherAppProblem(problem)).post() }
+        }
     }
 
+    /// The app selected among those shown, else the only one shown.
     private var selected: CheckableApp? {
-        let shown = model.shownApps
-        return (shown.inNowPlaying + shown.others).first { $0.id == model.selectedID }
+        let shown = model.shownAppsInOrder
+        return shown.first { $0.id == model.selectedID } ?? (shown.count == 1 ? shown.first : nil)
+    }
+
+    /// ↑ or ↓: the one before or after the selected among those shown.
+    private func moveSelection(_ step: Int) {
+        let shown = model.shownAppsInOrder
+        guard !shown.isEmpty else { return }
+        let index = shown.firstIndex { $0.id == model.selectedID }.map { $0 + step } ?? (step > 0 ? 0 : shown.count - 1)
+        model.selectedID = shown[min(max(index, 0), shown.count - 1)].id
     }
 
     private func chooseSelected() {
@@ -60,19 +75,25 @@ struct AppChooserView: View {
             Text(verbatim: AddAppText.noApps).captionStyle().frame(maxWidth: .infinity, minHeight: 80)
         } else {
             let shown = model.shownApps
-            ScrollView {
-                VStack(alignment: .leading, spacing: 2) {
-                    if !shown.inNowPlaying.isEmpty { section(AddAppText.nowPlayingSection, shown.inNowPlaying) }
-                    if !shown.others.isEmpty {
-                        section(AddAppText.otherAppsSection, shown.others).padding(.top, shown.inNowPlaying.isEmpty ? 0 : 6)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if !shown.inNowPlaying.isEmpty { section(AddAppText.nowPlayingSection, shown.inNowPlaying) }
+                        if !shown.others.isEmpty {
+                            section(AddAppText.otherAppsSection, shown.others).padding(.top, shown.inNowPlaying.isEmpty ? 0 : 6)
+                        }
+                        if shown.inNowPlaying.isEmpty && shown.others.isEmpty {
+                            Text(verbatim: PlayerOption.noMatchNote(model.search)).captionStyle()
+                        }
                     }
-                    if shown.inNowPlaying.isEmpty && shown.others.isEmpty {
-                        Text(verbatim: PlayerOption.noMatchNote(model.search)).captionStyle()
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 320)
+                // ↑ and ↓ keep the selected app in view.
+                .onChange(of: model.selectedID) { _, id in
+                    if let id { proxy.scrollTo(id) }
+                }
             }
-            .frame(height: 320)
         }
     }
 
@@ -97,12 +118,14 @@ struct AppChooserView: View {
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 4)
+                .id(app.id)
                 .background {
                     if isSelected { RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.selectedTileFill) }
                 }
                 .contentShape(Rectangle())
+                // Selected at the first click, not after the double click's wait.
                 .onTapGesture(count: 2) { model.selectedID = app.id; chooseSelected() }
-                .onTapGesture { model.selectedID = app.id }
+                .simultaneousGesture(TapGesture().onEnded { model.selectedID = app.id })
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
                 .accessibilityAction { model.selectedID = app.id }

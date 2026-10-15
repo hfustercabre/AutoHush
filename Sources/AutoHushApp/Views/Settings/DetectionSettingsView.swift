@@ -18,6 +18,11 @@ struct DetectionSettingsView: View {
                                    comment: "Settings, under AntiDot mode"),
                     isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
                 )
+                // A player that can only be muted: AntiDot mode can't mute it (the user, 2026-10-15).
+                .disabled(!model.isAntiDotMode && model.antiDotUnavailableFor != nil)
+                if !model.isAntiDotMode, let player = model.antiDotUnavailableFor {
+                    Text(verbatim: Self.unavailableNote(player)).captionStyle().fixedSize(horizontal: false, vertical: true)
+                }
                 // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
                 if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {
                     NoteLabel(audioNote)
@@ -76,9 +81,17 @@ struct DetectionSettingsView: View {
     @ViewBuilder private var audioButtons: some View {
         PermissionButton(model: model, permission: .systemAudioRecording, access: model.permissions.audio, long: true)
             .fixedSize()
-        Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
-            .buttonStyle(.chip)
-            .fixedSize()
+        if model.antiDotUnavailableFor == nil {
+            Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
+                .buttonStyle(.chip)
+                .fixedSize()
+        }
+    }
+
+    /// Under the AntiDot mode switch while it's off and dimmed.
+    static func unavailableNote(_ player: String) -> String {
+        String(localized: "Unavailable with \(player): AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.",
+               comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App that can only be muted; %@ is the player")
     }
 
     private var audioNote: String {

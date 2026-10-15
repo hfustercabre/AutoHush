@@ -42,7 +42,7 @@ struct CheckPanelView: View {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let since = progress.requestSince ?? context.date
                     let left = Double(request.minutes * 60) - context.date.timeIntervalSince(since)
-                    note(AddAppText.request(request, app: app.name), detail: AddAppText.timeLeft(left), symbol: Self.symbol(request))
+                    note(AddAppText.request(request, app: app.name), detail: AddAppText.timeLeft(left, for: request), symbol: Self.symbol(request))
                 }
             } else if let step = progress.windowStep {
                 windowStep(step)
@@ -63,6 +63,14 @@ struct CheckPanelView: View {
         .font(.appBody)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { resized($0) }
         .onChange(of: progress.blocksInput, initial: true) { _, blocked in dimmed(blocked) }
+        // VoiceOver hears what the check asks (it waits for the user, against
+        // a time limit), and that it stops.
+        .onChange(of: progress.request) { _, request in
+            if let request { AccessibilityNotification.Announcement(AddAppText.request(request, app: app.name)).post() }
+        }
+        .onChange(of: stopping) { _, stopping in
+            if stopping { AccessibilityNotification.Announcement(AddAppText.stopping).post() }
+        }
     }
 
     private static func symbol(_ request: CheckProgress.Request) -> String {
@@ -94,8 +102,8 @@ struct CheckPanelView: View {
             HStack(spacing: 3) {
                 ForEach(1...max(step.count, 1), id: \.self) { index in
                     Capsule()
-                        .fill(index < step.index ? Color.accentColor
-                              : index == step.index ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.22))
+                        .fill(index < step.index ? AnyShapeStyle(Color.accentColor)
+                              : index == step.index ? AnyShapeStyle(Color.accentColor.opacity(0.45)) : AnyShapeStyle(.switchOffFill))
                         .frame(height: 5)
                 }
             }
