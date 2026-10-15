@@ -38,7 +38,9 @@ import WebAppPlayers
     }
     let unread = running == nil || !AXIsProcessTrusted()
     // Not allowed to script it (--partial): its AppleScript wasn't tried.
-    add(.script, scriptControls() != nil, notChecked: automationAnswer == .denied || (partial && automationAnswer != .allowed)) {
+    // Not checked for Automation only when its dictionary has commands to try.
+    let scriptable = scriptControls() != nil
+    add(.script, scriptable, notChecked: scriptable && (automationAnswer == .denied || (partial && automationAnswer != .allowed))) {
         scripting.flatMap(ScriptSetup.init(dictionary:)).map { .script($0) }
     }
     add(.menu, menu != nil, notChecked: unread) { menu.map { .menu(menuName: $0.title) } }

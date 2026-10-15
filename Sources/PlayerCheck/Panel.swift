@@ -160,8 +160,10 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
         log("    Now Playing, hidden in the menu bar, shown for the press and hidden again")
         return pressed
     }
-    // Read before the panel opens: a page takes a moment.
+    // Read before the panel opens: a page takes a moment, its level half a
+    // second (for a row that doesn't follow it: it tells how the app is).
     let texts = choice == .lastOnly ? SongTexts() : songTexts(pid)
+    let heard = choice == .lastOnly ? nil : audible(pid)
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
         log("    no Now Playing item found; in front: \(WindowStates.frontName)")
@@ -193,24 +195,17 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
         }
     }
     if row == nil, choice != .lastOnly, mine.isEmpty {
-        // Its own row showing the other state: when its sound says otherwise
-        // (heard while it shows paused, silent while it shows playing), a
-        // row that doesn't follow it, pressed as a toggle. Its level is read
-        // with the panel closed (half a second).
+        // Its own row showing the other state while its sound says otherwise
+        // (heard while it shows paused, silent while it shows playing): a
+        // row that doesn't follow it, pressed as a toggle.
         let shown = appRows(rows.filter { $0.row.playing != pausing }, texts: texts)
-        if shown.count == 1 {
+        if shown.count == 1, heard == pausing {
+            log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
+            panelRowStale = true
+            notePanelRow(shown[0].row, rows.firstIndex { $0.row == shown[0].row } ?? 0, of: rows.count, why: "its own row, which doesn't follow it")
+            let pressed = AXUIElementPerformAction(shown[0].button, kAXPressAction as CFString) == .success
             closePanel(item)
-            if audible(pid) == pausing, let again = openPanel(item) {
-                defer { closePanel(item) }
-                if let own = again.first(where: { $0.row.text == shown[0].row.text }) {
-                    log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
-                    panelRowStale = true
-                    notePanelRow(own.row, again.firstIndex { $0.row == own.row } ?? 0, of: again.count, why: "its own row, which doesn't follow it")
-                    return AXUIElementPerformAction(own.button, kAXPressAction as CFString) == .success
-                }
-            }
-            panelProblem = noRowProblem(rows: candidates.count, mine: 0, showing: pausing ? "Pause" : "Play")
-            return false
+            return pressed
         }
     }
     guard let row else {
