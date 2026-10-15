@@ -74,6 +74,7 @@ struct SettingsModelTests {
         var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
                                  kind: .checkedApp)
         muted.pausesByMuting = true
+        muted.needsAudioLevels = true
         model.state.status.playerOptions = [muted]
         #expect(model.antiDotUnavailableFor == nil) // not the player
         model.state.status.chosenPlayerID = muted.bundleID
@@ -232,6 +233,7 @@ struct SettingsModelTests {
         var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
                                  kind: .checkedApp)
         muted.pausesByMuting = true
+        muted.needsAudioLevels = true
         let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
                                    appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
         model.state.status.playerOptions = [muted, spotify]

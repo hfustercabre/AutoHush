@@ -79,26 +79,33 @@ struct PlayerOptionTests {
         #expect(deezer.isClickable)
     }
 
-    @Test("in AntiDot mode, an app that can only be muted can't be chosen; other players and other modes are left alone")
+    @Test("in AntiDot mode, an app only its sound tells (muted only, or a Now Playing row that doesn’t follow it) can’t be chosen; other players and other modes are left alone")
     func antiDotMode() {
         var muted = option("Muted", installed: true)
         muted.kind = .checkedApp
         muted.pausesByMuting = true
+        muted.needsAudioLevels = true
         var paused = option("Paused", installed: true)
         paused.kind = .checkedApp
+        // Controlled through a Now Playing row that doesn't follow it (Qobuz's): only its sound tells.
+        var soundOnly = option("Qobuz", installed: true)
+        soundOnly.kind = .checkedApp
+        soundOnly.needsAudioLevels = true
         let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
-        let options = [option("A", installed: true), muted, paused, suggestion]
+        let options = [option("A", installed: true), muted, paused, suggestion, soundOnly]
 
         let antiDot = options.inAntiDotMode(true)
-        #expect(antiDot.map(\.isUnavailableInAntiDotMode) == [false, true, false, false])
-        #expect(antiDot.map(\.isClickable) == [true, false, true, true])
+        #expect(antiDot.map(\.isUnavailableInAntiDotMode) == [false, true, false, false, true])
+        #expect(antiDot.map(\.isClickable) == [true, false, true, true, false])
         #expect(antiDot[1].isInstalled) // still installed, and shown as chosen
         #expect(antiDot.inAntiDotMode(false) == options)
-        #expect(options.inAntiDotMode(false).map(\.isClickable) == [true, true, true, true])
+        #expect(options.inAntiDotMode(false).map(\.isClickable) == [true, true, true, true, true])
         #expect(PlayerOption.antiDotModeLabel == "Not in AntiDot mode")
         #expect(PlayerOption.antiDotModeTileLabel == "Not in AntiDot")
-        #expect(PlayerOption.antiDotModeReason
+        #expect(muted.antiDotModeReason
             == "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
+        #expect(soundOnly.antiDotModeReason
+            == "Only its sound tells AutoHush whether it plays, and hearing it needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
     @Test("an app that can only be muted says so in a short line on its tile and a longer one on its menu row")

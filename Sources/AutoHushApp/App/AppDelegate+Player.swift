@@ -86,6 +86,7 @@ extension AppDelegate {
     func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
         status.playerMutes = player?.pausesByMuting ?? false
+        status.playerNeedsLevels = player?.needsAudioLevels ?? false
         settingsModel.playerCanFade = player?.canFade ?? true
     }
 

@@ -104,6 +104,8 @@ struct AppStatus: Equatable {
     /// The chosen player is muted instead of paused (`MusicPlayer.pausesByMuting`):
     /// the card says "Muted", with Unmute.
     var playerMutes = false
+    /// Only the player's sound tells how it is (`MusicPlayer.needsAudioLevels`).
+    var playerNeedsLevels = false
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
     mutating func setHealth(_ health: AppHealthState) {

@@ -294,10 +294,18 @@ final class SettingsModel {
         settings.setDetectionMethod(method)
     }
 
-    /// The chosen player, when it can only be muted (an app added with Add
-    /// an App): AntiDot mode can't be turned on while it's the player.
+    /// The chosen player's name, when only its sound tells how it is (an app
+    /// added with Add an App, muted only or controlled through a Now Playing
+    /// row that doesn't follow it): AntiDot mode can't be turned on while
+    /// it's the player.
     var antiDotUnavailableFor: String? {
-        state.status.playerOptions.first { $0.bundleID == chosenPlayerID && $0.pausesByMuting }?.name
+        antiDotUnavailablePlayer?.name
+    }
+
+    /// The media player, when only its sound tells how it is
+    /// (`PlayerOption.needsAudioLevels`): AntiDot mode can't be used with it.
+    var antiDotUnavailablePlayer: PlayerOption? {
+        state.status.playerOptions.first { $0.bundleID == chosenPlayerID && $0.needsAudioLevels }
     }
 
     /// On: judges apps by what they tell macOS (the indicator-free method

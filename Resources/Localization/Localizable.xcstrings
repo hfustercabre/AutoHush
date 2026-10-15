@@ -63007,6 +63007,215 @@
         }
       }
     },
+    "Its row doesn’t show its state: only its sound tells, so not in AntiDot mode." : {
+      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when the app's row there doesn't show whether it plays (AutoHush then judges it by its sound, which AntiDot mode doesn't hear)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفه لا يُظهر حالته: صوته وحده يدل عليها، لذا ليس في وضع AntiDot."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La seva fila no mostra el seu estat: només el so ho indica, així que no en el mode AntiDot."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Její řádek nezobrazuje stav: prozradí ho jen zvuk, takže ne v režimu AntiDot."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rækken viser ikke tilstanden: kun lyden viser den, så ikke i AntiDot-tilstand."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Zeile zeigt ihren Zustand nicht: Nur ihr Ton verrät ihn, also nicht im AntiDot-Modus."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η γραμμή του δεν δείχνει την κατάστασή του: μόνο ο ήχος τη δείχνει, οπότε όχι σε λειτουργία AntiDot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sen rivi ei näytä tilaa: vain ääni kertoo sen, joten ei AntiDot-tilassa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इसकी पंक्ति इसकी स्थिति नहीं दिखाती: सिर्फ़ इसकी आवाज़ बताती है, इसलिए AntiDot मोड में नहीं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Njezin redak ne prikazuje stanje: otkriva ga samo zvuk, pa ne u načinu rada AntiDot."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sora nem mutatja az állapotát: csak a hangja árulja el, ezért AntiDot módban nem."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barisnya tidak menunjukkan keadaannya: hanya suaranya yang memberi tahu, jadi tidak di Mode AntiDot."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sua riga non mostra il suo stato: solo il suono lo dice, quindi non in modalità AntiDot."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行に状態が表示されないため、音だけで判断します。AntiDotモードでは使用できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "행에 상태가 표시되지 않음: 소리로만 알 수 있으므로 AntiDot 모드에서는 사용할 수 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raden viser ikke tilstanden: bare lyden viser den, så ikke i AntiDot-modus."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De rij toont de status niet: alleen het geluid vertelt het, dus niet in de AntiDot-modus."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jej wiersz nie pokazuje stanu: mówi o nim tylko dźwięk, więc nie w trybie AntiDot."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua linha não mostra o estado: só o som diz, então não no modo AntiDot."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sua linha não mostra o estado: só o som o indica, por isso não no modo AntiDot."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rândul ei nu arată starea: doar sunetul o spune, deci nu în modul AntiDot."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Его строка не показывает состояние: о нём говорит только звук, поэтому не в режиме AntiDot."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jej riadok nezobrazuje stav: prezradí ho len zvuk, takže nie v režime AntiDot."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Njena vrstica ne prikazuje stanja: pove ga le zvok, zato ne v načinu AntiDot."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raden visar inte läget: bara ljudet avslöjar det, så inte i AntiDot-läget."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satırı durumunu göstermiyor: bunu yalnızca sesi söylüyor, bu yüzden AntiDot modunda değil."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Її рядок не показує стан: про нього каже лише звук, тож не в режимі AntiDot."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hàng của ứng dụng không hiển thị trạng thái: chỉ âm thanh cho biết, nên không dùng được ở chế độ AntiDot."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的列不顯示其狀態：只有它的聲音能說明，因此不適用於 AntiDot 模式。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的行不显示其状态：只有它的声音能说明，因此不适用于 AntiDot 模式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的列不顯示其狀態：只有它的聲音能說明，因此不適用於 AntiDot 模式。"
+          }
+        }
+      }
+    },
     "It’s Paused" : {
       "comment" : "Button under the step “Pause it yourself” while AutoHush learns a web app's controls: the user has paused it",
       "localizations" : {
@@ -81813,6 +82022,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "播放音樂、Podcast 或影片的 App。如果它未打開，AutoHush 會在背景打開它。"
+          }
+        }
+      }
+    },
+    "Only its sound tells AutoHush whether it plays, and hearing it needs Audio Recording, which AntiDot mode doesn’t use." : {
+      "comment" : "Help tag and VoiceOver hint of an app added with Add an App whose Now Playing row doesn't show whether it plays, where media players are offered, dimmed while AntiDot mode is on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوته وحده يخبر AutoHush إن كان يعمل، وسماعه يتطلب تسجيل الصوت، الذي لا يستخدمه وضع AntiDot."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Només el so indica a l’AutoHush si es reprodueix, i sentir-lo requereix la gravació d’àudio, que el mode AntiDot no fa servir."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jen zvuk řekne aplikaci AutoHush, zda hraje, a jeho slyšení vyžaduje nahrávání zvuku, které režim AntiDot nepoužívá."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun lyden viser AutoHush, om appen spiller, og at høre den kræver lydoptagelse, som AntiDot-tilstand ikke bruger."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur ihr Ton verrät AutoHush, ob die App spielt, und ihn zu hören erfordert die Audioaufnahme, die der AntiDot-Modus nicht nutzt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μόνο ο ήχος δείχνει στο AutoHush αν παίζει, και για να ακουστεί χρειάζεται εγγραφή ήχου, την οποία η λειτουργία AntiDot δεν χρησιμοποιεί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo su sonido indica a AutoHush si se reproduce, y oírlo requiere la grabación de audio, que el modo AntiDot no usa."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo su sonido indica a AutoHush si se reproduce, y oírlo requiere la grabación de audio, que el modo AntiDot no usa."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vain ääni kertoo AutoHushille, soiko se, ja sen kuuleminen vaatii äänen tallennuksen, jota AntiDot-tila ei käytä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seul le son de l’app indique à AutoHush si elle joue, et l’entendre nécessite l’enregistrement audio, que le mode AntiDot n’utilise pas."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seul le son de l’app indique à AutoHush si elle joue, et l’entendre nécessite l’enregistrement audio, que le mode AntiDot n’utilise pas."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिर्फ़ इसकी आवाज़ AutoHush को बताती है कि यह चल रहा है या नहीं, और इसे सुनने के लिए ऑडियो रिकॉर्डिंग चाहिए, जिसे AntiDot मोड इस्तेमाल नहीं करता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samo zvuk govori AutoHushu svira li, a za to je potrebno snimanje zvuka, koje način rada AntiDot ne koristi."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csak a hangja árulja el az AutoHushnak, hogy szól-e, ennek hallásához pedig hangfelvétel kell, amelyet az AntiDot mód nem használ."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hanya suaranya yang memberi tahu AutoHush apakah app sedang diputar, dan mendengarnya memerlukan rekaman audio, yang tidak digunakan Mode AntiDot."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo il suono dice ad AutoHush se è in riproduzione, e sentirlo richiede la registrazione audio, che la modalità AntiDot non usa."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再生中かどうかは音でしかAutoHushに分からず、音を聞くにはオーディオ録音が必要です（AntiDotモードでは使いません）。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재생 중인지는 소리로만 AutoHush가 알 수 있으며, 소리를 들으려면 AntiDot 모드에서 사용하지 않는 오디오 녹음이 필요합니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bare lyden viser AutoHush om appen spiller, og å høre den krever lydopptak, som AntiDot-modus ikke bruker."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alleen het geluid vertelt AutoHush of de app speelt, en dat horen vereist audio-opname, die de AntiDot-modus niet gebruikt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tylko dźwięk mówi AutoHush, czy aplikacja gra, a słyszenie go wymaga nagrywania dźwięku, którego tryb AntiDot nie używa."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só o som diz ao AutoHush se ele está tocando, e ouvi-lo exige a gravação de áudio, que o modo AntiDot não usa."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só o som indica ao AutoHush se está a reproduzir, e ouvi-lo requer a gravação de áudio, que o modo AntiDot não usa."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doar sunetul îi spune lui AutoHush dacă redă, iar auzirea lui necesită înregistrarea audio, pe care modul AntiDot nu o folosește."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Только звук говорит AutoHush, играет ли оно, а чтобы его услышать, нужна запись звука, которую режим AntiDot не использует."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Len zvuk povie AutoHushu, či hrá, a jeho počutie vyžaduje nahrávanie zvuku, ktoré režim AntiDot nepoužíva."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le zvok pove AutoHushu, ali predvaja, za to pa je potrebno snemanje zvoka, ki ga način AntiDot ne uporablja."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bara ljudet visar AutoHush om appen spelar, och att höra det kräver ljudinspelning, som AntiDot-läget inte använder."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush’a çalıp çalmadığını yalnızca sesi söyler ve onu duymak AntiDot modunun kullanmadığı ses kaydını gerektirir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лише звук каже AutoHush, чи вона грає, а щоб його почути, потрібне записування звуку, яке режим AntiDot не використовує."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ âm thanh cho AutoHush biết ứng dụng có đang phát không, và nghe nó cần quyền ghi âm thanh, điều mà chế độ AntiDot không dùng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有它的聲音能告訴 AutoHush 它是否在播放，而聽到聲音需要錄音權限，AntiDot 模式不使用它。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有它的声音能告诉 AutoHush 它是否在播放，而听到声音需要录音权限，AntiDot 模式不使用它。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有它的聲音能告訴 AutoHush 它是否在播放，而聽到聲音需要錄音權限，AntiDot 模式不使用它。"
           }
         }
       }
@@ -113169,6 +113587,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用 %@ 時不可用：AutoHush 只能將它靜音，這需要錄音，而 AntiDot 模式不使用錄音。"
+          }
+        }
+      }
+    },
+    "Unavailable with %@: only its sound tells whether it plays, which needs Audio Recording, and AntiDot mode doesn’t use it." : {
+      "comment" : "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App whose Now Playing row doesn't show whether it plays; %@ is the player",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غير متاح مع %@: صوته وحده يدل على تشغيله، وهذا يتطلب تسجيل الصوت، ووضع AntiDot لا يستخدمه."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible amb %@: només el so indica si es reprodueix, cosa que requereix la gravació d’àudio, i el mode AntiDot no la fa servir."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedostupné s aplikací %@: jen zvuk řekne, zda hraje, k čemuž je potřeba nahrávání zvuku, a režim AntiDot ho nepoužívá."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke tilgængelig med %@: kun lyden viser, om appen spiller, hvilket kræver lydoptagelse, som AntiDot-tilstand ikke bruger."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbar mit %@: Nur der Ton verrät, ob die App spielt, was Audioaufnahme erfordert, und der AntiDot-Modus nutzt keine Audioaufnahme."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μη διαθέσιμο με το %@: μόνο ο ήχος δείχνει αν παίζει, κάτι που απαιτεί εγγραφή ήχου, και η λειτουργία AntiDot δεν τη χρησιμοποιεί."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible con %@: solo su sonido indica si se reproduce, lo que requiere la grabación de audio, y el modo AntiDot no la usa."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible con %@: solo su sonido indica si se reproduce, lo que requiere la grabación de audio, y el modo AntiDot no la usa."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei käytettävissä sovelluksen %@ kanssa: vain ääni kertoo, soiko se, mikä vaatii äänen tallennuksen, eikä AntiDot-tila käytä sitä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponible avec %@ : seul le son de cette app indique si elle joue, ce qui nécessite l’enregistrement audio, et le mode AntiDot ne l’utilise pas."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponible avec %@ : seul le son de cette app indique si elle joue, ce qui nécessite l’enregistrement audio, et le mode AntiDot ne l’utilise pas."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ के साथ उपलब्ध नहीं: सिर्फ़ इसकी आवाज़ बताती है कि यह चल रहा है या नहीं, जिसके लिए ऑडियो रिकॉर्डिंग चाहिए, और AntiDot मोड इसका इस्तेमाल नहीं करता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije dostupno s aplikacijom %@: samo zvuk govori svira li, za što je potrebno snimanje zvuka, a način rada AntiDot ga ne koristi."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nem érhető el a(z) %@ app mellett: csak a hangja árulja el, hogy szól-e, ehhez hangfelvétel kell, az AntiDot mód pedig nem használja."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak tersedia dengan %@: hanya suaranya yang memberi tahu apakah sedang diputar, yang memerlukan rekaman audio, dan Mode AntiDot tidak menggunakannya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non disponibile con %@: solo il suono dice se è in riproduzione, il che richiede la registrazione audio, e la modalità AntiDot non la usa."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@では使用できません：再生中かどうかは音でしか分からず、それにはオーディオ録音が必要ですが、AntiDotモードはそれを使いません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서는 사용할 수 없음: 재생 중인지는 소리로만 알 수 있는데, 이를 위해서는 오디오 녹음이 필요하며 AntiDot 모드는 이를 사용하지 않습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke tilgjengelig med %@: bare lyden viser om appen spiller, noe som krever lydopptak, som AntiDot-modus ikke bruker."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet beschikbaar met %@: alleen het geluid vertelt of de app speelt, en daarvoor is audio-opname nodig, die de AntiDot-modus niet gebruikt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedostępne z aplikacją %@: tylko dźwięk mówi, czy gra, co wymaga nagrywania dźwięku, a tryb AntiDot z niego nie korzysta."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponível com %@: só o som diz se ele está tocando, o que requer a gravação de áudio, e o modo AntiDot não a usa."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponível com %@: só o som indica se está a reproduzir, o que requer a gravação de áudio, e o modo AntiDot não a usa."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponibil cu aplicația %@: doar sunetul spune dacă redă, ceea ce necesită înregistrarea audio, iar modul AntiDot nu o folosește."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недоступно, пока плеер — %@: только звук говорит, играет ли он, для чего нужна запись звука, а режим AntiDot её не использует."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedostupné s apkou %@: len zvuk povie, či hrá, na čo je potrebné nahrávanie zvuku, a režim AntiDot ho nepoužíva."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni na voljo z aplikacijo %@: le zvok pove, ali predvaja, za kar je potrebno snemanje zvoka, način AntiDot pa ga ne uporablja."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inte tillgängligt med %@: bara ljudet visar om appen spelar, vilket kräver ljudinspelning, som AntiDot-läget inte använder."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ile kullanılamaz: çalıp çalmadığını yalnızca sesi söyler, bu da ses kaydı gerektirir ve AntiDot modu bunu kullanmaz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недоступно з програмою %@: лише звук каже, чи вона грає, для чого потрібне записування звуку, а режим AntiDot його не використовує."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không khả dụng với %@: chỉ âm thanh cho biết ứng dụng có đang phát không, việc này cần quyền ghi âm thanh, và chế độ AntiDot không dùng quyền đó."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 %@ 時不可用：只有它的聲音能說明它是否在播放，這需要錄音，而 AntiDot 模式不使用錄音。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 %@ 时不可用：只有它的声音能说明它是否在播放，这需要录音，而 AntiDot 模式不使用录音。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 %@ 時不可用：只有它的聲音能說明它是否在播放，這需要錄音，而 AntiDot 模式不使用錄音。"
           }
         }
       }

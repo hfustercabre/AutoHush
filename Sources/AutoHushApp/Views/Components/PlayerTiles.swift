@@ -141,8 +141,8 @@ struct PlayerTiles: View {
             if option.isInstalled && option.isUnavailableInAntiDotMode {
                 // Outside the disabled button, so the help tag still shows.
                 button
-                    .help(PlayerOption.antiDotModeReason)
-                    .accessibilityHint(Text(verbatim: PlayerOption.antiDotModeReason))
+                    .help(option.antiDotModeReason)
+                    .accessibilityHint(Text(verbatim: option.antiDotModeReason))
             } else {
                 button
             }

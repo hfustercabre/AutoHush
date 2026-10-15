@@ -49,15 +49,21 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// only when opened with `--disable-backgrounding-occluded-windows`: the
     /// user is asked before AutoHush reopens it so (2026-10-15).
     package var needsLaunchOption: Bool
+    /// Its Now Playing row shows a state it doesn't follow (Qobuz's always
+    /// shows paused, 2026-10-16), as its check found: when its sound says
+    /// otherwise, the row is pressed as a toggle (`PanelWay`), so only its
+    /// sound tells, and AntiDot mode, which hears none, can't control it.
+    package var panelRowIsStale: Bool?
 
     package init(bundleID: String, name: String, appURL: URL, ways: [Way], stateNotification: String? = nil,
-                 needsLaunchOption: Bool = false) {
+                 needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil) {
         self.bundleID = bundleID
         self.name = name
         self.appURL = appURL
         self.ways = ways.sorted { ($0.isPanel ? 1 : 0) < ($1.isPanel ? 1 : 0) }
         self.stateNotification = stateNotification
         self.needsLaunchOption = needsLaunchOption
+        self.panelRowIsStale = panelRowIsStale
     }
 }
 

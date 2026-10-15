@@ -407,6 +407,8 @@ private struct WayRow: View {
     let way: CheckResult.WayResult
     let app: String
     var recommended = false
+    /// Its Now Playing row doesn't follow the app: only its sound tells.
+    var soundOnly = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -417,6 +419,9 @@ private struct WayRow: View {
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
                 }
                 Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle().fixedSize(horizontal: false, vertical: true)
+                if soundOnly {
+                    Text(verbatim: AddAppText.panelSoundOnly).captionStyle().fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .accessibilityElement(children: .combine)
@@ -455,7 +460,7 @@ private struct WayChoices: View {
     private func card(_ way: CheckResult.WayResult, recommended: Bool) -> some View {
         let isChosen = model.chosenWay == way.kind
         return Button { model.choose(way.kind) } label: {
-            WayRow(way: way, app: app, recommended: recommended)
+            WayRow(way: way, app: app, recommended: recommended, soundOnly: way.kind == .panel && result.setup?.panelRowIsStale == true)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background {

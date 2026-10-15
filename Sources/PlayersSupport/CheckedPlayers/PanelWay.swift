@@ -7,7 +7,10 @@ import AutoHushKit
 /// screen for about half a second and takes the keyboard. Its row is the one
 /// showing what the app plays (its windows' titles) or its name, else the
 /// row it changed with last (kept in its setup), else, pausing, the only one
-/// playing while it holds Now Playing. Its state comes from its other signs.
+/// playing while it holds Now Playing. Its state comes from its other signs;
+/// for a row that doesn't follow the app (`PlayerSetup.panelRowIsStale`),
+/// from its sound, and the row is pressed as a toggle, only when its sound
+/// says it isn't as wanted yet.
 package actor PanelWay: MusicPlayer {
     /// What tells the app's row, read just before the panel opens: its
     /// windows' titles, the other running apps' names, and whether it holds
@@ -33,14 +36,19 @@ package actor PanelWay: MusicPlayer {
     private let panel: any NowPlayingPanel
     private let processIdentifier: @Sendable () -> pid_t?
     private let shown: @Sendable (pid_t) -> Shown
+    /// Its row doesn't follow it: its sound tells (`hearing`).
+    private let rowIsStale: Bool
+    private let hearing: LateHearing?
     private let queue = DispatchQueue(label: "AutoHush.NowPlayingPanel", qos: .userInitiated)
 
     /// `panel`, `processIdentifier` and `shown`: the real ones; tests stand in for them.
     package init(setup: PlayerSetup, remembered: String?, store: any PlayerSetupStore,
                  panel: any NowPlayingPanel = AccessibilityNowPlayingPanel(),
                  processIdentifier: (@Sendable () -> pid_t?)? = nil,
-                 shown: @escaping @Sendable (pid_t) -> Shown = PanelWay.shown) {
+                 shown: @escaping @Sendable (pid_t) -> Shown = PanelWay.shown, hearing: LateHearing? = nil) {
         bundleID = setup.bundleID
+        rowIsStale = setup.panelRowIsStale == true
+        self.hearing = hearing
         name = setup.name
         self.remembered = remembered
         self.store = store
@@ -72,14 +80,20 @@ package actor PanelWay: MusicPlayer {
 
     private func press(pausing: Bool) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        let (name, remembered, panel, shown) = (name, remembered, panel, shown)
+        if rowIsStale {
+            // Its row doesn't follow it: its sound tells how it is, and the row
+            // is pressed as a toggle only when that isn't as wanted yet.
+            guard let heard = await hearing?.heard(pid) else { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
+            if heard != pausing { return }
+        }
+        let (name, remembered, panel, shown, asToggle) = (name, remembered, panel, shown, rowIsStale)
         let (pressed, hidden): (String?, Bool) = await queue.run {
             // Read before the panel opens (Now Playing is asked of a fresh process).
             let now = shown(pid)
             var chosen: String?
             let opened = panel.pressRow { rows in
                 let row = PanelRows.row(in: rows, pausing: pausing, appName: name, otherApps: now.otherApps, texts: now.titles,
-                                        remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying)
+                                        remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying, asToggle: asToggle)
                 chosen = row?.text
                 return row
             }

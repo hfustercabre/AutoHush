@@ -18,10 +18,12 @@ struct DetectionSettingsView: View {
                                    comment: "Settings, under AntiDot mode"),
                     isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
                 )
-                // A player that can only be muted: AntiDot mode can't mute it (the user, 2026-10-15).
+                // A player only its sound tells (muted only, or a Now Playing row
+                // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16).
                 .disabled(!model.isAntiDotMode && model.antiDotUnavailableFor != nil)
-                if !model.isAntiDotMode, let player = model.antiDotUnavailableFor {
-                    Text(verbatim: Self.unavailableNote(player)).captionStyle().fixedSize(horizontal: false, vertical: true)
+                if !model.isAntiDotMode, let player = model.antiDotUnavailablePlayer {
+                    Text(verbatim: Self.unavailableNote(player.name, mutes: player.pausesByMuting))
+                        .captionStyle().fixedSize(horizontal: false, vertical: true)
                 }
                 // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
                 if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {
@@ -89,9 +91,12 @@ struct DetectionSettingsView: View {
     }
 
     /// Under the AntiDot mode switch while it's off and dimmed.
-    static func unavailableNote(_ player: String) -> String {
-        String(localized: "Unavailable with \(player): AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.",
-               comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App that can only be muted; %@ is the player")
+    static func unavailableNote(_ player: String, mutes: Bool = true) -> String {
+        mutes
+            ? String(localized: "Unavailable with \(player): AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.",
+                     comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App that can only be muted; %@ is the player")
+            : String(localized: "Unavailable with \(player): only its sound tells whether it plays, which needs Audio Recording, and AntiDot mode doesn’t use it.",
+                     comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App whose Now Playing row doesn't show whether it plays; %@ is the player")
     }
 
     private var audioNote: String {

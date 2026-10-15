@@ -23,12 +23,15 @@ struct PlayerOption: Equatable, Identifiable {
     /// An app added with Add an App that's muted instead of paused: said
     /// under its name.
     var pausesByMuting = false
+    /// Only its sound level tells how it is: muted only, or controlled
+    /// through a Now Playing row that doesn't follow it (Qobuz's).
+    var needsAudioLevels = false
     /// An app added with Add an App that's a Chromium browser's web app (a
     /// Chrome app, a Brave app…): its browser's name, e.g. "Google Chrome".
     /// Its icon carries the browser's, and VoiceOver says it (`spokenName`).
     var browserName: String?
-    /// AntiDot mode is on, and this app can only be muted: muting taps its
-    /// sound, which AntiDot mode never does, so it can't be chosen. It's
+    /// AntiDot mode is on, and only this app's sound tells how it is
+    /// (`needsAudioLevels`), which AntiDot mode never hears, so it can't be chosen. It's
     /// offered dimmed, saying why (`[PlayerOption].inAntiDotMode(_:)` sets it).
     var isUnavailableInAntiDotMode = false
 
@@ -42,7 +45,7 @@ struct PlayerOption: Equatable, Identifiable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
             && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested && lhs.pausesByMuting == rhs.pausesByMuting
-            && lhs.browserName == rhs.browserName && lhs.isUnavailableInAntiDotMode == rhs.isUnavailableInAntiDotMode
+            && lhs.needsAudioLevels == rhs.needsAudioLevels && lhs.browserName == rhs.browserName && lhs.isUnavailableInAntiDotMode == rhs.isUnavailableInAntiDotMode
     }
 
     /// A suggested web app, not added yet.
@@ -94,7 +97,7 @@ struct PlayerOption: Equatable, Identifiable {
             let appURL = $0.installedURL ?? locate($0.bundleID)
             return PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: appURL,
                                 iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested,
-                                pausesByMuting: $0.pausesByMuting,
+                                pausesByMuting: $0.pausesByMuting, needsAudioLevels: $0.needsAudioLevels,
                                 browserName: $0.kind == .checkedApp ? appURL.flatMap(CheckableApp.browserName(ofAppAt:)) : nil)
         } + catalog.webAppSuggestions.map(suggestion)
     }
@@ -260,11 +263,14 @@ struct PlayerOption: Equatable, Identifiable {
         String(localized: "Remove \(name)…", comment: "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → General, the welcome window) as its help tag and VoiceOver action; %@ is the app")
     }
 
-    /// Why an app that can only be muted can't be chosen in AntiDot mode:
-    /// the help tag and VoiceOver hint of its row and its tile.
-    static var antiDotModeReason: String {
-        String(localized: "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.",
-               comment: "Help tag and VoiceOver hint of an app added with Add an App that can only be muted, where media players are offered, dimmed while AntiDot mode is on")
+    /// Why it can't be chosen in AntiDot mode: the help tag and VoiceOver
+    /// hint of its row and its tile.
+    var antiDotModeReason: String {
+        pausesByMuting
+            ? String(localized: "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.",
+                     comment: "Help tag and VoiceOver hint of an app added with Add an App that can only be muted, where media players are offered, dimmed while AntiDot mode is on")
+            : String(localized: "Only its sound tells AutoHush whether it plays, and hearing it needs Audio Recording, which AntiDot mode doesn’t use.",
+                     comment: "Help tag and VoiceOver hint of an app added with Add an App whose Now Playing row doesn't show whether it plays, where media players are offered, dimmed while AntiDot mode is on")
     }
 
     /// Under an app that pauses the player while it plays (the menu's Playing
@@ -333,7 +339,7 @@ extension [PlayerOption] {
     func inAntiDotMode(_ on: Bool) -> [PlayerOption] {
         map { option in
             var option = option
-            option.isUnavailableInAntiDotMode = on && option.pausesByMuting
+            option.isUnavailableInAntiDotMode = on && option.needsAudioLevels
             return option
         }
     }

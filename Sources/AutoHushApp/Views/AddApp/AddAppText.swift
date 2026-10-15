@@ -405,6 +405,11 @@ enum AddAppText {
                comment: "Add an App window, under the step “See what worked, and use it”, over the ways that worked, one to choose; %@ is the app")
     }
 
+    static var panelSoundOnly: String {
+        String(localized: "Its row doesn’t show its state: only its sound tells, so not in AntiDot mode.",
+               comment: "Add an App window, under “The menu bar’s Now Playing panel” when the app's row there doesn't show whether it plays (AutoHush then judges it by its sound, which AntiDot mode doesn't hear)")
+    }
+
     static var recommendedBadge: String {
         String(localized: "Recommended", comment: "Add an App window: a badge beside the way AutoHush recommends to pause and play the app, among those that worked")
     }

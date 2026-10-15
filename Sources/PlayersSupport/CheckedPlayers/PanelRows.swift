@@ -56,10 +56,12 @@ package enum PanelRows {
     /// The row to press for the app, showing Pause when `pausing`, else
     /// Play: its song's or name's; else the one it changed with before,
     /// `remembered`; else, pausing, the only one playing when the app holds
-    /// Now Playing. `nil` when that's not one row.
+    /// Now Playing. `asToggle`: whatever it shows, for a row that doesn't
+    /// follow the app (`PlayerSetup.panelRowIsStale`), its song's, name's or
+    /// remembered only. `nil` when that's not one row.
     package static func row(in rows: [PanelRow], pausing: Bool, appName: String, otherApps: Set<String>, texts: [String],
-                            remembered: String?, holdsNowPlaying: Bool) -> PanelRow? {
-        let candidates = rows.filter { $0.playing == pausing }
+                            remembered: String?, holdsNowPlaying: Bool, asToggle: Bool = false) -> PanelRow? {
+        let candidates = asToggle ? rows : rows.filter { $0.playing == pausing }
         let mine = appRows(candidates, appName: appName, otherApps: otherApps, texts: texts)
         if mine.count == 1 { return mine[0] }
         guard mine.isEmpty else { return nil }
@@ -67,6 +69,6 @@ package enum PanelRows {
             let same = candidates.filter { $0.text == remembered }
             if same.count == 1 { return same[0] }
         }
-        return pausing && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil
+        return !asToggle && pausing && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil
     }
 }

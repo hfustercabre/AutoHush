@@ -82,6 +82,32 @@ struct PanelWayTests {
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nowPlayingHidden)) { try await way(hidden, store: store).pause() }
     }
 
+    @Test("a row that doesn't follow the app: its sound tells; pressed as a toggle only when it isn't as wanted yet, else nothing; unheard, it fails")
+    func staleRow() async throws {
+        var stale = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
+                                ways: [.panel(rememberedRow: nil)])
+        stale.panelRowIsStale = true
+        // Its row always shows paused, as Qobuz's does.
+        let shownPaused = [PanelRow(text: "Jukebox,  – ", playing: false), PanelRow(text: "Other Song, Someone – Else", playing: true)]
+        func way(_ panel: FakePanel, heard: Bool?) -> PanelWay {
+            let hearing = LateHearing()
+            hearing.set { _ in heard }
+            return PanelWay(setup: stale, remembered: nil, store: MemoryStore(), panel: panel, processIdentifier: { 4242 },
+                            shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing)
+        }
+        let playing = FakePanel(shownPaused)
+        try await way(playing, heard: true).pause()
+        #expect(playing.pressed == ["Jukebox,  – "])
+        let paused = FakePanel(shownPaused)
+        try await way(paused, heard: false).pause()
+        #expect(paused.pressed.isEmpty)
+        try await way(paused, heard: false).play()
+        #expect(paused.pressed == ["Jukebox,  – "])
+        try await way(playing, heard: true).play()
+        #expect(playing.pressed == ["Jukebox,  – "])
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await way(FakePanel(shownPaused), heard: nil).pause() }
+    }
+
     @Test("else the row it changed with before")
     func remembered() async throws {
         let panel = FakePanel([PanelRow(text: "Other Song, Someone – Else", playing: false)])

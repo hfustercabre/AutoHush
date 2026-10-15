@@ -68,6 +68,10 @@ package protocol MusicPlayer: Sendable {
     /// It's never paused, but muted while other apps play (an app added with
     /// Add an App that no way pauses): the menu says "Muted", with Unmute.
     var pausesByMuting: Bool { get }
+    /// Only its sound level tells how it is (muted only, or controlled
+    /// through a Now Playing row that doesn't follow it): not in AntiDot
+    /// mode, which measures none.
+    var needsAudioLevels: Bool { get }
     /// It runs, but was opened without what it needs to be controlled
     /// wherever its window is (an Electron app's launch option, without
     /// which its page takes no presses while covered or on another desktop):
@@ -96,6 +100,7 @@ extension MusicPlayer {
     package func release() async {}
     package var releasesOnQuit: Bool { false }
     package var pausesByMuting: Bool { false }
+    package var needsAudioLevels: Bool { false }
     package func needsReopen() async -> Bool { false }
     package func reopen() async -> Bool { false }
     /// Most players are scripted with Apple events.

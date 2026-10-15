@@ -62,7 +62,8 @@ import WebAppPlayers
     let ordered = ResultWays.ordered(working)
     let setup = ordered.isEmpty ? nil
         : PlayerSetup(bundleID: bundleID, name: appName, appURL: appURL, ways: ordered,
-                      stateNotification: announcingNotification, needsLaunchOption: LaunchOption.needed(by: appURL) != nil)
+                      stateNotification: announcingNotification, needsLaunchOption: LaunchOption.needed(by: appURL) != nil,
+                      panelRowIsStale: panelRowStale && ordered.contains(where: \.isPanel) ? true : nil)
     let result = CheckResult(ways: ways, setup: setup, pageButton: page?.toggle == nil ? nil : learned?.recipe ?? savedRecipe)
     do {
         try JSONEncoder().encode(result).write(to: resultFile, options: .atomic)

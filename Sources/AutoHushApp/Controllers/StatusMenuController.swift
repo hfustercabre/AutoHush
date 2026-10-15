@@ -142,7 +142,7 @@ final class StatusMenuController: NSObject {
         if let warning = status.warning {
             menu.addItem(warningItem(for: warning))
             // Not for a player that can only be muted: AntiDot mode can't mute it.
-            if warning == .systemAudioRecording, !status.playerMutes {
+            if warning == .systemAudioRecording, !status.playerNeedsLevels {
                 // Its title lines up with the warning's, after its symbol.
                 let antiDot = item(PermissionText.useAntiDot, #selector(useAntiDotMode))
                 antiDot.shownImage = NSImage(size: menu.items.last?.image?.size ?? .zero)
@@ -327,8 +327,8 @@ final class StatusMenuController: NSObject {
             row.subtitle = option.webAddress != nil ? PlayerOption.clickToAddLabel : PlayerOption.notInstalledLabel
         } else if option.isUnavailableInAntiDotMode {
             row.subtitle = PlayerOption.antiDotModeLabel
-            row.toolTip = PlayerOption.antiDotModeReason
-            row.setAccessibilityHelp(PlayerOption.antiDotModeReason)
+            row.toolTip = option.antiDotModeReason
+            row.setAccessibilityHelp(option.antiDotModeReason)
         } else if option.pausesByMuting {
             row.subtitle = PlayerOption.mutedInsteadLabel
         }

@@ -24,6 +24,10 @@ var nowPlayingSettings: String {
 /// (hidden in System Settings, macOS removes it), which `writeResult` says.
 @MainActor var panelItemSeen = false
 @MainActor var panelItemMissing = false
+/// The app's row showed a state its sound didn't (Qobuz's always shows
+/// paused, 2026-10-16), and was pressed as a toggle: kept in its setup
+/// (`PlayerSetup.panelRowIsStale`) when the panel worked.
+@MainActor var panelRowStale = false
 
 /// One app's row in the open panel, with its Play/Pause, as AutoHush reads
 /// it (`AccessibilityNowPlayingPanel`): its text ("Song, Artist – Album", or
@@ -180,6 +184,27 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
         } else if mine.isEmpty, holdsNowPlaying, candidates.count == 1 {
             row = candidates[0]
             why = "the only row playing, while it holds Now Playing"
+        }
+    }
+    if row == nil, choice != .lastOnly, mine.isEmpty {
+        // Its own row showing the other state: when its sound says otherwise
+        // (heard while it shows paused, silent while it shows playing), a
+        // row that doesn't follow it, pressed as a toggle. Its level is read
+        // with the panel closed (half a second).
+        let shown = appRows(rows.filter { $0.row.playing != pausing }, texts: texts)
+        if shown.count == 1 {
+            closePanel(item)
+            if audible(pid) == pausing, let again = openPanel(item) {
+                defer { closePanel(item) }
+                if let own = again.first(where: { $0.row.text == shown[0].row.text }) {
+                    log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
+                    panelRowStale = true
+                    notePanelRow(own.row, again.firstIndex { $0.row == own.row } ?? 0, of: again.count, why: "its own row, which doesn't follow it")
+                    return AXUIElementPerformAction(own.button, kAXPressAction as CFString) == .success
+                }
+            }
+            panelProblem = noRowProblem(rows: candidates.count, mine: 0, showing: pausing ? "Pause" : "Play")
+            return false
         }
     }
     guard let row else {

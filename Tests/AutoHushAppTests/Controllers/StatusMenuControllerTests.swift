@@ -230,6 +230,7 @@ struct StatusMenuControllerTests {
         var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
                                  kind: .checkedApp)
         muted.pausesByMuting = true
+        muted.needsAudioLevels = true
         status.playerOptions = [
             PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
             muted,
@@ -249,8 +250,8 @@ struct StatusMenuControllerTests {
         let dimmed = try item("Muted", in: sut.menu)
         #expect(!dimmed.isEnabled && dimmed.state == .on)
         #expect(dimmed.subtitle == "Not in AntiDot mode")
-        #expect(dimmed.toolTip == PlayerOption.antiDotModeReason)
-        #expect(dimmed.accessibilityHelp() == PlayerOption.antiDotModeReason)
+        #expect(dimmed.toolTip == muted.antiDotModeReason)
+        #expect(dimmed.accessibilityHelp() == muted.antiDotModeReason)
         #expect(try item("First", in: sut.menu).isEnabled)
     }
 

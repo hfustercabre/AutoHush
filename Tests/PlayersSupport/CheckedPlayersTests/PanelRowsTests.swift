@@ -29,6 +29,17 @@ struct PanelRowsTests {
         #expect(PanelRows.appRows(rows, appName: "VLC", otherApps: ["QuickTime Player"], texts: ["QuickTime Player"]).isEmpty)
     }
 
+    @Test("as a toggle, the app's own row is pressed whatever it shows, and never the only one playing")
+    func asToggle() {
+        let rows = [PanelRow(text: "Qobuz,  – ", playing: false), PanelRow(text: "Song, Artist – Album", playing: true)]
+        let own = PanelRows.row(in: rows, pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: true, asToggle: true)
+        #expect(own == rows[0])
+        // Not as a toggle, its row showing paused isn't one to press to pause it.
+        #expect(PanelRows.row(in: rows, pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: false) == nil)
+        #expect(PanelRows.row(in: [rows[1]], pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: true,
+                              asToggle: true) == nil)
+    }
+
     @Test("the row to press: its song's, else the one it changed with before, else the only one playing while it holds Now Playing")
     func row() {
         #expect(PanelRows.row(in: rows, pausing: false, appName: "Spotify", otherApps: [], texts: ["Another One Bites The Dust"],

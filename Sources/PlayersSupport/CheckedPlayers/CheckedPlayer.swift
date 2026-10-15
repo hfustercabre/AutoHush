@@ -58,6 +58,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
         var page: SafariWebAppPlayer?
         /// It's muted instead of paused: no way pauses it (`PlayerSetup.Way.mute`).
         var mutes = false
+        /// Its panel row doesn't follow it (`PlayerSetup.panelRowIsStale`):
+        /// the panel way asks its sound through this.
+        var hearing: LateHearing?
         /// What a script that only toggles, with no state of its own, asks before it's sent.
         var toggleState: LateState?
     }
@@ -112,6 +115,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
         self.assertionHeld = assertionHeld
         self.pressSleep = pressSleep
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
+        parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
     }
 
     /// Whether the app running as `pid`, or a process of its own, holds a
@@ -160,7 +164,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
                 parts.page = player
                 parts.ways.append(player)
             case .panel(let remembered):
-                parts.ways.append(PanelWay(setup: setup, remembered: remembered, store: store))
+                let hearing = setup.panelRowIsStale == true ? LateHearing() : nil
+                parts.hearing = hearing
+                parts.ways.append(PanelWay(setup: setup, remembered: remembered, store: store, hearing: hearing))
             case .mute:
                 parts.mutes = true
             }
@@ -240,7 +246,21 @@ package actor CheckedPlayer: MutingMusicPlayer {
             }
             if state != .unknown { return state }
         }
+        // Its Now Playing row (and report) doesn't follow it: only its sound tells.
+        if parts.hearing != nil {
+            return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
+        }
         return await reported(pid: pid) ?? .unknown
+    }
+
+    /// Whether it's heard now, by its level (half a second of listening):
+    /// one with no sound output open isn't; `nil` without Audio Recording or
+    /// in AntiDot mode, which taps no sound.
+    func heardNow(_ pid: pid_t) async -> Bool? {
+        guard soundOn(pid) else { return false }
+        guard tapsAllowed.withLock({ $0 }) else { return nil }
+        let probe = levelProbe
+        return await Self.probeQueue.run { probe.isAudible(appPID: pid) }
     }
 
     /// What it last reported to Now Playing, unless that's stale (see
@@ -363,6 +383,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
     // MARK: Muted instead of paused
 
     package nonisolated var pausesByMuting: Bool { parts.mutes }
+    /// Muted only, or controlled through a Now Playing row that doesn't
+    /// follow it: only its sound tells how it is.
+    package nonisolated var needsAudioLevels: Bool { parts.mutes || parts.hearing != nil }
 
     /// Not in AntiDot mode, which taps no sound: then it can't be muted (nor
     /// its page in place of a pause), and a mute under way is lifted.
