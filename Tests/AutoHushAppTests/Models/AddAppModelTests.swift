@@ -114,7 +114,7 @@ private final class World {
 @Suite("AddAppModel", .timeLimit(.minutes(1)))
 struct AddAppModelTests {
     private let result = CheckResult(
-        ways: [CheckResult.WayResult(kind: .page, mark: .works), CheckResult.WayResult(kind: .menu, mark: .none)],
+        ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
         setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                            ways: [.panel(rememberedRow: nil)]))
 
@@ -275,6 +275,28 @@ struct AddAppModelTests {
         #expect(model.mark(of: .check) == .done && model.mark(of: .use) == .current)
         model.use()
         #expect(world.used == [result] && world.closed == 1 && world.asksToReopen == [true])
+    }
+
+    @Test("only the ways that worked, fully or partly, can be chosen; the first is recommended and used unless another is chosen, and only the chosen one is kept")
+    func choosingTheWay() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        let found = CheckResult(
+            ways: [CheckResult.WayResult(kind: .script, mark: .notThere), CheckResult.WayResult(kind: .menu, mark: .some, failedStates: [.hidden]),
+                   CheckResult.WayResult(kind: .page, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback"), .panel(rememberedRow: nil)]))
+        world.run.finish(.finished(found))
+        await TestWait.until { model.result != nil }
+        #expect(model.choosableWays == [.menu, .panel] && model.chosenWay == .menu)
+        model.choose(.page)
+        #expect(model.chosenWay == .menu)
+        model.choose(.panel)
+        #expect(model.chosenWay == .panel)
+        model.use()
+        #expect(world.used.first?.setup?.ways == [.panel(rememberedRow: nil)] && world.used.first?.ways == found.ways)
     }
 
     @Test("a stopped check can run again; a check that found no way says so")

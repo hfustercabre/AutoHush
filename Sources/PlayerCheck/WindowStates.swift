@@ -49,6 +49,14 @@ extension CheckResult.WindowState {
         return (info, known.first { $0.number == number(of: info) }?.element)
     }
 
+    /// Its window in front among its ordinary ones on screen (the list goes
+    /// front to back), when it has one.
+    static func frontWindow(of pid: pid_t) -> Int? {
+        infos(.optionOnScreenOnly).first {
+            owner(of: $0) == pid && $0[kCGWindowLayer as String] as? Int == 0 && frame(of: $0).height >= 200
+        }.map(number(of:))
+    }
+
     private typealias GetWindow = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
     private static let getWindow = privateSymbol("_AXUIElementGetWindow", as: GetWindow.self)
 
@@ -130,6 +138,11 @@ extension CheckResult.WindowState {
     private static let processForPID = privateSymbol("GetProcessForPID", as: ProcessForPID.self)
     private static let pidForProcess = privateSymbol("GetProcessPID", as: PIDForProcess.self)
 
+    /// The app in front now, by name, for the log.
+    static var frontName: String {
+        frontPID().flatMap { NSRunningApplication(processIdentifier: $0)?.localizedName } ?? "?"
+    }
+
     /// The app in front now.
     static func frontPID() -> pid_t? {
         var process = ProcessSerialNumber(), pid: pid_t = 0
@@ -163,6 +176,13 @@ extension CheckResult.WindowState {
             } while Date() < deadline
             return false
         }
+        // Without Accessibility, reading its windows would make macOS ask for
+        // it there and then (Add an App opens the app with its launch option
+        // before its Allow step): brought forward as `open` does.
+        guard AXIsProcessTrusted() else {
+            if let url = app.bundleURL { bringForward(url) }
+            return there(within: 2.5)
+        }
         // The process forward, then its window above the others (SkyLight's
         // call alone left an Electron player's window under Player Check's).
         let target: (number: Int, element: AXUIElement?)? = window.map { ($0, element(of: app.processIdentifier, number: $0)) }
@@ -172,6 +192,9 @@ extension CheckResult.WindowState {
             if there(within: 2) { return true }
         }
         if let url = app.bundleURL { bringForward(url) }
+        // `open` brings its windows forward in their own order: the one asked
+        // for on top (AutoHush's Add an App above its Settings).
+        if window != nil, let element = target?.element { AXUIElementPerformAction(element, kAXRaiseAction as CFString) }
         return there(within: 2.5)
     }
 
@@ -302,8 +325,7 @@ extension CheckResult.WindowState {
         let pid = app.processIdentifier
         guard steps != 0, let (info, _) = main(of: pid), let start = Desktops.of(window: number(of: info)) else { return false }
         let shown = activate(app, showing: number(of: info))
-        log("  drag: \(app.localizedName ?? "the app") brought forward: \(shown); in front: "
-            + (frontPID().flatMap { NSRunningApplication(processIdentifier: $0)?.localizedName } ?? "?"))
+        log("  drag: \(app.localizedName ?? "the app") brought forward: \(shown); in front: \(frontName)")
         guard shown else { return false }
         Thread.sleep(forTimeInterval: 0.6)
         reveal?(true)

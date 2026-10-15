@@ -144,6 +144,27 @@ final class AddAppModel {
         if case .done(let result) = stage { result } else { nil }
     }
 
+    /// The ways that worked, in every window state or in some, that AutoHush
+    /// can run, the recommended first (the setup's order): the user chooses
+    /// one (U2, the user's pick, 2026-10-15).
+    var choosableWays: [CheckResult.WayKind] {
+        guard let result, let setup = result.setup else { return [] }
+        let worked = Set(result.ways.filter { $0.mark == .works || $0.mark == .some }.map(\.kind))
+        return setup.ways.compactMap(\.kind).filter(worked.contains)
+    }
+
+    /// The way Use makes AutoHush use: the user's choice, else the recommended.
+    var chosenWay: CheckResult.WayKind? {
+        pickedWay.flatMap { choosableWays.contains($0) ? $0 : nil } ?? choosableWays.first
+    }
+
+    private(set) var pickedWay: CheckResult.WayKind?
+
+    func choose(_ way: CheckResult.WayKind) {
+        guard choosableWays.contains(way) else { return }
+        pickedWay = way
+    }
+
     /// AntiDot mode is on: nothing listens to the app, and it can't be muted.
     var antiDot: Bool { services.antiDot() }
 
@@ -409,6 +430,7 @@ final class AddAppModel {
         guard stage == .ready, windowIsOpen, let app = chosen else { return }
         progress = CheckProgress()
         failureReason = nil
+        pickedWay = nil
         stage = .checking
         Task { [weak self] in
             if let ending = self?.endingRun { _ = await ending.waitForEnd() }
@@ -516,9 +538,11 @@ final class AddAppModel {
     /// The last step's Use: keeps what worked and makes the app the player
     /// (asking to reopen it unless the user skipped that here).
     func use() {
-        guard let result, result.setup != nil else { return }
+        guard let result, var setup = result.setup, let way = chosenWay else { return }
+        // Only the chosen way: the others as its backup are parked (the user, 2026-10-15).
+        setup.ways = setup.ways.filter { $0.kind == way }
         services.keptChecks.forget()
-        services.use(result, reopenOutcome != .skipped)
+        services.use(CheckResult(ways: result.ways, setup: setup), reopenOutcome != .skipped)
         services.close()
     }
 

@@ -24,7 +24,8 @@ import PlayerCheckKit
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
     var lines = mark == "⚠" ? results.filter { $0.result != .worked }.map { "      ✗ \($0.state.title): \($0.why)" } : []
     for state in WindowState.allCases where !results.contains(where: { $0.state == state }) {
-        lines.append("      – \(state.title): not tested (\(windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")))")
+        let why = untestedStates[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
+        lines.append("      – \(state.title): not tested (\(why))")
     }
     return (mark, suffix, lines)
 }

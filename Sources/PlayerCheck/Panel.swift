@@ -143,6 +143,7 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
     let texts = choice == .lastOnly ? SongTexts() : songTexts(pid)
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
+        log("    no Now Playing item found; in front: \(WindowStates.frontName)")
         panelProblem = noPanelItem
         return false
     }
@@ -205,6 +206,7 @@ enum PanelPress { case already, changed, pressed, notPressed }
     if !pageRead { _ = useRememberedBar(pid: pid) }
     var texts = songTexts(pid)
     guard let item = nowPlayingMenuItem() else {
+        log("    no Now Playing item found; in front: \(WindowStates.frontName)")
         panelProblem = noPanelItem
         return .notPressed
     }

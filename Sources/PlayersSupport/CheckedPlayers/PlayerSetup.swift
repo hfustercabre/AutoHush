@@ -17,13 +17,24 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         /// Its page's Play/Pause (`SafariWebAppPlayer` with `PageAccess`); the
         /// button the check learned is kept as a web app's is.
         case page(PageAccess)
-        /// Its row in the menu bar's Now Playing panel: only when nothing else
-        /// works (the user, 2026-10-15); the row it changed with last.
+        /// Its row in the menu bar's Now Playing panel; the row it changed
+        /// with last.
         case panel(rememberedRow: String?)
         /// Muting it while other apps play, never pausing it: chosen in Add
         /// an App when no way worked (the user, 2026-10-15). It keeps playing,
         /// silent, and is heard again when they stop.
         case mute
+
+        /// Which of the check's ways it is; none for muting.
+        package var kind: CheckResult.WayKind? {
+            switch self {
+            case .script: .script
+            case .menu: .menu
+            case .page: .page
+            case .panel: .panel
+            case .mute: nil
+            }
+        }
     }
 
     package var bundleID: String

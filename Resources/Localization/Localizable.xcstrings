@@ -32487,215 +32487,6 @@
         }
       }
     },
-    "AutoHush uses the first way that works, and the next if it doesn’t." : {
-      "comment" : "Add an App window, under the step “See what worked, and use it”, over the ways the check found",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يستخدم AutoHush أول طريقة تنجح، والطريقة التالية إن لم تنجح."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’AutoHush fa servir la primera manera que funcioni, i la següent si aquesta falla."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush použije první způsob, který funguje, a když selže, další."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush bruger den første måde, der virker, og den næste, hvis den ikke gør."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush nutzt den ersten Weg, der funktioniert, und den nächsten, wenn er nicht klappt."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Το AutoHush χρησιμοποιεί τον πρώτο τρόπο που λειτουργεί και τον επόμενο αν εκείνος δεν λειτουργήσει."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush usa la primera forma que funcione, y la siguiente si esa falla."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush usa la primera forma que funcione, y la siguiente si esa falla."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush käyttää ensimmäistä toimivaa tapaa ja seuraavaa, jos se ei toimi."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush utilise le premier moyen qui fonctionne, et le suivant s’il échoue."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush utilise le premier moyen qui fonctionne, et le suivant s’il échoue."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush काम करने वाला पहला तरीका इस्तेमाल करता है, और वह काम न करे तो अगला।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush koristi prvi način koji radi, a ako on ne uspije, sljedeći."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az AutoHush az első működő módot használja, és ha az nem működik, a következőt."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush menggunakan cara pertama yang berhasil, dan cara berikutnya jika tidak."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush usa il primo modo che funziona, e il successivo se quello non va."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHushは機能する最初の方法を使い、それが機能しない場合は次の方法を使います。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush는 작동하는 첫 번째 방법을 사용하고, 작동하지 않으면 다음 방법을 사용합니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush bruker den første måten som fungerer, og den neste hvis den ikke gjør det."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush gebruikt de eerste manier die werkt, en de volgende als die niet werkt."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush używa pierwszego działającego sposobu, a jeśli ten zawiedzie, następnego."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O AutoHush usa a primeira forma que funcionar e, se ela falhar, a seguinte."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O AutoHush usa a primeira forma que funcionar e, se falhar, a seguinte."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush folosește primul mod care funcționează și pe următorul dacă acela nu merge."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush использует первый способ, который работает, а если он не сработает — следующий."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush použije prvý spôsob, ktorý funguje, a keď zlyhá, ďalší."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush uporabi prvi način, ki deluje, in naslednjega, če ta ne deluje."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush använder det första sättet som fungerar, och nästa om det inte gör det."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush işe yarayan ilk yolu kullanır, o yol işe yaramazsa bir sonrakini."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush використовує перший спосіб, що працює, а якщо він не спрацює, наступний."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush dùng cách đầu tiên hoạt động, và cách tiếp theo nếu cách đó không hoạt động."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 會使用第一個有效的方式，無效時使用下一個。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 会使用第一个有效的方式，无效时使用下一个。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 會使用第一個有效的方式，無效時使用下一個。"
-          }
-        }
-      }
-    },
     "AutoHush waits up to 2 minutes for it to play." : {
       "comment" : "Add an App window, under the step “Play something in %@” before it's the one to do",
       "localizations" : {
@@ -40843,6 +40634,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選擇 App⋯"
+          }
+        }
+      }
+    },
+    "Choose how AutoHush pauses and plays %@:" : {
+      "comment" : "Add an App window, under the step “See what worked, and use it”, over the ways that worked, one to choose; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر كيف يوقف AutoHush تطبيق %@ مؤقتًا ويشغّله:"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tria com l’AutoHush posa en pausa i reprodueix %@:"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyberte, jak AutoHush pozastavuje a přehrává aplikaci %@:"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg, hvordan AutoHush sætter %@ på pause og afspiller:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle, wie AutoHush %@ pausiert und abspielt:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλέξτε πώς το AutoHush θέτει σε παύση και αναπαράγει το %@:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige cómo AutoHush pausa y reproduce %@:"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige cómo AutoHush pausa y reproduce %@:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse, miten AutoHush keskeyttää ja toistaa sovelluksen %@:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez comment AutoHush met en pause et lit %@ :"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez comment AutoHush met en pause et lit %@ :"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चुनें कि AutoHush, %@ को कैसे पॉज़ और प्ले करे:"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite kako AutoHush pauzira i reproducira aplikaciju %@:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Válassza ki, hogyan szünetelteti és játssza le az AutoHush a(z) %@ appot:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih cara AutoHush menjeda dan memutar %@:"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli come AutoHush mette in pausa e riproduce %@:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushが%@を一時停止・再生する方法を選択してください："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 %@을(를) 일시 정지하고 재생하는 방법을 선택하십시오:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velg hvordan AutoHush setter %@ på pause og spiller av:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies hoe AutoHush %@ pauzeert en afspeelt:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz, jak AutoHush wstrzymuje i odtwarza aplikację %@:"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha como o AutoHush pausa e reproduz %@:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha como o AutoHush coloca em pausa e reproduz %@:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți cum pune AutoHush pe pauză și redă aplicația %@:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите, как AutoHush ставит на паузу и воспроизводит %@:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyberte, ako AutoHush pozastavuje a prehráva apku %@:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izberite, kako AutoHush začasno ustavi in predvaja aplikacijo %@:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj hur AutoHush pausar och spelar upp %@:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush’ın %@ uygulamasını nasıl duraklatıp oynatacağını seçin:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виберіть, як AutoHush призупиняє й відтворює програму %@:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn cách AutoHush tạm dừng và phát %@:"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇 AutoHush 暫停和播放 %@ 的方式："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择 AutoHush 暂停和播放 %@ 的方式："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇 AutoHush 暫停和播放 %@ 的方式："
           }
         }
       }
@@ -59657,211 +59657,211 @@
         }
       }
     },
-    "In every window state; used only if nothing else works, as it opens on screen for a moment" : {
+    "In every window state; it opens on screen for a moment" : {
       "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when it worked",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "في كل حالات النافذة؛ تُستخدم فقط إذا لم ينجح شيء آخر، لأنها تُفتح على الشاشة للحظة"
+            "value" : "في كل حالات النافذة؛ تُفتح على الشاشة للحظة"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En tots els estats de la finestra; només es fa servir si res més no funciona, ja que s’obre a la pantalla un moment"
+            "value" : "En tots els estats de la finestra; s’obre a la pantalla un moment"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ve všech stavech okna; použije se jen tehdy, když nic jiného nefunguje, protože se na chvíli otevře na obrazovce"
+            "value" : "Ve všech stavech okna; na chvíli se otevře na obrazovce"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alle vinduestilstande; bruges kun, hvis intet andet virker, da det åbnes et øjeblik på skærmen"
+            "value" : "I alle vinduestilstande; det åbnes et øjeblik på skærmen"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In jedem Fensterzustand; nur genutzt, wenn nichts anderes funktioniert, da es sich kurz auf dem Bildschirm öffnet"
+            "value" : "In jedem Fensterzustand; es öffnet sich kurz auf dem Bildschirm"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Σε κάθε κατάσταση παραθύρου. Χρησιμοποιείται μόνο αν δεν λειτουργεί τίποτε άλλο, καθώς ανοίγει στην οθόνη για λίγο"
+            "value" : "Σε κάθε κατάσταση παραθύρου. Ανοίγει στην οθόνη για λίγο"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En todos los estados de la ventana; solo se usa si nada más funciona, ya que se abre en pantalla un momento"
+            "value" : "En todos los estados de la ventana; se abre en pantalla un momento"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En todos los estados de la ventana; solo se usa si nada más funciona, ya que se abre en pantalla un momento"
+            "value" : "En todos los estados de la ventana; se abre en pantalla un momento"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kaikissa ikkunan tiloissa; käytetään vain, jos mikään muu ei toimi, koska se avautuu näytölle hetkeksi"
+            "value" : "Kaikissa ikkunan tiloissa; se avautuu näytölle hetkeksi"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans tous les états de fenêtre ; utilisé seulement si rien d’autre ne fonctionne, car il s’ouvre un instant à l’écran"
+            "value" : "Dans tous les états de fenêtre ; il s’ouvre un instant à l’écran"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans tous les états de fenêtre; utilisé seulement si rien d’autre ne fonctionne, car il s’ouvre un instant à l’écran"
+            "value" : "Dans tous les états de fenêtre; il s’ouvre un instant à l’écran"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "विंडो की हर स्थिति में; सिर्फ़ तभी इस्तेमाल होता है जब और कुछ काम न करे, क्योंकि यह एक पल के लिए स्क्रीन पर खुलता है"
+            "value" : "विंडो की हर स्थिति में; यह एक पल के लिए स्क्रीन पर खुलता है"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "U svakom stanju prozora; koristi se samo ako ništa drugo ne radi jer se na trenutak otvara na zaslonu"
+            "value" : "U svakom stanju prozora; na trenutak se otvara na zaslonu"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minden ablakállapotban; csak akkor használja, ha semmi más nem működik, mert egy pillanatra megnyílik a képernyőn"
+            "value" : "Minden ablakállapotban; egy pillanatra megnyílik a képernyőn"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Di setiap keadaan jendela; hanya digunakan jika tidak ada cara lain yang berhasil, karena panel ini terbuka di layar sesaat"
+            "value" : "Di setiap keadaan jendela; panel ini terbuka di layar sesaat"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In tutti gli stati della finestra; usato solo se nient’altro funziona, perché si apre sullo schermo per un momento"
+            "value" : "In tutti gli stati della finestra; si apre sullo schermo per un momento"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "すべてのウインドウ状態で機能。一瞬画面に表示されるため、ほかに機能する方法がない場合にのみ使用します"
+            "value" : "すべてのウインドウ状態で機能。一瞬画面に表示されます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "모든 윈도우 상태에서 작동. 화면에 잠시 열리므로 다른 방법이 모두 작동하지 않을 때만 사용합니다"
+            "value" : "모든 윈도우 상태에서 작동. 화면에 잠시 열립니다"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alle vindustilstander; brukes bare hvis ingenting annet fungerer, siden det åpnes på skjermen et øyeblikk"
+            "value" : "I alle vindustilstander; det åpnes på skjermen et øyeblikk"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In elke toestand van het venster; alleen gebruikt als niets anders werkt, omdat het even op het scherm opengaat"
+            "value" : "In elke toestand van het venster; het gaat even op het scherm open"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "We wszystkich stanach okna; używany tylko wtedy, gdy nic innego nie działa, bo na chwilę otwiera się na ekranie"
+            "value" : "We wszystkich stanach okna; na chwilę otwiera się na ekranie"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Em todos os estados da janela; usado só se nada mais funcionar, pois ele abre na tela por um instante"
+            "value" : "Em todos os estados da janela; ele abre na tela por um instante"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Em todos os estados da janela; só é usado se nada mais funcionar, pois abre-se no ecrã por um momento"
+            "value" : "Em todos os estados da janela; abre-se no ecrã por um momento"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "În orice stare a ferestrei; folosit doar dacă nimic altceva nu merge, deoarece se deschide pe ecran pentru o clipă"
+            "value" : "În orice stare a ferestrei; se deschide pe ecran pentru o clipă"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "При любом состоянии окна; используется, только если больше ничего не работает, так как панель на мгновение открывается на экране"
+            "value" : "При любом состоянии окна; панель на мгновение открывается на экране"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vo všetkých stavoch okna; použije sa iba vtedy, keď nič iné nefunguje, pretože sa na chvíľu otvorí na obrazovke"
+            "value" : "Vo všetkých stavoch okna; na chvíľu sa otvorí na obrazovke"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "V vsakem stanju okna; uporabi se le, če nič drugega ne deluje, saj se za trenutek odpre na zaslonu"
+            "value" : "V vsakem stanju okna; za trenutek se odpre na zaslonu"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alla fönsterlägen; används bara om inget annat fungerar, eftersom den öppnas en kort stund på skärmen"
+            "value" : "I alla fönsterlägen; den öppnas en kort stund på skärmen"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Her pencere durumunda; ekranda bir an açıldığı için yalnızca başka hiçbir yol işe yaramazsa kullanılır"
+            "value" : "Her pencere durumunda; ekranda bir an açılır"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "У всіх станах вікна; використовується, лише якщо ніщо інше не працює, бо ненадовго відкривається на екрані"
+            "value" : "У всіх станах вікна; ненадовго відкривається на екрані"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ở mọi trạng thái cửa sổ; chỉ dùng nếu không có cách nào khác hoạt động, vì bảng mở ra trên màn hình trong giây lát"
+            "value" : "Ở mọi trạng thái cửa sổ; bảng mở ra trên màn hình trong giây lát"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有視窗狀態下；由於它會在螢幕上短暫開啟，只在其他方式都無效時使用"
+            "value" : "在所有視窗狀態下；它會在螢幕上短暫開啟"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有窗口状态下；由于它会在屏幕上短暂打开，仅在其他方式都无效时使用"
+            "value" : "在所有窗口状态下；它会在屏幕上短暂打开"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有視窗狀態下；由於它會在螢幕上短暫打開，僅在其他方式都無效時使用"
+            "value" : "在所有視窗狀態下；它會在螢幕上短暫打開"
           }
         }
       }
@@ -91839,6 +91839,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "讀取 %@ 的選單和頁面、移動其視窗，並阻擋滑鼠和鍵盤。"
+          }
+        }
+      }
+    },
+    "Recommended" : {
+      "comment" : "Add an App window: a badge beside the way AutoHush recommends to pause and play the app, among those that worked",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مُوصى به"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomanat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doporučeno"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anbefalet"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empfohlen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προτείνεται"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomendado"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomendado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suositeltu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandé"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अनुशंसित"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preporučeno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajánlott"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direkomendasikan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consigliato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推奨"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추천"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anbefalt"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aanbevolen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalecane"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomendado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomendado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recomandat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рекомендуется"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odporúčané"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priporočeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rekommenderas"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önerilen"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рекомендовано"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đề xuất"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推薦"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推荐"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推薦"
           }
         }
       }

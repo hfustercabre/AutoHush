@@ -399,9 +399,13 @@ enum AddAppText {
                comment: "Add an App window, under the step “See what worked, and use it” before it's the one to do")
     }
 
-    static var useOrder: String {
-        String(localized: "AutoHush uses the first way that works, and the next if it doesn’t.",
-               comment: "Add an App window, under the step “See what worked, and use it”, over the ways the check found")
+    static func chooseWay(_ app: String) -> String {
+        String(localized: "Choose how AutoHush pauses and plays \(app):",
+               comment: "Add an App window, under the step “See what worked, and use it”, over the ways that worked, one to choose; %@ is the app")
+    }
+
+    static var recommendedBadge: String {
+        String(localized: "Recommended", comment: "Add an App window: a badge beside the way AutoHush recommends to pause and play the app, among those that worked")
     }
 
     static func nothingWorked(_ app: String) -> String {
@@ -438,7 +442,7 @@ enum AddAppText {
         switch way.mark {
         case .works:
             way.kind == .panel
-                ? String(localized: "In every window state; used only if nothing else works, as it opens on screen for a moment",
+                ? String(localized: "In every window state; it opens on screen for a moment",
                          comment: "Add an App window, under “The menu bar’s Now Playing panel” when it worked")
                 : String(localized: "In every window state", comment: "Add an App window, under a way that paused and played the app wherever its window was")
         case .some:

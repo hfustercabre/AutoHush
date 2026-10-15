@@ -78,8 +78,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   window says first what the check does: for about 3 minutes it moves the
   app's window, blocks the mouse and keyboard and dims the screen, except a
   small panel with its progress and **Stop** (or Escape). Everything is put
-  back as it was. The app is then listed under Other Apps, marked **Checked
-  by you**, and controlled the ways that worked, the surest first. The **×**
+  back as it was. You then choose how AutoHush pauses and plays it among
+  the ways that worked (the recommended one is chosen unless you pick
+  another), and the app is listed under Other Apps, marked **Checked by
+  you**. The **×**
   on its tile in Settings → General, or its row with **⌥ Option** held in
   the menu, removes it, after asking.
 - **An app no way pauses can be muted instead.** When Add an App finds

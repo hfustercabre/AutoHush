@@ -234,10 +234,11 @@ struct AddAppView: View {
         if let result = model.result, let app = appName {
             if result.setup == nil {
                 StepNote(AddAppText.nothingWorked(app))
+                WaysList(result: result, app: app).padding(.top, 4)
             } else {
-                StepNote(AddAppText.useOrder)
+                StepNote(AddAppText.chooseWay(app))
+                WayChoices(model: model, result: result, app: app).padding(.top, 4)
             }
-            WaysList(result: result, app: app).padding(.top, 4)
             if result.setup == nil {
                 // No way pauses it: it can be muted instead (the user, 2026-10-15).
                 StepNote(AddAppText.muteInstead(app)).padding(.top, 4)
@@ -396,25 +397,77 @@ private struct WaysList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(result.ways, id: \.kind) { way in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    symbol(way.mark).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
-                        Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle().fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .accessibilityElement(children: .combine)
-            }
+            ForEach(result.ways, id: \.kind) { way in WayRow(way: way, app: app) }
         }
     }
+}
 
-    @ViewBuilder private func symbol(_ mark: CheckResult.Mark) -> some View {
+/// A way the check tried: its mark, its name (with a badge), and how it did.
+private struct WayRow: View {
+    let way: CheckResult.WayResult
+    let app: String
+    var recommended = false
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Self.symbol(way.mark).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 6) {
+                    Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
+                    if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
+                }
+                Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle().fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder static func symbol(_ mark: CheckResult.Mark) -> some View {
         switch mark {
         case .works: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
         case .some: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.appWarning)
         case .none, .notThere: Image(systemName: "xmark.circle.fill").foregroundStyle(.appSecondary)
         case .notTried, .notChecked: Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
         }
+    }
+}
+
+/// The last step when ways worked (U2, the user's pick, 2026-10-15): each one
+/// AutoHush can use as a card to choose, the recommended first and chosen
+/// until another is, and under them, dimmed, those that didn't work, with why.
+private struct WayChoices: View {
+    let model: AddAppModel
+    let result: CheckResult
+    let app: String
+
+    var body: some View {
+        let choosable = model.choosableWays
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(choosable.enumerated()), id: \.element) { index, kind in
+                if let way = result.ways.first(where: { $0.kind == kind }) { card(way, recommended: index == 0) }
+            }
+            ForEach(result.ways.filter { !choosable.contains($0.kind) }, id: \.kind) { way in
+                WayRow(way: way, app: app).opacity(0.6).padding(.horizontal, 9).padding(.top, 2)
+            }
+        }
+    }
+
+    private func card(_ way: CheckResult.WayResult, recommended: Bool) -> some View {
+        let isChosen = model.chosenWay == way.kind
+        return Button { model.choose(way.kind) } label: {
+            WayRow(way: way, app: app, recommended: recommended)
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    if isChosen { RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.selectedTileFill) }
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(isChosen ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.separator), lineWidth: isChosen ? 2 : 1)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isChosen ? .isSelected : [])
     }
 }

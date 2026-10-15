@@ -23,6 +23,10 @@ import AppKit
     private let coverers: [(pid: pid_t, window: Int)]
     /// The home app's window, when it was moved aside for the app's to show, and where it was.
     private var homeWindow: (element: AXUIElement, frame: CGRect)?
+    /// The home app's window in front when the test began, brought back each
+    /// time: the one the check was started from (AutoHush's Add an App), not
+    /// its biggest (Settings, which then covered it).
+    private let homeFront: Int?
     private let cover = CoverWindow()
     /// Why each state that can't be tested isn't.
     var untested: [WindowState: String] = [:]
@@ -39,11 +43,12 @@ import AppKit
         let front = frontAtStart ?? WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
         let home = parent?.activationPolicy == .regular ? parent : front?.processIdentifier == pid ? nil : front
         self.home = home
+        homeFront = home.flatMap { WindowStates.frontWindow(of: $0.processIdentifier) }
         // Read from the home app's desktop: whoever started the app playing
         // may have gone to its desktop for it, and from there its window read
         // as visible, that desktop was taken for home, and the first state
         // was never reached.
-        if let home { Self.show(home) }
+        if let home { Self.show(home, window: homeFront) }
         guard let state = WindowStates.state(of: app), let (info, element) = WindowStates.main(of: pid) else { return nil }
         original = state
         originalFrame = element?.frame ?? WindowStates.frame(of: info)
@@ -65,7 +70,9 @@ import AppKit
 
     /// Back to the app the test came from (`show`).
     private func comeHome() {
-        if let home { Self.show(home) }
+        guard let home else { return log("  back: no app to come back to; in front: \(WindowStates.frontName)") }
+        Self.show(home, window: homeFront)
+        log("  back to \(home.localizedName ?? "the app it came from"): in front: \(WindowStates.frontName)")
     }
 
     /// The app the test came from in front, until its window is on screen.
@@ -74,8 +81,9 @@ import AppKit
     /// and stayed on the checked app's desktop, and SkyLight's way can't run on macOS 27:
     /// GetProcessForPID is gone), so its desktop is then shown with
     /// Control-arrow, as a person would, and it's brought forward there.
-    private static func show(_ home: NSRunningApplication) {
-        let window = WindowStates.main(of: home.processIdentifier).map { WindowStates.number(of: $0.info) }
+    private static func show(_ home: NSRunningApplication, window front: Int?) {
+        let window = front.flatMap { number in WindowStates.infos(.optionAll).contains { WindowStates.number(of: $0) == number } ? number : nil }
+            ?? WindowStates.main(of: home.processIdentifier).map { WindowStates.number(of: $0.info) }
         func shown() -> Bool {
             guard let window else { return true }
             return WindowStates.infos(.optionOnScreenOnly).contains { WindowStates.number(of: $0) == window }

@@ -10,6 +10,10 @@ import PlayerCheckKit
 /// Each way's result in each window state, and why it failed there, for
 /// "Ways to Control It".
 @MainActor var stateResults: [Way: [(state: WindowState, result: TrialResult, why: String)]] = [:]
+/// The window states a way couldn't be tried in, and why: the Now Playing
+/// item missing from the menu bar in one state while there in others says
+/// nothing about the app, so that state isn't counted against the panel.
+@MainActor var untestedStates: [Way: [WindowState: String]] = [:]
 /// Why a way wasn't tried, for "Ways to Control It".
 @MainActor var notTried = readOnly ? "not tried: read only" : "not tried"
 
@@ -399,7 +403,16 @@ import PlayerCheckKit
             }
             // It paused with that row: its own, for later presses.
             if result != .didNotPause { rememberPanelRow() }
-            record(.panel, result)
+            if let state, !first, result == .didNotPause, panelProblem == noPanelItem {
+                // Not found in this state only: the panel wasn't tried here.
+                untestedStates[.panel, default: [:]][state] = "its item wasn't found in the menu bar then"
+                say("    not counted: the panel isn't tested in this state")
+                trialProblem = nil
+                trialRan = true
+                lastWay = .panel
+            } else {
+                record(.panel, result)
+            }
             stopIfRequested()
         }
         first = false

@@ -12,18 +12,20 @@ struct SectionLabel: View {
 }
 
 /// A word in a capsule after a heading that qualifies everything under it,
-/// e.g. "Experimental" after "Safari Web Apps".
+/// e.g. "Experimental" after "Safari Web Apps"; in the accent color for a
+/// good word ("Recommended", Add an App's ways).
 struct HeadingBadge: View {
     /// Already localized.
     let text: String
+    var accent = false
 
     var body: some View {
         Text(verbatim: text)
             .font(.appCaption.weight(.semibold))
-            .foregroundStyle(.appWarning)
+            .foregroundStyle(accent ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appWarning))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
-            .background(Capsule().fill(.warningBadgeFill))
+            .background(Capsule().fill(accent ? AnyShapeStyle(.selectedRowFill) : AnyShapeStyle(.warningBadgeFill)))
             .fixedSize()
     }
 }
