@@ -1,7 +1,8 @@
 import Foundation
+import AutoHushKit
 
 /// Why an update check could not tell.
-enum UpdateCheckError: LocalizedError, Equatable {
+enum UpdateCheckError: LocalizedError, LoggableError, Equatable {
     case badResponse(Int)
     case unreadableRelease
 
@@ -12,6 +13,13 @@ enum UpdateCheckError: LocalizedError, Equatable {
                           comment: "Update check error; %lld is an HTTP status code")
         case .unreadableRelease:
             return String(localized: "GitHub’s release information couldn’t be read.", comment: "Update check error")
+        }
+    }
+
+    var logDescription: String {
+        switch self {
+        case .badResponse(let status): "GitHub answered with HTTP status \(status)."
+        case .unreadableRelease: "GitHub's release information couldn't be read."
         }
     }
 }

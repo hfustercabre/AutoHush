@@ -58,7 +58,7 @@ package actor VLCPlayer: MusicPlayer {
             let time = try await get(Code.currentTimeProperty, from: pid).directObjectInteger
             return Self.state(playing: false, currentTime: time)
         } catch {
-            logger.error("VLC playerState failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("VLC playerState failed: \(error)")
             return .unknown
         }
     }

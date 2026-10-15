@@ -69,11 +69,15 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
                     status = await center.notificationSettings().authorizationStatus
                 }
             }
-            guard isAllowed(status) else { return }
+            guard isAllowed(status) else {
+                logger.info("No notification for \(notice.key, privacy: .public): notifications are off")
+                return
+            }
             do {
                 try await center.add(request)
+                logger.info("Notified: \(notice.key, privacy: .public)")
             } catch {
-                logger.error("Couldn't notify: \(error.localizedDescription, privacy: .public)")
+                logger.error("Couldn't notify: \(error)")
             }
         }
     }

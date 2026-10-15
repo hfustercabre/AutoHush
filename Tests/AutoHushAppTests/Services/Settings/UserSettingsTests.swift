@@ -156,4 +156,18 @@ struct UserSettingsTests {
         settings.setDetectionMethod(.audioLevels) // already
         #expect(told.calls == ["autoPause off"])
     }
+
+    @Test("the log says each timing that changed, by its name in Settings, from what to what")
+    func timingChanges() {
+        var new = TimingSettings.defaults
+        #expect(UserSettings.changes(from: .defaults, to: new).isEmpty)
+        new.startConfirmation = 1.25
+        new.silenceThresholdDB = -45
+        new.fadesEnabled = false
+        #expect(UserSettings.changes(from: .defaults, to: new) == [
+            "Pause playback after: 0.5 s → 1.25 s",
+            "Silence threshold: -60 dBFS → -45 dBFS",
+            "Fade the music: off",
+        ])
+    }
 }

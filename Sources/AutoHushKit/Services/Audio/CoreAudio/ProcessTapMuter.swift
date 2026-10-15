@@ -36,7 +36,7 @@ package final class ProcessTapMuter: AudioMuting {
         do {
             tap = try ProcessTap(processObjectIDs: processes, muted: true, ioQueue: ioQueue)
         } catch {
-            logger.error("[mute] couldn't mute pid \(appPID, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            logger.error("[mute] couldn't mute pid \(appPID, privacy: .public): \(error)")
             return false
         }
         let kept = taps.withLock { taps in

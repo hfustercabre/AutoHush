@@ -66,7 +66,7 @@ extension PlaybackArbiter {
             playerState = .playing
             logger.info("[arbiter] \(self.player.name, privacy: .public) resumed, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
         } catch {
-            logger.error("[arbiter] resume failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("[arbiter] resume failed: \(error)")
             // Still ours to resume, unless something called it off meanwhile.
             if retriesLeft > 0, !isShutDown, !isAsleep, pendingResumeID == nil,
                activeSources.isEmpty || !autoPauseEnabled {

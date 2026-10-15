@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 import Security
+import AutoHushKit
 
 /// Why this copy of AutoHush can't install updates by itself.
 enum UpdateInstallUnavailability: Equatable, Sendable {
@@ -25,7 +26,7 @@ enum UpdateInstallUnavailability: Equatable, Sendable {
 }
 
 /// Why an update could not be installed.
-enum UpdateInstallError: LocalizedError, Equatable {
+enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
     case unavailable(UpdateInstallUnavailability)
     /// The release has no disk image to install from.
     case noDiskImage
@@ -37,8 +38,9 @@ enum UpdateInstallError: LocalizedError, Equatable {
     case notGenuine
     /// The app in the download isn't the version the release announced.
     case wrongVersion
-    /// Swapping in the new app failed, for the reason given.
-    case notReplaced(String)
+    /// Swapping in the new app failed, for the reason given: in the user's
+    /// language, and in English for the log.
+    case notReplaced(String, logReason: String)
 
     var errorDescription: String? {
         switch self {
@@ -56,9 +58,22 @@ enum UpdateInstallError: LocalizedError, Equatable {
                           comment: "Update install error")
         case .wrongVersion:
             return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
-        case .notReplaced(let reason):
+        case .notReplaced(let reason, _):
             return String(localized: "AutoHush couldn’t replace itself: \(reason)",
                           comment: "Update install error; %@ is the reason macOS gave")
+        }
+    }
+
+    var logDescription: String {
+        switch self {
+        case .unavailable(.notSignedWithCertificate): "This copy isn't signed with AutoHush's certificate, so it can't update itself."
+        case .unavailable(.readOnlyLocation): "AutoHush can't write to the folder it's in, so it can't update itself."
+        case .noDiskImage: "The release has no disk image to install from."
+        case .badResponse(let status): "GitHub answered with HTTP status \(status)."
+        case .damaged: "The download is damaged."
+        case .notGenuine: "The download isn't signed with the same certificate as AutoHush."
+        case .wrongVersion: "The download doesn't contain the version GitHub announced."
+        case .notReplaced(_, let reason): "AutoHush couldn't replace itself: \(reason)"
         }
     }
 }
@@ -189,7 +204,7 @@ struct UpdateInstaller: UpdateInstalling {
             _ = try FileManager.default.replaceItemAt(appURL, withItemAt: update.app)
         } catch {
             cancelRelaunch()
-            throw UpdateInstallError.notReplaced(error.localizedDescription)
+            throw UpdateInstallError.notReplaced(error.localizedDescription, logReason: LogMessage.englishDescription(of: error))
         }
         discard(update)
     }

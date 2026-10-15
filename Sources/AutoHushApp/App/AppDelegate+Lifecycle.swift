@@ -36,7 +36,7 @@ extension AppDelegate {
             do {
                 focusAutoPause.followAtLaunch(try await AutoPauseFocusFilter.currentChoice())
             } catch {
-                logger.error("Couldn't read the Focus filter: \(error.localizedDescription, privacy: .public)")
+                logger.error("Couldn't read the Focus filter: \(error)")
             }
         }
     }

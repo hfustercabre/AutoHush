@@ -29,14 +29,24 @@ extension UpdateController {
         guard let currentVersion else {
             let unknown = String(localized: "AutoHush’s version is unknown.",
                                  comment: "Update status in Settings, and the alert after a check asked for from the menu or Settings")
+            logger.error("Can't check for updates: AutoHush's version is unknown")
             onStatus(unknown)
             if resultWanted { await presentFailure(unknown) }
             return
         }
+        logger.info("Checking for updates (\(resultWanted ? "asked for" : "automatic", privacy: .public))")
         onStatus(UpdateOffer.checkingTitle)
         do {
             let result = try await checker.check(currentVersion: currentVersion)
             preferences.lastUpdateCheck = now()
+            switch result {
+            case .available(let release):
+                logger.info("Version \(release.version.description, privacy: .public) is available (running \(currentVersion.description, privacy: .public))")
+            case .upToDate(let latest):
+                logger.info("Up to date: \(currentVersion.description, privacy: .public) is running, \(latest.description, privacy: .public) is the latest")
+            case .noReleases:
+                logger.info("Up to date: no releases have been published yet")
+            }
             switch result {
             case .available(let release):
                 latestVersion = release.version
@@ -64,7 +74,7 @@ extension UpdateController {
                 showAlert { self.present(result) }
             }
         } catch {
-            logger.error("Update check failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("Update check failed: \(error)")
             onStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
             if resultWanted { await presentFailure(error.localizedDescription) }
         }

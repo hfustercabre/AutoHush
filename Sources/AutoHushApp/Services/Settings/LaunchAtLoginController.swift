@@ -43,9 +43,10 @@ final class LaunchAtLoginController: LaunchAtLoginControlling {
     func setEnabled(_ enabled: Bool) -> Result<Void, Error> {
         do {
             if enabled { try registerAction() } else { try unregisterAction() }
+            AutoHushLogger.settings.info("Launch at login: \(enabled ? "on" : "off", privacy: .public)")
             return .success(())
         } catch {
-            logger.error("Launch at login update failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("Launch at login update failed: \(error)")
             return .failure(error)
         }
     }

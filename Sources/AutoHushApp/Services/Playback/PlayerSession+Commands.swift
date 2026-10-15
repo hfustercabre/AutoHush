@@ -84,7 +84,7 @@ extension PlayerSession {
                 guard let self, generation == self.startGeneration else { return }
                 switch error as? MusicPlayerError {
                 case .automationPermissionDenied?, .accessibilityPermissionDenied?:
-                    self.logger.error("Lost control of \(player.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    self.logger.error("Lost control of \(player.name, privacy: .public): \(error)")
                     self.requestStart()
                 default:
                     break // the player quit or didn't answer: monitoring follows those

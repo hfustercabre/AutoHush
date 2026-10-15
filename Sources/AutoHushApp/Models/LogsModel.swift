@@ -101,21 +101,39 @@ final class LogsModel {
     /// level, the area and the line.
     var text: String {
         shown.map { entry in
-            "\(entry.date.formatted(Self.textDate))  \(entry.level.rawValue.capitalized)  \(Self.area(of: entry.category))  \(entry.message)"
+            "\(Self.timestamp(of: entry.date))  \(entry.level.rawValue.capitalized)  \(Self.area(of: entry.category))  \(entry.message)"
         }.joined(separator: "\n")
     }
 
-    private static let textDate = Date.VerbatimFormatStyle(
-        format: "\(year: .defaultDigits)-\(month: .twoDigits)-\(day: .twoDigits) \(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits):\(second: .twoDigits)",
-        timeZone: .current, calendar: Calendar(identifier: .gregorian))
+    /// When an entry was logged, as the window and its copies say it: the
+    /// date, the 24-hour time and the time zone's offset from UTC then, e.g.
+    /// "15/10/2026 13:05:09 UTC+2". Never translated, as the log isn't.
+    static func timestamp(of date: Date, in timeZone: TimeZone = .current) -> String {
+        let style = Date.VerbatimFormatStyle(
+            format: "\(day: .twoDigits)/\(month: .twoDigits)/\(year: .defaultDigits) \(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits):\(second: .twoDigits)",
+            locale: Locale(identifier: "en_US_POSIX"), timeZone: timeZone, calendar: Calendar(identifier: .gregorian))
+        return "\(date.formatted(style)) \(utcOffset(seconds: timeZone.secondsFromGMT(for: date)))"
+    }
+
+    /// An offset from UTC: "UTC", "UTC+2", "UTC-3", "UTC+5:30".
+    static func utcOffset(seconds: Int) -> String {
+        guard seconds != 0 else { return "UTC" }
+        let minutes = abs(seconds) / 60
+        let rest = minutes % 60 == 0 ? "" : ":" + String(format: "%02d", minutes % 60)
+        return "UTC\(seconds < 0 ? "-" : "+")\(minutes / 60)\(rest)"
+    }
 
     /// The part of AutoHush a logger's category belongs to, as the window
     /// shows it: in English, as the lines themselves are.
+    /// Every area `area(of:)` names.
+    static let areas = ["Web Apps", "Player", "Detection", "Updates", "Settings", "App"]
+
     static func area(of category: String) -> String {
         if category.contains("WebApp") || category.contains("Learning") { return "Web Apps" }
         if category.contains("Player") || category.contains("Playback") || category.contains("Fader") { return "Player" }
         if category.contains("Monitor") || category.contains("Meter") { return "Detection" }
         if category.contains("Update") { return "Updates" }
+        if category == AutoHushLogger.settings.category || category.contains("LaunchAtLogin") { return "Settings" }
         return "App"
     }
 }

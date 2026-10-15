@@ -74,7 +74,7 @@ package actor ScriptablePlayer: MusicPlayer {
             let reply = try await channel.send(Self.makeGetPlayerStateEvent(processIdentifier:), to: pid)
             return Self.playerState(fromReply: reply)
         } catch {
-            logger.error("\(self.profile.name, privacy: .public) playerState failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("\(self.profile.name, privacy: .public) playerState failed: \(error)")
             return .unknown
         }
     }

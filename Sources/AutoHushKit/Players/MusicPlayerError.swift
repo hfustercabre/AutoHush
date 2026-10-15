@@ -1,7 +1,7 @@
 import Foundation
 
 /// Why the music player could not be controlled.
-package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
+package enum MusicPlayerError: LocalizedError, LoggableError, Equatable, Sendable {
     case automationPermissionDenied
     /// For a player controlled through its own menu.
     case accessibilityPermissionDenied
@@ -32,6 +32,8 @@ package enum MusicPlayerError: LocalizedError, Equatable, Sendable {
             return "AutoHush is still learning how to control the media player."
         }
     }
+
+    package var logDescription: String { errorDescription ?? "\(self)" }
 }
 
 /// What went wrong when a player was told to play or pause, or checked: the

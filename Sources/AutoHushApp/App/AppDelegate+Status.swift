@@ -28,7 +28,7 @@ extension AppDelegate {
         do {
             try openAfterExit(Bundle.main.bundleURL)
         } catch {
-            logger.error("Couldn't reopen AutoHush: \(error.localizedDescription, privacy: .public)")
+            logger.error("Couldn't reopen AutoHush: \(error)")
             return
         }
         terminate()

@@ -33,6 +33,13 @@ package struct AutoHushLogger: Sendable {
     }
 }
 
+/// An error as the log says it: in English, as every logged line is, never
+/// in the user's language (an error's `localizedDescription` would be).
+package protocol LoggableError: Error {
+    /// What went wrong, in English.
+    var logDescription: String { get }
+}
+
 /// How a logged value shows: as it is, or left out ("<private>").
 package enum LogPrivacy: Sendable {
     case `public`
@@ -82,8 +89,44 @@ package struct LogMessage: ExpressibleByStringInterpolation, Sendable {
             append(value.description, privacy)
         }
 
+        /// An error, in English (`LogMessage.englishDescription(of:)`).
+        package mutating func appendInterpolation(_ error: any Error, privacy: LogPrivacy = .public) {
+            append(LogMessage.englishDescription(of: error), privacy)
+        }
+
         private mutating func append(_ value: String, _ privacy: LogPrivacy) {
             text += privacy == .public ? value : "<private>"
         }
     }
+
+    /// What `error` says, in English: AutoHush's own errors in their words
+    /// (`LoggableError`); macOS's by their domain and code, which its words
+    /// would put in the user's language, with a name for the common network
+    /// ones; any other Swift error by its type and case.
+    package static func englishDescription(of error: any Error) -> String {
+        if let error = error as? any LoggableError { return error.logDescription }
+        let cocoa = error as NSError
+        guard type(of: error as Any) is NSError.Type || appleDomains.contains(cocoa.domain) else {
+            return String(describing: error)
+        }
+        var text = "\(cocoa.domain) error \(cocoa.code)"
+        if cocoa.domain == NSURLErrorDomain, let name = networkErrorNames[cocoa.code] { text += " (\(name))" }
+        if let underlying = cocoa.userInfo[NSUnderlyingErrorKey] as? any Error {
+            text += ", from \(englishDescription(of: underlying))"
+        }
+        return text
+    }
+
+    /// The domains of the errors Swift's own types stand for (`URLError`,
+    /// `CocoaError`, `POSIXError`).
+    private static let appleDomains: Set<String> = [NSURLErrorDomain, NSCocoaErrorDomain, NSPOSIXErrorDomain, NSOSStatusErrorDomain]
+    private static let networkErrorNames: [Int: String] = [
+        NSURLErrorTimedOut: "timed out",
+        NSURLErrorCannotFindHost: "host not found",
+        NSURLErrorCannotConnectToHost: "can't connect to the host",
+        NSURLErrorNetworkConnectionLost: "the connection was lost",
+        NSURLErrorNotConnectedToInternet: "not connected to the Internet",
+        NSURLErrorSecureConnectionFailed: "the secure connection failed",
+        NSURLErrorCancelled: "cancelled",
+    ]
 }

@@ -56,7 +56,11 @@ extension UpdateController {
                 await download(release)
             }
         case .install:
-            guard release.version != failedAutomaticInstall, isQuietMoment() else { return }
+            guard release.version != failedAutomaticInstall else { return }
+            guard isQuietMoment() else {
+                logger.info("\(release.version.description, privacy: .public) waits for a quiet moment to install: AutoHush holds the player paused, or a window or menu is open")
+                return
+            }
             await install(release, userInitiated: false)
         }
     }

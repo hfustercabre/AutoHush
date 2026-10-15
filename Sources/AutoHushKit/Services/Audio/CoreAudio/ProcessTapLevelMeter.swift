@@ -62,7 +62,7 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
                 logger.debug("[meter] tapping process object \(objectID, privacy: .public)")
             } catch {
                 failed.insert(objectID)
-                logger.error("[meter] tap for process object \(objectID, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                logger.error("[meter] tap for process object \(objectID, privacy: .public) failed: \(error)")
             }
         }
     }
@@ -88,10 +88,11 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
 
 // MARK: - Single process tap
 
-package struct ProcessTapError: LocalizedError {
+package struct ProcessTapError: LocalizedError, LoggableError {
     package let step: String
     package let status: OSStatus
     package var errorDescription: String? { "\(step) failed with OSStatus \(status)" }
+    package var logDescription: String { errorDescription ?? "\(step) failed" }
 }
 
 /// A tap on some processes, read by a private aggregate device whose IO block

@@ -78,7 +78,7 @@ extension WebAppControl {
             do {
                 try press(from: .paused, pid: pid)
             } catch {
-                logger.error("Playing \(self.name, privacy: .public) again failed: \(error.localizedDescription, privacy: .public)")
+                logger.error("Playing \(self.name, privacy: .public) again failed: \(error)")
                 pressKey()
             }
             return .paused

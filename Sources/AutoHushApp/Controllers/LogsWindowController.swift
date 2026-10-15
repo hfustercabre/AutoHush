@@ -6,10 +6,11 @@ import SwiftUI
 /// was left, the first time centered. It follows new lines while it's open.
 @MainActor
 final class LogsWindowController: NSWindowController, NSWindowDelegate {
-    static let minimumSize = NSSize(width: 560, height: 360)
-    static let initialSize = NSSize(width: 680, height: 520)
-    /// Where macOS keeps the window's place and size between launches.
-    static let frameName = "Logs"
+    static let minimumSize = NSSize(width: 760, height: 440)
+    static let initialSize = NSSize(width: 960, height: 640)
+    /// Where macOS keeps the window's place and size between launches (a
+    /// new name with the bigger size, so the old, smaller one isn't kept).
+    static let frameName = "Logs Window"
 
     let model: LogsModel
     /// The window has a place: kept from a previous launch, or centered once.

@@ -77,7 +77,7 @@ extension PlaybackArbiter {
             return
         } catch {
             isFadingOut = false
-            logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error)")
             // Unless every app stopped meanwhile: then there's nothing to say.
             if !activeSources.isEmpty, autoPauseEnabled, !isAsleep {
                 pauseFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)

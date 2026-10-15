@@ -89,7 +89,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   available" to the icon's label.
 - **A window with AutoHush's logs.** **Show Logs…**, at the foot of
   Settings → Diagnostics, opens what AutoHush logged (each pause and resume
-  of your player, and why, with the apps that played) since it last opened
+  of your player, and why, with the apps that played; every change to its
+  settings; each update check, download and install) since it last opened
   (**This Launch**) or in the **Last 24 Hours**, every entry or **Problems
   Only**, with a search (Edit → Find… puts the cursor in it). New entries
   show as they're logged, and the list follows them while **Follow new

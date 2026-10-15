@@ -83,6 +83,24 @@ struct LogsModelTests {
         #expect(LogsModel.area(of: "PlaybackArbiter") == "Player")
         #expect(LogsModel.area(of: "AudioMonitor") == "Detection")
         #expect(LogsModel.area(of: "Updates") == "Updates")
+        #expect(LogsModel.area(of: "Settings") == "Settings")
+        #expect(LogsModel.area(of: "LaunchAtLogin") == "Settings")
+        // Every area is listed, for the column's width.
+        for category in ["WebAppPlayer", "PlaybackArbiter", "AudioMonitor", "Updates", "Settings", "AppDelegate"] {
+            #expect(LogsModel.areas.contains(LogsModel.area(of: category)))
+        }
         #expect(LogsModel.area(of: "AppDelegate") == "App")
+    }
+
+    @Test("each entry's time: the date, the 24-hour time and the offset from UTC then, never translated")
+    func timestamps() throws {
+        let date = Date(timeIntervalSince1970: 1_792_069_509) // 15 Oct 2026, 13:05:09 UTC
+        #expect(LogsModel.timestamp(of: date, in: TimeZone(identifier: "UTC")!) == "15/10/2026 13:05:09 UTC")
+        #expect(LogsModel.timestamp(of: date, in: TimeZone(identifier: "Europe/Madrid")!) == "15/10/2026 15:05:09 UTC+2")
+        #expect(LogsModel.timestamp(of: date, in: TimeZone(identifier: "America/Sao_Paulo")!) == "15/10/2026 10:05:09 UTC-3")
+        #expect(LogsModel.timestamp(of: date, in: TimeZone(identifier: "Asia/Kolkata")!) == "15/10/2026 18:35:09 UTC+5:30")
+        // In winter, Madrid is an hour closer to UTC.
+        let january = Date(timeIntervalSince1970: 1_799_845_509) // 13 Jan 2027, 13:05:09 UTC
+        #expect(LogsModel.timestamp(of: january, in: TimeZone(identifier: "Europe/Madrid")!) == "13/01/2027 14:05:09 UTC+1")
     }
 }
