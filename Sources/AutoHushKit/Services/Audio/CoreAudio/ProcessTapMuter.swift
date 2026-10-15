@@ -24,7 +24,7 @@ package protocol AudioMuting: Sendable {
 package final class ProcessTapMuter: AudioMuting {
     private let taps = OSAllocatedUnfairLock<[pid_t: ProcessTap]>(initialState: [:])
     private let ioQueue = DispatchQueue(label: "AutoHush.Muter.io", qos: .userInitiated)
-    private let logger = Logger(category: "AudioMonitor")
+    private let logger = AutoHushLogger(category: "AudioMonitor")
 
     package init() {}
 

@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 // AppDelegate: what the menu and the windows show.

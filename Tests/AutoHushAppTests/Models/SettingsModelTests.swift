@@ -297,17 +297,7 @@ struct SettingsModelTests {
         #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
     }
 
-    // MARK: - Notifications
-
-    @Test("choices that notify are unavailable while notifications are off")
-    func notifyingChoices() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(AutomaticUpdates.allCases.allSatisfy(model.isAvailable))
-        model.notificationsOff = true
-        #expect(!model.isAvailable(.notify))
-        #expect(!model.isAvailable(.download))
-        #expect(model.isAvailable(.install))
-    }
+    // MARK: - Updates
 
     @Test("beside Check Now: the version until a check, then what it found; under it, when the last one was")
     func updateRow() {
@@ -384,38 +374,6 @@ struct SettingsModelTests {
         #expect(model.selectedApp == nil)
     }
 
-    @Test("the notifications note blinks for a while, longer when asked again")
-    func noteBlinks() async throws {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        model.noteFlashInterval = .milliseconds(20)
-        let clock = ContinuousClock()
-
-        // Asked for 300 ms, then at once (so surely while it blinks) for a
-        // minute: the second ask moves the end. A busy test run, whose sleeps
-        // run late, can't reach that end.
-        model.noteFlashDuration = .milliseconds(300)
-        model.flashNotificationsNote()
-        let firstEnd = clock.now + .milliseconds(300)
-        #expect(model.notificationsNoteIsLit) // lit at once
-        model.noteFlashDuration = .seconds(60)
-        model.flashNotificationsNote()
-
-        // Past the first end it still blinks: it changes again.
-        try await Task.sleep(until: firstEnd + .milliseconds(100), clock: clock)
-        let before = model.notificationsNoteIsLit
-        await TestWait.until { model.notificationsNoteIsLit != before }
-        #expect(model.notificationsNoteIsLit != before)
-
-        // Asked again for 200 ms, it stops then, unlit, and stays so.
-        model.noteFlashDuration = .milliseconds(200)
-        model.flashNotificationsNote()
-        try await Task.sleep(for: .milliseconds(300))
-        await TestWait.until { !model.notificationsNoteIsLit }
-        for _ in 0..<10 {
-            try await Task.sleep(for: .milliseconds(20))
-            #expect(!model.notificationsNoteIsLit)
-        }
-    }
 
 }
 

@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 /// Update checks against the latest GitHub release, and what follows them.
@@ -44,8 +43,7 @@ final class UpdateController {
     let onOffer: @MainActor (UpdateOffer?) -> Void
     /// The last check's, download's or install's outcome in one line, shown in Settings.
     let onStatus: @MainActor (String) -> Void
-    /// The update settings changed: the user's choice in Settings, or AutoHush
-    /// by itself (`adapt(toNotificationsOff:)`).
+    /// The update settings changed: the user's choice in Settings.
     let onSettingsChange: @MainActor () -> Void
     var timer: Timer?
     /// The check under way: one asked for meanwhile is answered by it.
@@ -73,7 +71,7 @@ final class UpdateController {
     var showAlert: @MainActor (@escaping @MainActor () -> Void) -> Void = { show in
         RunLoop.main.perform(inModes: [.common]) { MainActor.assumeIsolated(show) }
     }
-    let logger = Logger(category: "Updates")
+    let logger = AutoHushLogger(category: "Updates")
 
     init(
         checker: UpdateChecker,

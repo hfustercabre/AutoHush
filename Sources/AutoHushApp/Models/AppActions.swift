@@ -32,6 +32,8 @@ protocol AppActions: AnyObject {
     func openSettings(page: SettingsWindowController.Page?)
     /// Why the music player couldn't be controlled, in an alert.
     func showControlError()
+    /// The window with AutoHush's logs (Settings → Diagnostics' Show Logs…).
+    func showLogs()
     /// System Settings, on AutoHush's notifications.
     func openNotificationSettings()
     func quit()

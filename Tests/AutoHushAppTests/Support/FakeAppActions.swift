@@ -25,6 +25,7 @@ final class FakeAppActions: AppActions {
     func reopenAutoHush() { log.calls.append("reopen") }
     func openSettings(page: SettingsWindowController.Page?) { log.calls.append(page.map { "\($0)" } ?? "settings") }
     func showControlError() { log.calls.append("why") }
+    func showLogs() { log.calls.append("showLogs") }
     func openNotificationSettings() { log.calls.append("notificationSettings") }
     func quit() { log.calls.append("quit") }
 }

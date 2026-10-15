@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 // PlaybackArbiter: waiting for a pause or a resume under way.
 extension PlaybackArbiter {

@@ -27,6 +27,12 @@ This project follows [Semantic Versioning](https://semver.org/).
   - If AutoHush says a permission is missing while System Settings shows
     AutoHush switched on, that switch belongs to the old copy: select
     AutoHush there, remove it with **−**, then allow it again.
+- **Every update choice works with notifications off.** **Notify me** and
+  **Download it and notify me** could only be chosen with notifications
+  on, and turning them off moved the choice to **Install it
+  automatically** and turned automatic checks off. Now nothing changes:
+  the menu bar icon shows when an update is found, and Settings → Updates
+  says notifications are off, with a button to turn them on.
 - **Learning a web app asks you to play something.** Its first step said
   to play a song; it now says "Play something in" the web app, since a
   podcast or a video does just as well.
@@ -77,8 +83,26 @@ This project follows [Semantic Versioning](https://semver.org/).
   when it has one; elsewhere it's dimmed. In Settings → Apps, Tab reaches
   the apps' rows (with keyboard navigation on) and Space selects one, so
   Remove works from the keyboard too.
+- **The menu bar icon shows when an update waits.** A small disc with a
+  down arrow sits in the icon's corner, in the room around it, from when
+  AutoHush finds an update until it's installed. VoiceOver adds "update
+  available" to the icon's label.
+- **A window with AutoHush's logs.** **Show Logs…**, at the foot of
+  Settings → Diagnostics, opens what AutoHush logged since it last opened
+  (**This Launch**) or in the **Last 24 Hours**, every entry or **Problems
+  Only**, with a search (Edit → Find… puts the cursor in it). New entries
+  show as they're logged, and the list follows them while **Follow new
+  entries** is on. **Copy Logs** and **Save…** take what's shown, to send
+  with a bug report. AutoHush now keeps its log itself, on your Mac only
+  (`~/Library/Logs/AutoHush/AutoHush.log`), for the last 24 hours, private
+  details left out; macOS's own log gets its lines only while someone
+  streams them live (`log stream --level debug`), and keeps none.
 
 ### Fixed
+
+- **No AutoHush window goes full screen.** The green button could make
+  Settings fill the screen, in a space of its own; now it zooms the
+  window instead, and no other AutoHush window goes full screen either.
 
 - **VLC with nothing loaded counted as resumed.** Asked to play while
   stopped, VLC did nothing, yet the menu said "Playing" for a moment. Now

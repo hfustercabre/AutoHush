@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// What AutoHush needs to know about a music app it controls through its
@@ -59,7 +58,7 @@ package actor MenuPlayer: MusicPlayer {
     /// macOS's request for Accessibility is shown once per launch, not at
     /// every check.
     private var hasAskedForAccess = false
-    private let logger = Logger(category: "MenuPlayer")
+    private let logger = AutoHushLogger(category: "MenuPlayer")
     /// Accessibility calls block: they run here, one at a time.
     private let queue: DispatchQueue
 

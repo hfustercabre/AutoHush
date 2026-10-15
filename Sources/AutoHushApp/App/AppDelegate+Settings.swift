@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 // AppDelegate: the user's settings and the updates' settings.

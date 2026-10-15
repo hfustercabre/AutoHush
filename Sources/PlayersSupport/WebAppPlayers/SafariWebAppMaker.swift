@@ -1,6 +1,5 @@
 import AppKit
 import ApplicationServices
-import OSLog
 import AutoHushKit
 
 /// Makes a Safari web app from an address, the way a person does: it opens
@@ -37,7 +36,7 @@ package final class SafariWebAppMaker: WebAppMaking {
     private let checkAnswers: @Sendable (URL) async throws -> Void
     private let sleep: @Sendable (TimeInterval) async -> Void
     private let clock: @Sendable () -> Date
-    private let logger = Logger(category: "WebAppPlayer")
+    private let logger = AutoHushLogger(category: "WebAppPlayer")
 
     /// `webApps` lists the web apps installed now (looked at afresh);
     /// `sameSite` tells whether one opens the site at an address (another
@@ -219,7 +218,7 @@ package struct SafariUI: SafariDriving {
     /// Accessibility calls block: they run here, one at a time, as the
     /// players' do.
     private static let queue = DispatchQueue(label: "AutoHush.SafariUI", qos: .userInitiated)
-    private let logger = Logger(category: "WebAppPlayer")
+    private let logger = AutoHushLogger(category: "WebAppPlayer")
 
     package init() {}
 

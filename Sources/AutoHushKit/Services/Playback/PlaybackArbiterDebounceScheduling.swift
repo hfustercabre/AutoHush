@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 /// Waits before a deferred decision (a resume tried again, or a pause once
 /// auto-pause is back on): the real one sleeps, tests complete it by hand.

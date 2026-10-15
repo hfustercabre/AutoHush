@@ -141,10 +141,17 @@ struct AppStatus: Equatable {
     }
 
     var icon: MenuBarIcon { presentation.icon }
+    /// The icon shows the update badge while an update waits: from when it's
+    /// found until it's installed, as long as the menu offers it.
+    var iconShowsUpdate: Bool { updateOffer != nil }
     /// While Auto-Pause is off, the icon is dimmed: VoiceOver says the
-    /// status line, which says so ("AutoHush: Auto-Pause is off").
+    /// status line, which says so ("AutoHush: Auto-Pause is off"). The
+    /// update badge adds that an update is available.
     var iconAccessibilityLabel: String {
-        isReady && autoPause != .on ? StatePresentation.iconLabel(statusLine) : presentation.label
+        let label = isReady && autoPause != .on ? StatePresentation.iconLabel(statusLine) : presentation.label
+        guard iconShowsUpdate else { return label }
+        return String(localized: "\(label), update available",
+                      comment: "VoiceOver label of the menu bar icon while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running”")
     }
 
     /// The menu bar icon is dimmed while auto-pause is off.

@@ -404,6 +404,24 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["update"])
     }
 
+    @Test("the menu bar icon shows the update badge while an update waits, drawn as it is")
+    func iconShowsUpdate() {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        sut.status = status
+        #expect(sut.statusItem.button?.image?.size == MenuBarIcon.size)
+        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        status.updateOffer = UpdateOffer(release: release, state: .downloaded)
+        sut.status = status
+        #expect(sut.statusItem.button?.image?.size == MenuBarIcon.updateSize)
+        #expect(sut.statusItem.button?.imageScaling == .scaleNone)
+        #expect(sut.statusItem.button?.image?.accessibilityDescription == status.iconAccessibilityLabel)
+        status.updateOffer = nil
+        sut.status = status
+        #expect(sut.statusItem.button?.image?.size == MenuBarIcon.size)
+    }
+
     @Test("Retry tries again at once and keeps the menu open")
     func retry() {
         let sut = makeController()

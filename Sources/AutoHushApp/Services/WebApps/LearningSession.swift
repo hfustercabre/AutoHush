@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// Where the pause stands while the user teaches AutoHush a web app's
@@ -47,7 +46,7 @@ final class LearningSession {
     private let pauseWait: Duration
     /// How `countdown` waits (tests end the wait themselves).
     private let sleep: @Sendable (Duration) async -> Void
-    private let logger = Logger(category: "LearningSession")
+    private let logger = AutoHushLogger(category: "LearningSession")
 
     init(pauseWait: Duration = .seconds(LearningStatus.pauseWait),
          sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }) {

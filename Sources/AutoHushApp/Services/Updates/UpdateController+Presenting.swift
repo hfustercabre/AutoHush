@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 
 // UpdateController: the update window.
 extension UpdateController {

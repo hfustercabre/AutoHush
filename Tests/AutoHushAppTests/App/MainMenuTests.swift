@@ -61,6 +61,7 @@ struct MainMenuTests {
         #expect(target(.welcome) == .welcomeSearch)
         #expect(target(.welcome, searchable: false) == nil)
         #expect(target(.welcome, showsPlayers: false) == nil) // the permissions page
+        #expect(target(.logs) == .logsSearch)
         #expect(target(.other) == nil) // Add a Web App's address isn't a search; learning has none
     }
 }

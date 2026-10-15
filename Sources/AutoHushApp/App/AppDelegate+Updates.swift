@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 
 // AppDelegate: the updates.
 extension AppDelegate {

@@ -89,7 +89,8 @@ Sources/
                          SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
                          the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
                          UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
-                         LearningNote, LearningPauseMode, MonitoringSettings (what the monitoring follows)
+                         LearningNote, LearningPauseMode, MonitoringSettings (what the monitoring follows),
+                         LogsModel (the logs window's entries, time range, levels and search)
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open), Playback/ (PlayerSession,
@@ -105,19 +106,20 @@ Sources/
                          IntentDependencies)
     Controllers/         AppKit's window and menu controllers: StatusMenuController, SettingsWindowController,
                          PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
-                         LearningWindowController, HostedWindowController (their shared base)
+                         LearningWindowController, HostedWindowController (their shared base),
+                         LogsWindowController
     Views/               SwiftUI views, by area: Components/ (what several places show, one component and
                          its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
                          colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
                          ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
                          views, its drawn rows (NSMenuItem+PlayerList, MenuContentWidth) and MenuBarIcon,
                          drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
-                         WebApps/ (Add a Web App, the learning window and LearningSteps)
+                         WebApps/ (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView)
     Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, …
   AutoHushKit/           the engine, by kind of code too
     Models/              values and settings: AutoPauseSetting (the setting and snoozes), PlaybackState,
                          DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),
-                         AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates
+                         AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates, LogEntry
     Services/            Audio/ (AudioMonitor, SourceActivityTracker, PlaybackSignals: AntiDot mode's judge;
                          CoreAudio/: process list, taps, levels), Playback/ (PlaybackArbiter, VolumeFader,
                          PauseHandover)
@@ -127,8 +129,8 @@ Sources/
                          typed, and whether a page is its site), CountrySites (a service's site by
                          country), PlayerIconPlaceholder (a player's icon while it isn't installed)
     Permissions/         what's needed and where to grant it
-    Storage/             Preferences
-    Utilities/           logging and small helpers; PrivateAPI/ (TCC, ProcessResponsibility,
+    Storage/             Preferences, LogFile (AutoHush's own log, its last 24 hours)
+    Utilities/           logging (AutoHushLogger) and small helpers; PrivateAPI/ (TCC, ProcessResponsibility,
                          AccessibilityWindows, NowPlayingApp: undocumented macOS functions, resolved at
                          runtime with fallbacks; check them after every major macOS release)
   AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
@@ -158,6 +160,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
 - **`Utilities/PrivateAPI/`** (in the engine) is the only place that calls undocumented macOS functions.
 - **Text people read** lives in the app, never in the engine: mostly in `Models/StatePresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
+- **Logging** goes through `AutoHushLogger` (`AutoHushLogger(category:)`, then `.info`, `.notice`, `.error`, `.fault` or `.debug`), written as with macOS's `Logger`: a value shows only when marked `privacy: .public` (numbers and Booleans unless marked `.private`), otherwise it reads `<private>`. Every line but debug ones goes to AutoHush's own log, `~/Library/Logs/AutoHush/AutoHush.log` (`LogFile`: the last 24 hours, 4 MB at most), which Settings → Diagnostics → Show Logs… shows; macOS's log gets every line at the debug level only, so it keeps none: watch them live with `log stream --level debug --predicate 'subsystem == "com.autohush.AutoHush"'`.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 
 **Adding a media player:** first check that the app can be controlled, and how: [PlayerCheck](Tools/PlayerCheck) (or [Player Check](Tools/PlayerCheckApp), in a window) reads its scripting dictionary, playback menu and page, tries pausing and playing it, and says which kind of player it would be. The app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:

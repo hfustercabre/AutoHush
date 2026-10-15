@@ -73,7 +73,7 @@ package final class AudioMonitor: @unchecked Sendable {
     let clock: @Sendable () -> Date
     let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
     let onDetectionModeChange: @Sendable (DetectionMode) -> Void
-    let logger = Logger(category: "AudioMonitor")
+    let logger = AutoHushLogger(category: "AudioMonitor")
     let queue = DispatchQueue(label: "AutoHush.AudioMonitor", qos: .userInitiated)
     let events: AsyncStream<ArbiterEvent>.Continuation
     private let forwardingTask: Task<Void, Never>

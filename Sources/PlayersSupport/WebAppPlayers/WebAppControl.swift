@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import os
 import AutoHushKit
 
@@ -80,7 +79,7 @@ final class WebAppControl: @unchecked Sendable {
     let mayMute: @Sendable () -> Bool
     /// Presses the keyboard's Play/Pause key (`PlayPauseKey`).
     let pressKey: @Sendable () -> Void
-    let logger = Logger(category: "WebAppPlayer")
+    let logger = AutoHushLogger(category: "WebAppPlayer")
 
     var recipe: PlayPauseRecipe?
     /// The learned button, as last found.
@@ -318,5 +317,5 @@ final class WebAppControl: @unchecked Sendable {
     /// starts, and the user may click It's Playing right then.
     static let nowPlayingRecheck: TimeInterval = 0.5
 
-    static let keyLogger = Logger(category: "WebAppPlayer")
+    static let keyLogger = AutoHushLogger(category: "WebAppPlayer")
 }

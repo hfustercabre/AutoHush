@@ -48,5 +48,5 @@ package struct PlayPauseWords: Equatable, Sendable {
     private static let cache = OSAllocatedUnfairLock<[String: PlayPauseWords]>(initialState: [:])
     /// The copies and versions whose words couldn't be read, logged once.
     private static let failed = OSAllocatedUnfairLock<Set<String>>(initialState: [])
-    private static let logger = Logger(category: "MenuPlayer")
+    private static let logger = AutoHushLogger(category: "MenuPlayer")
 }

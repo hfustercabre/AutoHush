@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 // UpdateController: the kept download.

@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import ServiceManagement
 import AutoHushKit
 
@@ -19,7 +18,7 @@ protocol LaunchAtLoginControlling: AnyObject {
 
 @MainActor
 final class LaunchAtLoginController: LaunchAtLoginControlling {
-    private let logger = Logger(category: "LaunchAtLogin")
+    private let logger = AutoHushLogger(category: "LaunchAtLogin")
     private let statusProvider: @MainActor () -> SMAppService.Status
     private let registerAction: @MainActor () throws -> Void
     private let unregisterAction: @MainActor () throws -> Void

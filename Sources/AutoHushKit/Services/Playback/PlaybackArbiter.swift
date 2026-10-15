@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 /// Decides when to pause and resume the music player. Rule: pause when any
 /// foreign source starts; resume when ALL foreign sources have stopped (each
@@ -38,7 +37,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         didSet { if pauseFailure != oldValue { onPauseFailure(pauseFailure) } }
     }
     var publishedAudioLevelsNeeded: Bool?
-    let logger = Logger(category: "PlaybackArbiter")
+    let logger = AutoHushLogger(category: "PlaybackArbiter")
 
     var pausedByUs = false
     /// When the player was seen to stop playing here, as far as the arbiter

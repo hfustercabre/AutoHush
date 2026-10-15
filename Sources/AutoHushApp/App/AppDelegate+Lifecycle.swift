@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 // AppDelegate: launching, quitting, sleep and wake.

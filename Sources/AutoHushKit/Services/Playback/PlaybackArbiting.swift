@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 /// Takes AudioMonitor's events. Each call returns promptly: whatever it leads
 /// to (a pause with its fade-out) runs on its own, so the next event is never

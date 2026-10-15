@@ -346,30 +346,17 @@ struct UpdateControllerTests {
 
     // MARK: - Notifications turned off
 
-    @Test("with notifications off, a choice that notifies becomes installing, with automatic checks off",
+    @Test("with notifications off, the choice and the checks stay as they are, and the update is still offered",
           arguments: [AutomaticUpdates.notify, .download])
-    func notificationsOffMovesChoice(mode: AutomaticUpdates) async {
+    func notificationsOffChangeNothing(mode: AutomaticUpdates) async {
         let h = Harness(checker: .latestRelease("v0.3.0"), mode: mode)
         h.notifier.currentPermission = .off
         await h.controller.runAutomaticTasks()
 
-        #expect(h.controller.mode == .install)
-        #expect(!h.controller.checksAutomatically)
-        #expect(h.settingsChanges == 1)
-        #expect(h.installer.calls.isEmpty) // nothing installed without the user's say
-        #expect(h.notifier.announced.isEmpty)
-    }
-
-    @Test("with notifications on, or installing chosen, nothing changes")
-    func notificationsOffLeavesInstalling() async {
-        let on = Harness(checker: .offline, mode: .notify)
-        #expect(!on.controller.adapt(toNotificationsOff: false))
-        #expect(on.controller.mode == .notify)
-
-        let installing = Harness(checker: .offline, mode: .install)
-        #expect(!installing.controller.adapt(toNotificationsOff: true))
-        #expect(installing.controller.checksAutomatically)
-        #expect(installing.settingsChanges == 0)
+        #expect(h.controller.mode == mode)
+        #expect(h.controller.checksAutomatically)
+        #expect(h.settingsChanges == 0)
+        #expect(h.offer?.release.version == v030) // the menu offers it; its icon shows it
     }
 
     @Test("a reset in System Settings is asked about again, once, and only after an answer")
@@ -389,8 +376,8 @@ struct UpdateControllerTests {
         #expect(h.controller.mode == .notify)
 
         h.notifier.currentPermission = .off
-        await h.controller.followNotificationPermission()
-        #expect(h.controller.mode == .install)
+        #expect(await h.controller.followNotificationPermission() == .off)
+        #expect(h.controller.mode == .notify) // turned off, nothing changes
         h.notifier.currentPermission = .notAsked // reset again, while off
         await h.controller.runAutomaticTasks()
         #expect(h.notifier.permissionRequests == 2)

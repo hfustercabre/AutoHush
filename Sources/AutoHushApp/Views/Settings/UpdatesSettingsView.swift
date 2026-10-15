@@ -2,7 +2,7 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → Updates, in a card like the menu's: the daily check, what it
-/// leads to, a note while notifications are off, and Check Now.
+/// leads to (with a note while notifications are off), and Check Now.
 struct UpdatesSettingsView: View {
     let model: SettingsModel
 
@@ -18,32 +18,21 @@ struct UpdatesSettingsView: View {
                     CardDivider()
                     SectionLabel(Text("When an update is found", comment: "Settings → Updates: lead-in to what happens when an update is found"))
                     ChoiceChips(
-                        options: [AutomaticUpdates.notify, .download, .install].map {
-                            .init(title: $0.title, value: $0, isAvailable: model.isAvailable($0))
-                        },
+                        options: [AutomaticUpdates.notify, .download, .install].map { .init(title: $0.title, value: $0) },
                         // A copy that can't install itself can only notify.
                         selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                        onSelect: { model.updates.setMode($0) },
-                        onUnavailableClick: {
-                            model.flashNotificationsNote()
-                            AccessibilityNotification.Announcement(Self.notificationsOffNote).post()
-                        },
-                        unavailableNote: Self.notificationsOffNote
+                        onSelect: { model.updates.setMode($0) }
                     )
                     .disabled(model.updateInstallNote != nil)
                     Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
-                }
-                // Shown even with checks off: AutoHush turns them off when notifications go off.
-                if model.notificationsOff {
-                    // Blinks bright after a click on a choice that needs notifications.
-                    Text(verbatim: Self.notificationsOffNote)
-                        .font(.appCaption)
-                        .foregroundStyle(model.notificationsNoteIsLit ? AnyShapeStyle(.primary) : AnyShapeStyle(.appSecondary))
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button { model.actions?.openNotificationSettings() } label: {
-                        Text("Open Notifications Settings…", comment: "Settings → Updates: button that opens System Settings → Notifications")
+                    // Every choice still works: the menu bar icon says what a notification would.
+                    if model.notificationsOff {
+                        Text(verbatim: Self.notificationsOffNote).captionStyle()
+                        Button { model.actions?.openNotificationSettings() } label: {
+                            Text("Open Notifications Settings…", comment: "Settings → Updates: button that opens System Settings → Notifications")
+                        }
+                            .buttonStyle(.chip)
                     }
-                        .buttonStyle(.chip)
                 }
                 CardDivider()
                 HStack {
@@ -60,10 +49,9 @@ struct UpdatesSettingsView: View {
 }
 
 extension UpdatesSettingsView {
-    /// Under the update choices while notifications are off; also what
-    /// VoiceOver says for the choices that need them.
-    static var notificationsOffNote: String {
-        String(localized: "Notifications are off for AutoHush, so it can’t tell you about updates.",
+    /// Under the update choices while notifications are off.
+    private static var notificationsOffNote: String {
+        String(localized: "Notifications are off for AutoHush: its menu bar icon shows when an update is found.",
                comment: "Settings → Updates, under the update choices, while notifications are off for AutoHush")
     }
 }

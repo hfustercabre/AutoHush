@@ -117,6 +117,22 @@ struct AppStatusTests {
         #expect(!status.dimsIcon)
     }
 
+    @Test("while an update waits, the icon shows it, and VoiceOver says so after the icon's label")
+    func updateBadge() {
+        var status = ready(.musicPlaying)
+        let label = status.iconAccessibilityLabel
+        #expect(!status.iconShowsUpdate)
+        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        for state in [UpdateOffer.State.available, .downloaded, .installing] {
+            status.updateOffer = UpdateOffer(release: release, state: state)
+            #expect(status.iconShowsUpdate)
+            #expect(status.iconAccessibilityLabel == "\(label), update available")
+        }
+        status.updateOffer = nil
+        #expect(!status.iconShowsUpdate)
+        #expect(status.iconAccessibilityLabel == label)
+    }
+
     @Test("a snooze's description is refreshed at midnight before it ends, then when it ends")
     func snoozeDescriptionRefresh() {
         let calendar = TestDates.calendar

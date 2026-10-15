@@ -1,6 +1,5 @@
 import CoreAudio
 import Foundation
-import OSLog
 import os
 
 // AudioMonitor: each look at which apps play.

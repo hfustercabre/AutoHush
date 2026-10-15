@@ -66,13 +66,16 @@ components.
 | Settings window | Laid out as System Settings: a sidebar of pages (`SettingsSidebar`) beside the page shown, whose name is the window's title, in the toolbar. No back or forward buttons. The user resizes it: **715 to 875 pt** wide and **560 to 900 pt** tall, opening at **760 × 620** the first time; it keeps its place and size between launches. The sidebar stays **235 pt**; the page grows from **480 to 640 pt**, with **16 pt** margins. Cards are **8 pt** apart. |
 | Settings pages | General, Apps · Detection, Fades · Diagnostics, Updates, About, a gap between the groups. Each page fills the window and scrolls when it's taller (`SettingsPageScroll`). |
 | Pages with a list | The heading and its controls stay at the top, and the buttons stay at the window's foot in a [`BottomBar`](#components); only the list between them scrolls (Apps, Diagnostics). |
-| Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. After **Copy Report**, the foot says "Copied", with a check, for 2 s, in place of "Updated as it happens." |
+| Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. After **Copy Report**, the foot says "Copied", with a check, for 2 s, in place of "Updated as it happens." **Show Logs…** sits left of Copy Report and opens the logs window. |
 | Other windows | The welcome, Add a Web App and learning windows (`HostedWindowController`) look like a Settings page: the title bar is part of the window (no band, no line), with the window's title in it in bold, as a page's name; the welcome window's title is its page's ("Choose Your Media Player", "Allow AutoHush to Work"). The content starts **2 pt** under the title bar with a [`WindowHeader`](#components) (the icon and what the window is for), has **20 pt** margins (`windowMargins`), groups under `SectionHeading`s in cards **8 pt** apart, and ends with the buttons in a [`BottomBar`](#components) across the window, the main one blue at the right. Their height follows their content; their width is fixed (below: the welcome window and the guiding windows). Like any window, each can be minimized (⌘M, or its yellow button). |
 | Welcome window | Both pages **540 pt** wide, so the window keeps its width and its `PlayerTiles` go three a row as in Settings. Past **five rows** of tiles (the apps' and the web apps' together), they scroll inside their card. |
 | The Dock | AutoHush lives in the menu bar, with no Dock icon, except while one of its windows is open, minimized ones included (`DockPresence`): then it's in the Dock and the app switcher, with the Mac's standard menu bar (`MainMenu`, see [Keyboard](#keyboard)), so its window keeps its place when the user leaves its desktop and comes back. |
 | Menu | AutoHush's own rows are **345 pt** wide (`menuContentWidth`). Its sections ("Turn off for", "Playing Now") have **14 pt** side margins and **6 pt** above and below. The card at the top has **10 pt** of padding. The menu's own rows (players, Ignored Apps) are drawn by macOS, a point larger than its menu font; the players come under "Supported Apps" (`NSMenuItem.supportedAppsHeading`), then the web apps under `WebAppsHeading`. A menu row's image is set with `shownImage`: from macOS 27, AppKit hides menu items' images unless the item asks to show it (`preferredImageVisibility = .visible`). The toolbar's **Updates** checks in place: it says "Checking…" and the menu stays open until the result, then closes for the alert that tells it. |
+| Menu bar icon | `MenuBarIcon`: a 17 pt template image in the 22 pt square item, centered. While an update waits (found, downloaded or installing: while the menu offers it), the image is the item's full **22 pt**, the tile still centered, with a disc of **8 pt** in its bottom-right corner, reaching into the room around the tile, a down arrow cut out of it and a **1.2 pt** gap cut out of the tile around it; the item keeps its width, and the image is drawn as it is (`imageScaling = .scaleNone`). |
 | Guiding windows | **440 pt** wide. A window that walks the user through other apps (Add a Web App, learning a web app: Safari and the web app come in front meanwhile) floats above every app (`floatsInCorner`), in the top-right corner of the screen the pointer is on, **16 pt** from its edges, keeping its top edge as its steps come and go. Other windows open centered, at the normal level. |
 | About | Centered, under AutoHush's icon at **96 pt**. Every gap between its parts shows **24 pt**. |
+| Logs window | Opened by Diagnostics' **Show Logs…**; its title, "AutoHush Logs", in the title bar as in the other windows. The user resizes it: **560 × 360 pt** at least, opening centered at **680 × 520** the first time; it keeps its place and size between launches. At the top, the `SearchField`, then the time pop-up (This Launch, Last 24 Hours) and the level pop-up (All Levels, Problems Only). The entries fill one card, oldest first, a `CardDivider` between them: a mark (a problem's orange `exclamationmark.triangle.fill`; otherwise a small grey dot, filled for a notice, hollow for an info line), the time (today's as a time, older ones with their weekday), the area (Player, Detection, Web Apps, Updates, App) in `appCaption`, and the message, selectable. Entries and areas stay in English, as logged. It opens at the newest entry and follows new ones while **Follow new entries**, the switch at the left of the `BottomBar`, is on; **Save…** and **Copy Logs** sit at the right, and Copy Logs says "Copied" for 2 s, as Copy Report does. With nothing to show, the card says why: no match for the search, no problems, or nothing logged yet. |
+| Full screen | No window goes full screen (`.fullScreenNone`): Settings' and the logs window's green button zooms them instead. The guiding windows are `.fullScreenAuxiliary`, so they float over an app that's full screen. |
 | Section headings | **4 pt** in from the card's edge, in line with its text, with **6 pt** above (none for the first one on a page). In the other windows a heading has **8 pt** more above it than in Settings, so its group stands apart from the header and its notes. |
 
 ## Text sizes
@@ -144,7 +147,7 @@ Use the color tokens. A view never uses a raw color such as `.red` or
 | `SectionLabel` | A small grey label: the menu's headings ("Playing Now") and lead-ins above a control ("When an update is found"). |
 | `RowTitle` | A row's title, with an optional description under it. |
 | `SwitchRow` + `PillToggleStyle` | An on/off setting: the title on the left, the switch on the right. Switches are 36 × 21 pt; in lists of apps, 30 × 18 pt. |
-| `ChoiceChips` | One choice among two to four options, as chips. The chosen one is filled with the accent color. An option that's unavailable for now stays in its place, dimmed, and says why: a click on it makes the note that explains it blink for a few seconds (Settings → Updates: the choices that need notifications, while they're off, and the note that they're off), and VoiceOver hears that note as its hint, and again after the click (`unavailableNote`). |
+| `ChoiceChips` | One choice among two to four options, as chips. The chosen one is filled with the accent color. |
 | `.chip` button | Actions: "Check Now", "Reset List…". Corner 8; on macOS 26 and later a Liquid Glass capsule. |
 | `ChipButtonStyle(filled: true)` | Chips in a row, such as the menu's durations ("5 min"). On macOS 26 and later Liquid Glass (corner 12), interactive, and tinted with the accent color when selected (`ChoiceChips`). |
 | `ChipButtonStyle()` | Rows and buttons that light up only under the pointer: the menu's toolbar, the players' tiles, the player search's rows. |
@@ -283,7 +286,8 @@ their download symbol.
   - A search starts empty again when its window or menu opens again.
   - **Edit → Find…** (⌘F) opens Settings → Apps' search while it lists
     apps, and puts the cursor in the welcome window's player search when it
-    has one. Elsewhere it's dimmed: it only ever acts on a search.
+    has one and in the logs window's search. Elsewhere it's dimmed: it only
+    ever acts on a search.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Apps): a click on a row, anywhere but
@@ -442,12 +446,10 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     something needs the user, or while Auto-Pause is off (the icon dimmed),
     the menu's status line ("AutoHush: Spotify isn’t running", "AutoHush:
     Auto-Pause is off until 15:30"), never a word of AutoHush's own like
-    "degraded".
+    "degraded". While an update waits, it adds ", update available".
   - A slider says what it sets (Detection's and Fades' timings: the row's
     title) and its value as the row shows it ("0.5 s"); the row's own text
     is hidden from VoiceOver, so it's read once.
-  - An unavailable choice says why as its hint (`ChoiceChips`'
-    `unavailableNote`).
   - What an image alone tells is said in words: a web app whose name is
     also an app's reads "Spotify, Safari web app" where players are offered
     (`PlayerOption.spokenName`), as its icon's Safari badge shows, and an
@@ -461,8 +463,7 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   (Diagnostics' headings, the menu card's player button) says "Expanded"
   or "Collapsed" as its value.
 - **What changes away from VoiceOver's cursor is announced:** "Copied"
-  after Copy Report, why Add a Web App couldn't take the address, the note
-  an unavailable choice points to once it's clicked, a step's warning when
+  after Copy Report and Copy Logs, why Add a Web App couldn't take the address, a step's warning when
   it shows or changes, the card's line after Retry, and why a window waits
   for a permission, when it opens and when it locks.
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
@@ -489,8 +490,8 @@ standard ones**:
   All to Front), in macOS's own words in every language. The Edit menu is
   what makes text fields take ⌘V and the rest. **Find…** opens Settings →
   Apps' search while it lists apps, and puts the cursor in the welcome
-  window's player search when it has one; it's dimmed wherever there's no
-  search. **Minimize** works in every window: Settings, the welcome window
+  window's player search when it has one and in the logs window's search;
+  it's dimmed wherever there's no search. **Minimize** works in every window: Settings, the welcome window
   and the guiding windows (Add a Web App, learning).
 - **Return** presses a window's main, blue button
   (`.keyboardShortcut(.defaultAction)`: Continue, Done) and an alert's

@@ -1,6 +1,5 @@
 import CoreAudio
 import Foundation
-import OSLog
 import os
 
 // AudioMonitor: what it reports.

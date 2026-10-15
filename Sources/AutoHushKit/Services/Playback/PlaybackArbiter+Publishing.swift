@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 // PlaybackArbiter: what it tells the app.
 extension PlaybackArbiter {

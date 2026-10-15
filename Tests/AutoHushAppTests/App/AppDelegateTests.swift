@@ -1238,19 +1238,6 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("when notifications go off, Settings shows the choice moved to installing, with checks off")
-    func notificationsOffShownInSettings() {
-        let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
-        sut.updates.setMode(.download)
-        #expect(sut.updates.adapt(toNotificationsOff: true))
-        #expect(sut.settingsModel.automaticUpdates == .install)
-        #expect(!sut.settingsModel.checksForUpdatesAutomatically)
-        #expect(scratch.preferences.automaticUpdates == .install)
-        #expect(!scratch.preferences.checksForUpdatesAutomatically)
-    }
-
-    @MainActor
     @Test("Settings says why AutoHush can't update itself")
     func installUnavailableNote() {
         let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))

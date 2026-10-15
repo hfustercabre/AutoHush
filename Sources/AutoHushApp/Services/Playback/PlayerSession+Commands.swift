@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import AutoHushKit
 
 // PlayerSession: what the app tells it.

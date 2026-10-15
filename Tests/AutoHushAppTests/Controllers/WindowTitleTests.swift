@@ -45,6 +45,24 @@ struct WindowTitleTests {
         #expect(sut.window?.title == "Learn Deezer’s Controls")
     }
 
+    @Test("no AutoHush window can go full screen: Settings, welcome and Add a Web App none, learning only over another app's")
+    func noFullScreen() {
+        let model = makeModel()
+        let windows: [NSWindow?] = [
+            SettingsWindowController(model: model).window,
+            PlayerChooserWindowController(model: model, tallestPage: 600).window,
+            AddWebAppWindowController(model: AddWebAppModel(), settings: model).window,
+            LearningWindowController(model: model).window,
+        ]
+        for window in windows {
+            let behavior = window?.collectionBehavior ?? []
+            #expect(!behavior.contains(.fullScreenPrimary))
+            #expect(behavior.contains(.fullScreenNone) || behavior.contains(.fullScreenAuxiliary))
+        }
+        #expect(windows[0]?.collectionBehavior.contains(.fullScreenNone) == true)
+        #expect(windows[1]?.collectionBehavior.contains(.fullScreenNone) == true)
+    }
+
     @Test("AutoHush stays in the Dock for its own windows only: titled ones, not panels or borderless ones")
     func dockCountsAppWindows() {
         let titled = NSWindow(contentRect: .zero, styleMask: [.titled, .closable], backing: .buffered, defer: true)

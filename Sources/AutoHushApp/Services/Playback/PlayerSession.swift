@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// A player's monitoring, as the player session runs it: a
@@ -91,7 +90,7 @@ final class PlayerSession {
     let monitoringMaker: MakeMonitoring
     let locateApp: PlayerOption.Locate
     let retries: Retries
-    let logger = Logger(category: "PlayerSession")
+    let logger = AutoHushLogger(category: "PlayerSession")
 
     /// The chosen player's monitoring, while it runs.
     var monitoring: (any SessionMonitoring)?

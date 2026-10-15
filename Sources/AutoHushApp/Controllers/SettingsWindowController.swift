@@ -83,6 +83,9 @@ final class SettingsWindowController: NSWindowController {
 
         let window = NSWindow(contentViewController: split)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        // Resizable, but never full screen, as no AutoHush window: the green
+        // button zooms it within `maximumSize`.
+        window.collectionBehavior.insert(.fullScreenNone)
         window.isReleasedWhenClosed = false
         let toolbar = NSToolbar(identifier: "Settings")
         toolbar.delegate = toolbarDelegate

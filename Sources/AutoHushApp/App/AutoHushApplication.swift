@@ -12,6 +12,9 @@ public enum AutoHushApplication {
             NowPlayingApp.printAnswer()
             exit(0)
         }
+        // AutoHush's own log of the last 24 hours: ~/Library/Logs/AutoHush.
+        let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
+        LogFile.start(at: logs.appending(path: "Logs/AutoHush/AutoHush.log"))
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.setActivationPolicy(.accessory)

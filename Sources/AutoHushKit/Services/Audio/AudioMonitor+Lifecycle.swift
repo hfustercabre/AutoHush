@@ -1,6 +1,5 @@
 import CoreAudio
 import Foundation
-import OSLog
 import os
 
 // AudioMonitor: starting and stopping.

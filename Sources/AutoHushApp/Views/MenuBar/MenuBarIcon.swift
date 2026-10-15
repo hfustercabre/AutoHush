@@ -23,11 +23,28 @@ enum MenuBarIcon: CaseIterable, Sendable {
 
     /// The image's size; the tile fills it.
     static let size = NSSize(width: 17, height: 17)
+    /// The image's size with the update badge: as tall as a menu bar item
+    /// can be, the tile centered in it as without the badge, so the badge
+    /// takes the room around it.
+    static let updateSize = NSSize(width: 22, height: 22)
 
-    func image(accessibilityDescription: String? = nil) -> NSImage {
-        let image = NSImage(size: Self.size, flipped: true) { _ in
+    /// The icon; with `showsUpdate`, the update badge in its corner.
+    func image(accessibilityDescription: String? = nil, showsUpdate: Bool = false) -> NSImage {
+        let size = showsUpdate ? Self.updateSize : Self.size
+        let image = NSImage(size: size, flipped: true) { _ in
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            guard showsUpdate else {
+                draw(in: context)
+                return true
+            }
+            // One layer, so the badge's gap cuts the tile and nothing under it.
+            context.beginTransparencyLayer(auxiliaryInfo: nil)
+            context.saveGState()
+            context.translateBy(x: (size.width - Self.size.width) / 2, y: (size.height - Self.size.height) / 2)
             draw(in: context)
+            context.restoreGState()
+            Self.drawUpdateBadge(in: context)
+            context.endTransparencyLayer()
             return true
         }
         image.isTemplate = true
@@ -69,6 +86,36 @@ enum MenuBarIcon: CaseIterable, Sendable {
         context.translateBy(x: -center, y: -center)
         for cutout in cutouts { cutout.draw(in: context) }
         context.endTransparencyLayer()
+    }
+
+    /// An update waits: a disc with a down arrow cut out of it, in the
+    /// bottom-right corner of `updateSize`, half in the room around the
+    /// tile, with a gap cut out of the tile around it.
+    private static func drawUpdateBadge(in context: CGContext) {
+        let center = CGPoint(x: 18, y: 18)
+        let radius: CGFloat = 4, gap: CGFloat = 1.2
+        func disc(_ radius: CGFloat) {
+            context.fillEllipse(in: CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
+        }
+        context.setFillColor(.black)
+        context.setBlendMode(.destinationOut)
+        disc(radius + gap)
+        context.setBlendMode(.normal)
+        disc(radius)
+
+        context.setBlendMode(.destinationOut)
+        context.setStrokeColor(.black)
+        context.setLineWidth(1.25)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+        let stem: CGFloat = 2.3, head: CGFloat = 1.7
+        context.move(to: CGPoint(x: center.x, y: center.y - stem))
+        context.addLine(to: CGPoint(x: center.x, y: center.y + stem))
+        context.move(to: CGPoint(x: center.x - head, y: center.y + stem - head))
+        context.addLine(to: CGPoint(x: center.x, y: center.y + stem))
+        context.addLine(to: CGPoint(x: center.x + head, y: center.y + stem - head))
+        context.strokePath()
+        context.setBlendMode(.normal)
     }
 
     /// What each state cuts out of the tile, on the design grid.

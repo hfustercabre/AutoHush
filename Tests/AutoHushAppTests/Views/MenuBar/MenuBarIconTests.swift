@@ -58,6 +58,32 @@ struct MenuBarIconTests {
         #expect(inBar.redComponent > 0.9 && inBar.greenComponent < 0.1)
     }
 
+    @Test("with an update, every state is a 22 pt template image, the tile centered as without it, the badge in the corner")
+    func updateBadge() {
+        for icon in MenuBarIcon.allCases {
+            let image = icon.image(accessibilityDescription: "AutoHush", showsUpdate: true)
+            #expect(image.isTemplate)
+            #expect(image.size == NSSize(width: 22, height: 22))
+            #expect(image.accessibilityDescription == "AutoHush")
+        }
+        let size = MenuBarIcon.updateSize
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        rep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        MenuBarIcon.playing.image(showsUpdate: true).draw(in: NSRect(origin: .zero, size: size))
+        NSGraphicsContext.restoreGraphicsState()
+        #expect(color(rep, at: 5.5, 5.5).alphaComponent > 0.9) // the tile, 2.5 pt in
+        #expect(color(rep, at: 11, 11).alphaComponent < 0.1)   // the middle bar, at the centre
+        #expect(color(rep, at: 1, 1).alphaComponent < 0.1)     // the room around the tile
+        #expect(color(rep, at: 15, 18).alphaComponent > 0.9)   // the disc, in the corner
+        #expect(color(rep, at: 18, 18).alphaComponent < 0.1)   // its arrow
+        #expect(color(rep, at: 13, 18).alphaComponent < 0.1)   // the gap cut out of the tile around it
+        #expect(color(rep, at: 11, 18).alphaComponent > 0.9)   // the tile beside the gap
+    }
+
     @Test("each state looks different")
     func distinctStates() {
         let drawings = MenuBarIcon.allCases.map { render($0).representation(using: .png, properties: [:])! }

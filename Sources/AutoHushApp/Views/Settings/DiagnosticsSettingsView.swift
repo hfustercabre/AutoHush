@@ -161,9 +161,10 @@ struct DiagnosticsSettingsView: View {
         }
     }
 
-    /// Said after Copy Report; VoiceOver hears it too.
-    private static var copiedText: String {
-        String(localized: "Copied", comment: "Settings → Diagnostics: after Copy Report")
+    /// Said after Copy Report, and on the logs window's Copy Logs, briefly;
+    /// VoiceOver hears it too.
+    static var copiedText: String {
+        String(localized: "Copied", comment: "Settings → Diagnostics after Copy Report, and the logs window's Copy Logs button, for a moment after a click")
     }
 
     private func symbol(for kind: DiagnosticsSnapshot.Section.Kind) -> String {
@@ -194,6 +195,10 @@ struct DiagnosticsSettingsView: View {
                     .foregroundStyle(.appSecondary)
             }
             Spacer()
+            Button { model.actions?.showLogs() } label: {
+                Text("Show Logs…", comment: "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs")
+            }
+            .buttonStyle(.chip)
             Button {
                 copyReport()
             } label: {

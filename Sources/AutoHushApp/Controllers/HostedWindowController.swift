@@ -3,8 +3,7 @@ import Observation
 import SwiftUI
 
 /// A window around SwiftUI content, sized to it: closable, minimizable (⌘M),
-/// and kept when
-/// closed, so it shows again at once. Its title bar is part of it, as in
+/// never full screen, and kept when closed, so it shows again at once. Its title bar is part of it, as in
 /// Settings (no band, no line), with the title in bold as a Settings page's
 /// name. It's shown in front, and centered when it comes on screen, or,
 /// floating above other apps, in the top-right corner (`floatsInCorner`).
@@ -19,6 +18,9 @@ class HostedWindowController: NSWindowController {
         let window = NSWindow(contentViewController: content)
         window.title = title
         Self.styleTitleBar(of: window)
+        // No AutoHush window goes full screen: the green button, ⌃⌘F and the
+        // Window menu leave it as it is.
+        window.collectionBehavior.insert(.fullScreenNone)
         window.isReleasedWhenClosed = false
         super.init(window: window)
     }
@@ -65,7 +67,12 @@ class HostedWindowController: NSWindowController {
         didSet {
             guard let window else { return }
             window.level = floatsInCorner ? .floating : .normal
-            if floatsInCorner { window.collectionBehavior.insert(.fullScreenAuxiliary) }
+            // Over another app's full-screen window too (Safari, the web
+            // app); an auxiliary window doesn't go full screen itself.
+            if floatsInCorner {
+                window.collectionBehavior.remove(.fullScreenNone)
+                window.collectionBehavior.insert(.fullScreenAuxiliary)
+            }
             watchTopEdge(floatsInCorner)
         }
     }

@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 import AutoHushPlayers
 
@@ -30,6 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     var settingsWindowController: SettingsWindowController?
+    /// AutoHush's logs, from Settings → Diagnostics; made when first shown.
+    var logsWindowController: LogsWindowController?
     /// Follows what the open windows show that macOS doesn't announce.
     private(set) var windowWatch: WindowWatch!
     /// The music players to choose from.
@@ -67,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var playerLaunchObserver: (any NSObjectProtocol)?
     /// The Mac going to sleep and waking up.
     var sleepObservers: [any NSObjectProtocol] = []
-    let logger = Logger(category: "AppDelegate")
+    let logger = AutoHushLogger(category: "AppDelegate")
     /// Copies of AutoHush opened before this one, which quit when it opens.
     let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
@@ -112,7 +113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 _ = try await NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
             } catch {
-                Logger(category: "AppDelegate").error(
+                AutoHushLogger(category: "AppDelegate").error(
                     "Couldn't open \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         },
@@ -209,5 +210,9 @@ extension AppDelegate: AppActions {
     func openAddWebApp() { showAddWebApp() }
     func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }
+    func showLogs() {
+        if logsWindowController == nil { logsWindowController = LogsWindowController(model: LogsModel()) }
+        logsWindowController?.show()
+    }
     func quit() { NSApp.terminate(nil) }
 }

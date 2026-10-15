@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import AutoHushKit
 
 // UpdateController: launch and the daily checks.
@@ -62,9 +61,10 @@ extension UpdateController {
         }
     }
 
-    /// Looks at the permission to notify and follows changes to it. Turned
-    /// off, the update choice adapts (`adapt(toNotificationsOff:)`). Reset
-    /// in System Settings (Reset Notifications…), which makes macOS treat
+    /// Looks at the permission to notify and follows changes to it: turned
+    /// off, nothing changes (every choice still works, and the menu bar icon
+    /// shows when an update waits), Settings only says so. Reset in System
+    /// Settings (Reset Notifications…), which makes macOS treat
     /// AutoHush as never asked, AutoHush asks again at once. Called by each
     /// automatic run and, every second, while Settings is open.
     @discardableResult
@@ -75,22 +75,6 @@ extension UpdateController {
             notifier.requestPermission()
         }
         lastPermission = permission
-        adapt(toNotificationsOff: permission == .off)
         return permission
-    }
-
-    /// With notifications off, "Notify me" and "Download it and notify me"
-    /// can't tell the user anything. AutoHush then moves the choice to
-    /// "Install it automatically" and turns automatic checks off: it still
-    /// installs nothing without the user turning them back on. Returns
-    /// whether it changed the settings.
-    @discardableResult
-    func adapt(toNotificationsOff notificationsOff: Bool) -> Bool {
-        guard notificationsOff, mode != .install else { return false }
-        logger.notice("Notifications are off: update choice set to install, automatic checks off")
-        mode = .install
-        checksAutomatically = false
-        onSettingsChange()
-        return true
     }
 }

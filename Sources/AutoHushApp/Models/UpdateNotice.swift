@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 import UserNotifications
 
 /// Something about updates worth a notification.

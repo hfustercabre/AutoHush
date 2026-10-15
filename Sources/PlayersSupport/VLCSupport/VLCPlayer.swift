@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 import ScriptablePlayers
 
@@ -35,7 +34,7 @@ package actor VLCPlayer: MusicPlayer {
     package nonisolated var volumeCurve: VolumeCurve { .cubic }
 
     private let channel: any AppleEventSending
-    private let logger = Logger(category: "VLCPlayer")
+    private let logger = AutoHushLogger(category: "VLCPlayer")
     /// The last volume read, in VLC's numbers and AutoHush's, so setting it
     /// back restores VLC's exact number rather than a rounded one.
     private var lastVolume: (vlc: Int, volume: Int)?

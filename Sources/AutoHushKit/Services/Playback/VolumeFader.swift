@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 /// Fades a music player's own volume around pausing and playing, so the music
 /// eases out and back in instead of stopping and starting abruptly.
@@ -32,7 +31,7 @@ package actor VolumeFader {
     private let player: any MusicPlayer
     private let curve: VolumeCurve
     private let sleep: Sleep
-    private let logger = Logger(category: "VolumeFader")
+    private let logger = AutoHushLogger(category: "VolumeFader")
     private var fadeOut: TimeInterval
     private var fadeIn: TimeInterval
     /// The volume to come back to, while a fade or its restore is under way.

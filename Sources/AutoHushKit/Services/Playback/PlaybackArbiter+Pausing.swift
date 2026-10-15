@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 // PlaybackArbiter: pausing the music, and when.
 extension PlaybackArbiter {

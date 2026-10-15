@@ -43,7 +43,7 @@ package struct AudioLevel: Equatable, Sendable {
 package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendable {
     package init() {}
 
-    private let logger = Logger(category: "LevelMeter")
+    private let logger = AutoHushLogger(category: "LevelMeter")
     private let ioQueue = DispatchQueue(label: "AutoHush.LevelMeter.io", qos: .userInitiated)
     private var taps: [AudioObjectID: ProcessTap] = [:]
     /// Processes whose tap failed to start; not retried until they disappear.

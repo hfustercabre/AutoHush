@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// What the chosen player's monitoring follows from the user's settings.

@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// What AutoHush needs to know about a music app it controls with Apple
@@ -55,7 +54,7 @@ package actor ScriptablePlayer: MusicPlayer {
     package nonisolated var volumeCurve: VolumeCurve { profile.volumeCurve }
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { profile.iconPlaceholder }
 
-    private let logger = Logger(category: "ScriptablePlayer")
+    private let logger = AutoHushLogger(category: "ScriptablePlayer")
     private let channel: AppleEventChannel
 
     package init(profile: ScriptablePlayerProfile) {

@@ -1,6 +1,5 @@
 import CoreAudio
 import Foundation
-import OSLog
 
 /// A CoreAudio client process with its audio output running.
 package struct AudioProcessInfo: Equatable, Sendable {
@@ -36,7 +35,7 @@ package protocol AudioProcessSnapshotProviding: AnyObject, Sendable {
 package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProviding, @unchecked Sendable {
     package init() {}
 
-    private let logger = Logger(category: "AudioMonitor")
+    private let logger = AutoHushLogger(category: "AudioMonitor")
     private var queue: DispatchQueue?
     private var onChange: (@Sendable () -> Void)?
     private var processListListener: AudioObjectPropertyListenerBlock?

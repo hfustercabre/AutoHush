@@ -1,5 +1,4 @@
 import Foundation
-import OSLog
 
 // PlaybackArbiter: resuming it, and when.
 extension PlaybackArbiter {

@@ -1,5 +1,5 @@
 import AppKit
-import OSLog
+import AutoHushKit
 
 /// The keyboard's Play/Pause key, pressed as a user would. macOS sends it to
 /// the app it counts as playing now ("Now Playing"), not to one AutoHush
@@ -9,7 +9,7 @@ enum PlayPauseKey {
     /// `NX_KEYTYPE_PLAY` in IOKit's ev_keymap.h.
     private static let playKey = 16
 
-    private static let logger = Logger(category: "WebAppPlayer")
+    private static let logger = AutoHushLogger(category: "WebAppPlayer")
 
     /// Down, then up. On the main thread, where AppKit builds events.
     @MainActor

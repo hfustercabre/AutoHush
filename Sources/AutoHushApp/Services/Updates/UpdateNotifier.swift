@@ -1,5 +1,5 @@
 import AppKit
-import OSLog
+import AutoHushKit
 import UserNotifications
 
 /// Shows update notifications and reports clicks on them.
@@ -31,7 +31,7 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
     var onClick: (@MainActor (UpdateNotice.Kind, AppVersion) -> Void)?
 
     private static let identifier = "update"
-    private let logger = Logger(category: "Updates")
+    private let logger = AutoHushLogger(category: "Updates")
 
     private var center: UNUserNotificationCenter { .current() }
 
