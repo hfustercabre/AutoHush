@@ -81,7 +81,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   back as it was. You then choose how AutoHush pauses and plays it among
   the ways that worked (the recommended one is chosen unless you pick
   another), and the app is listed under Other Apps, marked **Checked by
-  you**. The **×**
+  you**. The Now Playing panel needs Now Playing shown in the menu bar:
+  hidden there, the check and the menu say where to show it. The **×**
   on its tile in Settings → General, or its row with **⌥ Option** held in
   the menu, removes it, after asking.
 - **An app no way pauses can be muted instead.** When Add an App finds

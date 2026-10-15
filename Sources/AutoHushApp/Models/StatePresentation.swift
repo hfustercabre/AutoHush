@@ -155,6 +155,18 @@ struct ControlError: Equatable {
 }
 
 extension ControlFailure {
+    /// Where Now Playing is shown in the menu bar or hidden: System
+    /// Settings' Menu Bar from macOS 26, its Control Center before.
+    static var nowPlayingSettings: String {
+        if #available(macOS 26, *) {
+            String(localized: "System Settings → Menu Bar",
+                   comment: "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 26 and later), inside a sentence")
+        } else {
+            String(localized: "System Settings → Control Center",
+                   comment: "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 15), inside a sentence")
+        }
+    }
+
     /// The failure as the user reads it, about `player`.
     func text(player: String) -> String {
         switch self {
@@ -179,6 +191,9 @@ extension ControlFailure {
         case .muteUnavailable:
             String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
                    comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled; %@ is the player")
+        case .nowPlayingHidden:
+            String(localized: "AutoHush pauses \(player) with Now Playing in the menu bar, which is hidden: show it in \(Self.nowPlayingSettings).",
+                   comment: "Why the media player (added with Add an App, paused through the menu bar's Now Playing panel) couldn't be controlled; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”")
         case .appleEventError(let number, _):
             String(localized: "\(player) answered with an error (\(String(number))).",
                    comment: "Why the media player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")

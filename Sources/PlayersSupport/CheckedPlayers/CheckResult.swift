@@ -20,6 +20,9 @@ package struct CheckResult: Codable, Equatable, Sendable {
         case none
         /// The app has no such way (no dictionary, menu, page button…).
         case notThere
+        /// The Now Playing panel's: Now Playing hidden in the menu bar, so
+        /// it couldn't be tried.
+        case menuBarHidden
         /// Found, but not tried (the app didn't play).
         case notTried
         /// Not looked for (the app wasn't running, or Accessibility is missing).

@@ -10,9 +10,20 @@ let panelNotNowPlaying = "nothing in it reports to Now Playing, so it has no row
 /// through Accessibility, so without that permission, that's why.
 var noPanelItem: String {
     AXIsProcessTrusted()
-        ? "no Now Playing item in the menu bar (it shows once something has played, unless System Settings → Control Center hides it)"
+        ? "no Now Playing item in the menu bar (it shows once something has played, unless \(nowPlayingSettings) hides it)"
         : "this tool (or the app running it) needs the Accessibility permission: the panel is found and pressed through it"
 }
+
+/// Where Now Playing is shown in the menu bar or hidden.
+var nowPlayingSettings: String {
+    if #available(macOS 26, *) { "System Settings → Menu Bar" } else { "System Settings → Control Center" }
+}
+
+/// Whether the panel's item was in the menu bar at a press, and whether it
+/// was missing at one: never there, Now Playing is hidden in the menu bar
+/// (hidden in System Settings, macOS removes it), which `writeResult` says.
+@MainActor var panelItemSeen = false
+@MainActor var panelItemMissing = false
 
 /// One app's row in the open panel, with its Play/Pause, as AutoHush reads
 /// it (`AccessibilityNowPlayingPanel`): its text ("Song, Artist – Album", or
@@ -144,9 +155,11 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
     guard let item = nowPlayingMenuItem() else {
         log("    no Now Playing item found; in front: \(WindowStates.frontName)")
+        panelItemMissing = true
         panelProblem = noPanelItem
         return false
     }
+    panelItemSeen = true
     guard let rows = openPanel(item) else {
         panelProblem = "the Now Playing item didn't open"
         return false
@@ -207,9 +220,11 @@ enum PanelPress { case already, changed, pressed, notPressed }
     var texts = songTexts(pid)
     guard let item = nowPlayingMenuItem() else {
         log("    no Now Playing item found; in front: \(WindowStates.frontName)")
+        panelItemMissing = true
         panelProblem = noPanelItem
         return .notPressed
     }
+    panelItemSeen = true
     guard var rows = openPanel(item) else {
         panelProblem = "the Now Playing item didn't open"
         return .notPressed

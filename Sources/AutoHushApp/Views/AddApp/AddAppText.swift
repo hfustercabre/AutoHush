@@ -1,5 +1,6 @@
-import Foundation
+import AutoHushKit
 import CheckedPlayers
+import Foundation
 
 /// What the Add an App window (W2), the warning before its check (W6) and
 /// the check's panel say. `app` is the chosen app's name.
@@ -457,6 +458,9 @@ enum AddAppText {
             case .page: String(localized: "It shows no page with a Play/Pause", comment: "Add an App window, under “Its page’s Play/Pause” when the app shows no page, or none with a Play/Pause button")
             case .panel: String(localized: "\(app) doesn’t show in Now Playing", comment: "Add an App window, under “The menu bar’s Now Playing panel”; %@ is the app")
             }
+        case .menuBarHidden:
+            String(localized: "Not tried: Now Playing is hidden in the menu bar. Show it in \(ControlFailure.nowPlayingSettings), then check again.",
+                   comment: "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar; %@ is where the setting is, e.g. “System Settings → Menu Bar”")
         case .notTried:
             String(localized: "Not tried", comment: "Add an App window, under a way the check found but didn't try")
         case .notChecked:

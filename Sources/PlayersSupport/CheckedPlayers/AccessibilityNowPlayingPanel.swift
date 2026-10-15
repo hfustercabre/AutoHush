@@ -2,14 +2,17 @@ import AppKit
 import ApplicationServices
 import AutoHushKit
 
-/// The real panel (macOS 26 on): its menu bar item found by hit-testing
-/// along the menu bar, its rows read from Control Center's windows. Player
-/// Check opens, reads and closes it with the same calls.
+/// The real panel (macOS 26 on): its menu bar item found in the menu bar's
+/// own windows (else by hit-testing along it), its rows read from Control
+/// Center's windows. Player Check opens, reads and closes it with the same
+/// calls.
 package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// A row as the open panel shows it, with its Play/Pause.
     package typealias ShownRow = (row: PanelRow, button: AXUIElement)
 
     package init() {}
+
+    package func isInMenuBar() -> Bool { Self.menuItem() != nil }
 
     package func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
         guard let item = Self.menuItem(), let rows = Self.open(item) else { return nil }
@@ -18,17 +21,51 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
         return AXUIElementPerformAction(button, kAXPressAction as CFString) == .success
     }
 
-    /// The menu bar's Now Playing item: the menu bar's own list doesn't name
-    /// it, so it's hit-tested along the primary display's menu bar (hit-test
-    /// coordinates start at its top left; `NSScreen.main` may be another).
+    /// The menu bar's Now Playing item: in the windows of the app that draws
+    /// the menu bar's items, else hit-tested along it. Hidden in System
+    /// Settings, it's in neither: macOS removes it.
     package static func menuItem() -> AXUIElement? {
+        listedItem() ?? hitTestedItem()
+    }
+
+    static let identifier = "com.apple.menuextra.now-playing"
+
+    /// The item in its own window: MenuBarAgent (macOS 27, measured
+    /// 2026-10-15; Control Center's before) keeps each menu bar item in a
+    /// window, named by its identifier there (its list of the menu bar's
+    /// items doesn't name them), wherever it is and whatever covers it: a
+    /// wide app's menus by the notch, another app's window over it.
+    package static func listedItem() -> AXUIElement? {
+        for id in ["com.apple.MenuBarAgent", "com.apple.controlcenter"] {
+            guard let app = NSRunningApplication.running(id) else { continue }
+            let element = AXUIElementCreateApplication(app.processIdentifier)
+            AXUIElementSetMessagingTimeout(element, 1)
+            func find(_ element: AXUIElement, depth: Int) -> AXUIElement? {
+                if element.string(kAXIdentifierAttribute) == identifier { return element }
+                guard depth < 4 else { return nil }
+                for child in element.children {
+                    if let found = find(child, depth: depth + 1) { return found }
+                }
+                return nil
+            }
+            for window in element.elements(kAXWindowsAttribute) {
+                if let found = find(window, depth: 0) { return found }
+            }
+        }
+        return nil
+    }
+
+    /// The item hit-tested along the primary display's menu bar (hit-test
+    /// coordinates start at its top left; `NSScreen.main` may be another):
+    /// the topmost thing there, so not while something covers it.
+    package static func hitTestedItem() -> AXUIElement? {
         let system = AXUIElementCreateSystemWide()
         let width = Float(NSScreen.screens.first?.frame.width ?? 1470)
         var x = width - 20
         while x > width / 3 {
             var hit: AXUIElement?
             if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit,
-               hit.string(kAXIdentifierAttribute) == "com.apple.menuextra.now-playing" { return hit }
+               hit.string(kAXIdentifierAttribute) == identifier { return hit }
             x -= 6
         }
         return nil

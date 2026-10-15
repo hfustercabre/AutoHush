@@ -55,6 +55,9 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
     /// It can only be muted, and muting isn't possible now: no Audio
     /// Recording, or AntiDot mode, which taps no sound.
     case muteUnavailable
+    /// Its way is the menu bar's Now Playing panel, and Now Playing isn't
+    /// shown in the menu bar (the user hid it in System Settings).
+    case nowPlayingHidden
     /// It answered an Apple event with an error: its number, and the
     /// message it gave, if any (in the player's language).
     case appleEventError(Int, message: String?)
@@ -68,6 +71,7 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
         case .pressFailed: "its Play/Pause couldn't be pressed"
         case .pressIgnored: "it didn't respond to its Play/Pause"
         case .muteUnavailable: "it can only be muted, and muting needs Audio Recording (not in AntiDot mode)"
+        case .nowPlayingHidden: "Now Playing isn't shown in the menu bar, so its panel can't be opened"
         case .appleEventError(let number, let message?) where !message.isEmpty: "\(message) (OSStatus \(number))"
         case .appleEventError(let number, _): "OSStatus \(number)"
         }

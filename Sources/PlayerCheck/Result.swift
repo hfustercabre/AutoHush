@@ -48,6 +48,10 @@ import WebAppPlayers
         .page(PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch))
     }
     add(.panel, canBeNowPlaying, notChecked: unread && canBeNowPlaying) { .panel(rememberedRow: panelRowText) }
+    // Never found in the menu bar: Now Playing is hidden there, which the user can change.
+    if !panelItemSeen, panelItemMissing, let index = ways.firstIndex(where: { $0.kind == .panel }), ways[index].mark == .none {
+        ways[index] = CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)
+    }
     // A toggle with no state and nothing else to tell AutoHush when to send it: not kept.
     if let index = working.firstIndex(where: { $0.kind == .script }), case .script(let script) = working[index].way,
        !ResultWays.canRun(script, besides: working.map(\.way), reportsReadable: canBeNowPlaying && isAdministrator) {

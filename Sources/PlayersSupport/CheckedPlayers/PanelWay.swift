@@ -73,19 +73,20 @@ package actor PanelWay: MusicPlayer {
     private func press(pausing: Bool) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let (name, remembered, panel, shown) = (name, remembered, panel, shown)
-        let pressed: String? = await queue.run {
+        let (pressed, hidden): (String?, Bool) = await queue.run {
             // Read before the panel opens (Now Playing is asked of a fresh process).
             let now = shown(pid)
             var chosen: String?
-            _ = panel.pressRow { rows in
+            let opened = panel.pressRow { rows in
                 let row = PanelRows.row(in: rows, pausing: pausing, appName: name, otherApps: now.otherApps, texts: now.titles,
                                         remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying)
                 chosen = row?.text
                 return row
             }
-            return chosen
+            // Not opened: hidden in the menu bar, which the user can change.
+            return (chosen, opened == nil && !panel.isInMenuBar())
         }
-        guard let pressed else { throw MusicPlayerError.playerCommandFailed(.pressFailed) }
+        guard let pressed else { throw MusicPlayerError.playerCommandFailed(hidden ? .nowPlayingHidden : .pressFailed) }
         guard pressed != self.remembered else { return }
         self.remembered = pressed
         // Only its row changes, in the setup kept now (checked again since, it

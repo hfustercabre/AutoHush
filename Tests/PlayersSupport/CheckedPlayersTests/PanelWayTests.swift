@@ -9,6 +9,7 @@ private final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     private var shown: [PanelRow]
     private var pressedRows: [String] = []
     var opens = true
+    var inMenuBar = true
 
     init(_ rows: [PanelRow]) { shown = rows }
 
@@ -21,6 +22,8 @@ private final class FakePanel: NowPlayingPanel, @unchecked Sendable {
         lock.withLock { pressedRows.append(row.text) }
         return true
     }
+
+    func isInMenuBar() -> Bool { inMenuBar }
 }
 
 @Suite("PanelWay")
@@ -60,7 +63,7 @@ struct PanelWayTests {
         #expect(store.setups().first?.ways == [.menu(menuName: "Play")])
     }
 
-    @Test("with no row of its own, nothing is pressed; not running, nothing is asked")
+    @Test("with no row of its own, nothing is pressed; not running, nothing is asked; Now Playing hidden in the menu bar says so")
     func noRow() async {
         let store = MemoryStore()
         let panel = FakePanel(rows)
@@ -72,6 +75,11 @@ struct PanelWayTests {
         let closed = FakePanel(rows)
         closed.opens = false
         await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await way(closed, store: store).pause() }
+        // Hidden in the menu bar (System Settings): says so, for the user to show it.
+        let hidden = FakePanel(rows)
+        hidden.opens = false
+        hidden.inMenuBar = false
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.nowPlayingHidden)) { try await way(hidden, store: store).pause() }
     }
 
     @Test("else the row it changed with before")

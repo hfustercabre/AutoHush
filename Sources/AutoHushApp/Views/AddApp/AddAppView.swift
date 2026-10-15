@@ -427,7 +427,7 @@ private struct WayRow: View {
         case .works: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
         case .some: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.appWarning)
         case .none, .notThere: Image(systemName: "xmark.circle.fill").foregroundStyle(.appSecondary)
-        case .notTried, .notChecked: Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
+        case .notTried, .notChecked, .menuBarHidden: Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
         }
     }
 }

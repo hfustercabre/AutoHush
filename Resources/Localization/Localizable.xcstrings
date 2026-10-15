@@ -31860,6 +31860,221 @@
         }
       }
     },
+    "AutoHush pauses %@ with Now Playing in the menu bar, which is hidden: show it in %@." : {
+      "comment" : "Why the media player (added with Add an App, paused through the menu bar's Now Playing panel) couldn't be controlled; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوقف AutoHush ‏%1$@ مؤقتًا عبر «قيد التشغيل الآن» في شريط القوائم، وهو مخفي: أظهره من %2$@."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush posa en pausa %1$@ amb «Està sonant» de la barra de menús, que està amagat: mostra’l a %2$@."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastavuje aplikaci %1$@ přes „Právě hraje“ na řádku nabídek, které je skryté: zobrazte ho (%2$@)."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush sætter %1$@ på pause med ”Afspilles nu” på menulinjen, som er skjult: vis det i %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausiert %1$@ über „Jetzt läuft“ in der Menüleiste, das ausgeblendet ist: Blende es unter %2$@ ein."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush θέτει σε παύση το %1$@ με το «Παίζει τώρα» της γραμμής μενού, που είναι κρυφό: εμφανίστε το (%2$@)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AutoHush pauses %1$@ with Now Playing in the menu bar, which is hidden: show it in %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa %1$@ con «Ahora suena» de la barra de menús, que está oculto: muéstralo en %2$@."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa %1$@ con «Ahora suena» de la barra de menús, que está oculto: muéstralo en %2$@."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush keskeyttää sovelluksen %1$@ valikkorivin Toistossa-paneelilla, joka on piilotettu: näytä se kohdassa %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met %1$@ en pause avec « À l’écoute » dans la barre des menus, qui est masqué : affichez-le dans %2$@."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met %1$@ en pause avec « À l’écoute » dans la barre des menus, qui est masqué : affichez-le dans %2$@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %1$@ को मेनू बार के “अभी चल रहा है” से पॉज़ करता है, जो छिपा है: इसे %2$@ में दिखाएँ।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzira aplikaciju %1$@ preko „Izvodi se” u traci s izbornicima, što je skriveno: prikažite ga (%2$@)."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush a menüsor „Lejátszás alatt” paneljével szünetelteti a(z) %1$@ appot, de az el van rejtve: jelenítse meg (%2$@)."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush menjeda %1$@ dengan Sedang Diputar di bar menu, yang disembunyikan: tampilkan di %2$@."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mette in pausa %1$@ con «In riproduzione» nella barra dei menu, che è nascosto: mostralo in %2$@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはメニューバーの“再生中”で%1$@を一時停止しますが、非表示になっています。%2$@で表示してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush는 메뉴 막대의 ‘지금 재생 중’으로 %1$@을(를) 일시 정지하지만, 이 항목이 가려져 있습니다. %2$@에서 표시하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush setter %1$@ på pause med Spilles nå i menylinjen, som er skjult: vis det i %2$@."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzeert %1$@ met ‘Wordt nu afgespeeld’ in de menubalk, dat verborgen is: toon het bij %2$@."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush wstrzymuje aplikację %1$@ przez „Teraz odtwarzane” na pasku menu, które jest ukryte: pokaż je (%2$@)."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush pausa %1$@ com “Reproduzindo” na barra de menus, que está oculto: mostre-o em %2$@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush coloca %1$@ em pausa com “A reproduzir” na barra de menus, que está oculto: mostre-o em %2$@."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pune aplicația %1$@ pe pauză prin „În redare” din bara de meniu, care e ascuns: afișați-l (%2$@)."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ставит %1$@ на паузу через «Исполняется» в строке меню, но оно скрыто: покажите его (%2$@)."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastavuje apku %1$@ cez „Práve hrá“ na lište ponúk, ktoré je skryté: zobrazte ho (%2$@)."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush začasno ustavi aplikacijo %1$@ prek »Predvaja se« v menijski vrstici, ki je skrit: prikažite ga (%2$@)."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausar %1$@ med ”Spelas nu” i menyraden, som är dolt: visa det i %2$@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %1$@ uygulamasını menü çubuğundaki Şu An Çalan ile duraklatır ama bu gizli: %2$@ bölümünde gösterin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush призупиняє програму %1$@ через «Зараз відтворюється» на смузі меню, що приховано: покажіть його (%2$@)."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tạm dừng %1$@ bằng Đang phát trên thanh menu, mục này đang bị ẩn: hãy hiển thị trong %2$@."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 透過選單列的「正在播放」暫停 %1$@，但它已隱藏：請在%2$@中顯示它。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 通过菜单栏的“正在播放”暂停 %1$@，但它已隐藏：请在%2$@中显示它。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 透過選單列的「正在播放」暫停 %1$@，但它已隱藏：請在%2$@中顯示它。"
+          }
+        }
+      }
+    },
     "AutoHush pauses what’s playing on it (music, podcasts or videos) while other apps play audio, and resumes it afterwards. You can change it at any time in the menu or in Settings." : {
       "comment" : "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”",
       "localizations" : {
@@ -78258,6 +78473,215 @@
         }
       }
     },
+    "Not tried: Now Playing is hidden in the menu bar. Show it in %@, then check again." : {
+      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar; %@ is where the setting is, e.g. “System Settings → Menu Bar”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُجرَّب: «قيد التشغيل الآن» مخفي في شريط القوائم. أظهره من %@ ثم تحقق مرة أخرى."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense provar: «Està sonant» està amagat a la barra de menús. Mostra’l a %@ i torna-ho a comprovar."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nevyzkoušeno: „Právě hraje“ je na řádku nabídek skryté. Zobrazte ho (%@) a zkontrolujte znovu."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke prøvet: ”Afspilles nu” er skjult på menulinjen. Vis det i %@, og kontroller igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht ausprobiert: „Jetzt läuft“ ist in der Menüleiste ausgeblendet. Blende es unter %@ ein und prüfe dann erneut."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν δοκιμάστηκε: το «Παίζει τώρα» είναι κρυφό στη γραμμή μενού. Εμφανίστε το (%@) και ελέγξτε ξανά."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin probar: «Ahora suena» está oculto en la barra de menús. Muéstralo en %@ y vuelve a comprobarlo."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin probar: «Ahora suena» está oculto en la barra de menús. Muéstralo en %@ y vuelve a comprobarlo."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei kokeiltu: Toistossa on piilotettu valikkorivillä. Näytä se kohdassa %@ ja tarkista uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non essayé : « À l’écoute » est masqué dans la barre des menus. Affichez-le dans %@, puis vérifiez à nouveau."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non essayé : « À l’écoute » est masqué dans la barre des menus. Affichez-le dans %@, puis vérifiez à nouveau."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज़माया नहीं गया: “अभी चल रहा है” मेनू बार में छिपा है। इसे %@ में दिखाएँ, फिर दोबारा जाँचें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije isprobano: „Izvodi se” skriveno je u traci s izbornicima. Prikažite ga (%@) pa ponovno provjerite."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nincs kipróbálva: a „Lejátszás alatt” el van rejtve a menüsorban. Jelenítse meg (%@), majd ellenőrizze újra."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belum dicoba: Sedang Diputar disembunyikan di bar menu. Tampilkan di %@, lalu periksa lagi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non provato: «In riproduzione» è nascosto nella barra dei menu. Mostralo in %@, poi verifica di nuovo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未試行：メニューバーの“再生中”が非表示です。%@で表示してから、もう一度確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시도하지 않음: 메뉴 막대에서 ‘지금 재생 중’이 가려져 있습니다. %@에서 표시한 다음 다시 확인하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke prøvd: Spilles nå er skjult i menylinjen. Vis det i %@, og kontroller på nytt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet geprobeerd: ‘Wordt nu afgespeeld’ is verborgen in de menubalk. Toon het bij %@ en controleer opnieuw."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie wypróbowano: „Teraz odtwarzane” jest ukryte na pasku menu. Pokaż je (%@) i sprawdź ponownie."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não testado: “Reproduzindo” está oculto na barra de menus. Mostre-o em %@ e verifique de novo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não testado: “A reproduzir” está oculto na barra de menus. Mostre-o em %@ e verifique novamente."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neîncercat: „În redare” e ascuns în bara de meniu. Afișați-l (%@), apoi verificați din nou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не проверено: «Исполняется» скрыто в строке меню. Покажите его (%@) и проверьте снова."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nevyskúšané: „Práve hrá“ je na lište ponúk skryté. Zobrazte ho (%@) a skontrolujte znova."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni preizkušeno: »Predvaja se« je skrit v menijski vrstici. Prikažite ga (%@) in znova preverite."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inte provat: ”Spelas nu” är dolt i menyraden. Visa det i %@ och kontrollera sedan igen."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denenmedi: Şu An Çalan menü çubuğunda gizli. %@ bölümünde gösterin, sonra yeniden denetleyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не випробувано: «Зараз відтворюється» приховано на смузі меню. Покажіть його (%@) і перевірте знову."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa thử: Đang phát đang bị ẩn trên thanh menu. Hãy hiển thị trong %@, rồi kiểm tra lại."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未嘗試：「正在播放」在選單列中已隱藏。請在%@中顯示它，然後重新檢查。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未尝试：“正在播放”在菜单栏中已隐藏。请在%@中显示它，然后重新检查。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未嘗試：「正在播放」在選單列中已隱藏。請在%@中顯示它，然後重新檢查。"
+          }
+        }
+      }
+    },
     "Not used in AntiDot mode: the check doesn’t listen to the app, and whether it plays is told by other signs." : {
       "comment" : "Add an App window, under “Audio Recording” while AntiDot mode is on",
       "localizations" : {
@@ -103131,6 +103555,424 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "支援的 App"
+          }
+        }
+      }
+    },
+    "System Settings → Control Center" : {
+      "comment" : "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 15), inside a sentence",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات النظام ← مركز التحكم"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuració del Sistema → Centre de control"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavení systému → Ovládací centrum"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemindstillinger → Kontrolcenter"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellungen → Kontrollzentrum"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρυθμίσεις συστήματος → Κέντρο ελέγχου"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del Sistema → Centro de control"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración del Sistema → Centro de control"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestelmäasetukset → Ohjauskeskus"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système → Centre de contrôle"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système → Centre de contrôle"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम सेटिंग्ज़ → कंट्रोल सेंटर"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke sustava → Kontrolni centar"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendszerbeállítások → Vezérlőközpont"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan Sistem → Pusat Kontrol"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni di Sistema → Centro di Controllo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“システム設定”→“コントロールセンター”"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정 → 제어 센터"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeminnstillinger → Kontrollsenter"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeeminstellingen → Bedieningspaneel"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia systemowe → Centrum sterowania"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes do Sistema → Central de Controle"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições do Sistema → Central de controlo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări sistem → Centru de control"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системные настройки → Пункт управления"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systémové nastavenia → Ovládacie centrum"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistemske nastavitve → Nadzorno središče"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeminställningar → Kontrollcenter"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Ayarları → Denetim Merkezi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Параметри системи → Центр керування"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt hệ thống → Trung tâm điều khiển"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「系統設定」→「控制中心」"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“系统设置”→“控制中心”"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「系統設定」→「控制中心」"
+          }
+        }
+      }
+    },
+    "System Settings → Menu Bar" : {
+      "comment" : "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 26 and later), inside a sentence",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات النظام ← شريط القوائم"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuració del Sistema → Barra de menús"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavení systému → Řádek nabídek"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemindstillinger → Menulinje"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellungen → Menüleiste"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ρυθμίσεις συστήματος → Γραμμή μενού"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del Sistema → Barra de menús"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración del Sistema → Barra de menús"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestelmäasetukset → Valikkorivi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système → Barre des menus"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système → Barre des menus"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम सेटिंग्ज़ → मेन्यू बार"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke sustava → Traka s izbornicima"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendszerbeállítások → Menüsor"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pengaturan Sistem → Bar Menu"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni di Sistema → Barra dei menu"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“システム設定”→“メニューバー”"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정 → 메뉴 막대"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeminnstillinger → Menylinje"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeeminstellingen → Menubalk"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia systemowe → Pasek menu"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes do Sistema → Barra de Menus"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definições do Sistema → Barra de menus"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări sistem → Bară de meniu"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Системные настройки → Строка меню"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systémové nastavenia → Lišta"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistemske nastavitve → Menijska vrstica"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systeminställningar → Menyrad"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Ayarları → Menü Çubuğu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Параметри системи → Смуга меню"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt hệ thống → Thanh menu"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「系統設定」→「選單列」"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“系统设置”→“菜单栏”"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「系統設定」→「選單列」"
           }
         }
       }

@@ -8,4 +8,7 @@ package protocol NowPlayingPanel: Sendable {
     /// has its Play/Pause pressed. The panel is closed again either way.
     /// `nil` when the panel couldn't be opened; else whether a row was pressed.
     func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool?
+    /// Whether Now Playing is in the menu bar: hidden in System Settings,
+    /// macOS removes it altogether (measured on macOS 27, 2026-10-15).
+    func isInMenuBar() -> Bool
 }
