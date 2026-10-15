@@ -25,6 +25,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package nonisolated var bundleID: String { app.bundleID }
     package nonisolated var name: String { app.name }
     package nonisolated var kind: MusicPlayerKind { .safariWebApp }
+    /// A press is checked here: one the page refuses mutes it instead (`WebAppControl`).
+    package nonisolated var checksItsPresses: Bool { true }
     package nonisolated var installedURL: URL? { app.url }
     /// Its page is read and pressed through Accessibility.
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }

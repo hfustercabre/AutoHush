@@ -31,6 +31,8 @@ package actor VolumeFader {
     private let player: any MusicPlayer
     private let curve: VolumeCurve
     private let sleep: Sleep
+    /// Each pause and play, checked to have taken.
+    private let presses: PressCheck
     private let logger = AutoHushLogger(category: "VolumeFader")
     private var fadeOut: TimeInterval
     private var fadeIn: TimeInterval
@@ -59,6 +61,7 @@ package actor VolumeFader {
         self.fadeOut = fadeOut
         self.fadeIn = fadeIn
         self.sleep = sleep
+        presses = PressCheck(player: player, sleep: sleep)
     }
 
     package func setDurations(fadeOut: TimeInterval, fadeIn: TimeInterval) {
@@ -71,7 +74,7 @@ package actor VolumeFader {
     package func fadeOutAndPause() async throws -> Bool {
         let fade = startFade()
         guard case let (current, target)? = await fadeVolumes(lasting: fadeOut) else {
-            try await player.pause()
+            try await presses.press(to: .paused)
             await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
             return true
         }
@@ -106,7 +109,7 @@ package actor VolumeFader {
         }
 
         do {
-            try await player.pause()
+            try await presses.press(to: .paused)
         } catch {
             try? await player.setVolume(target)
             userVolume = nil
@@ -124,7 +127,7 @@ package actor VolumeFader {
         guard let target = await fadeVolumes(lasting: fadeIn)?.user else {
             logger.debug("[fade] none: fade-in \(self.fadeIn, privacy: .public) s, volume unknown or off")
             await restoreUserVolume() // e.g. a fade-out interrupted halfway
-            try await player.play()
+            try await presses.press(to: .playing)
             return
         }
         let top = level(of: target)
@@ -133,7 +136,7 @@ package actor VolumeFader {
 
         try? await player.setVolume(volume(at: bottom))
         do {
-            try await player.play()
+            try await presses.press(to: .playing)
         } catch {
             try? await player.setVolume(target)
             userVolume = nil

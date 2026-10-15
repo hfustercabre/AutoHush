@@ -9,6 +9,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Every pause and play is checked.** After pausing or playing your
+  player, AutoHush reads its state for up to 3 seconds; one that didn't
+  take is made once more, and if the player still didn't follow, the menu
+  says it didn't respond, rather than AutoHush taking it as paused. Safari
+  web apps already checked theirs.
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies

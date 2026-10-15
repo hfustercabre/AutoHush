@@ -38,6 +38,10 @@ package protocol MusicPlayer: Sendable {
     func playerState() async -> PlayerState
     func pause() async throws
     func play() async throws
+    /// Whether its `pause()` and `play()` check by themselves that they took
+    /// (a web app's, which mutes a page that refuses to pause); any other's
+    /// presses are checked by `PressCheck`.
+    var checksItsPresses: Bool { get }
 
     /// The player's own volume, 0–100, or `nil` when it can't be read.
     /// Fades need it; players without one pause and play without fading.
@@ -68,6 +72,7 @@ extension MusicPlayer {
     package var installedURL: URL? { nil }
     package var isUntested: Bool { false }
     package var ownWordsRead: Bool? { nil }
+    package var checksItsPresses: Bool { false }
     /// Most players are scripted with Apple events.
     package var controlPermission: Permission { .automation(player: name) }
 }
