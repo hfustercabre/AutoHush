@@ -140,7 +140,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             if autoPauseEnabled { cancelPendingResume() }
             cancelPendingPause() // this app pauses the music now
             activeSources.insert(sourceID)
-            logActiveSources(after: "+\(sourceID)")
+            logActiveSources(after: "\(sourceID) started playing")
             guard !isAsleep else {
                 publishPlaybackState()
                 return
@@ -151,7 +151,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             startPause() // publishes the outcome
         } else {
             activeSources.remove(sourceID)
-            logActiveSources(after: "-\(sourceID)")
+            logActiveSources(after: "\(sourceID) stopped playing")
             if isAsleep {
                 publishPlaybackState()
             } else if activeSources.isEmpty {
@@ -183,7 +183,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     package func setAutoPauseEnabled(_ enabled: Bool) async {
         guard !isShutDown, enabled != autoPauseEnabled else { return }
         autoPauseEnabled = enabled
-        logger.debug("[arbiter] auto-pause \(enabled ? "on" : "off", privacy: .public)")
+        logger.info("[arbiter] Auto-Pause \(enabled ? "on" : "off", privacy: .public)")
         if enabled {
             if !activeSources.isEmpty {
                 schedulePause(after: configuration.sourceStopGrace + Self.remeasureMargin)
@@ -223,10 +223,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
             if pausedByUs {
                 pausedByUs = false
                 forgotPauseInSleep = true
-                logger.debug("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
+                logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
             }
         } else {
-            logger.debug("[arbiter] the Mac is awake")
+            logger.info("[arbiter] the Mac is awake")
             if forgotPauseInSleep, let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
             forgotPauseInSleep = false
             if autoPauseEnabled, !activeSources.isEmpty { startPause() }
@@ -248,7 +248,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         let state = await livePlayerState()
         guard !isShutDown, state == .paused else { return false }
         pausedByUs = true
-        logger.debug("[arbiter] took over the pause of the previous AutoHush")
+        logger.info("[arbiter] took over the pause of the previous AutoHush")
         publishPlaybackState()
         if activeSources.isEmpty {
             scheduleResume(after: autoPauseEnabled ? configuration.sourceStartConfirmation + Self.takeOverMargin : nil)
@@ -282,7 +282,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         } else {
             if live == .unknown { playerState = state } // no answer: the report stands
             if pausedByUs {
-                logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public) — clearing pausedByUs")
+                logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won't be resumed")
                 pausedByUs = false
             }
         }
@@ -316,8 +316,15 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     // MARK: - Private
 
+    /// Pauses and resumes, and why, are kept in AutoHush's log (info and
+    /// up); the steps between them are only for a live `log stream` (debug).
     private func logActiveSources(after change: String) {
-        logger.debug("[arbiter] \(change, privacy: .public) active=\(self.activeSources.sorted().joined(separator: ","), privacy: .public)")
+        logger.info("[arbiter] \(change, privacy: .public) (playing now: \(self.playingApps, privacy: .public))")
+    }
+
+    /// The apps playing now, for the log: their bundle IDs, or "none".
+    var playingApps: String {
+        activeSources.isEmpty ? "none" : activeSources.sorted().joined(separator: ", ")
     }
 
     func livePlayerState() async -> PlayerState {

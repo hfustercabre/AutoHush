@@ -42,12 +42,12 @@ extension PlaybackArbiter {
         let currentState = await livePlayerState()
         guard !isShutDown, pendingResumeID == id else { return }
         if currentState == .unknown, retriesLeft > 0 {
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             return
         }
         guard currentState == .paused else {
-            logger.debug("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
+            logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
             pausedByUs = false
             publishPlaybackState()
             return
@@ -64,7 +64,7 @@ extension PlaybackArbiter {
         do {
             try await fader.playAndFadeIn()
             playerState = .playing
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) resumed")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) resumed, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
         } catch {
             logger.error("[arbiter] resume failed: \(error.localizedDescription, privacy: .public)")
             // Still ours to resume, unless something called it off meanwhile.

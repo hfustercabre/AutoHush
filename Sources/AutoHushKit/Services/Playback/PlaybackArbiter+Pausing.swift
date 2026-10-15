@@ -52,14 +52,14 @@ extension PlaybackArbiter {
                takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
                 return
             }
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
             return
         }
         let state = await livePlayerState()
         guard state == .playing else {
             if await muteIfPlayingAnyway(saying: state) { return }
             if takeOverPauseOfStartingApp(state, checkedAt: checked) { return }
-            logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
         // Found playing: a pause from now on (the user's, during the fade-out)
@@ -73,7 +73,7 @@ extension PlaybackArbiter {
             paused = try await fader.fadeOutAndPause()
         } catch MusicPlayerError.stillLearning {
             isFadingOut = false
-            logger.debug("[arbiter] \(self.player.name, privacy: .public)'s controls aren't learned yet — not pausing")
+            logger.info("[arbiter] \(self.player.name, privacy: .public)'s controls aren't learned yet — not pausing")
             return
         } catch {
             isFadingOut = false
@@ -87,13 +87,13 @@ extension PlaybackArbiter {
         isFadingOut = false
         if paused { pauseFailure = nil }
         guard paused else {
-            logger.debug("[arbiter] pause called off during the fade-out")
+            logger.info("[arbiter] pause called off during the fade-out (playing now: \(self.playingApps, privacy: .public))")
             // Another app may have started while the music came back up.
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
             return
         }
         playerState = .paused
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) paused")
+        logger.info("[arbiter] \(self.player.name, privacy: .public) paused, because these apps play: \(self.playingApps, privacy: .public)")
         guard holdPause() else { return }
         if !autoPauseEnabled {
             // Auto-pause was turned off while we were pausing: undo it.
@@ -112,7 +112,7 @@ extension PlaybackArbiter {
               await muting.muteIfPlayingAnyway() else { return false }
         pauseFailure = nil
         playerState = .paused
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted")
+        logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
         // Things may have changed while it was measured.
         if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
         return true
@@ -129,7 +129,7 @@ extension PlaybackArbiter {
             return false
         }
         pauseFailure = nil
-        logger.debug("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop")
+        logger.info("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop (playing now: \(self.playingApps, privacy: .public))")
         // Things may have changed while the player answered.
         if holdPause(), !isShutDown, activeSources.isEmpty { scheduleResume(after: nil) }
         return true
@@ -160,7 +160,7 @@ extension PlaybackArbiter {
             return true
         }
         forgotPauseInSleep = true
-        logger.debug("[arbiter] paused as the Mac went to sleep: \(self.player.name, privacy: .public) stays paused")
+        logger.info("[arbiter] paused as the Mac went to sleep: \(self.player.name, privacy: .public) stays paused")
         return false
     }
 }
