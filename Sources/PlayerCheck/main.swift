@@ -46,6 +46,7 @@
 // Build: swift build -c release --product playercheck
 import AppKit
 import AutoHushKit
+import CheckedPlayers
 
 // Whoever reads the output may go first (Player Check quitting mid-check):
 // writing then fails quietly, and a test that paused the app still plays
@@ -57,6 +58,9 @@ atexit {
 }
 
 MainActor.assumeIsolated {
+    // Now Playing, shown for a press while the user hid it, put back should
+    // an earlier check have ended meanwhile.
+    NowPlayingSetting.restoreIfLeft()
     switch CommandLine.arguments.dropFirst().first {
     case NowPlayingApp.argument?:
         NowPlayingApp.printAnswer()

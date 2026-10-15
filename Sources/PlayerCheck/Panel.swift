@@ -154,6 +154,12 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
 /// is the Now Playing one. Nothing is pressed when that's not one row. In a
 /// trial, the app's own signs judge whether the row was its own.
 @MainActor func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> Bool {
+    // Hidden by the user: shown for this press only, as AutoHush does (the user, 2026-10-16).
+    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
+       let pressed = NowPlayingSetting.whileShown(until: { nowPlayingMenuItem() != nil }, { pressInPanel(pid: pid, pausing: pausing, choice: choice) }) {
+        log("    Now Playing, hidden in the menu bar, shown for the press and hidden again")
+        return pressed
+    }
     // Read before the panel opens: a page takes a moment.
     let texts = choice == .lastOnly ? SongTexts() : songTexts(pid)
     let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
@@ -236,6 +242,11 @@ enum PanelPress { case already, changed, pressed, notPressed }
 /// holding Now Playing, may be another app's showing the same: it's pressed
 /// as `.pressed`, so the app itself shows whether it changed.
 @MainActor func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
+    // Hidden by the user: shown for this press only.
+    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
+       let press = NowPlayingSetting.whileShown(until: { nowPlayingMenuItem() != nil }, { panelPress(pid: pid, pausing: pausing) }) {
+        return press
+    }
     // Its one line comes after: what it reads meanwhile isn't said.
     let wasQuiet = quiet
     quiet = true

@@ -15,6 +15,14 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     package func isInMenuBar() -> Bool { Self.menuItem() != nil }
 
     package func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
+        // Hidden by the user: shown for this press only (the user, 2026-10-16).
+        if Self.menuItem() == nil, NowPlayingSetting.isHidden {
+            return NowPlayingSetting.whileShown(until: { Self.menuItem() != nil }) { Self.press(pick) } ?? nil
+        }
+        return Self.press(pick)
+    }
+
+    private static func press(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
         guard let item = Self.menuItem(), let rows = Self.open(item) else { return nil }
         defer { Self.close(item) }
         guard let chosen = pick(rows.map(\.row)), let button = rows.first(where: { $0.row == chosen })?.button else { return false }

@@ -1,9 +1,13 @@
 import AppKit
 import AutoHushKit
+import CheckedPlayers
 
 // AppDelegate: launching, quitting, sleep and wake.
 extension AppDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Now Playing, shown for a press while the user hid it, put back
+        // should AutoHush have quit meanwhile.
+        NowPlayingSetting.restoreIfLeft()
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() },
@@ -72,6 +76,7 @@ extension AppDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        NowPlayingSetting.restoreIfLeft()
         unregisterPlayerLaunchObserver()
         sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         sleepObservers = []

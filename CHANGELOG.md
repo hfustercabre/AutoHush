@@ -81,8 +81,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   back as it was. You then choose how AutoHush pauses and plays it among
   the ways that worked (the recommended one is chosen unless you pick
   another), and the app is listed under Other Apps, marked **Checked by
-  you**. The Now Playing panel needs Now Playing shown in the menu bar:
-  hidden there, the check and the menu say where to show it. An app whose
+  you**. The Now Playing panel works with Now Playing hidden in the menu
+  bar too: AutoHush shows it for the moment of a press and hides it again;
+  if it can't, the check and the menu say where to show it. An app whose
   row there never shows whether it plays (Qobuz) is paused and played
   through it all the same, judged by its sound (so not in AntiDot mode).
   The **×**
