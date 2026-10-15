@@ -67,9 +67,8 @@ struct FoundMenu {
 /// The menu whose items include ⌘← and ⌘→ (Previous and Next), with Play or
 /// Pause first: how AutoHush finds it whatever the app's language. Else one
 /// whose first item is on Space and that has ← and → under other modifiers
-/// (Deezer's Play menu: Space, ⇧← and ⇧→), which AutoHush wouldn't find as
-/// it is. Looked up afresh each time, as some apps rebuild their menus on
-/// every change.
+/// (Deezer's Play menu: Space, ⇧← and ⇧→), which AutoHush finds too. Looked
+/// up afresh each time, as some apps rebuild their menus on every change.
 func playbackMenu(pid: pid_t) -> FoundMenu? {
     let app = AXUIElementCreateApplication(pid)
     // As AutoHush waits for a menu (`AccessibilityPlaybackMenu.timeout`).
@@ -97,7 +96,7 @@ func playbackMenu(pid: pid_t) -> FoundMenu? {
                              arrows: asAutoHush ? "⌘← ⌘→" : "← → (with no modifiers given)")
         }
         if other == nil, first.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int == 49 {
-            other = FoundMenu(title: barItem.title, toggle: first, asAutoHushFindsIt: false,
+            other = FoundMenu(title: barItem.title, toggle: first, asAutoHushFindsIt: true,
                               arrows: "\(modifierSymbols(left[0]))← \(modifierSymbols(right[0]))→")
         }
     }
@@ -155,8 +154,9 @@ func modifierSymbols(_ modifiers: Int) -> String {
         menu = found
         say("  “\(found.title)”: first item “\(found.toggleTitle)”, "
             + (found.toggleEnabled ? "enabled" : "disabled (nothing to play now, or nobody signed in)"))
-        if !found.asAutoHushFindsIt {
-            say("  its Previous and Next are \(found.arrows), not ⌘← ⌘→: AutoHush wouldn't find this menu as it is")
+        if found.arrows != "⌘← ⌘→" {
+            say("  its Previous and Next are \(found.arrows), not ⌘← ⌘→"
+                + (found.asAutoHushFindsIt ? ": AutoHush finds it by its first item, on Space" : ": AutoHush wouldn't find this menu as it is"))
         }
         say("  " + (ownAppWords.map { "its own words for Play and Pause, as AutoHush's menu players read them: \($0.words.play.count) and"
                                      + " \($0.words.pause.count), from \($0.source)" }

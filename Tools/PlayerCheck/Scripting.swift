@@ -5,146 +5,31 @@ import VLCSupport
 
 // MARK: - Scripting dictionary
 
-/// What AutoHush's ScriptablePlayers need: pause and play in the app's own
-/// suite (`<suite>Paus`, `<suite>Play`), the `player state` property (pPlS)
-/// with stopped/playing/paused (kPSS, kPSP, kPSp), and `sound volume` (pVol)
-/// for fades.
-struct Scripting {
-    var commands: [String: String] = [:]   // code → name
-    /// The application's own properties: an app's state is read there only
-    /// (QuickTime Player's `playing` is each document's, not the app's).
-    var properties: [String: String] = [:]
-    var enumerators: Set<String> = []
-    /// The commands that must be told which document to act on (QuickTime
-    /// Player's play and pause: "play document 1"), by code.
-    var documentCommands: Set<String> = []
-    /// The document class's code, and its `playing` property's (QuickTime
-    /// Player: "docu", "play").
-    var documentClass: String?
-    var documentPlaying: String?
-
-    var suite: String? {
-        let pauses = Set(commands.keys.filter { $0.hasSuffix("Paus") }.map { String($0.prefix(4)) })
-        let plays = Set(commands.keys.filter { $0.hasSuffix("Play") }.map { String($0.prefix(4)) })
-        return pauses.intersection(plays).sorted().first
-    }
-    var hasPlayerState: Bool { properties["pPlS"] != nil }
-    /// A true/false `playing` property instead (VLC's): its state too.
-    var hasPlayingFlag: Bool { properties.values.contains("playing") }
-    var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
-    /// Played and paused through its documents, each with its own `playing`
-    /// (QuickTime Player): it plays while one does.
-    var playsDocuments: Bool {
-        documentClass != nil && documentPlaying != nil
-            && ["pause", "play"].allSatisfy { commandCode($0).map(documentCommands.contains) == true }
-    }
-    /// Whether its state can be read by script: `player state`, a `playing`
-    /// flag, or its documents'.
-    var hasState: Bool { hasPlayerState || hasPlayingFlag || playsDocuments }
-    var hasVolume: Bool { properties["pVol"] != nil }
-    /// A `current track` (pTrk) with a name: what it plays, by script.
-    var hasCurrentTrack: Bool { properties["pTrk"] != nil }
-    /// Else a property of its own naming it (VLC's `name of current item`,
-    /// AANA): its panel row shows that name too, wherever its window is.
-    var currentItemName: String? { properties.first { $0.value == "name of current item" }?.key }
-    /// Whether it says by script what it plays (`scriptedSong`).
-    var namesItsSong: Bool { hasCurrentTrack || currentItemName != nil }
-    var fitsScriptablePlayer: Bool { suite != nil && hasPlayerState && hasStateValues }
-    /// A command's code ("spfyPaus") by its name: the app's own suite's
-    /// first, as ScriptablePlayers sends it.
-    func commandCode(_ name: String) -> String? {
-        let codes = commands.filter { $0.value.lowercased() == name.lowercased() }.keys.sorted()
-        return codes.first { $0.hasPrefix(suite ?? "????") } ?? codes.first
-    }
-}
+/// The app's AppleScript dictionary, read as AutoHush reads one for a
+/// player set up from a check (`ScriptingDictionary`).
+typealias Scripting = ScriptingDictionary
 
 /// Why the dictionary wasn't read, when it wasn't.
 @MainActor var scriptingNote: String?
 
-/// The app's dictionary: the .sdef its Info.plist names, else one in its
-/// resources, read as it is (running `sdef` takes about 0.15 s); else as
-/// `sdef` prints it, from an aete or old .scriptSuite files, but only while
-/// the app runs: `sdef` opens an app to ask it, and this tool never launches
-/// one, as AutoHush never does. `nil` when it has none.
+/// The app's dictionary, as AutoHush reads it (`ScriptingDictionary.read`):
+/// its .sdef as it is; else, as `sdef` prints it, only while the app runs:
+/// `sdef` opens an app to ask it, and this tool never launches one, as
+/// AutoHush never does. `nil` when it has none.
 @MainActor func readScripting(_ url: URL) -> Scripting? {
-    let bundle = Bundle(url: url)
-    let named = (bundle?.object(forInfoDictionaryKey: "OSAScriptingDefinition") as? String).flatMap { name in
-        bundle?.url(forResource: name, withExtension: nil)
-            ?? bundle?.url(forResource: (name as NSString).deletingPathExtension, withExtension: "sdef")
+    let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).contains { !$0.isTerminated }
+    if let found = ScriptingDictionary.read(appAt: url, isRunning: running) { return found }
+    if !running, ScriptingDictionary.isInBundle(at: url) {
+        scriptingNote = "its dictionary is read from the app itself, so only while it runs"
     }
-    let resources = url.appendingPathComponent("Contents/Resources")
-    let inResources = ((try? FileManager.default.contentsOfDirectory(atPath: resources.path)) ?? [])
-        .filter { $0.hasSuffix(".sdef") }.sorted().map { resources.appendingPathComponent($0) }
-    for file in [named].compactMap({ $0 }) + inResources {
-        if let document = try? XMLDocument(contentsOf: file, options: [.nodeLoadExternalEntitiesNever]),
-           let found = parseDictionary(document) {
-            return found
-        }
-    }
-    guard NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).contains(where: { !$0.isTerminated }) else {
-        if bundleHasDictionary(url) { scriptingNote = "its dictionary is read from the app itself, so only while it runs" }
-        return nil
-    }
-    let sdef = Process()
-    sdef.executableURL = URL(fileURLWithPath: "/usr/bin/sdef")
-    sdef.arguments = [url.path]
-    let output = Pipe()
-    sdef.standardOutput = output
-    sdef.standardError = FileHandle.nullDevice
-    guard (try? sdef.run()) != nil else { return nil }
-    let data = output.fileHandleForReading.readDataToEndOfFile()
-    sdef.waitUntilExit()
-    guard sdef.terminationStatus == 0, let document = try? XMLDocument(data: data, options: [.nodeLoadExternalEntitiesNever]) else { return nil }
-    return parseDictionary(document)
-}
-
-/// The commands, properties and enumerators of a dictionary's XML; `nil`
-/// with neither commands nor properties.
-func parseDictionary(_ document: XMLDocument) -> Scripting? {
-    var scripting = Scripting()
-    func attributes(_ xpath: String) -> [(code: String, name: String)] {
-        ((try? document.nodes(forXPath: xpath)) ?? []).compactMap { node in
-            guard let element = node as? XMLElement, let code = element.attribute(forName: "code")?.stringValue else { return nil }
-            return (code, element.attribute(forName: "name")?.stringValue ?? "")
-        }
-    }
-    for (code, name) in attributes("//command") { scripting.commands[code] = name }
-    for (code, name) in attributes("//class[@name='application']/property | //class-extension[@extends='application']/property") {
-        scripting.properties[code] = name
-    }
-    scripting.enumerators = Set(attributes("//enumerator").map(\.code))
-    // A command whose direct parameter, not optional, is a document.
-    for node in (try? document.nodes(forXPath: "//command[direct-parameter]")) ?? [] {
-        guard let command = node as? XMLElement, let code = command.attribute(forName: "code")?.stringValue,
-              let parameter = command.elements(forName: "direct-parameter").first,
-              parameter.attribute(forName: "optional")?.stringValue != "yes" else { continue }
-        let types = [parameter.attribute(forName: "type")?.stringValue]
-            + parameter.elements(forName: "type").map { $0.attribute(forName: "type")?.stringValue }
-        if types.contains("document") { scripting.documentCommands.insert(code) }
-    }
-    // An .sdef read as it is may only extend `document` (QuickTime Player's):
-    // the class comes from Cocoa's standard suite, which it includes, as "docu".
-    scripting.documentClass = attributes("//class[@name='document']").first?.code
-        ?? (((try? document.nodes(forXPath: "//class-extension[@extends='document']")) ?? []).isEmpty ? nil : "docu")
-    scripting.documentPlaying = attributes("//class[@name='document']/property[@name='playing']"
-        + " | //class-extension[@extends='document']/property[@name='playing']").first?.code
-    return scripting.commands.isEmpty && scripting.properties.isEmpty ? nil : scripting
-}
-
-/// Whether the bundle carries a dictionary: an .sdef (named by its
-/// Info.plist, or in its resources) or the older .scriptSuite files (VLC's).
-/// Without one, `sdef` has nothing to read but the running app's.
-func bundleHasDictionary(_ url: URL) -> Bool {
-    if Bundle(url: url)?.object(forInfoDictionaryKey: "OSAScriptingDefinition") != nil { return true }
-    let resources = (try? FileManager.default.contentsOfDirectory(atPath: url.appendingPathComponent("Contents/Resources").path)) ?? []
-    return resources.contains { $0.hasSuffix(".sdef") || $0.hasSuffix(".scriptSuite") }
+    return nil
 }
 
 /// The app's dictionary. A press by one way reads it when the bundle has
 /// one: for the script way, and its scripted state is the quickest sure sign
 /// of whether the app plays, for every way (what it reports to Now Playing
 /// first opens macOS's log, about 0.6 s).
-@MainActor let scripting = !pressingOneWay || bundleHasDictionary(appURL) ? readScripting(appURL) : nil
+@MainActor let scripting = !pressingOneWay || ScriptingDictionary.isInBundle(at: appURL) ? readScripting(appURL) : nil
 
 @MainActor func reportScripting() {
     say()

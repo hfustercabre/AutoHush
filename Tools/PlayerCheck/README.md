@@ -13,7 +13,7 @@ the two do the same thing (Apple events, VLC's states, playback menus and
 their words, learning a page's Play/Pause, sound, windows on other
 desktops, Now Playing), so what it finds holds for AutoHush. What AutoHush
 doesn't do yet stays its own: players of documents (QuickTime Player),
-menus on other arrows, Electron, CEF, Flutter and Tauri pages, what apps
+Electron, CEF, Flutter and Tauri pages, what apps
 report to Now Playing, and the Now Playing panel.
 
 ## Use

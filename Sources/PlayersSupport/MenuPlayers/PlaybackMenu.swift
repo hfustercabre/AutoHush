@@ -34,7 +34,9 @@ package protocol PlaybackMenu: Sendable {
 /// The menu's title is translated, so it's found by its shortcuts instead:
 /// it's the menu whose items include ⌘← and ⌘→ (Previous and Next), and its
 /// first item is Play or Pause. Measured: TIDAL's Playback menu and Apple
-/// Podcasts' Controls menu.
+/// Podcasts' Controls menu. Else, as Player Check finds it, one whose first
+/// item is on Space and whose items include ← and → under other modifiers
+/// (Deezer's Play menu: Space, ⇧← and ⇧→).
 package struct AccessibilityPlaybackMenu: PlaybackMenu {
     /// How long to wait for the app to answer, so a stuck app can't hold
     /// AutoHush up.
@@ -65,18 +67,26 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, Self.timeout)
         guard let menuBar = app.element(kAXMenuBarAttribute) else { return nil }
+        var onOtherArrows: AXUIElement?
         for menu in menuBar.children.compactMap({ $0.children.first }) {
             let items = menu.children
-            let shortcuts = Set(items.compactMap { item -> Int? in
+            var withCommand: Set<Int> = [], anyModifiers: Set<Int> = []
+            for item in items {
+                guard let key = item.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int else { continue }
+                anyModifiers.insert(key)
                 // Modifiers 0 is ⌘ alone (kAXMenuItemModifierNone).
-                guard item.value(kAXMenuItemCmdModifiersAttribute) as? Int == 0 else { return nil }
-                return item.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int
-            })
-            if shortcuts.isSuperset(of: [Self.leftArrow, Self.rightArrow]) { return items.first }
+                if item.value(kAXMenuItemCmdModifiersAttribute) as? Int == 0 { withCommand.insert(key) }
+            }
+            if withCommand.isSuperset(of: Self.arrows) { return items.first }
+            if onOtherArrows == nil, anyModifiers.isSuperset(of: Self.arrows),
+               items.first?.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int == Self.space {
+                onOtherArrows = items.first
+            }
         }
-        return nil
+        return onOtherArrows
     }
 
-    private static let leftArrow = 123
-    private static let rightArrow = 124
+    /// ← and → (Previous and Next).
+    private static let arrows: Set<Int> = [123, 124]
+    private static let space = 49
 }

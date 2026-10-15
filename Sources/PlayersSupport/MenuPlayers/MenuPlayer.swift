@@ -30,6 +30,17 @@ package struct MenuPlayerProfile: Sendable {
     }
 }
 
+extension MenuPlayerProfile {
+    /// For an app added through a check, not described by a module of its
+    /// own: its menu found as AutoHush finds any (`AccessibilityPlaybackMenu`),
+    /// its state told by the words its bundle has for Play and Pause
+    /// (`PlayPauseWords.found`), with the common ones.
+    package static func found(bundleID: String, name: String, menuName: String) -> MenuPlayerProfile {
+        MenuPlayerProfile(bundleID: bundleID, name: name, menuName: menuName,
+                          readWords: { PlayPauseWords.common.merged(with: PlayPauseWords.found(inAppAt: $0)?.words) })
+    }
+}
+
 /// Controls an app that can't be scripted through its playback menu (see
 /// `PlaybackMenu`), which needs the Accessibility permission. Its state is
 /// the menu item's title, told apart with the app's own words
