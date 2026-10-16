@@ -130,7 +130,7 @@ extension DetectionMethod {
             return String(localized: "An app counts as playing while it tells macOS it’s playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your player pauses, so notification sounds don’t interrupt it.",
                           comment: "Settings → Detection, under the ways of detecting playing apps: how “What apps tell macOS” works")
         case .openStreams:
-            return String(localized: "Any app with its audio open counts as playing, even when paused.",
+            return String(localized: "Any app with its audio open counts as playing, even when paused. Its audio must stay open at least 2 seconds before your player pauses, so notification sounds don’t interrupt it.",
                           comment: "Settings → Detection, under the ways of detecting playing apps: how “Open audio streams only” works")
         }
     }

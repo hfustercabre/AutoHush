@@ -267,7 +267,7 @@ The catch is that it's a little less precise (measured on macOS 27):
 | An app that never says it's playing and keeps its sound on while paused | Playback comes back | Playback stays paused until you close that app |
 | A muted video | Playback comes back | Playback comes back in Chrome and Firefox, stays paused in other apps |
 
-AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (recommended), as described above, or **Open audio streams only**, where any app with its sound switched on counts as playing, even when paused: simpler, but stricter.
+AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (recommended), as described above, or **Open audio streams only**, where any app with its sound switched on counts as playing, even when paused: simpler, but stricter. There, any app's sound must stay on 2 seconds before your player pauses, so notification sounds don't pause it either.
 
 ## Tips and troubleshooting
 

@@ -15,7 +15,10 @@ import os
 ///   3. feeds that into `SourceActivityTracker` and forwards the resulting
 ///      started/stopped transitions to the arbiter. In AntiDot mode, an app
 ///      showing no video must play longer before it counts
-///      (`AppConfiguration.startConfirmationWithoutVideo`).
+///      (`AppConfiguration.startConfirmationWithoutVideo`); with open streams
+///      only, which can't tell video, every app, for a shorter minimum
+///      (`startConfirmationWithOpenStreams`: an app's chat tone keeps its
+///      stream open about a second, measured on macOS 14.4).
 ///
 /// Level detection needs the System Audio Recording permission: without it taps
 /// deliver pure silence, which would make every source look stopped. The

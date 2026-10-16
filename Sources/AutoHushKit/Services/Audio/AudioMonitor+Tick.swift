@@ -160,12 +160,18 @@ extension AudioMonitor {
         // Before source events, so a pause decision in this tick sees it.
         updateLocalPlayback()
 
-        // AntiDot mode: sound without video must last longer (see the type comment).
-        let slowStarts = detectionMethod != .playbackSignals ? [:] : judgement.map { judgement in
+        // AntiDot mode: sound without video must last longer (see the type
+        // comment); with open streams only, which can't tell video, any sound
+        // (a shorter minimum).
+        let slowStarts: [String: TimeInterval] = switch detectionMethod {
+        case .audioLevels: [:]
+        case .playbackSignals: judgement.map { judgement in
             Dictionary(uniqueKeysWithValues: audible.subtracting(judgement.showingVideo).map {
                 ($0, configuration.startConfirmationWithoutVideo)
             })
         } ?? [:]
+        case .openStreams: Dictionary(uniqueKeysWithValues: audible.map { ($0, configuration.startConfirmationWithOpenStreams) })
+        }
         let (started, stopped) = tracker.update(audible: audible, at: now, startConfirmations: slowStarts)
         if !started.isEmpty || !stopped.isEmpty {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")

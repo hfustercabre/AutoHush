@@ -22455,211 +22455,211 @@
         }
       }
     },
-    "Any app with its audio open counts as playing, even when paused." : {
+    "Any app with its audio open counts as playing, even when paused. Its audio must stay open at least 2 seconds before your player pauses, so notification sounds don’t interrupt it." : {
       "comment" : "Settings → Detection, under the ways of detecting playing apps: how “Open audio streams only” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "أي تطبيق صوته مفتوح يُعدّ قيد التشغيل، حتى عند إيقافه مؤقتًا."
+            "value" : "أي تطبيق صوته مفتوح يُعدّ قيد التشغيل، حتى عند إيقافه مؤقتًا. يجب أن يبقى صوته مفتوحًا ثانيتين على الأقل قبل إيقاف مشغّلك مؤقتًا، حتى لا تقاطعه أصوات الإشعارات."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Qualsevol app amb l’àudio obert compta com a reproduint, encara que estigui en pausa."
+            "value" : "Qualsevol app amb l’àudio obert compta com a reproduint, encara que estigui en pausa. L’àudio ha de romandre obert almenys 2 segons abans que el reproductor es posi en pausa, perquè els sons de notificació no l’interrompin."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Každá aplikace s otevřeným zvukem se počítá jako přehrávající, i když je pozastavená."
+            "value" : "Každá aplikace s otevřeným zvukem se počítá jako přehrávající, i když je pozastavená. Její zvuk musí zůstat otevřený alespoň 2 sekundy, než se váš přehrávač pozastaví, aby ho nepřerušovaly zvuky oznámení."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle apps med åben lyd regnes som afspillende, også når de er sat på pause."
+            "value" : "Alle apps med åben lyd regnes som afspillende, også når de er sat på pause. Lyden skal være åben i mindst 2 sekunder, før din afspiller sættes på pause, så notifikationslyde ikke afbryder den."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jede App mit offenem Audio zählt als wiedergebend, auch wenn sie pausiert ist."
+            "value" : "Jede App mit offenem Audio zählt als wiedergebend, auch wenn sie pausiert ist. Ihr Audio muss mindestens 2 Sekunden offen bleiben, bevor dein Player pausiert, damit Mitteilungstöne ihn nicht unterbrechen."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Κάθε εφαρμογή με ανοιχτό ήχο θεωρείται ότι αναπαράγει, ακόμη και σε παύση."
+            "value" : "Κάθε εφαρμογή με ανοιχτό ήχο θεωρείται ότι αναπαράγει, ακόμη και σε παύση. Ο ήχος της πρέπει να μένει ανοιχτός τουλάχιστον 2 δευτερόλεπτα για να τεθεί σε παύση η εφαρμογή αναπαραγωγής σας, ώστε να μην τη διακόπτουν οι ήχοι γνωστοποιήσεων."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa."
+            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa. Su audio debe seguir abierto al menos 2 segundos antes de que se pause tu reproductor, para que los sonidos de notificación no lo interrumpan."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa."
+            "value" : "Cualquier app con el audio abierto cuenta como en reproducción, aunque esté en pausa. Su audio debe seguir abierto al menos 2 segundos antes de que se pause tu reproductor, para que los sonidos de notificación no lo interrumpan."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jokainen appi, jonka ääni on auki, lasketaan toistavaksi, vaikka se olisi keskeytetty."
+            "value" : "Jokainen appi, jonka ääni on auki, lasketaan toistavaksi, vaikka se olisi keskeytetty. Sen äänen on oltava auki vähintään 2 sekuntia, ennen kuin soittimesi keskeytetään, jotta ilmoitusäänet eivät keskeytä sitä."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toute app dont l’audio est ouvert compte comme en lecture, même en pause."
+            "value" : "Toute app dont l’audio est ouvert compte comme en lecture, même en pause. Son audio doit rester ouvert au moins 2 secondes avant que votre lecteur ne soit mis en pause, afin que les sons de notification ne l’interrompent pas."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toute app dont l’audio est ouvert compte comme en lecture, même en pause."
+            "value" : "Toute app dont l’audio est ouvert compte comme en lecture, même en pause. Son audio doit rester ouvert au moins 2 secondes avant que votre lecteur ne soit mis en pause, afin que les sons de notification ne l’interrompent pas."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "जिस भी ऐप का ऑडियो खुला है, वह चलता हुआ माना जाता है, पॉज़ होने पर भी।"
+            "value" : "जिस भी ऐप का ऑडियो खुला है, वह चलता हुआ माना जाता है, पॉज़ होने पर भी। आपका प्लेयर पॉज़ होने से पहले उसका ऑडियो कम से कम 2 सेकंड खुला रहना चाहिए, ताकि सूचनाओं की आवाज़ें उसमें रुकावट न डालें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Svaka aplikacija s otvorenim zvukom smatra se aktivnom, čak i kad je pauzirana."
+            "value" : "Svaka aplikacija s otvorenim zvukom smatra se aktivnom, čak i kad je pauzirana. Njezin zvuk mora ostati otvoren najmanje 2 sekunde prije nego što se vaš reproduktor pauzira, da ga zvukovi obavijesti ne bi prekidali."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minden nyitott hangú app lejátszónak számít, akkor is, ha szünetel."
+            "value" : "Minden nyitott hangú app lejátszónak számít, akkor is, ha szünetel. A hangjának legalább 2 másodpercig nyitva kell maradnia, mielőtt a lejátszója szünetel, így az értesítési hangok nem szakítják meg."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App apa pun yang audionya terbuka dianggap sedang memutar, bahkan saat dijeda."
+            "value" : "App apa pun yang audionya terbuka dianggap sedang memutar, bahkan saat dijeda. Audionya harus tetap terbuka setidaknya 2 detik sebelum pemutar Anda dijeda, sehingga suara notifikasi tidak mengganggunya."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Qualsiasi app con l’audio aperto conta come in riproduzione, anche se in pausa."
+            "value" : "Qualsiasi app con l’audio aperto conta come in riproduzione, anche se in pausa. Il suo audio deve restare aperto almeno 2 secondi prima che il lettore venga messo in pausa, così i suoni di notifica non lo interrompono."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "オーディオが開いているAppは、一時停止中でも再生中として扱われます。"
+            "value" : "オーディオが開いているAppは、一時停止中でも再生中として扱われます。オーディオが2秒以上開いたままになってからプレーヤーを一時停止するため、通知音で再生が中断されることはありません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "오디오가 열려 있는 앱은 일시 정지되어 있어도 재생 중으로 간주됩니다."
+            "value" : "오디오가 열려 있는 앱은 일시 정지되어 있어도 재생 중으로 간주됩니다. 오디오가 최소 2초 동안 열려 있어야 플레이어가 일시 정지되므로, 알림음으로 재생이 끊기지 않습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle apper med åpen lyd regnes som spillende, også når de er satt på pause."
+            "value" : "Alle apper med åpen lyd regnes som spillende, også når de er satt på pause. Lyden må være åpen i minst 2 sekunder før spilleren din settes på pause, slik at varsellyder ikke avbryter den."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elke app met open audio telt als spelend, ook als hij gepauzeerd is."
+            "value" : "Elke app met open audio telt als spelend, ook als hij gepauzeerd is. De audio moet minstens 2 seconden open blijven voordat je speler pauzeert, zodat meldingsgeluiden hem niet onderbreken."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Każda aplikacja z otwartym dźwiękiem jest uznawana za odtwarzającą, nawet gdy jest wstrzymana."
+            "value" : "Każda aplikacja z otwartym dźwiękiem jest uznawana za odtwarzającą, nawet gdy jest wstrzymana. Jej dźwięk musi pozostać otwarty co najmniej 2 sekundy, zanim Twój odtwarzacz zostanie wstrzymany, więc dźwięki powiadomień go nie przerywają."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Qualquer app com o áudio aberto conta como tocando, mesmo pausado."
+            "value" : "Qualquer app com o áudio aberto conta como tocando, mesmo pausado. O áudio precisa ficar aberto pelo menos 2 segundos antes que seu player seja pausado, para que sons de notificação não o interrompam."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Qualquer app com o áudio aberto conta como a tocar, mesmo em pausa."
+            "value" : "Qualquer app com o áudio aberto conta como a tocar, mesmo em pausa. O áudio tem de ficar aberto pelo menos 2 segundos antes de o seu leitor ser colocado em pausa, para que os sons de notificação não o interrompam."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Orice aplicație cu sunetul deschis este considerată în redare, chiar și pe pauză."
+            "value" : "Orice aplicație cu sunetul deschis este considerată în redare, chiar și pe pauză. Sunetul ei trebuie să rămână deschis cel puțin 2 secunde înainte ca playerul dvs. să fie pus pe pauză, astfel încât sunetele notificărilor să nu îl întrerupă."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Любое приложение с открытым аудиовыходом считается играющим, даже на паузе."
+            "value" : "Любое приложение с открытым аудиовыходом считается играющим, даже на паузе. Его аудиовыход должен оставаться открытым не менее 2 секунд, прежде чем ваш плеер встанет на паузу, поэтому звуки уведомлений его не прерывают."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Každá apka s otvoreným zvukom sa považuje za prehrávajúcu, aj keď je pozastavená."
+            "value" : "Každá apka s otvoreným zvukom sa považuje za prehrávajúcu, aj keď je pozastavená. Jej zvuk musí zostať otvorený aspoň 2 sekundy, kým sa váš prehrávač pozastaví, aby ho neprerušovali zvuky hlásení."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vsaka aplikacija z odprtim zvokom velja za predvajajočo, tudi ko je zaustavljena."
+            "value" : "Vsaka aplikacija z odprtim zvokom velja za predvajajočo, tudi ko je zaustavljena. Njen zvok mora ostati odprt vsaj 2 sekundi, preden se vaš predvajalnik zaustavi, da ga zvoki obvestil ne prekinjajo."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alla appar med öppet ljud räknas som spelande, även när de är pausade."
+            "value" : "Alla appar med öppet ljud räknas som spelande, även när de är pausade. Ljudet måste vara öppet i minst 2 sekunder innan din spelare pausas, så att notisljud inte avbryter den."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sesi açık olan her uygulama, duraklatılmış olsa bile çalıyor sayılır."
+            "value" : "Sesi açık olan her uygulama, duraklatılmış olsa bile çalıyor sayılır. Oynatıcınız duraklatılmadan önce sesin en az 2 saniye açık kalması gerekir; böylece bildirim sesleri onu kesmez."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Будь-яка програма з відкритим звуком вважається такою, що відтворює, навіть якщо її призупинено."
+            "value" : "Будь-яка програма з відкритим звуком вважається такою, що відтворює, навіть якщо її призупинено. Її звук має залишатися відкритим щонайменше 2 секунди, перш ніж ваш програвач буде призупинено, щоб звуки сповіщень його не переривали."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mọi ứng dụng có âm thanh đang mở đều được coi là đang phát, kể cả khi tạm dừng."
+            "value" : "Mọi ứng dụng có âm thanh đang mở đều được coi là đang phát, kể cả khi tạm dừng. Âm thanh phải mở ít nhất 2 giây thì trình phát của bạn mới tạm dừng, để âm thanh thông báo không làm gián đoạn."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "任何開啟音訊的 App 都會視為播放中，即使已暫停。"
+            "value" : "任何開啟音訊的 App 都會視為播放中，即使已暫停。音訊需保持開啟至少 2 秒才會暫停你的播放器，因此通知音不會打斷播放。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "任何打开音频的 App 都会视为播放中，即使已暂停。"
+            "value" : "任何打开音频的 App 都会视为播放中，即使已暂停。音频需保持打开至少 2 秒才会暂停你的播放器，因此通知音不会打断播放。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "任何開啟音訊的 App 都會視為播放中，即使已暫停。"
+            "value" : "任何開啟音訊的 App 都會視為播放中，即使已暫停。音訊需保持開啟至少 2 秒才會暫停你的播放器，因此通知音不會打斷播放。"
           }
         }
       }

@@ -19,7 +19,8 @@ struct AudioMonitorTests {
         configuration.activeSampleInterval = 3600
         configuration.idleSampleInterval = 3600
         configuration.musicPlayerBundleID = TestPlayer.bundleID
-        configuration.minimumStartWithoutVideo = 0 // the tests of AntiDot mode's longer start set it
+        configuration.minimumStartWithoutVideo = 0 // the tests of AntiDot mode's longer starts set them
+        configuration.minimumStartWithOpenStreams = 0
         return configuration
     }
 
@@ -576,17 +577,42 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("the longer start without video is only for AntiDot mode's playback signals", arguments: [DetectionMethod.audioLevels, .openStreams])
-    func usualStartOtherwise(method: DetectionMethod) async {
+    @Test("the longer start is only for AntiDot mode: measured levels use the usual one")
+    func usualStartWithLevels() async {
         var configuration = Self.config(startConfirmation: 0.5)
         configuration.minimumStartWithoutVideo = 3
         let h = Harness(configuration: configuration, meter: false, assertions: MockPowerAssertions())
-        h.monitor.setDetectionMethod(method)
+        h.monitor.setDetectionMethod(.audioLevels)
         h.start()
         h.step([Self.process(1, "com.example.audio")])
         h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.audio", isPlaying: true)])
+        h.monitor.stop()
+    }
+
+    @Test("with open streams only, which can't tell video, every app's sound must last 2 s, so an app's chat tone never pauses the music")
+    func openStreamsSlowStart() async {
+        var configuration = Self.config(startConfirmation: 0.5)
+        configuration.minimumStartWithOpenStreams = 2
+        let h = Harness(configuration: configuration, meter: false, assertions: MockPowerAssertions())
+        h.monitor.setDetectionMethod(.openStreams)
+        h.start()
+        let app = Self.process(1, "com.example.chat")
+        h.step([app])
+        h.step(after: 1) // a tone: its stream open about a second
+        h.step(after: 0.5, [])
+        h.step(after: 2)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.isEmpty)
+
+        h.step(after: 1, [Self.process(2, "com.example.video")])
+        h.step(after: 1.5)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.isEmpty)
+        h.step(after: 0.6)
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.example.video", isPlaying: true)])
         h.monitor.stop()
     }
 

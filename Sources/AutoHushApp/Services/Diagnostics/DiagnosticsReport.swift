@@ -140,7 +140,10 @@ enum DiagnosticsReport {
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
             Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
-            Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"), value: facts.timings.startConfirmation.secondsText),
+            // With open streams only, every app waits at least 2 s.
+            Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"),
+                value: facts.detectionMethod == .openStreams ? AppConfiguration(timings: facts.timings).startConfirmationWithOpenStreams.secondsText
+                    : facts.timings.startConfirmation.secondsText),
         ]
         if facts.detectionMethod == .playbackSignals {
             rows.append(Row(label: String(localized: "Pause playback after, without video",

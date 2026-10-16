@@ -159,6 +159,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Open audio streams only ignores notification sounds.** An app's own
+  short sound (a chat tone) kept its audio open long enough to pause your
+  player. Now any app's audio must stay open 2 seconds first.
 - **The purple dot stays off while an app keeps its sound on in
   silence.** Some players (Qobuz) keep their sound on while paused, so
   AutoHush measured them, and macOS showed its purple dot, for as long as

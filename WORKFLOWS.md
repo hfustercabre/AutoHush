@@ -141,7 +141,7 @@ flowchart TD
   IGN["An ignored app:<br/>listed under Playing Now,<br/>never pauses"]
   DM{"Detection"}
   NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays"]
-  ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s"]
+  ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
   T{"Playing<br/>for 0.5 s?"}
   TONE["Too short: a notification<br/>or chat tone, ignored"]
   AP{"Auto-Pause on,<br/>the player playing<br/>on this Mac?"}

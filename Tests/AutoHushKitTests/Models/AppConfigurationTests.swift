@@ -72,4 +72,10 @@ struct AppConfigurationTests {
         #expect(AppConfiguration().startConfirmationWithoutVideo == 3)
         #expect(AppConfiguration(timings: TimingSettings(startConfirmation: 4)).startConfirmationWithoutVideo == 4)
     }
+
+    @Test("with open streams only, any app's sound must last at least 2 s, or the user's longer choice")
+    func startWithOpenStreams() {
+        #expect(AppConfiguration().startConfirmationWithOpenStreams == 2)
+        #expect(AppConfiguration(timings: TimingSettings(startConfirmation: 4)).startConfirmationWithOpenStreams == 4)
+    }
 }

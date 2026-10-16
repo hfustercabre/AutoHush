@@ -33,6 +33,18 @@ package struct AppConfiguration: Sendable {
         max(sourceStartConfirmation, minimumStartWithoutVideo)
     }
 
+    /// "Open audio streams only": the least any app must keep its audio open
+    /// before it counts as playing. That method can't tell video, and an
+    /// app's chat tone keeps its stream open about a second (measured on
+    /// macOS 14.4).
+    package var minimumStartWithOpenStreams: TimeInterval = 2
+
+    /// How long any app must keep its audio open with open streams only: the
+    /// user's start confirmation, but at least `minimumStartWithOpenStreams`.
+    package var startConfirmationWithOpenStreams: TimeInterval {
+        max(sourceStartConfirmation, minimumStartWithOpenStreams)
+    }
+
     /// Inaudible gaps shorter than this do not restart the start confirmation.
     package var audibleGapTolerance: TimeInterval = 0.5
 
