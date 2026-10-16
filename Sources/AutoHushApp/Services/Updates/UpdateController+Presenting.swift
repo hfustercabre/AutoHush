@@ -98,6 +98,9 @@ extension UpdateController {
         textView.textContainer?.widthTracksTextView = true
         textView.textContainerInset = NSSize(width: 4, height: 6)
         textView.textStorage?.setAttributedString(ReleaseNotes.text(from: markdown))
+        // Made at the box's first size, it would never fit short notes below it.
+        textView.minSize = .zero
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         textView.sizeToFit()
 
         scrollView.frame.size.height = min(max(textView.frame.height + 4, 48), 180)

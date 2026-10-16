@@ -575,10 +575,13 @@ struct UpdateControllerTests {
         #expect(h.alerts.count == 3)
         #expect(h.installer.calls == ["prepare 0.3.0", "install 0.3.0"]) // not waiting for a quiet moment
 
-        // Long notes get a box 180 points tall, where they scroll; short ones a smaller one.
-        let heights = ["Fixes.", String(repeating: "- A fix\n", count: 40)].map { UpdateController.notesView($0).frame.height }
-        #expect(heights[0] >= 48 && heights[0] < 180)
-        #expect(heights[1] == 180)
+        // Long notes get a box 180 points tall, where they scroll; a few lines one as tall as they
+        // need; a single line the smallest, 48.
+        let heights = ["Fixes.", String(repeating: "- A fix\n", count: 5), String(repeating: "- A fix\n", count: 40)]
+            .map { UpdateController.notesView($0).frame.height }
+        #expect(heights[0] == 48)
+        #expect(heights[1] > 48 && heights[1] < 180)
+        #expect(heights[2] == 180)
     }
 
     @Test("a check asked for says what it found otherwise: up to date (also from a notification that no longer applies), no releases yet, or why it couldn't tell")

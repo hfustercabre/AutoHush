@@ -148,6 +148,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Short release notes get a small box.** The update window's notes box
+  stayed 100 points tall for a line or two; now it's as tall as they need,
+  from 48 points up to 180.
 - **No AutoHush window goes full screen.** The green button could make
   Settings fill the screen, in a space of its own; now it zooms the
   window instead, and no other AutoHush window goes full screen either.
