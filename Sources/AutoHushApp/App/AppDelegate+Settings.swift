@@ -1,5 +1,6 @@
 import AppKit
 import AutoHushKit
+import AutoHushPlayers
 
 // AppDelegate: the user's settings and the updates' settings.
 extension AppDelegate {
@@ -13,7 +14,7 @@ extension AppDelegate {
     }
 
     /// Shows the ignored apps in the menu, and the apps seen and ignored in
-    /// Settings → Apps; never the chosen player, which doesn't pause itself,
+    /// Settings → Sound Sources; never the chosen player, which doesn't pause itself,
     /// so an entry for it would do nothing.
     func showApps() {
         let chosen = player?.bundleID
@@ -22,6 +23,15 @@ extension AppDelegate {
         shown.seenApps = withoutPlayer(userSettings.state.seenApps)
         shown.ignoredApps = withoutPlayer(userSettings.state.ignoredApps)
         status = shown
+    }
+
+    /// Ignores the apps that play only the volume sound
+    /// (`SupportedPlayers.volumeSoundApps`) among those running or just
+    /// opened, before they play it.
+    func ignoreVolumeSoundApps(_ apps: [AudioSource]) {
+        for app in apps where SupportedPlayers.volumeSoundApps.contains(app.id) {
+            userSettings.ignoreByDefault(app)
+        }
     }
 
     /// Shows how a check from Settings is going, and when updates were last

@@ -3389,7 +3389,7 @@
       }
     },
     "%@ doesn’t identify itself as Mac apps do, so AutoHush can’t tell when it plays." : {
-      "comment" : "Settings → Apps: the alert after Ignore Another App…, when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name",
+      "comment" : "Settings → Sound Sources: the alert after Ignore Another App…, when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -5276,7 +5276,7 @@
       }
     },
     "%@ is turned off now. Removed from the list, it pauses your player again when it plays." : {
-      "comment" : "Settings → Apps: what removing an app that's turned off does, in its confirmation; %@ is the app",
+      "comment" : "Settings → Sound Sources: what removing an app that's turned off does, in its confirmation; %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -10955,7 +10955,7 @@
       }
     },
     "%@. Click to reverse the order." : {
-      "comment" : "Settings → Apps, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”",
+      "comment" : "Settings → Sound Sources, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -13469,7 +13469,7 @@
       }
     },
     "A to Z" : {
-      "comment" : "Settings → Apps: the order, alphabetical",
+      "comment" : "Settings → Sound Sources: the order, alphabetical",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -22873,217 +22873,8 @@
         }
       }
     },
-    "Apps" : {
-      "comment" : "Settings: a page in the sidebar: which apps pause your player",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التطبيقات"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikace"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εφαρμογές"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apit"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ऐप्स"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacije"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appok"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apper"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacje"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplicații"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Приложения"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apky"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacije"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appar"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uygulamalar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Програми"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ứng dụng"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        }
-      }
-    },
     "Apps appear here once they have played audio." : {
-      "comment" : "Settings → Apps, while the list is empty",
+      "comment" : "Settings → Sound Sources, while the list is empty",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23292,7 +23083,7 @@
       }
     },
     "Apps that pause playback first" : {
-      "comment" : "Settings → Apps: the order, switched-on apps first",
+      "comment" : "Settings → Sound Sources: the order, switched-on apps first",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -42107,211 +41898,211 @@
         }
       }
     },
-    "Choose which apps pause your player on the Apps page." : {
-      "comment" : "Settings → General, under the Auto-Pause switch; Apps is the Settings page that lists them",
+    "Choose which apps pause your player on the Sound Sources page." : {
+      "comment" : "Settings → General, under the Auto-Pause switch; Sound Sources is the Settings page that lists them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اختر التطبيقات التي توقف مشغّلك مؤقتًا من صفحة «التطبيقات»."
+            "value" : "اختر التطبيقات التي توقف مشغّلك مؤقتًا من صفحة «مصادر الصوت»."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tria quines apps posen el reproductor en pausa a la pàgina Apps."
+            "value" : "Tria quines apps posen el reproductor en pausa a la pàgina Fonts de so."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na stránce Aplikace vyberte, které aplikace pozastavují váš přehrávač."
+            "value" : "Na stránce Zdroje zvuku vyberte, které aplikace pozastavují váš přehrávač."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vælg på siden Apps, hvilke apps der sætter din afspiller på pause."
+            "value" : "Vælg på siden Lydkilder, hvilke apps der sætter din afspiller på pause."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wähle auf der Seite „Apps“ aus, welche Apps deinen Player pausieren."
+            "value" : "Wähle auf der Seite „Tonquellen“ aus, welche Apps deinen Player pausieren."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Επιλέξτε στη σελίδα «Εφαρμογές» ποιες εφαρμογές θέτουν την εφαρμογή αναπαραγωγής σας σε παύση."
+            "value" : "Επιλέξτε στη σελίδα «Πηγές ήχου» ποιες εφαρμογές θέτουν την εφαρμογή αναπαραγωγής σας σε παύση."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elige qué apps pausan tu reproductor en la página Apps."
+            "value" : "Elige qué apps pausan tu reproductor en la página Fuentes de sonido."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elige qué apps pausan tu reproductor en la página Apps."
+            "value" : "Elige qué apps pausan tu reproductor en la página Fuentes de sonido."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Valitse Apit-sivulla, mitkä apit keskeyttävät soittimesi."
+            "value" : "Valitse Äänilähteet-sivulla, mitkä apit keskeyttävät soittimesi."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choisissez dans la page Apps les apps qui mettent votre lecteur en pause."
+            "value" : "Choisissez dans la page Sources sonores les apps qui mettent votre lecteur en pause."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choisissez dans la page Apps les apps qui mettent votre lecteur en pause."
+            "value" : "Choisissez dans la page Sources sonores les apps qui mettent votre lecteur en pause."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ऐप्स पेज पर चुनें कि कौन-से ऐप्स आपका प्लेयर पॉज़ करें।"
+            "value" : "ध्वनि स्रोत पेज पर चुनें कि कौन-से ऐप्स आपका प्लेयर पॉज़ करें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na stranici Aplikacije odaberite koje aplikacije pauziraju vaš reproduktor."
+            "value" : "Na stranici Izvori zvuka odaberite koje aplikacije pauziraju vaš reproduktor."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az Appok oldalon válassza ki, mely appok szüneteltessék a lejátszóját."
+            "value" : "A Hangforrások oldalon válassza ki, mely appok szüneteltessék a lejátszóját."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pilih app mana yang menjeda pemutar Anda di halaman App."
+            "value" : "Pilih app mana yang menjeda pemutar Anda di halaman Sumber Suara."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scegli quali app mettono in pausa il lettore nella pagina App."
+            "value" : "Scegli quali app mettono in pausa il lettore nella pagina Sorgenti audio."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プレーヤーを一時停止させるAppは「App」ページで選択します。"
+            "value" : "プレーヤーを一時停止させるAppは「サウンドソース」ページで選択します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "플레이어를 일시 정지시킬 앱은 앱 페이지에서 선택하십시오."
+            "value" : "플레이어를 일시 정지시킬 앱은 사운드 소스 페이지에서 선택하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Velg hvilke apper som setter spilleren din på pause, på Apper-siden."
+            "value" : "Velg hvilke apper som setter spilleren din på pause, på Lydkilder-siden."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kies op de pagina Apps welke apps je speler pauzeren."
+            "value" : "Kies op de pagina Geluidsbronnen welke apps je speler pauzeren."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wybierz na stronie Aplikacje, które aplikacje wstrzymują Twój odtwarzacz."
+            "value" : "Wybierz na stronie Źródła dźwięku, które aplikacje wstrzymują Twój odtwarzacz."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escolha quais apps pausam seu player na página Apps."
+            "value" : "Escolha quais apps pausam seu player na página Fontes de som."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escolha na página Apps quais as apps que pausam o seu leitor."
+            "value" : "Escolha na página Fontes de som quais as apps que pausam o seu leitor."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alegeți pe pagina Aplicații care aplicații vă pun playerul pe pauză."
+            "value" : "Alegeți pe pagina Surse de sunet care aplicații vă pun playerul pe pauză."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выберите, какие приложения ставят ваш плеер на паузу, на странице «Приложения»."
+            "value" : "Выберите, какие приложения ставят ваш плеер на паузу, на странице «Источники звука»."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na stránke Apky vyberte, ktoré apky pozastavujú váš prehrávač."
+            "value" : "Na stránke Zdroje zvuku vyberte, ktoré apky pozastavujú váš prehrávač."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na strani Aplikacije izberite, katere aplikacije zaustavijo vaš predvajalnik."
+            "value" : "Na strani Viri zvoka izberite, katere aplikacije zaustavijo vaš predvajalnik."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Välj vilka appar som pausar din spelare på sidan Appar."
+            "value" : "Välj vilka appar som pausar din spelare på sidan Ljudkällor."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hangi uygulamaların oynatıcınızı duraklatacağını Uygulamalar sayfasında seçin."
+            "value" : "Hangi uygulamaların oynatıcınızı duraklatacağını Ses Kaynakları sayfasında seçin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Виберіть на сторінці «Програми», які програми призупиняють ваш програвач."
+            "value" : "Виберіть на сторінці «Джерела звуку», які програми призупиняють ваш програвач."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chọn những ứng dụng sẽ tạm dừng trình phát của bạn trên trang Ứng dụng."
+            "value" : "Chọn những ứng dụng sẽ tạm dừng trình phát của bạn trên trang Nguồn âm thanh."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請在「App」頁面中選擇哪些 App 會暫停你的播放器。"
+            "value" : "請在「聲音來源」頁面中選擇哪些 App 會暫停你的播放器。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在“App”页面中选择哪些 App 会暂停你的播放器。"
+            "value" : "在“声音来源”页面中选择哪些 App 会暂停你的播放器。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請在「App」頁面中選擇哪些 App 會暫停你的播放器。"
+            "value" : "請在「聲音來源」頁面中選擇哪些 App 會暫停你的播放器。"
           }
         }
       }
@@ -47124,7 +46915,7 @@
       }
     },
     "Couldn’t Ignore %@" : {
-      "comment" : "Settings → Apps: title of the alert after Ignore Another App… when the chosen app can't be ignored; %@ is the app's name",
+      "comment" : "Settings → Sound Sources: title of the alert after Ignore Another App… when the chosen app can't be ignored; %@ is the app's name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -52140,7 +51931,7 @@
       }
     },
     "Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio." : {
-      "comment" : "Settings → Apps: what Reset List does, in its confirmation",
+      "comment" : "Settings → Sound Sources: what Reset List does, in its confirmation",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -58619,7 +58410,7 @@
       }
     },
     "Ignore Another App…" : {
-      "comment" : "Settings → Apps: button that opens a panel to pick an app that never pauses your player",
+      "comment" : "Settings → Sound Sources: button that opens a panel to pick an app that never pauses your player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -59246,7 +59037,7 @@
       }
     },
     "Ignored apps first" : {
-      "comment" : "Settings → Apps: the order, switched-off apps first",
+      "comment" : "Settings → Sound Sources: the order, switched-off apps first",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -59455,7 +59246,7 @@
       }
     },
     "Ignored — your player keeps playing" : {
-      "comment" : "The menu's Playing Now and Settings → Apps: under an app that is ignored, so your player keeps playing while it plays",
+      "comment" : "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -64680,7 +64471,7 @@
       }
     },
     "Last Played" : {
-      "comment" : "Settings → Apps, Sort by: the app that played most recently first",
+      "comment" : "Settings → Sound Sources, Sort by: the app that played most recently first",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71159,7 +70950,7 @@
       }
     },
     "Mutes your player" : {
-      "comment" : "The menu's Playing Now and Settings → Apps: under an app that mutes your player while it plays (a player added with Add an App that can only be muted)",
+      "comment" : "The menu's Playing Now and Settings → Sound Sources: under an app that mutes your player while it plays (a player added with Add an App that can only be muted)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71577,7 +71368,7 @@
       }
     },
     "Name" : {
-      "comment" : "Settings → Apps, Sort by: alphabetically",
+      "comment" : "Settings → Sound Sources, Sort by: alphabetically",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -72413,7 +72204,7 @@
       }
     },
     "Newest first" : {
-      "comment" : "Settings → Apps: the order, the app that played last first",
+      "comment" : "Settings → Sound Sources: the order, the app that played last first",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -73249,7 +73040,7 @@
       }
     },
     "No apps match “%@”." : {
-      "comment" : "Settings → Apps, when the search finds nothing; %@ is what was typed",
+      "comment" : "Settings → Sound Sources, when the search finds nothing; %@ is what was typed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -81818,7 +81609,7 @@
       }
     },
     "Oldest first" : {
-      "comment" : "Settings → Apps: the order, the app that played longest ago first",
+      "comment" : "Settings → Sound Sources: the order, the app that played longest ago first",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -82654,7 +82445,7 @@
       }
     },
     "On/Off" : {
-      "comment" : "Settings → Apps, Sort by: apps that pause your player first, then the ignored ones",
+      "comment" : "Settings → Sound Sources, Sort by: apps that pause your player first, then the ignored ones",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -89551,7 +89342,7 @@
       }
     },
     "Pauses Playback" : {
-      "comment" : "Settings → Apps: heading of the list of apps that pause your player while they play",
+      "comment" : "Settings → Sound Sources: heading of the list of apps that pause your player while they play",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -90387,7 +90178,7 @@
       }
     },
     "Pauses your player" : {
-      "comment" : "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays",
+      "comment" : "The menu's Playing Now and Settings → Sound Sources: under an app that pauses your player while it plays",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -94775,6 +94566,215 @@
         }
       }
     },
+    "Recently Played" : {
+      "comment" : "Menu: heading of the apps that played sound in the last 5 minutes, under Playing Now",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شُغّلت مؤخرًا"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Han sonat fa poc"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedávno přehrávaly"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afspillet for nylig"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kürzlich gespielt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πρόσφατη αναπαραγωγή"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonaron hace poco"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonaron hace poco"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toistettu äskettäin"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture récente"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture récente"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हाल ही में चले"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedavno svirale"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nemrég szólt"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baru Saja Diputar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riprodotte di recente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近再生したApp"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 재생됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spilt nylig"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onlangs afgespeeld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatnio odtwarzane"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocaram recentemente"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tocaram recentemente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au redat recent"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недавно звучали"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedávno prehrávali"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nedavno predvajale"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spelades nyligen"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son Çalanlar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нещодавно звучали"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã phát gần đây"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近播放"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近播放"
+          }
+        }
+      }
+    },
     "Recommended" : {
       "comment" : "Add an App window: a badge beside the way AutoHush recommends to pause and play the app, among those that worked",
       "localizations" : {
@@ -95194,7 +95194,7 @@
       }
     },
     "Remove" : {
-      "comment" : "A button that removes: under Settings → Apps' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed",
+      "comment" : "A button that removes: under Settings → Sound Sources' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -95403,7 +95403,7 @@
       }
     },
     "Remove %@ from the list?" : {
-      "comment" : "Settings → Apps: title of the confirmation for removing an app that's turned off; %@ is the app",
+      "comment" : "Settings → Sound Sources: title of the confirmation for removing an app that's turned off; %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -96030,7 +96030,7 @@
       }
     },
     "Remove from List" : {
-      "comment" : "Settings → Apps: item of an app's contextual menu that forgets it",
+      "comment" : "Settings → Sound Sources: item of an app's contextual menu that forgets it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -97702,7 +97702,7 @@
       }
     },
     "Reset List" : {
-      "comment" : "Settings → Apps: confirms forgetting every app in the list",
+      "comment" : "Settings → Sound Sources: confirms forgetting every app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -97911,7 +97911,7 @@
       }
     },
     "Reset List…" : {
-      "comment" : "Settings → Apps: button that asks to forget every app in the list",
+      "comment" : "Settings → Sound Sources: button that asks to forget every app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -98120,7 +98120,7 @@
       }
     },
     "Reset the list of apps?" : {
-      "comment" : "Settings → Apps: title of the confirmation for Reset List",
+      "comment" : "Settings → Sound Sources: title of the confirmation for Reset List",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -98956,7 +98956,7 @@
       }
     },
     "Reverse order" : {
-      "comment" : "Settings → Apps: the arrow that reverses the apps' order",
+      "comment" : "Settings → Sound Sources: the arrow that reverses the apps' order",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103136,7 +103136,7 @@
       }
     },
     "Sort by" : {
-      "comment" : "Settings → Apps, before the pop-up that orders the apps",
+      "comment" : "Settings → Sound Sources, before the pop-up that orders the apps",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103340,6 +103340,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "排序方式"
+          }
+        }
+      }
+    },
+    "Sound Sources" : {
+      "comment" : "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مصادر الصوت"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonts de so"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdroje zvuku"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydkilder"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tonquellen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Πηγές ήχου"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fuentes de sonido"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fuentes de sonido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Äänilähteet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources sonores"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources sonores"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ध्वनि स्रोत"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvori zvuka"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hangforrások"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sumber Suara"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sorgenti audio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サウンドソース"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사운드 소스"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lydkilder"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geluidsbronnen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Źródła dźwięku"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fontes de som"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fontes de som"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surse de sunet"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Источники звука"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdroje zvuku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viri zvoka"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ljudkällor"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses Kaynakları"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Джерела звуку"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nguồn âm thanh"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聲音來源"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声音来源"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聲音來源"
           }
         }
       }
@@ -113801,7 +114010,7 @@
       }
     },
     "Turn an app off to keep your player playing while it makes sound. Select an app to remove it from the list." : {
-      "comment" : "Settings → Apps, under the list; “Select” as in clicking an app in the list",
+      "comment" : "Settings → Sound Sources, under the list; “Select” as in clicking an app in the list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -125511,7 +125720,7 @@
       }
     },
     "Z to A" : {
-      "comment" : "Settings → Apps: the order, reverse alphabetical",
+      "comment" : "Settings → Sound Sources: the order, reverse alphabetical",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

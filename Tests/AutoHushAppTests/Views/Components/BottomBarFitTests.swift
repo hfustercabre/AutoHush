@@ -35,7 +35,7 @@ struct BottomBarFitTests {
     static let spacing: CGFloat = 8
 
     static let bars: [Bar] = [
-        Bar(name: "Settings → Apps", width: 480, margin: 16, items: [
+        Bar(name: "Settings → Sound Sources", width: 480, margin: 16, items: [
             Item(keys: ["Ignore Another App…"]), Item(keys: ["Remove"]), Item(keys: ["Reset List…"]),
         ], slots: 4),
         Bar(name: "Settings → Diagnostics", width: 480, margin: 16, items: [

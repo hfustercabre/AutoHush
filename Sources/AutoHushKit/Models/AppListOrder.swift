@@ -1,6 +1,6 @@
 import Foundation
 
-/// How Settings → Apps orders its apps.
+/// How Settings → Sound Sources orders its apps.
 package struct AppListOrder: Equatable, Sendable {
     package enum Criterion: String, CaseIterable, Sendable {
         /// The app that played most recently first.

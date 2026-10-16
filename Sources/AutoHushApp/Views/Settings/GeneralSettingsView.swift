@@ -90,8 +90,8 @@ struct GeneralSettingsView: View {
             CardDivider()
             SwitchRow(
                 Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"),
-                subtitle: Text("Choose which apps pause your player on the Apps page.",
-                               comment: "Settings → General, under the Auto-Pause switch; Apps is the Settings page that lists them"),
+                subtitle: Text("Choose which apps pause your player on the Sound Sources page.",
+                               comment: "Settings → General, under the Auto-Pause switch; Sound Sources is the Settings page that lists them"),
                 isOn: Binding(get: { model.isAutoPauseOn }, set: { model.settings.setAutoPause($0) })
             )
             if let note = model.autoPauseNote {

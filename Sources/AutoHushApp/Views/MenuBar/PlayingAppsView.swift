@@ -2,15 +2,30 @@ import SwiftUI
 import AutoHushKit
 
 /// "Playing Now": each app playing sound, with a switch for whether it
-/// pauses the music.
+/// pauses the music; or "Recently Played", the same for the apps that
+/// played in the last 5 minutes.
 struct PlayingAppsView: View {
+    enum List { case playingNow, recentlyPlayed }
+
     let model: StatusMenuModel
+    let list: List
+
+    private var title: Text {
+        switch list {
+        case .playingNow: Text("Playing Now", comment: "Menu: heading of the apps playing sound right now")
+        case .recentlyPlayed: Text("Recently Played", comment: "Menu: heading of the apps that played sound in the last 5 minutes, under Playing Now")
+        }
+    }
+
+    private var sources: [AudioSource] {
+        list == .playingNow ? model.listedSources : model.listedRecentSources
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(Text("Playing Now", comment: "Menu: heading of the apps playing sound right now"))
+            SectionLabel(title)
                 .accessibilityAddTraits(.isHeader)
-            ForEach(model.listedSources, id: \.self) { source in
+            ForEach(sources, id: \.self) { source in
                 row(source, pausesMusic: !model.status.isIgnored(source.id))
             }
         }
@@ -31,7 +46,7 @@ struct PlayingAppsView: View {
                     if pausesMusic {
                         Text(verbatim: PlayerOption.interruptsLabel(mutes: model.status.playerMutes))
                     } else {
-                        Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Apps: under an app that is ignored, so your player keeps playing while it plays")
+                        Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
                     }
                 }
                 .font(.appCaption)

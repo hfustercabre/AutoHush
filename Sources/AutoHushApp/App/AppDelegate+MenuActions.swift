@@ -60,7 +60,7 @@ extension AppDelegate {
         if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
     }
 
-    /// Edit → Find… (⌘F): opens Settings → Apps' search while it lists
+    /// Edit → Find… (⌘F): opens Settings → Sound Sources' search while it lists
     /// apps, or puts the keyboard in a search already open there, in the
     /// welcome window's over its players, in the logs window's or in Add an
     /// App's list of apps. The item is dimmed elsewhere.
@@ -88,7 +88,7 @@ extension AppDelegate {
 
 /// The search Edit → Find… (⌘F) goes to in the window in front.
 enum FindTarget: Equatable {
-    /// Settings → Apps' search, which Find opens.
+    /// Settings → Sound Sources' search, which Find opens.
     case appsSearch
     /// The welcome window's search over its players.
     case welcomeSearch

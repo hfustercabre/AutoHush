@@ -29,6 +29,8 @@ import AutoHushKit
 ///   Playing Now
 ///   [icon] Safari   Pauses your player                 (●)
 ///   [icon] VLC      Ignored — your player keeps playing ( )
+///   Recently Played                  (the apps that played in the last 5 minutes)
+///   [icon] Messages Pauses your player                 (●)
 /// ─────────
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
@@ -41,8 +43,8 @@ import AutoHushKit
 /// that can only be muted is muted for another app.
 ///
 /// The card, the duration buttons, the playing apps and the toolbar are
-/// SwiftUI views; they follow `status` even while the menu is open. The
-/// rows around them are rebuilt each time it opens. Its rows have no keyboard
+/// SwiftUI views; they follow `status` even while the menu is open, as
+/// Ignored Apps does. The other rows are rebuilt each time it opens. Its rows have no keyboard
 /// shortcuts: AutoHush has none of its own (its menu bar, while a window is
 /// open, has the Mac's standard ones: `MainMenu`).
 @MainActor
@@ -77,6 +79,11 @@ final class StatusMenuController: NSObject {
     /// The search over the unfolded players, while it shows.
     private var playerSearchItem: NSMenuItem?
     private var playerRows: [NSMenuItem] = []
+    /// Ignored Apps and the separator above it, hidden while no app is
+    /// ignored. Unlike the other rows, they follow the ignored apps while the
+    /// menu is open (the user, 2026-10-16): a switch under Playing Now
+    /// changes them at once.
+    private var ignoredAppsRows: (separator: NSMenuItem, row: NSMenuItem)?
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: (any AppActions)?) {
@@ -113,6 +120,7 @@ final class StatusMenuController: NSObject {
         guard isMenuOpen else { return }
         model.status = status
         if let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
+        showIgnoredApps()
     }
 
     private func renderIcon() {
@@ -129,6 +137,7 @@ final class StatusMenuController: NSObject {
     private func rebuild() {
         model.status = status
         model.listedSources = status.activeSources
+        model.listedRecentSources = status.recentSources()
         model.isChoosingPlayer = false
         model.playerSearch = ""
         model.announcesRetryOutcome = false
@@ -150,14 +159,20 @@ final class StatusMenuController: NSObject {
             }
         }
         menu.addItem(hostedItem("snooze", SnoozeBarView(model: model)))
-        if !status.activeSources.isEmpty {
+        if !model.listedSources.isEmpty || !model.listedRecentSources.isEmpty {
             menu.addItem(.separator())
-            menu.addItem(hostedItem("playingApps", PlayingAppsView(model: model)))
         }
-        if !status.ignoredApps.isEmpty {
-            menu.addItem(.separator())
-            menu.addItem(ignoredAppsItem())
+        if !model.listedSources.isEmpty {
+            menu.addItem(hostedItem("playingApps", PlayingAppsView(model: model, list: .playingNow)))
         }
+        if !model.listedRecentSources.isEmpty {
+            menu.addItem(hostedItem("recentApps", PlayingAppsView(model: model, list: .recentlyPlayed)))
+        }
+        let ignoredApps = (separator: NSMenuItem.separator(), row: ignoredAppsItem())
+        menu.addItem(ignoredApps.separator)
+        menu.addItem(ignoredApps.row)
+        ignoredAppsRows = ignoredApps
+        showIgnoredApps()
         menu.addItem(.separator())
         if let offer = status.updateOffer { menu.addItem(updateItem(for: offer)) }
         menu.addItem(hostedItem("toolbar", MenuToolbarView(model: model)))
@@ -220,17 +235,28 @@ final class StatusMenuController: NSObject {
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         submenu.font = Self.rowFont
+        row.submenu = submenu
+        return row
+    }
+
+    /// Lists the ignored apps under Ignored Apps, shown while there's one.
+    private func showIgnoredApps() {
+        guard let (separator, row) = ignoredAppsRows, let submenu = row.submenu else { return }
+        let apps = status.ignoredApps
+        separator.isHidden = apps.isEmpty
+        row.isHidden = apps.isEmpty
+        let shown = submenu.items.dropFirst().compactMap { ($0.representedObject as? Payload<(AudioSource, Bool)>)?.value.0 }
+        guard shown != apps else { return }
+        submenu.removeAllItems()
         let hintTitle = String(localized: "Click an app to stop ignoring it", comment: "Hint atop the Ignored Apps submenu")
         let hint = NSMenuItem(title: hintTitle, action: nil, keyEquivalent: "")
         hint.isEnabled = false
         submenu.addItem(hint)
-        for app in status.ignoredApps {
+        for app in apps {
             let entry = item(app.name, #selector(toggleIgnored(_:)), payload: Payload((app, false)))
             entry.state = .on
             submenu.addItem(entry)
         }
-        row.submenu = submenu
-        return row
     }
 
     /// The rows the menu draws itself, a step above the system's menu font,

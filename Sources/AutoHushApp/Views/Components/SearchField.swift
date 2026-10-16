@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A search field in the style of the chips: a magnifier, the text, and a ✕
 /// that closes the search (`onClose`) or, without one, clears what was typed.
-/// Settings → Apps and the places that offer the media players use it.
+/// Settings → Sound Sources and the places that offer the media players use it.
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:

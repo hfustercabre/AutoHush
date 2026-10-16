@@ -66,6 +66,18 @@ package enum SupportedPlayers {
         "com.apple.reminders", "com.apple.TestFlight", "com.apple.helpviewer", "com.apple.dt.Xcode",
     ]
 
+    /// Apps that play only the volume sound, themselves, for the displays
+    /// they control (macOS plays its own from a system process, never
+    /// counted): BetterDisplay (seen on the user's Mac, 2026-10-16), and
+    /// MonitorControl and Lunar (their sources play macOS's `volume.aiff`).
+    /// Each is ignored the first time it's seen running, listed in Ignored
+    /// Apps so people can stop ignoring it (the user's pick, 2026-10-16).
+    package static let volumeSoundApps: Set<String> = [
+        "pro.betterdisplay.BetterDisplay",
+        "app.monitorcontrol.MonitorControl", "me.guillaumeb.MonitorControl", // MonitorControl, then and before
+        "fyi.lunar.Lunar",
+    ]
+
     /// The apps added through Player Check, each kept while its setup stays.
     package static let checkedPlayers = CheckedPlayers()
 

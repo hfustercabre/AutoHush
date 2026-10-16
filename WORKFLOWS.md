@@ -32,7 +32,7 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu: the card,<br/>Auto-Pause, Turn off for,<br/>Playing Now, Ignored Apps"]
+  MENU["The menu bar menu: the card,<br/>Auto-Pause, Turn off for,<br/>Playing Now, Recently Played,<br/>Ignored Apps"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
@@ -138,7 +138,7 @@ flowchart TD
   S(["Monitoring runs: which<br/>apps have their sound on"])
   F{"Another app?"}
   OWN["The player itself,<br/>system sounds:<br/>never count"]
-  IGN["An ignored app:<br/>listed under Playing Now,<br/>never pauses"]
+  IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
   NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]

@@ -15,7 +15,7 @@ extension AppDelegate {
         shown.detection = state.detection
         shown.controlError = state.controlError
         if shown != status { status = shown }
-        // The monitoring recorded the apps it heard: Settings → Apps lists them.
+        // The monitoring recorded the apps it heard: Settings → Sound Sources lists them.
         if sourcesChanged { userSettings.appsSeenChanged() }
     }
 

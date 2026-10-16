@@ -130,7 +130,7 @@ that thing as it looks, in both modes.
 | `.chipFill` / `.chipHoverFill` | black 8% / 13% | quaternary 60% / quaternary | A chip at rest / under the pointer; search fields |
 | `.switchOffFill` | black 26% | quaternary | A switch's track while off |
 | `.warningBadgeFill` | deep orange 12% | orange 18% | Behind a `HeadingBadge` |
-| `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Apps); the accent `HeadingBadge`'s capsule |
+| `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Sound Sources); the accent `HeadingBadge`'s capsule |
 | `.selectedTileFill` | accent 18% | accent 22% | Behind the chosen player's tile (`PlayerTiles`), the selected row of Choose an App's list, and the chosen choice card |
 | `.sidebarSelectionFill` | black 10% | quaternary | Behind the page shown in Settings' sidebar |
 | `.symbolTileFill` | accent 16% | accent 20% | The square behind a `SymbolTile`'s symbol (the symbol is the accent color) |
@@ -237,7 +237,7 @@ browsers, are told apart.
 
 ## Lists and searches
 
-- **Order:** a list has an obvious order and keeps it. Settings → Apps lets
+- **Order:** a list has an obvious order and keeps it. Settings → Sound Sources lets
   you choose the order, and remembers it. Where players are offered:
   - **Apps** are listed by how many people use them, with those that
     aren't installed after them, dimmed, and marked "Not installed".
@@ -314,7 +314,7 @@ browsers, are told apart.
     step, until the next click.
   - **A step only some cases need** ("Answer the site in Safari") shows only
     once it's needed, and stays ticked afterwards.
-- **Searches** appear where a list can grow long: always in Settings → Apps,
+- **Searches** appear where a list can grow long: always in Settings → Sound Sources,
   and in the menu and the welcome window once there are eight media players
   or more (not counting suggested web apps). Settings → General shows every
   player's tile on a page that scrolls, without one.
@@ -324,13 +324,13 @@ browsers, are told apart.
   - The window keeps its height while you type.
   - With no match, the list says so in its own words: "No apps match “…”."
   - A search starts empty again when its window or menu opens again.
-  - **Edit → Find…** (⌘F) opens Settings → Apps' search while it lists
+  - **Edit → Find…** (⌘F) opens Settings → Sound Sources' search while it lists
     apps, and puts the cursor in the welcome window's player search when it
     has one, in the logs window's search and in Add an App's list of apps.
     Elsewhere it's dimmed: it only ever acts on a search.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
-- **Removing from a list** (Settings → Apps): a click on a row, anywhere but
+- **Removing from a list** (Settings → Sound Sources): a click on a row, anywhere but
   its switch, selects it, behind a `.selectedRowFill` rounded rectangle; a
   second click deselects it. From the keyboard, Tab reaches the rows (with
   keyboard navigation on) and Space selects the focused one. **Remove** sits
@@ -422,7 +422,7 @@ AutoHush is translated into 34 languages besides English. DEVELOPMENT.md's
   update them, and delete the old key.
 - **A bottom bar's buttons stay on one line** (`.fixedSize()`). When a
   translation makes them wider than the window at its narrowest, that
-  translation is shortened, keeping its meaning (in Settings → Apps:
+  translation is shortened, keeping its meaning (in Settings → Sound Sources:
   Russian "Сбросить…", Greek "Επαναφορά…", German "App ignorieren …").
   `BottomBarFitTests` measures every bar in every language, with Liquid
   Glass's wider chip padding, and fails when one doesn't fit; a new bottom
@@ -562,7 +562,7 @@ standard ones**:
   name count as one (the Spotify app and the suggested Spotify web app: the
   app).
 - **Tab and Space** move and press as macOS's keyboard navigation does
-  (when it's on). Settings → Apps' rows take the focus too, and Space
+  (when it's on). Settings → Sound Sources' rows take the focus too, and Space
   selects the focused one, so **Remove** can be reached. In Add an App's
   list of apps, ↑ and ↓ in its search move the selection, and Return
   chooses it.

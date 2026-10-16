@@ -13,7 +13,7 @@ import AutoHushKit
 @MainActor
 @Observable
 final class SettingsModel {
-    /// One app in Settings → Apps, and whether it is ignored.
+    /// One app in Settings → Sound Sources, and whether it is ignored.
     struct AppRow: Identifiable, Equatable {
         let source: AudioSource
         let isIgnored: Bool
@@ -131,7 +131,7 @@ final class SettingsModel {
     }
     /// The rows `apps` ordered last, and what from.
     @ObservationIgnored private var orderedApps: (seen: [AudioSource], ignored: [AudioSource], order: AppListOrder, rows: [AppRow])?
-    /// The search in Settings → Apps: `nil` while it's closed. It's closed
+    /// The search in Settings → Sound Sources: `nil` while it's closed. It's closed
     /// again each time Settings opens.
     var appSearch: String?
     /// The apps whose names match the search, ignoring case and accents, in
@@ -141,7 +141,7 @@ final class SettingsModel {
         guard !query.isEmpty else { return apps }
         return apps.filter { $0.source.name.localizedStandardContains(query) }
     }
-    /// The app clicked in Settings → Apps, which Remove takes off the list.
+    /// The app clicked in Settings → Sound Sources, which Remove takes off the list.
     private(set) var selectedAppID: String?
     /// The selected app, while the list shows it (the search may hide it).
     var selectedApp: AppRow? { shownApps.first { $0.id == selectedAppID } }
@@ -237,7 +237,7 @@ final class SettingsModel {
 
     // MARK: - Apps
 
-    /// A click on an app in Settings → Apps: selects it, or unselects it.
+    /// A click on an app in Settings → Sound Sources: selects it, or unselects it.
     func toggleSelection(of id: String) {
         selectedAppID = selectedAppID == id ? nil : id
     }

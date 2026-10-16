@@ -16,6 +16,7 @@ extension AppDelegate {
         showStatusMenu()
         quitOnTerminationSignal()
         registerPlayerLaunchObserver()
+        ignoreVolumeSoundApps(NSWorkspace.shared.runningApplications.compactMap(\.audioSource))
         registerSleepObservers()
         followFocusAtLaunch()
         // Opened last, this copy is the one that runs: any opened before it

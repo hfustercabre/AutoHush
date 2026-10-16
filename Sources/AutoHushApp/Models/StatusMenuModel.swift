@@ -41,6 +41,8 @@ final class StatusMenuModel {
     /// The apps listed under "Playing Now", fixed while the menu is open so
     /// that no row moves under the pointer.
     var listedSources: [AudioSource] = []
+    /// The apps listed under "Recently Played", fixed the same way.
+    var listedRecentSources: [AudioSource] = []
     /// Whether the music players are unfolded under the card.
     var isChoosingPlayer = false
     /// What was typed in the search over the unfolded players.

@@ -658,6 +658,17 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("an app that plays only the volume sound (BetterDisplay) is ignored once it runs; others aren't")
+    func volumeSoundAppsIgnored() async {
+        let (sut, _) = makeSUT()
+        await start(sut)
+        let betterDisplay = AudioSource(id: "pro.betterdisplay.BetterDisplay", name: "BetterDisplay")
+        sut.ignoreVolumeSoundApps([betterDisplay, AudioSource(id: "org.videolan.vlc", name: "VLC")])
+        #expect(sut.userSettings.state.ignoredApps.map(\.id) == [betterDisplay.id])
+        #expect(sut.status.ignoredApps.map(\.id) == [betterDisplay.id]) // in the menu's Ignored Apps
+    }
+
+    @MainActor
     @Test("macOS's notices reach AutoHush: the chosen player opening starts it again, the Mac sleeping and waking (or only its screens) reach the session; unregistered, a launch does nothing")
     func workspaceNotices() async {
         let scratch = Scratch()
@@ -926,7 +937,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("the chosen player is left out of Settings → Apps and the ignored apps")
+    @Test("the chosen player is left out of Settings → Sound Sources and the ignored apps")
     func chosenPlayerNotListedAsApp() {
         let scratch = Scratch()
         let first = AudioSource(id: Players.first, name: "First")
@@ -1031,7 +1042,7 @@ struct AppDelegateTests {
         monitorings.made[0].send(.activeSources([vlc]))
         #expect(sut.status.playback == .pausedByMonitor)
         #expect(sut.status.activeSources == [vlc])
-        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id]) // listed in Settings → Apps as it plays
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id]) // listed in Settings → Sound Sources as it plays
     }
 
     @MainActor

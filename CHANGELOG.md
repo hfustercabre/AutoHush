@@ -9,6 +9,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Settings' Apps page is now Sound Sources.** It lists every app heard
+  playing sound, each switched to pause your player or be ignored.
 - **AutoHush runs on macOS 14.4 and later,** not only macOS 15: every
   feature works there. An update that needs a newer macOS than your Mac's
   isn't installed, and says so.
@@ -71,6 +73,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Recently Played in the menu.** Under Playing Now, the apps that
+  played in the last 5 minutes, each with its switch, so one that stopped
+  before you could switch it off is still there.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
   plays again those it paused, through its AppleScript (macOS asks for
@@ -159,6 +164,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The volume sound of display apps no longer pauses your player.**
+  BetterDisplay, MonitorControl and Lunar play it themselves, so AutoHush
+  counted them as playing. It now ignores each the first time it runs,
+  listed under Ignored Apps, where a click stops ignoring it.
 - **Open audio streams only ignores notification sounds.** An app's own
   short sound (a chat tone) kept its audio open long enough to pause your
   player. Now any app's audio must stay open 2 seconds first.

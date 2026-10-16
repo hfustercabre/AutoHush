@@ -28,7 +28,7 @@ extension PlayerSession {
             state.playback = playback
         case .activeSources(let sources):
             let othersStarted = state.activeSources.isEmpty && !sources.isEmpty
-            // Recorded first: Settings → Apps lists them as the state shows.
+            // Recorded first: Settings → Sound Sources lists them as the state shows.
             preferences.recordSeen(sources)
             state.activeSources = sources
             if othersStarted { checkAccess() }

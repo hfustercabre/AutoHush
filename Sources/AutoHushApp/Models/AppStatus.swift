@@ -73,6 +73,16 @@ struct AppStatus: Equatable {
     var autoPause: AutoPause = .on
     /// Sources playing right now, ignored ones included.
     private(set) var activeSources: [AudioSource] = []
+    /// The sources that stopped playing, the most recent first, each with
+    /// when: the menu's "Recently Played" (`recentSources(at:)`).
+    private(set) var stoppedSources: [StoppedSource] = []
+    struct StoppedSource: Equatable {
+        let source: AudioSource
+        let stoppedAt: Date
+    }
+    /// How long an app that stopped playing stays under "Recently Played"
+    /// (the user, 2026-10-16).
+    static let recentlyPlayedFor: TimeInterval = 5 * 60
     /// The apps that played sound, the most recent first, and the ones the
     /// user ignores; never the chosen player, which doesn't pause itself.
     var seenApps: [AudioSource] = []
@@ -116,8 +126,21 @@ struct AppStatus: Equatable {
         if health != .ready { activeSources = [] }
     }
 
-    mutating func setActiveSources(_ sources: [AudioSource]) {
+    /// An app that leaves them joins the stopped ones; one playing again
+    /// leaves those.
+    mutating func setActiveSources(_ sources: [AudioSource], now: Date = Date()) {
+        let playing = Set(sources.map(\.id))
+        let stopped = activeSources.filter { !playing.contains($0.id) }
+        let leaving = playing.union(stopped.map(\.id))
+        stoppedSources = stopped.map { StoppedSource(source: $0, stoppedAt: now) }
+            + stoppedSources.filter { !leaving.contains($0.source.id) && now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }
         activeSources = sources.sortedByName()
+    }
+
+    /// The apps that played in the last 5 minutes and play no more, the
+    /// most recent first.
+    func recentSources(at now: Date = Date()) -> [AudioSource] {
+        stoppedSources.filter { now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }.map(\.source)
     }
 
     func isIgnored(_ id: String) -> Bool {

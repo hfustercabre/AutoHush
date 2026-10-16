@@ -282,10 +282,10 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// Under an app that pauses the player while it plays (the menu's Playing
-    /// Now, Settings → Apps), or mutes it, for one muted instead of paused.
+    /// Now, Settings → Sound Sources), or mutes it, for one muted instead of paused.
     static func interruptsLabel(mutes: Bool) -> String {
-        mutes ? String(localized: "Mutes your player", comment: "The menu's Playing Now and Settings → Apps: under an app that mutes your player while it plays (a player added with Add an App that can only be muted)")
-            : String(localized: "Pauses your player", comment: "The menu's Playing Now and Settings → Apps: under an app that pauses your player while it plays")
+        mutes ? String(localized: "Mutes your player", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that mutes your player while it plays (a player added with Add an App that can only be muted)")
+            : String(localized: "Pauses your player", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that pauses your player while it plays")
     }
 
     /// Under a player that isn't installed, wherever players are offered.

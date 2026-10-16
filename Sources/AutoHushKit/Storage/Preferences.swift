@@ -19,6 +19,7 @@ package final class Preferences {
         static let focusNotedAutoPauseSnoozedUntil = "focusNotedAutoPauseSnoozedUntil"
         static let focusAppliedAutoPause = "focusAppliedAutoPause"
         static let ignoredApps = "ignoredApps"
+        static let appsIgnoredByDefault = "appsIgnoredByDefault"
         static let seenApps = "seenApps"
         static let appListOrder = "appListOrder"
         static let appListOrderReversed = "appListOrderReversed"
@@ -60,7 +61,7 @@ package final class Preferences {
     /// writes them all back, from several queues.
     package nonisolated static let webAppButtonsLock = OSAllocatedUnfairLock()
 
-    /// How many apps that played audio are remembered for Settings → Apps.
+    /// How many apps that played audio are remembered for Settings → Sound Sources.
     package static let seenAppsLimit = 50
 
     private let defaults: any PreferenceStore
@@ -279,7 +280,7 @@ package final class Preferences {
         }
     }
 
-    /// Apps that have played audio, most recent first (for Settings → Apps).
+    /// Apps that have played audio, most recent first (for Settings → Sound Sources).
     package var seenApps: [AudioSource] {
         get {
             let stored = defaults.object(forKey: Key.seenApps) as? [[String: String]] ?? []
@@ -314,7 +315,7 @@ package final class Preferences {
         seenApps = [app] + seenApps
     }
 
-    /// How Settings → Apps orders its apps.
+    /// How Settings → Sound Sources orders its apps.
     package var appListOrder: AppListOrder {
         get {
             let criterion = (defaults.object(forKey: Key.appListOrder) as? String).flatMap(AppListOrder.Criterion.init)
@@ -327,6 +328,14 @@ package final class Preferences {
             defaults.set(newValue.criterion.rawValue, forKey: Key.appListOrder)
             defaults.set(newValue.isReversed, forKey: Key.appListOrderReversed)
         }
+    }
+
+    /// The apps AutoHush once ignored by itself (`UserSettings.ignoreByDefault`),
+    /// by bundle ID, ignored or not now: one the user stopped ignoring isn't
+    /// ignored again.
+    package var appsIgnoredByDefault: Set<String> {
+        get { Set(defaults.object(forKey: Key.appsIgnoredByDefault) as? [String] ?? []) }
+        set { defaults.set(newValue.sorted(), forKey: Key.appsIgnoredByDefault) }
     }
 
     /// Apps that never pause the music, sorted by name.

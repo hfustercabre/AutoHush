@@ -48,7 +48,7 @@ struct MainMenuTests {
         #expect(target.validateMenuItem(find))
     }
 
-    @Test("Find… goes to Settings → Apps' search while it lists apps, or the welcome window's over many players; nowhere else")
+    @Test("Find… goes to Settings → Sound Sources' search while it lists apps, or the welcome window's over many players; nowhere else")
     func findTargets() {
         func target(_ window: FindTarget.Window, page: SettingsWindowController.Page? = nil, hasApps: Bool = true,
                     showsPlayers: Bool = true, searchable: Bool = true) -> FindTarget? {

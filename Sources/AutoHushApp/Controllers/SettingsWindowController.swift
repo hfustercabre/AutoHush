@@ -20,7 +20,7 @@ final class SettingsWindowController: NSWindowController {
             case .general:
                 String(localized: "General", comment: "Settings: a page in the sidebar")
             case .apps:
-                String(localized: "Apps", comment: "Settings: a page in the sidebar: which apps pause your player")
+                String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
             case .detection:
                 String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
             case .fades:

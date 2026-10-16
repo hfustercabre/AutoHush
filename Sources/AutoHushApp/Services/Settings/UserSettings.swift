@@ -136,7 +136,7 @@ final class UserSettings: AutoPauseControlling {
     // MARK: - The apps
 
     func setIgnored(_ source: AudioSource, _ ignored: Bool) {
-        // Keep the app (with its icon) listed in Settings → Apps, where it
+        // Keep the app (with its icon) listed in Settings → Sound Sources, where it
         // was: switching it isn't playing.
         if source.bundlePath != nil { preferences.keepSeen(source) }
         var apps = preferences.ignoredApps.filter { $0.id != source.id }
@@ -149,14 +149,25 @@ final class UserSettings: AutoPauseControlling {
         storeIgnoredApps(apps)
     }
 
-    /// Removes an app from Settings → Apps; a forgotten app is no longer ignored.
+    /// Ignores an app the first time it's seen running (one that plays only
+    /// the volume sound), as if the user had switched it off; once the user
+    /// stops ignoring it, it stays so.
+    func ignoreByDefault(_ source: AudioSource) {
+        guard !preferences.appsIgnoredByDefault.contains(source.id) else { return }
+        preferences.appsIgnoredByDefault.insert(source.id)
+        guard !preferences.ignoredApps.contains(where: { $0.id == source.id }) else { return }
+        logger.info("Ignored apps: \(source.name, privacy: .public) plays only the volume sound, so it's ignored by default")
+        setIgnored(source, true)
+    }
+
+    /// Removes an app from Settings → Sound Sources; a forgotten app is no longer ignored.
     func forget(_ source: AudioSource) {
         logger.info("Apps: removed \(source.name, privacy: .public) (\(source.id, privacy: .public)) from the list")
         preferences.seenApps.removeAll { $0.id == source.id }
         storeIgnoredApps(preferences.ignoredApps.filter { $0.id != source.id })
     }
 
-    /// Empties Settings → Apps: every app is forgotten and none is ignored
+    /// Empties Settings → Sound Sources: every app is forgotten and none is ignored
     /// any more. Apps reappear as they play audio.
     func forgetAll() {
         logger.info("Apps: emptied the list, so no app is ignored")

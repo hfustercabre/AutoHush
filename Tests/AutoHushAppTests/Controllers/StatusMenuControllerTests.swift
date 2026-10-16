@@ -84,6 +84,25 @@ struct StatusMenuControllerTests {
         #expect(sut.model.listedSources == [chrome, vlc])
     }
 
+    @Test("Recently Played follows Playing Now, and shows on its own once nothing plays")
+    func recentlyPlayedRows() {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.setActiveSources([vlc, chrome])
+        status.setActiveSources([chrome])
+        sut.status = status
+        prepareToOpen(sut)
+        #expect(rows(sut.menu) == ["card", "snooze", "—", "playingApps", "recentApps", "—", "toolbar"])
+        #expect(sut.model.listedRecentSources == [vlc])
+
+        status.setActiveSources([])
+        sut.status = status
+        prepareToOpen(sut)
+        #expect(rows(sut.menu) == ["card", "snooze", "—", "recentApps", "—", "toolbar"])
+        #expect(sut.model.listedRecentSources == [chrome, vlc])
+    }
+
     @Test("the views follow the status at once; rows are added only when the menu next opens")
     func rowsWaitForTheNextOpening() {
         let sut = makeController()
@@ -564,6 +583,33 @@ struct StatusMenuControllerTests {
         try perform(submenu.items[1])
         #expect(log.calls == ["menuWillOpen"])
         #expect(settings.state.ignoredApps.isEmpty)
+    }
+
+    @Test("Ignored Apps follows the switches while the menu is open: it shows, lists and goes")
+    func ignoredAppsFollowWhileOpen() throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.setActiveSources([vlc, chrome])
+        sut.status = status
+        prepareToOpen(sut)
+        sut.menuWillOpen(sut.menu)
+        #expect(!rows(sut.menu).contains("Ignored Apps"))
+
+        status.ignoredApps = [vlc]
+        sut.status = status
+        #expect(rows(sut.menu) == ["card", "snooze", "—", "playingApps", "—", "Ignored Apps", "—", "toolbar"])
+        let submenu = try #require(try item("Ignored Apps", in: sut.menu).submenu)
+        #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
+
+        status.ignoredApps = [chrome, vlc]
+        sut.status = status
+        #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", chrome.name, "VLC"])
+
+        status.ignoredApps = []
+        sut.status = status
+        #expect(!rows(sut.menu).contains("Ignored Apps"))
+        sut.menuDidClose(sut.menu)
     }
 
     @Test("once the user went to allow audio recording, its row reopens AutoHush")

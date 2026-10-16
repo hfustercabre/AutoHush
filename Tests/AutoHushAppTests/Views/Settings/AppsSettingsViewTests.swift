@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import AutoHushApp
 
-@Suite("Settings → Apps")
+@Suite("Settings → Sound Sources")
 @MainActor
 struct AppsSettingsViewTests {
     @Test("an app chosen to ignore that can't be told apart says so, by its name")

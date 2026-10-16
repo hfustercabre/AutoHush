@@ -103,6 +103,32 @@ struct UserSettingsTests {
         #expect(preferences.seenApps.isEmpty)
     }
 
+    @Test("an app that plays only the volume sound is ignored once; stopped ignoring, it stays so")
+    func ignoreByDefault() {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let settings = UserSettings(preferences: preferences)
+        let display = AudioSource(id: "com.example.display", name: "Display Tool", bundlePath: "/Applications/Display Tool.app")
+        settings.ignoreByDefault(display)
+        #expect(settings.state.ignoredApps.map(\.id) == [display.id])
+        #expect(settings.state.monitoring.ignored == [display.id])
+        #expect(settings.state.seenApps.map(\.id) == [display.id]) // listed in Settings → Sound Sources, with its icon
+
+        settings.setIgnored(display, false)
+        settings.ignoreByDefault(display) // opened again
+        #expect(settings.state.ignoredApps.isEmpty)
+        #expect(UserSettings(preferences: preferences).state.ignoredApps.isEmpty) // after a relaunch too
+    }
+
+    @Test("an app the user already ignores is only noted, not added twice")
+    func ignoreByDefaultAlreadyIgnored() {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let settings = UserSettings(preferences: preferences)
+        settings.setIgnored(vlc, true)
+        settings.ignoreByDefault(vlc)
+        #expect(settings.state.ignoredApps.map(\.id) == [vlc.id])
+        #expect(preferences.appsIgnoredByDefault == [vlc.id])
+    }
+
     @Test("resetting the list forgets every app and ignores none")
     func forgetAll() {
         let preferences = Preferences(store: InMemoryPreferenceStore())

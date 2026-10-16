@@ -458,7 +458,7 @@ struct SettingsWindowControllerTests {
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
         #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Apps"], ["Detection", "Fades"], ["Diagnostics", "Updates", "About"]])
+                == [["General", "Sound Sources"], ["Detection", "Fades"], ["Diagnostics", "Updates", "About"]])
         #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
         #expect(sut.shownPage == nil) // not on screen
 

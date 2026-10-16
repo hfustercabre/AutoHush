@@ -10,10 +10,11 @@ extension AppDelegate {
             object: nil,
             queue: nil
         ) { [weak self] notification in
-            // Extract the Sendable String before crossing the actor boundary.
-            let bundleIdentifier = (notification.userInfo?[NSWorkspace.applicationUserInfoKey]
-                as? NSRunningApplication)?.bundleIdentifier
+            // Extract the Sendable values before crossing the actor boundary.
+            let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            let bundleIdentifier = app?.bundleIdentifier, source = app?.audioSource
             Task { @MainActor [weak self] in
+                self?.ignoreVolumeSoundApps(source.map { [$0] } ?? [])
                 self?.handleApplicationDidLaunch(bundleIdentifier: bundleIdentifier)
             }
         }
