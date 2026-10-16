@@ -31,7 +31,8 @@ package protocol AudioProcessSnapshotProviding: AnyObject, Sendable {
 /// Every read is a round trip to the audio server, so while observing, only
 /// processes with audio running (input or output, as their is-running
 /// listeners report) are asked whether their output runs: usually a few of
-/// the dozens of audio processes.
+/// the dozens of audio processes. On macOS 14 every process is asked on each
+/// read, since its listeners miss some starts.
 package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProviding, @unchecked Sendable {
     package init() {}
 
@@ -43,8 +44,16 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
     /// Process objects with audio running, kept by the is-running listeners.
     private var runningObjects: Set<AudioObjectID> = []
 
+    /// macOS 14 sends a process's is-running change when its audio stops but
+    /// not always when it starts again (Apple Music resuming, 14.4,
+    /// 2026-10-16), so there the listeners can't be trusted to find it.
+    private static let listenersMissStarts: Bool = {
+        if #available(macOS 15, *) { return false }
+        return true
+    }()
+
     package func activeProcesses() -> [AudioProcessInfo] {
-        let objectIDs = processListListener == nil ? processObjectIDs() : runningObjects
+        let objectIDs = processListListener == nil || Self.listenersMissStarts ? processObjectIDs() : runningObjects
         return objectIDs.compactMap { objectID in
             // Read the cheap output flag first; only playing processes need more lookups.
             guard CoreAudioProperty.value(kAudioProcessPropertyIsRunningOutput, of: objectID, initial: UInt32(0)) == 1,

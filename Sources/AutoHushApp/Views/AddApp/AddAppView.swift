@@ -480,7 +480,10 @@ private struct WayRow: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Self.symbol(way.mark).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 6) {
+                // On their shared baseline: centered, the badge left the row's
+                // baseline (which the mark follows) undecided, and macOS 14
+                // crashed laying the window out again and again (2026-10-16).
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
                 }

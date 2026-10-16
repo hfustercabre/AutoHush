@@ -22,7 +22,7 @@ extension NSWindow {
         comeToActiveSpace()
         makeKeyAndOrderFront(nil)
         orderFrontRegardless()
-        NSApp.activate()
+        NSApp.becomeActive()
     }
 
     /// On screen, minimized in the Dock, or hidden with AutoHush (⌘H): open

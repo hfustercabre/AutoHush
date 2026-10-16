@@ -16,7 +16,7 @@ extension AppDelegate {
         // up every other main-actor job until it closes.
         RunLoop.main.perform(inModes: [.common]) {
             MainActor.assumeIsolated {
-                NSApp.activate()
+                NSApp.becomeActive()
                 guard PlayerAlerts.remove(option.name, isChosen: isChosen).runModal() == .alertFirstButtonReturn else { return }
                 self.removeAddedApp(option, wasChosen: isChosen)
             }

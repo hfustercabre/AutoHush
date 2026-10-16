@@ -86,23 +86,26 @@ struct LogsView: View {
     private var lines: some View {
         let shown = model.shown
         return ScrollView {
-            Card {
-                if shown.isEmpty && model.isLoading {
-                    ProgressView().controlSize(.small).frame(maxWidth: .infinity)
-                } else if shown.isEmpty {
-                    Text(verbatim: emptyNote).foregroundStyle(.appSecondary)
-                } else {
-                    LazyVStack(alignment: .leading, spacing: 10) {
-                        ForEach(Array(shown.enumerated()), id: \.offset) { index, entry in
-                            if index > 0 { CardDivider() }
-                            LogRow(entry: entry)
+            VStack(spacing: 0) {
+                Card {
+                    if shown.isEmpty && model.isLoading {
+                        ProgressView().controlSize(.small).frame(maxWidth: .infinity)
+                    } else if shown.isEmpty {
+                        Text(verbatim: emptyNote).foregroundStyle(.appSecondary)
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 10) {
+                            ForEach(Array(shown.enumerated()), id: \.offset) { index, entry in
+                                if index > 0 { CardDivider() }
+                                LogRow(entry: entry)
+                            }
                         }
-                        Color.clear.frame(height: 0).id(Self.bottom)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+                // Below the card and its margin, so the newest entry shows whole.
+                Color.clear.frame(height: 0).id(Self.bottom)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 12)
         }
         .modifier(FollowsNewest(count: shown.count, follows: model.followsNewEntries))
     }

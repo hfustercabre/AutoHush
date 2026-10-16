@@ -27,7 +27,7 @@ enum InfoAlert {
     /// it, which it returns. Code that runs alerts takes it as a runner that
     /// tests replace, since a modal alert waits for a person.
     static func runInFront(_ alert: NSAlert) -> NSApplication.ModalResponse {
-        NSApp.activate()
+        NSApp.becomeActive()
         return alert.runModal()
     }
 }
