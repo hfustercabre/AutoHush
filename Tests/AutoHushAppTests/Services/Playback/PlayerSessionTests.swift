@@ -384,6 +384,28 @@ struct PlayerSessionTests {
         #expect(bench.monitorings.of(Players.second)[1].asleep == [false])
     }
 
+    @MainActor
+    @Test("resumes held: the monitoring and the held pauses know, one started meanwhile starts held, and all hear the release")
+    func holdResumes() async {
+        let bench = Bench()
+        let session = await bench.holdingFirst()
+        let held = bench.monitorings.of(Players.first)[0]
+        let current = bench.monitorings.of(Players.second)[0]
+        #expect(current.setup?.resumesHeld == false)
+
+        session.holdResumes(true)
+        session.holdResumes(true)
+        #expect(current.resumesHeld == [true] && held.resumesHeld == [true])
+
+        session.retry() // the player reopened during Add an App's check, say
+        await TestWait.until { bench.monitorings.of(Players.second).count == 2 }
+        await TestWait.until { session.state.health == .ready }
+        let restarted = bench.monitorings.of(Players.second)[1]
+        #expect(restarted.setup?.resumesHeld == true)
+        session.holdResumes(false)
+        #expect(restarted.resumesHeld == [false] && held.resumesHeld == [true, false])
+    }
+
     // MARK: - Held pauses and the hand-over
 
     @MainActor

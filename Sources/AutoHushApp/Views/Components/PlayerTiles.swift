@@ -6,7 +6,8 @@ import SwiftUI
 /// with a tile that adds one. A tile is a chip: the player's icon, then its name
 /// with what a row would say under it, shorter. The chosen (or picked)
 /// player's tile is tinted and outlined with the accent color, even while
-/// AntiDot mode keeps it from being chosen (an app that can only be muted).
+/// AntiDot mode keeps it from being chosen (an app only its sound tells
+/// about).
 /// Settings → General and the welcome window show them; the menu keeps its
 /// rows.
 ///
@@ -25,8 +26,9 @@ struct PlayerTiles: View {
     let onAddWebApp: () -> Void
     /// "Add an App…": checks an app and adds it.
     var onAddApp: () -> Void = {}
-    /// An app added with Add an App: its × (under the pointer) removes it,
-    /// once the user confirms (R2, the user's pick, 2026-10-15).
+    /// An app added with Add an App: its × (under the pointer, or with the
+    /// keyboard on its tile) or its right-click menu removes it, once the
+    /// user confirms (R2, the user's pick, 2026-10-15).
     var onRemove: ((PlayerOption) -> Void)?
     var maxVisibleRows: Int?
     var holdsHeight = false
@@ -132,9 +134,9 @@ struct PlayerTiles: View {
     /// A player: its icon, then its name with what a row would say under it
     /// (Click to add, Untested, Not installed, Muted only); tinted and
     /// outlined once chosen. Dimmed while it can't be chosen; in AntiDot
-    /// mode, an app that can only be muted says why in its help tag and
+    /// mode, an app only its sound tells about says why in its help tag and
     /// VoiceOver hint. An app added with Add an App shows a × under the
-    /// pointer.
+    /// pointer or the keyboard, and can be removed from its right-click menu.
     @ViewBuilder private func tile(_ option: PlayerOption) -> some View {
         let button = tileButton(option)
         let explained = Group {
@@ -232,17 +234,23 @@ struct PlayerTiles: View {
 }
 
 /// An added app's tile with a × in its corner while the pointer is over it,
-/// which removes it once confirmed; VoiceOver has it as an action.
+/// or the keyboard is on it or its × (Tab, with keyboard navigation on),
+/// which removes it once confirmed; its right-click menu and VoiceOver have
+/// it too.
 private struct RemovableTile<Content: View>: View {
     let name: String
     let remove: () -> Void
     @ViewBuilder let content: Content
     @State private var isHovered = false
+    @FocusState private var focus: Focus?
+
+    private enum Focus { case tile, remove }
 
     var body: some View {
         content
+            .focused($focus, equals: .tile)
             .overlay(alignment: .topTrailing) {
-                if isHovered {
+                if isHovered || focus != nil {
                     Button(action: remove) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
@@ -250,12 +258,14 @@ private struct RemovableTile<Content: View>: View {
                             .foregroundStyle(.white, .appSecondary)
                     }
                     .buttonStyle(.plain)
+                    .focused($focus, equals: .remove)
                     .help(PlayerOption.removeTitle(name))
                     .accessibilityLabel(Text(verbatim: PlayerOption.removeTitle(name)))
                     .offset(x: 5, y: -5)
                 }
             }
             .onHover { isHovered = $0 }
+            .contextMenu { Button(PlayerOption.removeTitle(name), action: remove) }
             .accessibilityAction(named: Text(verbatim: PlayerOption.removeTitle(name)), remove)
     }
 }

@@ -24,8 +24,9 @@ package enum CheckReportLine {
         case play, pause, allowAccessibility
     }
 
-    /// "  waiting: start playing something in Deezer; … (up to 2 minutes)".
-    package static func waiting(_ request: Request, _ text: String, minutes: Int) -> String {
+    /// "  waiting: start playing something in Deezer; … (up to 2 minutes)":
+    /// `text` starts as `request(in:)` reads it.
+    package static func waiting(_ text: String, minutes: Int) -> String {
         waitingPrefix + text + " (up to \(minutes) minutes)"
     }
 

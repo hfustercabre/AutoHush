@@ -35,7 +35,7 @@ final class AddAppModel {
         case todo, current, busy, done, failed
     }
 
-    enum ReopenOutcome: Equatable {
+    enum ReopenOutcome: String, Codable, Equatable {
         case reopened, skipped
     }
 
@@ -103,7 +103,7 @@ final class AddAppModel {
         switch stage {
         case .opening, .reopening, .checking: return .busy
         case .playTimedOut, .stopped, .failed: return .failed
-        case .done(let result): return result.setup == nil ? .failed : .current
+        case .done: return choosableWays.isEmpty ? .failed : .current
         default: return .current
         }
     }
@@ -146,11 +146,24 @@ final class AddAppModel {
 
     /// The ways that worked, in every window state or in some, that AutoHush
     /// can run, the recommended first (the setup's order): the user chooses
-    /// one (U2, the user's pick, 2026-10-15).
+    /// one (U2, the user's pick, 2026-10-15). None: nothing it can use worked.
     var choosableWays: [CheckResult.WayKind] {
         guard let result, let setup = result.setup else { return [] }
-        let worked = Set(result.ways.filter { $0.mark == .works || $0.mark == .some }.map(\.kind))
-        return setup.ways.compactMap(\.kind).filter(worked.contains)
+        let worked = Set(result.ways.filter(\.worked).map(\.kind))
+        return setup.ways.compactMap(\.kind).filter { worked.contains($0) && !($0 == .panel && panelNeedsSound && antiDot) }
+    }
+
+    /// The Now Playing panel worked, but its row doesn't follow the app: only
+    /// its sound tells, which AntiDot mode doesn't hear, so it can't be chosen
+    /// then, as muting can't (the user, 2026-10-16).
+    var panelNeedsSound: Bool { result?.setup?.panelRowIsStale == true }
+
+    /// Check Again is offered in the last step: with nothing to use (beside
+    /// Mute It Instead), and beside Use when Now Playing was hidden in the
+    /// menu bar, so its panel wasn't tried (the user, 2026-10-16).
+    var offersCheckAgain: Bool {
+        guard let result else { return false }
+        return choosableWays.isEmpty || result.ways.contains { $0.mark == .menuBarHidden }
     }
 
     /// The way Use makes AutoHush use: the user's choice, else the recommended.
@@ -207,6 +220,8 @@ final class AddAppModel {
         selectedID = kept.app.id
         let traits = services.traits(kept.app.url)
         self.traits = traits
+        needsReopen = kept.needsReopen
+        reopenOutcome = kept.reopenOutcome
         stage = .done(kept.result)
         Task { [weak self] in
             guard let self else { return }
@@ -467,9 +482,10 @@ final class AddAppModel {
                 return
             }
             stage = .done(result)
-            services.keptChecks.save(KeptCheck(app: app, result: result, at: services.now()))
+            services.keptChecks.save(KeptCheck(app: app, result: result, at: services.now(),
+                                               needsReopen: needsReopen, reopenOutcome: reopenOutcome))
             // What muting needs, as it stands now (the last step may offer it).
-            if result.setup == nil, let traits {
+            if choosableWays.isEmpty, let traits {
                 Task { [weak self] in
                     guard let self else { return }
                     self.permissions = await self.services.permissions(app, traits.scriptable)
@@ -492,14 +508,18 @@ final class AddAppModel {
         run?.stop()
     }
 
-    /// After a check that stopped, failed or found no way: from playing again.
+    /// After a check that stopped or failed, or one whose last step offers
+    /// it (`offersCheckAgain`): from playing again.
     func checkAgain() {
         switch stage {
         case .stopped, .failed, .playTimedOut: waitForPlaying()
-        case .done(let result) where result.setup == nil: waitForPlaying()
+        case .done where offersCheckAgain: waitForPlaying()
         default: break
         }
     }
+
+    /// There's a check's log to show.
+    var canShowLog: Bool { services.hasLog() }
 
     /// Shows the newest check's log (after one couldn't finish).
     func showLog() {
@@ -510,10 +530,10 @@ final class AddAppModel {
     /// (the last step's Mute It Instead).
     var canMute: Bool { permissions.audio == .allowed && !antiDot }
 
-    /// The last step's Mute It Instead, when no way worked: the app is
-    /// muted while other apps play, never paused, and made the player.
+    /// The last step's Mute It Instead, when no way it can use worked: the
+    /// app is muted while other apps play, never paused, and made the player.
     func useMuting() {
-        guard let result, result.setup == nil, canMute, let app = chosen else { return }
+        guard let result, choosableWays.isEmpty, canMute, let app = chosen else { return }
         let setup = PlayerSetup(bundleID: app.bundleID, name: app.name, appURL: app.url, ways: [.mute])
         services.keptChecks.forget()
         services.use(CheckResult(ways: result.ways, setup: setup), reopenOutcome != .skipped)

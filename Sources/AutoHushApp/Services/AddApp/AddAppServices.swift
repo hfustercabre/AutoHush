@@ -42,6 +42,8 @@ struct AddAppServices {
     var checkEnded: @MainActor () -> Void
     /// Shows the newest check's log (after one couldn't finish).
     var showLog: @MainActor () -> Void = {}
+    /// Whether there's a check's log to show.
+    var hasLog: @MainActor () -> Bool = { false }
     /// Quits AutoHush and opens it again (Audio Recording allowed in System
     /// Settings applies from the next launch).
     var reopenAutoHush: @MainActor () -> Void = {}

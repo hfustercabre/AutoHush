@@ -31,6 +31,11 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
+        guard !resumesHeld else {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused until Add an App’s check ends")
+            publishPlaybackState()
+            return
+        }
         await resumeNow(id: id, retriesLeft: retriesLeft)
     }
 
@@ -42,7 +47,7 @@ extension PlaybackArbiter {
         let currentState = await livePlayerState()
         guard !isShutDown, pendingResumeID == id else { return }
         if currentState == .unknown, retriesLeft > 0 {
-            logger.info("[arbiter] \(self.player.name, privacy: .public) did not answer — trying the resume again")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             return
         }

@@ -71,6 +71,8 @@ final class UpdateController {
     var showAlert: @MainActor (@escaping @MainActor () -> Void) -> Void = { show in
         RunLoop.main.perform(inModes: [.common]) { MainActor.assumeIsolated(show) }
     }
+    /// Runs an alert and returns the button pressed. Tests replace it.
+    var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
     let logger = AutoHushLogger(category: "Updates")
 
     init(

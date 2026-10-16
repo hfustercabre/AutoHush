@@ -122,7 +122,7 @@ struct DiagnosticsReportTests {
         #expect(rows.contains(DiagnosticsSnapshot.Row(label: "Play/Pause words read", value: "No", mark: .problem)))
         #expect(rows.contains(DiagnosticsSnapshot.Row(
             label: "Last error",
-            value: "AutoHush can’t find Play/Pause in Jukebox’s menus.\nControlling the media player failed: its Play/Pause menu item wasn't found.",
+            value: "AutoHush can’t find Play/Pause in Jukebox’s menus.\nControlling the media player failed: its Play/Pause menu item wasn’t found.",
             mark: .problem)))
 
         let plain = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts())

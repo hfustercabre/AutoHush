@@ -1,5 +1,4 @@
 import Foundation
-import CheckedPlayers
 
 /// AutoHush's own playercheck (in Contents/Helpers), which Add an App…
 /// runs: a check of an app in a process of its own, so a check that ends,

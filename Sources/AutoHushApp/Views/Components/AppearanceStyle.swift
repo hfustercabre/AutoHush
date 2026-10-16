@@ -30,6 +30,13 @@ extension ShapeStyle where Self == AppearanceStyle {
     static var appWarning: AppearanceStyle {
         AppearanceStyle(light: Color(red: 0xB0 / 255, green: 0x30 / 255, blue: 0), dark: .orange)
     }
+    /// Text in the accent color the user picked, on its own tint (the
+    /// "Recommended" `HeadingBadge`, a chosen card's included): darkened in
+    /// light mode, where the system's is hard to read, enough for 4.5:1
+    /// with any of macOS's accent colors.
+    static var appAccent: AppearanceStyle {
+        AppearanceStyle(light: Color.accentColor.mix(with: .black, by: 0.45), dark: Color.accentColor)
+    }
     /// A card's background.
     static var cardFill: AppearanceStyle {
         AppearanceStyle(light: Color.black.opacity(0.05), dark: .quaternary.opacity(0.6))

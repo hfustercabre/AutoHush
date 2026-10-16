@@ -4,26 +4,34 @@ import AutoHushKit
 // AppDelegate: choosing and following the music player.
 extension AppDelegate {
     /// Makes `bundleID` the player AutoHush controls and starts over with it.
-    /// A player that isn't installed, or is chosen already, is ignored. Music
-    /// that AutoHush holds paused in the previous player stays paused: the
-    /// user is moving to another one. A player AutoHush must learn opens the
-    /// learning window, unless another window shows the steps. A suggested
-    /// web app opens "Add a Web App", filled in with its address.
+    /// A player that isn't installed, or is chosen already, is ignored, as
+    /// is one only its sound tells about while AntiDot mode is on (its tile
+    /// and row are dimmed then). Music that AutoHush holds paused in the
+    /// previous player stays paused: the user is moving to another one. A
+    /// player AutoHush must learn opens the learning window, unless another
+    /// window shows the steps. A suggested web app opens "Add a Web App",
+    /// filled in with its address.
     /// `replacing`: chosen again all the same, as an app checked again
     /// (its new setup); `asksToReopen`: false right after the user skipped
     /// reopening it in Add an App.
     func chooseMusicPlayer(_ bundleID: String, showsLearningWindow: Bool = true, replacing: Bool = false,
                            asksToReopen: Bool = true) {
         refreshPlayerOptions()
-        if let address = status.playerOptions.first(where: { $0.bundleID == bundleID })?.webAddress {
+        let option = status.playerOptions.first { $0.bundleID == bundleID }
+        if let address = option?.webAddress {
             showAddWebApp(address: address)
             return
         }
         guard bundleID != player?.bundleID || replacing,
               let chosen = players.player(bundleID: bundleID),
-              let appURL = status.playerOptions.first(where: { $0.bundleID == bundleID })?.appURL
+              let appURL = option?.appURL
         else { return }
-        logger.notice("Music player chosen: \(chosen.name, privacy: .public)")
+        // AntiDot mode hears no sound, so it can't tell how this one is.
+        if chosen.needsAudioLevels, userSettings.state.detection != .audioLevels {
+            logger.notice("\(chosen.name, privacy: .public) isn’t chosen: only its sound tells how it is, and AntiDot mode doesn’t hear it")
+            return
+        }
+        logger.notice("Media player chosen: \(chosen.name, privacy: .public)")
         setChosenPlayer(chosen)
         watchFolders(holding: appURL)
         showApps()
@@ -107,7 +115,7 @@ extension AppDelegate {
         // again makes a new one): no player is chosen any more.
         if player.kind == .safariWebApp, !options.contains(where: { $0.bundleID == player.bundleID }),
            Self.isDeleted(player.bundleID) {
-            logger.notice("\(player.name, privacy: .public) was deleted: no music player is chosen")
+            logger.notice("\(player.name, privacy: .public) was deleted: no media player is chosen")
             setChosenPlayer(nil)
             return
         }

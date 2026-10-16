@@ -32,6 +32,17 @@ extension StatePresentation {
         )
     }
 
+    /// A player AutoHush paused, kept paused while Add an App checks an app,
+    /// whose pauses and plays would otherwise resume it in their gaps.
+    static var heldForCheck: StatePresentation {
+        StatePresentation(
+            icon: .pausedForApp,
+            label: String(localized: "AutoHush: playback paused", comment: "VoiceOver label of the menu bar icon"),
+            line: String(localized: "Paused while a check runs",
+                         comment: "At the top of the menu, under the media player: AutoHush keeps it paused until Add an App’s check of another app ends")
+        )
+    }
+
     /// While something needs the user: VoiceOver says what the status line
     /// does ("AutoHush: Spotify isn't running").
     static func needingAttention(_ line: String) -> StatePresentation {
@@ -126,7 +137,7 @@ extension AppHealthState {
 struct ControlError: Equatable {
     /// E.g. "AutoHush can't find Play/Pause in TIDAL's menus."
     let text: String
-    /// E.g. "Controlling the media player failed: its Play/Pause menu item wasn't found."
+    /// E.g. "Controlling the media player failed: its Play/Pause menu item wasn’t found."
     let detail: String
 
     init(text: String, detail: String) {
@@ -191,6 +202,9 @@ extension ControlFailure {
         case .muteUnavailable:
             String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
                    comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled; %@ is the player")
+        case .hearingUnavailable:
+            String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing.",
+                   comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played; %@ is the player")
         case .nowPlayingHidden:
             String(localized: "AutoHush pauses \(player) with Now Playing in the menu bar, which is hidden: show it in \(Self.nowPlayingSettings).",
                    comment: "Why the media player (added with Add an App, paused through the menu bar's Now Playing panel) couldn't be controlled; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”")

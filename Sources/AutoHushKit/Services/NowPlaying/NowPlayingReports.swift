@@ -60,15 +60,23 @@ package final class NowPlayingReports: @unchecked Sendable {
     private var idleTimer: DispatchSourceTimer?
     private let lookBack: TimeInterval
     private let idle: TimeInterval?
+    /// `log stream`'s command, then the past since a date as a store opened
+    /// after it reads it (`nil`: the log can't be opened): tests stand in.
+    private let streamCommand: [String]
+    private let readPast: @Sendable (Date) -> [pid_t: Client]?
     private let queue = DispatchQueue(label: "AutoHush.NowPlayingReports", qos: .utility)
 
     /// Read already, whatever the account: what tests stand in for the log with.
     private var given = false
 
     /// `idleLimit` `nil`: followed until `stop` (Player Check's, for one run).
-    package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit) {
+    package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit,
+                 streamCommand: [String] = NowPlayingReports.streamCommand,
+                 readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
         self.lookBack = lookBack
         idle = idleLimit
+        self.streamCommand = streamCommand
+        self.readPast = readPast
     }
 
     /// Reports as `clients` say, never read from the log (tests).
@@ -170,8 +178,8 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     private func startFollowing(since: Date) {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/log")
-        process.arguments = ["stream", "--style", "ndjson", "--predicate", Self.streamPredicate]
+        process.executableURL = URL(fileURLWithPath: streamCommand[0])
+        process.arguments = Array(streamCommand.dropFirst())
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
@@ -193,7 +201,7 @@ package final class NowPlayingReports: @unchecked Sendable {
             stream = process
             streamID = id
         }
-        guard (try? process.run()) != nil, let store = try? OSLogStore.local() else {
+        guard (try? process.run()) != nil, let past = readPast(since) else {
             pipe.fileHandleForReading.readabilityHandler = nil
             if process.isRunning { process.terminate() }
             lock.withLock {
@@ -206,8 +214,6 @@ package final class NowPlayingReports: @unchecked Sendable {
             }
             return
         }
-        var past: [pid_t: Client] = [:]
-        _ = Self.read(store, from: since, into: &past)
         let kept = lock.withLock { () -> Bool in
             starting = false
             guard streamID == id else { return false }
@@ -279,6 +285,16 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     private static let streamPredicate =
         #"process == "mediaremoted" AND (composedMessage CONTAINS "nowPlayingClient" OR composedMessage CONTAINS "PlaybackState changed")"#
+    package static let streamCommand = ["/usr/bin/log", "stream", "--style", "ndjson", "--predicate", streamPredicate]
+
+    /// What the daemon wrote since `start`, from a store opened now; `nil`
+    /// when the log can't be opened.
+    package static func readPast(since start: Date) -> [pid_t: Client]? {
+        guard let store = try? OSLogStore.local() else { return nil }
+        var past: [pid_t: Client] = [:]
+        read(store, from: start, into: &past)
+        return past
+    }
 
     /// Reads what MediaRemote's daemon wrote in `store` from `start` into
     /// `clients`, by process: each client it creates and removes, and each

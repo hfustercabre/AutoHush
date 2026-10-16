@@ -5,12 +5,21 @@ import AppKit
 /// Return presses.
 @MainActor
 enum InfoAlert {
-    static func show(_ title: String, _ message: String) {
+    /// `run`: how the alert runs (`runInFront`); tests replace it.
+    static func show(_ title: String, _ message: String,
+                     run: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront) {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
+        _ = run(alert)
+    }
+
+    /// Brings AutoHush to the front and runs `alert` until a button closes
+    /// it, which it returns. Code that runs alerts takes it as a runner that
+    /// tests replace, since a modal alert waits for a person.
+    static func runInFront(_ alert: NSAlert) -> NSApplication.ModalResponse {
         NSApp.activate()
-        alert.runModal()
+        return alert.runModal()
     }
 }

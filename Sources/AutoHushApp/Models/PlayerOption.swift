@@ -31,14 +31,15 @@ struct PlayerOption: Equatable, Identifiable {
     /// Its icon carries the browser's, and VoiceOver says it (`spokenName`).
     var browserName: String?
     /// AntiDot mode is on, and only this app's sound tells how it is
-    /// (`needsAudioLevels`), which AntiDot mode never hears, so it can't be chosen. It's
-    /// offered dimmed, saying why (`[PlayerOption].inAntiDotMode(_:)` sets it).
+    /// (`needsAudioLevels`), which AntiDot mode never hears, so it can't be
+    /// chosen. It's offered dimmed, saying why (`[PlayerOption].inAntiDotMode(_:)`
+    /// sets it).
     var isUnavailableInAntiDotMode = false
 
     var id: String { bundleID }
     var isInstalled: Bool { appURL != nil }
     /// A click does something: chooses the player, or adds the suggested web
-    /// app. Not in AntiDot mode for an app that can only be muted.
+    /// app. Not in AntiDot mode for an app only its sound tells about.
     var isClickable: Bool { (isInstalled || webAddress != nil) && !isUnavailableInAntiDotMode }
 
     /// A player's placeholder is its own, so it doesn't tell options apart.
@@ -245,16 +246,17 @@ struct PlayerOption: Equatable, Identifiable {
         String(localized: "Muted only", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)")
     }
 
-    /// Under an app that can only be muted while AntiDot mode is on, on its
-    /// row in the menu: it can't be chosen (`antiDotModeReason` says why).
+    /// Under an app only its sound tells about (`needsAudioLevels`) while
+    /// AntiDot mode is on, on its row in the menu: it can't be chosen
+    /// (`antiDotModeReason` says why).
     static var antiDotModeLabel: String {
-        String(localized: "Not in AntiDot mode", comment: "The menu's rows of media players: under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it (AntiDot mode, the detection that hides the purple recording indicator)")
+        String(localized: "Not in AntiDot mode", comment: "The menu's rows of media players: under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound (AntiDot mode, the detection that hides the purple recording indicator)")
     }
 
     /// The same on its tile (Settings → General, the welcome window): a
     /// short `antiDotModeLabel`.
     static var antiDotModeTileLabel: String {
-        String(localized: "Not in AntiDot", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it. Keep it short (about 14 characters at most)")
+        String(localized: "Not in AntiDot", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)")
     }
 
     /// Where an app added with Add an App is removed: its tile's × (help tag,
@@ -334,7 +336,7 @@ extension [PlayerOption] {
     }
 
     /// These players as offered with AntiDot mode `on` or off: while it's
-    /// on, the apps that can only be muted can't be chosen
+    /// on, the apps only their sound tells about can't be chosen
     /// (`PlayerOption.isUnavailableInAntiDotMode`).
     func inAntiDotMode(_ on: Bool) -> [PlayerOption] {
         map { option in

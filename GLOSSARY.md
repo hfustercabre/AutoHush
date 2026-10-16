@@ -118,20 +118,21 @@ window. _Avoid_: test (that's the code's tests), scan.
 **Way** (`PlayerSetup.Way`, `CheckResult.WayKind`): one means of pausing
 and playing an app: its script, its menu, its page or the panel; or, when
 none works and the user chooses it, muting it while other apps play
-(`.mute`, its state kept by `MuteState`). A check
-says how each did: in every window state, in some, in none, not there, not
-tried or not checked. _Avoid_: method.
+(`.mute`, its state kept by `MuteState`). A check says how each did: in
+every window state, in some, in none, not there, not tried or not checked.
+_Avoid_: method.
 
 **Window state**: where an app's window is while a check presses it: in
-view ("seen"), covered, on another desktop, covered there, full screen,
+view, covered, on another desktop, covered there, full screen,
 minimized or hidden. A way that works in every state works wherever the
 user leaves the window.
 
 **Checked app** (`CheckedPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
-controlled the ways its check found, the surest first, a press handed to
-the next way when one fails. What the check found is kept as its
-**player setup** (`PlayerSetup`). _Avoid_: custom player.
+controlled the one way the user chose among those its check found (a setup
+kept before that choice may hold several, a press handed to the next when
+one fails). That way is kept as its **player setup** (`PlayerSetup`).
+_Avoid_: custom player.
 
 **Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,
 but was opened without what it needs to be controlled wherever its window

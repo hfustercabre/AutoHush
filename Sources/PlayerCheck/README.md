@@ -14,10 +14,10 @@ It's a target of AutoHush's package and runs AutoHush's own code wherever
 the two do the same thing (Apple events, scripted states, playback menus and
 their words, learning a page's Play/Pause, sound, windows on other
 desktops, Now Playing), so what it finds holds for AutoHush. AutoHush
-controls an added app the ways the check found (`CheckedPlayer`): players
-of documents (QuickTime Player), Electron, CEF, Flutter and Tauri pages and
-Chromium browsers' web apps, what apps report to Now Playing, and the Now
-Playing panel. The check keeps its own code for those, since it reports
+controls an added app the way the user chose among those the check found
+(`CheckedPlayer`): players of documents (QuickTime Player), Electron, CEF,
+Flutter and Tauri pages and Chromium browsers' web apps, what apps report
+to Now Playing, and the Now Playing panel. The check keeps its own code for those, since it reports
 more than AutoHush needs: each try, in each window state, and why it
 failed.
 
@@ -153,7 +153,15 @@ Each step is a section of the report, in this order:
    the one showing its song (from its windows' titles, its page's player
    bar or its AppleScript current track), else the row it changed with
    before, else, pausing, the only one playing while the app holds Now
-   Playing; a row chosen by memory is confirmed by the app itself.
+   Playing, as AutoHush chooses it (`PanelRows.row`); a row chosen by
+   memory is confirmed by the app itself. The
+   panel's icon is found in the menu bar's own windows, whatever covers it.
+   With Now Playing hidden in the menu bar, the tool shows it for the
+   moment of a press, then puts the setting back (unless the user changed
+   it meanwhile), as AutoHush does; one left shown by a check cut short is
+   put back by AutoHush at its next start, or by the tool as it stops. A
+   row that never shows whether its app plays (it always says paused) is
+   pressed as a toggle, when the app's sound says otherwise.
 
 A way that leaves the app paused is followed by playing it again by a way
 that worked, before anyone is asked; a track that ends during a trial is
@@ -167,11 +175,13 @@ AppleScript state, what it reports to Now Playing (from macOS's log,
 administrators only), its page's word (only while current: a WebKit page's
 anywhere, a Chromium or Flutter page's only on screen), its level, its
 keep-awake assertion, its menu's state; else its menu's word changing or its
-sound. A Chromium browser's web app has no level (its sound is the
-browser's, all its pages together); its keep-awake sign counts the browser's
-"Playing audio" assertions instead (below). Its state notification (`<bundle
-ID>.PlaybackStateChanged`, `.playerInfo`, …) confirms too, and the verdict
-names the one that announced both (with `--developer`).
+sound. A Now Playing row that doesn't follow its app is judged by the
+app's level alone. A Chromium browser's web app has no level (its sound is
+the browser's, all its pages together); its keep-awake sign counts the
+browser's "Playing audio" assertions instead (below). Its state
+notification (`<bundle ID>.PlaybackStateChanged`, `.playerInfo`, …)
+confirms too, and the verdict names the one that announced both (with
+`--developer`).
 
 ## Pages kept out of Accessibility
 
@@ -276,7 +286,8 @@ the window is away from where it was, or in a trial, the check finishes the
 step under way (a trial plays the app again first; a move; the page read; a
 wait ends at once), then puts the window back and stops; before anything
 moved, it stops at once. Either way the switches it turned on are set back,
-and the app that was in front comes back.
+the app that was in front comes back, and a Now Playing shown for a press
+is hidden again.
 
 ## Playing and pausing (`--play`, `--pause`)
 
@@ -296,6 +307,9 @@ checks use `~/Library/Caches/com.autohush.AutoHush/PlayerCheck`):
   and its Now Playing panel row.
 - `words.json`: each app's own words for Play and Pause, per copy and
   version.
+
+While a hidden Now Playing is shown for a press, the setting to put back is
+kept too, where AutoHush's next start finds it, until it's put back.
 
 In `~/Library/Logs/PlayerCheck/`, or `--logs`' folder (AutoHush's checks
 use `~/Library/Logs/AutoHush/Checks`): every check, press and relaunch,

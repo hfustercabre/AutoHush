@@ -13,6 +13,8 @@ protocol HeldMonitoring: AnyObject {
     func setAutoPauseEnabled(_ enabled: Bool)
     func setIgnoredSources(_ ids: Set<String>)
     func setDetectionMethod(_ method: DetectionMethod)
+    /// See `PlaybackArbiter.holdResumes`.
+    func holdResumes(_ held: Bool)
 }
 
 /// The monitoring of players AutoHush held paused when the user chose
@@ -137,6 +139,9 @@ final class HeldPauses {
     }
     func setIgnoredSources(_ ids: Set<String>) { held.forEach { $0.monitoring.setIgnoredSources(ids) } }
     func setDetectionMethod(_ method: DetectionMethod) { held.forEach { $0.monitoring.setDetectionMethod(method) } }
+    /// Held, each keeps its player paused, as the chosen player's
+    /// monitoring does (`PlayerSession.holdResumes`).
+    func holdResumes(_ held: Bool) { self.held.forEach { $0.monitoring.holdResumes(held) } }
 
     /// `bundleID`'s player is chosen again: its held monitoring stops, and
     /// `true` says the new one takes the pause back over.

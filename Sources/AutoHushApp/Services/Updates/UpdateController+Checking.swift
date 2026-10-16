@@ -84,6 +84,6 @@ extension UpdateController {
     private func presentFailure(_ reason: String) async {
         await beforePresenting()
         let title = String(localized: "Couldn’t Check for Updates", comment: "Alert title")
-        showAlert { InfoAlert.show(title, reason) }
+        showAlert { InfoAlert.show(title, reason, run: self.runAlert) }
     }
 }

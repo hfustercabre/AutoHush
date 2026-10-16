@@ -25,6 +25,15 @@ struct MusicPlayerErrorTests {
         #expect(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")).errorDescription
                 == "Controlling the media player failed: Not understood (OSStatus -1708).")
         #expect(MusicPlayerError.playerCommandFailed(.menuItemNotFound).errorDescription
-                == "Controlling the media player failed: its Play/Pause menu item wasn't found.")
+                == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
+    }
+
+    @Test("its English, shown in the control-error alert, has no straight apostrophe")
+    func curlyApostrophes() {
+        let failures: [ControlFailure] = [.menuItemNotFound, .stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored,
+                                          .muteUnavailable, .hearingUnavailable, .nowPlayingHidden]
+        let errors: [MusicPlayerError] = [.automationPermissionDenied, .accessibilityPermissionDenied, .playerNotRunning,
+                                          .playerNotResponding, .stillLearning] + failures.map { .playerCommandFailed($0) }
+        #expect(errors.allSatisfy { $0.errorDescription?.contains("'") == false })
     }
 }

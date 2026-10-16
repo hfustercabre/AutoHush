@@ -40,12 +40,14 @@ extension UpdateController {
             InfoAlert.show(
                 String(localized: "AutoHush Is Up to Date", comment: "Alert title"),
                 String(localized: "You have the latest version, \(current.description).",
-                       comment: "Alert text; %@ is the installed version")
+                       comment: "Alert text; %@ is the installed version"),
+                run: runAlert
             )
         case .noReleases:
             InfoAlert.show(
                 String(localized: "No Releases Yet", comment: "Alert title"),
-                String(localized: "No AutoHush release has been published on GitHub yet.", comment: "Alert text")
+                String(localized: "No AutoHush release has been published on GitHub yet.", comment: "Alert text"),
+                run: runAlert
             )
         }
     }
@@ -66,8 +68,7 @@ extension UpdateController {
             if button.choice == .later { added.keyEquivalent = "\u{1b}" }
         }
         if let notes = release.notes { alert.accessoryView = Self.notesView(notes) }
-        NSApp.activate()
-        let index = alert.runModal().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        let index = runAlert(alert).rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
         guard prompt.buttons.indices.contains(index) else { return }
         switch prompt.buttons[index].choice {
         case .install: Task { await install(release, userInitiated: true) }
@@ -115,8 +116,7 @@ extension UpdateController {
         alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
         alert.addButton(withTitle: String(localized: "Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)"))
             .keyEquivalent = "\u{1b}" // Escape; Return opens the page
-        NSApp.activate()
-        if alert.runModal() == .alertFirstButtonReturn {
+        if runAlert(alert) == .alertFirstButtonReturn {
             openURL(release.pageURL)
         }
     }

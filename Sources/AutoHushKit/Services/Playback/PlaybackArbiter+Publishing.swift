@@ -21,7 +21,8 @@ extension PlaybackArbiter {
     }
 
     private func mapPlaybackState() -> PlaybackState {
-        if pausedByUs, !activeSources.isEmpty { return .pausedByMonitor }
+        // Held, our pause lasts while no app plays too (see `holdResumes`).
+        if pausedByUs, !activeSources.isEmpty || resumesHeld { return .pausedByMonitor }
         if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
         if playerState == .playing, !playsLocally { return .playingElsewhere }
 

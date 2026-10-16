@@ -7,7 +7,8 @@ import CheckedPlayers
 /// stop arrives on: the switches it turned on (and those it found on, set
 /// back on), and the app that was in front when it brought the checked one
 /// forward. (The `log stream` it follows Now Playing with ends with
-/// `nowPlayingReports.stop()`.)
+/// `nowPlayingReports.stop()`; a Now Playing shown for a press is kept in
+/// `nowPlayingRecord`.)
 final class Changes: @unchecked Sendable {
     private let lock = NSLock()
     private var switches: [String] = []
@@ -128,6 +129,8 @@ func stopNow(_ code: Int32) -> Never {
     inputBlock.end()
     switchesBackOff()
     if let front = changes.frontToRestore { bringForward(front) }
+    // Now Playing, when a press shows it meanwhile (the user hid it).
+    NowPlayingSetting.restoreIfLeft(defaults: nowPlayingRecord)
     nowPlayingReports.stop()
     fflush(nil)
     _exit(code)

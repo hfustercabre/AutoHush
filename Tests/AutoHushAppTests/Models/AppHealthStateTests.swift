@@ -36,7 +36,7 @@ struct AppHealthStateTests {
     func controlErrorWords() {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
         #expect(menu.text == "AutoHush can’t find Play/Pause in TIDAL’s menus.")
-        #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn't found.")
+        #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
         #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")), player: "Spotify").text
                 == "Spotify answered with an error (-1708).")
         #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn’t responding.")

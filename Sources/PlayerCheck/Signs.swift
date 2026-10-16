@@ -161,7 +161,7 @@ struct Sign {
         return true
     }
     countPagesBeforePlaying(pid, saying: true)
-    say(CheckReportLine.waiting(.play, "start playing something in \(appName); the test goes on as soon as it plays", minutes: Int(seconds / 60))
+    say(CheckReportLine.waiting("start playing something in \(appName); the test goes on as soon as it plays", minutes: Int(seconds / 60))
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
     // Whoever runs the check may need the mouse and keyboard for it.
@@ -196,9 +196,11 @@ struct Sign {
 /// the state notifications announced is said after each. A play that didn't
 /// take is pressed once more (still a failure, said so in `trialProblem`); a
 /// track that ended meanwhile sets `trialTrackEnded`. A stop meanwhile waits
-/// until it plays again.
-@MainActor func trial(_ label: String, pid: pid_t, pause: () -> Bool, play: () -> Bool, undo: (() -> Void)? = nil,
-                      whilePaused: (() -> Void)? = nil) -> TrialResult {
+/// until it plays again. `pause` and `play` are given its level as the
+/// trial heard it last (nil when it wasn't measured), for a press that needs
+/// it (the panel's, for a row that doesn't follow the app).
+@MainActor func trial(_ label: String, pid: pid_t, pause: (_ heard: Bool?) -> Bool, play: (_ heard: Bool?) -> Bool,
+                      undo: (() -> Void)? = nil, whilePaused: (() -> Void)? = nil) -> TrialResult {
     stopState.setInTrial(true)
     defer { stopState.setInTrial(false) }
     trialTrackEnded = false
@@ -206,7 +208,7 @@ struct Sign {
     let sign = Sign(before: before)
     say("  \(label): before, \(before.line)")
     let pausedAt = Date()
-    guard pause() else { say("    couldn't send it"); return .didNotPause }
+    guard pause(before.audible) else { say("    couldn't send it"); return .didNotPause }
     let after = waitFor(4, pid: pid, level: sign.byLevel, until: sign.paused)
     guard sign.paused(after) else {
         say("\(CheckReportLine.afterPause): \(after.line) → it didn't pause in 4 s")
@@ -227,7 +229,7 @@ struct Sign {
             trialProblem = "it paused, but played again only after more than 4 s"
             return .pausedOnly
         }
-        guard play() else {
+        guard play(now.audible) else {
             say("    pressed once more: couldn't play it again either")
             return .pausedOnly
         }
@@ -244,7 +246,7 @@ struct Sign {
         return .pausedOnly
     }
     let playedAt = Date()
-    guard play() else {
+    guard play(after.audible) else {
         say("    couldn't play it again")
         return pressedOnceMore()
     }

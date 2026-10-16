@@ -2,10 +2,10 @@ import Foundation
 import ScriptablePlayers
 import WebAppPlayers
 
-/// What a check found for an app AutoHush has no module for: the ways that
-/// paused and played it, the surest first, and what reads its state. Kept
-/// (`PlayerSetupStore`), so the app is offered as a player from then on
-/// (the user, 2026-10-15: apps are added through Player Check).
+/// What a check found for an app AutoHush has no module for: the ways to
+/// pause and play it (kept, the one the user chose), and what reads its
+/// state. Kept (`PlayerSetupStore`), so the app is offered as a player from
+/// then on (the user, 2026-10-15: apps are added through Player Check).
 package struct PlayerSetup: Codable, Equatable, Sendable {
     /// A way to pause and play it, as the check tried them.
     package enum Way: Codable, Equatable, Sendable {
@@ -41,7 +41,9 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     package var name: String
     /// Where the app was when it was checked.
     package var appURL: URL
-    /// The ways that worked, the surest first; the panel, if any, last.
+    /// The surest first, the panel, if any, last: in a check's result, the
+    /// ways that worked; kept, only the one the user chose at Use (an older
+    /// setup may hold several, tried in that order).
     package var ways: [Way]
     /// The notification that announced its pauses and plays in the check.
     package var stateNotification: String?
@@ -82,11 +84,14 @@ package protocol PlayerSetupStore: Sendable {
     func setups() -> [PlayerSetup]
     func save(_ setup: PlayerSetup)
     func forget(_ bundleID: String)
+    /// Changes the kept setup of `bundleID`, if one is kept (a setup the
+    /// user removed isn't added back).
+    func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void)
 }
 
 extension PlayerSetupStore {
-    /// Changes the kept setup of `bundleID`, if one is kept (a setup the
-    /// user removed isn't added back).
+    /// Read, changed and saved in turn; the preferences' store does it
+    /// under its lock.
     package func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
         guard var setup = setups().first(where: { $0.bundleID == bundleID }) else { return }
         change(&setup)
@@ -129,6 +134,21 @@ package struct DefaultsPlayerSetupStore: PlayerSetupStore {
         Self.lock.withLock {
             var stored = defaults.dictionary(forKey: Self.key) ?? [:]
             guard stored.removeValue(forKey: bundleID) != nil else { return }
+            defaults.set(stored, forKey: Self.key)
+        }
+    }
+
+    /// Read, changed and saved under the lock: a change (a panel row kept,
+    /// a moved app's place) can't bring back a setup the user removed
+    /// meanwhile, nor put its old ways over a new check's.
+    package func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
+        let defaults = defaults
+        Self.lock.withLock {
+            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
+            guard let data = stored[bundleID] as? Data, var setup = try? JSONDecoder().decode(PlayerSetup.self, from: data) else { return }
+            change(&setup)
+            guard let changed = try? JSONEncoder().encode(setup) else { return }
+            stored[bundleID] = changed
             defaults.set(stored, forKey: Self.key)
         }
     }

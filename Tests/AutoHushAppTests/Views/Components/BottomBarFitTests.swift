@@ -5,7 +5,9 @@ import Testing
 /// "Short slots stay short"): in every language of the String Catalog, their
 /// texts must fit the narrowest window or page. Measured as the bars lay
 /// them out: the app's text sizes, a chip's padding on Liquid Glass (14 pt a
-/// side, the wider), 8 pt between items, the bar's side margins.
+/// side, the wider), 8 pt between items, the bar's side margins. The line
+/// under a player's name on its tile (`PlayerTiles`) is measured the same
+/// way, as a bar of one text.
 @Suite("Bottom bars fit in every language")
 struct BottomBarFitTests {
     /// One item of a bar: a text, as a chip (`chip`) or plain, and the room a
@@ -56,7 +58,18 @@ struct BottomBarFitTests {
             Item(keys: [], chip: false, extra: 36), // the switch
             Item(keys: ["Follow new entries"], size: 13, chip: false), Item(keys: ["Save…"]), Item(keys: ["Copy Logs", "Copied"]),
         ], slots: 5),
+    ] + ["Click to add", "Not installed", "Not in AntiDot", "Muted only"].map {
+        Bar(name: "A player's tile: \($0)", width: tileLine, margin: 0, items: [Item(keys: [$0], size: 11, chip: false)], slots: 1)
+    } + [ // a HeadingBadge: semibold, 6 pt of capsule a side
+        Bar(name: "A player's tile: Untested", width: tileLine, margin: 0,
+            items: [Item(keys: ["Untested"], size: 11, weight: .semibold, chip: false, extra: 12)], slots: 1),
     ]
+
+    /// The room for the line under a player's name on its tile, on Settings'
+    /// narrowest page (480 pt, 16 pt margins): three tiles a row, 8 pt apart,
+    /// in a Liquid Glass card (14 pt padding, the wider); in each, 6 pt in,
+    /// the 24 pt icon, 8 pt, the text, 6 pt in.
+    static let tileLine: CGFloat = (480 - 2 * 16 - 2 * 14 - 2 * 8) / 3 - (6 + 24 + 8 + 6)
 
     /// Every key's value per language, English as the key.
     static let catalog: [String: [String: String]] = {

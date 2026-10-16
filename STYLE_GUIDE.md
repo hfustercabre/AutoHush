@@ -58,7 +58,8 @@ control that shows or hides what's under it (Expanded, Collapsed);
 `WindowHeader.swift`, `ChecklistStepRow.swift`, `PermissionButton.swift`,
 `NoteLabel.swift`, `SearchField.swift`, `IconChipButton.swift`,
 `SymbolTile.swift`, `SupportLine.swift`, `BadgedHeading.swift`,
-`WebAppsHeading.swift` and `OtherAppsHeading.swift` the components.
+`WebAppsHeading.swift` and `OtherAppsHeading.swift` the components, and
+`PlayerAlerts.swift` the alert before an added app is removed.
 
 ## Layout
 
@@ -86,9 +87,9 @@ Use the `Font` tokens. Never set a text's size by hand.
 | Token | Size | For |
 |---|---|---|
 | `appLargeTitle` | 24 bold | The app's name in About |
-| `appBody` | 14 | Plain text and row titles (the default) |
+| `appBody` | 14 | Plain text, row titles, and buttons in Settings and the windows (the default) |
 | `appHeadline` | 14 bold | A card's title (the player's name in the menu), Diagnostics' headings |
-| `appCallout` | 13 | Buttons, values, notes, search fields |
+| `appCallout` | 13 | The menu's chips, values, notes, search fields |
 | `appSubheadline` | 12 | The status line under the menu card's title |
 | `appCaption` | 11 | Descriptions under rows, section labels, captions |
 | `appSidebarRow` | 16 | A page's name in Settings' sidebar |
@@ -122,14 +123,15 @@ that thing as it looks, in both modes.
 | `.primary` | system | system | Text and symbols |
 | `.appSecondary` | black 68% | system secondary | Descriptions, section labels, values, captions |
 | `.appWarning` | #B03000 | system orange | Things that need the user: warning symbols, a status line with a problem |
+| `.appAccent` | accent mixed 45% with black | accent color | The accent color as text on its own tint: the "Recommended" `HeadingBadge` (4.5:1 or more with every macOS accent, inside a chosen card too) |
 | `.appSuccess` | system green | system green | Symbols for what works (Diagnostics, the welcome window's permissions); never text, too faint in light mode |
 | accent color | system | system | Switches that are on, the selected chip, links, the main button |
 | `.cardFill` / `.cardBorder` | black 5% / 10% | quaternary 60% / none | A card's background and outline |
 | `.chipFill` / `.chipHoverFill` | black 8% / 13% | quaternary 60% / quaternary | A chip at rest / under the pointer; search fields |
 | `.switchOffFill` | black 26% | quaternary | A switch's track while off |
 | `.warningBadgeFill` | deep orange 12% | orange 18% | Behind a `HeadingBadge` |
-| `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Apps) |
-| `.selectedTileFill` | accent 18% | accent 22% | Behind the chosen player's tile (`PlayerTiles`) |
+| `.selectedRowFill` | accent 14% | accent 18% | Behind a list row the user selected (Settings → Apps); the accent `HeadingBadge`'s capsule |
+| `.selectedTileFill` | accent 18% | accent 22% | Behind the chosen player's tile (`PlayerTiles`), the selected row of Choose an App's list, and the chosen choice card |
 | `.sidebarSelectionFill` | black 10% | quaternary | Behind the page shown in Settings' sidebar |
 | `.symbolTileFill` | accent 16% | accent 20% | The square behind a `SymbolTile`'s symbol (the symbol is the accent color) |
 
@@ -161,9 +163,9 @@ that thing as it looks, in both modes.
 | The card's status line with `info.circle` | When the media player couldn't be controlled ("Can’t control TIDAL right now", "Couldn’t pause — Safari is playing"), an `info.circle` in `.appSecondary` ends the line, kept with its last word by a no-break space; a click on the line closes the menu and opens an `InfoAlert`: what failed as its title ("Can’t Control TIDAL"), the cause in words, then the log's English for a bug report. Diagnostics shows the same as "Last error". |
 | The card's Reopen and Unmute | A player that must be reopened to be controlled wherever its window is (an Electron app opened without its option) says "<player> needs reopening" in orange, with **Reopen** under it (the line names the player), whose tooltip says why. Choosing such a player asks first, in a warning alert: "Reopen <player>?", why, the checkbox "Always reopen <player> this way" (the alert's own suppression checkbox: from then on it's reopened without asking), then **Reopen <player>** (Return) and **Cancel** (Escape), which leaves the card saying so. A player muted instead of paused says "Muted — Safari is playing", with **Unmute**, which lets it be heard until the other apps stop. |
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up (22 × 20 pt, corner 6): the sort arrow, the magnifiers. |
-| `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Checked by you" after "Other Apps", "Untested" after an untested web app, "Needed" after a permission a step can't go without. In the accent color (`accent: true`, on `.selectedRowFill`) for a word that recommends: "Recommended" beside the way Add an App suggests. |
+| `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Checked by you" after "Other Apps", "Untested" after an untested web app, "Needed" after a permission a step can't go without, while it's missing. In `.appAccent` (`accent: true`, on `.selectedRowFill`) for a word that recommends: "Recommended" beside the way Add an App suggests. |
 | `BadgedHeading` | A heading with a `HeadingBadge` after it and a note under it, over a group of players: `WebAppsHeading` and `OtherAppsHeading` ("Other Apps", "Checked by you", "Controlled the ways a check found to work.") are made of it. |
-| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it, shorter where it must fit: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, "Not installed" (dimmed), or, for an app added through a check that can only be muted, "Muted only" (its menu row: "Muted instead of paused"). In AntiDot mode, which hears no sound, such an app can't be chosen, nor one only its sound tells (a Now Playing row that never shows its state, Qobuz's): it's dimmed, saying "Not in AntiDot" ("Not in AntiDot mode" on its menu row), with why in its tooltip and VoiceOver hint; chosen already, its tile stays outlined. The other way round, while it's the player, Settings → Detection's AntiDot mode switch is off and dimmed, with "Unavailable with <player>: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn't use it." (or "…: only its sound tells whether it plays, which needs Audio Recording, and AntiDot mode doesn't use it.") under it, and no "Use AntiDot Mode Instead" is offered. Under the pointer, an added app's tile shows a × in its top-right corner (`xmark.circle.fill`, 16 pt, white on `.appSecondary`), its help tag "Remove <app>…" and a VoiceOver action of that name; it asks first (`PlayerAlerts.remove`). In the menu, holding Option turns each added app's row into "Remove <app>…" (an alternate item). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
+| `PlayerTiles` | Where players are offered in a window (Settings → General, the welcome window): a card of tiles, three a row, each 44 pt tall: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile (`plus`). A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` with what a row would say under it, shorter where it must fit: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, "Not installed" (dimmed), or, for an app added through a check that can only be muted, "Muted only" (its menu row: "Muted instead of paused"). In AntiDot mode, which hears no sound, such an app can't be chosen, nor one only its sound tells (a Now Playing row that never shows its state, Qobuz's): it's dimmed, saying "Not in AntiDot" ("Not in AntiDot mode" on its menu row), with why in its tooltip and VoiceOver hint; chosen already, its tile stays outlined. The other way round, while it's the player, Settings → Detection's AntiDot mode switch is off and dimmed, with "Unavailable with <player>: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn't use it." (or "…: only its sound tells whether it plays, which needs Audio Recording, and AntiDot mode doesn't use it.") under it, and no "Use AntiDot Mode Instead" is offered. Under the pointer, or while it has the keyboard's focus, an added app's tile shows a × in its top-right corner (`xmark.circle.fill`, 16 pt, white on `.appSecondary`), with its help tag "Remove <app>…"; a right-click offers "Remove <app>…" too, and VoiceOver gets it as an action. It asks first (`PlayerAlerts.remove`: **Remove**, the default button, which Return presses, and **Cancel**, Escape). Removing the chosen player opens the welcome window, to choose another. In the menu, holding Option turns each added app's row into "Remove <app>…" (an alternate item). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
 | `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In the menu it's a drawn row (`NSMenuItem.webAppsHeading`), since a section header can't show a badge; "Supported Apps" over the apps is drawn the same way, so the two match. |
 | Pop-ups | The system's pop-up (`NSPopUpButton` or a SwiftUI `Picker` with `.menu`), always **without a border**: `isBordered = false` or `.buttonStyle(.borderless)`. |
 | `SearchField` | Every search. Its ✕ closes the search or, when the search can't close, clears it. |
@@ -176,9 +178,9 @@ that thing as it looks, in both modes.
 | `RestoreDefaultsButton` | Under a page's cards on the right: sets that page's settings back (Detection's timings, or the fades), dimmed while they're the defaults. |
 | `SupportLine` | "Would you like to support me?" with its link, in About and, compact, at the foot of Settings' sidebar. |
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Manually"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
-| `NumberedStepRow` | A step of a window whose steps go in order and are few (Add an App): its number in a circle while it's to come (`N.circle`, `.appSecondary`), filled with the accent color while it's the one to do (`N.circle.fill`, title semibold), a check in `.appSuccess` once done (title in `.appSecondary`), a spinner while AutoHush does it, an orange `xmark.circle.fill` once it failed. All marks are 18 pt wide, so the titles line up. Under the title: its lines (`.captionStyle()`), what it needs (a list, permission rows, the ways found), a warning (`NoteLabel`), then its button, blue for the way forward (Return presses it), grey for another way on ("Skip"). The whole window shows every step from the start, so what's coming is clear before it begins. |
-| Choice cards | Choosing one of a few options that each need a line of why (Add an App's last step, the ways that worked): each a card (corner 10) with its mark, name and grey note, outlined in `.separator` (1 pt); the chosen one on `.selectedTileFill`, outlined in the accent color (2 pt), as a chosen tile. The suggested one comes first, with an accent "Recommended" `HeadingBadge`, and is chosen until another is. Options that can't be chosen are listed under them, not as cards, dimmed (60 %), each with why. The step's main button acts on the chosen one. |
-| A warning window before a takeover | Before AutoHush takes over the Mac (Add an App's check): its own window, titled for what it does ("Check Deezer"), the app's 56 pt icon, what happens and for how long, pictures of it (`SymbolTile`s for the window's states, a drawn dimmed screen), then **Cancel** and the action in blue ("Start the Check"). Nothing starts until that button. |
+| `NumberedStepRow` | A step of a window whose steps go in order and are few (Add an App): its number in a circle while it's to come (`N.circle`, `.appSecondary`), filled with the accent color while it's the one to do (`N.circle.fill`, title semibold), a check in `.appSuccess` once done (title in `.appSecondary`), a spinner while AutoHush does it, an orange `xmark.circle.fill` once it failed. All marks are 18 pt wide, so the titles line up. Under the title: its lines (`.captionStyle()`), what it needs (a list, permission rows, the ways found), a warning (`NoteLabel`), then its button, blue for the way forward (Return presses it), grey for another way on ("Skip"). The keyboard's focus moves to the main control of the step to do now. A failed check's **Show Log…** is dimmed while there's no log. The whole window shows every step from the start, so what's coming is clear before it begins. |
+| Choice cards | Choosing one of a few options that each need a line of why (Add an App's last step, the ways that worked): each a card (corner 10) with its mark, name and grey note, outlined in `.separator` (1 pt); the chosen one on `.selectedTileFill`, outlined in the accent color (2 pt), as a chosen tile. The suggested one comes first, with an accent "Recommended" `HeadingBadge`, and is chosen until another is. Options that can't be chosen are listed under them, not as cards, dimmed (60%), each with why (for one not checked, what was missing); in AntiDot mode, that includes a way only the app's sound tells about. Notes are fragments, without periods. The step's main button acts on the chosen one; while Now Playing is hidden in the menu bar, a grey **Check Again** sits beside it. |
+| A warning window before a takeover | Before AutoHush takes over the Mac (Add an App's check): its own window, titled for what it does ("Check Deezer"), the app's 56 pt icon, what happens and for how long, pictures of it (`SymbolTile`s for the window's states, in a grid of 4 columns; a drawn dimmed screen), then **Cancel** and the action in blue ("Start the Check"). Nothing starts until that button. |
 | A check's panel | While AutoHush takes over the Mac: a borderless panel at the bottom right of the main display, on every desktop, never taking the keyboard: the app's icon, "Checking <app>…" (two lines at most) with what it does, **Stop**; what it asks of the user on an orange line with the time left; the window states as segments, the one under test and what's pressed; and, while the mouse and keyboard are blocked, a line saying so (`hand.raised`, orange). The screen dims (black at 50%) except the panel while input is blocked. |
 | `CountdownBanner` | How long is left to do a step, as a whole sentence ("You have 0:45 to pause it and click It’s Paused."): semibold `.appCallout` in `.appWarning` with a timer, on a `.warningBadgeFill` rounded line, above the step's button. |
 | `PermissionButton` | The button that allows a missing permission, labeled for where it stands: "Open <player>" (Automation is asked only while the player runs), "Allow…" or the permission's "Allow … Access…" (macOS's prompt when it hasn't asked, else System Settings), "Reopen AutoHush" (Audio Recording switched on in System Settings). Nothing once it's allowed. `prominent` makes it the blue chip when it's the window's next step. |
@@ -195,12 +197,13 @@ the user to click again. Audio Recording always offers "Use AntiDot Mode
 Instead" beside it.
 
 **Permissions a step can partly go without** (Add an App's): each row says
-whether it's **Needed** (`HeadingBadge`) or *Optional* (grey caption) after
-its name, and what it's used for under it. While one that's needed is
-missing, a `NoteLabel` says why it's needed and there's no Continue. While
-only optional ones are missing, a `NoteLabel` says what happens without each,
-then "Allow it now, or go on without it.", with **Continue** (blue) under it;
-with everything allowed, the step goes on by itself.
+whether it's **Needed** (`HeadingBadge`, only while it's missing) or
+*Optional* (grey caption) after its name, and what it's used for under it.
+While one that's needed is missing, a `NoteLabel` says why it's needed and
+there's no Continue. While only optional ones are missing, a `NoteLabel`
+says what happens without each, then "Allow it now, or go on without it.",
+with **Continue** (blue) under it; with everything allowed, the step goes
+on by itself.
 
 **App icons** come from `AppIcon` (or `PlayerOption.icon`), at the size for
 where they appear:
@@ -398,7 +401,7 @@ rest; a title and one line usually do for an alert.
 - **Periods** end full sentences: descriptions and notes. Fragments have
   none: subtitles ("Pauses your player"), status lines, labels and buttons.
 - **Numbers** are digits, with units in the user's format: "0.5 s",
-  "−60 dB", "5 min".
+  "-60 dB" (a hyphen for minus, as numbers are printed), "5 min".
 - **Shortcuts** read like Apple's own actions: a name that says what the
   action does ("Set Auto-Pause", "Get Auto-Pause"), a summary that reads as
   a sentence with the choices in it ("Turn Auto-Pause On"), and a full
@@ -427,8 +430,9 @@ AutoHush is translated into 34 languages besides English. DEVELOPMENT.md's
 - **Short slots stay short.** Measured at the windows' sizes: a Settings
   page's name in the sidebar has about 134 pt at 16 pt (about 16
   characters: German "Ein-/Ausblenden", not "Ein- und Ausblenden"), and the
-  line under a player's name in a chip (`PlayerTiles`) about 88 pt at
-  11 pt (about 12 characters: "Click to add" is "Añadir", "Hinzufügen").
+  line under a player's name in a chip (`PlayerTiles`) about 90 pt at
+  11 pt (about 12 characters: "Click to add" is "Añadir", "Hinzufügen"),
+  which `BottomBarFitTests` checks in every language.
   The menu's Controls button may drop "controls", which its row's title
   already says (French "Apprendre").
 - **Keep the menu card short.** The label under its switch shows whole and

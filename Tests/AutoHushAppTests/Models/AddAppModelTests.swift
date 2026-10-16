@@ -5,111 +5,6 @@ import AutoHushKit
 import AutoHushTestSupport
 import CheckedPlayers
 
-/// A check that ends when the test says.
-@MainActor
-private final class FakeCheckRun: CheckRunning {
-    var stopped = false
-    /// Stopped, it ends at once; else it puts things back first, until `finish`.
-    var endsWhenStopped = true
-    private var end: PlayerCheckEnd?
-    private var waiting: [CheckedContinuation<PlayerCheckEnd, Never>] = []
-
-    func stop() {
-        stopped = true
-        if endsWhenStopped { finish(.stopped) }
-    }
-
-    func finish(_ end: PlayerCheckEnd) {
-        self.end = end
-        waiting.forEach { $0.resume(returning: end) }
-        waiting = []
-    }
-
-    func waitForEnd() async -> PlayerCheckEnd {
-        if let end { return end }
-        return await withCheckedContinuation { waiting.append($0) }
-    }
-}
-
-/// What the fake services saw and answer.
-@MainActor
-private final class World {
-    var apps = [CheckableApp(bundleID: "com.example.player", name: "Player", url: URL(filePath: "/Applications/Player.app"), nowPlaying: true),
-                CheckableApp(bundleID: "com.example.other", name: "Other", url: URL(filePath: "/Applications/Other.app"))]
-    var traits = CheckedAppTraits(scriptable: false, framework: nil, needsLaunchOption: false)
-    var running = true
-    var runsWithOption: Bool?
-    var permissions = CheckPermissions(accessibility: true, audio: .allowed)
-    var playing = false
-    var now = Date(timeIntervalSince1970: 1000)
-    var opened: [(String, Bool)] = []
-    var reopened = 0
-    var warnings = 0
-    var used: [CheckResult] = []
-    var asksToReopen: [Bool] = []
-    var closed = 0
-    var choosers = 0
-    var warningsClosed = 0
-    var panel: [String] = []
-    var antiDot = false
-    var taps: [Bool] = []
-    var audioRequests = 0
-    var exists = true
-    var run = FakeCheckRun()
-    var runs = 0
-    let kept = KeptCheckStore(defaults: UserDefaults(suiteName: "AddAppModelTests-\(UUID().uuidString)")!)
-
-    var services: AddAppServices {
-        AddAppServices(
-            listApps: { self.apps },
-            appAt: { url in
-                url.lastPathComponent == "AutoHush.app" ? .failure(.autoHush)
-                    : .success(CheckableApp(bundleID: "com.example.picked", name: "Picked", url: url))
-            },
-            showChooser: { self.choosers += 1 },
-            traits: { _ in self.traits },
-            isRunning: { _ in self.running },
-            exists: { _ in self.exists },
-            open: { app, option in
-                self.opened.append((app.bundleID, option))
-                self.running = true
-                return true
-            },
-            runsWithLaunchOption: { _ in self.runsWithOption },
-            reopen: { _ in
-                self.reopened += 1
-                return true
-            },
-            permissions: { _, scriptable in
-                var permissions = self.permissions
-                if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
-                return permissions
-            },
-            request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
-            antiDot: { self.antiDot },
-            isPlaying: { _, _ in self.playing },
-            startCheck: { _, taps, onLine in
-                self.taps.append(taps)
-                self.runs += 1
-                onLine("Press Test")
-                return self.run
-            },
-            showWarning: { self.warnings += 1 },
-            closeWarning: { self.warningsClosed += 1 },
-            checkStarted: { _ in self.panel.append("shown") },
-            checkEnded: { self.panel.append("hidden") },
-            keptChecks: kept,
-            use: { result, asks in
-                self.used.append(result)
-                self.asksToReopen.append(asks)
-            },
-            close: { self.closed += 1 },
-            now: { self.now },
-            sleep: { _ in await Task.yield() }
-        )
-    }
-}
-
 @MainActor
 @Suite("AddAppModel", .timeLimit(.minutes(1)))
 struct AddAppModelTests {
@@ -449,7 +344,23 @@ struct AddAppModelTests {
         #expect(world.kept.load() == nil && world.used == [result])
     }
 
-    @Test("after Skip at the Reopen step, Use doesn't ask to reopen it")
+    @Test("with Now Playing hidden in the menu bar, Check Again is offered beside Use and checks again")
+    func panelHidden() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback")]))))
+        await TestWait.until { model.result != nil }
+        #expect(model.offersCheckAgain && model.mark(of: .use) == .current)
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+    }
+
+    @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")
     func skippedReopen() async {
         let world = World()
         world.traits.needsLaunchOption = true
@@ -464,11 +375,15 @@ struct AddAppModelTests {
         await TestWait.until { world.panel == ["shown"] }
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
-        model.use()
+        model.windowClosed()
+        let again = AddAppModel(services: world.services)
+        again.reset()
+        #expect(again.steps.contains(.reopen) && again.reopenOutcome == .skipped)
+        again.use()
         #expect(world.asksToReopen == [false])
     }
 
-    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and nothing can be muted")
+    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and neither muting nor a panel only its sound tells can be used")
     func antiDot() async {
         let world = World()
         world.antiDot = true
@@ -482,9 +397,14 @@ struct AddAppModelTests {
         await TestWait.until { world.panel == ["shown"] }
         #expect(world.taps == [false])
         world.permissions.audio = .allowed
-        world.run.finish(.finished(CheckResult(ways: [], setup: nil)))
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .notThere), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)], panelRowIsStale: true))))
         await TestWait.until { model.result != nil }
-        #expect(!model.canMute)
+        #expect(!model.canMute && model.choosableWays.isEmpty && model.mark(of: .use) == .failed && model.offersCheckAgain)
+        model.use()
+        #expect(world.used.isEmpty)
     }
 
     @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen")

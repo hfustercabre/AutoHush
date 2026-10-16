@@ -21,7 +21,7 @@ struct AppStatusTests {
         return status
     }
 
-    @Test("a player muted instead of paused says “Muted”, with Unmute, while another app plays")
+    @Test("a player muted instead of paused says “Muted”, with Unmute, while another app plays; one held for a check says so")
     func muted() {
         var status = ready(.pausedByMonitor)
         status.setActiveSources([chrome])
@@ -31,6 +31,15 @@ struct AppStatusTests {
         status.playback = .musicPlaying
         #expect(!status.offersUnmute)
         #expect(AppStatus.unmuteTitle == "Unmute")
+
+        // Kept paused while Add an App checks an app, also when nothing plays in its gaps.
+        status.playerMutes = false
+        status.playerHeldForCheck = true
+        status.playback = .pausedByMonitor
+        status.setActiveSources([])
+        #expect(status.statusLine == "Paused while a check runs" && status.icon == .pausedForApp)
+        status.playback = .musicIdle
+        #expect(status.statusLine == "Not playing")
     }
 
     @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")

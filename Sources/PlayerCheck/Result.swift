@@ -26,9 +26,10 @@ import WebAppPlayers
     guard let resultFile, testing else { return }
     var ways: [CheckResult.WayResult] = []
     var working: [ResultWays.Working] = []
-    func add(_ kind: CheckResult.WayKind, _ found: Bool, notChecked: Bool = false, setup: () -> PlayerSetup.Way?) {
-        guard found, !(notChecked && firstResults[Way(rawValue: kind.rawValue)!] == nil) else {
-            ways.append(CheckResult.WayResult(kind: kind, mark: notChecked ? .notChecked : .notThere))
+    // `notChecked`: its mark when it couldn't be looked for (saying why), unless it was tried after all.
+    func add(_ kind: CheckResult.WayKind, _ found: Bool, notChecked: CheckResult.Mark? = nil, setup: () -> PlayerSetup.Way?) {
+        guard found, notChecked == nil || firstResults[Way(rawValue: kind.rawValue)!] != nil else {
+            ways.append(CheckResult.WayResult(kind: kind, mark: notChecked ?? .notThere))
             return
         }
         let (mark, failed) = resultMark(Way(rawValue: kind.rawValue)!)
@@ -36,20 +37,23 @@ import WebAppPlayers
         ways.append(result)
         if result.worked, let way = setup() { working.append(ResultWays.Working(way: way, kind: kind, everywhere: mark == .works)) }
     }
-    let unread = running == nil || !AXIsProcessTrusted()
+    let unread: CheckResult.Mark? = running == nil ? .notChecked : !AXIsProcessTrusted() ? .noAccessibility : nil
     // Not allowed to script it (--partial): its AppleScript wasn't tried.
     // Not checked for Automation only when its dictionary has commands to try.
     let scriptable = scriptControls() != nil
-    add(.script, scriptable, notChecked: scriptable && (automationAnswer == .denied || (partial && automationAnswer != .allowed))) {
+    let noAutomation = automationAnswer == .denied || (partial && automationAnswer != .allowed)
+    add(.script, scriptable, notChecked: scriptable && noAutomation ? .noAutomation : nil) {
         scripting.flatMap(ScriptSetup.init(dictionary:)).map { .script($0) }
     }
     add(.menu, menu != nil, notChecked: unread) { menu.map { .menu(menuName: $0.title) } }
     // No page at all is no page button; not read for another reason is unchecked.
     let noPage = ["no page in its windows", "no switch was taken"].contains(pageNotChecked ?? "")
-    add(.page, page?.toggle != nil, notChecked: unread || (pageNotChecked != nil && !noPage)) {
+    let pageUnread: CheckResult.Mark? = pageNotChecked == nil || noPage ? nil
+        : pageNotChecked == "no Accessibility permission" ? .noAccessibility : .notChecked
+    add(.page, page?.toggle != nil, notChecked: unread ?? pageUnread) {
         .page(PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch))
     }
-    add(.panel, canBeNowPlaying, notChecked: unread && canBeNowPlaying) { .panel(rememberedRow: panelRowText) }
+    add(.panel, canBeNowPlaying, notChecked: canBeNowPlaying ? unread : nil) { .panel(rememberedRow: panelRowText) }
     // Never found in the menu bar: Now Playing is hidden there, which the user can change.
     if !panelItemSeen, panelItemMissing, let index = ways.firstIndex(where: { $0.kind == .panel }), ways[index].mark == .none {
         ways[index] = CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)
@@ -58,8 +62,8 @@ import WebAppPlayers
     if let index = working.firstIndex(where: { $0.kind == .script }), case .script(let script) = working[index].way,
        !ResultWays.canRun(script, besides: working.map(\.way), reportsReadable: canBeNowPlaying && isAdministrator) {
         working.remove(at: index)
-        if let marked = ways.firstIndex(where: { $0.kind == .script }) { ways[marked] = CheckResult.WayResult(kind: .script, mark: .notTried) }
-        log("  AppleScript's toggle isn't kept: it has no state, and nothing else tells AutoHush when to send it")
+        if let marked = ways.firstIndex(where: { $0.kind == .script }) { ways[marked] = CheckResult.WayResult(kind: .script, mark: .toggleOnly) }
+        log("  AppleScript’s toggle isn’t kept: it has no state, and nothing else tells AutoHush when to send it")
     }
     let ordered = ResultWays.ordered(working)
     let setup = ordered.isEmpty ? nil
@@ -70,6 +74,6 @@ import WebAppPlayers
     do {
         try JSONEncoder().encode(result).write(to: resultFile, options: .atomic)
     } catch {
-        log("couldn't write the result to \(resultFile.path): \(error)")
+        log("couldn’t write the result to \(resultFile.path): \(error)")
     }
 }

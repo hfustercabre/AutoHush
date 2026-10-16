@@ -1,7 +1,8 @@
 import AppKit
 
 /// The alert before an app added with Add an App is removed (R0, the user's
-/// pick, 2026-10-15): short, as the user asked. Return removes, Escape
+/// pick, 2026-10-15): short, as the user asked. Remove is its default
+/// button, blue, not red (the user, 2026-10-16): Return removes, Escape
 /// cancels.
 @MainActor
 enum PlayerAlerts {
@@ -17,7 +18,7 @@ enum PlayerAlerts {
             : String(localized: "\(app) won’t be offered as a player anymore. The app stays on your Mac. Add an App… can add it back.",
                      comment: "Message of the alert before an app added with Add an App is removed from the media players; %@ is the app")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: String(localized: "Remove", comment: "A button that removes: under Settings → Apps' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Remove", comment: "A button that removes: under Settings → Apps' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed"))
         alert.addButton(withTitle: AddAppText.cancel).keyEquivalent = "\u{1b}" // Escape
         return alert
     }

@@ -70,7 +70,13 @@ extension AudioMonitor {
             break
         }
         if changed {
-            logger.info("[monitor] System Audio Recording permission: \(status.map { "\($0)" } ?? "unknown", privacy: .public)")
+            let said = switch status {
+            case .granted: "allowed"
+            case .denied: "denied"
+            case .notDetermined: "not asked yet"
+            case nil: "unknown"
+            }
+            logger.info("[monitor] System Audio Recording permission: \(said, privacy: .public)")
             updateMeteredProcesses(at: now)
         }
     }

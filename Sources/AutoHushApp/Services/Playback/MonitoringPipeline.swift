@@ -27,6 +27,7 @@ final class MonitoringPipeline {
         case configuration(AppConfiguration)
         /// With its number (see `PlaybackArbiter.setAsleep`).
         case asleep(Bool, change: Int)
+        case resumesHeld(Bool)
     }
 
     private let arbiter: PlaybackArbiter
@@ -53,12 +54,14 @@ final class MonitoringPipeline {
     }
 
     /// `hostedApp` names a process's app when its program doesn't (see
-    /// `ProcessAudioSourceIdentifier`).
+    /// `ProcessAudioSourceIdentifier`). `resumesHeld`: it starts with
+    /// resumes held (see `holdResumes`).
     init(
         player: any MusicPlayer,
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil },
         configuration: AppConfiguration,
         autoPauseEnabled: Bool,
+        resumesHeld: Bool = false,
         ignoredSourceIDs: Set<String>,
         detectionMethod: DetectionMethod,
         learnedAssertions: [String: AnnouncedAssertions],
@@ -75,6 +78,7 @@ final class MonitoringPipeline {
             player: player,
             configuration: configuration,
             autoPauseEnabled: autoPauseEnabled,
+            resumesHeld: resumesHeld,
             onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
             onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) },
             onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
@@ -114,6 +118,7 @@ final class MonitoringPipeline {
                     case .autoPause(let enabled):  await arbiter.setAutoPauseEnabled(enabled)
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
+                    case .resumesHeld(let held): await arbiter.holdResumes(held)
                     }
                 }
             },
@@ -181,6 +186,12 @@ final class MonitoringPipeline {
     func setAsleep(_ asleep: Bool) {
         sleepChanges += 1
         arbiterCommands.yield(.asleep(asleep, change: sleepChanges))
+    }
+
+    /// Holds resumes, or lets them happen again: see
+    /// `PlaybackArbiter.holdResumes`.
+    func holdResumes(_ held: Bool) {
+        arbiterCommands.yield(.resumesHeld(held))
     }
 
     /// Applies new timings and thresholds live.

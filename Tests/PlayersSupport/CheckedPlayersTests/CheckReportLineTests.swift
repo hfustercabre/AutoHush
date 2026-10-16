@@ -19,7 +19,7 @@ struct CheckReportLineTests {
             #expect(CheckReportLine.way(ofTrial: "  " + CheckReportLine.trial(way, detail: "a, b") + ": before, playing") == way)
         }
         #expect(CheckReportLine.trial(.page, learned: true) == "by its page's learned button")
-        let line = CheckReportLine.waiting(.pause, "pause Jukebox yourself", minutes: 2)
+        let line = CheckReportLine.waiting("pause Jukebox yourself", minutes: 2)
         #expect(line == "  waiting: pause Jukebox yourself (up to 2 minutes)")
         #expect(CheckReportLine.request(in: line)?.request == .pause && CheckReportLine.request(in: line)?.minutes == 2)
         #expect(CheckReportLine.request(in: "  it plays") == nil)

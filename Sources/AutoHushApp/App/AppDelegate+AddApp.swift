@@ -18,7 +18,7 @@ extension AppDelegate {
 
     private func liveAddAppServices() -> AddAppServices {
         let helper = PlayerCheckHelper.bundled
-        if helper == nil { logger.error("Add an App: the check's helper is missing from the app") }
+        if helper == nil { logger.error("Add an App: the check’s helper is missing from the app") }
         return AddAppServices(
             listApps: { [weak self] in
                 // The supported players aren't offered (their support is
@@ -60,14 +60,21 @@ extension AppDelegate {
             showWarning: { [weak self] in self?.showCheckWarning() },
             closeWarning: { [weak self] in self?.checkWarningWindow?.close() },
             checkStarted: { [weak self] app in
-                guard let self, let model = self.addAppModel else { return }
+                guard let self else { return }
+                // AutoHush's player isn't resumed while the check plays and pauses its app.
+                self.holdsPlayerForCheck(true)
+                guard let model = self.addAppModel else { return }
                 self.checkPanel.show(app, model: model)
             },
-            checkEnded: { [weak self] in self?.checkPanel.hide() },
+            checkEnded: { [weak self] in
+                self?.checkPanel.hide()
+                self?.holdsPlayerForCheck(false)
+            },
             showLog: {
                 guard let log = PlayerCheckHelper.newestLog else { return }
                 NSWorkspace.shared.open(log)
             },
+            hasLog: { PlayerCheckHelper.newestLog != nil },
             reopenAutoHush: { [weak self] in
                 self?.noteAudioRecordingAllowedInSettings()
                 self?.reopen()

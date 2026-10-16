@@ -14,18 +14,19 @@ package enum MusicPlayerError: LocalizedError, LoggableError, Equatable, Sendabl
     /// (`LearningMusicPlayer`): an expected wait, not a failure.
     case stillLearning
 
-    /// In English, for the log and Diagnostics' report; the app words the
-    /// failure for the user (the engine has no text for people).
+    /// In English, for the log, Diagnostics' report and the control-error
+    /// alert's last paragraph (never translated: it's what a bug report
+    /// quotes); the app words the failure for the user in their language.
     package var errorDescription: String? {
         switch self {
         case .automationPermissionDenied:
-            return "Automation permission to control the media player is not granted."
+            return "AutoHush isn’t allowed Automation access to control the media player."
         case .accessibilityPermissionDenied:
-            return "Accessibility permission to control the media player is not granted."
+            return "AutoHush isn’t allowed Accessibility access to control the media player."
         case .playerNotRunning:
-            return "The media player is not running or is unavailable."
+            return "The media player isn’t running or isn’t available."
         case .playerNotResponding:
-            return "The media player is not responding."
+            return "The media player isn’t responding."
         case .playerCommandFailed(let failure):
             return "Controlling the media player failed: \(failure)."
         case .stillLearning:
@@ -55,6 +56,10 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
     /// It can only be muted, and muting isn't possible now: no Audio
     /// Recording, or AntiDot mode, which taps no sound.
     case muteUnavailable
+    /// Only its sound tells whether it plays (its Now Playing row doesn't
+    /// follow it), and it can't be heard now: no Audio Recording, or AntiDot
+    /// mode, which taps no sound.
+    case hearingUnavailable
     /// Its way is the menu bar's Now Playing panel, and Now Playing isn't
     /// shown in the menu bar (the user hid it in System Settings).
     case nowPlayingHidden
@@ -64,14 +69,15 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
 
     package var description: String {
         switch self {
-        case .menuItemNotFound: "its Play/Pause menu item wasn't found"
+        case .menuItemNotFound: "its Play/Pause menu item wasn’t found"
         case .stateUnknown: "its state is unknown"
         case .nothingToPlay: "it has nothing to play"
         case .buttonDisabled: "its Play/Pause button is disabled"
-        case .pressFailed: "its Play/Pause couldn't be pressed"
-        case .pressIgnored: "it didn't respond to its Play/Pause"
+        case .pressFailed: "its Play/Pause couldn’t be pressed"
+        case .pressIgnored: "it didn’t respond to its Play/Pause"
         case .muteUnavailable: "it can only be muted, and muting needs Audio Recording (not in AntiDot mode)"
-        case .nowPlayingHidden: "Now Playing isn't shown in the menu bar, so its panel can't be opened"
+        case .hearingUnavailable: "only its sound tells whether it’s playing, and hearing it needs Audio Recording (not in AntiDot mode)"
+        case .nowPlayingHidden: "Now Playing isn’t shown in the menu bar, so its panel can’t be opened"
         case .appleEventError(let number, let message?) where !message.isEmpty: "\(message) (OSStatus \(number))"
         case .appleEventError(let number, _): "OSStatus \(number)"
         }

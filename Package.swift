@@ -14,8 +14,8 @@ import PackageDescription
 //          │    ├─ MenuPlayers      controls an app through its playback menu
 //          │    ├─ WebAppPlayers    controls Safari web apps through the site's
 //          │    │                   own Play/Pause button, learned once
-//          │    └─ CheckedPlayers   controls an app added through a check, by
-//          │                        the ways that worked there (on the three above)
+//          │    └─ CheckedPlayers   controls an app added with Add an App…, the
+//          │                        way the user chose (on the three above)
 //          ├─ CheckedPlayers    Add an App…'s check results and its report's lines
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
@@ -62,7 +62,7 @@ let package = Package(
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
         .target(name: "MenuPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/MenuPlayers"),
         .target(name: "WebAppPlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/WebAppPlayers"),
-        // Apps added through Player Check: controlled by the ways a check found.
+        // Apps added with Add an App…: controlled the way the user chose.
         .target(
             name: "CheckedPlayers",
             dependencies: ["AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers"],

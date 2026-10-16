@@ -27,14 +27,14 @@ struct CheckedPlayerTests {
         #expect(try JSONDecoder().decode(PlayerSetup.self, from: JSONEncoder().encode(found)) == found)
     }
 
-    @Test("muted instead of paused: a pause mutes it and it reads paused; a play unmutes it; once its assertion was seen, it tells")
+    @Test("muted instead of paused: a pause mutes it and it reads paused; a play unmutes it; once its assertion was seen, it tells; a sleep doesn't lift it while it plays")
     func muting() async throws {
         let muter = FakeMuter()
         let held = AssertionBox()
         let setup = setup([.mute])
         let player = CheckedPlayer(setup: setup, parts: CheckedPlayer.parts(for: setup, store: MemoryStore()), reports: nil,
                                    processIdentifier: { 4242 }, muter: muter, assertionHeld: { _ in held.value })
-        #expect(player.pausesByMuting && player.controlPermission == .systemAudioRecording && !player.canFade)
+        #expect(player.pausesByMuting && player.needsAudioLevels && player.controlPermission == .systemAudioRecording && !player.canFade)
         held.value = true
         #expect(await player.playerState() == .playing)
         try await player.pause()
@@ -46,6 +46,11 @@ struct CheckedPlayerTests {
         #expect(await player.playerState() == .paused) // its assertion seen: without it, it's paused
 
         #expect(player.checksItsPresses) // a mute always takes: PressCheck never checks it
+
+        try await player.pause()
+        held.value = true
+        await player.forgetPause() // the Mac slept: AutoHush no longer holds the pause
+        #expect(muter.isMuted)
 
         player.allowTaps(false) // AntiDot mode: no taps, no mute
         await #expect(throws: MusicPlayerError.playerCommandFailed(.muteUnavailable)) { try await player.pause() }
@@ -106,7 +111,7 @@ struct CheckedPlayerTests {
         #expect(await paged.muteIfPlayingAnyway())
     }
 
-    @Test("only an app whose page is a way and that needs the launch option can need reopening")
+    @Test("only an app whose page is a way and that needs the launch option can need reopening; one that's gone can't be reopened")
     func reopenNeed() async {
         let menu = CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), reports: nil, store: MemoryStore())
         #expect(await menu.needsReopen() == false)
@@ -114,6 +119,8 @@ struct CheckedPlayerTests {
         page.needsLaunchOption = true
         // Not running: nothing to reopen.
         #expect(await CheckedPlayer(setup: page, reports: nil, store: MemoryStore()).needsReopen() == false)
+        page.appURL = URL(fileURLWithPath: "/nonexistent/Jukebox.app")
+        #expect(await CheckedPlayer(setup: page, reports: nil, store: MemoryStore()).reopen() == false)
     }
 
     @Test("it's an app, controlled as its first way needs, faded when its script has a volume")
@@ -142,6 +149,10 @@ struct CheckedPlayerTests {
         await #expect(throws: MusicPlayerError.playerNotResponding) {
             try await player(ways: [first, second], signs: []).pause()
         }
+
+        try await player(ways: [first, second], signs: []).play() // a play the same
+        #expect(await first.playCallCount == 1)
+        #expect(await second.playCallCount == 0)
     }
 
     @Test("it checks its own presses by its sure signs: one that doesn't take is made again, then the next way gets it")
@@ -195,6 +206,8 @@ struct CheckedPlayerTests {
         let jukebox = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
                                     reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
                                     levelProbe: heard, soundOn: { _ in true })
+        #expect(await jukebox.polledState() == .paused) // read once a second: as reported, not listened to
+        #expect(heard.listens == 0)
         #expect(await jukebox.playerState() == .playing) // heard: the report of a pause is stale
         #expect(heard.listens == 1)
         #expect(await jukebox.playerState() == .playing)
@@ -208,6 +221,83 @@ struct CheckedPlayerTests {
         #expect(await quiet.playerState() == .paused)
         #expect(silent.listens == 1) // once per report
         quiet.allowTaps(false)
+    }
+
+    @Test("one told by its level is listened to only when it's about to be paused or played; read once a second, its assertion tells")
+    func levelOnlyForDecisions() async {
+        var stale = setup([.panel(rememberedRow: nil)])
+        stale.panelRowIsStale = true
+        let heard = Heard(false)
+        let held = AssertionBox()
+        let qobuz = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemoryStore()), reports: nil,
+                                  processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, assertionHeld: { _ in held.value })
+        #expect(qobuz.needsAudioLevels && !qobuz.pausesByMuting) // heard, through Audio Recording, but pressed, not muted
+        #expect(await qobuz.polledState() == .unknown) // its output open, and no assertion seen yet: nothing told
+        held.value = true
+        #expect(await qobuz.polledState() == .playing)
+        held.value = false
+        #expect(await qobuz.polledState() == .paused)
+        #expect(heard.listens == 0)
+        #expect(await qobuz.playerState() == .paused) // about to be paused or played: listened to
+        #expect(heard.listens == 1)
+    }
+
+    @Test("its access is checked way by way until one answers, the panel only when it's the only way; muted only, it needs only to run")
+    func access() async throws {
+        let denied = MockMusicPlayer(failVerifyWith: MusicPlayerError.automationPermissionDenied), allowed = MockMusicPlayer()
+        let panelAsked = AssertionBox() // here: whether the panel way was asked
+        let panel = PanelWay(setup: setup([.panel(rememberedRow: nil)]), remembered: nil, store: MemoryStore(), panel: FakePanel([]),
+                             processIdentifier: { panelAsked.value = true; return nil })
+        // Found first here, it's still asked last: it opens on screen.
+        try await player(ways: [panel, denied, allowed], signs: []).verifyControlAccess()
+        #expect(await denied.verifyCallCount == 1)
+        #expect(await allowed.verifyCallCount == 1)
+        // None other answering: the first one's reason, and the panel isn't asked.
+        await #expect(throws: MusicPlayerError.automationPermissionDenied) {
+            try await player(ways: [panel, denied], signs: []).verifyControlAccess()
+        }
+        #expect(!panelAsked.value)
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await player(ways: [panel], signs: []).verifyControlAccess() }
+        #expect(panelAsked.value)
+
+        let mute = setup([.mute])
+        let running = PIDValue(4242)
+        let muted = CheckedPlayer(setup: mute, parts: CheckedPlayer.parts(for: mute, store: MemoryStore()), reports: nil,
+                                  processIdentifier: { running.value }, muter: FakeMuter())
+        try await muted.verifyControlAccess()
+        running.value = nil
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await muted.verifyControlAccess() }
+    }
+
+    @MainActor
+    @Test("its volume is its script's; it's watched by its script's notification, else read about once a second, and stopping that lifts its page's mute: the app is never left silent")
+    func volumeAndObserver() async throws {
+        let script = MockMusicPlayer()
+        await script.setVolumeLevel(40)
+        let scripted = CheckedPlayer(setup: setup([.script(self.script)]),
+                                     parts: .init(ways: [script], signs: [script], volume: script, announcing: script),
+                                     reports: nil, processIdentifier: { 4242 })
+        #expect(await scripted.volume() == 40)
+        try await scripted.setVolume(25)
+        #expect(await script.volumeHistory == [25])
+        #expect(scripted.makeStateObserver { _ in } is MockStateObserver) // its script's own
+        #expect(scripted.stateReportDelay == 0)
+
+        let page = StubPage(), muter = FakeMuter()
+        let pagePlayer = page.player(muter: muter)
+        let paged = CheckedPlayer(setup: setup([.page(.webKit)]), parts: .init(ways: [pagePlayer], signs: [pagePlayer], page: pagePlayer),
+                                  reports: nil, processIdentifier: { 4242 })
+        #expect(await paged.volume() == nil) // no fades
+        #expect(paged.stateReportDelay == PolledStateObserver.reportDelay)
+        #expect(await paged.muteIfPlayingAnyway()) // its button says Play while it's heard (an ad): muted instead
+        var states: [PlayerState] = []
+        let observer = paged.makeStateObserver { states.append($0) }
+        observer.start()
+        await TestWait.until { !states.isEmpty }
+        #expect(states == [.paused]) // read by its page: muted in place of a pause
+        observer.stop()
+        await TestWait.until { !muter.isMuted }
+        #expect(!muter.isMuted)
     }
 
     @Test("its state is the surest sign that answers; not running, it isn't asked")

@@ -1,7 +1,5 @@
 import AppKit
 import AutoHushKit
-import CheckedPlayers
-import WebAppPlayers
 
 // MARK: - The switches for assistive tools
 

@@ -55,6 +55,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
     var forgotPauseInSleep = false
     /// The number of the latest sleep or wake applied (see `setAsleep`).
     private var sleepChange = 0
+    /// While held, nothing paused by us is resumed (see `holdResumes`).
+    var resumesHeld: Bool
     var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     var playsLocally = true
@@ -109,6 +111,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         fadeSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
         clock: @escaping @Sendable () -> Date = { Date() },
         autoPauseEnabled: Bool = true,
+        resumesHeld: Bool = false,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
@@ -124,6 +127,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         self.debounceScheduler = debounceScheduler
         self.clock = clock
         self.autoPauseEnabled = autoPauseEnabled
+        self.resumesHeld = resumesHeld
         self.onPlaybackStateChange = onPlaybackStateChange
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
         self.onPauseFailure = onPauseFailure
@@ -234,6 +238,25 @@ package actor PlaybackArbiter: PlaybackArbiting {
         publishPlaybackState()
     }
 
+    /// Holds every resume (`true`), or lets them happen again (`false`).
+    /// While Add an App checks an app, playing and pausing it for minutes,
+    /// music its sound paused would otherwise come back in each gap, fading
+    /// in and out. Pausing goes on as usual, so music that plays still
+    /// pauses when an app starts; a player we didn't pause is never touched.
+    /// Released, music we paused resumes as it would have: at once when no
+    /// other app plays (or Auto-Pause is off), otherwise once they stop.
+    package func holdResumes(_ held: Bool) {
+        guard !isShutDown, held != resumesHeld else { return }
+        resumesHeld = held
+        logger.debug("[arbiter] resumes \(held ? "held" : "no longer held", privacy: .public)")
+        if held {
+            cancelPendingResume() // one checking on the player calls itself off
+        } else if pausedByUs, !isAsleep, activeSources.isEmpty || !autoPauseEnabled {
+            scheduleResume(after: nil)
+        }
+        publishPlaybackState()
+    }
+
     /// Takes over the pause of the AutoHush that ran before this one, which
     /// quit to install an update while holding the music paused: if the
     /// player is still paused, it counts as paused by this arbiter, so the
@@ -282,7 +305,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         } else {
             if live == .unknown { playerState = state } // no answer: the report stands
             if pausedByUs {
-                logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won't be resumed")
+                logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won’t be resumed")
                 pausedByUs = false
             }
         }

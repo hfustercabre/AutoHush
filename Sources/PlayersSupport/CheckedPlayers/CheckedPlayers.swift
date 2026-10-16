@@ -53,8 +53,9 @@ package final class CheckedPlayers: Sendable {
         return moved
     }
 
-    /// Keeps what a check found: the setup of the ways that worked, and its
-    /// page's Play/Pause as a web app's is kept. Nothing when none worked.
+    /// Keeps what a check found: its setup, with the way the user chose at
+    /// Use, and its page's Play/Pause as a web app's is kept. Nothing when
+    /// no way worked.
     package func keep(_ result: CheckResult, recipes: any PlayPauseRecipeStore = DefaultsRecipeStore()) {
         guard let setup = result.setup else { return }
         if let button = result.pageButton { recipes.save(button, for: setup.bundleID) }

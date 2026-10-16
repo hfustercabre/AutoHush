@@ -45,6 +45,8 @@ final class PlayerSession {
         let configuration: AppConfiguration
         let settings: MonitoringSettings
         let learnedAssertions: [String: AnnouncedAssertions]
+        /// It starts with resumes held (see `PlayerSession.holdResumes`).
+        var resumesHeld = false
     }
 
     /// Makes a player's monitoring, whose updates go to the closure.
@@ -121,6 +123,9 @@ final class PlayerSession {
     /// Between the Mac going to sleep and waking up: a monitoring started
     /// meanwhile (the player relaunched in a dark wake) knows it too.
     var isAsleep = false
+    /// While resumes are held (`holdResumes`): a monitoring started meanwhile
+    /// starts held too.
+    var resumesHeld = false
     /// AutoHush is quitting: nothing starts any more (see `quit`).
     var hasQuit = false
 
@@ -156,6 +161,7 @@ final class PlayerSession {
                 hostedApp: hostedApp,
                 configuration: setup.configuration,
                 autoPauseEnabled: setup.settings.autoPause,
+                resumesHeld: setup.resumesHeld,
                 ignoredSourceIDs: setup.settings.ignored,
                 detectionMethod: setup.settings.detection,
                 learnedAssertions: setup.learnedAssertions,

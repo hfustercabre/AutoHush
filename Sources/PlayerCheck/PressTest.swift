@@ -322,7 +322,7 @@ import PlayerCheckKit
             // A toggle is sent for the pause only while it plays, and again to play.
             record(.script, trialAgainIfEnded(.script) {
                 trial(CheckReportLine.trial(.script, detail: "\(script.pause), \(script.play)"), pid: pid,
-                      pause: { sendScript(script.pause) }, play: { sendScript(script.play) },
+                      pause: { _ in sendScript(script.pause) }, play: { _ in sendScript(script.play) },
                       whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil)
             })
             stopIfRequested()
@@ -330,7 +330,8 @@ import PlayerCheckKit
         }
         if menu != nil, ready() {
             record(.menu, trialAgainIfEnded(.menu) {
-                trial(CheckReportLine.trial(.menu), pid: pid, pause: { pressMenuToggle(pid: pid) }, play: { pressMenuToggle(pid: pid) },
+                trial(CheckReportLine.trial(.menu), pid: pid,
+                      pause: { _ in pressMenuToggle(pid: pid) }, play: { _ in pressMenuToggle(pid: pid) },
                       whilePaused: first ? { learnPageButton(pid: pid) } : nil)
             })
             stopIfRequested()
@@ -345,7 +346,7 @@ import PlayerCheckKit
                 // Its page is out of sight, where its words can't be learned: nobody is asked.
                 learnPageButton(pid: pid)
             } else {
-                say(CheckReportLine.waiting(.pause, "pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
+                say(CheckReportLine.waiting("pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
                     + " changes on it", minutes: 2))
                 let deadline = Date().addingTimeInterval(120)
                 inputBlock.pause()
@@ -364,8 +365,8 @@ import PlayerCheckKit
             let result = trialAgainIfEnded(.page) {
                 pressedPlayersPause = false
                 return trial(CheckReportLine.trial(.page, learned: learned != nil), pid: pid,
-                             pause: { switchForPress(true); return pressPage(pausing: true) },
-                             play: { switchForPress(true); return pressPage(pausing: false) },
+                             pause: { _ in switchForPress(true); return pressPage(pausing: true) },
+                             play: { _ in switchForPress(true); return pressPage(pausing: false) },
                              undo: { switchForPress(false) },
                              whilePaused: first ? { learnPageButton(pid: pid) } : { switchForPress(false) })
             }
@@ -388,8 +389,8 @@ import PlayerCheckKit
         } else if ready() {
             let result = trialAgainIfEnded(.panel) {
                 panelProblem = nil
-                return trial(CheckReportLine.trial(.panel), pid: pid, pause: { pressInPanel(pid: pid, pausing: true) },
-                             play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp) },
+                return trial(CheckReportLine.trial(.panel), pid: pid, pause: { pressInPanel(pid: pid, pausing: true, heard: $0) },
+                             play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp, heard: $0) },
                              undo: {
                                  // The row pressed may have been another app's: pressed again, that app plays on.
                                  if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }

@@ -104,6 +104,9 @@ struct AppStatus: Equatable {
     /// The chosen player is muted instead of paused (`MusicPlayer.pausesByMuting`):
     /// the card says "Muted", with Unmute.
     var playerMutes = false
+    /// Add an App's check runs: AutoHush keeps the player it paused paused
+    /// until the check ends (`AppDelegate.holdsPlayerForCheck`).
+    var playerHeldForCheck = false
     /// Only the player's sound tells how it is (`MusicPlayer.needsAudioLevels`).
     var playerNeedsLevels = false
 
@@ -134,6 +137,7 @@ struct AppStatus: Equatable {
     private var presentation: StatePresentation {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
             : playerMutes && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name))
+            : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
             : playback.presentation(playing: pausingSources.map(\.name)))
     }
 

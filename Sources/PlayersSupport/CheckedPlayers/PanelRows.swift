@@ -1,7 +1,8 @@
 import Foundation
 
-/// Which of the panel's rows is an app's, as Player Check tells it: the one
-/// showing its song, found whole in what the app shows (its windows'
+/// Which of the panel's rows is an app's, as `PanelWay` and Player Check's
+/// presses both tell it (a check passes a row only by AutoHush's rule): the
+/// one showing its song, found whole in what the app shows (its windows'
 /// titles, what it plays by AppleScript, its page's player bar) or, with no
 /// song, its name; else the row it changed with before; else, pausing, the
 /// only row playing while the app holds Now Playing. Never a row for a word

@@ -78,17 +78,21 @@ This project follows [Semantic Versioning](https://semver.org/).
   window says first what the check does: for about 3 minutes it moves the
   app's window, blocks the mouse and keyboard and dims the screen, except a
   small panel with its progress and **Stop** (or Escape). Everything is put
-  back as it was. You then choose how AutoHush pauses and plays it among
-  the ways that worked (the recommended one is chosen unless you pick
-  another), and the app is listed under Other Apps, marked **Checked by
-  you**. The Now Playing panel works with Now Playing hidden in the menu
-  bar too: AutoHush shows it for the moment of a press and hides it again;
-  if it can't, the check and the menu say where to show it. An app whose
-  row there never shows whether it plays (Qobuz) is paused and played
-  through it all the same, judged by its sound (so not in AntiDot mode).
-  The **×**
-  on its tile in Settings → General, or its row with **⌥ Option** held in
-  the menu, removes it, after asking.
+  back as it was, and a player AutoHush paused stays paused until the check
+  ends (**Paused while a check runs**). You then choose how AutoHush pauses and plays it among the ways
+  that worked (the recommended one is chosen unless you pick another), and
+  the app is listed under Other Apps, marked **Checked by you**. The Now
+  Playing panel works with Now Playing hidden in the menu bar too:
+  AutoHush shows it for the moment of a press, then puts your setting back
+  (unless you changed it meanwhile), even after a quit mid-press; if it
+  can't, the check and the menu say where to show it, and **Check Again**
+  checks once you have. An app whose row there never shows whether it
+  plays (Qobuz) is paused and played through it all the same, judged by
+  half a second of its sound just before each press (so not in AntiDot
+  mode). The **×** on its tile in Settings → General or the welcome window
+  (also with the keyboard's focus there), a right-click on the tile, or its
+  row with **⌥ Option** held in the menu removes it, after asking; removing
+  your current player opens the window to choose another.
 - **An app no way pauses can be muted instead.** When Add an App finds
   no way to pause an app, **Mute It Instead** makes it your player all the
   same: AutoHush mutes it while other apps play and lifts the mute when they

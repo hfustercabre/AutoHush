@@ -7,7 +7,7 @@ extension PlayerSession {
     /// one's are applied; a held pause's stay with `heldPauses`.
     func makeMonitoring(for player: any MusicPlayer, token: UUID) -> any SessionMonitoring {
         let setup = MonitoringSetup(configuration: configuration(for: player), settings: settings,
-                                    learnedAssertions: preferences.playbackAssertions)
+                                    learnedAssertions: preferences.playbackAssertions, resumesHeld: resumesHeld)
         return monitoringMaker(player, setup) { [weak self, token] update in
             guard let self, !self.heldPauses.takes(update, from: token) else { return }
             self.apply(update)

@@ -23,7 +23,6 @@ package struct AutoHushLogger: Sendable {
     package func info(_ message: LogMessage) { write(.info, message) }
     package func notice(_ message: LogMessage) { write(.notice, message) }
     package func error(_ message: LogMessage) { write(.error, message) }
-    package func fault(_ message: LogMessage) { write(.fault, message) }
 
     private func write(_ level: LogLevel?, _ message: LogMessage) {
         let text = message.text

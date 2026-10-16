@@ -13,7 +13,7 @@ struct SectionLabel: View {
 
 /// A word in a capsule after a heading that qualifies everything under it,
 /// e.g. "Experimental" after "Safari Web Apps"; in the accent color for a
-/// good word ("Recommended", Add an App's ways).
+/// good word ("Recommended", Add an App's ways), darker in light mode.
 struct HeadingBadge: View {
     /// Already localized.
     let text: String
@@ -22,7 +22,7 @@ struct HeadingBadge: View {
     var body: some View {
         Text(verbatim: text)
             .font(.appCaption.weight(.semibold))
-            .foregroundStyle(accent ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appWarning))
+            .foregroundStyle(accent ? AnyShapeStyle(.appAccent) : AnyShapeStyle(.appWarning))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
             .background(Capsule().fill(accent ? AnyShapeStyle(.selectedRowFill) : AnyShapeStyle(.warningBadgeFill)))

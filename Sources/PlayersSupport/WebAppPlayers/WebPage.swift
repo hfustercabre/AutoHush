@@ -108,7 +108,8 @@ extension WebPage {
 /// every page without any setting. Another app's page (`PageAccess`: an
 /// Electron, CEF or Flutter app's, a Chromium browser's web app's) shows once
 /// its switch for assistive tools is on: it's turned on before the first
-/// look, on the process that serves the page, and kept on until `release`.
+/// look, on the process that serves the page, and kept on until the last
+/// page using it in AutoHush is released (`switches`).
 ///
 /// Windows on another Space are reached through `AccessibilityWindows`, a
 /// private function; the public list has only the current Space's.
@@ -141,9 +142,23 @@ package struct AccessibilityWebPage: WebPage {
     private let audioProcesses = OwnedAudioProcesses()
     /// How the app shows its page.
     package let access: PageAccess
-    /// The processes whose switch this page turned on, and whether each was
-    /// on before.
-    private let switched = OSAllocatedUnfairLock<[pid_t: Bool]>(initialState: [:])
+    /// This page, among the users of a switch (its copies are the same page).
+    private let id = UUID()
+    /// A switch set on a process.
+    private struct SwitchKey: Hashable {
+        let process: pid_t
+        let attribute: String
+    }
+    /// The pages in AutoHush that use a switch.
+    private struct SwitchUse {
+        var pages: Set<UUID> = []
+        /// AutoHush turned it on: the last page released turns it off.
+        var turnedOn = false
+    }
+    /// Every page's switches, shared: two pages of one browser (two Chrome
+    /// web apps, an app checked again while its old player is released)
+    /// share one, which the first to go mustn't turn off under the other.
+    private static let switches = OSAllocatedUnfairLock<[SwitchKey: SwitchUse]>(initialState: [:])
     /// A Chromium web app's browser's other playing pages, counted when the
     /// web app's state was last known; `nil` until then, and once they changed.
     private let otherPages = OSAllocatedUnfairLock<Int?>(initialState: nil)
@@ -295,39 +310,70 @@ package struct AccessibilityWebPage: WebPage {
         return app.elements(kAXWindowsAttribute).contains { $0.value(kAXMinimizedAttribute) as? Bool != true }
     }
 
+    /// Its switches go back off, those AutoHush turned on that no other page
+    /// of AutoHush uses still.
     package func release() {
-        guard let attribute = access.switchAttribute else { return }
-        let turnedOn = switched.withLock { switched in
-            defer { switched = [:] }
-            return switched.filter { !$0.value }.map(\.key)
+        let id = id
+        let unused = Self.switches.withLock { switches in
+            var unused: [SwitchKey] = []
+            for (key, var use) in switches where use.pages.contains(id) {
+                use.pages.remove(id)
+                guard use.pages.isEmpty else {
+                    switches[key] = use
+                    continue
+                }
+                switches[key] = nil
+                if use.turnedOn { unused.append(key) }
+            }
+            return unused
         }
-        for pid in turnedOn {
-            let app = AXUIElementCreateApplication(pid)
+        for key in unused {
+            let app = AXUIElementCreateApplication(key.process)
             AXUIElementSetMessagingTimeout(app, Self.timeout)
-            AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanFalse)
+            AXUIElementSetAttributeValue(app, key.attribute as CFString, kCFBooleanFalse)
         }
     }
 
     // MARK: - The switch
 
-    /// Turns its switch on, on the process that serves its page, once per
-    /// process (the app opened again is a new one): Chromium builds the page
-    /// for assistive tools from then on, and Electron takes presses about 2 s
-    /// later. Kept on: a press that turned it on and off again would lose
-    /// the page out of sight (Player Check, 2026-10-12).
+    /// Turns its switch on, on the process that serves its page, at its
+    /// first look on that process (the app opened again is a new one):
+    /// Chromium builds the page for assistive tools from then on, and
+    /// Electron takes presses about 2 s later. Kept on: a press that turned
+    /// it on and off again would lose the page out of sight (Player Check,
+    /// 2026-10-12). VoiceOver's, which reads back as it is, is read at each
+    /// look, and turned on again when another tool turned it off (a check of
+    /// another web app of the same browser, at its end).
     private func showPage(pid: pid_t) {
         guard let attribute = access.switchAttribute else { return }
-        let target = switchTarget(pid)
-        guard switched.withLock({ $0[target] == nil }) else { return }
-        let app = AXUIElementCreateApplication(target)
+        let key = SwitchKey(process: switchTarget(pid), attribute: attribute)
+        let id = id
+        let inUse = Self.switches.withLock { switches in
+            guard switches[key] != nil else { return false }
+            switches[key]?.pages.insert(id)
+            return true
+        }
+        let app = AXUIElementCreateApplication(key.process)
         AXUIElementSetMessagingTimeout(app, Self.timeout)
+        if inUse {
+            guard attribute == PageAccess.voiceOverSwitch, app.value(attribute) as? Bool != true else { return }
+            AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanTrue)
+            Self.switches.withLock { $0[key]?.turnedOn = true }
+            return
+        }
         // Electron's reads back off even while it's on (Deezer): a page that
         // shows already has it on, by another tool maybe, so it's left on at
         // the end, as Player Check leaves it.
         let wasOn = app.value(attribute) as? Bool == true
             || (attribute == PageAccess.electronSwitch && windows(of: pid).contains { !Self.webAreas(in: $0).isEmpty })
         if !wasOn { AXUIElementSetAttributeValue(app, attribute as CFString, kCFBooleanTrue) }
-        switched.withLock { $0[target] = wasOn }
+        Self.switches.withLock { switches in
+            // Another page may have come meanwhile: it's theirs to share.
+            var use = switches[key] ?? SwitchUse()
+            use.pages.insert(id)
+            if !wasOn { use.turnedOn = true }
+            switches[key] = use
+        }
     }
 
     /// The process its switch is set on: a Chromium web app's browser (its

@@ -22,11 +22,9 @@ struct CheckWarningView: View {
                 SectionHeading(Text(verbatim: AddAppText.statesHeading(app.name))).padding(.top, 8)
                 Card {
                     VStack(spacing: 10) {
-                        HStack(alignment: .top, spacing: 6) {
-                            ForEach(Array(CheckResult.WindowState.allCases.prefix(4)), id: \.self, content: tile)
-                        }
-                        HStack(alignment: .top, spacing: 6) {
-                            ForEach(Array(CheckResult.WindowState.allCases.dropFirst(4)), id: \.self, content: tile)
+                        // Four columns: the last row's tiles under the first row's.
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6, alignment: .top), count: 4), spacing: 10) {
+                            ForEach(CheckResult.WindowState.allCases, id: \.self, content: tile)
                         }
                         Text(verbatim: AddAppText.statesNote(app.name))
                             .captionStyle().fixedSize(horizontal: false, vertical: true)
@@ -92,7 +90,8 @@ struct CheckWarningView: View {
         case .visible: "macwindow"
         case .covered: "macwindow.on.rectangle"
         case .otherDesktop: "rectangle.righthalf.inset.filled.arrow.right"
-        case .otherDesktopCovered: "rectangle.on.rectangle"
+        // Another desktop, as switching to it (unlike "Covered"'s windows).
+        case .otherDesktopCovered: "rectangle.2.swap"
         case .fullScreen: "arrow.up.left.and.arrow.down.right"
         case .minimized: "dock.arrow.down.rectangle"
         case .hidden: "eye.slash"

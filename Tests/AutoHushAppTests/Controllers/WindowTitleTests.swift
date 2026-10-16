@@ -3,6 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
+import CheckedPlayers
 
 @Suite("Windows")
 @MainActor
@@ -45,12 +46,18 @@ struct WindowTitleTests {
         #expect(sut.window?.title == "Learn Deezer’s Controls")
     }
 
-    @Test("no AutoHush window can go full screen: Settings, welcome and Add a Web App none, learning only over another app's")
+    @Test("no AutoHush window can go full screen: Settings, welcome, Add an App's, the logs none; Add a Web App and learning only over another app's")
     func noFullScreen() {
         let model = makeModel()
+        let world = World()
+        let addApp = AddAppModel(services: world.services)
         let windows: [NSWindow?] = [
             SettingsWindowController(model: model).window,
             PlayerChooserWindowController(model: model, tallestPage: 600).window,
+            AddAppWindowController(model: addApp).window,
+            AppChooserWindowController(model: addApp).window,
+            CheckWarningWindowController(app: world.apps[0], muted: false) {}.window,
+            LogsWindowController(model: LogsModel(source: nil)).window,
             AddWebAppWindowController(model: AddWebAppModel(), settings: model).window,
             LearningWindowController(model: model).window,
         ]
@@ -59,8 +66,105 @@ struct WindowTitleTests {
             #expect(!behavior.contains(.fullScreenPrimary))
             #expect(behavior.contains(.fullScreenNone) || behavior.contains(.fullScreenAuxiliary))
         }
-        #expect(windows[0]?.collectionBehavior.contains(.fullScreenNone) == true)
-        #expect(windows[1]?.collectionBehavior.contains(.fullScreenNone) == true)
+        #expect(windows.prefix(6).allSatisfy { $0?.collectionBehavior.contains(.fullScreenNone) == true })
+    }
+
+    @Test("a window opens centered, or floating in the top-right corner with its top edge kept as it grows; shown again, it stays put; closed, what it shows stops")
+    func showingAndClosing() async throws {
+        let world = World()
+        let addApp = AddAppModel(services: world.services)
+        let centered: [HostedWindowController] = [
+            AddAppWindowController(model: addApp),
+            AppChooserWindowController(model: addApp),
+            CheckWarningWindowController(app: world.apps[0], muted: false) {},
+        ]
+        for sut in centered {
+            let window = try #require(sut.window)
+            sut.show()
+            let area = try #require(window.screen?.visibleFrame)
+            #expect(sut.isOpen && abs(window.frame.midX - area.midX) <= 1)
+            #expect(window.frame.height - window.contentLayoutRect.height == HostedWindowController.titleBarHeight)
+            let moved = NSPoint(x: area.minX + 10, y: area.minY + 10) // by the user
+            window.setFrameOrigin(moved)
+            sut.show()
+            #expect(window.frame.origin == moved)
+            sut.close()
+            await TestWait.until { !sut.isOpen }
+            sut.bringForward() // as when the menu opens: a closed window stays closed
+            #expect(!sut.isOpen)
+        }
+        #expect(world.warningsClosed == 1) // Add an App closed: what it opened closes too
+
+        let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
+        let window = try #require(floating.window)
+        floating.show()
+        let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
+        let area = try #require(screen?.visibleFrame)
+        let margin = HostedWindowController.cornerMargin
+        #expect(window.level == .floating)
+        #expect(abs(window.frame.maxX - (area.maxX - margin)) <= 1 && abs(window.frame.maxY - (area.maxY - margin)) <= 1)
+        for top in [window.frame.maxY, window.frame.maxY - 50] {
+            window.setFrameTopLeftPoint(NSPoint(x: window.frame.minX, y: top)) // the second time, moved by the user
+            let height = window.frame.height + 40 // grown from its bottom edge, as its content grows it
+            window.setFrame(NSRect(origin: window.frame.origin, size: NSSize(width: window.frame.width, height: height)), display: false)
+            await TestWait.until { window.frame.maxY == top }
+            #expect(window.frame.maxY == top && window.frame.height == height)
+        }
+        floating.close()
+
+        let log = LogsModelTests.FakeLog()
+        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LogsWindowController.frameName)") // never opened before
+        let logs = LogsWindowController(model: LogsModel(source: log))
+        logs.show()
+        #expect(logs.window?.isOpen == true && log.handlers.count == 1) // new lines follow
+        let logsArea = try #require(logs.window?.screen?.visibleFrame)
+        #expect(abs((logs.window?.frame.midX ?? 0) - logsArea.midX) <= 1)
+        let size = try #require(logs.window.map { $0.contentRect(forFrameRect: $0.frame).size })
+        #expect(size.width >= LogsWindowController.minimumSize.width && size.height >= LogsWindowController.minimumSize.height)
+        #expect(logs.window?.styleMask.contains(.resizable) == true)
+        logs.model.search = "fade"
+        logs.show() // shown again while open: the search stays
+        #expect(logs.model.search == "fade" && log.handlers.count == 1)
+        logs.close()
+        await TestWait.until { logs.window?.isOpen != true }
+        #expect(log.handlers.isEmpty)
+    }
+
+    @Test("the check's panel is on every desktop and never takes the keyboard; while the check blocks input, a shade under it dims each screen; hidden, they all go")
+    func checkPanel() async throws {
+        let world = World()
+        world.playing = true
+        let model = AddAppModel(services: world.services)
+        model.reset()
+        await model.loadApps()
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await TestWait.until { world.report != nil }
+        let sut = CheckPanelController()
+        let before = Set(NSApp.windows.map(ObjectIdentifier.init))
+        sut.show(world.apps[0], model: model)
+        let panel = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) } as? NSPanel)
+        let shades = { NSApp.windows.filter { $0.level == CheckPanelController.shadeLevel && $0.isVisible } }
+        #expect(panel.isVisible && panel.styleMask.contains(.nonactivatingPanel) && !panel.canBecomeKey)
+        #expect(panel.collectionBehavior.contains(.canJoinAllSpaces) && panel.level == .floating)
+        let corner = NSScreen.screens.first?.visibleFrame ?? .zero // the main display's, above the Dock
+        #expect(abs(panel.frame.maxX - (corner.maxX - 16)) <= 1 && abs(panel.frame.minY - (corner.minY + 16)) <= 1)
+        #expect(shades().isEmpty)
+
+        world.report?(CheckReportLine.blocked)
+        await TestWait.until { panel.level == CheckPanelController.panelLevel && shades().count == NSScreen.screens.count }
+        #expect(shades().allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
+        #expect(shades().allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
+        world.report?(CheckReportLine.free)
+        await TestWait.until { panel.level == .floating && shades().isEmpty }
+        #expect(panel.level == .floating && shades().isEmpty)
+
+        world.report?(CheckReportLine.blocked)
+        await TestWait.until { !shades().isEmpty }
+        sut.hide()
+        #expect(!panel.isVisible && shades().isEmpty)
+        world.run.finish(.stopped)
     }
 
     @Test("AutoHush stays in the Dock for its own windows only: titled ones, not panels or borderless ones")

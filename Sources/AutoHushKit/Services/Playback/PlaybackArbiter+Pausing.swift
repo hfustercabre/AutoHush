@@ -52,7 +52,7 @@ extension PlaybackArbiter {
                takeOverPauseOfStartingApp(await livePlayerState(), checkedAt: checked) {
                 return
             }
-            logger.info("[arbiter] \(self.player.name, privacy: .public) is not playing on this Mac — not pausing")
+            logger.info("[arbiter] \(self.player.name, privacy: .public) isn’t playing on this Mac — not pausing")
             return
         }
         let state = await livePlayerState()
@@ -73,7 +73,7 @@ extension PlaybackArbiter {
             paused = try await fader.fadeOutAndPause()
         } catch MusicPlayerError.stillLearning {
             isFadingOut = false
-            logger.info("[arbiter] \(self.player.name, privacy: .public)'s controls aren't learned yet — not pausing")
+            logger.info("[arbiter] \(self.player.name, privacy: .public)’s controls aren’t learned yet — not pausing")
             return
         } catch {
             isFadingOut = false

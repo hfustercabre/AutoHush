@@ -150,6 +150,25 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func forgetPause() { commandLog.append("forgetPause") }
+
+    /// It runs without what it needs (`needsReopen`) until reopened, which
+    /// fixes that unless `reopenKeepsNeed` (a launcher that drops the option).
+    package var needsReopening = false
+    package var reopenKeepsNeed = false
+    package var reopenCount = 0
+
+    package func setNeedsReopening(_ needs: Bool, afterReopen: Bool = false) {
+        needsReopening = needs
+        reopenKeepsNeed = afterReopen
+    }
+
+    package func needsReopen() -> Bool { needsReopening }
+
+    package func reopen() -> Bool {
+        reopenCount += 1
+        needsReopening = reopenKeepsNeed
+        return true
+    }
 }
 
 // MARK: - MockMutingMusicPlayer

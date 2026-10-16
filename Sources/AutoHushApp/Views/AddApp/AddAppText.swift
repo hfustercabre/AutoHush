@@ -17,7 +17,7 @@ enum AddAppText {
     }
 
     static var cancel: String {
-        String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player, to remove an app added with Add an App, or to turn AntiDot mode on or off")
+        String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
     }
 
     // MARK: Step 1: the app
@@ -147,7 +147,7 @@ enum AddAppText {
     }
 
     static func accessibilityNeeded(_ app: String) -> String {
-        String(localized: "Accessibility is needed: without it, the check can’t read \(app)’s menus or page, try the Now Playing panel or move its window.",
+        String(localized: "Accessibility is needed: without it, the check can’t read \(app)’s menus or page, press the Now Playing panel, or move its window.",
                comment: "Add an App window, warning under the permissions while Accessibility isn't allowed; %@ is the app")
     }
 
@@ -361,7 +361,7 @@ enum AddAppText {
     }
 
     static var switchNote: String {
-        String(localized: "Its accessibility switch is turned on to read its page, and stays on while it’s your player.",
+        String(localized: "AutoHush turns on its page’s accessibility, and leaves it on while it’s your player.",
                comment: "Add an App window, under the step “AutoHush tries every way to pause and play it”, for an app built with Electron, Chromium or Flutter")
     }
 
@@ -370,15 +370,11 @@ enum AddAppText {
     }
 
     static var stopHint: String {
-        String(localized: "Stop, here or in the panel at the bottom right of the screen, ends the check; Escape too.", comment: "Add an App window, under the check's step while it runs (a Stop button follows)")
+        String(localized: "Stop here, Stop in the panel or Escape ends the check.", comment: "Add an App window, under the check's step while it runs (a Stop button follows; the panel is the check's, at the bottom right of the screen)")
     }
 
     static var stoppedNote: String {
         String(localized: "Stopped. Everything was put back as it was.", comment: "Add an App window, under the check's step once it was stopped")
-    }
-
-    static var failedNote: String {
-        String(localized: "The check couldn’t finish.", comment: "Add an App window, under the check's step when it ended without a result")
     }
 
     static var putBackNote: String {
@@ -406,7 +402,7 @@ enum AddAppText {
     }
 
     static var panelSoundOnly: String {
-        String(localized: "Its row doesn’t show its state: only its sound tells, so not in AntiDot mode.",
+        String(localized: "Its row shows no state: only its sound tells, so not in AntiDot mode",
                comment: "Add an App window, under “The menu bar’s Now Playing panel” when the app's row there doesn't show whether it plays (AutoHush then judges it by its sound, which AntiDot mode doesn't hear)")
     }
 
@@ -416,6 +412,13 @@ enum AddAppText {
 
     static func nothingWorked(_ app: String) -> String {
         String(localized: "No way to pause and play \(app) worked.", comment: "Add an App window, under the last step when the check found no way; %@ is the app")
+    }
+
+    /// The only way that worked needs the app's sound (its Now Playing row
+    /// shows no state), which AntiDot mode doesn't hear.
+    static func nothingInAntiDot(_ app: String) -> String {
+        String(localized: "No way to pause and play \(app) works in AntiDot mode.",
+               comment: "Add an App window, under the last step while AntiDot mode is on, when the only way that worked needs the app's sound, which AntiDot mode doesn't hear; %@ is the app")
     }
 
     static func muteInstead(_ app: String) -> String {
@@ -448,8 +451,8 @@ enum AddAppText {
         switch way.mark {
         case .works:
             way.kind == .panel
-                ? String(localized: "In every window state; it opens on screen for a moment",
-                         comment: "Add an App window, under “The menu bar’s Now Playing panel” when it worked")
+                ? String(localized: "In every window state, but it opens on screen for a moment",
+                         comment: "Add an App window, under “The menu bar’s Now Playing panel” when it worked: why it comes after the other ways")
                 : String(localized: "In every window state", comment: "Add an App window, under a way that paused and played the app wherever its window was")
         case .some:
             String(localized: "Not with its window \(way.failedStates.map(stateInSentence).formatted(.list(type: .or)))",
@@ -464,10 +467,17 @@ enum AddAppText {
             case .panel: String(localized: "\(app) doesn’t show in Now Playing", comment: "Add an App window, under “The menu bar’s Now Playing panel”; %@ is the app")
             }
         case .menuBarHidden:
-            String(localized: "Not tried: Now Playing is hidden in the menu bar. Show it in \(ControlFailure.nowPlayingSettings), then check again.",
-                   comment: "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar; %@ is where the setting is, e.g. “System Settings → Menu Bar”")
+            String(localized: "Not tried: hidden in the menu bar; show it in \(ControlFailure.nowPlayingSettings), then check again",
+                   comment: "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar (a Check Again button follows); %@ is where the setting is, e.g. “System Settings → Menu Bar”")
+        case .toggleOnly:
+            String(localized: "Only toggles: AutoHush can’t tell when to send it",
+                   comment: "Add an App window, under “AppleScript” when it paused and played the app but only by one Play/Pause command, and nothing tells AutoHush whether the app plays, so it can't be used")
         case .notTried:
             String(localized: "Not tried", comment: "Add an App window, under a way the check found but didn't try")
+        case .noAutomation:
+            String(localized: "Not checked: Automation isn’t allowed", comment: "Add an App window, under “AppleScript” when the check couldn't try it without the Automation permission")
+        case .noAccessibility:
+            String(localized: "Not checked: Accessibility isn’t allowed", comment: "Add an App window, under a way the check couldn't look for without the Accessibility permission")
         case .notChecked:
             String(localized: "Not checked", comment: "Add an App window, under a way the check couldn't look for")
         }
@@ -639,7 +649,7 @@ enum AddAppText {
     }
 
     static var showLog: String {
-        String(localized: "Show Log", comment: "Add an App window: button that shows the check's log (in Console) after a check couldn't finish")
+        String(localized: "Show Log…", comment: "Add an App window: button that shows the check's log (in Console) after a check couldn't finish")
     }
 
     static var helperMissing: String {
@@ -661,6 +671,6 @@ enum AddAppText {
 
     /// A numbered step, as VoiceOver reads its title: "Step 2 of 6, …".
     static func stepLabel(_ number: Int, of count: Int, title: String) -> String {
-        String(localized: "Step \(number) of \(count), \(title)", comment: "VoiceOver label of a numbered step's title in the Add an App window; the first %@ is its number, the second how many steps there are, the third its title")
+        String(localized: "Step \(number) of \(count), \(title)", comment: "VoiceOver label of a numbered step's title in the Add an App window; the first %lld is its number, the second how many steps there are; %@ is its title")
     }
 }

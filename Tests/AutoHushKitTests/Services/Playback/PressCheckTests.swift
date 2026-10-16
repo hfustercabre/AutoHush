@@ -76,6 +76,23 @@ struct PressCheckTests {
         #expect(await player.commandLog == ["pause"])
     }
 
+    @Test("a toggle judged by another sign is made once: shown after the usual wait, it took; never shown, it fails")
+    func toggle() async throws {
+        let player = MockMusicPlayer(state: .paused)
+        let clock = ManualClock(start: Date(timeIntervalSince1970: 0))
+        // Heard 5 s after its press, as Qobuz buffering.
+        let heardAt = Date(timeIntervalSince1970: 5)
+        let toggle = { (shows: Bool) in
+            PressCheck(name: "Jukebox", isToggle: true, press: { _ in try await player.play() },
+                       state: { shows && clock.now >= heardAt ? .playing : .paused }, sleep: { clock.advance(by: $0) },
+                       now: { clock.now })
+        }
+        try await toggle(true).press(to: .playing)
+        #expect(await player.playCallCount == 1)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await toggle(false).press(to: .playing) }
+        #expect(await player.playCallCount == 2) // once more, for the second toggle only
+    }
+
     @Test("a player that checks its own presses isn't checked again")
     func checksItself() async throws {
         let player = SelfCheckingPlayer()

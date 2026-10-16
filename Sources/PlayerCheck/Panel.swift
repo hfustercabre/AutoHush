@@ -19,6 +19,23 @@ var nowPlayingSettings: String {
     if #available(macOS 26, *) { "System Settings → Menu Bar" } else { "System Settings → Control Center" }
 }
 
+/// Where the Now Playing setting to put back is kept while a press shows it
+/// (`NowPlayingSetting`): inside an AutoHush app (…/AutoHush.app/Contents/
+/// Helpers/playercheck; a test copy has a bundle ID of its own), that app's
+/// defaults, so its next start puts back what a check that died left;
+/// elsewhere (the Player Check app, a build's folder) this tool's own.
+var nowPlayingRecord: UserDefaults { hostAppID.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
+
+/// The bundle ID of the app this tool is the helper of, when it's not this
+/// tool's own bundle already (whose defaults are the standard ones).
+let hostAppID: String? = {
+    let helpers = URL(fileURLWithPath: executablePath(of: getpid()) ?? CommandLine.arguments[0]).deletingLastPathComponent()
+    let contents = helpers.deletingLastPathComponent(), app = contents.deletingLastPathComponent()
+    guard helpers.lastPathComponent == "Helpers", contents.lastPathComponent == "Contents", app.pathExtension == "app",
+          let id = Bundle(url: app)?.bundleIdentifier, id != Bundle.main.bundleIdentifier else { return nil }
+    return id
+}()
+
 /// Whether the panel's item was in the menu bar at a press, and whether it
 /// was missing at one: never there, Now Playing is hidden in the menu bar
 /// (hidden in System Settings, macOS removes it), which `writeResult` says.
@@ -82,16 +99,6 @@ struct SongTexts {
 /// is that app's, not this one's song.
 func otherAppNames() -> Set<String> { Set(NSWorkspace.shared.runningApplications.compactMap(\.localizedName)) }
 
-/// The rows that show what the app plays, as AutoHush tells them
-/// (`PanelRows.appRows`): their song found whole in `texts` (its windows'
-/// titles, its player bar, its current track), or, with no song, its name.
-/// A row isn't taken for a word in common: another app's paused "Another
-/// One Bites The Dust" was pressed for a web app for its "the".
-@MainActor func appRows(_ rows: [ShownRow], texts: SongTexts) -> [ShownRow] {
-    let mine = PanelRows.appRows(rows.map(\.row), appName: appName, otherApps: otherAppNames(), texts: texts.all)
-    return rows.filter { shown in mine.contains(shown.row) }
-}
-
 /// What told that `row` was the app's, for the log: where its song showed,
 /// or its name. Never the row's text, nor the song.
 @MainActor func rowFound(_ row: PanelRow, by texts: SongTexts) -> String {
@@ -119,16 +126,12 @@ func otherAppNames() -> Set<String> { Set(NSWorkspace.shared.runningApplications
 /// the app's song (a Play after a Pause, as a check's play does within one
 /// run; a window on another desktop may give no title).
 @MainActor func rememberPanelRow() {
-    guard let panelRowText, savedButtons()[bundleID]?.panelRow != panelRowText else { return }
+    guard let panelRowText, keptPanelRow() != panelRowText else { return }
     saveButton { $0.panelRow = panelRowText }
 }
 
-/// The one row whose text is the app's remembered row's, if exactly one is.
-func rememberedRow(_ rows: [ShownRow]) -> ShownRow? {
-    guard let text = savedButtons()[bundleID]?.panelRow else { return nil }
-    let same = rows.filter { $0.row.text == text }
-    return same.count == 1 ? same[0] : nil
-}
+/// The row it changed with before, kept between runs (`rememberPanelRow`).
+func keptPanelRow() -> String? { savedButtons()[bundleID]?.panelRow }
 
 /// Why no row could be taken as the app's: `rows` rows (those showing
 /// `state`, Play or Pause, when it says), `mine` of them showing its song.
@@ -142,176 +145,223 @@ func rememberedRow(_ rows: [ShownRow]) -> ShownRow? {
         + ") or its name; the rows don't name their apps"
 }
 
-/// Which row to press: the app's; the one pressed last, else the app's; or
-/// only the one pressed last (to put back a press that changed it).
+/// What tells the app's row, read before the panel opens (and before a
+/// hidden Now Playing is shown for it): what AutoHush reads
+/// (`PanelWay.Shown`), with its song in its player bar and by AppleScript
+/// too, and its level, which tells how it is when its row doesn't follow it.
+struct PanelRead {
+    var texts: SongTexts
+    var otherApps: Set<String>
+    /// Heard by its level; nil when not measured.
+    var heard: Bool?
+    /// Pausing, whether it holds Now Playing.
+    var holdsNowPlaying: Bool
+
+    /// Its level as `heard` says, when a trial just measured it, else
+    /// measured now (half a second).
+    @MainActor init(_ pid: pid_t, pausing: Bool, heard: Bool?) {
+        texts = songTexts(pid)
+        otherApps = otherAppNames()
+        self.heard = heard ?? audible(pid)
+        holdsNowPlaying = pausing && nowPlayingHolder(pid).isThisApp
+    }
+
+    /// Whether `row` shows the app's song or its name.
+    @MainActor func showsApp(_ row: PanelRow) -> Bool {
+        !PanelRows.appRows([row], appName: appName, otherApps: otherApps, texts: texts.all).isEmpty
+    }
+
+    /// The app's row among the open panel's `rows`, as AutoHush's `PanelWay`
+    /// takes it (`PanelRows.row`): showing Pause when `pausing`, Play
+    /// otherwise, its song's or name's, else the one it changed with before
+    /// (`remembered`), else, pausing, the only one playing while it holds Now
+    /// Playing. `asToggle`: its own, whatever it shows.
+    @MainActor func row(in rows: [PanelRow], pausing: Bool, remembered: String?, asToggle: Bool = false) -> PanelRow? {
+        PanelRows.row(in: rows, pausing: pausing, appName: appName, otherApps: otherApps, texts: texts.all,
+                      remembered: remembered, holdsNowPlaying: holdsNowPlaying, asToggle: asToggle)
+    }
+
+    /// Why `row` was taken as the app's, for the log (never its text).
+    @MainActor func why(_ row: PanelRow, remembered: String?) -> String {
+        if showsApp(row) { return rowFound(row, by: texts) }
+        if row.text == remembered { return remembered == panelRowText ? "the row pressed before" : "the row it changed with before" }
+        return "the only row playing, while it holds Now Playing"
+    }
+}
+
+/// A row that doesn't follow the app: its own showing the other state while
+/// its sound says it isn't as wanted yet (heard while it shows paused,
+/// silent while it shows playing), pressed as a toggle as AutoHush presses
+/// such a row (`PlayerSetup.panelRowIsStale`), and kept so (`panelRowStale`).
+@MainActor func staleRow(in rows: [PanelRow], pausing: Bool, read: PanelRead, remembered: String?) -> PanelRow? {
+    guard read.heard == pausing, let own = read.row(in: rows, pausing: pausing, remembered: remembered, asToggle: true) else { return nil }
+    log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
+    panelRowStale = true
+    return own
+}
+
+/// Presses `row`'s Play/Pause in the open panel, taken as the one pressed
+/// (`notePanelRow`); whether it took.
+@MainActor func pressRow(_ row: PanelRow, in rows: [ShownRow], why: String) -> Bool {
+    guard let index = rows.firstIndex(where: { $0.row == row }) else { return false }
+    notePanelRow(row, index, of: rows.count, why: why)
+    return AXUIElementPerformAction(rows[index].button, kAXPressAction as CFString) == .success
+}
+
+/// Which row to press: the app's (`PanelRead.row`), the row it changed
+/// with before (kept between runs) as the one AutoHush remembers; the same
+/// with the row pressed last as that one (a trial's play, after its pause
+/// pressed it); or only the one pressed last (to put back a press that
+/// changed it).
 enum PanelRowChoice { case app, lastElseApp, lastOnly }
 
 /// Opens the panel, presses the Play/Pause of a row (the row shows Pause
 /// when `pausing`, Play otherwise) and closes it; true once pressed. The
 /// rows don't name their apps (only an icon shows it), so the app's row is
-/// the one showing its song (`appRows`); else the row it changed with before
-/// (`rememberedRow`); while pausing, else the only row playing when the app
-/// is the Now Playing one. Nothing is pressed when that's not one row. In a
-/// trial, the app's own signs judge whether the row was its own.
-@MainActor func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app) -> Bool {
+/// taken as AutoHush takes it (`PanelRead.row`), else a row that doesn't
+/// follow it (`staleRow`), its level as `heard` says when the trial just
+/// measured it. Nothing is pressed when that's not one row. In a trial, the
+/// app's own signs judge whether the row was its own.
+@MainActor func pressInPanel(pid: pid_t, pausing: Bool, choice: PanelRowChoice = .app, heard: Bool? = nil) -> Bool {
+    // Read before the panel opens: a page takes a moment, its level half a second.
+    let read = choice == .lastOnly ? nil : PanelRead(pid, pausing: pausing, heard: heard)
+    let remembered = choice == .lastElseApp ? panelRowText ?? keptPanelRow() : keptPanelRow()
+    func press() -> Bool {
+        guard let item = nowPlayingMenuItem() else {
+            log("    no Now Playing item found; in front: \(WindowStates.frontName)")
+            panelItemMissing = true
+            panelProblem = noPanelItem
+            return false
+        }
+        panelItemSeen = true
+        guard let rows = openPanel(item) else {
+            panelProblem = "the Now Playing item didn't open"
+            return false
+        }
+        defer { closePanel(item) }
+        let shown = rows.map(\.row)
+        let state = pausing ? "Pause" : "Play"
+        guard let read else {
+            guard let row = shown.first(where: { $0.playing == pausing && $0.text == panelRowText }) else {
+                panelProblem = rows.isEmpty ? "the panel showed no rows" : "the row pressed before (\(panelRowSaid ?? "")) no longer shows \(state)"
+                return false
+            }
+            return pressRow(row, in: rows, why: "the row pressed before")
+        }
+        if let row = read.row(in: shown, pausing: pausing, remembered: remembered) {
+            return pressRow(row, in: rows, why: read.why(row, remembered: remembered))
+        }
+        if let row = staleRow(in: shown, pausing: pausing, read: read, remembered: remembered) {
+            return pressRow(row, in: rows, why: "its own row, which doesn't follow it")
+        }
+        let candidates = shown.filter { $0.playing == pausing }
+        panelProblem = rows.isEmpty ? "the panel showed no rows"
+            : noRowProblem(rows: candidates.count, mine: candidates.filter { read.showsApp($0) }.count, showing: state)
+        return false
+    }
     // Hidden by the user: shown for this press only, as AutoHush does (the user, 2026-10-16).
     if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
-       let pressed = NowPlayingSetting.whileShown(until: { nowPlayingMenuItem() != nil }, { pressInPanel(pid: pid, pausing: pausing, choice: choice) }) {
+       let pressed = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, { press() }) {
         log("    Now Playing, hidden in the menu bar, shown for the press and hidden again")
         return pressed
     }
-    // Read before the panel opens: a page takes a moment, its level half a
-    // second (for a row that doesn't follow it: it tells how the app is).
-    let texts = choice == .lastOnly ? SongTexts() : songTexts(pid)
-    let heard = choice == .lastOnly ? nil : audible(pid)
-    let holdsNowPlaying = choice != .lastOnly && pausing && nowPlayingHolder(pid).isThisApp
-    guard let item = nowPlayingMenuItem() else {
-        log("    no Now Playing item found; in front: \(WindowStates.frontName)")
-        panelItemMissing = true
-        panelProblem = noPanelItem
-        return false
-    }
-    panelItemSeen = true
-    guard let rows = openPanel(item) else {
-        panelProblem = "the Now Playing item didn't open"
-        return false
-    }
-    let candidates = rows.filter { $0.row.playing == pausing }
-    var row = choice == .app ? nil : candidates.first { $0.row.text == panelRowText }
-    var why = "the row pressed before"
-    var mine: [ShownRow] = []
-    if row == nil, choice != .lastOnly {
-        mine = appRows(candidates, texts: texts)
-        // Its song first; else the row it changed with before; else, pausing, the only one playing.
-        if mine.count == 1 {
-            row = mine[0]
-            why = rowFound(mine[0].row, by: texts)
-        } else if mine.isEmpty, let remembered = rememberedRow(candidates) {
-            row = remembered
-            why = "the row it changed with before"
-        } else if mine.isEmpty, holdsNowPlaying, candidates.count == 1 {
-            row = candidates[0]
-            why = "the only row playing, while it holds Now Playing"
-        }
-    }
-    if row == nil, choice != .lastOnly, mine.isEmpty {
-        // Its own row showing the other state while its sound says otherwise
-        // (heard while it shows paused, silent while it shows playing): a
-        // row that doesn't follow it, pressed as a toggle.
-        let shown = appRows(rows.filter { $0.row.playing != pausing }, texts: texts)
-        if shown.count == 1, heard == pausing {
-            log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
-            panelRowStale = true
-            notePanelRow(shown[0].row, rows.firstIndex { $0.row == shown[0].row } ?? 0, of: rows.count, why: "its own row, which doesn't follow it")
-            let pressed = AXUIElementPerformAction(shown[0].button, kAXPressAction as CFString) == .success
-            closePanel(item)
-            return pressed
-        }
-    }
-    guard let row else {
-        let state = pausing ? "Pause" : "Play"
-        panelProblem = rows.isEmpty ? "the panel showed no rows"
-            : choice == .lastOnly ? "the row pressed before (\(panelRowSaid ?? "")) no longer shows \(state)"
-            : noRowProblem(rows: candidates.count, mine: mine.count, showing: state)
-        closePanel(item)
-        return false
-    }
-    notePanelRow(row.row, rows.firstIndex { $0.row == row.row } ?? 0, of: rows.count, why: why)
-    let pressed = AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success
-    closePanel(item)
-    return pressed
+    return press()
 }
 
 /// How a press by the panel went (`--via panel`).
 enum PanelPress { case already, changed, pressed, notPressed }
 
-/// A press by the panel (`--via panel`). The app's row is found by its song
-/// in its windows' titles or what it plays by AppleScript (a window's
-/// title, a current track or a current item may name it), else as the row
-/// it changed with before (`rememberedRow`); only when none matches is its
-/// page read, for its player bar's song (a web app's title may not name
-/// it), since reading a page can take seconds (an Electron app's may be
-/// built anew each time). The row's own Play/Pause, as Now Playing knows the app, tells
-/// whether it's that way already, and shows the press take before the panel
+/// A press by the panel (`--via panel`), its row taken as AutoHush takes it
+/// (`PanelRead.row`), else a row that doesn't follow it (`staleRow`). Its
+/// song is read from its windows' titles and what it plays by AppleScript
+/// (a window's title, a current track or a current item may name it); only
+/// when no row is its own is its page read, for its player bar's song (a
+/// web app's title may not name it), since reading a page can take seconds
+/// (an Electron app's may be built anew each time). Its own row showing the
+/// other state tells it's that way already, unless its sound says
+/// otherwise; a row found by its song shows the press take before the panel
 /// closes (2 s at most). A row told only by memory, or only by the app
 /// holding Now Playing, may be another app's showing the same: it's pressed
 /// as `.pressed`, so the app itself shows whether it changed.
 @MainActor func panelPress(pid: pid_t, pausing: Bool) -> PanelPress {
-    // Hidden by the user: shown for this press only.
-    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
-       let press = NowPlayingSetting.whileShown(until: { nowPlayingMenuItem() != nil }, { panelPress(pid: pid, pausing: pausing) }) {
-        return press
-    }
     // Its one line comes after: what it reads meanwhile isn't said.
     let wasQuiet = quiet
     quiet = true
     defer { quiet = wasQuiet }
     // The remembered player bar, when it's there, costs a few reads.
     if !pageRead { _ = useRememberedBar(pid: pid) }
-    var texts = songTexts(pid)
-    guard let item = nowPlayingMenuItem() else {
-        log("    no Now Playing item found; in front: \(WindowStates.frontName)")
-        panelItemMissing = true
-        panelProblem = noPanelItem
-        return .notPressed
-    }
-    panelItemSeen = true
-    guard var rows = openPanel(item) else {
-        panelProblem = "the Now Playing item didn't open"
-        return .notPressed
-    }
-    var mine = appRows(rows, texts: texts)
-    var byMemory = false
-    // Else the row it changed with before, before reading its page (seconds).
-    if mine.isEmpty, let remembered = rememberedRow(rows) {
-        mine = [remembered]
-        byMemory = true
-    }
-    if mine.isEmpty, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
-        closePanel(item)
-        readPage()
-        texts.bar = playerBarTexts(pid)
-        guard let again = openPanel(item) else {
+    var read = PanelRead(pid, pausing: pausing, heard: nil)
+    let remembered = keptPanelRow()
+    func press() -> PanelPress {
+        guard let item = nowPlayingMenuItem() else {
+            log("    no Now Playing item found; in front: \(WindowStates.frontName)")
+            panelItemMissing = true
+            panelProblem = noPanelItem
+            return .notPressed
+        }
+        panelItemSeen = true
+        guard var rows = openPanel(item) else {
             panelProblem = "the Now Playing item didn't open"
             return .notPressed
         }
-        rows = again
-        mine = appRows(rows, texts: texts)
-    }
-    func index(of shown: ShownRow) -> Int { rows.firstIndex { $0.row == shown.row } ?? 0 }
-    if mine.count == 1 {
-        let row = mine[0]
-        notePanelRow(row.row, index(of: row), of: rows.count, why: byMemory ? "the row it changed with before" : rowFound(row.row, by: texts))
-        if row.row.playing != pausing {
+        var row = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered)
+        var own = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered, asToggle: true)
+        // None told by its song or by memory: its page's player bar may show its song.
+        func toldByIt(_ row: PanelRow) -> Bool { read.showsApp(row) || row.text == remembered }
+        if own == nil, row.map({ toldByIt($0) }) != true, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
+            closePanel(item)
+            readPage()
+            read.texts.bar = playerBarTexts(pid)
+            guard let again = openPanel(item) else {
+                panelProblem = "the Now Playing item didn't open"
+                return .notPressed
+            }
+            rows = again
+            row = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered)
+            own = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered, asToggle: true)
+        }
+        if row == nil, let own {
+            if let stale = staleRow(in: rows.map(\.row), pausing: pausing, read: read, remembered: remembered) {
+                let pressed = pressRow(stale, in: rows, why: "its own row, which doesn't follow it")
+                closePanel(item)
+                return pressed ? .pressed : .notPressed
+            }
+            notePanelRow(own, rows.firstIndex { $0.row == own } ?? 0, of: rows.count, why: read.why(own, remembered: remembered))
             closePanel(item)
             // A remembered row that's that way already may be another app's:
             // the app itself must be so too.
-            guard byMemory, isPlaying(pid) == pausing else { return .already }
+            guard !read.showsApp(own), isPlaying(pid) == pausing else { return .already }
             panelProblem = "the row it changed with before shows another app's song now"
             return .notPressed
         }
-        guard AXUIElementPerformAction(row.button, kAXPressAction as CFString) == .success else {
+        guard let row else {
+            closePanel(item)
+            panelProblem = noRowProblem(rows: rows.count, mine: rows.filter { read.showsApp($0.row) }.count)
+            return .notPressed
+        }
+        guard pressRow(row, in: rows, why: read.why(row, remembered: remembered)) else {
             closePanel(item)
             panelProblem = "its row's \(pausing ? "Pause" : "Play") didn't take the press"
             return .notPressed
+        }
+        // Told by its song, it shows the press take.
+        guard read.showsApp(row) else {
+            closePanel(item)
+            return .pressed
         }
         let deadline = Date().addingTimeInterval(2)
         var changed = false
         while !changed, Date() < deadline {
             Thread.sleep(forTimeInterval: 0.05)
-            changed = panelRows().first { $0.row.text == row.row.text }?.row.playing == !pausing
+            changed = panelRows().first { $0.row.text == row.text }?.row.playing == !pausing
         }
         closePanel(item)
-        return changed && !byMemory ? .changed : .pressed
+        return changed ? .changed : .pressed
     }
-    let candidates = rows.filter { $0.row.playing == pausing }
-    if mine.isEmpty, pausing, candidates.count == 1, nowPlayingHolder(pid).isThisApp {
-        notePanelRow(candidates[0].row, index(of: candidates[0]), of: rows.count, why: "the only row playing, while it holds Now Playing")
-        let pressed = AXUIElementPerformAction(candidates[0].button, kAXPressAction as CFString) == .success
-        closePanel(item)
-        return pressed ? .pressed : .notPressed
+    // Hidden by the user: shown for this press only.
+    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
+       let result = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, { press() }) {
+        return result
     }
-    closePanel(item)
-    panelProblem = noRowProblem(rows: rows.count, mine: mine.count)
-    return .notPressed
+    return press()
 }

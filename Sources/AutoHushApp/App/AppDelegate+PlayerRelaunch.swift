@@ -34,11 +34,24 @@ extension AppDelegate {
 
     // MARK: - A player opened without what it needs
 
+    /// A player found without its option again this soon after AutoHush
+    /// reopened it drops the option when reopened (a launcher that starts
+    /// the app again without it): it isn't reopened by itself again.
+    private static let reopenAgainAfter: TimeInterval = 60
+
+    /// When AutoHush last reopened each player, by bundle ID, and whether it
+    /// then gave up reopening it by itself (`reopensByItself`).
+    private static var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
+
+    /// Runs the reopen alert and returns the button pressed. Tests replace it.
+    static var runReopenAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
+
     /// Whether the chosen player runs without what it needs to be controlled
     /// wherever its window is (`MusicPlayer.needsReopen`): the card says so.
     /// `asking` (it was just chosen): an alert first offers to reopen it.
     /// One the user chose to reopen always (the alert's checkbox) is
-    /// reopened at once, whenever it's found so.
+    /// reopened at once, whenever it's found so, but at most once for each
+    /// time it's opened (`reopensByItself`).
     func followPlayerReopen(asking: Bool = false) {
         guard let player else {
             status.playerNeedsReopen = false
@@ -47,7 +60,7 @@ extension AppDelegate {
         Task { [weak self] in
             let needs = await player.needsReopen()
             guard let self, self.player?.bundleID == player.bundleID else { return }
-            if needs, ReopenChoices.reopensAlways(player.bundleID) {
+            if needs, ReopenChoices.reopensAlways(player.bundleID), self.reopensByItself(player) {
                 self.logger.notice("\(player.name, privacy: .public) runs without the option it needs: reopening it, as the user chose")
                 await self.reopen(player)
                 return
@@ -77,9 +90,25 @@ extension AppDelegate {
         Task { [weak self] in await self?.reopen(player) }
     }
 
+    /// Whether a player the user chose to reopen always, found without its
+    /// option, is reopened now: not when AutoHush reopened it less than
+    /// `reopenAgainAfter` ago, which would quit and reopen it over and over.
+    /// Giving up is logged once, and the card says it needs reopening.
+    private func reopensByItself(_ player: any MusicPlayer) -> Bool {
+        guard let last = Self.lastReopens[player.bundleID],
+              Date().timeIntervalSince(last.at) < Self.reopenAgainAfter else { return true }
+        if !last.gaveUp {
+            Self.lastReopens[player.bundleID]?.gaveUp = true
+            logger.notice("\(player.name, privacy: .public) runs without the option it needs again right after being reopened: it isn’t reopened by itself again this time")
+        }
+        return false
+    }
+
     private func reopen(_ player: any MusicPlayer) async {
+        // From the start: it opens again before the reopen is over.
+        Self.lastReopens[player.bundleID] = (Date(), false)
         let reopened = await player.reopen()
-        logger.notice("\(player.name, privacy: .public) \(reopened ? "reopened with what it needs" : "couldn't be reopened", privacy: .public)")
+        logger.notice("\(player.name, privacy: .public) \(reopened ? "reopened with what it needs" : "couldn’t be reopened", privacy: .public)")
         let needs = await player.needsReopen()
         if self.player?.bundleID == player.bundleID { status.playerNeedsReopen = needs }
     }
@@ -89,8 +118,7 @@ extension AppDelegate {
     /// reopens it so from then on without asking.
     private static func askToReopen(_ name: String) -> (reopens: Bool, always: Bool) {
         let alert = reopenAlert(name)
-        NSApp.activate()
-        let reopens = alert.runModal() == .alertFirstButtonReturn
+        let reopens = runReopenAlert(alert) == .alertFirstButtonReturn
         return (reopens, reopens && alert.suppressionButton?.state == .on)
     }
 

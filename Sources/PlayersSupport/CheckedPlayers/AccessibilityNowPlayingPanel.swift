@@ -10,14 +10,22 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// A row as the open panel shows it, with its Play/Pause.
     package typealias ShownRow = (row: PanelRow, button: AXUIElement)
 
+    /// How long a hit-tested point waits for an answer: macOS waits 6 s for
+    /// an app that doesn't answer otherwise.
+    static let timeout: Float = 0.25
+    /// How long MenuBarAgent and Control Center, which draw the menu bar's
+    /// items and the panel, get to answer each read.
+    static let ownTimeout: Float = 1
+
     package init() {}
 
     package func isInMenuBar() -> Bool { Self.menuItem() != nil }
 
     package func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
-        // Hidden by the user: shown for this press only (the user, 2026-10-16).
+        // Hidden by the user: shown for this press only (the user, 2026-10-16),
+        // looked for meanwhile only in the menu bar's own windows.
         if Self.menuItem() == nil, NowPlayingSetting.isHidden {
-            return NowPlayingSetting.whileShown(until: { Self.menuItem() != nil }) { Self.press(pick) } ?? nil
+            return NowPlayingSetting.whileShown(until: { Self.listedItem() != nil }) { Self.press(pick) } ?? nil
         }
         return Self.press(pick)
     }
@@ -47,8 +55,10 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
         for id in ["com.apple.MenuBarAgent", "com.apple.controlcenter"] {
             guard let app = NSRunningApplication.running(id) else { continue }
             let element = AXUIElementCreateApplication(app.processIdentifier)
-            AXUIElementSetMessagingTimeout(element, 1)
+            AXUIElementSetMessagingTimeout(element, ownTimeout)
             func find(_ element: AXUIElement, depth: Int) -> AXUIElement? {
+                // Each element waits macOS's default otherwise, not its app's.
+                AXUIElementSetMessagingTimeout(element, ownTimeout)
                 if element.string(kAXIdentifierAttribute) == identifier { return element }
                 guard depth < 4 else { return nil }
                 for child in element.children {
@@ -64,16 +74,24 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     }
 
     /// The item hit-tested along the primary display's menu bar (hit-test
-    /// coordinates start at its top left; `NSScreen.main` may be another):
-    /// the topmost thing there, so not while something covers it.
+    /// coordinates start at its top left; the main display, read off the
+    /// main thread through CoreGraphics, which AppKit's screens aren't): the
+    /// topmost thing there, so not while something covers it. A point over
+    /// the front app's menus asks that app, so each waits `timeout` at most:
+    /// set on the system-wide element, that's this process's own timeout for
+    /// every element without one, so it's put back to macOS's default after.
     package static func hitTestedItem() -> AXUIElement? {
         let system = AXUIElementCreateSystemWide()
-        let width = Float(NSScreen.screens.first?.frame.width ?? 1470)
+        AXUIElementSetMessagingTimeout(system, timeout)
+        defer { AXUIElementSetMessagingTimeout(system, 0) }
+        let width = Float(CGDisplayBounds(CGMainDisplayID()).width)
         var x = width - 20
         while x > width / 3 {
             var hit: AXUIElement?
-            if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit,
-               hit.string(kAXIdentifierAttribute) == identifier { return hit }
+            if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit {
+                AXUIElementSetMessagingTimeout(hit, timeout)
+                if hit.string(kAXIdentifierAttribute) == identifier { return hit }
+            }
             x -= 6
         }
         return nil
@@ -99,6 +117,7 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
         var found: [ShownRow] = []
         func walk(_ element: AXUIElement, _ depth: Int) {
             guard depth < 20 else { return }
+            AXUIElementSetMessagingTimeout(element, ownTimeout)
             let children = element.children
             if let button = children.first(where: { ["play.fill", "pause.fill"].contains($0.string(kAXIdentifierAttribute)) }) {
                 let text = children.compactMap { $0.string(kAXValueAttribute) }.filter { !$0.isEmpty }.joined(separator: " ")
@@ -107,7 +126,9 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
             }
             children.forEach { walk($0, depth + 1) }
         }
-        AXUIElementCreateApplication(center.processIdentifier).elements(kAXWindowsAttribute).forEach { walk($0, 0) }
+        let app = AXUIElementCreateApplication(center.processIdentifier)
+        AXUIElementSetMessagingTimeout(app, ownTimeout)
+        app.elements(kAXWindowsAttribute).forEach { walk($0, 0) }
         return found
     }
 

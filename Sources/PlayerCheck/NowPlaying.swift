@@ -2,7 +2,6 @@ import AppKit
 import AutoHushKit
 import OSLog
 import PlayerCheckKit
-import WebAppPlayers
 
 // MARK: - Now Playing (MediaRemote, read only)
 

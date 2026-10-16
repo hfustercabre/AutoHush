@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import AutoHushApp
@@ -7,8 +8,9 @@ import AutoHushTestSupport
 @Suite("UpdateController")
 @MainActor
 struct UpdateControllerTests {
-    /// Records what the controller reports, and keeps its preferences, its
-    /// downloads folder and its clock.
+    /// Records what the controller reports and the alerts it shows (at once,
+    /// answered with `answer`), and keeps its preferences, its downloads
+    /// folder and its clock.
     @MainActor
     private final class Harness {
         let preferences = Preferences(store: InMemoryPreferenceStore())
@@ -23,6 +25,11 @@ struct UpdateControllerTests {
         var opened: [URL] = []
         var quits = 0
         var settingsChanges = 0
+        var alerts: [NSAlert] = []
+        /// The button that closes the next alert.
+        var answer = NSApplication.ModalResponse.alertFirstButtonReturn
+        /// How many times the menu was closed for an alert.
+        var menuClosings = 0
         private(set) var controller: UpdateController!
 
         init(
@@ -51,6 +58,12 @@ struct UpdateControllerTests {
                 onStatus: { [weak self] in self?.statuses.append($0) },
                 onSettingsChange: { [weak self] in self?.settingsChanges += 1 }
             )
+            controller.beforePresenting = { [weak self] in self?.menuClosings += 1 }
+            controller.showAlert = { $0() }
+            controller.runAlert = { [weak self] alert in
+                self?.alerts.append(alert)
+                return self?.answer ?? .cancel
+            }
         }
 
         deinit {
@@ -536,6 +549,74 @@ struct UpdateControllerTests {
 
         #expect(h.keptFiles.isEmpty)
         #expect(h.preferences.downloadedUpdate == nil)
+    }
+
+    // MARK: - Alerts
+
+    @Test("a check asked for offers the update with its notes: Later (Escape) leaves it in the menu, which shows it again; Open Release Page opens its page; Download and Install (Return) installs it at once")
+    func offerChoices() async throws {
+        let h = Harness(checker: .latestRelease("v0.3.0", notes: "Fixes."), quiet: Flag(false))
+        h.answer = .alertSecondButtonReturn
+        await h.controller.check(userInitiated: true)
+        let alert = try #require(h.alerts.first)
+        #expect(alert.messageText == "AutoHush 0.3.0 Is Available")
+        #expect(alert.buttons.map(\.title) == ["Download and Install", "Later", "Open Release Page"])
+        #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}", ""])
+        #expect(alert.accessoryView is NSScrollView) // its notes, in a scrolling box
+        #expect(h.offer?.state == .available)
+
+        h.answer = .alertThirdButtonReturn
+        h.controller.presentAvailableUpdate() // the menu's "Install AutoHush 0.3.0…"
+        #expect(h.opened == [URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0")!])
+
+        h.answer = .alertFirstButtonReturn
+        h.controller.presentAvailableUpdate()
+        await TestWait.until { h.quits == 1 }
+        #expect(h.alerts.count == 3)
+        #expect(h.installer.calls == ["prepare 0.3.0", "install 0.3.0"]) // not waiting for a quiet moment
+
+        // Long notes get a box 180 points tall, where they scroll; short ones a smaller one.
+        let heights = ["Fixes.", String(repeating: "- A fix\n", count: 40)].map { UpdateController.notesView($0).frame.height }
+        #expect(heights[0] >= 48 && heights[0] < 180)
+        #expect(heights[1] == 180)
+    }
+
+    @Test("a check asked for says what it found otherwise: up to date (also from a notification that no longer applies), no releases yet, or why it couldn't tell")
+    func checkResults() async {
+        let notFound = UpdateChecker { (Data(), HTTPURLResponse(url: $0.url!, statusCode: 404, httpVersion: nil, headerFields: nil)!) }
+        let results: [(UpdateChecker, AppVersion?, title: String, message: String)] = [
+            (.latestRelease("v0.2.0"), AppVersion("0.2.0"), "AutoHush Is Up to Date", "You have the latest version, 0.2.0."),
+            (notFound, AppVersion("0.2.0"), "No Releases Yet", "No AutoHush release has been published on GitHub yet."),
+            (.offline, AppVersion("0.2.0"), "Couldn’t Check for Updates", URLError(.notConnectedToInternet).localizedDescription),
+            (.offline, nil, "Couldn’t Check for Updates", "AutoHush’s version is unknown."),
+        ]
+        for (checker, version, title, message) in results {
+            let h = Harness(checker: checker, currentVersion: version)
+            h.controller.presentAvailableUpdate() // nothing offered: it checks
+            await TestWait.until { !h.alerts.isEmpty }
+            #expect(h.alerts.map(\.messageText) == [title])
+            #expect(h.alerts.first?.informativeText == message)
+            #expect(h.menuClosings == 1) // the menu, open while it checked, closes first
+        }
+    }
+
+    @Test("an install asked for that fails says why: Open Release Page (Return) opens the release to install it by hand, Later (Escape) closes it")
+    func installError() async throws {
+        let answers: [(NSApplication.ModalResponse, opensPage: Bool)] = [(.alertFirstButtonReturn, true), (.alertSecondButtonReturn, false)]
+        for (answer, opensPage) in answers {
+            let h = Harness(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(prepareError: UpdateInstallError.notGenuine))
+            await h.controller.check(userInitiated: false)
+            let release = try #require(h.controller.availableUpdate)
+            h.answer = answer
+            await h.controller.install(release, userInitiated: true)
+            let alert = try #require(h.alerts.first)
+            #expect(alert.messageText == "Couldn’t Install the Update")
+            #expect(alert.informativeText == UpdateInstallError.notGenuine.localizedDescription)
+            #expect(alert.buttons.map(\.title) == ["Open Release Page", "Later"])
+            #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}"])
+            #expect(h.opened == (opensPage ? [release.pageURL] : []))
+            #expect(h.notifier.announced.isEmpty) // said in the alert, not in a notification
+        }
     }
 
     // MARK: - Scheduling

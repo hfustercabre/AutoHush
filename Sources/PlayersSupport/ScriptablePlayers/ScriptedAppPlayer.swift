@@ -9,7 +9,8 @@ import AutoHushKit
 /// Player's). Its state is its `player state`, its `playing` flag or its
 /// documents'; its notification follows it when the check saw one,
 /// otherwise it's read about once a second. One whose state can't be read
-/// by script toggles by `toggleState`, the app's other signs.
+/// by script toggles by `toggleState`, the app's other signs, and checks
+/// that toggle itself, by them.
 package actor ScriptedAppPlayer: MusicPlayer {
     package nonisolated let bundleID: String
     package nonisolated let name: String
@@ -26,20 +27,35 @@ package actor ScriptedAppPlayer: MusicPlayer {
     private var pausedDocuments: [String] = []
     /// The last read's failure, logged once until a read works or fails otherwise.
     private var lastFailure: String?
+    private let sleep: VolumeFader.Sleep
     private let logger = AutoHushLogger(category: "ScriptedAppPlayer")
 
-    /// `channel`: its Apple events; tests stand in for it.
+    /// `channel`: its Apple events, and `sleep`, while a toggle is checked;
+    /// tests stand in for them.
     package init(bundleID: String, name: String, setup: ScriptSetup, stateNotification: Notification.Name? = nil,
-                 toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: (any AppleEventSending)? = nil) {
+                 toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: (any AppleEventSending)? = nil,
+                 sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         self.bundleID = bundleID
         self.name = name
         self.setup = setup
         self.stateNotification = stateNotification
         self.toggleState = toggleState
         self.channel = channel ?? AppleEventChannel(bundleID: bundleID, label: name)
+        self.sleep = sleep
     }
 
     package nonisolated var canFade: Bool { setup.hasVolume }
+
+    /// A toggle with no scripted state checks itself (`togglesBySigns`);
+    /// any other press is checked as any player's is (`PressCheck`).
+    package nonisolated var checksItsPresses: Bool { togglesBySigns }
+
+    /// It only toggles, and whether it plays is the app's other signs':
+    /// checked by them, a toggle is never sent twice, since a second would
+    /// undo a first the app is only slow to show (still buffering).
+    private nonisolated var togglesBySigns: Bool {
+        if case .toggle = setup.commands { setup.state == nil } else { false }
+    }
 
     package func verifyControlAccess() async throws {
         let pid = try channel.runningProcessIdentifier()
@@ -86,7 +102,7 @@ package actor ScriptedAppPlayer: MusicPlayer {
             try await send(pause, pausing: true)
         case .toggle(let toggle):
             guard try await stateForToggle().needsToggle(from: .playing) else { return }
-            try await send(toggle, pausing: true)
+            try await sendToggle(toggle, to: .paused)
         }
     }
 
@@ -96,13 +112,22 @@ package actor ScriptedAppPlayer: MusicPlayer {
             try await send(play, pausing: false)
         case .toggle(let toggle):
             guard try await stateForToggle().needsToggle(from: .paused) else { return }
-            try await send(toggle, pausing: false)
+            try await sendToggle(toggle, to: .playing)
         }
     }
 
     /// Its state before a toggle: by script, else by its other signs.
     private func stateForToggle() async -> PlayerState {
         setup.state == nil ? await toggleState() : await playerState()
+    }
+
+    /// Sends `toggle`; one judged by the app's other signs waits for them
+    /// to show `target` (`PressCheck.toggleWait`), and isn't sent again.
+    private func sendToggle(_ toggle: String, to target: PlayerState) async throws {
+        let pausing = target == .paused
+        guard togglesBySigns else { return try await send(toggle, pausing: pausing) }
+        try await PressCheck(name: name, isToggle: true, press: { [self] _ in try await send(toggle, pausing: pausing) },
+                             state: toggleState, sleep: sleep).press(to: target)
     }
 
     package func volume() async -> Int? {

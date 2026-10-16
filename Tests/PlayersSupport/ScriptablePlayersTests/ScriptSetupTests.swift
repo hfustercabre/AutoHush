@@ -75,6 +75,36 @@ struct ScriptSetupTests {
         #expect(setup.state == .documents(documentClass: "docu", playing: "splg"))
     }
 
+    @Test("an app's dictionary is read from its bundle: the .sdef its Info.plist names, else the first in its resources that has one; not running, it's never asked for one")
+    func readFromBundle() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("ScriptSetupTests-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        /// An app holding `files` (name: text) in its resources, its Info.plist naming `named`.
+        func app(_ name: String, named: String? = nil, files: [String: String]) throws -> URL {
+            let url = folder.appendingPathComponent("\(name).app")
+            let resources = url.appendingPathComponent("Contents/Resources")
+            try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
+            try (["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 } as NSDictionary)
+                .write(to: url.appendingPathComponent("Contents/Info.plist"))
+            for (file, text) in files { try Data(text.utf8).write(to: resources.appendingPathComponent(file)) }
+            return url
+        }
+        // Named without its extension, as many apps name it; the other .sdef isn't read.
+        let named = try ScriptingDictionary.read(appAt: app("Spotify", named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc]),
+                                                 isRunning: false)
+        #expect(named?.suite == "spfy")
+        #expect(named.map { $0.hasState && $0.namesItsSong } == true)
+        // Not named: the first that holds a dictionary.
+        let itemNamed = vlc.replacingOccurrences(of: "</class-extension>", with: "<property name=\"name of current item\" code=\"nmci\"/></class-extension>")
+        let found = try ScriptingDictionary.read(appAt: app("VLC", files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed]), isRunning: false)
+        #expect(found?.hasPlayingFlag == true && found?.hasState == true)
+        #expect(found?.currentItemName == "nmci" && found?.namesItsSong == true)
+        // Only old .scriptSuite files: only the running app could say, so nothing is read.
+        let old = try app("Old", files: ["Old.scriptSuite": "{}"])
+        #expect(ScriptingDictionary.isInBundle(at: old))
+        #expect(ScriptingDictionary.read(appAt: old, isRunning: false) == nil)
+    }
+
     @Test("an app with no play or pause can't be scripted")
     func nothingToPress() throws {
         let dictionary = try dictionary("""

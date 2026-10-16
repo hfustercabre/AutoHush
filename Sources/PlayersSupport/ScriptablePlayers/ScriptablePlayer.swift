@@ -55,11 +55,12 @@ package actor ScriptablePlayer: MusicPlayer {
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { profile.iconPlaceholder }
 
     private let logger = AutoHushLogger(category: "ScriptablePlayer")
-    private let channel: AppleEventChannel
+    private let channel: any AppleEventSending
 
-    package init(profile: ScriptablePlayerProfile) {
+    /// `channel`: its Apple events; tests stand in for them.
+    package init(profile: ScriptablePlayerProfile, channel: (any AppleEventSending)? = nil) {
         self.profile = profile
-        channel = AppleEventChannel(bundleID: profile.bundleID, label: profile.name)
+        self.channel = channel ?? AppleEventChannel(bundleID: profile.bundleID, label: profile.name)
     }
 
     package func verifyControlAccess() async throws {

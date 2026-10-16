@@ -60,45 +60,45 @@ to it and loses its permissions; one signed with a certificate keeps them.
   doesn't, the check stops there, with nothing moved or pressed). Only then
   does anything move. The check tests each way to control it (AppleScript,
   its playback menu, its page's button and the menu bar's Now Playing
-  panel), pausing the app and playing it again by each, with the app's
-  window in each state a player's can be in while AutoHush controls it:
-  visible, covered (Player Check puts a window of its own over it), on
-  another desktop, covered there, full screen, minimized and hidden. Player
-  Check moves the window there itself, starting by bringing it to visible on
-  this desktop whatever state it's in, and comes back to the front before
-  each state's trials; for the desktops it drags the window with the pointer
-  and Control-arrow. So from the first move until the window is put back,
-  your clicks, scrolling and keys are blocked (playercheck's
-  `--block-input`): the pointer still moves (except during a drag), and the
-  panel's Stop and Escape still work, both stopping the check; whenever the
-  check asks you something, they're yours again. Meanwhile every screen dims
-  (black at 50%) but the panel: the shade lets the check's drags through and
-  hides nothing from it (macOS still counts the windows under it as visible,
-  so a Chromium page there takes presses). Its own window may move aside so
-  the app's shows. Everything is put back as it was at the end (also at a
-  Stop). A check takes about 3 minutes; the status says which state it's in
-  ("Checking: its window covered, 2 of 7…"). While it runs, a small panel at
-  the screen's bottom right shows how far it has got, on every desktop (full
-  screen apps' too): what it's doing, what it asks of you with the time
-  left, the window states as segments with the one it's in and the way it's
-  pressing, while your input is blocked an orange line saying so, and its
-  **Stop**, which leaves the app you're in where it is. It floats above
-  other windows (above the menu bar and the shade too while the screen is
-  dimmed), which the check doesn't count as covering the app; during a drag,
-  a click on it is taken as its Stop. The keyboard's Play/Pause key isn't
-  one: macOS sends it only to the Now Playing app, which AutoHush can't
-  choose (when AutoHush pauses a player, the app that started playing may
-  hold Now Playing). When a way leaves it paused, the check first plays it
-  again by itself (that way once more, then a way that worked, else
-  AppleScript, its menu, then the panel) and asks you only when none does; a
-  track that ends during a test is tested again rather than failing the way.
-  **Stop** ends a check (if a test had paused the app, it's played again
-  first; what the check is doing ends first, then the window is put back). A
-  check stopped or failed leaves the last finished one shown, with a note.
-  Quitting Player Check, or closing its window, stops a check or Play/Pause
-  that's running; one whose window went by force (or a crash) stops by
-  itself. Its window doesn't go full screen: the green button zooms it
-  instead.
+  panel, shown for a moment if you hid it), pausing the app and playing it
+  again by each, with the app's window in each state a player's can be in
+  while AutoHush controls it: visible, covered (Player Check puts a window
+  of its own over it), on another desktop, covered there, full screen,
+  minimized and hidden. Player Check moves the window there itself, starting
+  by bringing it to visible on this desktop whatever state it's in, and
+  comes back to the front before each state's trials; for the desktops it
+  drags the window with the pointer and Control-arrow. So from the first
+  move until the window is put back, your clicks, scrolling and keys are
+  blocked (playercheck's `--block-input`): the pointer still moves (except
+  during a drag), and the panel's Stop and Escape still work, both stopping
+  the check; whenever the check asks you something, they're yours again.
+  Meanwhile every screen dims (black at 50%) but the panel: the shade lets
+  the check's drags through and hides nothing from it (macOS still counts
+  the windows under it as visible, so a Chromium page there takes presses).
+  Its own window may move aside so the app's shows. Everything is put back
+  as it was at the end (also at a Stop). A check takes about 3 minutes; the
+  status says which state it's in ("Checking: its window covered, 2 of 7…").
+  While it runs, a small panel at the screen's bottom right shows how far it
+  has got, on every desktop (full screen apps' too): what it's doing, what
+  it asks of you with the time left, the window states as segments with the
+  one it's in and the way it's pressing, while your input is blocked an
+  orange line saying so, and its **Stop**, which leaves the app you're in
+  where it is. It floats above other windows (above the menu bar and the
+  shade too while the screen is dimmed), which the check doesn't count as
+  covering the app; during a drag, a click on it is taken as its Stop. The
+  keyboard's Play/Pause key isn't one: macOS sends it only to the Now
+  Playing app, which AutoHush can't choose (when AutoHush pauses a player,
+  the app that started playing may hold Now Playing). When a way leaves it
+  paused, the check first plays it again by itself (that way once more, then
+  a way that worked, else AppleScript, its menu, then the panel) and asks
+  you only when none does; a track that ends during a test is tested again
+  rather than failing the way. **Stop** ends a check (if a test had paused
+  the app, it's played again first; what the check is doing ends first, then
+  the window is put back). A check stopped or failed leaves the last
+  finished one shown, with a note. Quitting Player Check, or closing its
+  window, stops a check or Play/Pause that's running; one whose window went
+  by force (or a crash) stops by itself. Its window doesn't go full screen:
+  the green button zooms it instead.
 - **The results:** "Ways to Control It" as a checklist (✓ worked in every
   window state, an orange ⚠ in some, with the states it failed in and why
   under it, ✗ in none or not there, ? not tried, – not checked), "For

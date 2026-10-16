@@ -1,6 +1,8 @@
 import Foundation
+import os
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("NowPlayingReports")
 struct NowPlayingReportsTests {
@@ -59,5 +61,84 @@ struct NowPlayingReportsTests {
         #expect(reports.state(of: "com.example.app") == .playing)
         reports.stop()
         #expect(reports.state(of: "com.example.app") == nil)
+    }
+
+    /// A folder of its own for a stream's script: the files it waits for, or writes.
+    private func folder() throws -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("NowPlayingReportsTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
+
+    @Test("the log followed: its past under the live lines; a stream that ends says nothing, and the next question follows it again")
+    func followed() async throws {
+        let folder = try folder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let pid = getpid()
+        // A web app's media process: it played as the web app, then is created again under WebKit's ID.
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        NowPlayingReports.apply("[com.apple.WebKit.GPU/com.example.webapp (\(pid)) Web App ❯] PlaybackState changed from Paused to Playing",
+                                to: &clients)
+        let past = clients
+        let lines = ["Creating nowPlayingClient com.apple.WebKit.GPU (\(pid)) ",
+                     "[com.apple.WebKit.GPU/com.example.webapp (\(pid)) Web App ❯] PlaybackState changed from Playing to Paused"]
+            .map { #"{"eventMessage":"\#($0)"}"# }
+        // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does.
+        let script = #"printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ]; do sleep 0.01; done; printf '%s\n' "$2"; until [ -e "$3/end" ]; do sleep 0.01; done"#
+        let reads = OSAllocatedUnfairLock(initialState: [Date]())
+        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path]) { since in
+            Thread.sleep(forTimeInterval: 0.1) // the live line comes first
+            reads.withLock { $0.append(since) }
+            return past
+        }
+        defer { reports.stop() }
+        let webApp = "com.example.webapp"
+        let since = Date(timeIntervalSinceNow: -30)
+        #expect(reports.follow(since: since))
+        #expect(reads.withLock { $0 } == [since])
+        // The live line says only that it's there: its name, ID and report are the past's.
+        #expect(reports.state(of: webApp) == .playing)
+        #expect(reports.latest(of: webApp)?.name == "Web App")
+        try Data().write(to: folder.appendingPathComponent("more"))
+        await TestWait.until { reports.state(of: webApp) == .paused }
+        #expect(reports.state(of: webApp) == .paused)
+        try Data().write(to: folder.appendingPathComponent("end"))
+        // Nothing said once it ended; that question follows it again, its past read back `lookBack`.
+        await TestWait.until { reports.state(of: webApp) == nil }
+        await TestWait.until { reads.withLock { $0.count } == 2 }
+        let again = try #require(reads.withLock { $0.dropFirst().first })
+        #expect(abs(again.timeIntervalSinceNow + NowPlayingReports.firstLookBack) < 5)
+    }
+
+    @Test("followed until nobody asks for its idle limit, or until stop; a log that can't be opened isn't asked again")
+    func idle() async throws {
+        let folder = try folder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("pid").path
+        let line = #"{"eventMessage":"[com.example.app (\#(getpid())) App ❯] PlaybackState changed from Paused to Playing"}"#
+        // Its pid written, its line, then it waits.
+        let reports = NowPlayingReports(idleLimit: 0.2, streamCommand: ["/bin/sh", "-c", #"echo $$ > "$1"; printf '%s\n' "$2"; exec sleep 60"#,
+                                                                        "sh", file, line]) { _ in [:] }
+        func stream() -> pid_t? {
+            (try? String(contentsOfFile: file, encoding: .utf8)).flatMap { pid_t($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        }
+        #expect(reports.follow(since: Date()))
+        await TestWait.until { reports.state(of: "com.example.app") == .playing }
+        #expect(reports.state(of: "com.example.app") == .playing)
+        let first = try #require(stream())
+        await TestWait.until { !NowPlayingReports.stillRuns(first) }
+        #expect(!NowPlayingReports.stillRuns(first))
+        #expect(reports.state(of: "com.example.app") == nil)
+        await TestWait.until { reports.state(of: "com.example.app") == .playing }
+        let second = try #require(stream())
+        #expect(second != first)
+        reports.stop()
+        await TestWait.until { !NowPlayingReports.stillRuns(second) }
+        #expect(!NowPlayingReports.stillRuns(second))
+
+        let closed = NowPlayingReports(streamCommand: ["/bin/sh", "-c", "exec sleep 60"]) { _ in nil }
+        #expect(!closed.follow(since: Date()))
+        #expect(!closed.isAvailable)
+        #expect(closed.state(of: "com.example.app") == nil)
     }
 }

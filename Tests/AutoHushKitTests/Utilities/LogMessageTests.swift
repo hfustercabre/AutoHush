@@ -21,7 +21,7 @@ struct LogMessageTests {
     func errorsInEnglish() {
         let own: any Error = Own()
         #expect(text("failed: \(own)") == "failed: It broke, in English.")
-        #expect(text("\(MusicPlayerError.playerNotResponding as any Error)") == "The media player is not responding.")
+        #expect(text("\(MusicPlayerError.playerNotResponding as any Error)") == "The media player isn’t responding.")
 
         let offline: any Error = URLError(.notConnectedToInternet)
         #expect(text("\(offline)") == "NSURLErrorDomain error -1009 (not connected to the Internet)")

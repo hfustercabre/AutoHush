@@ -62,6 +62,8 @@ extension PlayPauseWords {
         }
         // An Electron app's translations, inside app.asar as JSON.
         if let asar = try? Data(contentsOf: resources.appendingPathComponent("app.asar"), options: .alwaysMapped) {
+            /// JSON's white space, between a key, its colon and its text.
+            func isSpace(_ byte: UInt8) -> Bool { [0x20, 0x09, 0x0A, 0x0D].contains(byte) }
             /// The JSON string starting at `index` (a quote), decoded, and the index after it.
             func string(at index: Data.Index) -> (String, Data.Index)? {
                 guard index >= asar.startIndex, index < asar.endIndex, asar[index] == UInt8(ascii: "\"") else { return nil }
@@ -78,10 +80,10 @@ extension PlayPauseWords {
                     start = range.upperBound
                     guard range.lowerBound > asar.startIndex else { continue }
                     var colon = range.lowerBound - 1
-                    while colon > asar.startIndex, asar[colon] == UInt8(ascii: " ") { colon -= 1 }
+                    while colon > asar.startIndex, isSpace(asar[colon]) { colon -= 1 }
                     guard asar[colon] == UInt8(ascii: ":") else { continue }
                     var close = colon - 1
-                    while close > asar.startIndex, asar[close] == UInt8(ascii: " ") { close -= 1 }
+                    while close > asar.startIndex, isSpace(asar[close]) { close -= 1 }
                     guard asar[close] == UInt8(ascii: "\"") else { continue }
                     var open = close - 1
                     while open > asar.startIndex, asar[open] != UInt8(ascii: "\""), close - open < 80 { open -= 1 }
@@ -89,14 +91,18 @@ extension PlayPauseWords {
                 }
                 return found
             }
-            /// Every text of `key`: `"<key>": "…"`.
+            /// Every text of `key`: `"<key>": "…"`, with or without spaces
+            /// around the colon, as `keys(of:)` reads them.
             func texts(of key: String) -> Set<String> {
                 var found: Set<String> = [], start = asar.startIndex
-                let marker = Data("\"\(key)\":".utf8)
+                let marker = Data("\"\(key)\"".utf8)
                 while let range = asar.range(of: marker, in: start..<asar.endIndex) {
                     start = range.upperBound
                     var index = range.upperBound
-                    while index < asar.endIndex, asar[index] == UInt8(ascii: " ") { index += 1 }
+                    while index < asar.endIndex, isSpace(asar[index]) { index += 1 }
+                    guard index < asar.endIndex, asar[index] == UInt8(ascii: ":") else { continue }
+                    index += 1
+                    while index < asar.endIndex, isSpace(asar[index]) { index += 1 }
                     if let (text, _) = string(at: index), !text.isEmpty { found.insert(text) }
                 }
                 return found

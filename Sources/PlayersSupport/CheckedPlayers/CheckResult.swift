@@ -23,9 +23,17 @@ package struct CheckResult: Codable, Equatable, Sendable {
         /// The Now Playing panel's: Now Playing hidden in the menu bar, so
         /// it couldn't be tried.
         case menuBarHidden
+        /// AppleScript's: it worked, but only toggles, with no state, and
+        /// nothing else tells AutoHush when to send it, so it isn't kept.
+        case toggleOnly
         /// Found, but not tried (the app didn't play).
         case notTried
-        /// Not looked for (the app wasn't running, or Accessibility is missing).
+        /// Not looked for: Automation for the app isn't allowed (AppleScript).
+        case noAutomation
+        /// Not looked for: Accessibility isn't allowed.
+        case noAccessibility
+        /// Not looked for, for another reason (the app wasn't running, had
+        /// no window, or didn't play).
         case notChecked
     }
 

@@ -405,6 +405,51 @@ struct PlaybackArbiterTests {
         #expect(await player.commandLog == ["mute", "forgetPause"])
     }
 
+    // MARK: - Held resumes (Add an App's check)
+
+    @Test("while resumes are held, music paused before the hold or during it stays paused in the other app's gaps; released, it resumes",
+          arguments: [true, false])
+    func heldResumes(pausedBeforeHold: Bool) async {
+        let player = MockMusicPlayer()
+        let states = ValuesLog<PlaybackState>()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { states.record($0) })
+
+        if pausedBeforeHold { await arbiter.sourceChanged("org.videolan.vlc", playing: true) }
+        await arbiter.holdResumes(true)
+        if !pausedBeforeHold { await arbiter.sourceChanged("org.videolan.vlc", playing: true) }
+        for _ in 1...2 { // the check's gaps
+            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.waitUntilIdle()
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        }
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.playCallCount == 0)
+        #expect(states.values.last == .pausedByMonitor) // still ours: handed over should AutoHush quit
+
+        await arbiter.holdResumes(false)
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.state == .playing)
+    }
+
+    @Test("an arbiter started with resumes held takes a pause over, and resumes it only once released")
+    func startedHeld() async {
+        let player = MockMusicPlayer(state: .paused)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler, resumesHeld: true)
+
+        #expect(await arbiter.takeOverPause())
+        await scheduler.completeNext() // no app turned up
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+
+        await arbiter.holdResumes(false)
+        await waitUntil { await player.playCallCount == 1 }
+        #expect(await player.state == .playing)
+    }
+
     @Test("fades the music out before pausing and back in after resuming")
     func fadesAroundPauseAndResume() async {
         let player = MockMusicPlayer()

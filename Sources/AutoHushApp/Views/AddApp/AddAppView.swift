@@ -14,10 +14,14 @@ import CheckedPlayers
 struct AddAppView: View {
     let model: AddAppModel
     let close: () -> Void
-    /// While AutoHush waits for the app to play, the window floats in the
-    /// top-right corner, above the app the user goes into (`true`), and
-    /// stays where it is after (`false`).
+    /// While AutoHush waits for the app to play, the window floats above the
+    /// app the user goes into (`true`), and is back at the normal level after
+    /// (`false`).
     var floats: (Bool) -> Void = { _ in }
+    /// The step whose main control has the keyboard focus (with keyboard
+    /// navigation on): the current one's, so a done step's Change… doesn't
+    /// keep it.
+    @FocusState private var focused: AddAppModel.Step?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -50,6 +54,18 @@ struct AddAppView: View {
         .font(.appBody)
         .announcesCurrentStep(announcement)
         .onChange(of: isWaitingToPlay) { _, waiting in floats(waiting) }
+        .defaultFocus($focused, model.currentStep)
+        .onChange(of: model.stage, initial: true) { focusCurrentStep() }
+        .onChange(of: model.permissions.neededAllowed) { focusCurrentStep() }
+    }
+
+    /// The focus leaves the control it's on, then goes to the current step's
+    /// main control once it's in place (none while it waits for the app to
+    /// play).
+    private func focusCurrentStep() {
+        focused = nil
+        let step = model.currentStep
+        Task { @MainActor in focused = step }
     }
 
     private var appName: String? { model.chosen?.name }
@@ -82,7 +98,7 @@ struct AddAppView: View {
             case .failed: return AddAppText.checkFailed(model.failureReason, app: app)
             default: return nil
             }
-        case .use: return model.result?.setup == nil ? model.result.map { _ in AddAppText.nothingWorked(app) } : nil
+        case .use: return model.choosableWays.isEmpty ? model.result.map { nothingNote($0, app: app) } : nil
         }
     }
 
@@ -121,6 +137,7 @@ struct AddAppView: View {
                 Button { model.changeApp() } label: { Text(verbatim: AddAppText.changeApp) }
                     .buttonStyle(.chip)
                     .padding(.top, 2)
+                    .focused($focused, equals: .choose)
             }
         case .busy:
             StepNote(AddAppText.opening(appName ?? ""))
@@ -128,6 +145,7 @@ struct AddAppView: View {
             StepNote(AddAppText.chooseNote)
             if model.openFailed, let app = appName { NoteLabel(AddAppText.couldNotOpen(app)).padding(.top, 2) }
             AddAppStepButton(AddAppText.chooseApp) { model.openChooser() }
+                .focused($focused, equals: .choose)
         }
     }
 
@@ -141,7 +159,7 @@ struct AddAppView: View {
             if let app = appName {
                 if model.traits?.scriptable == false { StepNote(AddAppText.notScriptable(app)) }
                 if model.permissionMissingInCheck { NoteLabel(AddAppText.neededInCheck).padding(.top, 2) }
-                CheckPermissionRows(model: model, app: app).padding(.top, 4)
+                CheckPermissionRows(model: model, app: app, focused: $focused).padding(.top, 4)
                 // Some not allowed: what the check does without them, then
                 // Continue once what's needed is (all allowed goes on by itself).
                 let missing = model.permissions.missingOptional(antiDot: model.antiDot)
@@ -150,6 +168,7 @@ struct AddAppView: View {
                 } else if !missing.isEmpty {
                     NoteLabel(AddAppText.withoutWarning(missing, app: app)).padding(.top, 4)
                     AddAppStepButton(AddAppText.continueButton) { model.continueWithoutAll() }
+                        .focused($focused, equals: .allow)
                 }
             }
         }
@@ -166,6 +185,7 @@ struct AddAppView: View {
             if model.reopenFailed { NoteLabel(AddAppText.didNotQuit(appName ?? "")).padding(.top, 2) }
             StepButtons {
                 AddAppStepButton(AddAppText.reopenTitle(appName ?? "")) { model.reopen() }
+                    .focused($focused, equals: .reopen)
                 AddAppStepButton(AddAppText.skip, secondary: true) { model.skipReopen() }
             }
         default:
@@ -186,9 +206,11 @@ struct AddAppView: View {
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
             AddAppStepButton(AddAppText.open(appName ?? "")) { model.openAppAgain() }
+                .focused($focused, equals: .play)
         case (.failed, _):
             StepNote(AddAppText.didNotPlay(appName ?? ""))
             AddAppStepButton(AddAppText.tryAgain) { model.waitForPlaying() }
+                .focused($focused, equals: .play)
         default:
             StepNote(AddAppText.playWaits)
         }
@@ -206,15 +228,19 @@ struct AddAppView: View {
             StepNote(model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
             AddAppStepButton(AddAppText.stop, secondary: true, cancels: true) { model.stopCheck() }
+                .focused($focused, equals: .check)
         case (.failed, .stopped):
             StepNote(AddAppText.stoppedNote)
             AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+                .focused($focused, equals: .check)
         case (.failed, _):
             StepNote(AddAppText.checkFailed(model.failureReason, app: appName ?? ""))
             StepButtons {
                 AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+                    .focused($focused, equals: .check)
                 if model.failureReason == .other {
                     AddAppStepButton(AddAppText.showLog, secondary: true) { model.showLog() }
+                        .disabled(!model.canShowLog)
                 }
             }
         default:
@@ -226,21 +252,29 @@ struct AddAppView: View {
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if mark == .current {
                 AddAppStepButton(AddAppText.continueToCheck) { model.continueToCheck() }
+                    .focused($focused, equals: .check)
             }
         }
     }
 
+    /// Why no way can be used: none worked, or only one AntiDot mode can't
+    /// hear (the panel, its row showing no state).
+    private func nothingNote(_ result: CheckResult, app: String) -> String {
+        result.setup == nil ? AddAppText.nothingWorked(app) : AddAppText.nothingInAntiDot(app)
+    }
+
     @ViewBuilder private func useStep() -> some View {
         if let result = model.result, let app = appName {
-            if result.setup == nil {
-                StepNote(AddAppText.nothingWorked(app))
-                WaysList(result: result, app: app).padding(.top, 4)
+            if model.choosableWays.isEmpty {
+                StepNote(nothingNote(result, app: app))
+                WaysList(result: result, app: app, panelNeedsSound: model.panelNeedsSound).padding(.top, 4)
             } else {
                 StepNote(AddAppText.chooseWay(app))
                 WayChoices(model: model, result: result, app: app).padding(.top, 4)
             }
-            if result.setup == nil {
-                // No way pauses it: it can be muted instead (the user, 2026-10-15).
+            if model.choosableWays.isEmpty {
+                // No way it can use pauses it: it can be muted instead (the
+                // user, 2026-10-15); in AntiDot mode neither (2026-10-16).
                 StepNote(AddAppText.muteInstead(app)).padding(.top, 4)
                 if model.antiDot {
                     NoteLabel(ControlFailure.muteUnavailable.text(player: app)).padding(.top, 2)
@@ -257,12 +291,27 @@ struct AddAppView: View {
                     }
                 }
                 StepButtons {
-                    AddAppStepButton(AddAppText.muteItInstead) { model.useMuting() }
-                        .disabled(!model.canMute)
-                    AddAppStepButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                    // The focus goes to Check Again while Mute It Instead can't be pressed.
+                    let mute = AddAppStepButton(AddAppText.muteItInstead) { model.useMuting() }.disabled(!model.canMute)
+                    let again = AddAppStepButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                    if model.canMute {
+                        mute.focused($focused, equals: .use)
+                        again
+                    } else {
+                        mute
+                        again.focused($focused, equals: .use)
+                    }
                 }
             } else {
-                AddAppStepButton(AddAppText.use(app)) { model.use() }
+                // Now Playing hidden in the menu bar: once it's shown, its
+                // panel can be tried (the user, 2026-10-16).
+                StepButtons {
+                    AddAppStepButton(AddAppText.use(app)) { model.use() }
+                        .focused($focused, equals: .use)
+                    if model.offersCheckAgain {
+                        AddAppStepButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                    }
+                }
             }
         } else {
             StepNote(AddAppText.useWaits)
@@ -326,6 +375,8 @@ private struct StepButtons<Content: View>: View {
 private struct CheckPermissionRows: View {
     let model: AddAppModel
     let app: String
+    /// Accessibility's Allow… is the step's main control while it's missing.
+    var focused: FocusState<AddAppModel.Step?>.Binding
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -353,9 +404,10 @@ private struct CheckPermissionRows: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(verbatim: title)
-                    // Accessibility is needed; the check goes on without the others.
+                    // Accessibility is needed (said while it's missing); the
+                    // check goes on without the others.
                     if permission == .accessibility {
-                        HeadingBadge(text: AddAppText.neededBadge)
+                        if allowed == false { HeadingBadge(text: AddAppText.neededBadge) }
                     } else if allowed != nil {
                         Text(verbatim: AddAppText.optionalLabel).font(.appCaption).foregroundStyle(.appSecondary)
                     }
@@ -379,10 +431,11 @@ private struct CheckPermissionRows: View {
                         .buttonStyle(.chip)
                         .fixedSize()
                 } else {
-                    Button { model.request(permission) } label: { Text(verbatim: AddAppText.allowButton) }
+                    let allow = Button { model.request(permission) } label: { Text(verbatim: AddAppText.allowButton) }
                         .buttonStyle(.chip)
                         .fixedSize()
                         .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(title)))
+                    if permission == .accessibility { allow.focused(focused, equals: .allow) } else { allow }
                 }
             }
         }
@@ -394,10 +447,15 @@ private struct CheckPermissionRows: View {
 private struct WaysList: View {
     let result: CheckResult
     let app: String
+    /// The panel's row shows no state: only its sound tells (in AntiDot
+    /// mode, why nothing can be used).
+    var panelNeedsSound = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(result.ways, id: \.kind) { way in WayRow(way: way, app: app) }
+            ForEach(result.ways, id: \.kind) { way in
+                WayRow(way: way, app: app, soundOnly: way.kind == .panel && way.worked && panelNeedsSound)
+            }
         }
     }
 }
@@ -432,14 +490,16 @@ private struct WayRow: View {
         case .works: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
         case .some: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.appWarning)
         case .none, .notThere: Image(systemName: "xmark.circle.fill").foregroundStyle(.appSecondary)
-        case .notTried, .notChecked, .menuBarHidden: Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
+        case .notTried, .notChecked, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly:
+            Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
         }
     }
 }
 
 /// The last step when ways worked (U2, the user's pick, 2026-10-15): each one
 /// AutoHush can use as a card to choose, the recommended first and chosen
-/// until another is, and under them, dimmed, those that didn't work, with why.
+/// until another is, and under them, dimmed, those that didn't work or can't
+/// be used (the panel only its sound tells, in AntiDot mode), with why.
 private struct WayChoices: View {
     let model: AddAppModel
     let result: CheckResult
@@ -452,7 +512,7 @@ private struct WayChoices: View {
                 if let way = result.ways.first(where: { $0.kind == kind }) { card(way, recommended: index == 0) }
             }
             ForEach(result.ways.filter { !choosable.contains($0.kind) }, id: \.kind) { way in
-                WayRow(way: way, app: app).opacity(0.6).padding(.horizontal, 9).padding(.top, 2)
+                WayRow(way: way, app: app, soundOnly: soundOnly(way)).opacity(0.6).padding(.horizontal, 9).padding(.top, 2)
             }
         }
     }
@@ -460,7 +520,7 @@ private struct WayChoices: View {
     private func card(_ way: CheckResult.WayResult, recommended: Bool) -> some View {
         let isChosen = model.chosenWay == way.kind
         return Button { model.choose(way.kind) } label: {
-            WayRow(way: way, app: app, recommended: recommended, soundOnly: way.kind == .panel && result.setup?.panelRowIsStale == true)
+            WayRow(way: way, app: app, recommended: recommended, soundOnly: soundOnly(way))
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background {
@@ -474,5 +534,10 @@ private struct WayChoices: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? .isSelected : [])
+    }
+
+    /// The panel that worked, its row showing no state: only its sound tells.
+    private func soundOnly(_ way: CheckResult.WayResult) -> Bool {
+        way.kind == .panel && way.worked && model.panelNeedsSound
     }
 }

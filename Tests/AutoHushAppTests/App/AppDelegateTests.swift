@@ -655,6 +655,115 @@ struct AppDelegateTests {
         #expect(monitorings.made.count == 1)
     }
 
+    @MainActor
+    @Test("macOS's notices reach AutoHush: the chosen player opening starts it again, the Mac sleeping and waking (or only its screens) reach the session; unregistered, a launch does nothing")
+    func workspaceNotices() async {
+        let scratch = Scratch()
+        await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, monitorings) = makeSUT(scratch)
+        sut.session.launch()
+        await waitFor { sut.status.health == .degraded("First isn’t running") }
+        sut.registerPlayerLaunchObserver()
+        let observer = sut.playerLaunchObserver
+        sut.registerPlayerLaunchObserver() // once only
+        #expect(observer != nil && sut.playerLaunchObserver === observer)
+        sut.registerSleepObservers()
+        let center = NSWorkspace.shared.notificationCenter
+        defer {
+            sut.unregisterPlayerLaunchObserver()
+            sut.sleepObservers.forEach { center.removeObserver($0) }
+        }
+        func launch() {
+            center.post(name: NSWorkspace.didLaunchApplicationNotification, object: nil,
+                        userInfo: [NSWorkspace.applicationUserInfoKey: FakeRunningApplication(bundleID: Players.first)])
+        }
+
+        await scratch.first.setFailVerify(nil)
+        launch()
+        await waitFor { sut.status.health == .ready }
+        #expect(monitorings.made.count == 1)
+
+        for (notice, asleep) in [(NSWorkspace.willSleepNotification, true), (NSWorkspace.didWakeNotification, false),
+                                 (NSWorkspace.willSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)] {
+            center.post(name: notice, object: nil)
+            await waitFor { sut.session.isAsleep == asleep }
+        }
+        #expect(monitorings.made.first?.asleep == [true, false, true, false])
+
+        sut.unregisterPlayerLaunchObserver()
+        #expect(sut.playerLaunchObserver == nil)
+        launch()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(monitorings.made.count == 1) // not started again
+    }
+
+    // MARK: - A player opened without what it needs
+
+    @MainActor
+    @Test("a player opened without the option it needs: one to reopen always is reopened at once, but found so again within a minute only the card says so; its Reopen reopens it; any other is left to the card, or, just chosen, asked about: Cancel leaves it so, Reopen with the box ticked reopens it from then on")
+    func playerNeedingReopen() async {
+        let scratch = Scratch()
+        let tunes = MockMusicPlayer(bundleID: "com.example.tunes", name: "Tunes")
+        let radio = MockMusicPlayer(bundleID: "com.example.radio", name: "Radio")
+        await tunes.setNeedsReopening(true, afterReopen: true) // a launcher that drops the option
+        await radio.setNeedsReopening(true)
+        scratch.players = MusicPlayerCatalog(players: [tunes, radio])
+        scratch.installed = [tunes.bundleID, radio.bundleID]
+        // The alert's box ticked for Tunes, in the registration domain: kept
+        // in memory, never written.
+        UserDefaults.standard.register(defaults: [ReopenChoices.key: [tunes.bundleID]])
+
+        // Reopened at once; found so again right after, it isn't quit and
+        // reopened over and over.
+        let (sut, _) = makeSUT(scratch, chosenPlayer: tunes.bundleID)
+        await waitFor { sut.status.playerNeedsReopen }
+        #expect(await tunes.reopenCount == 1)
+        sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(await tunes.reopenCount == 1)
+        #expect(sut.status.playerNeedsReopen)
+
+        await tunes.setNeedsReopening(true)
+        sut.reopenChosenPlayer() // the card's Reopen
+        await waitFor { !sut.status.playerNeedsReopen }
+        #expect(await tunes.reopenCount == 2)
+
+        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false) // not asked: reopening it was just skipped in Add an App
+        await waitFor { sut.status.playerNeedsReopen }
+        #expect(await radio.reopenCount == 0)
+
+        // Asked when one is chosen: Reopen (Return) or Cancel (Escape), and the box.
+        let alert = AppDelegate.reopenAlert("Radio")
+        #expect(alert.messageText == "Reopen Radio?")
+        #expect(alert.buttons.map(\.title) == ["Reopen Radio", "Cancel"])
+        #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}"])
+        #expect(alert.showsSuppressionButton && alert.suppressionButton?.title == "Always reopen Radio this way")
+
+        // Cancel leaves it to the card, the box ticked or not; Reopen with the
+        // box ticked reopens it, and from then on without asking.
+        let shown = CallLog()
+        AppDelegate.runReopenAlert = { alert in
+            shown.calls.append(alert.messageText)
+            alert.suppressionButton?.state = .on
+            return shown.calls.count == 1 ? .alertSecondButtonReturn : .alertFirstButtonReturn
+        }
+        defer {
+            AppDelegate.runReopenAlert = InfoAlert.runInFront
+            UserDefaults.standard.removeObject(forKey: ReopenChoices.key) // what the box stored; the registered Tunes stays
+        }
+        sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
+        await waitFor { shown.calls.count == 1 }
+        #expect(await radio.reopenCount == 0)
+        #expect(sut.status.playerNeedsReopen)
+        #expect(!ReopenChoices.reopensAlways(radio.bundleID))
+
+        sut.chooseMusicPlayer(radio.bundleID, replacing: true)
+        await TestWait.until { await radio.reopenCount == 1 }
+        await waitFor { !sut.status.playerNeedsReopen }
+        #expect(shown.calls == ["Reopen Radio?", "Reopen Radio?"])
+        #expect(ReopenChoices.reopensAlways(radio.bundleID))
+    }
+
     // MARK: - Music player
 
     @MainActor
@@ -719,15 +828,38 @@ struct AppDelegateTests {
         #expect(monitorings.made.map(\.bundleID) == [Players.second, Players.first])
     }
 
+    /// A player only its sound tells about (`needsAudioLevels`), as an app
+    /// added with Add an App can be.
+    private struct HeardPlayer: MusicPlayer {
+        static let id = "com.example.heard"
+        let bundleID = Self.id
+        let name = "Heard"
+        let stateReportDelay: TimeInterval = 0
+        var needsAudioLevels: Bool { true }
+        func verifyControlAccess() async throws {}
+        func playerState() async -> PlayerState { .playing }
+        func pause() async throws {}
+        func play() async throws {}
+        func volume() async -> Int? { nil }
+        func setVolume(_ volume: Int) async throws {}
+        @MainActor
+        func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+            MockStateObserver()
+        }
+    }
+
     @MainActor
-    @Test("a player that isn't installed, or isn't supported, can't be chosen")
+    @Test("a player that isn't installed, isn't supported, or in AntiDot mode is told only by its sound, can't be chosen")
     func chooseUnavailablePlayer() {
         let scratch = Scratch()
-        scratch.installed = [Players.first]
+        scratch.installed = [Players.first, HeardPlayer.id]
+        scratch.players = MusicPlayerCatalog(players: [scratch.first, scratch.second, HeardPlayer()], formerDefault: Players.first)
+        scratch.preferences.detectionMethod = .playbackSignals // AntiDot mode
         let (sut, monitorings) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(Players.second)
         sut.chooseMusicPlayer("com.example.unknown")
+        sut.chooseMusicPlayer(HeardPlayer.id)
         #expect(sut.player?.bundleID == Players.first)
         #expect(scratch.preferences.musicPlayer == Players.first)
         #expect(monitorings.made.isEmpty)
@@ -1243,6 +1375,16 @@ struct AppDelegateTests {
         let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))
         #expect(sut.settingsModel.updateInstallNote == "AutoHush can’t update itself, because it can’t write to the folder it’s in.")
     }
+}
+
+/// An app macOS says opened, as the launch notice carries it.
+private final class FakeRunningApplication: NSRunningApplication, @unchecked Sendable {
+    private let fakeBundleID: String
+    init(bundleID: String) {
+        fakeBundleID = bundleID
+        super.init()
+    }
+    override var bundleIdentifier: String? { fakeBundleID }
 }
 
 /// Players found on the Mac, changed by a test.

@@ -58,9 +58,7 @@ atexit {
 }
 
 MainActor.assumeIsolated {
-    // Now Playing, shown for a press while the user hid it, put back should
-    // an earlier check have ended meanwhile.
-    NowPlayingSetting.restoreIfLeft()
+    // A one-line answer first: it neither checks nor presses.
     switch CommandLine.arguments.dropFirst().first {
     case NowPlayingApp.argument?:
         NowPlayingApp.printAnswer()
@@ -75,6 +73,10 @@ MainActor.assumeIsolated {
         break
     }
 
+    // Now Playing, shown for a press while the user hid it, put back should
+    // an earlier check or press have ended meanwhile (not by a one-line
+    // answer: the fresh copy a press asks for Now Playing would undo it).
+    NowPlayingSetting.restoreIfLeft(defaults: nowPlayingRecord)
     // A check (or, with --read-only, the same without pressing anything), or
     // a press (--play, --pause): each step in the report's order.
     startRun()

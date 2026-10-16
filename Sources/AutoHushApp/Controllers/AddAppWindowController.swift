@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// The "Add an App" window (W2). Closing it (Cancel, or its close button)
-/// stops a check under way; nothing is kept.
+/// stops a check under way; a finished check stays kept (`KeptCheck`).
 @MainActor
 final class AddAppWindowController: HostedWindowController, NSWindowDelegate {
     private let model: AddAppModel

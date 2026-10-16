@@ -6,20 +6,26 @@ import MenuPlayers
 import ScriptablePlayers
 import WebAppPlayers
 
-/// An app added through a check (`PlayerSetup`), controlled by the ways that
-/// worked there, the surest first: its AppleScript, its page's Play/Pause,
-/// its playback menu, and only when none of them works, its row in the Now
-/// Playing panel (the user, 2026-10-15). Its state is the surest sign that
-/// answers: its scripted state, its page's word (while current), its menu's
-/// item, what it reported to Now Playing (only where macOS's log can be
-/// read, and not once it's found stale), else whether its sound is on.
+/// An app added through a check (`PlayerSetup`), controlled by the way the
+/// user chose at Use: its AppleScript, its page's Play/Pause, its playback
+/// menu, or its row in the Now Playing panel (the user, 2026-10-15). An
+/// older setup may hold several, the surest first, the panel last, tried in
+/// that order. Its state is the surest sign that answers: its
+/// scripted state, its page's word (while current), its menu's item, what it
+/// reported to Now Playing (only where macOS's log can be read, and not once
+/// it's found stale), else whether its sound output is on. One whose Now
+/// Playing row doesn't follow it (`PlayerSetup.panelRowIsStale`) is told by
+/// its level instead, listened to only when AutoHush is about to pause or
+/// play it, and read once a second by its keep-awake assertion meanwhile
+/// (the user, 2026-10-16: else macOS's recording dot stays on all day).
 /// Player Check judges by much the same signs, in its own order (the report
 /// second, its level among them).
 ///
 /// It checks its own presses: each by the way that made it, against those
-/// signs (`sureState`) and never by its sound alone, since an output stays
-/// open for seconds after a pause; a page checks its own, and a mute always
-/// takes.
+/// signs (`sureState`) and never by its output alone, which stays open for
+/// seconds after a pause; a page checks its own, a toggle judged by another
+/// sign (a row that doesn't follow it, a script without a state) checks its
+/// own without pressing again, and a mute always takes.
 package actor CheckedPlayer: MutingMusicPlayer {
     package nonisolated let setup: PlayerSetup
 
@@ -30,6 +36,10 @@ package actor CheckedPlayer: MutingMusicPlayer {
     package nonisolated var installedURL: URL? { Self.installedURL(of: setup) }
     package nonisolated var kind: MusicPlayerKind { .checkedApp }
     /// Muted only, it needs Audio Recording, as AutoHush's own hearing does.
+    /// Through a Now Playing row that doesn't follow it, it needs both:
+    /// Accessibility is named, since nothing presses the row without it,
+    /// and Audio Recording has its own row and warning, as AutoHush's (and
+    /// AntiDot mode can't be used with it).
     package nonisolated var controlPermission: Permission {
         switch setup.ways.first {
         case .script?: .automation(player: name)
@@ -77,6 +87,8 @@ package actor CheckedPlayer: MutingMusicPlayer {
     /// For one that's muted instead of paused: the mute, what it stands for,
     /// and whether it plays now (its keep-awake assertion, once it has shown
     /// one: Qobuz holds one only while it plays; its sound output before).
+    /// The assertion also tells whether one told by its level plays, read
+    /// once a second (`polledState`).
     private let muter: any AudioMuting
     private var hush = MuteState()
     private var mutedPID: pid_t?
@@ -195,12 +207,15 @@ package actor CheckedPlayer: MutingMusicPlayer {
         try await parts.ways.first { $0 is PanelWay }?.verifyControlAccess()
     }
 
+    /// Asked when AutoHush is about to pause or play it (and as it starts):
+    /// its level may be listened to then.
     package func playerState() async -> PlayerState {
         await state(polled: false)
     }
 
     /// For its observer, about once a second: its page is read as a web
-    /// app's observer reads it (less often while it's silent).
+    /// app's observer reads it (less often while it's silent), and its sound
+    /// is never listened to (see `sureState`).
     func polledState() async -> PlayerState {
         await state(polled: true)
     }
@@ -223,19 +238,27 @@ package actor CheckedPlayer: MutingMusicPlayer {
         }
         let sure = await sureState(pid: pid, polled: polled)
         if sure != .unknown { return sure }
+        // Told by its level, which isn't listened to now: an open output
+        // tells nothing (Qobuz keeps its own open while paused).
+        if polled, parts.hearing != nil { return soundOn(pid) ? .unknown : .paused }
         return soundOn(pid) ? .playing : .paused
     }
 
     /// What its sure signs say: its ways' own (its script's state, its
-    /// page's word, its menu's item), else what it reported to Now Playing;
-    /// `.unknown` when none answers. Its sound alone can't tell: an output
-    /// stays open for seconds after a pause. Its presses are checked by
-    /// this, and a script that only toggles asks it.
+    /// page's word, its menu's item), else, for one whose Now Playing row
+    /// doesn't follow it, its level (`heardNow`), else what it reported to
+    /// Now Playing; `.unknown` when none answers. Whether its output is open
+    /// can't tell: an output stays open for seconds after a pause. Its
+    /// presses are checked by this, and a script that only toggles asks it.
     func sureState() async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
         return await sureState(pid: pid, polled: false)
     }
 
+    /// `polled`: read once a second, its sound isn't listened to (the user,
+    /// 2026-10-16: else macOS's recording dot stays on all day): one told by
+    /// its level goes by its keep-awake assertion then, and a report isn't
+    /// checked against its level.
     private func sureState(pid: pid_t, polled: Bool) async -> PlayerState {
         for sign in parts.signs {
             let state: PlayerState
@@ -246,16 +269,19 @@ package actor CheckedPlayer: MutingMusicPlayer {
             }
             if state != .unknown { return state }
         }
-        // Its Now Playing row (and report) doesn't follow it: only its sound tells.
+        // Its Now Playing row (and report) doesn't follow it: only its sound
+        // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
+            if polled { return asserted(pid) }
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
-        return await reported(pid: pid) ?? .unknown
+        return await reported(pid: pid, polled: polled) ?? .unknown
     }
 
-    /// Whether it's heard now, by its level (half a second of listening):
-    /// one with no sound output open isn't; `nil` without Audio Recording or
-    /// in AntiDot mode, which taps no sound.
+    /// Whether it's heard now, by its level (half a second of listening),
+    /// only when AutoHush is about to pause or play it, or checks a press:
+    /// one with no sound output open isn't; `nil` without Audio Recording
+    /// or in AntiDot mode, which taps no sound.
     func heardNow(_ pid: pid_t) async -> Bool? {
         guard soundOn(pid) else { return false }
         guard tapsAllowed.withLock({ $0 }) else { return nil }
@@ -266,16 +292,17 @@ package actor CheckedPlayer: MutingMusicPlayer {
     /// What it last reported to Now Playing, unless that's stale (see
     /// `reportIsStale`): a report that it isn't playing while its output is
     /// open is checked once against its level (half a second of listening,
-    /// with Audio Recording, not in AntiDot mode).
-    private func reported(pid: pid_t) async -> PlayerState? {
+    /// with Audio Recording, not in AntiDot mode), at the first read that
+    /// isn't `polled`.
+    private func reported(pid: pid_t, polled: Bool) async -> PlayerState? {
         guard !reportIsStale, let client = reports?.latest(of: bundleID), let state = client.state else { return nil }
-        guard state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }),
+        guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }),
               soundOn(pid) else { return state }
         reportHeardAt = client.changed
         let probe = levelProbe
         guard await Self.probeQueue.run({ probe.isAudible(appPID: pid) }) else { return state }
         reportIsStale = true
-        logger.notice("\(self.name, privacy: .public)'s Now Playing report says \(client.reported ?? "", privacy: .public) while it's heard: its reports count no more")
+        logger.notice("\(self.name, privacy: .public)’s Now Playing report says \(client.reported ?? "", privacy: .public) while it’s heard: its reports count no more")
         return nil
     }
 
@@ -304,11 +331,21 @@ package actor CheckedPlayer: MutingMusicPlayer {
     /// once it has held one, else its sound output (open while it plays, and
     /// for some apps paused too).
     private func playsNow(_ pid: pid_t) -> Bool {
+        switch asserted(pid) {
+        case .playing: true
+        case .paused: false
+        default: soundOn(pid)
+        }
+    }
+
+    /// What its keep-awake assertion says: playing while it holds one,
+    /// paused once it has held one before; `.unknown` until it has.
+    private func asserted(_ pid: pid_t) -> PlayerState {
         if assertionHeld(pid) {
             assertionSeen = true
-            return true
+            return .playing
         }
-        return assertionSeen ? false : soundOn(pid)
+        return assertionSeen ? .paused : .unknown
     }
 
     private func liftMute() {
@@ -323,9 +360,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     /// Presses by the first way that takes it, checked as that way allows
-    /// (`sureState`; a page checks its own; with no sure sign at all, not
-    /// checked): a way that fails, or whose press doesn't take, hands it to
-    /// the next, the panel last.
+    /// (`sureState`; a page and a toggle judged by another sign check their
+    /// own; with no sure sign at all, not checked): a way that fails, or
+    /// whose press doesn't take, hands it to the next, the panel last.
     private func press(to target: PlayerState) async throws {
         var firstError: (any Error)?
         let checkable = !parts.signs.isEmpty || reports != nil

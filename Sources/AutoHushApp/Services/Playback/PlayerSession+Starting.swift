@@ -56,7 +56,7 @@ extension PlayerSession {
             if problem == loggedStartupProblem {
                 logger.debug("Still can't control \(problem, privacy: .public)")
             } else {
-                logger.error("Can't control \(problem, privacy: .public)")
+                logger.error("Can’t control \(problem, privacy: .public)")
                 loggedStartupProblem = problem
             }
             // The line says AutoHush can't control it: the menu tells why.

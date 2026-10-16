@@ -4,7 +4,7 @@ import Testing
 import AutoHushKit
 
 /// The panel in memory: its rows, the one pressed.
-private final class FakePanel: NowPlayingPanel, @unchecked Sendable {
+final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     private let lock = NSLock()
     private var shown: [PanelRow]
     private var pressedRows: [String] = []
@@ -51,6 +51,11 @@ struct PanelWayTests {
         #expect(saved.ways == [.menu(menuName: "Play"), .panel(rememberedRow: "Song, Artist – Album")])
         #expect(saved.stateNotification == "checked again since") // only its row changed
         #expect(await way(panel, store: store).playerState() == .unknown) // its state is its other signs'
+        #expect(!way(panel, store: store).checksItsPresses) // and so are its presses' checks
+        // Pressed through Accessibility, with no volume: no fades.
+        #expect(way(panel, store: store).controlPermission == .accessibility(player: "Jukebox"))
+        #expect(!way(panel, store: store).canFade)
+        #expect(await way(panel, store: store).volume() == nil)
     }
 
     @Test("a setup no longer kept isn't added back, nor one without the panel any more")
@@ -82,20 +87,23 @@ struct PanelWayTests {
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nowPlayingHidden)) { try await way(hidden, store: store).pause() }
     }
 
-    @Test("a row that doesn't follow the app: its sound tells; pressed as a toggle only when it isn't as wanted yet, else nothing; unheard, it fails")
+    @Test("a row that doesn't follow the app: its sound tells; pressed as a toggle only when it isn't as wanted yet, checked by its sound and never pressed twice; unheard, it says why")
     func staleRow() async throws {
         var stale = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
                                 ways: [.panel(rememberedRow: nil)])
         stale.panelRowIsStale = true
         // Its row always shows paused, as Qobuz's does.
         let shownPaused = [PanelRow(text: "Jukebox,  – ", playing: false), PanelRow(text: "Other Song, Someone – Else", playing: true)]
-        func way(_ panel: FakePanel, heard: Bool?) -> PanelWay {
+        /// Heard as `heard`, until a press toggles it (unless it ignores presses).
+        func way(_ panel: FakePanel, heard: Bool?, ignores: Bool = false) -> PanelWay {
             let hearing = LateHearing()
-            hearing.set { _ in heard }
+            hearing.set { _ in heard.map { !ignores && panel.pressed.count % 2 == 1 ? !$0 : $0 } }
             return PanelWay(setup: stale, remembered: nil, store: MemoryStore(), panel: panel, processIdentifier: { 4242 },
-                            shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing)
+                            shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing,
+                            sleep: { _ in })
         }
         let playing = FakePanel(shownPaused)
+        #expect(way(playing, heard: true).checksItsPresses)
         try await way(playing, heard: true).pause()
         #expect(playing.pressed == ["Jukebox,  – "])
         let paused = FakePanel(shownPaused)
@@ -103,9 +111,16 @@ struct PanelWayTests {
         #expect(paused.pressed.isEmpty)
         try await way(paused, heard: false).play()
         #expect(paused.pressed == ["Jukebox,  – "])
-        try await way(playing, heard: true).play()
-        #expect(playing.pressed == ["Jukebox,  – "])
-        await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await way(FakePanel(shownPaused), heard: nil).pause() }
+        let playingAlready = FakePanel(shownPaused)
+        try await way(playingAlready, heard: true).play()
+        #expect(playingAlready.pressed.isEmpty)
+        // Never heard to pause: a second press would undo a late first one.
+        let ignored = FakePanel(shownPaused)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await way(ignored, heard: true, ignores: true).pause() }
+        #expect(ignored.pressed.count == 1)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.hearingUnavailable)) {
+            try await way(FakePanel(shownPaused), heard: nil).pause()
+        }
     }
 
     @Test("else the row it changed with before")

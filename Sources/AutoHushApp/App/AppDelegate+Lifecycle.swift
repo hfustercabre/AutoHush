@@ -40,7 +40,7 @@ extension AppDelegate {
             do {
                 focusAutoPause.followAtLaunch(try await AutoPauseFocusFilter.currentChoice())
             } catch {
-                logger.error("Couldn't read the Focus filter: \(error)")
+                logger.error("Couldn’t read the Focus filter: \(error)")
             }
         }
     }
@@ -77,6 +77,9 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         NowPlayingSetting.restoreIfLeft()
+        // Its `log stream` would otherwise outlive AutoHush, until
+        // mediaremoted next writes.
+        CheckedPlayer.sharedReports.stop()
         unregisterPlayerLaunchObserver()
         sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         sleepObservers = []

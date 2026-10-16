@@ -45,15 +45,15 @@ struct CheckProgressTests {
     @Test("a request lasts until it's answered or the report moves on, and lifts the block meanwhile")
     func requests() {
         let asked = progress([Line.Heading.playing.rawValue, Line.blocked + " until its window is put back",
-                              Line.waiting(.play, "start playing something in Deezer; the test goes on as soon as it plays", minutes: 2)])
+                              Line.waiting("start playing something in Deezer; the test goes on as soon as it plays", minutes: 2)])
         #expect(asked.request == .play(minutes: 2))
         #expect(asked.requestSince == Date(timeIntervalSince1970: 100))
         #expect(asked.inputBlocked && !asked.blocksInput)
-        #expect(progress([Line.waiting(.pause, "pause Deezer yourself (its own Pause, anywhere): …", minutes: 2)]).request == .pause(minutes: 2))
-        #expect(progress([Line.waiting(.play, "start playing something in Deezer", minutes: 2), "  it plays: testing"]).request == nil)
-        #expect(progress([Line.waiting(.allowAccessibility, "allow Accessibility for AutoHush", minutes: 3),
+        #expect(progress([Line.waiting("pause Deezer yourself (its own Pause, anywhere): …", minutes: 2)]).request == .pause(minutes: 2))
+        #expect(progress([Line.waiting("start playing something in Deezer", minutes: 2), "  it plays: testing"]).request == nil)
+        #expect(progress([Line.waiting("allow Accessibility for AutoHush", minutes: 3),
                           Line.Heading.windowStates.rawValue]).request == nil)
-        #expect(progress([Line.waiting(.allowAccessibility, "allow Accessibility for AutoHush", minutes: 3)]).request
+        #expect(progress([Line.waiting("allow Accessibility for AutoHush", minutes: 3)]).request
             == .allowAccessibility(minutes: 3))
     }
 

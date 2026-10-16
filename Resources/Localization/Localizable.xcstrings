@@ -4660,7 +4660,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikace %@ je mezitím slyšet"
+            "value" : "%@ je slyšet"
           }
         },
         "da" : {
@@ -4672,43 +4672,43 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ währenddessen hörbar"
+            "value" : "%@ hörbar"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η εφαρμογή %@ ακούγεται στο μεταξύ"
+            "value" : "%@ ακούγεται"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ se oye mientras tanto"
+            "value" : "%@ se oye"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ se escucha mientras tanto"
+            "value" : "%@ se escucha"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appi %@ kuuluu sillä aikaa"
+            "value" : "%@ kuuluu"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Son de %@ audible pendant ce temps"
+            "value" : "Son de %@ audible"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Son de %@ audible pendant ce temps"
+            "value" : "Son de %@ audible"
           }
         },
         "hi" : {
@@ -4720,25 +4720,25 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacija %@ za to se vrijeme čuje"
+            "value" : "Aplikacija %@ se čuje"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A(z) %@ közben hallható"
+            "value" : "A(z) %@ hallható"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ terdengar selama itu"
+            "value" : "%@ terdengar"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ udibile nel frattempo"
+            "value" : "%@ udibile"
           }
         },
         "ja" : {
@@ -4762,49 +4762,49 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ondertussen hoorbaar"
+            "value" : "%@ hoorbaar"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacja %@ jest w tym czasie słyszalna"
+            "value" : "%@ z dźwiękiem"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ audível enquanto isso"
+            "value" : "%@ audível"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ audível entretanto"
+            "value" : "%@ audível"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplicația %@ se aude între timp"
+            "value" : "%@ cu sunet"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ на это время со звуком"
+            "value" : "%@ со звуком"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apku %@ je medzitým počuť"
+            "value" : "%@ so zvukom"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacija %@ se medtem sliši"
+            "value" : "%@ z zvokom"
           }
         },
         "sv" : {
@@ -4816,19 +4816,19 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu sırada %@ duyulur"
+            "value" : "%@ duyulur"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Програму %@ тим часом чутно"
+            "value" : "%@ зі звуком"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ vẫn phát ra tiếng trong lúc đó"
+            "value" : "%@ vẫn có tiếng"
           }
         },
         "zh-HK" : {
@@ -6541,13 +6541,13 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ en silenci mentrestant"
+            "value" : "%@ en silenci"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikace %@ je mezitím ztlumená"
+            "value" : "%@ se ztlumí"
           }
         },
         "da" : {
@@ -6559,43 +6559,43 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ währenddessen stummgeschaltet"
+            "value" : "%@ stumm"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η εφαρμογή %@ σε σίγαση στο μεταξύ"
+            "value" : "%@ σε σίγαση"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ en silencio mientras tanto"
+            "value" : "%@ en silencio"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ en silencio mientras tanto"
+            "value" : "%@ en silencio"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appi %@ on sillä aikaa mykistetty"
+            "value" : "%@ mykistetään"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Son de %@ coupé pendant ce temps"
+            "value" : "Son de %@ coupé"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Son de %@ coupé pendant ce temps"
+            "value" : "Son de %@ coupé"
           }
         },
         "hi" : {
@@ -6607,25 +6607,25 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacija %@ utišana za to vrijeme"
+            "value" : "Aplikacija %@ utišana"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A(z) %@ közben némítva"
+            "value" : "A(z) %@ némítva"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ dibisukan selama itu"
+            "value" : "%@ dibisukan"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ senza audio nel frattempo"
+            "value" : "%@ senza audio"
           }
         },
         "ja" : {
@@ -6643,79 +6643,79 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ er dempet så lenge"
+            "value" : "%@ er dempet"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ondertussen gedempt"
+            "value" : "%@ gedempt"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacja %@ jest w tym czasie wyciszona"
+            "value" : "%@ bez dźwięku"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ sem som enquanto isso"
+            "value" : "%@ sem som"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ sem som entretanto"
+            "value" : "%@ sem som"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sunetul aplicației %@ oprit între timp"
+            "value" : "%@ fără sunet"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ на это время без звука"
+            "value" : "%@ без звука"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apka %@ je medzitým stlmená"
+            "value" : "%@ bez zvuku"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacija %@ medtem utišana"
+            "value" : "%@ brez zvoka"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ljudlös under tiden"
+            "value" : "%@ ljudlös"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu sırada %@ sessize alınır"
+            "value" : "%@ sessize alınır"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Звук програми %@ тим часом вимкнено"
+            "value" : "%@ без звуку"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ bị tắt tiếng trong lúc đó"
+            "value" : "%@ bị tắt tiếng"
           }
         },
         "zh-HK" : {
@@ -13898,7 +13898,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uns 3 minuts"
+            "value" : "Uns 3 min"
           }
         },
         "cs" : {
@@ -13910,7 +13910,7 @@
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Omkring 3 minutter"
+            "value" : "Cirka 3 minutter"
           }
         },
         "de" : {
@@ -13946,13 +13946,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Environ 3 minutes"
+            "value" : "Environ 3 min"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Environ 3 minutes"
+            "value" : "Environ 3 min"
           }
         },
         "hi" : {
@@ -13970,7 +13970,7 @@
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Körülbelül 3 perc"
+            "value" : "Kb. 3 perc"
           }
         },
         "id" : {
@@ -14000,7 +14000,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Omtrent 3 minutter"
+            "value" : "Cirka 3 minutter"
           }
         },
         "nl" : {
@@ -14018,19 +14018,19 @@
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cerca de 3 minutos"
+            "value" : "Uns 3 minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cerca de 3 minutos"
+            "value" : "Uns 3 minutos"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aproximativ 3 minute"
+            "value" : "Circa 3 minute"
           }
         },
         "ru" : {
@@ -14054,13 +14054,13 @@
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ungefär 3 minuter"
+            "value" : "Cirka 3 minuter"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yaklaşık 3 dakika"
+            "value" : "3 dakika kadar"
           }
         },
         "uk" : {
@@ -15558,211 +15558,211 @@
         }
       }
     },
-    "Accessibility is needed: without it, the check can’t read %@’s menus or page, try the Now Playing panel or move its window." : {
+    "Accessibility is needed: without it, the check can’t read %@’s menus or page, press the Now Playing panel, or move its window." : {
       "comment" : "Add an App window, warning under the permissions while Accessibility isn't allowed; %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تسهيلات الاستخدام مطلوبة: بدونها لا يستطيع الفحص قراءة قوائم %@ أو صفحته، ولا تجربة لوحة «قيد التشغيل الآن»، ولا تحريك نافذته."
+            "value" : "تسهيلات الاستخدام مطلوبة: بدونها لا يستطيع الفحص قراءة قوائم %@ أو صفحته، ولا الضغط في لوحة «قيد التشغيل الآن»، ولا تحريك نافذته."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cal Accessibilitat: sense aquest permís, la comprovació no pot llegir els menús ni la pàgina de %@, provar el tauler «Està sonant» ni moure’n la finestra."
+            "value" : "Cal Accessibilitat: sense aquest permís, la comprovació no pot llegir els menús ni la pàgina de %@, fer clic al tauler «Està sonant» ni moure’n la finestra."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Je potřeba Zpřístupnění: bez něj kontrola nemůže číst nabídky ani stránku aplikace %@, zkusit panel „Právě hraje“ ani přesouvat její okno."
+            "value" : "Je potřeba Zpřístupnění: bez něj kontrola nemůže číst nabídky ani stránku aplikace %@, klikat v panelu „Právě hraje“ ani přesouvat její okno."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tilgængelighed er nødvendig: uden den kan kontrollen ikke læse menuerne eller siden i %@, prøve panelet ”Afspilles nu” eller flytte vinduet."
+            "value" : "Tilgængelighed er nødvendig: uden den kan kontrollen ikke læse menuerne eller siden i %@, klikke i panelet ”Afspilles nu” eller flytte vinduet."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Bedienungshilfen“ ist nötig: Ohne diesen Zugriff kann die Prüfung weder die Menüs oder die Seite von %@ lesen noch „Jetzt läuft“ ausprobieren noch das Fenster bewegen."
+            "value" : "„Bedienungshilfen“ ist nötig: Ohne diesen Zugriff kann die Prüfung weder die Menüs oder die Seite von %@ lesen noch „Jetzt läuft“ bedienen noch das Fenster bewegen."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Απαιτείται η Προσβασιμότητα: χωρίς αυτήν, ο έλεγχος δεν μπορεί να διαβάσει τα μενού ή τη σελίδα της εφαρμογής %@, να δοκιμάσει το πλαίσιο «Παίζει τώρα» ή να μετακινήσει το παράθυρό της."
+            "value" : "Απαιτείται η Προσβασιμότητα: χωρίς αυτήν, ο έλεγχος δεν μπορεί να διαβάσει τα μενού ή τη σελίδα της εφαρμογής %@, να πατήσει στο πλαίσιο «Παίζει τώρα» ή να μετακινήσει το παράθυρό της."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se necesita Accesibilidad: sin ella, la comprobación no puede leer los menús ni la página de %@, probar el panel «Ahora suena» ni mover su ventana."
+            "value" : "Se necesita Accesibilidad: sin ella, la comprobación no puede leer los menús ni la página de %@, hacer clic en el panel «Ahora suena» ni mover su ventana."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se necesita Accesibilidad: sin ella, la verificación no puede leer los menús ni la página de %@, probar el panel «Ahora suena» ni mover su ventana."
+            "value" : "Se necesita Accesibilidad: sin ella, la verificación no puede leer los menús ni la página de %@, hacer clic en el panel «Ahora suena» ni mover su ventana."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Käyttöapu tarvitaan: ilman sitä tarkistus ei voi lukea apin %@ valikoita tai sivua, kokeilla Toistossa-paneelia eikä siirtää sen ikkunaa."
+            "value" : "Käyttöapu tarvitaan: ilman sitä tarkistus ei voi lukea apin %@ valikoita tai sivua, painaa Toistossa-paneelia eikä siirtää sen ikkunaa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’accès « Accessibilité » est nécessaire : sans lui, la vérification ne peut ni lire les menus ou la page de %@, ni essayer le panneau « À l’écoute », ni déplacer sa fenêtre."
+            "value" : "L’accès « Accessibilité » est nécessaire : sans lui, la vérification ne peut ni lire les menus ou la page de %@, ni cliquer dans le panneau « À l’écoute », ni déplacer sa fenêtre."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’accès « Accessibilité » est nécessaire : sans lui, la vérification ne peut ni lire les menus ou la page de %@, ni essayer le panneau « À l’écoute », ni déplacer sa fenêtre."
+            "value" : "L’accès « Accessibilité » est nécessaire : sans lui, la vérification ne peut ni lire les menus ou la page de %@, ni cliquer dans le panneau « À l’écoute », ni déplacer sa fenêtre."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ऐक्सेसिबिलिटी ज़रूरी है: इसके बिना जाँच %@ के मेनू या पेज नहीं पढ़ सकती, “अभी चल रहा है” पैनल नहीं आज़मा सकती और उसकी विंडो नहीं खिसका सकती।"
+            "value" : "ऐक्सेसिबिलिटी ज़रूरी है: इसके बिना जाँच %@ के मेनू या पेज नहीं पढ़ सकती, “अभी चल रहा है” पैनल में क्लिक नहीं कर सकती और उसकी विंडो नहीं खिसका सकती।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Potrebna je Pristupačnost: bez nje provjera ne može čitati izbornike ni stranicu aplikacije %@, isprobati ploču „Izvodi se” ni pomicati njezin prozor."
+            "value" : "Potrebna je Pristupačnost: bez nje provjera ne može čitati izbornike ni stranicu aplikacije %@, pritiskati ploču „Izvodi se” ni pomicati njezin prozor."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A Kisegítő lehetőségek szükségesek: nélkülük az ellenőrzés nem tudja olvasni a(z) %@ menüit vagy oldalát, kipróbálni a „Lejátszás alatt” panelt, sem mozgatni az ablakát."
+            "value" : "A Kisegítő lehetőségek szükségesek: nélkülük az ellenőrzés nem tudja olvasni a(z) %@ menüit vagy oldalát, kattintani a „Lejátszás alatt” panelen, sem mozgatni az ablakát."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aksesibilitas diperlukan: tanpanya, pemeriksaan tidak dapat membaca menu atau halaman %@, mencoba panel Sedang Diputar, atau memindahkan jendelanya."
+            "value" : "Aksesibilitas diperlukan: tanpanya, pemeriksaan tidak dapat membaca menu atau halaman %@, menekan panel Sedang Diputar, atau memindahkan jendelanya."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Serve Accessibilità: senza di essa, la verifica non può leggere i menu o la pagina di %@, provare il pannello «In riproduzione» o spostarne la finestra."
+            "value" : "Serve Accessibilità: senza di essa, la verifica non può leggere i menu o la pagina di %@, fare clic nel pannello «In riproduzione» o spostarne la finestra."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "アクセシビリティが必要です。これがないと、チェックで%@のメニューやページを読み取ること、“再生中”パネルを試すこと、ウインドウを移動することができません。"
+            "value" : "アクセシビリティが必要です。これがないと、チェックで%@のメニューやページを読み取ること、“再生中”パネルをクリックすること、ウインドウを移動することができません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "손쉬운 사용이 필요합니다. 이 권한이 없으면 검사에서 %@의 메뉴나 페이지를 읽거나, ‘지금 재생 중’ 패널을 시도하거나, 윈도우를 이동할 수 없습니다."
+            "value" : "손쉬운 사용이 필요합니다. 이 권한이 없으면 검사에서 %@의 메뉴나 페이지를 읽거나, ‘지금 재생 중’ 패널을 누르거나, 윈도우를 이동할 수 없습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tilgjengelighet er påkrevd: uten den kan ikke kontrollen lese menyene eller siden i %@, prøve Spilles nå-panelet eller flytte vinduet."
+            "value" : "Tilgjengelighet er påkrevd: uten den kan ikke kontrollen lese menyene eller siden i %@, klikke i Spilles nå-panelet eller flytte vinduet."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toegankelijkheid is nodig: zonder deze toegang kan de controle de menu’s of pagina van %@ niet lezen, het paneel ‘Wordt nu afgespeeld’ niet proberen en het venster niet verplaatsen."
+            "value" : "Toegankelijkheid is nodig: zonder deze toegang kan de controle de menu’s of pagina van %@ niet lezen, niet in het paneel ‘Wordt nu afgespeeld’ klikken en het venster niet verplaatsen."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dostępność jest wymagana: bez niej sprawdzanie nie może odczytać menu ani strony aplikacji %@, użyć panelu „Teraz odtwarzane” ani przesuwać jej okna."
+            "value" : "Dostępność jest wymagana: bez niej sprawdzanie nie może odczytać menu ani strony aplikacji %@, klikać w panelu „Teraz odtwarzane” ani przesuwać jej okna."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A Acessibilidade é necessária: sem ela, a verificação não consegue ler os menus nem a página de %@, testar o painel “Reproduzindo” nem mover a janela dele."
+            "value" : "A Acessibilidade é necessária: sem ela, a verificação não consegue ler os menus nem a página de %@, clicar no painel “Reproduzindo” nem mover a janela dele."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "É necessária a Acessibilidade: sem ela, a verificação não consegue ler os menus nem a página de %@, experimentar o painel “A reproduzir” nem mover a janela."
+            "value" : "É necessária a Acessibilidade: sem ela, a verificação não consegue ler os menus nem a página de %@, clicar no painel “A reproduzir” nem mover a janela."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este necesară Accesibilitatea: fără ea, verificarea nu poate citi meniurile sau pagina aplicației %@, încerca panoul „În redare” sau muta fereastra ei."
+            "value" : "Este necesară Accesibilitatea: fără ea, verificarea nu poate citi meniurile sau pagina aplicației %@, apăsa în panoul „În redare” sau muta fereastra ei."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Требуется «Универсальный доступ»: без него проверка не сможет прочитать меню или страницу %@, попробовать панель «Исполняется» или переместить окно."
+            "value" : "Требуется «Универсальный доступ»: без него проверка не сможет прочитать меню или страницу %@, нажать в панели «Исполняется» или переместить окно."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Je potrebná Prístupnosť: bez nej kontrola nemôže čítať menu ani stránku apky %@, skúsiť panel „Práve hrá“ ani presúvať jej okno."
+            "value" : "Je potrebná Prístupnosť: bez nej kontrola nemôže čítať menu ani stránku apky %@, klikať v paneli „Práve hrá“ ani presúvať jej okno."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Potrebna je dostopnost: brez nje preverjanje ne more brati menijev ali strani aplikacije %@, preizkusiti plošče »Predvaja se« ali premikati njenega okna."
+            "value" : "Potrebna je dostopnost: brez nje preverjanje ne more brati menijev ali strani aplikacije %@, pritiskati na plošči »Predvaja se« ali premikati njenega okna."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hjälpmedel behövs: utan det kan kontrollen inte läsa menyerna eller sidan i %@, prova panelen ”Spelas nu” eller flytta fönstret."
+            "value" : "Hjälpmedel behövs: utan det kan kontrollen inte läsa menyerna eller sidan i %@, klicka i panelen ”Spelas nu” eller flytta fönstret."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erişilebilirlik gerekli: bu izin olmadan denetim, %@ menülerini veya sayfasını okuyamaz, Şu An Çalan panelini deneyemez ve penceresini taşıyamaz."
+            "value" : "Erişilebilirlik gerekli: bu izin olmadan denetim, %@ menülerini veya sayfasını okuyamaz, Şu An Çalan panelinde tıklayamaz ve penceresini taşıyamaz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Потрібна «Доступність»: без неї перевірка не може читати меню чи сторінку програми %@, пробувати панель «Зараз відтворюється» або переміщувати її вікно."
+            "value" : "Потрібна «Доступність»: без неї перевірка не може читати меню чи сторінку програми %@, натискати в панелі «Зараз відтворюється» або переміщувати її вікно."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cần có Trợ năng: thiếu quyền này, lần kiểm tra không thể đọc menu hoặc trang của %@, thử bảng Đang phát hay di chuyển cửa sổ của ứng dụng."
+            "value" : "Cần có Trợ năng: thiếu quyền này, lần kiểm tra không thể đọc menu hoặc trang của %@, bấm trong bảng Đang phát hay di chuyển cửa sổ của ứng dụng."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "需要「輔助使用」權限：沒有它，檢查就無法讀取 %@ 的選單或頁面、嘗試「正在播放」面板或移動其視窗。"
+            "value" : "需要「輔助使用」權限：沒有它，檢查就無法讀取 %@ 的選單或頁面、按一下「正在播放」面板或移動其視窗。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "需要辅助功能权限：没有它，检查就无法读取 %@ 的菜单或页面、尝试“正在播放”面板或移动其窗口。"
+            "value" : "需要辅助功能权限：没有它，检查就无法读取 %@ 的菜单或页面、点按“正在播放”面板或移动其窗口。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "需要「輔助使用」權限：沒有它，檢查就無法讀取 %@ 的選單或頁面、嘗試「正在播放」面板或移動其視窗。"
+            "value" : "需要「輔助使用」權限：沒有它，檢查就無法讀取 %@ 的選單或頁面、按一下「正在播放」面板或移動其視窗。"
           }
         }
       }
@@ -18072,13 +18072,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يُعاد كل شيء كما كان"
+            "value" : "يُعاد كل شيء"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tot torna al seu lloc"
+            "value" : "Tot com abans"
           }
         },
         "cs" : {
@@ -18090,13 +18090,13 @@
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alt sættes tilbage"
+            "value" : "Alt som før"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alles wird wiederhergestellt"
+            "value" : "Alles wie vorher"
           }
         },
         "el" : {
@@ -18108,43 +18108,43 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Todo vuelve a su sitio"
+            "value" : "Todo como estaba"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Todo vuelve a su lugar"
+            "value" : "Todo como estaba"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kaikki palautetaan"
+            "value" : "Kaikki ennalleen"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tout est remis en place"
+            "value" : "Tout est rétabli"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tout est remis en place"
+            "value" : "Tout est rétabli"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सब कुछ पहले जैसा कर दिया जाता है"
+            "value" : "सब कुछ पहले जैसा"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sve se vraća na staro"
+            "value" : "Sve kao prije"
           }
         },
         "hu" : {
@@ -18180,19 +18180,19 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alt settes tilbake"
+            "value" : "Alt som før"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alles wordt teruggezet"
+            "value" : "Alles hersteld"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wszystko wraca na miejsce"
+            "value" : "Wszystko jak było"
           }
         },
         "pt" : {
@@ -18216,7 +18216,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Всё вернётся как было"
+            "value" : "Всё как было"
           }
         },
         "sk" : {
@@ -18240,19 +18240,19 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Her şey eski hâline getirilir"
+            "value" : "Her şey eskisi gibi"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Усе буде повернуто"
+            "value" : "Усе як було"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mọi thứ được khôi phục"
+            "value" : "Mọi thứ như cũ"
           }
         },
         "zh-HK" : {
@@ -31233,6 +31233,215 @@
         }
       }
     },
+    "AutoHush needs Audio Recording to hear whether %@ is playing." : {
+      "comment" : "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played; %@ is the player",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتاج AutoHush إلى تسجيل الصوت ليسمع ما إذا كان %@ يُشغّل الصوت."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush necessita la gravació d’àudio per sentir si %@ sona."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush potřebuje nahrávání zvuku, aby slyšel, jestli aplikace %@ hraje."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush skal bruge lydoptagelse for at høre, om %@ afspiller."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush braucht die Audioaufnahme, um zu hören, ob %@ abspielt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush χρειάζεται την εγγραφή ήχου για να ακούει αν παίζει η εφαρμογή %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush necesita la grabación de audio para oír si %@ está sonando."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush necesita la grabación de audio para escuchar si %@ está sonando."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tarvitsee äänen tallennuksen kuullakseen, toistaako appi %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush a besoin de l’enregistrement audio pour entendre si %@ est en lecture."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush a besoin de l’enregistrement audio pour entendre si %@ est en lecture."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush को यह सुनने के लिए ऑडियो रिकॉर्डिंग चाहिए कि %@ चल रहा है या नहीं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush treba snimanje zvuka da bi čuo svira li aplikacija %@."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHushnak hangfelvétel kell ahhoz, hogy hallja, szól-e a(z) %@."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush memerlukan Rekaman audio untuk mendengar apakah %@ sedang diputar."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ha bisogno della registrazione audio per sentire se %@ è in riproduzione."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が再生中かどうかを聞き取るには、AutoHushにオーディオ録音が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 %@이(가) 재생 중인지 들으려면 오디오 녹음이 필요합니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush trenger lydopptak for å høre om %@ spiller av."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush heeft audio-opname nodig om te horen of %@ afspeelt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush potrzebuje nagrywania dźwięku, aby słyszeć, czy aplikacja %@ odtwarza."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush precisa da Gravação de áudio para ouvir se %@ está tocando."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush precisa da gravação de áudio para ouvir se %@ está a reproduzir."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush are nevoie de înregistrarea audio pentru a auzi dacă aplicația %@ redă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush нужна запись звука, чтобы слышать, играет ли %@."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush potrebuje nahrávanie zvuku, aby počul, či apka %@ hrá."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush potrebuje snemanje zvoka, da sliši, ali aplikacija %@ predvaja."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush behöver ljudinspelning för att höra om %@ spelar upp."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %@ uygulamasının çalıp çalmadığını duymak için ses kaydına ihtiyaç duyar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для AutoHush потрібне записування звуку, щоб чути, чи грає програма %@."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush cần Ghi âm thanh để nghe xem %@ có đang phát không."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 需要錄音權限才能聽出 %@ 是否在播放。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 需要录音权限才能听出 %@ 是否在播放。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 需要錄音權限才能聽出 %@ 是否在播放。"
+          }
+        }
+      }
+    },
     "AutoHush needs it to see %@’s buttons. The steps below unlock once it’s allowed." : {
       "comment" : "The learning window, under the permission it needs first; %@ is the web app",
       "localizations" : {
@@ -32698,6 +32907,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush 嘗試以各種方式暫停和播放它"
+          }
+        }
+      }
+    },
+    "AutoHush turns on its page’s accessibility, and leaves it on while it’s your player." : {
+      "comment" : "Add an App window, under the step “AutoHush tries every way to pause and play it”, for an app built with Electron, Chromium or Flutter",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُفعّل AutoHush تسهيلات الاستخدام في صفحته، ويُبقيها مفعّلة ما دام هو مشغّلك."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush activa l’accessibilitat de la seva pàgina i la deixa activada mentre sigui el teu reproductor."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush zapne zpřístupnění její stránky a nechá ho zapnuté, dokud je vaším přehrávačem."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush slår sidens tilgængelighed til og lader den være slået til, så længe appen er din afspiller."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush schaltet die Bedienungshilfen ihrer Seite ein und lässt sie an, solange die App dein Player ist."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush ενεργοποιεί την προσβασιμότητα της σελίδας της και την αφήνει ενεργή όσο είναι η εφαρμογή πολυμέσων σας."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush activa la accesibilidad de su página y la deja activada mientras sea tu reproductor."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush activa la accesibilidad de su página y la deja activada mientras sea tu reproductor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush laittaa sivun käyttöavun päälle ja pitää sen päällä niin kauan kuin appi on soittimesi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush active l’accessibilité de sa page et la laisse activée tant que l’app est votre lecteur."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush active l’accessibilité de sa page et la laisse activée tant que l’app est votre lecteur."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush इसके पेज की ऐक्सेसिबिलिटी चालू करता है, और जब तक यह आपका प्लेयर है, इसे चालू रखता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush uključuje pristupačnost stranice aplikacije i ostavlja je uključenom dok je ona vaš medijski reproduktor."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush bekapcsolja az oldala kisegítő lehetőségeit, és bekapcsolva hagyja őket, amíg ez a médialejátszója."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush menyalakan aksesibilitas halamannya, dan membiarkannya menyala selama app ini menjadi pemutar Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush attiva l’accessibilità della sua pagina e la lascia attiva finché è il tuo lettore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはページのアクセシビリティをオンにし、プレーヤーである間はオンのままにします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 페이지의 손쉬운 사용을 켜고, 플레이어로 사용하는 동안 켜 둡니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush slår på sidens tilgjengelighet og lar den være på mens appen er spilleren din."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush zet de toegankelijkheid van de pagina aan en laat die aan zolang de app je speler is."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush włącza dostępność strony aplikacji i zostawia ją włączoną, dopóki aplikacja jest Twoim odtwarzaczem."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush ativa a acessibilidade da página do app e a mantém ativada enquanto ele for seu player."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush ativa a acessibilidade da página da app e mantém-na ativada enquanto for o seu leitor."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush activează accesibilitatea paginii aplicației și o lasă activată cât timp e playerul dvs. media."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush включает универсальный доступ для страницы приложения и оставляет его включённым, пока это ваш медиаплеер."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush zapne prístupnosť jej stránky a nechá ju zapnutú, kým je vaším prehrávačom."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush vklopi dostopnost strani aplikacije in jo pusti vklopljeno, dokler je vaš predvajalnik predstavnosti."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush slår på sidans hjälpmedelsstöd och låter det vara på så länge appen är din spelare."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, sayfasının erişilebilirliğini açar ve uygulama oynatıcınız olduğu sürece açık bırakır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush вмикає доступність її сторінки й лишає її ввімкненою, поки вона ваш програвач."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush bật trợ năng cho trang của ứng dụng, và giữ bật khi ứng dụng là trình phát của bạn."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會開啟其頁面的輔助使用，並在它作為你的播放器期間保持開啟。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 会打开其页面的辅助功能，并在它作为你的播放器期间保持打开。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會開啟其頁面的輔助使用，並在它作為你的播放器期間保持開啟。"
           }
         }
       }
@@ -36674,7 +37092,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Add a Web App and Add an App windows: stops adding and closes the window; and the alert that asks to reopen the media player\nButton that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player, to remove an app added with Add an App, or to turn AntiDot mode on or off",
+      "comment" : "Add a Web App and Add an App windows: stops adding and closes the window; and the alert that asks to reopen the media player\nButton that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -42543,7 +42961,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přidáte kliknutím"
+            "value" : "Přidat"
           }
         },
         "da" : {
@@ -42627,7 +43045,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "クリックして追加"
+            "value" : "クリックで追加"
           }
         },
         "ko" : {
@@ -59872,211 +60290,211 @@
         }
       }
     },
-    "In every window state; it opens on screen for a moment" : {
-      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when it worked",
+    "In every window state, but it opens on screen for a moment" : {
+      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when it worked: why it comes after the other ways",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "في كل حالات النافذة؛ تُفتح على الشاشة للحظة"
+            "value" : "في كل حالات النافذة، لكنها تُفتح على الشاشة للحظة"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En tots els estats de la finestra; s’obre a la pantalla un moment"
+            "value" : "En tots els estats de la finestra, però s’obre a la pantalla un moment"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ve všech stavech okna; na chvíli se otevře na obrazovce"
+            "value" : "Ve všech stavech okna, ale na chvíli se otevře na obrazovce"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alle vinduestilstande; det åbnes et øjeblik på skærmen"
+            "value" : "I alle vinduestilstande, men det åbnes et øjeblik på skærmen"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In jedem Fensterzustand; es öffnet sich kurz auf dem Bildschirm"
+            "value" : "In jedem Fensterzustand, aber es öffnet sich kurz auf dem Bildschirm"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Σε κάθε κατάσταση παραθύρου. Ανοίγει στην οθόνη για λίγο"
+            "value" : "Σε κάθε κατάσταση παραθύρου, αλλά ανοίγει στην οθόνη για λίγο"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En todos los estados de la ventana; se abre en pantalla un momento"
+            "value" : "En todos los estados de la ventana, pero se abre en pantalla un momento"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En todos los estados de la ventana; se abre en pantalla un momento"
+            "value" : "En todos los estados de la ventana, pero se abre en pantalla un momento"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kaikissa ikkunan tiloissa; se avautuu näytölle hetkeksi"
+            "value" : "Kaikissa ikkunan tiloissa, mutta se avautuu näytölle hetkeksi"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans tous les états de fenêtre ; il s’ouvre un instant à l’écran"
+            "value" : "Dans tous les états de fenêtre, mais il s’ouvre un instant à l’écran"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans tous les états de fenêtre; il s’ouvre un instant à l’écran"
+            "value" : "Dans tous les états de fenêtre, mais il s’ouvre un instant à l’écran"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "विंडो की हर स्थिति में; यह एक पल के लिए स्क्रीन पर खुलता है"
+            "value" : "विंडो की हर स्थिति में, पर यह एक पल के लिए स्क्रीन पर खुलता है"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "U svakom stanju prozora; na trenutak se otvara na zaslonu"
+            "value" : "U svakom stanju prozora, ali se na trenutak otvara na zaslonu"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minden ablakállapotban; egy pillanatra megnyílik a képernyőn"
+            "value" : "Minden ablakállapotban, de egy pillanatra megnyílik a képernyőn"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Di setiap keadaan jendela; panel ini terbuka di layar sesaat"
+            "value" : "Di setiap keadaan jendela, tetapi panel ini terbuka di layar sesaat"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In tutti gli stati della finestra; si apre sullo schermo per un momento"
+            "value" : "In tutti gli stati della finestra, ma si apre sullo schermo per un momento"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "すべてのウインドウ状態で機能。一瞬画面に表示されます"
+            "value" : "すべてのウインドウ状態で機能。ただし一瞬画面に表示されます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "모든 윈도우 상태에서 작동. 화면에 잠시 열립니다"
+            "value" : "모든 윈도우 상태에서 작동하지만 화면에 잠시 열림"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alle vindustilstander; det åpnes på skjermen et øyeblikk"
+            "value" : "I alle vindustilstander, men det åpnes på skjermen et øyeblikk"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In elke toestand van het venster; het gaat even op het scherm open"
+            "value" : "In elke toestand van het venster, maar het gaat even op het scherm open"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "We wszystkich stanach okna; na chwilę otwiera się na ekranie"
+            "value" : "We wszystkich stanach okna, ale na chwilę otwiera się na ekranie"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Em todos os estados da janela; ele abre na tela por um instante"
+            "value" : "Em todos os estados da janela, mas ele abre na tela por um instante"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Em todos os estados da janela; abre-se no ecrã por um momento"
+            "value" : "Em todos os estados da janela, mas abre-se no ecrã por um momento"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "În orice stare a ferestrei; se deschide pe ecran pentru o clipă"
+            "value" : "În orice stare a ferestrei, dar se deschide pe ecran pentru o clipă"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "При любом состоянии окна; панель на мгновение открывается на экране"
+            "value" : "При любом состоянии окна, но панель на мгновение открывается на экране"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vo všetkých stavoch okna; na chvíľu sa otvorí na obrazovke"
+            "value" : "Vo všetkých stavoch okna, ale na chvíľu sa otvorí na obrazovke"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "V vsakem stanju okna; za trenutek se odpre na zaslonu"
+            "value" : "V vsakem stanju okna, vendar se za trenutek odpre na zaslonu"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I alla fönsterlägen; den öppnas en kort stund på skärmen"
+            "value" : "I alla fönsterlägen, men den öppnas en kort stund på skärmen"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Her pencere durumunda; ekranda bir an açılır"
+            "value" : "Her pencere durumunda, ama ekranda bir an açılır"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "У всіх станах вікна; ненадовго відкривається на екрані"
+            "value" : "У всіх станах вікна, але ненадовго відкривається на екрані"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ở mọi trạng thái cửa sổ; bảng mở ra trên màn hình trong giây lát"
+            "value" : "Ở mọi trạng thái cửa sổ, nhưng bảng mở ra trên màn hình trong giây lát"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有視窗狀態下；它會在螢幕上短暫開啟"
+            "value" : "在所有視窗狀態下均可，但它會在螢幕上短暫開啟"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有窗口状态下；它会在屏幕上短暂打开"
+            "value" : "在所有窗口状态下均可，但它会在屏幕上短暂打开"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在所有視窗狀態下；它會在螢幕上短暫打開"
+            "value" : "在所有視窗狀態下均可，但它會在螢幕上短暫打開"
           }
         }
       }
@@ -62380,215 +62798,6 @@
         }
       }
     },
-    "Its accessibility switch is turned on to read its page, and stays on while it’s your player." : {
-      "comment" : "Add an App window, under the step “AutoHush tries every way to pause and play it”, for an app built with Electron, Chromium or Flutter",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يُفعَّل مفتاح تسهيلات الاستخدام الخاص به لقراءة صفحته، ويبقى مفعّلًا ما دام هو مشغّلك."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El seu interruptor d’accessibilitat s’activa per llegir-ne la pàgina, i continua activat mentre sigui el teu reproductor."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Její přepínač zpřístupnění se zapne, aby šla číst její stránka, a zůstane zapnutý, dokud je vaším přehrávačem."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appens tilgængelighedskontakt slås til for at læse dens side og forbliver slået til, så længe den er din afspiller."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Bedienungshilfen-Schalter der App wird eingeschaltet, um ihre Seite zu lesen, und bleibt an, solange sie dein Player ist."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ο διακόπτης προσβασιμότητάς της ενεργοποιείται για να διαβαστεί η σελίδα της και μένει ενεργός όσο είναι η εφαρμογή πολυμέσων σας."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Su interruptor de accesibilidad se activa para leer su página y sigue activado mientras sea tu reproductor."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Su interruptor de accesibilidad se activa para leer su página y sigue activado mientras sea tu reproductor."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sen käyttöapukytkin laitetaan päälle sivun lukemista varten, ja se pysyy päällä niin kauan kuin appi on soittimesi."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Son interrupteur d’accessibilité est activé pour lire sa page, et reste activé tant que l’app est votre lecteur."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Son interrupteur d’accessibilité est activé pour lire sa page, et reste activé tant que l’app est votre lecteur."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इसका पेज पढ़ने के लिए इसका ऐक्सेसिबिलिटी स्विच चालू किया जाता है, और जब तक यह आपका प्लेयर है, चालू रहता है।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Njezin prekidač pristupačnosti uključen je radi čitanja stranice i ostaje uključen dok je ona vaš medijski reproduktor."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A kisegítési kapcsolója bekapcsol az oldala olvasásához, és bekapcsolva marad, amíg ez a médialejátszója."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sakelar aksesibilitasnya dinyalakan untuk membaca halamannya, dan tetap menyala selama app ini menjadi pemutar Anda."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Il suo interruttore di accessibilità viene attivato per leggerne la pagina, e resta attivo finché è il tuo lettore."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ページを読み取るためにアクセシビリティのスイッチがオンになり、プレーヤーである間はオンのままになります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "페이지를 읽기 위해 앱의 손쉬운 사용 스위치를 켜며, 플레이어로 사용하는 동안 켜진 상태로 유지됩니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tilgjengelighetsbryteren dens slås på for å lese siden, og forblir på mens den er spilleren din."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De toegankelijkheidsschakelaar van de app wordt aangezet om de pagina te lezen, en blijft aan zolang de app je speler is."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jej przełącznik dostępności zostaje włączony, aby odczytać stronę, i pozostaje włączony, dopóki jest ona Twoim odtwarzaczem."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A chave de acessibilidade do app é ativada para ler a página e continua ativada enquanto ele for seu player."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O interruptor de acessibilidade da app é ativado para ler a página e mantém-se ativado enquanto for o seu leitor."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comutatorul ei de accesibilitate e activat pentru a-i citi pagina și rămâne activat cât timp e playerul dvs. media."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Его переключатель универсального доступа включается, чтобы читать страницу, и остаётся включённым, пока это приложение — ваш медиаплеер."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jej prepínač prístupnosti sa zapne, aby sa dala čítať jej stránka, a zostane zapnutý, kým je vaším prehrávačom."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Njeno stikalo za dostopnost je vklopljeno za branje strani in ostane vklopljeno, dokler je vaš predvajalnik predstavnosti."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appens hjälpmedelsreglage slås på för att läsa dess sida och förblir på så länge den är din spelare."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sayfasını okumak için erişilebilirlik anahtarı açılır ve uygulama oynatıcınız olduğu sürece açık kalır."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Її перемикач доступності вмикається, щоб читати її сторінку, і лишається ввімкненим, поки вона ваш програвач."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Công tắc trợ năng của ứng dụng được bật để đọc trang, và vẫn bật khi ứng dụng là trình phát của bạn."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "為了讀取其頁面，會開啟它的輔助使用開關；在它作為你的播放器期間，開關會保持開啟。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为读取其页面，会打开它的辅助功能开关；在它作为你的播放器期间，开关会保持打开。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "為了讀取其頁面，會開啟它的輔助使用開關；在它作為你的播放器期間，開關會保持開啟。"
-          }
-        }
-      }
-    },
     "Its page’s Play/Pause" : {
       "comment" : "A way to pause and play an app added with Add an App: the Play/Pause button of the page it shows (the Add an App window, Settings → Diagnostics under “Controlled by”)",
       "localizations" : {
@@ -63007,211 +63216,211 @@
         }
       }
     },
-    "Its row doesn’t show its state: only its sound tells, so not in AntiDot mode." : {
+    "Its row shows no state: only its sound tells, so not in AntiDot mode" : {
       "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when the app's row there doesn't show whether it plays (AutoHush then judges it by its sound, which AntiDot mode doesn't hear)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "صفه لا يُظهر حالته: صوته وحده يدل عليها، لذا ليس في وضع AntiDot."
+            "value" : "صفه لا يُظهر حالة: صوته وحده يدل عليها، لذا ليس في وضع AntiDot"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La seva fila no mostra el seu estat: només el so ho indica, així que no en el mode AntiDot."
+            "value" : "La seva fila no mostra l’estat: només el so ho indica, així que no en el mode AntiDot"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Její řádek nezobrazuje stav: prozradí ho jen zvuk, takže ne v režimu AntiDot."
+            "value" : "Její řádek nezobrazuje stav: prozradí ho jen zvuk, takže ne v režimu AntiDot"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rækken viser ikke tilstanden: kun lyden viser den, så ikke i AntiDot-tilstand."
+            "value" : "Rækken viser ingen tilstand: kun lyden viser den, så ikke i AntiDot-tilstand"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ihre Zeile zeigt ihren Zustand nicht: Nur ihr Ton verrät ihn, also nicht im AntiDot-Modus."
+            "value" : "Ihre Zeile zeigt keinen Zustand: Nur ihr Ton verrät ihn, also nicht im AntiDot-Modus"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η γραμμή του δεν δείχνει την κατάστασή του: μόνο ο ήχος τη δείχνει, οπότε όχι σε λειτουργία AntiDot."
+            "value" : "Η γραμμή του δεν δείχνει κατάσταση: μόνο ο ήχος τη δείχνει, οπότε όχι σε λειτουργία AntiDot"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot."
+            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot."
+            "value" : "Su fila no muestra su estado: solo su sonido lo indica, así que no en el modo AntiDot"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sen rivi ei näytä tilaa: vain ääni kertoo sen, joten ei AntiDot-tilassa."
+            "value" : "Sen rivi ei näytä tilaa: vain ääni kertoo sen, joten ei AntiDot-tilassa"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot."
+            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot."
+            "value" : "Sa ligne n’indique pas son état : seul le son de l’app le dit, donc pas en mode AntiDot"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "इसकी पंक्ति इसकी स्थिति नहीं दिखाती: सिर्फ़ इसकी आवाज़ बताती है, इसलिए AntiDot मोड में नहीं।"
+            "value" : "इसकी पंक्ति कोई स्थिति नहीं दिखाती: सिर्फ़ इसकी आवाज़ बताती है, इसलिए AntiDot मोड में नहीं"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Njezin redak ne prikazuje stanje: otkriva ga samo zvuk, pa ne u načinu rada AntiDot."
+            "value" : "Njezin redak ne prikazuje stanje: otkriva ga samo zvuk, pa ne u načinu rada AntiDot"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A sora nem mutatja az állapotát: csak a hangja árulja el, ezért AntiDot módban nem."
+            "value" : "A sora nem mutat állapotot: csak a hangja árulja el, ezért AntiDot módban nem"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Barisnya tidak menunjukkan keadaannya: hanya suaranya yang memberi tahu, jadi tidak di Mode AntiDot."
+            "value" : "Barisnya tidak menunjukkan keadaan: hanya suaranya yang memberi tahu, jadi tidak di Mode AntiDot"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La sua riga non mostra il suo stato: solo il suono lo dice, quindi non in modalità AntiDot."
+            "value" : "La sua riga non mostra lo stato: solo il suono lo dice, quindi non in modalità AntiDot"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "行に状態が表示されないため、音だけで判断します。AntiDotモードでは使用できません。"
+            "value" : "行に状態が表示されず、音だけで判断。AntiDotモードでは不可"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "행에 상태가 표시되지 않음: 소리로만 알 수 있으므로 AntiDot 모드에서는 사용할 수 없습니다."
+            "value" : "행에 상태가 표시되지 않음: 소리로만 알 수 있어 AntiDot 모드에서는 불가"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Raden viser ikke tilstanden: bare lyden viser den, så ikke i AntiDot-modus."
+            "value" : "Raden viser ingen tilstand: bare lyden viser den, så ikke i AntiDot-modus"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "De rij toont de status niet: alleen het geluid vertelt het, dus niet in de AntiDot-modus."
+            "value" : "De rij toont geen status: alleen het geluid vertelt het, dus niet in de AntiDot-modus"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jej wiersz nie pokazuje stanu: mówi o nim tylko dźwięk, więc nie w trybie AntiDot."
+            "value" : "Jej wiersz nie pokazuje stanu: mówi o nim tylko dźwięk, więc nie w trybie AntiDot"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sua linha não mostra o estado: só o som diz, então não no modo AntiDot."
+            "value" : "Sua linha não mostra o estado: só o som diz, então não no modo AntiDot"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A sua linha não mostra o estado: só o som o indica, por isso não no modo AntiDot."
+            "value" : "A sua linha não mostra o estado: só o som o indica, por isso não no modo AntiDot"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rândul ei nu arată starea: doar sunetul o spune, deci nu în modul AntiDot."
+            "value" : "Rândul ei nu arată starea: doar sunetul o spune, deci nu în modul AntiDot"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Его строка не показывает состояние: о нём говорит только звук, поэтому не в режиме AntiDot."
+            "value" : "Его строка не показывает состояние: о нём говорит только звук, поэтому не в режиме AntiDot"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jej riadok nezobrazuje stav: prezradí ho len zvuk, takže nie v režime AntiDot."
+            "value" : "Jej riadok nezobrazuje stav: prezradí ho len zvuk, takže nie v režime AntiDot"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Njena vrstica ne prikazuje stanja: pove ga le zvok, zato ne v načinu AntiDot."
+            "value" : "Njena vrstica ne prikazuje stanja: pove ga le zvok, zato ne v načinu AntiDot"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Raden visar inte läget: bara ljudet avslöjar det, så inte i AntiDot-läget."
+            "value" : "Raden visar inget läge: bara ljudet avslöjar det, så inte i AntiDot-läget"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Satırı durumunu göstermiyor: bunu yalnızca sesi söylüyor, bu yüzden AntiDot modunda değil."
+            "value" : "Satırı durum göstermiyor: bunu yalnızca sesi söylüyor, bu yüzden AntiDot modunda değil"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Її рядок не показує стан: про нього каже лише звук, тож не в режимі AntiDot."
+            "value" : "Її рядок не показує стан: про нього каже лише звук, тож не в режимі AntiDot"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hàng của ứng dụng không hiển thị trạng thái: chỉ âm thanh cho biết, nên không dùng được ở chế độ AntiDot."
+            "value" : "Hàng của ứng dụng không hiển thị trạng thái: chỉ âm thanh cho biết, nên không dùng được ở chế độ AntiDot"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "它的列不顯示其狀態：只有它的聲音能說明，因此不適用於 AntiDot 模式。"
+            "value" : "它的列不顯示狀態：只有聲音能說明，因此不適用於 AntiDot 模式"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "它的行不显示其状态：只有它的声音能说明，因此不适用于 AntiDot 模式。"
+            "value" : "它的行不显示状态：只有声音能说明，因此不适用于 AntiDot 模式"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "它的列不顯示其狀態：只有它的聲音能說明，因此不適用於 AntiDot 模式。"
+            "value" : "它的列不顯示狀態：只有聲音能說明，因此不適用於 AntiDot 模式"
           }
         }
       }
@@ -70382,13 +70591,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muet seulement"
+            "value" : "Son coupé"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muet seulement"
+            "value" : "Son coupé"
           }
         },
         "hi" : {
@@ -70400,7 +70609,7 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Samo utišavanje"
+            "value" : "Utišavanje"
           }
         },
         "hu" : {
@@ -70412,7 +70621,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hanya dibisukan"
+            "value" : "Dibisukan"
           }
         },
         "it" : {
@@ -70448,7 +70657,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tylko wyciszanie"
+            "value" : "Wyciszanie"
           }
         },
         "pt" : {
@@ -70472,7 +70681,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Только без звука"
+            "value" : "Без звука"
           }
         },
         "sk" : {
@@ -70502,7 +70711,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Лише без звуку"
+            "value" : "Без звуку"
           }
         },
         "vi" : {
@@ -75338,6 +75547,215 @@
         }
       }
     },
+    "No way to pause and play %@ works in AntiDot mode." : {
+      "comment" : "Add an App window, under the last step while AntiDot mode is on, when the only way that worked needs the app's sound, which AntiDot mode doesn't hear; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تعمل أي طريقة لإيقاف %@ مؤقتًا وتشغيله في وضع AntiDot."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cap manera de posar en pausa i reproduir %@ no funciona en el mode AntiDot."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V režimu AntiDot nefunguje žádný způsob, jak aplikaci %@ pozastavit a přehrát."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen måde at sætte %@ på pause og afspille den på virker i AntiDot-tilstand."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im AntiDot-Modus lässt sich %@ auf keine Weise pausieren und abspielen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Κανένας τρόπος παύσης και αναπαραγωγής της εφαρμογής %@ δεν δουλεύει στη λειτουργία AntiDot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna forma de pausar y reproducir %@ funciona en el modo AntiDot."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna forma de pausar y reproducir %@ funciona en el modo AntiDot."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mikään tapa keskeyttää ja jatkaa apin %@ toistoa ei toimi AntiDot-tilassa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune façon de mettre en pause et de relancer %@ ne fonctionne en mode AntiDot."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune façon de mettre en pause et de relancer %@ ne fonctionne en mode AntiDot."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ को पॉज़ करने और चलाने का कोई भी तरीका AntiDot मोड में काम नहीं करता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nijedan način pauziranja i reprodukcije aplikacije %@ ne radi u načinu rada AntiDot."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot módban a(z) %@ szüneteltetésének és lejátszásának egyik módja sem működik."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada cara menjeda dan memutar %@ yang berfungsi di Mode AntiDot."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun modo di mettere in pausa e riprodurre %@ funziona in modalità AntiDot."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDotモードでは、%@を一時停止・再生できる方法がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 모드에서는 %@을(를) 일시 정지하고 재생할 방법이 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen måte å sette %@ på pause og spille av på fungerer i AntiDot-modus."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In de AntiDot-modus werkt geen manier om %@ te pauzeren en af te spelen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Żaden sposób wstrzymywania i odtwarzania aplikacji %@ nie działa w trybie AntiDot."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma forma de pausar e reproduzir %@ funciona no modo AntiDot."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma forma de pausar e reproduzir %@ funciona no modo AntiDot."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niciun mod de a pune pe pauză și a reda aplicația %@ nu funcționează în modul AntiDot."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В режиме AntiDot ни один способ поставить %@ на паузу и снова включить не работает."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V režime AntiDot nefunguje žiadny spôsob, ako apku %@ pozastaviť a prehrať."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noben način za zaustavitev in predvajanje aplikacije %@ ne deluje v načinu AntiDot."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inget sätt att pausa och spela upp %@ fungerar i AntiDot-läget."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uygulamasını duraklatıp oynatmanın hiçbir yolu AntiDot modunda çalışmıyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У режимі AntiDot жоден спосіб призупинити й відтворити програму %@ не працює."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có cách nào để tạm dừng và phát %@ hoạt động ở chế độ AntiDot."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下，沒有任何方式能暫停和播放 %@。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下，没有任何方式能暂停和播放 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下，沒有任何方式能暫停和播放 %@。"
+          }
+        }
+      }
+    },
     "None" : {
       "comment" : "Diagnostics: no apps, or no ignored apps",
       "localizations" : {
@@ -76592,8 +77010,426 @@
         }
       }
     },
+    "Not checked: Accessibility isn’t allowed" : {
+      "comment" : "Add an App window, under a way the check couldn't look for without the Accessibility permission",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُفحص: لم يُسمح بتسهيلات الاستخدام"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense comprovar: Accessibilitat no permesa"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nezkontrolováno: Zpřístupnění nepovoleno"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke kontrolleret: Tilgængelighed ikke tilladt"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht geprüft: Bedienungshilfen nicht erlaubt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν ελέγχθηκε: δεν επιτρέπεται η Προσβασιμότητα"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin comprobar: Accesibilidad no permitida"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin verificar: Accesibilidad no permitida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei tarkistettu: Käyttöapua ei ole sallittu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non vérifié : Accessibilité non autorisée"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non vérifié : Accessibilité non autorisée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जाँचा नहीं गया: ऐक्सेसिबिलिटी की अनुमति नहीं है"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije provjereno: Pristupačnost nije dozvoljena"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nincs ellenőrizve: a Kisegítő lehetőségek nincsenek engedélyezve"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak diperiksa: Aksesibilitas tidak diizinkan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non verificato: Accessibilità non consentita"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未チェック：アクセシビリティ未許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사 안 됨: 손쉬운 사용 허용 안 됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke kontrollert: Tilgjengelighet ikke tillatt"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet gecontroleerd: Toegankelijkheid niet toegestaan"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie sprawdzono: Dostępność niedozwolona"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não verificado: Acessibilidade não permitida"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não verificado: Acessibilidade não permitida"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neverificat: Accesibilitate nepermisă"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не проверено: «Универсальный доступ» не разрешён"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neskontrolované: Prístupnosť nepovolená"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni preverjeno: dostopnost ni dovoljena"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inte kontrollerat: Hjälpmedel inte tillåtet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denetlenmedi: Erişilebilirlik izni verilmedi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не перевірено: Доступність не дозволено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa kiểm tra: chưa cho phép Trợ năng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未檢查：未允許輔助使用"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检查：未允许辅助功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未檢查：未允許輔助使用"
+          }
+        }
+      }
+    },
+    "Not checked: Automation isn’t allowed" : {
+      "comment" : "Add an App window, under “AppleScript” when the check couldn't try it without the Automation permission",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُفحص: لم يُسمح بالتحكم التلقائي"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense comprovar: Automatització no permesa"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nezkontrolováno: Automatizace nepovolena"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke kontrolleret: Automatisering ikke tilladt"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht geprüft: Automation nicht erlaubt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν ελέγχθηκε: δεν επιτρέπεται η Αυτοματοποίηση"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin comprobar: Automatización no permitida"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin verificar: Automatización no permitida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei tarkistettu: Automaatiota ei ole sallittu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non vérifié : Automatisation non autorisée"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non vérifié : Automatisation non autorisée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जाँचा नहीं गया: ऑटोमेशन की अनुमति नहीं है"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije provjereno: Automatizacija nije dozvoljena"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nincs ellenőrizve: az Automatizálás nincs engedélyezve"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak diperiksa: Automasi tidak diizinkan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non verificato: Automazione non consentita"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未チェック：オートメーション未許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사 안 됨: 자동화 허용 안 됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke kontrollert: Automatisering ikke tillatt"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet gecontroleerd: Automatisering niet toegestaan"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie sprawdzono: Automatyzacja niedozwolona"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não verificado: Automação não permitida"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não verificado: Automatização não permitida"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neverificat: Automatizare nepermisă"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не проверено: «Автоматизация» не разрешена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neskontrolované: Automatizácia nepovolená"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni preverjeno: avtomatizacija ni dovoljena"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inte kontrollerat: Automatisering inte tillåten"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denetlenmedi: Otomasyon izni verilmedi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не перевірено: Автоматизацію не дозволено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa kiểm tra: chưa cho phép Tự động hóa"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未檢查：未允許自動化"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检查：未允许自动化"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未檢查：未允許自動化"
+          }
+        }
+      }
+    },
     "Not in AntiDot" : {
-      "comment" : "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it. Keep it short (about 14 characters at most)",
+      "comment" : "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -76682,7 +77518,7 @@
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tidak di AntiDot"
+            "value" : "Tak di AntiDot"
           }
         },
         "it" : {
@@ -76784,25 +77620,25 @@
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AntiDot 下無法使用"
+            "value" : "AntiDot 不適用"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AntiDot 下不可用"
+            "value" : "AntiDot 不适用"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AntiDot 下無法使用"
+            "value" : "AntiDot 不適用"
           }
         }
       }
     },
     "Not in AntiDot mode" : {
-      "comment" : "The menu's rows of media players: under an app added with Add an App that can only be muted, dimmed while AntiDot mode is on, which can't mute it (AntiDot mode, the detection that hides the purple recording indicator)",
+      "comment" : "The menu's rows of media players: under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound (AntiDot mode, the detection that hides the purple recording indicator)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -77028,7 +77864,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nenainstalováno"
+            "value" : "Není na Macu"
           }
         },
         "da" : {
@@ -77046,7 +77882,7 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Μη εγκατεστημένη"
+            "value" : "Όχι στο Mac"
           }
         },
         "es" : {
@@ -77130,13 +77966,13 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niet geïnstalleerd"
+            "value" : "Niet aanwezig"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie zainstalowano"
+            "value" : "Brak na Macu"
           }
         },
         "pt" : {
@@ -77166,7 +78002,7 @@
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nenainštalovaný"
+            "value" : "Nie je v Macu"
           }
         },
         "sl" : {
@@ -77190,7 +78026,7 @@
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не встановлено"
+            "value" : "Немає на Mac"
           }
         },
         "vi" : {
@@ -78682,211 +79518,211 @@
         }
       }
     },
-    "Not tried: Now Playing is hidden in the menu bar. Show it in %@, then check again." : {
-      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar; %@ is where the setting is, e.g. “System Settings → Menu Bar”",
+    "Not tried: hidden in the menu bar; show it in %@, then check again" : {
+      "comment" : "Add an App window, under “The menu bar’s Now Playing panel” when Now Playing is hidden in the menu bar (a Check Again button follows); %@ is where the setting is, e.g. “System Settings → Menu Bar”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لم تُجرَّب: «قيد التشغيل الآن» مخفي في شريط القوائم. أظهره من %@ ثم تحقق مرة أخرى."
+            "value" : "لم تُجرَّب: مخفي في شريط القوائم؛ أظهره من %@ ثم أعد الفحص"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sense provar: «Està sonant» està amagat a la barra de menús. Mostra’l a %@ i torna-ho a comprovar."
+            "value" : "Sense provar: amagat a la barra de menús; mostra’l a %@ i torna a comprovar"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nevyzkoušeno: „Právě hraje“ je na řádku nabídek skryté. Zobrazte ho (%@) a zkontrolujte znovu."
+            "value" : "Nevyzkoušeno: skryté na řádku nabídek; zobrazte ho (%@) a zkontrolujte znovu"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ikke prøvet: ”Afspilles nu” er skjult på menulinjen. Vis det i %@, og kontroller igen."
+            "value" : "Ikke prøvet: skjult på menulinjen; vis det i %@, og kontroller igen"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nicht ausprobiert: „Jetzt läuft“ ist in der Menüleiste ausgeblendet. Blende es unter %@ ein und prüfe dann erneut."
+            "value" : "Nicht ausprobiert: in der Menüleiste ausgeblendet; blende es unter %@ ein und prüfe dann erneut"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Δεν δοκιμάστηκε: το «Παίζει τώρα» είναι κρυφό στη γραμμή μενού. Εμφανίστε το (%@) και ελέγξτε ξανά."
+            "value" : "Δεν δοκιμάστηκε: κρυφό στη γραμμή μενού, εμφανίστε το (%@) και ελέγξτε ξανά"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin probar: «Ahora suena» está oculto en la barra de menús. Muéstralo en %@ y vuelve a comprobarlo."
+            "value" : "Sin probar: oculto en la barra de menús; muéstralo en %@ y vuelve a comprobar"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin probar: «Ahora suena» está oculto en la barra de menús. Muéstralo en %@ y vuelve a comprobarlo."
+            "value" : "Sin probar: oculto en la barra de menús; muéstralo en %@ y vuelve a verificar"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ei kokeiltu: Toistossa on piilotettu valikkorivillä. Näytä se kohdassa %@ ja tarkista uudelleen."
+            "value" : "Ei kokeiltu: piilotettu valikkorivillä; näytä se kohdassa %@ ja tarkista uudelleen"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non essayé : « À l’écoute » est masqué dans la barre des menus. Affichez-le dans %@, puis vérifiez à nouveau."
+            "value" : "Non essayé : masqué dans la barre des menus ; affichez-le dans %@, puis vérifiez à nouveau"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non essayé : « À l’écoute » est masqué dans la barre des menus. Affichez-le dans %@, puis vérifiez à nouveau."
+            "value" : "Non essayé : masqué dans la barre des menus; affichez-le dans %@, puis vérifiez à nouveau"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आज़माया नहीं गया: “अभी चल रहा है” मेनू बार में छिपा है। इसे %@ में दिखाएँ, फिर दोबारा जाँचें।"
+            "value" : "आज़माया नहीं गया: मेनू बार में छिपा है; इसे %@ में दिखाएँ, फिर दोबारा जाँचें"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nije isprobano: „Izvodi se” skriveno je u traci s izbornicima. Prikažite ga (%@) pa ponovno provjerite."
+            "value" : "Nije isprobano: skriveno u traci s izbornicima; prikažite ga (%@) pa ponovno provjerite"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nincs kipróbálva: a „Lejátszás alatt” el van rejtve a menüsorban. Jelenítse meg (%@), majd ellenőrizze újra."
+            "value" : "Nincs kipróbálva: el van rejtve a menüsorban; jelenítse meg (%@), majd ellenőrizze újra"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Belum dicoba: Sedang Diputar disembunyikan di bar menu. Tampilkan di %@, lalu periksa lagi."
+            "value" : "Tidak dicoba: disembunyikan di bar menu; tampilkan di %@, lalu periksa lagi"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non provato: «In riproduzione» è nascosto nella barra dei menu. Mostralo in %@, poi verifica di nuovo."
+            "value" : "Non provato: nascosto nella barra dei menu; mostralo in %@, poi verifica di nuovo"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未試行：メニューバーの“再生中”が非表示です。%@で表示してから、もう一度確認してください。"
+            "value" : "未試行：メニューバーで非表示。%@で表示してから、もう一度チェック"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "시도하지 않음: 메뉴 막대에서 ‘지금 재생 중’이 가려져 있습니다. %@에서 표시한 다음 다시 확인하십시오."
+            "value" : "시도 안 됨: 메뉴 막대에서 가려짐. %@에서 표시한 다음 다시 검사"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ikke prøvd: Spilles nå er skjult i menylinjen. Vis det i %@, og kontroller på nytt."
+            "value" : "Ikke prøvd: skjult i menylinjen; vis det i %@, og kontroller igjen"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niet geprobeerd: ‘Wordt nu afgespeeld’ is verborgen in de menubalk. Toon het bij %@ en controleer opnieuw."
+            "value" : "Niet geprobeerd: verborgen in de menubalk; toon het bij %@ en controleer opnieuw"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie wypróbowano: „Teraz odtwarzane” jest ukryte na pasku menu. Pokaż je (%@) i sprawdź ponownie."
+            "value" : "Nie wypróbowano: ukryte na pasku menu; pokaż je (%@) i sprawdź ponownie"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não testado: “Reproduzindo” está oculto na barra de menus. Mostre-o em %@ e verifique de novo."
+            "value" : "Não testado: oculto na barra de menus; mostre-o em %@ e verifique novamente"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não testado: “A reproduzir” está oculto na barra de menus. Mostre-o em %@ e verifique novamente."
+            "value" : "Não experimentado: oculto na barra de menus; mostre-o em %@ e verifique novamente"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neîncercat: „În redare” e ascuns în bara de meniu. Afișați-l (%@), apoi verificați din nou."
+            "value" : "Neîncercat: ascuns în bara de meniu; afișați-l (%@), apoi verificați din nou"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не проверено: «Исполняется» скрыто в строке меню. Покажите его (%@) и проверьте снова."
+            "value" : "Не опробовано: скрыто в строке меню; покажите его (%@) и проверьте снова"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nevyskúšané: „Práve hrá“ je na lište ponúk skryté. Zobrazte ho (%@) a skontrolujte znova."
+            "value" : "Nevyskúšané: skryté na lište ponúk; zobrazte ho (%@) a skontrolujte znova"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ni preizkušeno: »Predvaja se« je skrit v menijski vrstici. Prikažite ga (%@) in znova preverite."
+            "value" : "Ni preizkušeno: skrit v menijski vrstici; prikažite ga (%@) in znova preverite"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inte provat: ”Spelas nu” är dolt i menyraden. Visa det i %@ och kontrollera sedan igen."
+            "value" : "Inte provat: dolt i menyraden; visa det i %@ och kontrollera sedan igen"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Denenmedi: Şu An Çalan menü çubuğunda gizli. %@ bölümünde gösterin, sonra yeniden denetleyin."
+            "value" : "Denenmedi: menü çubuğunda gizli; %@ bölümünde gösterin, sonra yeniden denetleyin"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не випробувано: «Зараз відтворюється» приховано на смузі меню. Покажіть його (%@) і перевірте знову."
+            "value" : "Не випробувано: приховано на смузі меню; покажіть його (%@) і перевірте ще раз"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chưa thử: Đang phát đang bị ẩn trên thanh menu. Hãy hiển thị trong %@, rồi kiểm tra lại."
+            "value" : "Chưa thử: đang bị ẩn trên thanh menu; hãy hiển thị trong %@, rồi kiểm tra lại"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未嘗試：「正在播放」在選單列中已隱藏。請在%@中顯示它，然後重新檢查。"
+            "value" : "未嘗試：在選單列中已隱藏；請在%@中顯示它，然後再次檢查"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未尝试：“正在播放”在菜单栏中已隐藏。请在%@中显示它，然后重新检查。"
+            "value" : "未尝试：在菜单栏中已隐藏；请在%@中显示它，然后再次检查"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未嘗試：「正在播放」在選單列中已隱藏。請在%@中顯示它，然後重新檢查。"
+            "value" : "未嘗試：在選單列中已隱藏；請在%@中顯示它，然後再次檢查"
           }
         }
       }
@@ -82231,6 +83067,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只有它的聲音能告訴 AutoHush 它是否在播放，而聽到聲音需要錄音權限，AntiDot 模式不使用它。"
+          }
+        }
+      }
+    },
+    "Only toggles: AutoHush can’t tell when to send it" : {
+      "comment" : "Add an App window, under “AppleScript” when it paused and played the app but only by one Play/Pause command, and nothing tells AutoHush whether the app plays, so it can't be used",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبديل فقط: لا يعرف AutoHush متى يرسله"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Només alterna: l’AutoHush no sap quan enviar-lo"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jen přepínání: AutoHush neví, kdy příkaz poslat"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun skift: AutoHush kan ikke vide, hvornår kommandoen skal sendes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur ein Umschaltbefehl: AutoHush weiß nicht, wann es ihn senden soll"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μόνο εναλλαγή: το AutoHush δεν ξέρει πότε να στείλει την εντολή"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo alterna: AutoHush no sabe cuándo enviarlo"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo alterna: AutoHush no sabe cuándo enviarlo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vain vaihto: AutoHush ei tiedä, milloin komento lähetetään"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bascule seulement : AutoHush ne sait pas quand l’envoyer"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bascule seulement : AutoHush ne sait pas quand l’envoyer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिर्फ़ टॉगल: AutoHush नहीं जान सकता कि इसे कब भेजे"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samo prebacivanje: AutoHush ne zna kada poslati naredbu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Csak váltás: az AutoHush nem tudja, mikor küldje"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hanya beralih: AutoHush tidak tahu kapan harus mengirimnya"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterna soltanto: AutoHush non sa quando inviarlo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替えのみ：AutoHushは送るタイミングが分かりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전환만 가능: AutoHush가 보낼 시점을 알 수 없음"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bare veksling: AutoHush kan ikke vite når kommandoen skal sendes"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alleen een wisselopdracht: AutoHush weet niet wanneer het die moet sturen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tylko przełączanie: AutoHush nie wie, kiedy wysłać polecenie"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só alterna: o AutoHush não sabe quando enviá-lo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Só alterna: o AutoHush não sabe quando enviá-lo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doar comutare: AutoHush nu știe când să trimită comanda"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Только переключение: AutoHush не знает, когда отправлять команду"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Len prepínanie: AutoHush nevie, kedy príkaz poslať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samo preklop: AutoHush ne ve, kdaj poslati ukaz"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bara växling: AutoHush kan inte veta när kommandot ska skickas"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yalnızca geçiş: AutoHush komutu ne zaman göndereceğini bilemez"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лише перемикання: AutoHush не знає, коли надсилати команду"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ bật/tắt: AutoHush không biết khi nào cần gửi lệnh"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅能切換：AutoHush 無法判斷何時傳送"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅能切换：AutoHush 无法判断何时发送"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅能切換：AutoHush 無法判斷何時傳送"
           }
         }
       }
@@ -87247,6 +88292,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已由 AutoHush 暫停"
+          }
+        }
+      }
+    },
+    "Paused while a check runs" : {
+      "comment" : "At the top of the menu, under the media player: AutoHush keeps it paused until Add an App’s check of another app ends",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف مؤقتًا أثناء الفحص"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa durant la comprovació"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaveno během kontroly"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sat på pause under kontrollen"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausiert während der Prüfung"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Σε παύση κατά τον έλεγχο"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa durante la comprobación"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa durante la verificación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskeytetty tarkistuksen ajaksi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause pendant la vérification"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause pendant la vérification"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जाँच के दौरान पॉज़"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzirano tijekom provjere"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szünetel az ellenőrzés alatt"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dijeda selama pemeriksaan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In pausa durante la verifica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チェック中のため一時停止中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사 중 일시 정지됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satt på pause under kontrollen"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gepauzeerd tijdens de controle"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstrzymana na czas sprawdzania"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em pausa durante a verificação"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em pausa durante a verificação"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pe pauză în timpul verificării"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На паузе во время проверки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastavená počas kontroly"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaustavljeno med preverjanjem"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausad under kontrollen"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denetim sürerken duraklatıldı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Призупинено на час перевірки"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã tạm dừng trong lúc kiểm tra"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查期間已暫停"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查期间已暂停"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查期間已暫停"
           }
         }
       }
@@ -100000,215 +101254,6 @@
         }
       }
     },
-    "Show Log" : {
-      "comment" : "Add an App window: button that shows the check's log (in Console) after a check couldn't finish",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "عرض السجل"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostra el registre"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zobrazit protokol"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vis log"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Protokoll anzeigen"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εμφάνιση αρχείου καταγραφής"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar registro"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar registro"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Näytä loki"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afficher le journal"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afficher le journal"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "लॉग दिखाएँ"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prikaži zapisnik"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Napló megjelenítése"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tampilkan Log"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostra log"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ログを表示"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "로그 보기"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vis logg"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toon logboek"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pokaż dziennik"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar Registro"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar registo"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afișați jurnalul"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показать журнал"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zobraziť protokol"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pokaži dnevnik"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visa logg"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Günlüğü Göster"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показати журнал"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hiển thị nhật ký"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顯示記錄"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "显示日志"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顯示記錄"
-          }
-        }
-      }
-    },
     "Show Logs…" : {
       "comment" : "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs",
       "localizations" : {
@@ -100390,6 +101435,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показати журнали…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị nhật ký…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示記錄⋯"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示日志…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示記錄⋯"
+          }
+        }
+      }
+    },
+    "Show Log…" : {
+      "comment" : "Add an App window: button that shows the check's log (in Console) after a check couldn't finish",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض السجل…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra el registre…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobrazit protokol…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis log…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokoll anzeigen …"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εμφάνιση αρχείου καταγραφής…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar registro…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar registro…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä loki…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le journal…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le journal…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लॉग दिखाएँ…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži zapisnik…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napló megjelenítése…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tampilkan Log…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra log…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログを表示…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그 보기…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vis logg…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon logboek…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż dziennik…"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar Registro…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar registo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați jurnalul…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать журнал…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť protokol…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaži dnevnik …"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa logg…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Günlüğü Göster…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показати журнал…"
           }
         },
         "vi" : {
@@ -102509,7 +103763,7 @@
       }
     },
     "Step %lld of %lld, %@" : {
-      "comment" : "VoiceOver label of a numbered step's title in the Add an App window; the first %@ is its number, the second how many steps there are, the third its title",
+      "comment" : "VoiceOver label of a numbered step's title in the Add an App window; the first %lld is its number, the second how many steps there are; %@ is its title",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103141,211 +104395,211 @@
         }
       }
     },
-    "Stop, here or in the panel at the bottom right of the screen, ends the check; Escape too." : {
-      "comment" : "Add an App window, under the check's step while it runs (a Stop button follows)",
+    "Stop here, Stop in the panel or Escape ends the check." : {
+      "comment" : "Add an App window, under the check's step while it runs (a Stop button follows; the panel is the check's, at the bottom right of the screen)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يُنهي زر «إيقاف»، هنا أو في اللوحة أسفل يمين الشاشة، الفحص؛ وكذلك مفتاح Esc."
+            "value" : "يُنهي زر «إيقاف» هنا أو في اللوحة، أو مفتاح Esc، الفحص."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Atura», aquí o al tauler de l’angle inferior dret de la pantalla, acaba la comprovació; Esc també."
+            "value" : "«Atura» aquí o al tauler, o Esc, acaba la comprovació."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kontrolu ukončíte tlačítkem „Zastavit“ zde nebo v panelu v pravém dolním rohu obrazovky; také klávesou Esc."
+            "value" : "Kontrolu ukončíte tlačítkem „Zastavit“ zde nebo v panelu, nebo klávesou Esc."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "”Stop”, her eller i panelet nederst til højre på skærmen, afslutter kontrollen; Esc også."
+            "value" : "”Stop” her eller i panelet eller Esc afslutter kontrollen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Stoppen“, hier oder im Fortschrittsfenster unten rechts auf dem Bildschirm, beendet die Prüfung; Esc ebenso."
+            "value" : "„Stoppen“ hier oder im Fortschrittsfenster oder Esc beendet die Prüfung."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η «Διακοπή», εδώ ή στο πλαίσιο κάτω δεξιά στην οθόνη, τερματίζει τον έλεγχο, όπως και το Escape."
+            "value" : "Η «Διακοπή» εδώ ή στο πλαίσιο, ή το Escape, τερματίζει τον έλεγχο."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Detener», aquí o en el panel de la esquina inferior derecha de la pantalla, termina la comprobación; Esc también."
+            "value" : "«Detener» aquí o en el panel, o Esc, termina la comprobación."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Detener», aquí o en el panel de la esquina inferior derecha de la pantalla, termina la verificación; Esc también."
+            "value" : "«Detener» aquí o en el panel, o Esc, termina la verificación."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "”Pysäytä” täällä tai näytön oikean alakulman paneelissa lopettaa tarkistuksen; samoin Esc."
+            "value" : "”Pysäytä” täällä tai paneelissa tai Esc lopettaa tarkistuksen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "« Arrêter », ici ou dans le panneau en bas à droite de l’écran, met fin à la vérification ; Échap aussi."
+            "value" : "« Arrêter » ici ou dans le panneau, ou Échap, met fin à la vérification."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "« Arrêter », ici ou dans le panneau en bas à droite de l’écran, met fin à la vérification; Échap aussi."
+            "value" : "« Arrêter » ici ou dans le panneau, ou Échap, met fin à la vérification."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“रोकें”, यहाँ या स्क्रीन के निचले दाएँ कोने के पैनल में, जाँच ख़त्म करता है; Escape भी।"
+            "value" : "यहाँ या पैनल में “रोकें”, या Escape, जाँच ख़त्म करता है।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Zaustavi”, ovdje ili na ploči u donjem desnom kutu zaslona, završava provjeru; i Escape."
+            "value" : "„Zaustavi” ovdje ili na ploči, ili Escape, završava provjeru."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A „Leállítás”, itt vagy a képernyő jobb alsó sarkában lévő panelen, befejezi az ellenőrzést; az Esc is."
+            "value" : "Az itteni vagy a panel „Leállítás” gombja, illetve az Esc befejezi az ellenőrzést."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Hentikan”, di sini atau di panel kanan bawah layar, mengakhiri pemeriksaan; begitu juga Escape."
+            "value" : "“Hentikan” di sini atau di panel, atau Escape, mengakhiri pemeriksaan."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Interrompi», qui o nel pannello in basso a destra dello schermo, termina la verifica; anche Esc."
+            "value" : "«Interrompi» qui o nel pannello, o Esc, termina la verifica."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ここまたは画面右下のパネルの「停止」でチェックを終了できます。Escキーでも終了できます。"
+            "value" : "ここまたはパネルの「停止」、またはEscキーでチェックを終了できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "여기나 화면 오른쪽 하단의 패널에서 ‘중단’을 누르면 검사가 끝납니다. Esc 키도 마찬가지입니다."
+            "value" : "여기나 패널에서 ‘중단’을 누르거나 Esc 키를 누르면 검사가 끝납니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Stopp», her eller i panelet nederst til høyre på skjermen, avslutter kontrollen; Esc også."
+            "value" : "«Stopp» her eller i panelet, eller Esc, avslutter kontrollen."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "‘Stop’, hier of in het paneel rechtsonder op het scherm, beëindigt de controle; Esc ook."
+            "value" : "‘Stop’ hier of in het paneel, of Esc, beëindigt de controle."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Przycisk „Zatrzymaj” tutaj lub w panelu w prawym dolnym rogu ekranu kończy sprawdzanie; klawisz Esc także."
+            "value" : "„Zatrzymaj” tutaj lub w panelu albo klawisz Esc kończy sprawdzanie."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Parar”, aqui ou no painel do canto inferior direito da tela, encerra a verificação; Esc também."
+            "value" : "“Parar” aqui ou no painel, ou Esc, encerra a verificação."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Parar”, aqui ou no painel do canto inferior direito do ecrã, termina a verificação; Esc também."
+            "value" : "“Parar” aqui ou no painel, ou Esc, termina a verificação."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Opriți”, aici sau în panoul din dreapta jos al ecranului, încheie verificarea; și Escape."
+            "value" : "„Opriți” aici sau în panou ori Escape încheie verificarea."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Кнопка «Остановить» здесь или на панели в правом нижнем углу экрана завершает проверку; Escape тоже."
+            "value" : "Кнопка «Остановить» здесь или на панели либо Escape завершает проверку."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kontrolu ukončíte tlačidlom „Zastaviť“ tu alebo v paneli v pravom dolnom rohu obrazovky; aj klávesom Esc."
+            "value" : "Kontrolu ukončíte tlačidlom „Zastaviť“ tu alebo v paneli, alebo klávesom Esc."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "»Ustavi«, tukaj ali na plošči spodaj desno na zaslonu, konča preverjanje; tudi Escape."
+            "value" : "»Ustavi« tukaj ali na plošči ali Escape konča preverjanje."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "”Stoppa”, här eller i panelen längst ned till höger på skärmen, avslutar kontrollen; Esc också."
+            "value" : "”Stoppa” här eller i panelen, eller Esc, avslutar kontrollen."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Burada veya ekranın sağ altındaki panelde “Durdur” denetimi bitirir; Esc tuşu da."
+            "value" : "Burada veya paneldeki “Durdur” ya da Esc tuşu denetimi bitirir."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Кнопка «Зупинити» тут або на панелі в правому нижньому куті екрана завершує перевірку; клавіша Esc також."
+            "value" : "Кнопка «Зупинити» тут або на панелі чи клавіша Esc завершує перевірку."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Dừng”, ở đây hoặc trong bảng ở góc dưới bên phải màn hình, sẽ kết thúc lần kiểm tra; Esc cũng vậy."
+            "value" : "“Dừng” ở đây hoặc trong bảng, hay Esc, sẽ kết thúc lần kiểm tra."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按一下此處或螢幕右下角面板中的「停止」便可結束檢查；按 Esc 鍵也可以。"
+            "value" : "按一下此處或面板中的「停止」，或按 Esc 鍵，便可結束檢查。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "点按此处或屏幕右下角面板中的“停止”即可结束检查；按 Esc 键也可以。"
+            "value" : "点按此处或面板中的“停止”，或按 Esc 键，即可结束检查。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按一下此處或螢幕右下角面板中的「停止」即可結束檢查；按 Esc 鍵也可以。"
+            "value" : "按一下此處或面板中的「停止」，或按 Esc 鍵，即可結束檢查。"
           }
         }
       }
@@ -105854,215 +107108,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那是 AutoHush 本身。"
-          }
-        }
-      }
-    },
-    "The check couldn’t finish." : {
-      "comment" : "Add an App window, under the check's step when it ended without a result",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تعذّر إكمال الفحص."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La comprovació no s’ha pogut acabar."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrolu se nepodařilo dokončit."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrollen kunne ikke gennemføres."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Prüfung konnte nicht abgeschlossen werden."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ο έλεγχος δεν μπόρεσε να ολοκληρωθεί."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La comprobación no ha podido terminar."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La verificación no pudo terminar."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tarkistusta ei voitu viedä loppuun."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La vérification n’a pas pu aboutir."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La vérification n’a pas pu aboutir."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "जाँच पूरी नहीं हो सकी।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Provjera nije mogla završiti."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az ellenőrzést nem sikerült befejezni."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pemeriksaan tidak dapat diselesaikan."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossibile completare la verifica."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "チェックを完了できませんでした。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "검사를 완료할 수 없습니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrollen kunne ikke fullføres."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De controle kon niet worden voltooid."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nie udało się ukończyć sprawdzania."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível concluir a verificação."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível concluir a verificação."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verificarea nu s-a putut încheia."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось завершить проверку."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrolu sa nepodarilo dokončiť."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preverjanja ni bilo mogoče dokončati."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kontrollen kunde inte slutföras."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denetim tamamlanamadı."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не вдалося завершити перевірку."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không thể hoàn tất lần kiểm tra."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "檢查無法完成。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检查无法完成。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "檢查無法完成。"
           }
         }
       }
@@ -114505,7 +115550,7 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neprovjereno"
+            "value" : "Netestirano"
           }
         },
         "hu" : {
@@ -114553,7 +115598,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nietestowana"
+            "value" : "Bez testów"
           }
         },
         "pt" : {
@@ -114577,7 +115622,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не проверено"
+            "value" : "Без тестов"
           }
         },
         "sk" : {
@@ -114589,7 +115634,7 @@
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nepreizkušeno"
+            "value" : "Netestirano"
           }
         },
         "sv" : {
@@ -114601,13 +115646,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Test edilmedi"
+            "value" : "Denenmedi"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не перевірено"
+            "value" : "Без тестів"
           }
         },
         "vi" : {

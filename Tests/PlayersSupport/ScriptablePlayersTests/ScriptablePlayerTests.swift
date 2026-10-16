@@ -236,6 +236,37 @@ struct ScriptablePlayerTests {
         #expect(profile.readVolume(42) == 42) // read as reported unless the profile says otherwise
     }
 
+    @Test("running, the app is asked its state and volume and sent its suite's pause and play; not running, it isn't asked, and its commands and access check say so")
+    func sends() async throws {
+        let app = FakeScriptedApp()
+        let jukebox = ScriptablePlayer(profile: ScriptablePlayerProfile(
+            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+            stateNotification: Notification.Name("com.example.jukebox.state"), readVolume: { $0 + 1 }
+        ), channel: app)
+        try await jukebox.verifyControlAccess()
+        #expect(await jukebox.playerState() == .playing)
+        try await jukebox.pause()
+        try await jukebox.play()
+        #expect(await jukebox.volume() == 51) // read as the profile says
+        try await jukebox.setVolume(150)
+        #expect(app.sent == ["ask", "get pPlS", "get pPlS", "jboxPaus", "jboxPlay", "get pVol", "set pVol 100"])
+        // An app that doesn't answer: its state unknown, no volume.
+        app.state.withLock { $0.fails = true }
+        #expect(await jukebox.playerState() == .unknown)
+        #expect(await jukebox.volume() == nil)
+
+        let player = ScriptablePlayer(profile: ScriptablePlayerProfile(
+            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+            stateNotification: Notification.Name("com.example.jukebox.state")
+        ))
+        #expect(await player.playerState() == .notRunning)
+        #expect(await player.volume() == nil)
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await player.verifyControlAccess() }
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await player.pause() }
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await player.play() }
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await player.setVolume(50) }
+    }
+
     @MainActor
     @Test("a player watches its state through its notification")
     func observer() {
