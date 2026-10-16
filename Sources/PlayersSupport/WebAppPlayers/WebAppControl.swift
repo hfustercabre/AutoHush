@@ -237,7 +237,7 @@ final class WebAppControl: @unchecked Sendable {
             logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
             throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
-        if follows(button, recipe: recipe, from: state) { return }
+        if follows(button, recipe: recipe, from: state, pid: pid) { return }
         logger.error("\(self.name, privacy: .public)'s Play/Pause didn't change after a press")
         if state == .playing, mute(pid: pid, reason: .pressIgnored) { return }
         throw MusicPlayerError.playerCommandFailed(.pressIgnored)

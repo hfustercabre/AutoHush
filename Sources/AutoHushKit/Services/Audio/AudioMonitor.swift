@@ -62,6 +62,11 @@ package final class AudioMonitor: @unchecked Sendable {
     /// After a HAL change, keep re-reading processes at the active rate for this
     /// long: a process's output flag can flip shortly after the notification.
     static let postChangeRefreshWindow: TimeInterval = 1
+    /// A source's process measured silent this long loses its tap, which
+    /// keeps macOS's recording indicator on (an app keeping its output open
+    /// while paused, as Qobuz does). It's tapped again once its output closes
+    /// and opens again, or once it tells macOS it plays.
+    static let silentTapRelease: TimeInterval = 10
 
     /// Queue-confined; replaced live by `setConfiguration(_:)`.
     var configuration: AppConfiguration
@@ -105,6 +110,11 @@ package final class AudioMonitor: @unchecked Sendable {
     var detectionMode: DetectionMode = .pending
     var playerPlayingSince: Date?
     var playerTapSince: Date?
+    /// Since when each tapped source process has been measured silent.
+    var silentSince: [AudioObjectID: Date] = [:]
+    /// Source processes whose tap was released for their silence: they don't
+    /// count as playing until they're tapped again.
+    var quietProcesses: Set<AudioObjectID> = []
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     var permissionStatus: AudioCapturePermission?
     var lastPermissionCheck: Date?

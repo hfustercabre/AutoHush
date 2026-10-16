@@ -69,7 +69,7 @@ struct AddAppTextTests {
                 ]
             case .allowedSummary:
                 return [
-                    Row("Audio Recording", summary(audio: .allowed)),
+                    Row("Audio Recording", summary(audio: .allowed), summary(audio: .allowed, automation: .playerNotRunning)),
                     Row("without Audio Recording", summary(audio: .denied)),
                     Row("AntiDot", summary(audio: .allowed, antiDot: true), summary(audio: .denied, antiDot: true)),
                     Row("Audio Recording and Automation", summary(audio: .allowed, automation: .allowed)),

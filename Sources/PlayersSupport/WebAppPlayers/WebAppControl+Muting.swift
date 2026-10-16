@@ -35,7 +35,7 @@ extension WebAppControl {
             if forgotten { releaseMute() }
             return
         }
-        guard follows(found.handle, recipe: recipe, from: .playing) else {
+        guard follows(found.handle, recipe: recipe, from: .playing, pid: pid) else {
             if forgotten { releaseMute() } else { muted = (pid, .pressIgnored) }
             return
         }
@@ -43,11 +43,19 @@ extension WebAppControl {
         releaseMute()
     }
 
-    /// Whether the button's words changed from `state` within `pressConfirmation`.
-    func follows(_ button: ButtonHandle, recipe: PlayPauseRecipe, from state: PlayerState) -> Bool {
+    /// Whether the button's words changed from `state` within
+    /// `pressConfirmation`; gone, the learned button found again tells.
+    func follows(_ button: ButtonHandle, recipe: PlayPauseRecipe, from state: PlayerState, pid: pid_t) -> Bool {
         let deadline = clock().addingTimeInterval(Self.pressConfirmation)
         repeat {
-            if let now = page.button(button), let shown = recipe.state(of: now), shown != state { return true }
+            if let now = page.button(button) {
+                if let shown = recipe.state(of: now), shown != state { return true }
+            } else if case .found(let found) = lookup(recipe, pid: pid, now: clock()),
+                      let shown = recipe.state(of: found), shown != state {
+                // The site put a new button in its place (YouTube Music's Pause,
+                // on macOS 14.4): the learned one, found again, tells.
+                return true
+            }
             sleep(Self.pressCheckInterval)
         } while clock() < deadline
         return false

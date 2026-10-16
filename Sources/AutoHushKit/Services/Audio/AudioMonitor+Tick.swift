@@ -40,6 +40,9 @@ extension AudioMonitor {
             knownSources[source.id] = source
         }
         presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
+        // A released process whose output closed is tapped again when it opens.
+        let present = Set(candidates.map(\.objectID))
+        quietProcesses.formIntersection(present)
         updateMeteredProcesses(at: now)
     }
 
@@ -106,7 +109,8 @@ extension AudioMonitor {
         // The player is tapped only to prove the permission when TCC cannot be read.
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
         let metered = shouldMeterLevels ? candidates.filter {
-            sourceOfProcess[$0.objectID] != nil || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
+            (sourceOfProcess[$0.objectID] != nil && !quietProcesses.contains($0.objectID))
+                || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
         } : []
         let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
@@ -123,15 +127,34 @@ extension AudioMonitor {
         let judgement = judgePlaybackSignals(at: now)
         /// The verdicts that decided: only for what wasn't measured.
         var verdicts: [String: Bool] = [:]
+        // Silence counts only while measured: a tap made again starts afresh.
+        // Without levels (AntiDot mode, open streams), no tap was released.
+        silentSince = detectionMode == .audioLevel ? silentSince.filter { peaks[$0.key] != nil } : [:]
+        if detectionMode != .audioLevel { quietProcesses = [] }
+        var released: Set<AudioObjectID> = []
+        var woken: Set<AudioObjectID> = []
         for process in candidates {
             guard let source = sourceOfProcess[process.objectID] else { continue }
+            if quietProcesses.contains(process.objectID) {
+                // Released for its silence: silent until it says it plays.
+                if judgement?.verdicts[source.id] == true { woken.insert(process.objectID) }
+                continue
+            }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
+            if let peak, noteSilence(of: process.objectID, peak: peak, at: now) { released.insert(process.objectID) }
             if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
             let verdict = peak == nil ? judgement?.verdicts[source.id] : nil
             if let verdict { verdicts[source.id] = verdict }
             if isAudible(peak: peak, verdict: verdict) {
                 audible.insert(source.id)
             }
+        }
+
+        if !released.isEmpty || !woken.isEmpty {
+            quietProcesses.formUnion(released)
+            quietProcesses.subtract(woken)
+            logger.debug("[monitor] taps released for silence: \(released.count, privacy: .public), made again: \(woken.count, privacy: .public)")
+            updateMeteredProcesses(at: now)
         }
 
         // Before source events, so a pause decision in this tick sees it.
@@ -159,6 +182,22 @@ extension AudioMonitor {
 
         publishActiveSources()
         publishReport(audible: audible, levels: levels, verdicts: verdicts)
+    }
+
+    /// Notes a tapped source process's level: `true` once it has been silent
+    /// for `silentTapRelease`, when its tap is to be released.
+    private func noteSilence(of objectID: AudioObjectID, peak: Float, at now: Date) -> Bool {
+        guard peak < configuration.audibleThreshold else {
+            silentSince[objectID] = nil
+            return false
+        }
+        let since = silentSince[objectID] ?? now
+        guard now.timeIntervalSince(since) >= Self.silentTapRelease else {
+            silentSince[objectID] = since
+            return false
+        }
+        silentSince[objectID] = nil
+        return true
     }
 
     /// Whether one process of a source counts as audible in this tick: by its

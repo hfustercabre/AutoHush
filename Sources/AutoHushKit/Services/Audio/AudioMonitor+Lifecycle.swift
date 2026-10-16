@@ -45,6 +45,8 @@ extension AudioMonitor {
         lastRefresh = nil
         lastHALChange = nil
         playerTapSince = nil
+        silentSince = [:]
+        quietProcesses = []
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
         publishActiveSources()

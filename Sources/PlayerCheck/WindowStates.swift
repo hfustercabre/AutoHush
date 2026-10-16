@@ -37,12 +37,11 @@ extension CheckResult.WindowState {
     /// that Accessibility knows, wherever it is (a full screen window may
     /// come with a bigger one it doesn't: an Apple player's), else its biggest.
     static func main(of pid: pid_t) -> (info: Info, element: AXUIElement?)? {
-        let candidates = infos(.optionAll).filter {
-            owner(of: $0) == pid && $0[kCGWindowLayer as String] as? Int == 0 && frame(of: $0).height >= 200
-        }
+        let known = windowElements(of: pid)
+        let standard = standardWindows(in: known)
+        let candidates = infos(.optionAll).filter { owner(of: $0) == pid && isOrdinary($0, standard: standard) }
         guard !candidates.isEmpty else { return nil }
         func area(_ info: Info) -> CGFloat { frame(of: info).width * frame(of: info).height }
-        let known = windowElements(of: pid)
         let numbers = Set(known.map(\.number))
         guard let info = candidates.filter({ numbers.contains(number(of: $0)) }).max(by: { area($0) < area($1) })
                 ?? candidates.max(by: { area($0) < area($1) }) else { return nil }
@@ -52,9 +51,24 @@ extension CheckResult.WindowState {
     /// Its window in front among its ordinary ones on screen (the list goes
     /// front to back), when it has one.
     static func frontWindow(of pid: pid_t) -> Int? {
-        infos(.optionOnScreenOnly).first {
-            owner(of: $0) == pid && $0[kCGWindowLayer as String] as? Int == 0 && frame(of: $0).height >= 200
-        }.map(number(of:))
+        let standard = standardWindows(in: windowElements(of: pid))
+        return infos(.optionOnScreenOnly).first { owner(of: $0) == pid && isOrdinary($0, standard: standard) }.map(number(of:))
+    }
+
+    /// An ordinary window: a document window's layer, and either a standard
+    /// window to Accessibility, whatever its height (a movie player's for
+    /// sound alone can be about 130 points tall), or at least 200 points tall
+    /// (not a strip or a helper).
+    static func isOrdinary(_ info: Info, standard: Set<Int>) -> Bool {
+        info[kCGWindowLayer as String] as? Int == 0 && (standard.contains(number(of: info)) || frame(of: info).height >= 200)
+    }
+
+    /// The numbers of the windows Accessibility calls standard ones, and of
+    /// the minimized ones (macOS 14.4 calls a minimized window a dialog).
+    static func standardWindows(in known: [(number: Int, element: AXUIElement)]) -> Set<Int> {
+        Set(known.filter {
+            $0.element.string(kAXSubroleAttribute) == kAXStandardWindowSubrole || $0.element.value(kAXMinimizedAttribute) as? Bool == true
+        }.map(\.number))
     }
 
     private typealias GetWindow = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError

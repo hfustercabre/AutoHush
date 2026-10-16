@@ -8,16 +8,19 @@ import SpotifySupport
 import AppleMusicSupport
 import MenuPlayers
 import VLCSupport
+import QuickTimeSupport
 import WebAppPlayers
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
-    @Test("Spotify, Apple Music, VLC, Apple Podcasts and TIDAL are offered, the most used first")
+    @Test("Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player are offered, the most used first")
     func players() {
         let catalog = SupportedPlayers.catalog
-        #expect(catalog.players.map(\.bundleID)
-            == ["com.spotify.client", "com.apple.Music", "org.videolan.vlc", "com.apple.podcasts", "com.tidal.desktop"])
-        #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL"])
+        #expect(catalog.players.map(\.bundleID) == [
+            "com.spotify.client", "com.apple.Music", "org.videolan.vlc", "com.apple.podcasts", "com.tidal.desktop",
+            "com.apple.QuickTimePlayerX",
+        ])
+        #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "QuickTime Player"])
         // The built-in players only: `player(bundleID:)` would also look for
         // the Safari web apps in this Mac's Applications folders.
         let player = { (id: String) in catalog.players.first { $0.bundleID == id } }
@@ -25,6 +28,7 @@ struct SupportedPlayersTests {
         #expect(player("com.tidal.desktop") is MenuPlayer)
         #expect(player("com.apple.podcasts") is MenuPlayer)
         #expect(player("org.videolan.vlc") is VLCPlayer)
+        #expect(player("com.apple.QuickTimePlayerX") is ScriptedAppPlayer)
         #expect(catalog.players.allSatisfy { !$0.isUntested && $0.installedURL == nil })
     }
 

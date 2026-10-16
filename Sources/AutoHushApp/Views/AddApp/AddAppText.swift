@@ -203,7 +203,9 @@ enum AddAppText {
         var allowed = [accessibilityTitle]
         var without: [String] = []
         if permissions.audio == .allowed, !antiDot { allowed.append(PermissionText.audioTitle) } else if !antiDot { without.append(PermissionText.audioTitle) }
-        if let automation = permissions.automation {
+        // With the app closed (a kept check reopened), macOS can't tell:
+        // Automation isn't said either way.
+        if let automation = permissions.automation, automation != .playerNotRunning {
             if automation == .allowed { allowed.append(automationTitle) } else { without.append(automationTitle) }
         }
         let allowedList = allowed.formatted(.list(type: .and))

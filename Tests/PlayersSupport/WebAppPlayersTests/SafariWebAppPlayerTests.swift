@@ -405,6 +405,22 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
+    @Test("a press after which the site puts a new button in place (YouTube Music's Pause): the new one tells")
+    func replacedButton() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Play")
+        setup.page.onPress = { page, number in
+            var buttons = page.buttonsByNumber
+            guard var button = buttons.removeValue(forKey: number) else { return }
+            button.label = "Pause"
+            buttons[number + 10] = button
+            page.buttonsByNumber = buttons
+        }
+        try await setup.player.play()
+        #expect(setup.page.presses == [1])
+        #expect(await setup.player.playerState() == .playing)
+    }
+
     @Test("a press the page doesn't follow is an error when the web app can't be muted either")
     func ignoredPress() async {
         let setup = Setup(recipe: Self.learned)

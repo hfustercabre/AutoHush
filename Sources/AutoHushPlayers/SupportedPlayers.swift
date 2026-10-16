@@ -9,6 +9,7 @@ import AppleMusicSupport
 import TidalSupport
 import PodcastsSupport
 import VLCSupport
+import QuickTimeSupport
 
 /// The music players AutoHush ships with, plus the Safari web apps on this
 /// Mac. Each app lives in its own `<App>Support` target; adding one means
@@ -17,8 +18,9 @@ package enum SupportedPlayers {
     /// Every supported player, the most used first (2026): Spotify (777
     /// million monthly users), Apple Music (about 100 million subscribers),
     /// VLC (over 6 billion downloads), Apple Podcasts (a tenth of podcast
-    /// listeners), then TIDAL (a few million). Installed players are offered
-    /// before the others, each group in this order. Spotify was the only
+    /// listeners), TIDAL (a few million), then QuickTime Player, on every Mac
+    /// but played more for videos. Installed players are offered before the
+    /// others, each group in this order. Spotify was the only
     /// player before the choice, so people updating keep it.
     package static let catalog = MusicPlayerCatalog(
         players: [
@@ -27,6 +29,7 @@ package enum SupportedPlayers {
             VLCPlayer(),
             MenuPlayer(profile: .applePodcasts),
             MenuPlayer(profile: .tidal),
+            QuickTime.player(),
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
         // Shown in Add a Web App's address field and its "not a web address" note.

@@ -80,7 +80,7 @@ flowchart TD
   NT["Notifications asked once,<br/>for updates (optional)"]
   W["The welcome window:<br/>Choose Your Media Player"]
   K{"Which tile?"}
-  SUP["Supported Apps: Spotify,<br/>Apple Music, VLC, Apple<br/>Podcasts, TIDAL (the only one<br/>installed is already picked)"]
+  SUP["Supported Apps: Spotify,<br/>Apple Music, VLC, Apple<br/>Podcasts, TIDAL, QuickTime<br/>Player (the only one<br/>installed is already picked)"]
   OTH["Other Apps: an app<br/>you added, Checked by you"]
   WEB["Safari Web Apps:<br/>the tested ones first,<br/>any other Untested"]
   ADDAPP["Add an App…"]
@@ -140,7 +140,7 @@ flowchart TD
   OWN["The player itself,<br/>system sounds:<br/>never count"]
   IGN["An ignored app:<br/>listed under Playing Now,<br/>never pauses"]
   DM{"Detection"}
-  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot)"]
+  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s"]
   T{"Playing<br/>for 0.5 s?"}
   TONE["Too short: a notification<br/>or chat tone, ignored"]

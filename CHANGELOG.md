@@ -71,6 +71,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **QuickTime Player is a supported player.** Choose it among the
+  Supported Apps: AutoHush pauses every movie or recording it plays, and
+  plays again those it paused, through its AppleScript (macOS asks for
+  Automation the first time). It pauses without fading.
 - **Add any app that plays as your media player.** **Add an App…**, under
   the new **Other Apps** among the players (in the menu, Settings → General
   and the welcome window), checks how AutoHush can pause and play an app it
@@ -155,6 +159,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The purple dot stays off while an app keeps its sound on in
+  silence.** Some players (Qobuz) keep their sound on while paused, so
+  AutoHush measured them, and macOS showed its purple dot, for as long as
+  your player played. Now an app silent for 10 seconds isn't measured
+  until it opens its sound again or tells macOS it plays.
+- **A web app whose site swaps its Play button for a new Pause one is
+  resumed.** YouTube Music does that as it plays (seen on macOS 14.4):
+  AutoHush kept reading the button that was gone, called the resume
+  failed, and took the music playing for yours. It now finds the button
+  again.
 - **Short release notes get a small box.** The update window's notes box
   stayed 100 points tall for a line or two; now it's as tall as they need,
   from 48 points up to 180.

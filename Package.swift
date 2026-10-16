@@ -56,7 +56,7 @@ let package = Package(
             name: "AutoHushPlayers",
             dependencies: [
                 "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers",
-                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport",
+                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "QuickTimeSupport",
             ]
         ),
         .target(name: "ScriptablePlayers", dependencies: ["AutoHushKit"], path: "Sources/PlayersSupport/ScriptablePlayers"),
@@ -88,6 +88,11 @@ let package = Package(
             name: "VLCSupport",
             dependencies: ["AutoHushKit", "ScriptablePlayers"],
             path: "Sources/PlayersSupport/VLCSupport"
+        ),
+        .target(
+            name: "QuickTimeSupport",
+            dependencies: ["AutoHushKit", "ScriptablePlayers"],
+            path: "Sources/PlayersSupport/QuickTimeSupport"
         ),
         .target(name: "AutoHushKit"),
 
@@ -176,6 +181,11 @@ let package = Package(
             dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/VLCSupportTests"
         ),
+        .testTarget(
+            name: "QuickTimeSupportTests",
+            dependencies: ["QuickTimeSupport", "ScriptablePlayers", "AutoHushKit"],
+            path: "Tests/PlayersSupport/QuickTimeSupportTests"
+        ),
         // AutoHushPlayers only for the supported players' names, which no
         // file of Sources/PlayerCheck may hold.
         .testTarget(
@@ -191,7 +201,8 @@ let package = Package(
             name: "AutoHushPlayersTests",
             dependencies: [
                 "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers",
-                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "AutoHushKit",
+                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "QuickTimeSupport",
+                "AutoHushKit",
             ]
         ),
     ],

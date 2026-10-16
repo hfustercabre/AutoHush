@@ -20,14 +20,15 @@ struct NeutralSourcesTests {
 
     /// The supported players' names and bundle IDs, and the tested web apps'
     /// names: a one-word name anywhere, whatever its case; a name of several
-    /// words whole, whatever its case, and each word but Apple's as a word
-    /// of its own, capitalized as the name has it (so not the same word in
+    /// words whole, whatever its case, and each word but "Apple" and
+    /// "Player" (QuickTime Player's, as in Player Check) as a word of its
+    /// own, capitalized as the name has it (so not the same word in
     /// lowercase, which may be ordinary English).
     private static func names() -> (anyCase: [String], asWords: [String]) {
         let players = SupportedPlayers.catalog.players
         let names = Set(players.map(\.name) + SupportedPlayers.testedWebApps.map(\.name))
         let anyCase = Array(names) + players.map(\.bundleID)
-        let asWords = names.filter { $0.contains(" ") }.flatMap { $0.split(separator: " ").map(String.init) }.filter { $0 != "Apple" }
+        let asWords = names.filter { $0.contains(" ") }.flatMap { $0.split(separator: " ").map(String.init) }.filter { !["Apple", "Player"].contains($0) }
         return (anyCase, asWords)
     }
 

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        AutoHush works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL, with any website added to the Dock from Safari, and with other apps you add yourself: choose **Add an App…** among the media players, and AutoHush checks how it can pause and play the app. If the check finds no way, paste its log below: it's the newest `… check.log` in `~/Library/Logs/AutoHush/Checks`.
+        AutoHush works with Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player, with any website added to the Dock from Safari, and with other apps you add yourself: choose **Add an App…** among the media players, and AutoHush checks how it can pause and play the app. If the check finds no way, paste its log below: it's the newest `… check.log` in `~/Library/Logs/AutoHush/Checks`.
   - type: input
     id: app
     attributes:

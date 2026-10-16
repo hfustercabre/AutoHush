@@ -248,6 +248,58 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
+    @Test("a source silent for 10 s loses its tap and doesn't count as playing; its output opening again taps it again")
+    func silentSourceReleased() async {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        let radio = Self.process(2, "com.example.radio") // keeps its output open while paused
+        h.step([radio], peaks: [2: 0])
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 5)
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 5.1)
+        #expect(h.meter.lastMetered == [])
+        h.step(after: 3) // no tap, no level: still not counted as playing
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.isEmpty)
+
+        h.step(after: 1, [])
+        h.step(after: 1, [radio])
+        #expect(h.meter.lastMetered == [2])
+        h.monitor.stop()
+    }
+
+    @Test("a source released for its silence is tapped again once it tells macOS it plays")
+    func releasedSourceAnnounces() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(permission: MockAudioCapturePermission(.granted), assertions: assertions)
+        h.start()
+        h.step([Self.process(2, "com.example.radio")], peaks: [2: 0]) // pid 1002
+        h.step(after: 10.1)
+        #expect(h.meter.lastMetered == [])
+
+        assertions.held = [1002: MockPowerAssertions.playing]
+        h.step(after: 1)
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 0.25, peaks: [2: 0.4])
+        h.step(after: 1.1)
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.example.radio", isPlaying: true)])
+        h.monitor.stop()
+    }
+
+    @Test("a source heard within 10 s keeps its tap")
+    func audibleSourceKeepsTap() async {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        h.step([Self.process(2, "com.example.radio")], peaks: [2: 0])
+        h.step(after: 8, peaks: [2: 0.3])
+        h.step(after: 0.25, peaks: [2: 0])
+        h.step(after: 8)
+        #expect(h.meter.lastMetered == [2])
+        h.monitor.stop()
+    }
+
     // MARK: - Capturing only when needed (recording indicator)
 
     @Test("nothing is captured while audio levels are not needed")

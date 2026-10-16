@@ -198,7 +198,8 @@ package protocol SafariDriving: Sendable {
 
 /// Safari, driven through Accessibility. Its menu items and the dialog's
 /// fields and buttons are found by their identifiers, the same in every
-/// language (measured on macOS 27): `AddToDock`, `CloseTab`,
+/// language (measured on macOS 27): `AddToDock` (Safari 17.4 on macOS 14.4:
+/// `generateWebAppForCurrentPage:`), `CloseTab`,
 /// `AddToDockFormNameTextField`, `AddToDockFormURLTextField`,
 /// `AddToDockFormAddButton`, `AddToDockFormCancelButton`.
 package struct SafariUI: SafariDriving {
@@ -244,7 +245,7 @@ package struct SafariUI: SafariDriving {
         while Date() < deadline, !Task.isCancelled {
             let tab = await Self.queue.run { () -> SafariTab? in
                 guard let app = Self.safariElement(), Self.pageLoaded(in: app),
-                      let item = Self.menuItem("AddToDock", in: app), item.value(kAXEnabledAttribute) as? Bool == true,
+                      let item = Self.addToDockItem(in: app), item.value(kAXEnabledAttribute) as? Bool == true,
                       let page = Self.frontPage(in: app)
                 else { return nil }
                 return SafariTab(page: page)
@@ -279,7 +280,7 @@ package struct SafariUI: SafariDriving {
         // up afresh once it is.
         await Self.bringSafariToFront()
         let pressed = await Self.queue.run { () -> AXError? in
-            guard let app = Self.safariElement(), let item = Self.menuItem("AddToDock", in: app) else { return nil }
+            guard let app = Self.safariElement(), let item = Self.addToDockItem(in: app) else { return nil }
             return AXUIElementPerformAction(item, kAXPressAction as CFString)
         }
         guard let pressed else {
@@ -379,6 +380,11 @@ package struct SafariUI: SafariDriving {
     private static func frontPage(in app: AXUIElement) -> AXUIElement? {
         guard let window = app.element(kAXFocusedWindowAttribute) else { return nil }
         return first(in: window, depth: 8) { $0.string(kAXRoleAttribute) == "AXWebArea" }
+    }
+
+    /// File → Add to Dock…, by either name Safari gives it.
+    private static func addToDockItem(in app: AXUIElement) -> AXUIElement? {
+        menuItem("AddToDock", in: app) ?? menuItem("generateWebAppForCurrentPage:", in: app)
     }
 
     private static func menuItem(_ identifier: String, in app: AXUIElement) -> AXUIElement? {

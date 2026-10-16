@@ -2,9 +2,9 @@ import AppKit
 import ApplicationServices
 import AutoHushKit
 
-/// The real panel (macOS 26 on): its menu bar item found in the menu bar's
-/// own windows (else by hit-testing along it), its rows read from Control
-/// Center's windows. Player Check opens, reads and closes it with the same
+/// The real panel: its menu bar item found in the menu bar's own windows
+/// (macOS 26 on; else by hit-testing along it), its rows read from Control
+/// Center's windows (macOS 14's laid out as `flatRows` reads them). Player Check opens, reads and closes it with the same
 /// calls.
 package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// A row as the open panel shows it, with its Play/Pause.
@@ -124,6 +124,11 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
                 found.append((PanelRow(text: text, playing: button.string(kAXIdentifierAttribute) == "pause.fill"), button))
                 return
             }
+            let flat = flatRows(in: children)
+            guard flat.isEmpty else {
+                found += flat
+                return
+            }
             children.forEach { walk($0, depth + 1) }
         }
         let app = AXUIElementCreateApplication(center.processIdentifier)
@@ -131,6 +136,45 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
         app.elements(kAXWindowsAttribute).forEach { walk($0, 0) }
         return found
     }
+
+    /// macOS 14's panel: one group with every row's parts in a line (its
+    /// text, its Play/Pause, its Next), the buttons named only by their
+    /// description, in Control Center's language (measured on 14.4).
+    static func flatRows(in children: [AXUIElement]) -> [ShownRow] {
+        var rows: [ShownRow] = []
+        var text: String?
+        for child in children {
+            switch child.string(kAXRoleAttribute) {
+            case kAXStaticTextRole:
+                text = child.string(kAXValueAttribute)
+            case kAXButtonRole:
+                guard let said = text, !said.isEmpty, let word = child.string(kAXDescriptionAttribute)?.lowercased() else { continue }
+                // It says what a press does: Pause while the row plays.
+                if centerWords.pause.contains(word) { rows.append((PanelRow(text: said, playing: true), child)) }
+                else if centerWords.play.contains(word) { rows.append((PanelRow(text: said, playing: false), child)) }
+                else { continue }
+                text = nil
+            default:
+                break
+            }
+        }
+        return rows
+    }
+
+    /// Control Center's words for its Play and Pause, in every language it
+    /// has (its NowPlaying table); English when the table can't be read.
+    static let centerWords: (play: Set<String>, pause: Set<String>) = {
+        var words: (play: Set<String>, pause: Set<String>) = (["play"], ["pause"])
+        let url = URL(fileURLWithPath: "/System/Library/CoreServices/ControlCenter.app/Contents/Resources/NowPlaying.loctable")
+        guard let data = try? Data(contentsOf: url),
+              let table = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: [String: Any]]
+        else { return words }
+        for strings in table.values {
+            if let play = strings["play"] as? String { words.play.insert(play.lowercased()) }
+            if let pause = strings["pause"] as? String { words.pause.insert(pause.lowercased()) }
+        }
+        return words
+    }()
 
     /// Closes it, waiting up to 2 s for its rows to go.
     package static func close(_ item: AXUIElement) {

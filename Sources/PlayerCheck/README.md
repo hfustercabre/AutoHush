@@ -15,7 +15,7 @@ the two do the same thing (Apple events, scripted states, playback menus and
 their words, learning a page's Play/Pause, sound, windows on other
 desktops, Now Playing), so what it finds holds for AutoHush. AutoHush
 controls an added app the way the user chose among those the check found
-(`CheckedPlayer`): players of documents (QuickTime Player), Electron, CEF,
+(`CheckedPlayer`): players of documents (as QuickTime Player, now built in), Electron, CEF,
 Flutter and Tauri pages and Chromium browsers' web apps, what apps report
 to Now Playing, and the Now Playing panel. The check keeps its own code for those, since it reports
 more than AutoHush needs: each try, in each window state, and why it

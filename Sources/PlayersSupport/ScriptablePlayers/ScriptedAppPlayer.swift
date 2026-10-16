@@ -15,6 +15,9 @@ package actor ScriptedAppPlayer: MusicPlayer {
     package nonisolated let bundleID: String
     package nonisolated let name: String
     package nonisolated let setup: ScriptSetup
+    /// Its icon while it isn't installed: a built-in player's (QuickTime
+    /// Player's); none for an added app.
+    package nonisolated let iconPlaceholder: PlayerIconPlaceholder?
     /// The notification that announced its pauses and plays in the check;
     /// `nil` when none did.
     package nonisolated let stateNotification: Notification.Name?
@@ -32,12 +35,14 @@ package actor ScriptedAppPlayer: MusicPlayer {
 
     /// `channel`: its Apple events, and `sleep`, while a toggle is checked;
     /// tests stand in for them.
-    package init(bundleID: String, name: String, setup: ScriptSetup, stateNotification: Notification.Name? = nil,
+    package init(bundleID: String, name: String, setup: ScriptSetup, iconPlaceholder: PlayerIconPlaceholder? = nil,
+                 stateNotification: Notification.Name? = nil,
                  toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: (any AppleEventSending)? = nil,
                  sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         self.bundleID = bundleID
         self.name = name
         self.setup = setup
+        self.iconPlaceholder = iconPlaceholder
         self.stateNotification = stateNotification
         self.toggleState = toggleState
         self.channel = channel ?? AppleEventChannel(bundleID: bundleID, label: name)
