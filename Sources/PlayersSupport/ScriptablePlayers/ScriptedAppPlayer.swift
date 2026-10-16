@@ -49,7 +49,7 @@ package actor ScriptedAppPlayer: MusicPlayer {
         self.sleep = sleep
     }
 
-    package nonisolated var canFade: Bool { setup.hasVolume }
+    package nonisolated var canFade: Bool { setup.hasVolume || setup.documentVolume != nil }
 
     /// A toggle with no scripted state checks itself (`togglesBySigns`);
     /// any other press is checked as any player's is (`PressCheck`).
@@ -136,6 +136,7 @@ package actor ScriptedAppPlayer: MusicPlayer {
     }
 
     package func volume() async -> Int? {
+        if let property = setup.documentVolume { return await documentVolume(property) }
         guard setup.hasVolume, let pid = channel.processIdentifier(),
               let reply = try? await channel.send(ScriptablePlayer.makeGetVolumeEvent(processIdentifier:), to: pid)
         else { return nil }
@@ -143,8 +144,9 @@ package actor ScriptedAppPlayer: MusicPlayer {
     }
 
     package func setVolume(_ volume: Int) async throws {
-        guard setup.hasVolume else { return }
         let volume = min(max(volume, 0), 100)
+        if let property = setup.documentVolume { return try await setDocumentVolume(property, to: volume) }
+        guard setup.hasVolume else { return }
         let pid = try channel.runningProcessIdentifier()
         _ = try await channel.send({ ScriptablePlayer.makeSetVolumeEvent(volume, processIdentifier: $0) }, to: pid)
     }
@@ -184,6 +186,45 @@ package actor ScriptedAppPlayer: MusicPlayer {
         for target in targets {
             _ = try await channel.send({
                 ScriptedAppPlayer.makeCommandEvent(code, to: ScriptedAppPlayer.documentSpecifier(documentClass, named: target), processIdentifier: $0)
+            }, to: pid)
+        }
+    }
+
+    /// The documents a volume goes to: those playing, else those its last
+    /// pause paused (its volume set back while paused, then faded in), else
+    /// the front one; none with no document open.
+    private func volumeTargets(of pid: pid_t) async throws -> [String?] {
+        let documents = try await documents(of: pid)
+        let playing = documents.filter(\.playing).map(\.name)
+        if !playing.isEmpty { return playing }
+        let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
+        if !paused.isEmpty { return paused }
+        return documents.isEmpty ? [] : [nil]
+    }
+
+    /// Its documents' `property` (0–1) as AutoHush's 0–100: the first one's
+    /// a volume goes to.
+    private func documentVolume(_ property: String) async -> Int? {
+        guard case .documents(let documentClass, _) = setup.state, let pid = channel.processIdentifier(),
+              let target = try? await volumeTargets(of: pid).first,
+              let reply = try? await channel.send({
+                  ScriptedAppPlayer.makeGetDataEvent(
+                      ScriptedAppPlayer.propertySpecifier(property, of: ScriptedAppPlayer.documentSpecifier(documentClass, named: target)),
+                      processIdentifier: $0)
+              }, to: pid),
+              let value = reply.directObjectReal
+        else { return nil }
+        return Int((min(max(value, 0), 1) * 100).rounded())
+    }
+
+    private func setDocumentVolume(_ property: String, to volume: Int) async throws {
+        guard case .documents(let documentClass, _) = setup.state else { return }
+        let pid = try channel.runningProcessIdentifier()
+        for target in try await volumeTargets(of: pid) {
+            _ = try await channel.send({
+                ScriptedAppPlayer.makeSetDataEvent(
+                    ScriptedAppPlayer.propertySpecifier(property, of: ScriptedAppPlayer.documentSpecifier(documentClass, named: target)),
+                    to: NSAppleEventDescriptor(double: Double(volume) / 100), processIdentifier: $0)
             }, to: pid)
         }
     }

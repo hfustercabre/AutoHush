@@ -6,7 +6,7 @@ import ScriptablePlayers
 
 @Suite("QuickTime Player")
 struct QuickTimeTests {
-    @Test("QuickTime Player is named, identified, and scripted on its documents, without fades")
+    @Test("QuickTime Player is named, identified, and scripted on its documents, fading by each one's audio volume")
     func player() {
         let quickTime = QuickTime.player()
         #expect(quickTime.name == "QuickTime Player")
@@ -15,6 +15,7 @@ struct QuickTimeTests {
         #expect(quickTime.setup.commands == .pauseAndPlay(pause: "MVWRpaus", play: "MVWRplay"))
         #expect(quickTime.setup.actsOnDocuments)
         #expect(quickTime.setup.state == .documents(documentClass: "docu", playing: "play"))
-        #expect(!quickTime.canFade)
+        #expect(quickTime.setup.documentVolume == "volu")
+        #expect(quickTime.canFade)
     }
 }

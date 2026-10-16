@@ -29,6 +29,15 @@ extension ScriptedAppPlayer {
         return event
     }
 
+    /// `set` of what `specifier` names (a document's property) to `value`.
+    static func makeSetDataEvent(_ specifier: NSAppleEventDescriptor, to value: NSAppleEventDescriptor,
+                                 processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        let event = ScriptablePlayer.makeCommandEvent(suite: Code.coreSuite, Code.setData, processIdentifier: pid)
+        event.setParam(specifier, forKeyword: Code.directObject)
+        event.setParam(value, forKeyword: Code.setDataValue)
+        return event
+    }
+
     /// The object specifier for the app's documents of class `documentClass`:
     /// the one named `name`, the front one (`name` nil, `front`), or every one.
     static func documentSpecifier(_ documentClass: String, named name: String?? = .none) -> NSAppleEventDescriptor {

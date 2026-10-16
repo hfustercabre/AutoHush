@@ -89,6 +89,25 @@ struct ScriptedAppPlayerTests {
         #expect(await jukebox.playerState() == .playing)
     }
 
+    @Test("a document's own volume (QuickTime Player's): read from the one playing and set on those playing, then on those its pause paused")
+    func documentVolume() async throws {
+        let app = FakeScriptedApp {
+            $0.documents = [("Song A", false), ("Song B", true)]
+            $0.documentVolumes = ["Song B": 0.8]
+        }
+        let quickTime = player(ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
+                                           state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false,
+                                           documentVolume: "volu"), app: app)
+        #expect(quickTime.canFade)
+        #expect(await quickTime.volume() == 80)
+        try await quickTime.setVolume(30)
+        #expect(app.state.withLock { $0.documentVolumes } == ["Song B": 0.3])
+        try await quickTime.pause()
+        try await quickTime.setVolume(80) // set back while paused: on the one it paused
+        #expect(app.state.withLock { $0.documentVolumes } == ["Song B": 0.8])
+        #expect(app.sent.filter { $0.hasPrefix("set volu") } == ["set volu of Song B 0.30", "set volu of Song B 0.80"])
+    }
+
     @Test("by its documents: it plays while one does; a pause goes to each one playing, a play back to those it paused still open, else to the front one; none open, it's stopped")
     func documents() async throws {
         let app = FakeScriptedApp { $0.documents = [("Song A", true), ("Song B", false), ("Song C", true)] }

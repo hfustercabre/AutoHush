@@ -74,7 +74,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
   plays again those it paused, through its AppleScript (macOS asks for
-  Automation the first time). It pauses without fading.
+  Automation the first time), fading them out and back in as Apple Music.
 - **Add any app that plays as your media player.** **Add an App…**, under
   the new **Other Apps** among the players (in the menu, Settings → General
   and the welcome window), checks how AutoHush can pause and play an app it

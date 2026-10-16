@@ -34,12 +34,17 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
     package var state: State?
     /// Its `sound volume` (pVol, 0–100), so it can fade.
     package var hasVolume: Bool
+    /// Each document's own volume, by code, 0–1 (QuickTime Player's `audio
+    /// volume`), so it can fade: read from and set on its documents playing,
+    /// else those its last pause paused, else the front one. `nil` without one.
+    package var documentVolume: String?
 
-    package init(commands: Commands, actsOnDocuments: Bool = false, state: State?, hasVolume: Bool) {
+    package init(commands: Commands, actsOnDocuments: Bool = false, state: State?, hasVolume: Bool, documentVolume: String? = nil) {
         self.commands = commands
         self.actsOnDocuments = actsOnDocuments
         self.state = state
         self.hasVolume = hasVolume
+        self.documentVolume = documentVolume
     }
 
     /// What `dictionary` offers: pause and play in its own suite, else

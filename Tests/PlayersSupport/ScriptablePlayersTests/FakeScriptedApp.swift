@@ -18,6 +18,8 @@ final class FakeScriptedApp: AppleEventSending {
         var volume = 50
         /// Its open documents (`docu`, each with its `jPly`), front first.
         var documents: [(name: String, playing: Bool)] = []
+        /// Each document's `audio volume` (`volu`, 0–1), by name; 1 unless set.
+        var documentVolumes: [String: Double] = [:]
         var fails = false
         /// Its toggle is taken, but doesn't change it.
         var ignoresToggle = false
@@ -56,12 +58,28 @@ final class FakeScriptedApp: AppleEventSending {
         let property = (direct?.forKeyword(fourCharCode("seld"))?.typeCodeValue).map(Self.text)
         let ofDocuments = direct?.forKeyword(fourCharCode("from")).map { $0.descriptorType != fourCharCode("null") } ?? false
         let value = event.paramDescriptor(forKeyword: fourCharCode("data")).map { Int($0.int32Value) }
+        let real = event.paramDescriptor(forKeyword: fourCharCode("data"))?.doubleValue
+        // A property's document: by its name, else the front one.
+        let container = direct?.forKeyword(fourCharCode("from"))
+        let propertyDocument = container.map { $0.forKeyword(fourCharCode("form"))?.enumCodeValue == fourCharCode("name")
+            ? $0.forKeyword(fourCharCode("seld"))?.stringValue ?? "?" : "front" }
         // A command's document: by its name, else the front one (index 1).
         let document = direct.flatMap { $0.forKeyword(fourCharCode("form"))?.enumCodeValue == fourCharCode("name")
             ? $0.forKeyword(fourCharCode("seld"))?.stringValue : "front" }
         return try state.withLock { state in
             if state.fails { throw MusicPlayerError.playerNotResponding }
             switch (code, property) {
+            case ("coregetd", "volu"?) where ofDocuments:
+                let name = propertyDocument == "front" ? state.documents.first?.name : propertyDocument
+                state.sent.append("get volu of \(propertyDocument ?? "?")")
+                var reply = PlayerReply()
+                reply.directObjectReal = name.map { state.documentVolumes[$0] ?? 1 }
+                return reply
+            case ("coresetd", "volu"?) where ofDocuments:
+                let name = propertyDocument == "front" ? state.documents.first?.name : propertyDocument
+                state.sent.append(String(format: "set volu of %@ %.2f", propertyDocument ?? "?", real ?? -1))
+                if let name, let real { state.documentVolumes[name] = real }
+                return PlayerReply()
             case ("coregetd", let property?) where ofDocuments:
                 state.sent.append("get \(property) of docu")
                 // One document answers with its value, not a list of one.

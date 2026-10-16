@@ -174,6 +174,9 @@ package struct PlayerReply: Sendable, Equatable {
     package var listBooleans: [Bool] = []
     /// The direct object as a text, if it is one (a document's name).
     package var directObjectText: String?
+    /// The direct object as a real number, if it is one (a document's
+    /// `audio volume`, 0–1: QuickTime Player's).
+    package var directObjectReal: Double?
 
     package init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil, directObjectBoolean: Bool? = nil,
                  listTexts: [String] = [], listBooleans: [Bool] = []) {
@@ -201,6 +204,7 @@ package struct PlayerReply: Sendable, Equatable {
         default: directObjectBoolean = nil
         }
         directObjectInteger = directObjectBoolean == nil ? direct.coerce(toDescriptorType: typeSInt32).map { Int($0.int32Value) } : nil
+        directObjectReal = directObjectBoolean == nil ? direct.coerce(toDescriptorType: typeIEEE64BitFloatingPoint)?.doubleValue : nil
         if [typeUnicodeText, typeUTF8Text, typeChar].contains(direct.descriptorType) { directObjectText = direct.stringValue }
         if direct.descriptorType == typeAEList, direct.numberOfItems > 0 {
             let items = (1...direct.numberOfItems).compactMap { direct.atIndex($0) }

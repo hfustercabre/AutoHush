@@ -20,4 +20,4 @@ It reads the player's output through AutoHush's own process-tap meter. For
 each volume it alternates with 100 several times (4 pairs, 0.2 s to settle
 and 0.3 s to measure each) and reports the median level difference in dB,
 which cancels out the music's own ups and downs. Measured this way:
-Spotify follows a cube law, Apple Music is linear.
+Spotify follows a cube law; Apple Music and QuickTime Player are linear.
