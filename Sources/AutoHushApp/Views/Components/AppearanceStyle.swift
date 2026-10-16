@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// A style with one value in light mode and another in dark mode. The
@@ -35,7 +36,13 @@ extension ShapeStyle where Self == AppearanceStyle {
     /// light mode, where the system's is hard to read, enough for 4.5:1
     /// with any of macOS's accent colors.
     static var appAccent: AppearanceStyle {
-        AppearanceStyle(light: Color.accentColor.mix(with: .black, by: 0.45), dark: Color.accentColor)
+        AppearanceStyle(light: darkenedAccent, dark: Color.accentColor)
+    }
+
+    private static var darkenedAccent: Color {
+        if #available(macOS 15, *) { return Color.accentColor.mix(with: .black, by: 0.45) }
+        // macOS 14 blends in sRGB, which darkens less for the same share.
+        return Color(nsColor: NSColor.controlAccentColor.blended(withFraction: 0.55, of: .black) ?? .controlAccentColor)
     }
     /// A card's background.
     static var cardFill: AppearanceStyle {

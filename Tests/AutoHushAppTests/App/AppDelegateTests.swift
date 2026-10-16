@@ -198,7 +198,8 @@ struct AppDelegateTests {
         await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
         sut.learnControlsAgain()
         #expect(!scratch.learningWindow.isOpen) // the old one, closed at once
-        await waitFor { scratch.learningWindow.isOpen }
+        // The new window and the player's new status come by separate tasks, in either order.
+        await waitFor { scratch.learningWindow.isOpen && sut.settingsModel.learning == .learning(hasPlayed: false) }
         #expect(webApp.learnAgainCount == 3)
         #expect(scratch.learningWindowsMade == 3)
         #expect(webApp.keepLearnedCount == 1)
@@ -579,7 +580,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("a chosen web app that's deleted is no longer chosen: no Controls row, and the status line asks for a player")
+    @Test("a chosen web app that's deleted is no longer chosen: no Controls row, the status line asks for a player, and the welcome window opens")
     func chosenWebAppDeleted() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.DELETED-\(UUID())", name: "Spotify",
@@ -600,6 +601,7 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.chosenPlayer == nil)
         #expect(scratch.preferences.musicPlayer == nil)
         #expect(sut.status.health == .waitingForPlayer(among: sut.status.playerOptions))
+        #expect(scratch.chooser.isOpen)
     }
 
     @MainActor
@@ -722,11 +724,17 @@ struct AppDelegateTests {
         try? await Task.sleep(for: .milliseconds(50))
         #expect(await tunes.reopenCount == 1)
         #expect(sut.status.playerNeedsReopen)
+        // Found so again over a minute later, it's reopened by itself again.
+        AppDelegate.now = { Date().addingTimeInterval(61) }
+        defer { AppDelegate.now = Date.init }
+        sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
+        await TestWait.until { await tunes.reopenCount == 2 }
+        #expect(await tunes.reopenCount == 2)
 
         await tunes.setNeedsReopening(true)
         sut.reopenChosenPlayer() // the card's Reopen
         await waitFor { !sut.status.playerNeedsReopen }
-        #expect(await tunes.reopenCount == 2)
+        #expect(await tunes.reopenCount == 3)
 
         sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false) // not asked: reopening it was just skipped in Add an App
         await waitFor { sut.status.playerNeedsReopen }

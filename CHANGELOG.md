@@ -9,6 +9,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **AutoHush runs on macOS 14.4 and later,** not only macOS 15: every
+  feature works there. An update that needs a newer macOS than your Mac's
+  isn't installed, and says so.
+- **Deleting your chosen Safari web app opens the window to choose
+  another,** as removing an app you added does, instead of only saying
+  that none is chosen.
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies
@@ -85,8 +91,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   Playing panel works with Now Playing hidden in the menu bar too:
   AutoHush shows it for the moment of a press, then puts your setting back
   (unless you changed it meanwhile), even after a quit mid-press; if it
-  can't, the check and the menu say where to show it, and **Check Again**
-  checks once you have. An app whose row there never shows whether it
+  can't, the check and the menu say where to show it, with a button that
+  opens it, and **Check Again** checks once you have. An app whose row there never shows whether it
   plays (Qobuz) is paused and played through it all the same, judged by
   half a second of its sound just before each press (so not in AntiDot
   mode). The **×** on its tile in Settings → General or the welcome window
@@ -98,8 +104,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   same: AutoHush mutes it while other apps play and lifts the mute when they
   stop. The menu says it's muted, with **Unmute**; pausing it and playing it
   again yourself unmutes it too. It needs Audio Recording, so AntiDot
-  mode doesn't offer it: such an app is dimmed there, and while it's your
-  player the AntiDot mode switch is off.
+  mode doesn't offer it (the step offers **Turn Off AntiDot Mode**): such
+  an app is dimmed there, and while it's your player the AntiDot mode
+  switch is off.
 - **An app that must be opened with an option says so.** An app built with
   Electron is pressed while its window is covered or on another desktop
   only when opened with an option: Add an App asks before reopening it so,

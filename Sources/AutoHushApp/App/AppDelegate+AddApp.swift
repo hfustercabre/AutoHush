@@ -12,6 +12,8 @@ extension AppDelegate {
         addAppModel = model
         if addAppWindow == nil { addAppWindow = AddAppWindowController(model: model) }
         model.services.antiDot = { [weak self] in self?.preferences.detectionMethod != .audioLevels }
+        model.services.turnOffAntiDot = { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) }
+        model.services.openMenuBarSettings = { SystemSettingsPane.menuBar.open() }
         if addAppWindow?.isOpen != true { model.reset() }
         addAppWindow?.show()
     }

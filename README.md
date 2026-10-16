@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/hfustercabre/AutoHush/releases/latest"><img src="https://img.shields.io/github/v/release/hfustercabre/AutoHush?color=BD5FFF" alt="Latest release"></a>
   <a href="https://github.com/hfustercabre/AutoHush/releases"><img src="https://img.shields.io/github/downloads/hfustercabre/AutoHush/total?color=BD5FFF" alt="Downloads"></a>
-  <a href="#install"><img src="https://img.shields.io/badge/macOS-15%2B-BD5FFF" alt="macOS 15 or later"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/macOS-14.4%2B-BD5FFF" alt="macOS 14.4 or later"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/hfustercabre/AutoHush?color=BD5FFF" alt="MIT license"></a>
 </p>
 <p align="center">
@@ -59,7 +59,7 @@ Yes, this whole app exists because of a yellow dot.
 
 ## Install
 
-You need **macOS 15 or later**, on a Mac with Apple silicon or an Intel processor, and one of the supported players: **Spotify**, **TIDAL** or **VLC** (their desktop apps), **Apple Music** or **Apple Podcasts** (the Music and Podcasts apps that come with macOS), or a **Safari web app**, such as YouTube Music, Amazon Music or Spotify's web player added to the Dock from Safari (see [Safari web apps](#safari-web-apps)). Another app that plays can be your player too, once [Add an App…](#other-apps-add-an-app) has checked how to control it.
+You need **macOS 14.4 or later**, on a Mac with Apple silicon or an Intel processor, and one of the supported players: **Spotify**, **TIDAL** or **VLC** (their desktop apps), **Apple Music** or **Apple Podcasts** (the Music and Podcasts apps that come with macOS), or a **Safari web app**, such as YouTube Music, Amazon Music or Spotify's web player added to the Dock from Safari (see [Safari web apps](#safari-web-apps)). Another app that plays can be your player too, once [Add an App…](#other-apps-add-an-app) has checked how to control it.
 
 AutoHush is free and isn't sold through Apple. It's signed, but not *notarized* by Apple, because notarization needs a paid developer account. All that means for you is one extra confirmation the first time you open it, and Homebrew handles even that.
 
@@ -124,6 +124,8 @@ If you said no by mistake, the menu, Settings (General for the media player, Det
 
 ## Using AutoHush
 
+Every way through AutoHush, from its first launch to quitting it, is drawn as flowcharts in [WORKFLOWS.md](WORKFLOWS.md).
+
 Click the menu bar icon to see what's going on:
 
 <p align="center">
@@ -175,7 +177,7 @@ The steps show only in these windows. If you close the window with **Later**, th
 - **When a site won't pause,** AutoHush mutes the web app instead: during an ad that can't be paused (the site disables its button, or the button reads "Play" while the ad plays, as on YouTube Music), or when a press doesn't take. As soon as the site can be paused (the ad is over and what you chose plays), AutoHush pauses it and unmutes it, so you don't miss any of it, and plays it when the other app stops. It never mutes a web app that paused. Muting uses macOS's own per-app audio taps, so it needs the audio permission and isn't available in AntiDot mode.
 - If the site changes so much that the button can't be found for a minute while the web app plays, AutoHush asks you to tell it once more when it plays and when it's paused, and remembers both layouts. A page that isn't playing doesn't count: a fresh YouTube Music window shows its player bar only once something plays.
 - **If AutoHush pauses or resumes a web app at the wrong times,** it may have learned the wrong button, or its words the wrong way round: **Learn Again…** in the **Controls** row (in the menu's card and in Settings → General) asks you once more, in a new learning window, to tell it when the web app plays. What it learned keeps working until you click **It's Playing** there, and is forgotten only then: close the window before that (or click **Later**) and nothing changes. A learning window still open is closed and starts over.
-- Deleting the chosen web app leaves no player chosen, and AutoHush asks you for one: adding the site again makes a new web app, which learns its button again.
+- Deleting the chosen web app leaves no player chosen, and the window to choose another opens: adding the site again makes a new web app, which learns its button again.
 - **Settings → Diagnostics** shows whether the button has been learned.
 
 ### Other apps: Add an App…
@@ -191,8 +193,8 @@ AutoHush can also control an app it doesn't support itself, once it has checked 
 
 - **A page's switch:** for an app built with Electron, Chromium or Flutter, AutoHush turns on the app's switch for assistive tools (as VoiceOver does) to read its page, and keeps it on while the app is your player (a browser's switch, shared by its web apps, while any of them needs it).
 - **If the app was opened without its option** while it's your player (from the Dock, say), the menu bar icon shows "!", the card says it needs reopening, and **Reopen** (there and in Settings → General) reopens it as it needs. Choosing such an app as your player asks first, in an alert; with **Always reopen … this way** ticked there, AutoHush reopens it so from then on, without asking, whenever it finds it opened without its option.
-- **If no way works** (an app with no AppleScript, no playback menu, a page whose button doesn't change, and no working Now Playing row), the last step says so and offers **Mute It Instead**: AutoHush then mutes the app while other apps play, never pausing it, so it keeps playing, silent, and is heard again when they stop (you miss that part of it). The menu says "Muted — Safari is playing", with **Unmute** (Settings → General has it too), and the app is marked **Muted instead of paused** among the players (**Muted only** on its tile). Pausing it and playing it again yourself while it's muted (stopped for 3 seconds or more, so a gap between songs doesn't count) unmutes it, and AutoHush leaves it alone until the other apps stop, as when you play a paused player yourself. Muting uses macOS's per-app audio taps, so it needs Audio Recording and isn't available in AntiDot mode: there the last step doesn't offer it, and an app added that way is dimmed among the players, marked **Not in AntiDot mode** (**Not in AntiDot** on its tile), and while such an app is your player, the AntiDot mode switch is off and dimmed. Quitting AutoHush always unmutes it. The check's log, the newest `… check.log` in `~/Library/Logs/AutoHush/Checks`, says what was tried, leaving out your Mac account's name and what was playing: you can [ask for the app](https://github.com/hfustercabre/AutoHush/issues/new/choose) with it.
-- **The Now Playing panel** needs Now Playing in the menu bar (System Settings → Menu Bar; Control Center on macOS 15). If you hid it there, AutoHush shows it for the moment of a press and hides it again (in under a second, without touching anything else). It leaves the setting alone if you changed it meanwhile, and should AutoHush or its check quit during a press, your setting is put back afterwards. Only if it can't be shown does the check mark the panel as not tried and a pause through it fail, both saying where to show it; once you've shown it, **Check Again**, beside **Use**, checks the app again. Whatever covers its icon (a wide app's menus by the notch, another app's window) doesn't matter: AutoHush finds it in the menu bar's own windows. Some apps' rows there never show whether they play (Qobuz's always shows paused): the check then presses the row as a toggle when the app's sound says otherwise, and AutoHush does the same, listening to the app for half a second just before it pauses or plays it. That needs Audio Recording, so in AntiDot mode such a way can't be chosen, and an app added that way is treated as one that can only be muted: dimmed among the players, and while it's your player the AntiDot mode switch is off and dimmed.
+- **If no way works** (an app with no AppleScript, no playback menu, a page whose button doesn't change, and no working Now Playing row), the last step says so and offers **Mute It Instead**: AutoHush then mutes the app while other apps play, never pausing it, so it keeps playing, silent, and is heard again when they stop (you miss that part of it). The menu says "Muted — Safari is playing", with **Unmute** (Settings → General has it too), and the app is marked **Muted instead of paused** among the players (**Muted only** on its tile). Pausing it and playing it again yourself while it's muted (stopped for 3 seconds or more, so a gap between songs doesn't count) unmutes it, and AutoHush leaves it alone until the other apps stop, as when you play a paused player yourself. Muting uses macOS's per-app audio taps, so it needs Audio Recording and isn't available in AntiDot mode: there the last step doesn't offer it (it offers **Turn Off AntiDot Mode** instead), and an app added that way is dimmed among the players, marked **Not in AntiDot mode** (**Not in AntiDot** on its tile), and while such an app is your player, the AntiDot mode switch is off and dimmed. Quitting AutoHush always unmutes it. The check's log, the newest `… check.log` in `~/Library/Logs/AutoHush/Checks`, says what was tried, leaving out your Mac account's name and what was playing: you can [ask for the app](https://github.com/hfustercabre/AutoHush/issues/new/choose) with it.
+- **The Now Playing panel** needs Now Playing in the menu bar (System Settings → Menu Bar; Control Center on macOS 14 and 15). If you hid it there, AutoHush shows it for the moment of a press and hides it again (in under a second, without touching anything else). It leaves the setting alone if you changed it meanwhile, and should AutoHush or its check quit during a press, your setting is put back afterwards. Only if it can't be shown does the check mark the panel as not tried and a pause through it fail, both saying where to show it, with **Open Menu Bar Settings…** to go there; once you've shown it, **Check Again**, beside **Use**, checks the app again. Whatever covers its icon (a wide app's menus by the notch, another app's window) doesn't matter: AutoHush finds it in the menu bar's own windows. Some apps' rows there never show whether they play (Qobuz's always shows paused): the check then presses the row as a toggle when the app's sound says otherwise, and AutoHush does the same, listening to the app for half a second just before it pauses or plays it. That needs Audio Recording, so in AntiDot mode such a way can't be chosen, and an app added that way is treated as one that can only be muted: dimmed among the players, and while it's your player the AntiDot mode switch is off and dimmed.
 - Apps added this way pause and resume without fading, unless they're controlled by an AppleScript that has a volume.
 
 ### Settings
@@ -216,7 +218,7 @@ Settings has a page for each of these in its sidebar, which also shows AutoHush'
 | **Updates** | Automatic checks, what happens when an update is found (see [Updates](#updates)), and **Check Now** |
 | **About** | AutoHush's version, what it does and the players it works with, links to GitHub, the release notes and a new issue, and a link to support AutoHush |
 
-On macOS 26 and later, AutoHush's menu and windows use Liquid Glass; on macOS 15 they keep the look they've always had.
+On macOS 26 and later, AutoHush's menu and windows use Liquid Glass; on macOS 14 and 15 they keep the look they've always had.
 
 ### Language
 
@@ -345,7 +347,7 @@ AutoHush is free. If it saves your ears a few times a day and you'd like to say 
 
 ## For developers
 
-How AutoHush works, its architecture, building and testing it, translations, contributing and releases are in [DEVELOPMENT.md](DEVELOPMENT.md). To propose a change, see [CONTRIBUTING.md](CONTRIBUTING.md); for how AutoHush looks and reads, [STYLE_GUIDE.md](STYLE_GUIDE.md).
+How AutoHush works, its architecture, building and testing it, translations, contributing and releases are in [DEVELOPMENT.md](DEVELOPMENT.md); what it does, step by step, in [WORKFLOWS.md](WORKFLOWS.md). To propose a change, see [CONTRIBUTING.md](CONTRIBUTING.md); for how AutoHush looks and reads, [STYLE_GUIDE.md](STYLE_GUIDE.md).
 
 ## License
 

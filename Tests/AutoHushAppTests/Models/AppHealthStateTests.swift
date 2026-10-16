@@ -32,8 +32,8 @@ struct AppHealthStateTests {
             == .retrying("Can’t control Jukebox right now"))
     }
 
-    @Test("each failure is said in words, with the log's English for a bug report")
-    func controlErrorWords() {
+    @Test("each failure is said in words, with the log's English for a bug report; Now Playing hidden offers its settings")
+    @MainActor func controlErrorWords() {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
         #expect(menu.text == "AutoHush can’t find Play/Pause in TIDAL’s menus.")
         #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
@@ -44,6 +44,18 @@ struct AppHealthStateTests {
         for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
             #expect(failure.text(player: "YT Music").contains("YT Music"))
         }
+        // Only Now Playing hidden in the menu bar opens the pane where it's shown.
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Qobuz").opensMenuBarSettings)
+        #expect(!menu.opensMenuBarSettings)
+        #expect(SystemSettingsPane.menuBar.url.absoluteString == "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")
+
+        // Its alert: the button first (Return), OK after it (Escape), the pane opened by the first.
+        var buttons: [(String, String)] = [], opened = 0
+        InfoAlert.show("Couldn’t Pause Qobuz", "…", action: ("Open Menu Bar Settings…", { opened += 1 })) { alert in
+            buttons = alert.buttons.map { ($0.title, $0.keyEquivalent) }
+            return .alertFirstButtonReturn
+        }
+        #expect(buttons.map(\.0) == ["Open Menu Bar Settings…", "OK"] && buttons.map(\.1) == ["\r", "\u{1b}"] && opened == 1)
     }
 
     @Test("messages name the player")

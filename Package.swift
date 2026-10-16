@@ -40,7 +40,7 @@ import PackageDescription
 let package = Package(
     name: "AutoHush",
     platforms: [
-        .macOS(.v15)
+        .macOS("14.4")
     ],
     products: [
         .executable(name: "AutoHush", targets: ["AutoHush"]),

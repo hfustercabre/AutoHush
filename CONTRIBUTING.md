@@ -29,7 +29,8 @@ privately, as [SECURITY.md](SECURITY.md) says.
      (`change-fade-length`).
 3. Check that it builds and its tests pass (DEVELOPMENT.md →
    [Build and test](DEVELOPMENT.md#build-and-test)), and that it follows the
-   [style guide](STYLE_GUIDE.md).
+   [style guide](STYLE_GUIDE.md). A change to what AutoHush does updates
+   its flowcharts in [WORKFLOWS.md](WORKFLOWS.md) too.
 4. Open a pull request into **`wip`**, not `main`, saying what it changes
    and why (its template asks for that, and how you checked it).
 
@@ -45,5 +46,7 @@ reaches `main` with the next release.
   [DEVELOPMENT.md](DEVELOPMENT.md), including what adding a media
   player takes.
 - **How it looks and reads:** [STYLE_GUIDE.md](STYLE_GUIDE.md).
+- **What it does, step by step:** [WORKFLOWS.md](WORKFLOWS.md), flowcharts
+  GitHub draws from their Mermaid source.
 - **Text people read:** written as `String(localized:)` with a comment for
   translators (DEVELOPMENT.md → [Translations](DEVELOPMENT.md#translations)).

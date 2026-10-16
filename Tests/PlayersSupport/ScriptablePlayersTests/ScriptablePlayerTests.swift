@@ -227,12 +227,15 @@ struct ScriptablePlayerTests {
     func identity() {
         let profile = ScriptablePlayerProfile(
             bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
-            stateNotification: Notification.Name("com.example.jukebox.state"), volumeCurve: .cubic
+            stateNotification: Notification.Name("com.example.jukebox.state"), volumeCurve: .cubic,
+            iconPlaceholder: PlayerIconPlaceholder(tile: [.init(0x000000)], mark: .init(0x1ED760)) { CGMutablePath() }
         )
         let player = ScriptablePlayer(profile: profile)
         #expect(player.name == "Jukebox")
         #expect(player.bundleID == "com.example.jukebox")
         #expect(player.volumeCurve == .cubic)
+        #expect(player.iconPlaceholder?.mark == .init(0x1ED760))
+        #expect(player.stateReportDelay == 0) // its notification says each change at once
         #expect(profile.readVolume(42) == 42) // read as reported unless the profile says otherwise
     }
 

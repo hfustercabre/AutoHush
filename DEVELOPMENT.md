@@ -2,7 +2,8 @@
 
 How AutoHush works and how its code is laid out, building and testing it,
 its translations, contributing and releases. For using AutoHush, see the
-[README](README.md).
+[README](README.md); for every workflow as a flowchart,
+[WORKFLOWS.md](WORKFLOWS.md).
 
 ## How it works
 

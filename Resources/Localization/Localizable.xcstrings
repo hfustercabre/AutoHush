@@ -16603,6 +16603,215 @@
         }
       }
     },
+    "Add any other app: a check finds how to pause and play it." : {
+      "comment" : "Where media players are offered, under the “Other Apps” heading while no app was added yet, over its Add… tile",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف أي تطبيق آخر: يجد الفحص كيفية إيقافه مؤقتًا وتشغيله."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afegeix qualsevol altra app: una comprovació troba com posar-la en pausa i reproduir-la."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přidejte jakoukoli jinou aplikaci: kontrola zjistí, jak ji pozastavit a přehrát."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilføj en hvilken som helst anden app: en kontrol finder ud af, hvordan den sættes på pause og afspilles."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge jede andere App hinzu: Eine Prüfung ermittelt, wie sie sich pausieren und abspielen lässt."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προσθέστε οποιαδήποτε άλλη εφαρμογή: ένας έλεγχος βρίσκει πώς να τη θέσει σε παύση και να την αναπαράγει."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade cualquier otra app: una comprobación averigua cómo pausarla y reproducirla."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrega cualquier otra app: una verificación averigua cómo pausarla y reproducirla."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää mikä tahansa muu appi: tarkistus selvittää, miten sen toisto keskeytetään ja jatketaan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez n’importe quelle autre app : une vérification trouve comment la mettre en pause et la relancer."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez n’importe quelle autre app : une vérification trouve comment la mettre en pause et la relancer."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोई भी दूसरा ऐप जोड़ें: जाँच से पता चलता है कि उसे कैसे पॉज़ करें और चलाएँ।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodajte bilo koju drugu aplikaciju: provjera otkriva kako je pauzirati i reproducirati."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjon hozzá bármilyen más appot: egy ellenőrzés kideríti, hogyan szüneteltethető és játszható le."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tambahkan app lain apa pun: pemeriksaan menemukan cara menjeda dan memutarnya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi qualsiasi altra app: una verifica trova come metterla in pausa e riprodurla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかのAppも追加できます。チェックで一時停止と再生の方法を見つけます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱도 추가할 수 있습니다. 검사를 통해 일시 정지 및 재생 방법을 찾습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legg til hvilken som helst annen app: en kontroll finner ut hvordan den settes på pause og spilles av."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg elke andere app toe: een controle zoekt uit hoe je die pauzeert en afspeelt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj dowolną inną aplikację: sprawdzenie ustali, jak ją wstrzymywać i wznawiać."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione qualquer outro app: uma verificação descobre como pausá-lo e reproduzi-lo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione qualquer outra app: uma verificação descobre como pausá-la e reproduzi-la."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați orice altă aplicație: o verificare află cum poate fi pusă pe pauză și redată."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавьте любое другое приложение: проверка найдёт, как ставить его на паузу и снова включать."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridajte akúkoľvek inú apku: kontrola zistí, ako ju pozastaviť a prehrať."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodajte katero koli drugo aplikacijo: preverjanje ugotovi, kako jo zaustaviti in predvajati."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till valfri annan app: en kontroll tar reda på hur den pausas och spelas upp."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka herhangi bir uygulamayı ekleyin: Bir denetim, nasıl duraklatılıp oynatılacağını bulur."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додайте будь-яку іншу програму: перевірка з’ясує, як її призупиняти й відтворювати."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm bất kỳ ứng dụng nào khác: một lần kiểm tra sẽ tìm cách tạm dừng và phát ứng dụng đó."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入任何其他 App：檢查會找出暫停和播放它的方式。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加任何其他 App：检查会找出暂停和播放它的方式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入任何其他 App：檢查會找出暫停和播放它的方式。"
+          }
+        }
+      }
+    },
     "Add it to the Dock" : {
       "comment" : "Add a Web App window: a step, before it's done",
       "localizations" : {
@@ -75129,211 +75338,211 @@
         }
       }
     },
-    "No supported media player is installed. Install one of these, and choose it here." : {
-      "comment" : "Settings and the welcome window, while none of the media players is installed",
+    "No supported media player is installed. Install one of these, or add another app under Other Apps, and choose it here." : {
+      "comment" : "Settings and the welcome window, while none of the media players is installed; “Other Apps” is the heading over the apps added with Add an App… (its Add… tile)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يوجد مشغّل وسائط مدعوم مثبّت. ثبّت أحد هذه المشغّلات واختره هنا."
+            "value" : "لا يوجد مشغّل وسائط مدعوم مثبّت. ثبّت أحد هذه المشغّلات أو أضف تطبيقًا آخر ضمن «تطبيقات أخرى»، واختره هنا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No hi ha cap reproductor multimèdia compatible instal·lat. Instal·la’n un d’aquests i tria’l aquí."
+            "value" : "No hi ha cap reproductor multimèdia compatible instal·lat. Instal·la’n un d’aquests o afegeix una altra app a Altres apps, i tria-la aquí."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Není nainstalován žádný podporovaný přehrávač médií. Nainstalujte jeden z nich a vyberte ho zde."
+            "value" : "Není nainstalován žádný podporovaný přehrávač médií. Nainstalujte jeden z nich nebo přidejte jinou aplikaci v části Jiné aplikace a vyberte ji zde."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der er ikke installeret nogen understøttet medieafspiller. Installer en af disse, og vælg den her."
+            "value" : "Der er ikke installeret nogen understøttet medieafspiller. Installer en af disse, eller tilføj en anden app under Andre apps, og vælg den her."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Es ist kein unterstützter Medienplayer installiert. Installiere einen davon und wähle ihn hier aus."
+            "value" : "Es ist kein unterstützter Medienplayer installiert. Installiere einen davon oder füge unter „Andere Apps“ eine weitere App hinzu und wähle sie hier aus."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Δεν είναι εγκατεστημένη καμία υποστηριζόμενη εφαρμογή πολυμέσων. Εγκαταστήστε μία από αυτές και επιλέξτε την εδώ."
+            "value" : "Δεν είναι εγκατεστημένη καμία υποστηριζόμενη εφαρμογή πολυμέσων. Εγκαταστήστε μία από αυτές ή προσθέστε άλλη εφαρμογή στις Άλλες εφαρμογές και επιλέξτε την εδώ."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No hay ningún reproductor multimedia compatible instalado. Instala uno de estos y elígelo aquí."
+            "value" : "No hay ningún reproductor multimedia compatible instalado. Instala uno de estos o añade otra app en Otras apps, y elígela aquí."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No hay ningún reproductor multimedia compatible instalado. Instala uno de estos y elígelo aquí."
+            "value" : "No hay ningún reproductor multimedia compatible instalado. Instala uno de estos o agrega otra app en Otras apps, y elígela aquí."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tuettua mediasoitinta ei ole asennettu. Asenna jokin näistä ja valitse se täältä."
+            "value" : "Tuettua mediasoitinta ei ole asennettu. Asenna jokin näistä tai lisää muu appi kohdassa Muut apit ja valitse se täältä."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun lecteur multimédia compatible n’est installé. Installez l’un d’eux, puis choisissez-le ici."
+            "value" : "Aucun lecteur multimédia compatible n’est installé. Installez l’un d’eux ou ajoutez une autre app sous Autres apps, puis choisissez-la ici."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun lecteur multimédia compatible n’est installé. Installez l’un d’eux, puis choisissez-le ici."
+            "value" : "Aucun lecteur multimédia compatible n’est installé. Installez l’un d’eux ou ajoutez une autre app sous Autres apps, puis choisissez-la ici."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कोई समर्थित मीडिया प्लेयर इंस्टॉल नहीं है। इनमें से कोई एक इंस्टॉल करें और उसे यहाँ चुनें।"
+            "value" : "कोई समर्थित मीडिया प्लेयर इंस्टॉल नहीं है। इनमें से कोई एक इंस्टॉल करें या दूसरे ऐप्स में कोई और ऐप जोड़ें, और उसे यहाँ चुनें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nije instaliran nijedan podržani medijski reproduktor. Instalirajte jedan od ovih i odaberite ga ovdje."
+            "value" : "Nije instaliran nijedan podržani medijski reproduktor. Instalirajte jedan od ovih ili dodajte drugu aplikaciju u odjeljku Ostale aplikacije i odaberite je ovdje."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nincs telepítve támogatott médialejátszó. Telepítse ezek egyikét, és válassza ki itt."
+            "value" : "Nincs telepítve támogatott médialejátszó. Telepítse ezek egyikét, vagy adjon hozzá egy másik appot az Egyéb appok alatt, és válassza ki itt."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tidak ada pemutar media yang didukung terinstal. Instal salah satunya, lalu pilih di sini."
+            "value" : "Tidak ada pemutar media yang didukung terinstal. Instal salah satunya atau tambahkan app lain di App Lain, lalu pilih di sini."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nessun lettore multimediale supportato è installato. Installane uno di questi e sceglilo qui."
+            "value" : "Nessun lettore multimediale supportato è installato. Installane uno di questi o aggiungi un’altra app in Altre app, e sceglila qui."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "対応するメディアプレーヤーがインストールされていません。いずれかをインストールして、ここで選択してください。"
+            "value" : "対応するメディアプレーヤーがインストールされていません。いずれかをインストールするか、「その他のApp」でほかのAppを追加して、ここで選択してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "지원되는 미디어 플레이어가 설치되어 있지 않습니다. 이 중 하나를 설치한 다음 여기에서 선택하십시오."
+            "value" : "지원되는 미디어 플레이어가 설치되어 있지 않습니다. 이 중 하나를 설치하거나 기타 앱에서 다른 앱을 추가한 다음 여기에서 선택하십시오."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen støttet mediespiller er installert. Installer en av disse, og velg den her."
+            "value" : "Ingen støttet mediespiller er installert. Installer en av disse, eller legg til en annen app under Andre apper, og velg den her."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er is geen ondersteunde mediaspeler geïnstalleerd. Installeer er een en kies hem hier."
+            "value" : "Er is geen ondersteunde mediaspeler geïnstalleerd. Installeer er een of voeg onder ‘Andere apps’ een andere app toe, en kies hem hier."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie zainstalowano obsługiwanego odtwarzacza multimediów. Zainstaluj jeden z nich i wybierz go tutaj."
+            "value" : "Nie zainstalowano obsługiwanego odtwarzacza multimediów. Zainstaluj jeden z nich lub dodaj inną aplikację w sekcji Inne aplikacje i wybierz ją tutaj."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nenhum player de mídia compatível está instalado. Instale um destes e escolha-o aqui."
+            "value" : "Nenhum player de mídia compatível está instalado. Instale um destes ou adicione outro app em Outros apps e escolha-o aqui."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nenhum leitor multimédia compatível está instalado. Instale um destes e escolha-o aqui."
+            "value" : "Nenhum leitor multimédia compatível está instalado. Instale um destes ou adicione outra app em Outras apps e escolha-a aqui."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niciun player media acceptat nu este instalat. Instalați unul dintre acestea și alegeți-l aici."
+            "value" : "Niciun player media acceptat nu este instalat. Instalați unul dintre acestea sau adăugați altă aplicație la Alte aplicații și alegeți-o aici."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Поддерживаемый медиаплеер не установлен. Установите один из этих плееров и выберите его здесь."
+            "value" : "Поддерживаемый медиаплеер не установлен. Установите один из этих плееров или добавьте другое приложение в разделе «Другие приложения» и выберите его здесь."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie je nainštalovaný žiadny podporovaný prehrávač médií. Nainštalujte jeden z nich a vyberte ho tu."
+            "value" : "Nie je nainštalovaný žiadny podporovaný prehrávač médií. Nainštalujte jeden z nich alebo pridajte inú apku v časti Iné apky a vyberte ju tu."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nameščen ni noben podprt predvajalnik predstavnosti. Namestite enega od teh in ga izberite tukaj."
+            "value" : "Nameščen ni noben podprt predvajalnik predstavnosti. Namestite enega od teh ali dodajte drugo aplikacijo v razdelku Druge aplikacije in jo izberite tukaj."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen mediaspelare som stöds är installerad. Installera en av dem och välj den här."
+            "value" : "Ingen mediaspelare som stöds är installerad. Installera en av dem eller lägg till en annan app under Andra appar, och välj den här."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desteklenen bir medya oynatıcı yüklü değil. Bunlardan birini yükleyip burada seçin."
+            "value" : "Desteklenen bir medya oynatıcı yüklü değil. Bunlardan birini yükleyin veya Diğer Uygulamalar bölümünde başka bir uygulama ekleyin, sonra burada seçin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не встановлено жодного підтримуваного медіапрогравача. Встановіть один із цих і виберіть його тут."
+            "value" : "Не встановлено жодного підтримуваного медіапрогравача. Встановіть один із цих або додайте іншу програму в розділі «Інші програми» і виберіть її тут."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chưa cài đặt trình phát đa phương tiện được hỗ trợ. Hãy cài đặt một trong các trình phát này và chọn nó ở đây."
+            "value" : "Chưa cài đặt trình phát đa phương tiện được hỗ trợ. Hãy cài đặt một trong các trình phát này hoặc thêm ứng dụng khác trong Ứng dụng khác, rồi chọn nó ở đây."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未安裝支援的媒體播放器。請安裝其中一個，然後在這裡選擇。"
+            "value" : "未安裝支援的媒體播放器。請安裝其中一個，或在「其他 App」中加入另一個 App，然後在這裡選擇。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未安装受支持的媒体播放器。请安装其中一个，然后在这里选择。"
+            "value" : "未安装受支持的媒体播放器。请安装其中一个，或在“其他 App”中添加另一个 App，然后在这里选择。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未安裝支援的媒體播放器。請安裝其中一個，然後在這裡選擇。"
+            "value" : "未安裝支援的媒體播放器。請安裝其中一個，或在「其他 App」中加入另一個 App，然後在這裡選擇。"
           }
         }
       }
@@ -80981,6 +81190,215 @@
         }
       }
     },
+    "OK" : {
+      "comment" : "Button that closes an alert",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "موافق"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’acord"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U redu"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OKE"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ОК"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potvrdiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        }
+      }
+    },
     "Off" : {
       "comment" : "A setting that is off: in Diagnostics, and the choice that turns Auto-Pause off in Shortcuts (it reads “Turn Auto-Pause Off”) and in the Focus filter",
       "localizations" : {
@@ -83907,6 +84325,215 @@
         }
       }
     },
+    "Open Control Center Settings…" : {
+      "comment" : "Button in the alert about Now Playing being hidden in the menu bar, and in the Add an App window: opens System Settings → Control Center (macOS 14 and 15), where it can be shown",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح إعدادات مركز التحكم…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre la configuració del Centre de control…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít nastavení Ovládacího centra…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn indstillinger for Kontrolcenter…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrollzentrum-Einstellungen öffnen …"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα ρυθμίσεων Κέντρου ελέγχου…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir los ajustes del Centro de control…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la configuración del Centro de control…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa Ohjauskeskuksen asetukset…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages du Centre de contrôle…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages du Centre de contrôle…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कंट्रोल सेंटर सेटिंग खोलें…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori postavke Kontrolnog centra…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vezérlőközpont-beállítások megnyitása…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Pengaturan Pusat Kontrol…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri le impostazioni di Centro di Controllo…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コントロールセンターの設定を開く…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제어 센터 설정 열기…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne innstillinger for Kontrollsenter…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open instellingen voor Bedieningspaneel…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz ustawienia Centrum sterowania…"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes da Central de Controle…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir definições da Central de controlo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți configurările pentru Centru de control…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть настройки Пункта управления…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť nastavenia Ovládacieho centra…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri nastavitve Nadzornega središča …"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna inställningar för Kontrollcenter…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denetim Merkezi Ayarlarını Aç…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити параметри Центру керування…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở cài đặt Trung tâm điều khiển…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟控制中心設定⋯"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开控制中心设置…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開控制中心設定⋯"
+          }
+        }
+      }
+    },
     "Open Login Items Settings…" : {
       "comment" : "Settings → General: button that opens System Settings → Login Items",
       "localizations" : {
@@ -84112,6 +84739,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打開登入項目設定⋯"
+          }
+        }
+      }
+    },
+    "Open Menu Bar Settings…" : {
+      "comment" : "Button in the alert about Now Playing being hidden in the menu bar, and in the Add an App window: opens System Settings → Menu Bar (macOS 26 and later), where it can be shown",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح إعدادات شريط القوائم…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre la configuració de la barra de menús…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít nastavení řádku nabídek…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn indstillinger for menulinjen…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menüleisten-Einstellungen öffnen …"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα ρυθμίσεων γραμμής μενού…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir los ajustes de la barra de menús…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la configuración de la barra de menús…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa valikkorivin asetukset…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages de la barre des menus…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages de la barre des menus…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मेन्यू बार सेटिंग खोलें…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori postavke trake s izbornicima…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menüsor-beállítások megnyitása…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Pengaturan Bar Menu…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri le impostazioni della barra dei menu…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーの設定を開く…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴 막대 설정 열기…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne innstillinger for menylinjen…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open instellingen voor Menubalk…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz ustawienia paska menu…"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes da Barra de Menus…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir definições da barra de menus…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți configurările pentru bara de meniu…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть настройки строки меню…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť nastavenia lišty…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri nastavitve menijske vrstice …"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna inställningar för menyraden…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menü Çubuğu Ayarlarını Aç…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити параметри смуги меню…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở cài đặt Thanh menu…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟選單列設定⋯"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开菜单栏设置…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開選單列設定⋯"
           }
         }
       }
@@ -98747,7 +99583,7 @@
       }
     },
     "Safari web apps" : {
-      "comment" : "Settings → About, last in the list of players AutoHush works with: websites added to the Dock from Safari",
+      "comment" : "Settings → About, in the list of players AutoHush works with: websites added to the Dock from Safari",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -98896,7 +99732,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "веб-приложения Safari"
+            "value" : "веб-приложениями Safari"
           }
         },
         "sk" : {
@@ -105232,7 +106068,7 @@
       }
     },
     "System Settings → Control Center" : {
-      "comment" : "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 15), inside a sentence",
+      "comment" : "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 14 and 15), inside a sentence",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -110665,6 +111501,215 @@
         }
       }
     },
+    "This version needs macOS %@ or later, so it wasn’t installed." : {
+      "comment" : "Update install error; %@ is a macOS version, e.g. “15.0”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتطلب هذا الإصدار macOS %@ أو أحدث، لذلك لم يُثبَّت."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquesta versió necessita el macOS %@ o posterior, així que no s’ha instal·lat."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tato verze vyžaduje macOS %@ nebo novější, a proto nebyla nainstalována."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne version kræver macOS %@ eller nyere, så den blev ikke installeret."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version erfordert macOS %@ oder neuer und wurde daher nicht installiert."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αυτή η έκδοση απαιτεί macOS %@ ή νεότερο, οπότε δεν εγκαταστάθηκε."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión necesita macOS %@ o posterior, así que no se ha instalado."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión necesita macOS %@ o posterior, así que no se instaló."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä versio vaatii macOS %@:n tai uudemman, joten sitä ei asennettu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version nécessite macOS %@ ou ultérieur, elle n’a donc pas été installée."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version nécessite macOS %@ ou ultérieur, elle n’a donc pas été installée."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस संस्करण के लिए macOS %@ या उसके बाद का संस्करण चाहिए, इसलिए उसे इंस्टॉल नहीं किया गया।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ova verzija zahtijeva macOS %@ ili noviji pa nije instalirana."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ehhez a verzióhoz macOS %@ vagy újabb kell, ezért nem lett telepítve."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi ini memerlukan macOS %@ atau yang lebih baru, sehingga tidak diinstal."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Questa versione richiede macOS %@ o versioni successive, quindi non è stata installata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このバージョンにはmacOS %@以降が必要なため、インストールされませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 버전에는 macOS %@ 이상이 필요하므로 설치하지 않았습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denne versjonen krever macOS %@ eller nyere, så den ble ikke installert."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze versie vereist macOS %@ of nieuwer, dus hij is niet geïnstalleerd."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta wersja wymaga systemu macOS %@ lub nowszego, więc nie została zainstalowana."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão requer o macOS %@ ou posterior, então não foi instalada."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versão requer o macOS %@ ou posterior, por isso não foi instalada."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Această versiune necesită macOS %@ sau o versiune ulterioară, așa că nu a fost instalată."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта версия требует macOS %@ или новее, поэтому она не установлена."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Táto verzia vyžaduje macOS %@ alebo novší, preto nebola nainštalovaná."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta različica potrebuje macOS %@ ali novejši, zato ni bila nameščena."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den här versionen kräver macOS %@ eller senare, så den installerades inte."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu sürüm macOS %@ veya sonrasını gerektirdiği için yüklenmedi."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ця версія потребує macOS %@ або новішої, тому її не встановлено."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản này cần macOS %@ trở lên nên không được cài đặt."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本需要 macOS %@ 或以上版本，因此未安裝。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本需要 macOS %@ 或更高版本，因此未安装。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本需要 macOS %@ 或以上版本，因此未安裝。"
+          }
+        }
+      }
+    },
     "Time" : {
       "comment" : "The logs window: title of the column with when each entry was logged (its date, time and offset from UTC)",
       "localizations" : {
@@ -112333,6 +113378,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可在選單或設定中重新開啟自動暫停。"
+          }
+        }
+      }
+    },
+    "Turn Off AntiDot Mode" : {
+      "comment" : "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Detection), so muting or a way only the app's sound tells can be used",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف تشغيل وضع AntiDot"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva el mode AntiDot"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnout režim AntiDot"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå AntiDot-tilstand fra"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot-Modus ausschalten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Απενεργοποίηση λειτουργίας AntiDot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar el modo AntiDot"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar el modo AntiDot"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laita AntiDot-tila pois päältä"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver le mode AntiDot"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver le mode AntiDot"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot मोड बंद करें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isključi način rada AntiDot"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot mód kikapcsolása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Matikan Mode AntiDot"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattiva la modalità AntiDot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDotモードをオフにする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 모드 끄기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå av AntiDot-modus"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet AntiDot-modus uit"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz tryb AntiDot"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar o Modo AntiDot"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar o modo AntiDot"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați modul AntiDot"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выключить режим AntiDot"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť režim AntiDot"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izklopi način AntiDot"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng av AntiDot-läge"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot Modunu Kapat"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимкнути режим AntiDot"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt chế độ AntiDot"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉 AntiDot 模式"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭 AntiDot 模式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉 AntiDot 模式"
           }
         }
       }
@@ -127178,6 +128432,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在另一個桌面上"
+          }
+        }
+      }
+    },
+    "other apps through Add an App" : {
+      "comment" : "Settings → About, last in the list of players AutoHush works with: any other app the user adds with Add an App… (a check finds how to pause and play it)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تطبيقات أخرى عبر «إضافة تطبيق»"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "altres apps mitjançant Afegeix una app"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "další aplikace přes Přidat aplikaci"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "andre apps via Tilføj en app"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "anderen Apps über „App hinzufügen“"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "άλλες εφαρμογές μέσω της Προσθήκης εφαρμογής"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "otras apps mediante Añadir una app"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "otras apps mediante Agregar una app"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "muut apit Lisää appi -toiminnolla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "d’autres apps via Ajouter une app"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "d’autres apps via Ajouter une app"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐप जोड़ें से जोड़े गए दूसरे ऐप्स"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ostale aplikacije putem stavke Dodaj aplikaciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "egyéb appok az App hozzáadása funkcióval"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "app lain melalui Tambahkan App"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "altre app tramite Aggiungi un’app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「Appを追加」で追加したその他のApp"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 추가로 추가한 기타 앱"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "andre apper via Legg til en app"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "andere apps via ‘Voeg een app toe’"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inne aplikacje przez Dodaj aplikację"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "outros apps via Adicionar um App"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "outras apps através de Adicionar uma app"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "alte aplicații prin Adăugați o aplicație"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "другими приложениями через «Добавить приложение»"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ďalšie apky cez Pridať apku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "druge aplikacije prek možnosti Dodaj aplikacijo"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "andra appar via Lägg till en app"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama Ekle ile eklenen diğer uygulamalar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "інші програми через «Додати програму»"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "các ứng dụng khác qua Thêm ứng dụng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過「加入 App」加入的其他 App"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过“添加 App”添加的其他 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過「加入 App」加入的其他 App"
           }
         }
       }

@@ -69,13 +69,16 @@ struct AboutSettingsView: View {
         }
     }
 
-    /// Every player AutoHush works with, e.g. "Spotify, Apple Music, TIDAL
-    /// and Safari web apps": the apps by name, the web apps all at once.
+    /// Every player AutoHush works with, e.g. "Spotify, Apple Music, TIDAL,
+    /// Safari web apps and other apps through Add an App": the apps by name,
+    /// the web apps and the apps one adds all at once.
     private var players: String {
         let apps = model.playerOptions.filter { $0.kind == .app }.map(\.name)
         let webApps = String(localized: "Safari web apps",
-                             comment: "Settings → About, last in the list of players AutoHush works with: websites added to the Dock from Safari")
-        return (apps + [webApps]).formatted(.list(type: .and))
+                             comment: "Settings → About, in the list of players AutoHush works with: websites added to the Dock from Safari")
+        let added = String(localized: "other apps through Add an App",
+                           comment: "Settings → About, last in the list of players AutoHush works with: any other app the user adds with Add an App… (a check finds how to pause and play it)")
+        return (apps + [webApps, added]).formatted(.list(type: .and))
     }
 
     private func link(_ title: Text, symbol: String, to url: URL) -> some View {

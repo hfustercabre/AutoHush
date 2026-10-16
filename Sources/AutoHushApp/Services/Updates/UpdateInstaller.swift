@@ -38,6 +38,9 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
     case notGenuine
     /// The app in the download isn't the version the release announced.
     case wrongVersion
+    /// The app in the download needs a newer macOS than this Mac's (its
+    /// `LSMinimumSystemVersion`): installed, it wouldn't open.
+    case needsNewerMacOS(String)
     /// Swapping in the new app failed, for the reason given: in the user's
     /// language, and in English for the log.
     case notReplaced(String, logReason: String)
@@ -58,6 +61,9 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
                           comment: "Update install error")
         case .wrongVersion:
             return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
+        case .needsNewerMacOS(let minimum):
+            return String(localized: "This version needs macOS \(minimum) or later, so it wasn’t installed.",
+                          comment: "Update install error; %@ is a macOS version, e.g. “15.0”")
         case .notReplaced(let reason, _):
             return String(localized: "AutoHush couldn’t replace itself: \(reason)",
                           comment: "Update install error; %@ is the reason macOS gave")
@@ -73,6 +79,7 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .damaged: "The download is damaged."
         case .notGenuine: "The download isn't signed with the same certificate as AutoHush."
         case .wrongVersion: "The download doesn't contain the version GitHub announced."
+        case .needsNewerMacOS(let minimum): "The download needs macOS \(minimum) or later."
         case .notReplaced(_, let reason): "AutoHush couldn't replace itself: \(reason)"
         }
     }
@@ -258,6 +265,21 @@ struct UpdateInstaller: UpdateInstalling {
         let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))
         guard let found = (info?["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init), found == version
         else { throw UpdateInstallError.wrongVersion }
+        // Swapped in, an app that needs a newer macOS wouldn't open.
+        if let minimum = info?["LSMinimumSystemVersion"] as? String,
+           !Self.isAtLeast(minimum, ProcessInfo.processInfo.operatingSystemVersion) {
+            throw UpdateInstallError.needsNewerMacOS(minimum)
+        }
+    }
+
+    /// Whether `system` is `minimum` ("14.4", "15", "15.0.1") or later; an
+    /// unreadable minimum doesn't hold an update back.
+    static func isAtLeast(_ minimum: String, _ system: OperatingSystemVersion) -> Bool {
+        let parts = minimum.split(separator: ".").map { Int($0) }
+        guard !parts.isEmpty, parts.allSatisfy({ $0 != nil }) else { return true }
+        let needed = parts.compactMap { $0 } + [0, 0]
+        let have = [system.majorVersion, system.minorVersion, system.patchVersion]
+        return !have.lexicographicallyPrecedes(needed.prefix(3))
     }
 
     // MARK: - System

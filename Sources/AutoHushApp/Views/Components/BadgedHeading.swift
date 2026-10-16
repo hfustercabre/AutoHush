@@ -5,7 +5,8 @@ import SwiftUI
 /// "Safari Web Apps" (Experimental).
 struct BadgedHeading: View {
     let title: String
-    let badge: String
+    /// None while there's nothing for it to qualify.
+    let badge: String?
     let note: String
     /// The heading's own font: menus draw theirs a little larger than
     /// `SectionLabel`.
@@ -17,7 +18,7 @@ struct BadgedHeading: View {
                 Text(verbatim: title)
                     .font(font)
                     .foregroundStyle(.appSecondary)
-                HeadingBadge(text: badge)
+                if let badge { HeadingBadge(text: badge) }
             }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)

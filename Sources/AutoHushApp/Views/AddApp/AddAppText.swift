@@ -430,6 +430,11 @@ enum AddAppText {
         String(localized: "Mute It Instead", comment: "Add an App window: button under the last step when no way could pause the app: AutoHush will mute it while other apps play")
     }
 
+    static var turnOffAntiDot: String {
+        String(localized: "Turn Off AntiDot Mode",
+               comment: "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Detection), so muting or a way only the app's sound tells can be used")
+    }
+
     static var muteNeedsAudio: String {
         String(localized: "Muting needs Audio Recording.", comment: "Add an App window, warning above “Allow…” in the last step while Audio Recording isn't allowed")
     }

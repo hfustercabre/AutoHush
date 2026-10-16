@@ -139,6 +139,8 @@ struct ControlError: Equatable {
     let text: String
     /// E.g. "Controlling the media player failed: its Play/Pause menu item wasn’t found."
     let detail: String
+    /// Now Playing is hidden in the menu bar: its alert opens the pane to show it.
+    var opensMenuBarSettings = false
 
     init(text: String, detail: String) {
         self.text = text
@@ -150,6 +152,7 @@ struct ControlError: Equatable {
         switch error as? MusicPlayerError {
         case .playerCommandFailed(let failure)?:
             text = failure.text(player: player)
+            opensMenuBarSettings = failure == .nowPlayingHidden
         case .automationPermissionDenied?, .accessibilityPermissionDenied?:
             text = String(localized: "AutoHush may no longer control \(player).",
                           comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")
@@ -174,7 +177,19 @@ extension ControlFailure {
                    comment: "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 26 and later), inside a sentence")
         } else {
             String(localized: "System Settings → Control Center",
-                   comment: "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 15), inside a sentence")
+                   comment: "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 14 and 15), inside a sentence")
+        }
+    }
+
+    /// The button that opens that pane (`SystemSettingsPane.menuBar`), so
+    /// Now Playing can be shown.
+    static var openMenuBarSettings: String {
+        if #available(macOS 26, *) {
+            String(localized: "Open Menu Bar Settings…",
+                   comment: "Button in the alert about Now Playing being hidden in the menu bar, and in the Add an App window: opens System Settings → Menu Bar (macOS 26 and later), where it can be shown")
+        } else {
+            String(localized: "Open Control Center Settings…",
+                   comment: "Button in the alert about Now Playing being hidden in the menu bar, and in the Add an App window: opens System Settings → Control Center (macOS 14 and 15), where it can be shown")
         }
     }
 

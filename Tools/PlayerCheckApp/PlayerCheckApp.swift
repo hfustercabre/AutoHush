@@ -1604,10 +1604,16 @@ struct PlayerCheckApp: App {
     var body: some Scene {
         Window("Player Check", id: "main") {
             ContentView(checker: delegate.checker)
-                // Never full screen. An AppKit collection behavior set on the
-                // window didn't hold.
-                .windowFullScreenBehavior(.disabled)
+                .neverFullScreen()
         }
         .defaultSize(width: 980, height: 680)
+    }
+}
+
+private extension View {
+    /// Never full screen, from macOS 15; an AppKit collection behavior set
+    /// on the window didn't hold, so before it the green button still can.
+    @ViewBuilder func neverFullScreen() -> some View {
+        if #available(macOS 15, *) { windowFullScreenBehavior(.disabled) } else { self }
     }
 }

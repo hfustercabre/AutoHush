@@ -87,6 +87,7 @@ final class World {
             },
             request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
             antiDot: { self.antiDot },
+            turnOffAntiDot: { self.antiDot = false },
             isPlaying: { _, _ in self.playing },
             startCheck: { _, taps, onLine in
                 self.taps.append(taps)

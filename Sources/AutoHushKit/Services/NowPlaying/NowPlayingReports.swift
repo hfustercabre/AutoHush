@@ -79,9 +79,11 @@ package final class NowPlayingReports: @unchecked Sendable {
         self.readPast = readPast
     }
 
-    /// Reports as `clients` say, never read from the log (tests).
-    package convenience init(clients: [pid_t: Client]) {
-        self.init(idleLimit: nil)
+    /// Reports as `clients` say, not read from the log (tests) until `stop`:
+    /// the next question then follows it, through `streamCommand` and `readPast`.
+    package convenience init(clients: [pid_t: Client], streamCommand: [String] = NowPlayingReports.streamCommand,
+                             readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
+        self.init(idleLimit: nil, streamCommand: streamCommand, readPast: readPast)
         self.clients = clients
         ready = true
         given = true

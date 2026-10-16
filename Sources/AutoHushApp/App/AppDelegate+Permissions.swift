@@ -53,6 +53,9 @@ extension AppDelegate {
     /// controlled (also in Settings → Diagnostics, as "Last error").
     func showControlError() {
         guard let alert = status.controlErrorAlert else { return }
-        InfoAlert.show(alert.title, alert.message)
+        // Now Playing hidden in the menu bar: the pane where it's shown.
+        let opens = status.controlError?.opensMenuBarSettings == true
+        InfoAlert.show(alert.title, alert.message,
+                       action: opens ? (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() }) : nil)
     }
 }

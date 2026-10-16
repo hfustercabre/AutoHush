@@ -184,6 +184,12 @@ struct PlayerOption: Equatable, Identifiable {
                comment: "Badge after the “Other Apps” heading where media players are offered: these apps were added through a check the user ran, not supported by AutoHush itself")
     }
 
+    /// Under `otherAppsHeading` while no app has been added: what Add… does.
+    static var otherAppsEmptyNote: String {
+        String(localized: "Add any other app: a check finds how to pause and play it.",
+               comment: "Where media players are offered, under the “Other Apps” heading while no app was added yet, over its Add… tile")
+    }
+
     /// Under `otherAppsHeading` wherever players are offered.
     static var otherAppsNote: String {
         String(localized: "Controlled the ways a check found to work.",
@@ -301,8 +307,8 @@ struct PlayerOption: Equatable, Identifiable {
     /// Shown in Settings and the welcome window while no supported player is
     /// installed.
     static var noneInstalledWarning: String {
-        String(localized: "No supported media player is installed. Install one of these, and choose it here.",
-               comment: "Settings and the welcome window, while none of the media players is installed")
+        String(localized: "No supported media player is installed. Install one of these, or add another app under Other Apps, and choose it here.",
+               comment: "Settings and the welcome window, while none of the media players is installed; “Other Apps” is the heading over the apps added with Add an App… (its Add… tile)")
     }
 
     /// In the welcome window when one player is installed and others could

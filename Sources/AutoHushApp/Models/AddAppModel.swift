@@ -179,7 +179,28 @@ final class AddAppModel {
     }
 
     /// AntiDot mode is on: nothing listens to the app, and it can't be muted.
-    var antiDot: Bool { services.antiDot() }
+    var antiDot: Bool {
+        _ = antiDotChanges // read, so the window follows `turnOffAntiDot`
+        return services.antiDot()
+    }
+
+    /// How many times AntiDot mode was turned off from here.
+    private var antiDotChanges = 0
+
+    /// Now Playing was hidden in the menu bar, so its panel wasn't tried:
+    /// the last step offers to open where it's shown, then Check Again.
+    var nowPlayingHidden: Bool { result?.ways.contains { $0.mark == .menuBarHidden } == true }
+
+    func openMenuBarSettings() {
+        services.openMenuBarSettings()
+    }
+
+    /// The last step's Turn Off AntiDot Mode, when nothing that worked can be
+    /// used in it: a way only the app's sound tells, or muting, then can.
+    func turnOffAntiDot() {
+        services.turnOffAntiDot()
+        antiDotChanges += 1
+    }
 
     // MARK: - Steps
 

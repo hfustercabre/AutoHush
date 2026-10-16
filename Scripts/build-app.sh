@@ -12,7 +12,7 @@ set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
 BUILD_CONFIG="${1:-release}"
-# A release runs on Apple silicon and Intel Macs alike (macOS 15 and 26 still
+# A release runs on Apple silicon and Intel Macs alike (macOS 14.4 to 26 still
 # run on Intel); a debug build only on this Mac's kind.
 case "$BUILD_CONFIG" in
     release) CONFIG_DIR=Release; ARCH_FLAGS=(--arch arm64 --arch x86_64) ;;

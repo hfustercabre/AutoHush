@@ -30,6 +30,10 @@ struct AddAppServices {
     /// AntiDot mode is on: no audio taps (nothing listens to the app, and
     /// it can't be muted).
     var antiDot: @MainActor () -> Bool = { false }
+    /// Turns AntiDot mode off (the last step, when nothing can be used in it).
+    var turnOffAntiDot: @MainActor () -> Void = {}
+    /// Opens System Settings where Now Playing is shown in the menu bar.
+    var openMenuBarSettings: @MainActor () -> Void = {}
     /// Whether it plays now, as the check judges it (`AppPlaying`).
     var isPlaying: @MainActor (CheckableApp, CheckedAppTraits) async -> Bool
     /// Starts the check; `taps` false in AntiDot mode.

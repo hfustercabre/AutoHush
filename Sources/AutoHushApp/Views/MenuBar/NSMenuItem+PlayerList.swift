@@ -11,11 +11,11 @@ extension NSMenuItem {
     }
 
     /// The heading and note over the apps added through a check, as a row
-    /// of the menu's players.
+    /// of the menu's players (`isEmpty`: none added yet).
     @MainActor
-    static func otherAppsHeading(width: CGFloat?) -> NSMenuItem {
+    static func otherAppsHeading(width: CGFloat?, isEmpty: Bool) -> NSMenuItem {
         headingRow("otherAppsHeading", title: PlayerOption.otherAppsHeading, width: width,
-                   OtherAppsHeading(font: menuHeadingFont))
+                   OtherAppsHeading(isEmpty: isEmpty, font: menuHeadingFont))
     }
 
     /// "Supported Apps" over the apps among the menu's players, drawn as the

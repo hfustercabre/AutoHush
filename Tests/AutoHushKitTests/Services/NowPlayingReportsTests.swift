@@ -56,7 +56,8 @@ struct NowPlayingReportsTests {
     func given() {
         var clients: [pid_t: NowPlayingReports.Client] = [:]
         NowPlayingReports.apply("[com.example.app (\(getpid())) App ❯] PlaybackState changed from Paused to Playing", to: &clients)
-        let reports = NowPlayingReports(clients: clients)
+        // Stopped, the next question follows the log: a stream that ends at once stands in for it.
+        let reports = NowPlayingReports(clients: clients, streamCommand: ["/usr/bin/true"]) { _ in [:] }
         #expect(reports.isAvailable)
         #expect(reports.state(of: "com.example.app") == .playing)
         reports.stop()

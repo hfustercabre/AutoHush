@@ -383,7 +383,7 @@ struct AddAppModelTests {
         #expect(world.asksToReopen == [false])
     }
 
-    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and neither muting nor a panel only its sound tells can be used")
+    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and neither muting nor a panel only its sound tells can be used, until it's turned off from there")
     func antiDot() async {
         let world = World()
         world.antiDot = true
@@ -405,6 +405,9 @@ struct AddAppModelTests {
         #expect(!model.canMute && model.choosableWays.isEmpty && model.mark(of: .use) == .failed && model.offersCheckAgain)
         model.use()
         #expect(world.used.isEmpty)
+
+        model.turnOffAntiDot()
+        #expect(!world.antiDot && model.choosableWays == [.panel] && model.mark(of: .use) != .failed)
     }
 
     @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen")

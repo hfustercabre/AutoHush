@@ -87,7 +87,7 @@ struct PlayerTiles: View {
                     .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .named(Self.space)).minY }) { appsTop = $0 }
                 CardDivider()
             }
-            OtherAppsHeading()
+            OtherAppsHeading(isEmpty: checkedApps.isEmpty)
             grid(checkedApps, adds: .app)
                 .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .named(Self.space)).minY }) { otherAppsTop = $0 }
             CardDivider()

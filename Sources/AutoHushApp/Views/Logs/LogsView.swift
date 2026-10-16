@@ -9,8 +9,8 @@ import AutoHushKit
 struct LogsView: View {
     @Bindable var model: LogsModel
     @State private var copied = false
-    /// Where the entries are scrolled to: the newest, at first.
-    @State private var position = ScrollPosition(edge: .bottom)
+    /// The end of the entries, scrolled to on macOS 14 (`FollowsNewest`).
+    static let bottom = "bottom"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -97,21 +97,51 @@ struct LogsView: View {
                             if index > 0 { CardDivider() }
                             LogRow(entry: entry)
                         }
+                        Color.clear.frame(height: 0).id(Self.bottom)
                     }
                 }
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
         }
-        .scrollPosition($position)
-        // Opened at the newest entry; a few entries stay at the top.
-        .defaultScrollAnchor(.bottom, for: .initialOffset)
-        .defaultScrollAnchor(.top, for: .alignment)
-        .onChange(of: shown.count) {
-            if model.followsNewEntries { position.scrollTo(edge: .bottom) }
+        .modifier(FollowsNewest(count: shown.count, follows: model.followsNewEntries))
+    }
+
+    /// Opened at the newest entry, and following new ones while asked to:
+    /// on macOS 15 by its scroll position (a few entries stay at the top),
+    /// on macOS 14 by scrolling to the end's marker (`LogsView.bottom`).
+    private struct FollowsNewest: ViewModifier {
+        let count: Int
+        let follows: Bool
+
+        func body(content: Content) -> some View {
+            if #available(macOS 15, *) {
+                content.modifier(FollowsNewestByPosition(count: count, follows: follows))
+            } else {
+                ScrollViewReader { proxy in
+                    content
+                        .defaultScrollAnchor(.bottom)
+                        .onChange(of: count) { if follows { proxy.scrollTo(LogsView.bottom, anchor: .bottom) } }
+                        .onChange(of: follows) { _, follows in if follows { proxy.scrollTo(LogsView.bottom, anchor: .bottom) } }
+                }
+            }
         }
-        .onChange(of: model.followsNewEntries) { _, follows in
-            if follows { position.scrollTo(edge: .bottom) }
+    }
+
+    @available(macOS 15, *)
+    private struct FollowsNewestByPosition: ViewModifier {
+        let count: Int
+        let follows: Bool
+        /// Where the entries are scrolled to: the newest, at first.
+        @State private var position = ScrollPosition(edge: .bottom)
+
+        func body(content: Content) -> some View {
+            content
+                .scrollPosition($position)
+                .defaultScrollAnchor(.bottom, for: .initialOffset)
+                .defaultScrollAnchor(.top, for: .alignment)
+                .onChange(of: count) { if follows { position.scrollTo(edge: .bottom) } }
+                .onChange(of: follows) { _, follows in if follows { position.scrollTo(edge: .bottom) } }
         }
     }
 

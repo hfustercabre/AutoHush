@@ -6,13 +6,21 @@ import AppKit
 @MainActor
 enum InfoAlert {
     /// `run`: how the alert runs (`runInFront`); tests replace it.
-    static func show(_ title: String, _ message: String,
+    /// `action`: a button that fixes what it says, first (Return presses
+    /// it), with OK after it (Escape).
+    static func show(_ title: String, _ message: String, action: (title: String, perform: () -> Void)? = nil,
                      run: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront) {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
-        _ = run(alert)
+        guard let action else {
+            _ = run(alert)
+            return
+        }
+        alert.addButton(withTitle: action.title)
+        alert.addButton(withTitle: String(localized: "OK", comment: "Button that closes an alert")).keyEquivalent = "\u{1b}"
+        if run(alert) == .alertFirstButtonReturn { action.perform() }
     }
 
     /// Brings AutoHush to the front and runs `alert` until a button closes

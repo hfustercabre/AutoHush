@@ -272,12 +272,20 @@ struct AddAppView: View {
                 StepNote(AddAppText.chooseWay(app))
                 WayChoices(model: model, result: result, app: app).padding(.top, 4)
             }
+            if model.nowPlayingHidden {
+                // Shown there, the panel can be tried with Check Again (2026-10-16).
+                Button { model.openMenuBarSettings() } label: { Text(verbatim: ControlFailure.openMenuBarSettings) }
+                    .buttonStyle(.chip)
+                    .padding(.top, 2)
+            }
             if model.choosableWays.isEmpty {
                 // No way it can use pauses it: it can be muted instead (the
                 // user, 2026-10-15); in AntiDot mode neither (2026-10-16).
                 StepNote(AddAppText.muteInstead(app)).padding(.top, 4)
                 if model.antiDot {
                     NoteLabel(ControlFailure.muteUnavailable.text(player: app)).padding(.top, 2)
+                    Button { model.turnOffAntiDot() } label: { Text(verbatim: AddAppText.turnOffAntiDot) }
+                        .buttonStyle(.chip)
                 } else if !model.canMute {
                     if model.audioAwaitsReopen {
                         NoteLabel(AddAppText.audioAfterReopen).padding(.top, 2)

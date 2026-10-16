@@ -292,7 +292,7 @@ final class StatusMenuController: NSObject {
         }
         if !apps.isEmpty { rows += [.supportedAppsHeading(width: menuContentWidth)] + apps.map(playerRow) }
         // While a search narrows the players, the heading shows only over a match.
-        if !checked.isEmpty || model.playerSearch.isEmpty { rows.append(.otherAppsHeading(width: menuContentWidth)) }
+        if !checked.isEmpty || model.playerSearch.isEmpty { rows.append(.otherAppsHeading(width: menuContentWidth, isEmpty: checked.isEmpty)) }
         rows += checked.flatMap { [playerRow(for: $0), removeRow(for: $0)] } + [addRow(PlayerOption.addAppTitle, #selector(addApp))]
         if !webApps.isEmpty { rows += [.webAppsHeading(width: menuContentWidth)] + webApps.map(playerRow) }
         rows.append(addRow(PlayerOption.addWebAppTitle, #selector(addWebApp)))

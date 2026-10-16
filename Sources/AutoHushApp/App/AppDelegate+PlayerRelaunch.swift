@@ -42,6 +42,8 @@ extension AppDelegate {
     /// When AutoHush last reopened each player, by bundle ID, and whether it
     /// then gave up reopening it by itself (`reopensByItself`).
     private static var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
+    /// The clock `lastReopens` is stamped and read by. Tests move it on.
+    static var now: () -> Date = Date.init
 
     /// Runs the reopen alert and returns the button pressed. Tests replace it.
     static var runReopenAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
@@ -96,7 +98,7 @@ extension AppDelegate {
     /// Giving up is logged once, and the card says it needs reopening.
     private func reopensByItself(_ player: any MusicPlayer) -> Bool {
         guard let last = Self.lastReopens[player.bundleID],
-              Date().timeIntervalSince(last.at) < Self.reopenAgainAfter else { return true }
+              Self.now().timeIntervalSince(last.at) < Self.reopenAgainAfter else { return true }
         if !last.gaveUp {
             Self.lastReopens[player.bundleID]?.gaveUp = true
             logger.notice("\(player.name, privacy: .public) runs without the option it needs again right after being reopened: it isn’t reopened by itself again this time")
@@ -106,7 +108,7 @@ extension AppDelegate {
 
     private func reopen(_ player: any MusicPlayer) async {
         // From the start: it opens again before the reopen is over.
-        Self.lastReopens[player.bundleID] = (Date(), false)
+        Self.lastReopens[player.bundleID] = (Self.now(), false)
         let reopened = await player.reopen()
         logger.notice("\(player.name, privacy: .public) \(reopened ? "reopened with what it needs" : "couldn’t be reopened", privacy: .public)")
         let needs = await player.needsReopen()

@@ -112,11 +112,13 @@ extension AppDelegate {
             return
         }
         // A deleted web app can't come back as the same app (adding the site
-        // again makes a new one): no player is chosen any more.
+        // again makes a new one): no player is chosen any more, and the
+        // welcome window asks for one, as when the chosen app is removed.
         if player.kind == .safariWebApp, !options.contains(where: { $0.bundleID == player.bundleID }),
            Self.isDeleted(player.bundleID) {
             logger.notice("\(player.name, privacy: .public) was deleted: no media player is chosen")
             setChosenPlayer(nil)
+            showPlayerChooser()
             return
         }
         let appURL = options.first { $0.bundleID == player.bundleID }?.appURL
