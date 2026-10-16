@@ -116,10 +116,12 @@ struct VLCControlTests {
         #expect(await player.playerState() == .playing)
     }
 
-    @Test("stopped, playing sends nothing; unknown or not running, it says why")
+    @Test("stopped, playing sends nothing and says it has nothing to play; unknown or not running, it says why")
     func refusesToGuess() async throws {
         let stopped = FakeVLC { $0.playing = false; $0.currentTime = -1 }
-        try await VLCPlayer(channel: stopped).play()
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) {
+            try await VLCPlayer(channel: stopped).play()
+        }
         #expect(!stopped.sent.contains("VLC1"))
 
         await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) {

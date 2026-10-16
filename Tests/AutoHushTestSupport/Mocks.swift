@@ -113,10 +113,16 @@ package actor MockMusicPlayer: MusicPlayer {
     /// Lets tests override the reported state without going through pause/play.
     package func overrideState(_ newState: PlayerState) { state = newState }
 
+    /// How many presses (pauses or plays) to ignore, as a player that
+    /// doesn't follow one: the call succeeds, but its state stays.
+    package var ignoredPresses = 0
+    package func setIgnoredPresses(_ count: Int) { ignoredPresses = count }
+
     package func pause() async throws {
         pauseCallCount += 1
         commandLog.append("pause")
         if let error = failPauseWith { throw error }
+        guard ignoredPresses == 0 else { ignoredPresses -= 1; return }
         state = .paused
     }
 
@@ -124,6 +130,7 @@ package actor MockMusicPlayer: MusicPlayer {
         playCallCount += 1
         commandLog.append("play")
         if let error = failPlayWith { throw error }
+        guard ignoredPresses == 0 else { ignoredPresses -= 1; return }
         state = .playing
     }
 
@@ -143,6 +150,25 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func forgetPause() { commandLog.append("forgetPause") }
+
+    /// It runs without what it needs (`needsReopen`) until reopened, which
+    /// fixes that unless `reopenKeepsNeed` (a launcher that drops the option).
+    package var needsReopening = false
+    package var reopenKeepsNeed = false
+    package var reopenCount = 0
+
+    package func setNeedsReopening(_ needs: Bool, afterReopen: Bool = false) {
+        needsReopening = needs
+        reopenKeepsNeed = afterReopen
+    }
+
+    package func needsReopen() -> Bool { needsReopening }
+
+    package func reopen() -> Bool {
+        reopenCount += 1
+        needsReopening = reopenKeepsNeed
+        return true
+    }
 }
 
 // MARK: - MockMutingMusicPlayer

@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// What AutoHush needs to know about a music app it controls through its
@@ -28,6 +27,17 @@ package struct MenuPlayerProfile: Sendable {
         self.menuName = menuName
         self.readWords = readWords
         self.iconPlaceholder = iconPlaceholder
+    }
+}
+
+extension MenuPlayerProfile {
+    /// For an app added through a check, not described by a module of its
+    /// own: its menu found as AutoHush finds any (`AccessibilityPlaybackMenu`),
+    /// its state told by the words its bundle has for Play and Pause
+    /// (`PlayPauseWords.found`), with the common ones.
+    package static func found(bundleID: String, name: String, menuName: String) -> MenuPlayerProfile {
+        MenuPlayerProfile(bundleID: bundleID, name: name, menuName: menuName,
+                          readWords: { PlayPauseWords.common.merged(with: PlayPauseWords.found(inAppAt: $0)?.words) })
     }
 }
 
@@ -59,7 +69,7 @@ package actor MenuPlayer: MusicPlayer {
     /// macOS's request for Accessibility is shown once per launch, not at
     /// every check.
     private var hasAskedForAccess = false
-    private let logger = Logger(category: "MenuPlayer")
+    private let logger = AutoHushLogger(category: "MenuPlayer")
     /// Accessibility calls block: they run here, one at a time.
     private let queue: DispatchQueue
 
@@ -136,13 +146,7 @@ package actor MenuPlayer: MusicPlayer {
     /// Presses Play/Pause if the app is in `state`; does nothing if it's
     /// already in the other one.
     private func press(from state: PlayerState) async throws {
-        let current = await playerState()
-        guard current == state else {
-            if current == .notRunning { throw MusicPlayerError.playerNotRunning }
-            if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
-            if current == .stopped { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
-            return
-        }
+        guard try await playerState().needsToggle(from: state) else { return }
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let menu = menu
         guard await queue.run({ menu.pressToggle(pid: pid) }) else {

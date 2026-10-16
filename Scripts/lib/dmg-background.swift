@@ -4,7 +4,7 @@
 //
 // Built together with the app's MenuBarIcon.swift, so the mark is the real
 // menu bar icon (see Scripts/build-dmg.sh):
-//   swiftc -parse-as-library Sources/AutoHushApp/MenuBar/MenuBarIcon.swift \
+//   swiftc -parse-as-library Sources/AutoHushApp/Views/MenuBar/MenuBarIcon.swift \
 //       Scripts/lib/dmg-background.swift -o dmg-background
 //   dmg-background <output.png> <scale>
 //

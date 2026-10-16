@@ -20,6 +20,7 @@ final class FakeMonitoring: SessionMonitoring {
     private(set) var autoPause: Bool?
     private(set) var ignored: Set<String>?
     private(set) var asleep: [Bool] = []
+    private(set) var resumesHeld: [Bool] = []
     private(set) var configurations: [AppConfiguration] = []
     private(set) var detectionMethods: [DetectionMethod] = []
     /// A resume under way (its player fading back in), from `beginResume()`
@@ -52,6 +53,9 @@ final class FakeMonitoring: SessionMonitoring {
         resumeWaiters = nil
     }
 
+    /// Something waits for the resume under way to end.
+    var isWaitingForResume: Bool { resumeWaiters?.isEmpty == false }
+
     func waitForResume() async {
         if resumeWaiters != nil { await withCheckedContinuation { resumeWaiters?.append($0) } }
         resumeWaitsOver += 1
@@ -62,6 +66,7 @@ final class FakeMonitoring: SessionMonitoring {
     func setAutoPauseEnabled(_ enabled: Bool) { autoPause = enabled }
     func setIgnoredSources(_ ids: Set<String>) { ignored = ids }
     func setAsleep(_ asleep: Bool) { self.asleep.append(asleep) }
+    func holdResumes(_ held: Bool) { resumesHeld.append(held) }
     func setConfiguration(_ configuration: AppConfiguration) { configurations.append(configuration) }
     func setDetectionMethod(_ method: DetectionMethod) { detectionMethods.append(method) }
     func activeAudioReport() -> [ActiveAudioReport.Entry] { [] }

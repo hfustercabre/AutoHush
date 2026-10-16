@@ -44,6 +44,7 @@ body:
         - VLC
         - Apple Podcasts
         - TIDAL
+        - An app added with Add an App… (say which below)
         - A Safari web app (say which below)
         - None chosen
     validations:
@@ -55,7 +56,13 @@ body:
       description: In Settings → Diagnostics, click Copy Report and paste it here. It lists AutoHush's settings and permissions, your player's state and the apps that played sound lately; remove anything you'd rather not share.
       render: text
   - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: In Settings → Diagnostics, click Show Logs…, then Copy Logs, and paste them here (This Launch, or Last 24 Hours if it happened before AutoHush last opened). They list each pause and resume of your player and why, with the apps that played, and each change to AutoHush's settings, private details left out; remove any app's name you'd rather not share.
+      render: text
+  - type: textarea
     id: more
     attributes:
       label: Anything else
-      description: Which web app, how often it happens, screenshots.
+      description: Which web app or added app, how often it happens, screenshots.

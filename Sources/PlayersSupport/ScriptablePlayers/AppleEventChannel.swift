@@ -39,9 +39,7 @@ package final class AppleEventChannel: AppleEventSending {
     /// The running app's pid. Targeting the running process (rather than the
     /// bundle ID) guarantees that an event can never launch the app.
     package func processIdentifier() -> pid_t? {
-        NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-            .first { !$0.isTerminated }?
-            .processIdentifier
+        NSRunningApplication.running(bundleID)?.processIdentifier
     }
 
     /// The running app's pid, for commands that can't do without it.

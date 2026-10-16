@@ -1,6 +1,6 @@
 # MeasureVolumeCurve
 
-Measures how a music player turns its volume number (0–100) into loudness,
+Measures how a media player turns its volume number (0–100) into loudness,
 so its `VolumeCurve` can be set and AutoHush's fades sound even.
 
 ```bash

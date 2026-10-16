@@ -3,6 +3,7 @@ import AutoHushKit
 import ScriptablePlayers
 import MenuPlayers
 import WebAppPlayers
+import CheckedPlayers
 import SpotifySupport
 import AppleMusicSupport
 import TidalSupport
@@ -31,17 +32,18 @@ package enum SupportedPlayers {
         // Shown in Add a Web App's address field and its "not a web address" note.
         exampleWebAddress: "music.youtube.com",
         countrySites: testedWebApps.compactMap(\.countrySites),
-        found: { webApps.current() },
+        // The Safari web apps, then the apps added through Player Check (never a
+        // built-in player's), those not installed now too, as the built-in ones are.
+        found: { webApps.current() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
         suggested: { webApps.suggestions() }
     )
 
     /// The music services' web players AutoHush has been tested with (live,
-    /// 2026-10-06; SoundCloud 2026-10-09, and taking Now Playing as it plays
-    /// 2026-10-10), the most subscribed first: Spotify, YouTube Music (125
-    /// million subscribers), Amazon Music, Deezer (about 10 million), then
-    /// SoundCloud, most of whose listeners don't subscribe. Their web apps
-    /// are offered first, and suggested until added; any other web app is
-    /// offered after them, marked untested.
+    /// on macOS 27, also taking Now Playing as it plays), the most subscribed
+    /// first: Spotify, YouTube Music (125 million subscribers), Amazon Music,
+    /// Deezer (about 10 million), then SoundCloud, most of whose listeners
+    /// don't subscribe. Their web apps are offered first, and suggested
+    /// until added; any other web app is offered after them, marked untested.
     package static let testedWebApps: [TestedWebApp] = [
         TestedWebApp(name: "Spotify", address: "open.spotify.com"),
         TestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
@@ -49,6 +51,24 @@ package enum SupportedPlayers {
         TestedWebApp(name: "Deezer", address: "deezer.com"),
         TestedWebApp(name: "SoundCloud", address: "soundcloud.com"),
     ]
+
+    /// Apple's apps that can show or play something but are no media players,
+    /// which Add an App never offers (the user's pick, 2026-10-15): App Store,
+    /// Clock, Dictionary, Freeform, Home, Journal, Mail, Maps, Notes, Photo
+    /// Booth, Reminders, TestFlight, Tips and Xcode. Other App… can still
+    /// pick one.
+    package static let notPlayers: Set<String> = [
+        "com.apple.AppStore", "com.apple.clock", "com.apple.Dictionary", "com.apple.freeform", "com.apple.Home",
+        "com.apple.journal", "com.apple.mail", "com.apple.Maps", "com.apple.Notes", "com.apple.PhotoBooth",
+        "com.apple.reminders", "com.apple.TestFlight", "com.apple.helpviewer", "com.apple.dt.Xcode",
+    ]
+
+    /// The apps added through Player Check, each kept while its setup stays.
+    package static let checkedPlayers = CheckedPlayers()
+
+    /// The built-in players' bundle IDs, the catalog's own: a check never
+    /// stands in for one (a player added to the catalog is one of them).
+    private static let builtIn: Set<String> = Set(catalog.players.map { $0.bundleID })
 
     /// The Safari web apps in the Applications folders, looked for once for
     /// the players, the suggestions and Add a Web App.
@@ -62,8 +82,8 @@ package enum SupportedPlayers {
     /// Germany's, Ireland the United Kingdom's); the others use
     /// music.amazon.com. A sign-in on another country's site doesn't carry
     /// over, so the web app opens the Mac's own, and Add a Web App offers the
-    /// others. Checked 2026-10-10: music.amazon.ae, .sa and .eg answer with
-    /// an empty page (Amazon Music isn't offered there).
+    /// others. Checked: music.amazon.ae, .sa and .eg answer with an empty
+    /// page (Amazon Music isn't offered there).
     package static let amazonMusicSites = CountrySites(
         name: "Amazon Music",
         byRegion: [

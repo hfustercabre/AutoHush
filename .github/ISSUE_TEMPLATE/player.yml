@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        AutoHush works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL, and with any website added to the Dock from Safari. For another app, [Player Check](https://github.com/hfustercabre/AutoHush/tree/main/Tools/PlayerCheckApp) finds out whether AutoHush could control it, and how: build it as its README says, check the app, then click Copy Report and paste the report below.
+        AutoHush works with Spotify, Apple Music, VLC, Apple Podcasts and TIDAL, with any website added to the Dock from Safari, and with other apps you add yourself: choose **Add an App…** among the media players, and AutoHush checks how it can pause and play the app. If the check finds no way, paste its log below: it's the newest `… check.log` in `~/Library/Logs/AutoHush/Checks`.
   - type: input
     id: app
     attributes:
@@ -16,7 +16,8 @@ body:
   - type: textarea
     id: report
     attributes:
-      label: Player Check's report
+      label: The check's log
+      description: Pasted whole. It says what the check tried and how each way did, and leaves out your Mac account's name and what was playing; remove anything else you'd rather not share.
       render: text
   - type: textarea
     id: more

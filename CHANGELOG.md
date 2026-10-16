@@ -9,10 +9,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **AutoHush runs on macOS 14.4 and later,** not only macOS 15: every
+  feature works there. An update that needs a newer macOS than your Mac's
+  isn't installed, and says so.
+- **Deleting your chosen Safari web app opens the window to choose
+  another,** as removing an app you added does, instead of only saying
+  that none is chosen.
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies
-  before 0.13.0 accept only their old certificate, so they can't install
+  before 1.0.0 accept only their old certificate, so they can't install
   this version themselves and say they couldn't install the update.
   Download it once from the [releases
   page](https://github.com/hfustercabre/AutoHush/releases) (**Open Release
@@ -27,9 +33,86 @@ This project follows [Semantic Versioning](https://semver.org/).
   - If AutoHush says a permission is missing while System Settings shows
     AutoHush switched on, that switch belongs to the old copy: select
     AutoHush there, remove it with **−**, then allow it again.
+- **Every pause and play is checked.** After pausing or playing your
+  player, AutoHush reads its state for up to 3 seconds; one that didn't
+  take is made once more, and if the player still didn't follow, the menu
+  says it didn't respond, rather than AutoHush taking it as paused. Safari
+  web apps already checked theirs.
+- **Every update choice works with notifications off.** **Notify me** and
+  **Download it and notify me** could only be chosen with notifications
+  on, and turning them off moved the choice to **Install it
+  automatically** and turned automatic checks off. Now nothing changes:
+  the menu bar icon shows when an update is found, and Settings → Updates
+  says notifications are off, with a button to turn them on.
+- **Learning a web app asks you to play something.** Its first step said
+  to play a song; it now says "Play something in" the web app, since a
+  podcast or a video does just as well.
+- **"Learn Controls…" and "Learn Again…"** now end with an ellipsis, as
+  buttons that open a window do.
+- **The step that asks for a permission is the step to do now.** While the
+  permission is missing, it shows as the current step, so it's clear what
+  comes first.
+- **Suggested web apps say "Click to add" in the menu too.** The menu
+  marked them "Not installed", like a missing app; it now says what their
+  tiles in Settings and the welcome window say.
+- **Settings → General says "None chosen"** while no media player is
+  chosen, where it showed "AutoHush".
+- **The menu's Updates button says "Checking…".** The menu stays open
+  while AutoHush checks, then closes for the alert with the result, also
+  when a check was already under way. When AutoHush's version is unknown,
+  so it can't check, the alert says so.
+- **Status lines use contractions,** as the rest of AutoHush does:
+  "Spotify isn't running", "isn't responding", "isn't installed".
+- **Clearer words.** With no other app making sound, Diagnostics says "No
+  other app is playing sound right now.", and "Starting…" until it knows
+  your player's state, rather than "Working normally"; the permission is
+  called "Audio Recording" there, as in System Settings; and Settings →
+  Updates says "AutoHush's version is unknown." rather than "the app's".
 
 ### Added
 
+- **Add any app that plays as your media player.** **Add an App…**, under
+  the new **Other Apps** among the players (in the menu, Settings → General
+  and the welcome window), checks how AutoHush can pause and play an app it
+  doesn't support itself, then makes it your player. Choose the app from a
+  list (or any app on your disk with **Other App…**), allow what the check
+  needs, play something in it, and AutoHush tries every way it finds: its
+  AppleScript, its playback menu, its page's Play/Pause button (for apps
+  built with Electron, Chromium or Flutter too, such as Deezer's app) and
+  its row in the menu bar's Now Playing panel, with its window in view,
+  covered, on another desktop, in full screen, minimized and hidden. A
+  window says first what the check does: for about 3 minutes it moves the
+  app's window, blocks the mouse and keyboard and dims the screen, except a
+  small panel with its progress and **Stop** (or Escape). Everything is put
+  back as it was, and a player AutoHush paused stays paused until the check
+  ends (**Paused while a check runs**). You then choose how AutoHush pauses and plays it among the ways
+  that worked (the recommended one is chosen unless you pick another), and
+  the app is listed under Other Apps, marked **Checked by you**. The Now
+  Playing panel works with Now Playing hidden in the menu bar too:
+  AutoHush shows it for the moment of a press, then puts your setting back
+  (unless you changed it meanwhile), even after a quit mid-press; if it
+  can't, the check and the menu say where to show it, with a button that
+  opens it, and **Check Again** checks once you have. An app whose row there never shows whether it
+  plays (Qobuz) is paused and played through it all the same, judged by
+  half a second of its sound just before each press (so not in AntiDot
+  mode). The **×** on its tile in Settings → General or the welcome window
+  (also with the keyboard's focus there), a right-click on the tile, or its
+  row with **⌥ Option** held in the menu removes it, after asking; removing
+  your current player opens the window to choose another.
+- **An app no way pauses can be muted instead.** When Add an App finds
+  no way to pause an app, **Mute It Instead** makes it your player all the
+  same: AutoHush mutes it while other apps play and lifts the mute when they
+  stop. The menu says it's muted, with **Unmute**; pausing it and playing it
+  again yourself unmutes it too. It needs Audio Recording, so AntiDot
+  mode doesn't offer it (the step offers **Turn Off AntiDot Mode**): such
+  an app is dimmed there, and while it's your player the AntiDot mode
+  switch is off.
+- **An app that must be opened with an option says so.** An app built with
+  Electron is pressed while its window is covered or on another desktop
+  only when opened with an option: Add an App asks before reopening it so,
+  and while it's your player and runs without it, the menu says it needs
+  reopening, with a **Reopen** button. Choosing it asks first, and **Always
+  reopen … this way** reopens it so from then on, without asking.
 - **Shortcuts actions for Auto-Pause.** The Shortcuts app offers three:
   **Set Auto-Pause** turns it **On** or **Off**, or switches it with
   **Toggle** (Off lasts until it's turned on again); **Turn Off Auto-Pause
@@ -45,9 +128,42 @@ This project follows [Semantic Versioning](https://semver.org/).
   in System Settings → Focus, choose the Focus, then **Add Filter…** under
   Focus Filters and **AutoHush**. When the Focus ends, Auto-Pause goes back
   to how it was, unless you changed it meanwhile.
+- **More of the Mac's keyboard shortcuts.** ⌘M minimizes the welcome, Add
+  a Web App and learning windows, as it does Settings. Return presses the
+  blue button of the step to do now (It's Playing, It's Paused, Add to
+  Dock, Try Again). Edit → Find… (⌘F) opens Settings → Apps' search while
+  it lists apps, and puts the cursor in the welcome window's player search
+  when it has one and in Add an App's list of apps; elsewhere it's dimmed.
+  In Settings → Apps, Tab reaches the apps' rows (with keyboard navigation
+  on) and Space selects one, so Remove works from the keyboard too.
+- **The menu bar icon shows when an update waits.** A small disc with a
+  down arrow sits in the icon's corner, in the room around it, from when
+  AutoHush finds an update until it's installed. VoiceOver adds "update
+  available" to the icon's label.
+- **A window with AutoHush's logs.** **Show Logs…**, at the foot of
+  Settings → Diagnostics, opens what AutoHush logged (each pause and resume
+  of your player, and why, with the apps that played; every change to its
+  settings; each update check, download and install) since it last opened
+  (**This Launch**) or in the **Last 24 Hours**, every entry or **Problems
+  Only**, with a search (Edit → Find… puts the cursor in it). New entries
+  show as they're logged, and the list follows them while **Follow new
+  entries** is on. **Copy Logs** and **Save…** take what's shown, to send
+  with a bug report. AutoHush now keeps its log itself, on your Mac only
+  (`~/Library/Logs/AutoHush/AutoHush.log`), for the last 24 hours, private
+  details left out; macOS's own log gets its lines only while someone
+  streams them live (`log stream --level debug`), and keeps none.
 
 ### Fixed
 
+- **Short release notes get a small box.** The update window's notes box
+  stayed 100 points tall for a line or two; now it's as tall as they need,
+  from 48 points up to 180.
+- **No AutoHush window goes full screen.** The green button could make
+  Settings fill the screen, in a space of its own; now it zooms the
+  window instead, and no other AutoHush window goes full screen either.
+- **VLC with nothing loaded counted as resumed.** Asked to play while
+  stopped, VLC did nothing, yet the menu said "Playing" for a moment. Now
+  AutoHush knows it has nothing to play, as with TIDAL and Apple Podcasts.
 - **A web app's window on another desktop could go unfound.** AutoHush
   reaches windows on other desktops by trying the app's element numbers,
   only the first thousand. An app that makes its window again later can
@@ -61,7 +177,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   their section. A web app's icon now carries Safari's, wherever it shows.
 - **VoiceOver said "degraded" or "failed".** While something needs you, the
   menu bar icon now says what the menu's status line does ("AutoHush:
-  Spotify is not running"), and a web app named as an app is reads as a
+  Spotify isn't running"), and a web app named like an app now reads as a
   Safari web app where you choose your player.
 - **VoiceOver said nothing while a window waited for a permission.** When
   Accessibility is missing, the Add a Web App and learning windows now
@@ -80,6 +196,46 @@ This project follows [Semantic Versioning](https://semver.org/).
   chose another player while AutoHush held yours paused, that player
   played again once the other apps stopped, but it was back at full volume
   in a fraction of a second. It now fades back in as any resume does.
+- **AntiDot mode could leave the purple recording indicator on.** A pause
+  AutoHush held on the player you chose before kept its audio taps after
+  AntiDot mode was turned on, and with them the purple indicator. It now
+  follows the detection method, as your chosen player does.
+- **A disabled blue button was hard to read in light mode.** Disabled, it
+  loses most of its blue, and its white text could barely be seen; its
+  text is now grey, as on the other disabled buttons.
+- **Add a Web App could stop without a word.** When macOS listed a web app
+  just made a little late, the window stopped there. It now looks for the
+  new web app again for a few seconds, with "Learn its controls" still the
+  step to do; if it's still not found, it says it was added but can't be
+  found yet, and takes it by itself once macOS lists it. A player you pick
+  in the menu meanwhile is kept.
+- **An open update alert held AutoHush up.** While an alert about updates
+  was open (up to date, couldn't check, available, couldn't install), the
+  menu and Settings stopped updating, and AutoHush heard that you played
+  or paused your player only once it closed. The alerts no longer hold
+  anything up.
+- **Quitting with an alert open skipped the clean-up.** When another
+  AutoHush opened, or an update installed, while the running one showed an
+  alert, it was stopped without setting your player's volume back or
+  handing over a pause it held. It now closes the alert and quits as
+  usual.
+- **VoiceOver:**
+  - the timing sliders in Detection and Fades say what they set, and their
+    value, and each row is read once;
+  - while Auto-Pause is off, the menu bar icon says so, as the menu's
+    status line does ("AutoHush: Auto-Pause is off until 15:30");
+  - section headings, and the menu's "Turn off for" and "Playing Now", are
+    headings;
+  - Add a Web App says why it couldn't take an address;
+  - a step's warning is said when it shows (AutoHush can't hear the web
+    app, nothing changed, the minute ran out…), and the card's line after
+    Retry; a step that asks for a permission reads its words, not only
+    where it stands;
+  - an untested web app says "Untested" in the menu;
+  - Diagnostics' headings and the card's player button say whether their
+    part is expanded or collapsed, and "Copied" is said after Copy Report;
+  - symbols beside their text, such as the menu toolbar's, are no longer
+    read on their own.
 
 ## [0.12.1] — 2026-10-11
 

@@ -2,7 +2,8 @@
 
 How AutoHush works and how its code is laid out, building and testing it,
 its translations, contributing and releases. For using AutoHush, see the
-[README](README.md).
+[README](README.md); for every workflow as a flowchart,
+[WORKFLOWS.md](WORKFLOWS.md).
 
 ## How it works
 
@@ -11,9 +12,9 @@ its translations, contributing and releases. For using AutoHush, see the
    - *Normal mode:* each app is metered through a private, unmuted CoreAudio **process tap** that computes only its peak level. Taps exist only while a level can change a decision (see the purple dot below); meanwhile an app is judged by AntiDot mode's rule when it's known to tell macOS it plays, so a paused VLC doesn't count just because it keeps its stream open for a minute.
    - *AntiDot mode ("What apps tell macOS"):* no taps. An app holding its own system-sleep **power assertion** (`IOPMCopyAssertionsByProcess`) counts as playing. An app seen doing that before but not now counts as paused, even with its output open. Apps that never hold one count as playing while their output is open. Assertions held on an app's behalf (by `coreaudiod` or `runningboardd`) are ignored. The names of each app's assertions are remembered across launches. An app that uses one name for both a display-sleep and a system-sleep assertion announces only video: WebKit (Safari) keeps the display awake while a video with sound is visible, and the system while it's hidden, but announces nothing for sound without video. Its display assertion then counts too, and it counts as paused only after dropping its assertion while its output stayed open, for at most 10 s (WebKit closes its output 7.5 s after a pause), so its sound without video is still judged by its open output. An app with no display-sleep assertion, so showing no video, must play for 3 s instead of 0.5 s, because Chromium keeps its "Playing audio" assertion for about 2.5 s after even a short sound.
 3. **Filtering.** System sounds are played by `systemsoundserverd`, which is excluded outright. An app must be audible for 0.5 s to count as playing (this filters out chat tones) and silent for 2 s to count as stopped (this bridges gaps between tracks).
-4. **Deciding.** `PlaybackArbiter` pauses the chosen player when the first app starts, and resumes it as soon as the last one stops, but only if it paused the player itself and the player is still paused. A player found paused by the check an app's start calls for counts as paused by AutoHush when it stopped playing as that app started: the app paused it (VLC does). That's from 0.5 s before the app was first heard (the monitor hears an app a tick or two late) to 1 s after (an app that pauses others does it at once; VLC within 0.3 s), so a pause the user makes while the app isn't counted as playing yet (3 s for sound without video in AntiDot mode) stays theirs. A player read once a second reports its stop too late to place it that precisely, so its stops are never taken over. Pauses and resumes run on their own, so new events are handled even while playback fades. A resume the player doesn't answer, or doesn't follow, is tried twice more, a second apart. When the Mac goes to sleep (`NSWorkspace.willSleepNotification`), a pause it holds is forgotten, and nothing is paused or resumed until the Mac is awake: other apps' sound stops as it falls asleep, and a web page can't be pressed then.
+4. **Deciding.** `PlaybackArbiter` pauses the chosen player when the first app starts, and resumes it as soon as the last one stops, but only if it paused the player itself and the player is still paused. A player found paused by the check an app's start calls for counts as paused by AutoHush when it stopped playing as that app started: the app paused it (VLC does). That's from 0.5 s before the app was first heard (the monitor hears an app a tick or two late) to 1 s after (an app that pauses others does it at once; VLC within 0.3 s), so a pause the user makes while the app isn't counted as playing yet (3 s for sound without video in AntiDot mode) stays theirs. A player read once a second reports its stop too late to place it that precisely, so its stops are never taken over. Pauses and resumes run on their own, so new events are handled even while playback fades. Each pause and play is checked to have taken (`PressCheck`): the player's state is read for up to 3 s, a press it missed is made once more, and one it still ignores fails (`pressIgnored`); a web app and an added app check their own. A resume the player doesn't answer, or doesn't follow, is tried twice more, a second apart. When the Mac goes to sleep (`NSWorkspace.willSleepNotification`), a pause it holds is forgotten, and nothing is paused or resumed until the Mac is awake: other apps' sound stops as it falls asleep, and a web page can't be pressed then.
 5. **Fading.** `VolumeFader` fades the player's own volume logarithmically, in 0.1 s steps: it falls at a steady rate in decibels to 50 dB below the user's volume over 1 s, then the player pauses and its volume is set back while paused; resuming plays from 50 dB below and rises back over 2 s. Each player's `VolumeCurve` turns decibels into its volume number (a cube law for Spotify, linear for Apple Music, both measured; a cube law for VLC, from its source). The user's volume is remembered when a fade starts, so an interrupted fade never leaves it lower: if the other app stops during the fade-out, playback comes back up without pausing; if you pause the player yourself, AutoHush leaves it to you; quitting mid-fade sets the volume straight back. Players without a readable volume pause and play directly.
-6. **The players.** Spotify and Apple Music are both scripted with Apple events (`ScriptablePlayers`). Their state arrives as a distributed notification (`com.spotify.client.PlaybackStateChanged`, `com.apple.Music.playerInfo`) and is confirmed with an Apple event right before each pause or resume. Music posts each change twice, the old state first, so a notification that would end AutoHush's pause is checked with the player first. A player plays "on this Mac" only when its own process, or one of its helpers, has output running; otherwise it's on another device (Spotify Connect) and is left alone. VLC is scripted too (`VLCSupport`), with its own vocabulary: `play` toggles, so it's only sent from the opposite state; `playing` and `current time` (−1 without an item) tell playing, paused and stopped apart; and its `audio volume` goes from 0 to 512. TIDAL and Apple Podcasts can't be scripted (`MenuPlayers`): AutoHush presses the first item of their playback menu (TIDAL's Playback, Podcasts' Controls) through Accessibility, found by its ⌘← and ⌘→ items since its title is translated, and only from the opposite state. It reads the state from that item's title, comparing it with the running app's own translations of Play and Pause (TIDAL's `app.asar`, Podcasts' `Localizable.loctable`). VLC, TIDAL and Podcasts announce nothing, so their state is read about once a second (`PolledStateObserver`).
+6. **The players.** Spotify and Apple Music are both scripted with Apple events (`ScriptablePlayers`). Their state arrives as a distributed notification (`com.spotify.client.PlaybackStateChanged`, `com.apple.Music.playerInfo`) and is confirmed with an Apple event right before each pause or resume. Music posts each change twice, the old state first, so a notification that would end AutoHush's pause is checked with the player first. A player plays "on this Mac" only when its own process, or one of its helpers, has output running; otherwise it's on another device (Spotify Connect) and is left alone. VLC is scripted too (`VLCSupport`), with its own vocabulary: `play` toggles, so it's only sent from the opposite state; `playing` and `current time` (−1 without an item) tell playing, paused and stopped apart; and its `audio volume` goes from 0 to 512. TIDAL and Apple Podcasts can't be scripted (`MenuPlayers`): AutoHush presses the first item of their playback menu (TIDAL's Playback, Podcasts' Controls) through Accessibility, found by its ⌘← and ⌘→ items since its title is translated (or, as Player Check finds Deezer's, by its first item on Space and ← and → under other modifiers), and only from the opposite state. It reads the state from that item's title, comparing it with the running app's own translations of Play and Pause (TIDAL's `app.asar`, Podcasts' `Localizable.loctable`). VLC, TIDAL and Podcasts announce nothing, so their state is read about once a second (`PolledStateObserver`).
 7. **Safari web apps** (`WebAppPlayers`):
    - **Finding them.** Each is a template app, `com.apple.Safari.WebApp.<UUID>`, found in ~/Applications and /Applications. A tested site's web app (`TestedWebApp`) is one that starts on that site: its Info.plist's `Manifest.start_url` has the same host, with or without "www." (for Amazon Music, any of its country sites: `CountrySites`, which Add a Web App also offers by country); until one is found, the site is suggested, and any other web app is untested. The other-Spaces search tries the first 1,000 element numbers, and further (up to 100,000) only when none of them is a window and the app has one out of sight; it stops after 1 s, so a frozen web app can't hold AutoHush up, and every page element waits at most 0.5 s for an answer. Its sound comes from its own WebKit process, which macOS holds the web app responsible for, so it's the player's output like any player's own process. AutoHush reads and presses the site's Play/Pause button through Accessibility, which WebKit offers for every page.
    - **Learning the button.** The button is learned once (`PlayPauseLearner`), from two looks at the page: at **It's Playing** (only while the web app can be heard), and once it's paused. AutoHush pauses it itself: it presses the keyboard's Play/Pause key (`PlayPauseKey`, a system-defined `NSEvent` posted to the HID event tap, which needs Accessibility), which macOS sends to the app it counts as playing now ("Now Playing"), the web app while its song plays, and reads the page every 0.5 s for 3 s. First it asks which app that is (`NowPlayingApp`: MediaRemote's private `MRMediaRemoteNowPlayingResolvePlayerPath` on a player path with no client, one of the few questions it still answers without Apple's entitlement); since one process keeps getting MediaRemote's first answer, a fresh copy of AutoHush, started with `--now-playing`, answers and quits. When another app is Now Playing (WebKit's media process counts as its web app), or none is, the key isn't pressed and the user pauses it (`SelfPause.keyGoesElsewhere`); with no answer, it's pressed as before; a change is read again 0.5 s later, since a song's own button can change before the player bar's. Once learned, the learned button plays it again. With no change (the site ignores it, or the key went to another app the check couldn't see), the key is pressed again to undo it, and the step is marked failed: **Try Again** takes a new look while it plays and tries the key again; **Pause It Manually** takes a new look, then the user pauses it and clicks **It's Paused**, within `LearningStatus.pauseWait` (a minute; then it starts over).
@@ -21,12 +22,20 @@ its translations, contributing and releases. For using AutoHush, see the
    - **Remembering it.** The recipe (`PlayPauseRecipe`) keeps the two names and where the button is: the kinds of element around it (not their names, which are translated) and its distance from the window's bottom. A reload makes every element new, so the button is found again by its names at that place, never by its names alone: another "Play" would start something else. **Learn Again** keeps the recipe, and keeps pressing its button, until It's Playing is taken (`LearningStatus.relearning`); it's forgotten then (and a mute standing in for a pause lifted), so nothing of a wrong one is kept, and closing the learning window before that keeps it (`keepLearned`).
    - **Windows and Spaces.** Each window has its own page, so two windows of a web app have two such buttons in the same place: the one saying it plays wins, and while the one in use says it's paused but the web app can be heard, the other windows are looked at again (every 2 s at most), so playback moved to another window is followed there. Windows on another Space aren't in Accessibility's window list, so they're reached through `_AXUIElementCreateWithRemoteToken`, a private function window managers use (`AccessibilityWindows`).
    - **Reading the state.** The state is read about once a second from the button's name, which the page has to answer, so while the web app is silent and its button says it isn't playing, only every 5 s (at once when its sound comes on, and always right before a pause or a resume); a press is checked to have changed it. With no window, the page is looked for again after 5 s, then twice as long each time, up to a minute, or at once when the web app's sound comes on.
-   - **Add a Web App…** (`SafariWebAppMaker`) checks the address (`WebAddress`: http or https, a host with a dot, "https://" added when missing), asks the site with one HEAD request (GET when HEAD is refused; any answer but 404 or 410 counts), opens it in Safari and waits until the page has loaded. Safari makes the web app from the page it shows, so it then waits for the site itself (`WebAddress.isSameSite`: the host typed, with or without "www.", a part of a bare address typed, or the same service's site for another place: the same first two parts of the host followed only by com, a country's code alone or after co or com, such as "es", "co.uk" or "com.br", or the ending of a region or city, such as "cat" or "berlin"); another host of the same domain is the site asking something first (consent.youtube.com for music.youtube.com, accounts.spotify.com for open.spotify.com), looked at again every second while the user answers it. Then it waits for the user's **Add to Dock**, checks the page is still the site, brings Safari to the front (it opens its dialog only while it's the active app, and its menu is looked up again once it is: a menu item found before doesn't open it), and presses Safari's File menu item through Accessibility. The dialog is found by its identifiers, the same in every language (`AddToDock`, `AddToDockFormAddButton`…); its address is set back to the one typed if the page moved, though Safari on macOS 27 ignores an address set through Accessibility. Then the user names the web app and clicks Add there: the dialog is looked at every 0.3 s until it closes (cancelling the add in AutoHush clicks its Cancel). Once it closes, the new web app gets 20 s to appear; none by then, it was closed with Cancel, and Add to Dock waits again (a web app that comes later is still taken at the next click). The new web app is used only once Safari has sealed it with its code signature, about 0.3 s after its Info.plist appears: macOS won't open it before. macOS has no other way to make a web app.
+   - **Add a Web App…** (`SafariWebAppMaker`) checks the address (`WebAddress`: http or https, a host with a dot, "https://" added when missing), asks the site with one HEAD request (GET when HEAD is refused; any answer but 404 or 410 counts), opens it in Safari and waits until the page has loaded. Safari makes the web app from the page it shows, so it then waits for the site itself (`WebAddress.isSameSite`: the host typed, with or without "www.", a part of a bare address typed, or the same service's site for another place: the same first two parts of the host followed only by com, a country's code alone or after co or com, such as "es", "co.uk" or "com.br", or the ending of a region or city, such as "cat" or "berlin"); another host of the same domain is the site asking something first (consent.youtube.com for music.youtube.com, accounts.spotify.com for open.spotify.com), looked at again every second while the user answers it. Then it waits for the user's **Add to Dock**, checks the page is still the site, brings Safari to the front (it opens its dialog only while it's the active app, and its menu is looked up again once it is: a menu item found before doesn't open it), and presses Safari's File menu item through Accessibility. The dialog is found by its identifiers, the same in every language (`AddToDock`, `AddToDockFormAddButton`…); its address is set back to the one typed if the page moved, though Safari on macOS 27 ignores an address set through Accessibility. Then the user names the web app and clicks Add there: the dialog is looked at every 0.3 s until it closes (cancelling the add in AutoHush clicks its Cancel). Once it closes, the new web app gets 20 s to appear; none by then, it was closed with Cancel, and Add to Dock waits again (a web app that comes later is still taken at the next click). The new web app is used only once Safari has sealed it with its code signature, about 0.3 s after its Info.plist appears: macOS won't open it before. It's then chosen as the player; macOS may list it a little late, so it's looked for again up to 10 times, 0.5 s apart (a player the user picks meanwhile is kept). Still not listed, the window says it was added but can't be found yet, and takes it by itself once it's listed (looked for once a second meanwhile). macOS has no other way to make a web app.
    - **Muting.** A site that refuses to pause (its button disabled, as during an ad, or a press that doesn't take within 2 s) is muted instead with a Core Audio process tap muted while it's read, read by a private aggregate device whose IO block throws the samples away (`ProcessTapMuter`): macOS mutes nothing for a tap that nothing reads. Nothing is kept or rerouted, and removing it unmutes, on resume or when monitoring stops; should the reading stop, the sound comes back by itself. So is a site whose button says it's paused while it can be heard (YouTube Music's reads "Play" during an ad), when another app starts: since a paused page keeps its output open, silent, for seconds, the web app is first listened to for 0.5 s through level taps that exist only meanwhile (`ProcessTapLevelProbe`). While it's muted, its button is read about once a second; once it can pause (enabled, and saying it plays), it's pressed and the mute removed, so resuming goes on from there.
+8. **Apps added with Add an App…** (`CheckedPlayers`):
+   - **The check.** Add an App runs AutoHush's helper, playercheck (`Contents/Helpers`), in a process of its own (`PlayerCheckRun`), so a check that ends, is stopped or crashes takes its block on the mouse and keyboard with it. It finds the app's ways, presses each with the window in each state, and writes what worked (`CheckResult`). The user chooses one way, and Use keeps it in AutoHush's preferences as the app's `PlayerSetup` (`checkedPlayerSetups`); until then, for a day at most, the finished check is kept too (`KeptCheck`, forgotten once expired), so reopening AutoHush or closing the window doesn't cost another check. While a check runs, AutoHush leaves its own player as it is: one it paused stays paused until the check ends, never resumed in the check's gaps. The lines of the report AutoHush follows a check by (its panel, its shade) are `CheckReportLine`s, which the helper writes and AutoHush reads, and the log and report leave out the account's name and what was playing (`PrivateText`). Its caches and logs go in AutoHush's folders (`~/Library/Caches/com.autohush.AutoHush/PlayerCheck`, `~/Library/Logs/AutoHush/Checks`); in AntiDot mode it taps no sound (`--no-taps`).
+   - **The ways.** The ways that worked are offered surest first: its AppleScript (`ScriptedAppPlayer`, as its own dictionary allows), its page's Play/Pause (a `SafariWebAppPlayer` on the app's page, through `PageAccess`), its playback menu (`MenuPlayer` with `MenuPlayerProfile.found`), and last its row in the menu bar's Now Playing panel (`PanelWay`: the panel shows on screen for about half a second and takes the keyboard). The setup keeps only the one the user chose, and a `CheckedPlayer` presses by it alone (a setup kept before that choice may hold several: each press goes to the first, and one that fails hands it to the next). It checks its own presses (`checksItsPresses`): a way that toggles (an AppleScript that only toggles, a row that doesn't follow its app) is checked by the app's state for up to 10 s (`PressCheck(isToggle:)`), never pressed again, which would undo it. It fades only when its way is an AppleScript with a volume, and hears of changes from that AppleScript's notification when it has one, else by reading its state once a second.
+   - **Its state** is the surest sign that answers: its AppleScript state, its page's word (while current), its menu's item; then what it reported to Now Playing (`NowPlayingReports`: mediaremoted's lines in macOS's log, the last hour read once, then followed with one `log stream` from the first question on, which stops after a minute without one; only an administrator can read that log, and its wording is macOS's, not an API, so it's only an extra sign); else whether its sound output runs. A Chromium browser's web app plays through its browser, which holds one "Playing audio" assertion per playing page (`PlayingPages`): one more than its other pages' says the web app plays.
+   - **The Now Playing panel.** Its icon is found in the windows MenuBarAgent keeps for each menu bar item (Control Center's before macOS 27), by the item's identifier, `com.apple.menuextra.now-playing` (`AccessibilityNowPlayingPanel`), whatever covers it; else by hit-testing along the menu bar. With Now Playing hidden by the user, it's shown for the moment of a press by writing Control Center's `NowPlaying` preference for this Mac (`NowPlayingSetting`; flag 8 hides it); the user's value is written back after, unless the preference no longer holds what AutoHush wrote (the user changed it meanwhile). The value to put back is kept until then, so a press cut short is put right by AutoHush at its next start, or by the helper as it stops (`restoreIfLeft`). A row that doesn't follow its app (`PlayerSetup.panelRowIsStale`: Qobuz's always shows paused) is pressed as a toggle, judged by the app's sound (`LateHearing`): it's listened to for half a second (`ProcessTapLevelProbe`) just before a pause or a resume, and during the check; in between, its keep-awake assertion tells whether it plays. That needs Audio Recording, so in AntiDot mode such a way can't be chosen, and an app set up so is kept out of it as a mute-only one is (`needsAudioLevels`).
+   - **Muted instead of paused.** When no way works, **Mute It Instead** keeps a setup whose only way is `.mute`: while other apps play, the app is muted with a process tap (`ProcessTapMuter`, as a web app's ad is) and reads as paused, so the rest of AutoHush treats it as any paused player. Whether it plays is its keep-awake assertion once it has held one, else its open output. `MuteState` tells the user's own pause and play from a gap between songs: once the app has stopped for 3 s (`MuteState.stopTime`) and plays again, the mute is lifted and it reads as playing, a resume of the user's, which AutoHush leaves alone until the other apps stop. **Unmute** on the card does the same. After a sleep, the mute is lifted once the app has stopped for 3 s, never while it plays on. Quitting AutoHush lifts it, and AntiDot mode, which taps no sound, lifts it and leaves the app unable to be muted: it's then shown dimmed among the players.
+   - **The page's switch.** An Electron, CEF or Flutter app's page, and a Chromium browser's web app's, shows in Accessibility only once its switch for assistive tools is on (Electron's `AXManualAccessibility`, or VoiceOver's `AXEnhancedUserInterface`, set on the browser for a web app). It stays on while the app is the player, and goes back off (`release()`) when another player is chosen or AutoHush quits; a browser's, shared by its web apps, only once none of them uses it.
+   - **Reopening.** Chromium builds no page for a window out of sight, so an Electron app's page takes presses while covered or on another desktop only when the app was opened with `--disable-backgrounding-occluded-windows` (`PlayerSetup.launchOption`). Add an App's Reopen step reopens it so, after asking. Once it's the player, `needsReopen()` reads the running app's arguments; the card then says it needs reopening, and `reopen()` quits it as a person would (15 s, never by force) and opens it again in the background with the option.
 
-**The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and the player playing here or paused by us), with a 2 s release delay. The player itself is never tapped, except to prove the permission works when TCC can't be read.
+**The purple dot:** taps exist only while `PlaybackArbiter` says levels can change a decision (auto-pause on, and the player playing here or paused by us), with a 2 s release delay. The player itself is never tapped, except to prove the permission works when TCC can't be read, and an added app judged by its sound, for half a second just before a pause or a resume.
 
-**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
+**The audio permission:** macOS has no public API for it, and taps without it simply deliver silence. AutoHush reads it through the private `TCCAccessPreflight` / `TCCAccessRequest` (resolved at runtime, in `AutoHushKit/Utilities/PrivateAPI`), re-checks it every 5 s, and falls back to "any open output counts" when it's denied. If a future macOS removes those functions, it infers the permission from tapped samples instead.
 
 ## Architecture
 
@@ -53,7 +62,8 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
                                                                       ├── pauses the player on the first app
                                                                       ├── resumes after all apps stop
                                                                       ├── VolumeFader: logarithmic fades around both
-                                                                      └── MusicPlayer (ScriptablePlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility)
+                                                                      └── MusicPlayer (ScriptablePlayer and VLCPlayer: Apple events; MenuPlayer and SafariWebAppPlayer: Accessibility;
+                                                                            CheckedPlayer: an added app, by the way the user chose)
 ```
 
 AutoHush is a Swift package of several modules, so the compiler keeps the layers apart:
@@ -66,106 +76,150 @@ AutoHush (executable: the entry point only)
        │    │                   one <App>Support module per player
        │    ├─ ScriptablePlayers   shared by the players scripted with Apple events
        │    ├─ MenuPlayers         shared by the players controlled through their playback menu
-       │    └─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
+       │    ├─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
+       │    └─ CheckedPlayers      the apps added with Add an App…, controlled the way the user chose
+       ├─ CheckedPlayers    also used directly: a check's result and the report's lines AutoHush follows
        └─ AutoHushKit       the engine: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
-playercheck (tool, in Tools/) → ScriptablePlayers, MenuPlayers, WebAppPlayers, VLCSupport, AutoHushKit:
-                            could AutoHush control an app? (Player Check shows it in a window)
+playercheck (AutoHush.app's helper, in Sources/PlayerCheck) → PlayerCheckKit, ScriptablePlayers, MenuPlayers,
+                            WebAppPlayers, CheckedPlayers, AutoHushKit: how AutoHush can control an app;
+                            Add an App… runs it (and Player Check, in Tools/, shows it in a window)
+  └─ PlayerCheckKit         its parts that need no app to check (Sources/PlayerCheck/Kit), so tests reach them
 ```
 
 ```text
 Sources/
   AutoHush/              AutoHushMain (starts AutoHushApp)
-  AutoHushApp/
-    Main/                AppDelegate (wiring; its web app, permission and Diagnostics parts in
-                         AppDelegate+WebApps, +Permissions and +Diagnostics), PlayerSession (the chosen
-                         player from its start until AutoHush quits), LearningSession (learning a web
-                         app's controls with the user), WindowWatch (what the open windows show,
-                         followed once a second), UserSettings (the user's settings), AppActions (what only
-                         AppDelegate does, for the windows and the menu), MonitoringPipeline
-                         (the engine for each start), the app-wide state: AppState, which holds AppStatus (what
-                         the menu and the windows show, with UpdateOffer), and SettingsModel (what only
-                         Settings and the other windows show, and their actions), then
-                         StatusPresentation (the status's icons and text), AppHealthState, PermissionCenter
-                         (reads and asks for the permissions), OtherInstances (quits the copies opened before it),
-                         MainMenu (the Mac's standard menu bar, while a window is open), HeldPauses (a player
-                         left mid-pause keeps its monitoring until that pause ends)
-    MenuBar/             StatusMenuController, StatusMenuModel and Views/ (the menu), MenuBarIcon (drawn in code)
-    PlayerChoice/        the welcome window, Learning (the window for a player AutoHush learns, a Safari
-                         web app) and AddWebApp (the Add a Web App window)
-    Settings/            SettingsWindowController (the window, its pages and their sidebar),
-                         LaunchAtLoginController, DiagnosticsReport (the Diagnostics page, and Copy Report's
-                         text), Views/ (one per page: General, Apps, Detection, Fades, Diagnostics, Updates,
-                         About; SettingsSidebar)
-    Updates/             UpdateController, UpdateChecker, UpdateInstaller (download, signature check, swap),
-                         UpdateDownloads (the kept download), UpdateNotifier, the update window
-    Shortcuts/           Shortcuts' actions (AutoPauseIntents), the two App Shortcuts (AutoHushShortcuts), the
-                         Focus filter (AutoPauseFocusFilter) and FocusAutoPause (notes Auto-Pause as a Focus
-                         starts and puts it back as it ends); they reach Auto-Pause through
-                         AutoPauseControlling, which UserSettings implements, registered at launch
-                         (IntentDependencies)
-    General/             what several features show: PlayerOption (each player and whether it's installed),
-                         PlayerTiles (the players as tiles), WebAppsHeading (the web apps' heading, its badges
-                         and note), LearningSteps (the steps of learning a player, in the windows, and the
-                         Controls row of the menu's card and Settings), PermissionButton, ChecklistStep,
-                         CardStyles (the look the menu and Settings share), HostedWindowController and
-                         WindowHeader (the welcome, learning and Add a Web App windows, in Settings' look),
-                         DockPresence (in the Dock while a window is open), AppVersion, AppIcon, InfoAlert, …
-  AutoHushKit/
-    AudioDetection/      AudioMonitor, SourceActivityTracker, PlaybackSignals (AntiDot mode's judge),
-                         ActiveAudioReport (what Diagnostics shows), CoreAudio/ (process list, taps, levels)
-    Playback/            PlaybackArbiter, VolumeFader, PlaybackState, AutoPause (the setting and snoozes)
-    MusicPlayers/        MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
+  AutoHushApp/            by kind of code first, then by area
+    App/                 AutoHushApplication, AppDelegate (wiring; its parts by topic in AppDelegate+Lifecycle,
+                         +Player, +WebApps, +Permissions, +Updates, …), MainMenu (the Mac's
+                         standard menu bar, while a window is open)
+    Models/              the app-wide state: AppState, which holds AppStatus (what the menu and the windows
+                         show, with UpdateOffer), SettingsModel (what only the windows show, and their
+                         actions), StatePresentation (the status's icons and text), AppHealthState,
+                         StatusMenuModel, AddWebAppModel, PlayerOption (each player and whether it's
+                         installed), AppActions (what only AppDelegate does), UpdateCommands,
+                         SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
+                         the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
+                         UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
+                         LearningNote, LearningPauseMode, MonitoringSettings (what the monitoring follows),
+                         LogsModel (the logs window's entries, time range, levels and search), AddAppModel
+                         (Add an App's steps, from choosing the app to Use), CheckableApp, CheckPermissions
+                         and CheckPermission (one of them), CheckProgress (how far a check has got, read
+                         from the helper's report), PlayerCheckEnd (how it ended), KeptCheck (a finished
+                         check not used yet), OtherAppProblem (why an app picked from the disk can't be
+                         checked)
+    Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
+                         followed once a second; OtherInstances, quits the copies opened before it;
+                         DockPresence, in the Dock while a window is open), Playback/ (PlayerSession,
+                         the chosen player from its start until AutoHush quits; MonitoringPipeline, the
+                         engine for each start; HeldPauses), Settings/ (UserSettings, LaunchAtLoginController,
+                         ReopenChoices: the players reopened without asking),
+                         Permissions/ (PermissionCenter), Updates/ (UpdateController, UpdateChecker,
+                         UpdateInstaller: download, signature check, swap; UpdateDownloads, UpdateNotifier,
+                         ReleaseNotes), WebApps/ (LearningSession, learning a web app's controls with the
+                         user; FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
+                         (Shortcuts' actions and their choices, the two App Shortcuts, the Focus filter, and
+                         FocusAutoPause, which notes Auto-Pause as a Focus starts and puts it back as it ends;
+                         they reach Auto-Pause through AutoPauseControlling, registered at launch by
+                         IntentDependencies), AddApp/ (PlayerCheckHelper and PlayerCheckRun: AutoHush's own
+                         playercheck, and a check running in it, through CheckRunning; AddAppServices:
+                         what adding an app does outside its model; CheckableApps: the apps Add an App offers;
+                         AppPlaying: whether the chosen app plays, by its level, or by its open output without
+                         Audio Recording or in AntiDot mode)
+    Controllers/         AppKit's window and menu controllers: StatusMenuController, SettingsWindowController,
+                         PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
+                         LearningWindowController, HostedWindowController (their shared base),
+                         LogsWindowController, AddAppWindowController, AppChooserWindowController (the apps to
+                         choose), CheckWarningWindowController (before a check), CheckPanelController (a
+                         check's progress at the bottom right of every desktop, and the screen's shade)
+    Views/               SwiftUI views, by area: Components/ (what several places show, one component and
+                         its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
+                         colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
+                         ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
+                         views, its drawn rows (NSMenuItem+PlayerList, MenuContentWidth) and MenuBarIcon,
+                         drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
+                         WebApps/ (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
+                         AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
+                         before a check, the check's panel, AddAppText: what they say)
+    Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, …
+  AutoHushKit/           the engine, by kind of code too
+    Models/              values and settings: AutoPauseSetting (the setting and snoozes), PlaybackState,
+                         DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),
+                         AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates, LogEntry
+    Services/            Audio/ (AudioMonitor, SourceActivityTracker, PlaybackSignals: AntiDot mode's judge;
+                         CoreAudio/: process list, taps, levels), Playback/ (PlaybackArbiter, VolumeFader, PauseHandover, PressCheck),
+                         NowPlaying/ (NowPlayingReports: what apps report to Now Playing, from macOS's log,
+                         administrators only, an extra sign)
+    Players/             MusicPlayer (the interface), MusicPlayerCatalog, PlayerState, VolumeCurve,
                          PolledStateObserver (for players that announce nothing), WebAppMaking (making a
                          web app from an address, and the suggested ones), WebAddress (an address as
                          typed, and whether a page is its site), CountrySites (a service's site by
                          country), PlayerIconPlaceholder (a player's icon while it isn't installed)
     Permissions/         what's needed and where to grant it
-    PrivateAPI/          TCC, ProcessResponsibility, AccessibilityWindows, NowPlayingApp: undocumented macOS
-                         functions, resolved at runtime with fallbacks; check them after every major macOS
-                         release
-    Configuration/       AppConfiguration, TimingSettings, AutomaticUpdates
-    Storage/, General/   Preferences; logging and small helpers
+    Storage/             Preferences, LogFile (AutoHush's own log, its last 24 hours)
+    Utilities/           logging (AutoHushLogger) and small helpers; PrivateAPI/ (TCC, ProcessResponsibility,
+                         AccessibilityWindows, NowPlayingApp: undocumented macOS functions, resolved at
+                         runtime with fallbacks; check them, and those listed under Where things go, after
+                         every major macOS release)
   AutoHushPlayers/       SupportedPlayers (the catalog of supported players)
   PlayersSupport/        ScriptablePlayers and MenuPlayers (shared), SpotifySupport, AppleMusicSupport,
                          TidalSupport, PodcastsSupport and VLCSupport: each player's profile or controller,
                          and its placeholder icon; WebAppPlayers: Safari web apps (finding them, learning
-                         their button, controlling them)
-Tests/                   a test module per module, mirroring its folders (only the player modules' tests
-                         name a player), plus AutoHushTestSupport (shared fakes)
+                         their button, controlling them; with PageAccess, another app's page too: Electron,
+                         CEF, Flutter and Chromium web apps, once their switch for assistive tools is on;
+                         PlayingPages: a Chromium browser's playing pages). For an app without a module of
+                         its own: ScriptingDictionary, ScriptSetup and ScriptedAppPlayer (an app controlled as
+                         its own dictionary allows, documents too), MenuPlayerProfile.found with
+                         PlayPauseWords.found (any app's menu and words); and CheckedPlayers: PlayerSetup
+                         (the way the user chose, kept), CheckedPlayer (pressing by it, and checking its
+                         presses), LateState and LateHearing (a toggle's state, and a stale row's sound),
+                         MuteState, CheckReportLine (the report's lines AutoHush follows), and the Now Playing
+                         panel (NowPlayingPanel, AccessibilityNowPlayingPanel, PanelRows, PanelWay: the last
+                         way; NowPlayingSetting: showing it for a press while hidden)
+  PlayerCheck/           playercheck: how AutoHush can control an app. build-app.sh puts it in the app, as
+                         Contents/Helpers/playercheck, where Add an App… runs it (its own process: a check that
+                         ends or stops takes its block on the mouse and keyboard with it); --result writes what
+                         it found (CheckResult), --partial goes on without Audio Recording or Automation,
+                         --logs and --caches put its logs and caches in AutoHush's folders, --no-taps taps no
+                         sound (AntiDot mode)
+Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
+                         fakes); only the players' code names a player, but any test may use real apps
+                         (VLC, Spotify…) as test data
 Tools/                   tools for measuring the fades and checking apps, never part of the app or its disk
                          image; each has a README.md saying what it does and how (Tools/README.md lists them)
   MeasureVolumeCurve/    measures a player's volume curve
   ListenToFades/         records a loopback device and measures the fades in it
   LoopbackDriver/        AutoHush Loopback, a test-only virtual audio device, with build, install and
                          uninstall scripts
-  PlayerCheck/           playercheck: whether and how AutoHush could control an app
-  PlayerCheckApp/        Player Check, the same in a window, with Play and Pause for the apps it can control
+  PlayerCheckApp/        Player Check, Sources/PlayerCheck in a window, with Play and Pause for the apps it
+                         can control
 Resources/               Info.plist, entitlements, AutoHush.icon (the app icon), and Localization/ with the
                          String Catalogs, assembled into the .app by Scripts/build-app.sh
 ```
 
 **Where things go:**
 
-- **`AutoHushKit`** has no user interface (no AppKit or SwiftUI) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
-- **`AutoHushApp`** holds what you see and use, grouped by feature, plus `Main/`, which starts things, wires the features to the engine and owns the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show). Features may use the engine, `General/` and that state, not each other: what several of them show lives in `General/`.
+- **`AutoHushKit`** has no user interface (no windows or views; AppKit only for `NSRunningApplication`, the shared `running(_:)` helper) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushApp`** is sorted by kind of code first, then by area: `App/` starts things and wires them together; `Models/` holds the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show); `Services/` does the work; `Controllers/` are AppKit's window and menu controllers; `Views/` are SwiftUI's, with what several places show in `Views/Components/`; `Utilities/` are small helpers. A file holds one kind of code and is named after its main type; a large type is split by topic into `Type+Topic.swift` files beside it (`PlaybackArbiter+Pausing.swift`, `AppDelegate+Player.swift`).
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
-- **`PrivateAPI/`** is the only place that calls undocumented macOS functions.
-- **Text people read** lives in the app, never in the engine: mostly in `Main/StatusPresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
-- **`General/`** folders hold only what several parts of a module need.
+- **`Utilities/PrivateAPI/`** (in the engine) holds the undocumented macOS functions AutoHush calls. The only other undocumented parts of macOS it relies on: Control Center's `NowPlaying` preference and its flags (`NowPlayingSetting`, written), MenuBarAgent's windows for each menu bar item and `com.apple.menuextra.now-playing` (`AccessibilityNowPlayingPanel`), and the helper's SkyLight calls (`Desktops`) and `_AXUIElementGetWindow` (`WindowStates`). Check all of them after every major macOS release.
+- **Text people read** lives in the app, never in the engine: mostly in `Models/StatePresentation.swift`, while Diagnostics gets plain facts from the engine (`ActiveAudioReport`) and words them. Write it as `String(localized:)` or a SwiftUI text, with a `comment:` for translators when the context isn't obvious (see [Translations](#translations)). Logs stay in English.
+- **Logging** goes through `AutoHushLogger` (`AutoHushLogger(category:)`, then `.info`, `.notice`, `.error`, `.fault` or `.debug`), written as with macOS's `Logger`: a value shows only when marked `privacy: .public` (numbers and Booleans unless marked `.private`), otherwise it reads `<private>`. Lines are in English and never translated: interpolate an error as `\(error)`, never its `localizedDescription` (in the user's language), and it's said in English (`LoggableError` for AutoHush's own errors; macOS's by domain and code). Every line but debug ones goes to AutoHush's own log, `~/Library/Logs/AutoHush/AutoHush.log` (`LogFile`: the last 24 hours, 4 MB at most), which Settings → Diagnostics → Show Logs… shows; macOS's log gets every line at the debug level only, so it keeps none: watch them live with `log stream --level debug --predicate 'subsystem == "com.autohush.AutoHush"'`.
 - **Access:** types used across modules are marked `package`, visible inside AutoHush but to nothing outside it.
 
-**Adding a media player:** first check that the app can be controlled, and how: [PlayerCheck](Tools/PlayerCheck) (or [Player Check](Tools/PlayerCheckApp), in a window) reads its scripting dictionary, playback menu and page, tries pausing and playing it, and says which kind of player it would be. The app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
+**Adding a media player:** most apps need no code. **Add an App…** checks the app with AutoHush's helper, [playercheck](Sources/PlayerCheck): it reads its scripting dictionary, playback menu, page and Now Playing panel row, tries pausing and playing it by each with its window in each state, and writes what worked (`CheckResult`). The user chooses one way, AutoHush keeps it as a `PlayerSetup` (`CheckedPlayers.keep`), and a `CheckedPlayer` controls the app by it. A module of its own is for a popular player that needs fades, its own words or quirks: check it first with the same [PlayerCheck](Sources/PlayerCheck) (or [Player Check](Tools/PlayerCheckApp), in a window), which says which kind of player it would be. The app and the engine only talk to players through the `MusicPlayer` protocol: its bundle ID and name, a permission check, its live state, `pause()` / `play()`, its volume (for fades; `nil` if it has none) and how that volume maps to loudness (`VolumeCurve`; linear if not given), and a `PlayerStateObserving` that reports state changes. A new player is:
 
 1. a new module, `Sources/PlayersSupport/<App>Support/`, and its tests in `Tests/PlayersSupport/<App>SupportTests/` (both need a `path:` in `Package.swift`). If the app is scripted like Spotify and Music, the module is a `ScriptablePlayerProfile`: its bundle ID and name, the suite code of its pause and play commands (from the `.sdef` in its bundle), its state notification, and any quirk, such as Spotify's volume reading one less than it was set to. If it can't be scripted but has a playback menu with Play/Pause first and ⌘← and ⌘→ items, as TIDAL and Podcasts do, it's a `MenuPlayerProfile`: its bundle ID, name, menu name and how to read its own words for Play and Pause from its bundle. Otherwise it's a type implementing `MusicPlayer`, as `VLCPlayer` does;
 2. an entry in `SupportedPlayers.catalog` (and a dependency of `AutoHushPlayers` in `Package.swift`), so it's offered in the menu, Settings and the welcome window;
 3. its placeholder icon, a `PlayerIconPlaceholder` in its module (as `SpotifyIcon.swift`): its tile's colors and its mark drawn as a path on a 1000-point tile, shown while the app isn't installed. The catalog's tests check that every player has one;
-4. its volume curve: linear until it's measured. The maintainer measures it before the player ships.
+4. its volume curve: linear until it's measured. The maintainer measures it before the player ships;
+5. its name in the bug report form's player list (`.github/ISSUE_TEMPLATE/bug.yml`).
 
 A website needs none of this: added to the Dock from Safari, it's offered as a player, and AutoHush learns its Play/Pause button. `MusicPlayerCatalog` takes such players besides the built-in ones (`found`) and the sites it suggests adding (`suggested`); a player that has to learn implements `LearningMusicPlayer`, whose status the app shows, and one that may mute itself implements `MutingMusicPlayer`. Once a website has been tested live, add it to `SupportedPlayers.testedWebApps`: its web app is then offered first and suggested until added, instead of being marked untested.
 
-Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Configuration/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
+Defaults that aren't in Settings, such as tick rates, the gap tolerance and the excluded system processes, live in [`AppConfiguration.swift`](Sources/AutoHushKit/Models/AppConfiguration.swift). Any non-empty bundle ID that isn't excluded counts as a media app.
 
 ## Build and test
 
@@ -179,6 +233,8 @@ bash Scripts/build-app.sh release   # build and sign AutoHush.app
 The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts.
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
+
+`build-app.sh` also builds `playercheck`, the helper Add an App… runs, and puts it in `Contents/Helpers`, signed like the app (its entitlements, the identifier `com.autohush.AutoHush.playercheck`) before the app is signed around it. macOS counts what the helper does as AutoHush's, so its checks use AutoHush's permissions.
 
 Shortcuts and System Settings' Focus filters find AutoHush's actions, App Shortcuts and Focus filter in `Contents/Resources/Metadata.appintents`, which Xcode writes and SwiftPM doesn't. So `build-app.sh`, after `swift build` and before signing, runs Xcode's `appintentsmetadataprocessor` on AutoHushApp: it reads them from the module's sources and the constant values the compiler recorded for them, so their texts must be literals, and lists the actions' summaries for the String Catalog. With Xcode, a build that writes no metadata fails; without it, the app builds without the actions, with a warning. macOS indexes the actions once the app has run, and runs them only for an app signed by a developer team (see [Signing and releases](#signing-and-releases)).
 
@@ -214,7 +270,7 @@ Contributions are welcome. The repository has two branches:
 
 To propose a change, fork the repository and create a branch from `wip` whose name starts with what it is: **`fix-`** for a bug fix, **`feature-`** for something new, or **`change-`** for a change to how something already works (for example `fix-vlc-resume` or `feature-qobuz`). Then open a pull request into **`wip`**, not `main`. I review every pull request before approving and merging it, and it reaches `main` with the next release. Before you open it, check that it builds and its tests pass (see [Build and test](#build-and-test)) and that it follows the [style guide](STYLE_GUIDE.md). A check on every pull request flags one whose branch name or target doesn't follow this, and another builds it and runs the tests; [CONTRIBUTING.md](CONTRIBUTING.md) has it all in one place.
 
-To report a problem or suggest something, [open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose): there's a form for a bug (with Diagnostics' report, from **Settings → Diagnostics → Copy Report**), a feature, a player you'd like AutoHush to support (with [Player Check](Tools/PlayerCheckApp)'s report) and a translation fix. A security problem goes privately, as [SECURITY.md](SECURITY.md) says.
+To report a problem or suggest something, [open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose): there's a form for a bug (with Diagnostics' report, from **Settings → Diagnostics → Copy Report**, and the logs, from **Show Logs…** beside it), a feature, a player you'd like AutoHush to support (when **Add an App…** found no way, with its check's log) and a translation fix. A security problem goes privately, as [SECURITY.md](SECURITY.md) says.
 
 ## Signing and releases
 
@@ -237,10 +293,10 @@ This creates the certificate (valid 10 years) in your login keychain. The first 
 | `Scripts/create-signing-certificate.sh` | Creates the self-signed certificate (once) |
 | `Scripts/build-app.sh [release\|debug]` | Builds and signs `AutoHush.app` (`VERSION` / `BUILD_NUMBER` override the bundle version) |
 | `Scripts/build-dmg.sh [version]` | Packages `dist/AutoHush-<version>.dmg`: a drag-to-Applications window in AutoHush's colours, with a first-launch note, drawn by `Scripts/lib/dmg-background.swift` and laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild) (`Scripts/lib/dmg-settings.py`), without Finder. dmgbuild is installed on first use into `.build/`, pinned and hash-checked (`Scripts/lib/dmgbuild-requirements.txt`); it needs Python 3.10 or later (`PYTHON` picks one) |
-| `Scripts/release.sh <version>` | Prepares a release: tests, version and changelog, signed build, DMG and release notes. It refuses any build not signed with an Apple developer team (self-signed or ad hoc) and never commits, tags or publishes |
+| `Scripts/release.sh <version>` | Prepares a release: tests, signed build and DMG, then version and changelog (a failed build changes neither), and release notes. It refuses any build not signed with AutoHush's developer team (another team, self-signed or ad hoc) and never commits, tags or publishes |
 | `Scripts/update-tap.sh <version>` | Points the Homebrew tap at a published release: checks that the DMG on GitHub is the one in `dist/`, then commits the new version and checksum to the tap's cask and pushes it |
 
-The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise the first valid "Apple Development" identity in the keychain, otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
+The signing identity is `SIGNING_IDENTITY` if set (`-` means ad hoc), otherwise an "Apple Development" identity in the keychain (AutoHush's team's if there is one; of several, the one valid longest), otherwise "AutoHush Self-Signed" if it exists, otherwise ad hoc. `SIGNING_KEYCHAIN` points to another keychain (for example on CI). Ad-hoc builds reset AutoHush's permissions so macOS asks again; `KEEP_PERMISSIONS=1` skips that.
 
 **Publishing a release:** releases are made on the `wip` branch. Run `bash Scripts/release.sh <version>` there and follow the steps it prints: commit `Resources/Info.plist` and `CHANGELOG.md` and tag `v<version>` on `wip`, move `main` to that commit (a fast-forward), push both branches and the tag, create the GitHub release with the DMG and the generated notes, then run `bash Scripts/update-tap.sh <version>` for Homebrew. Installed copies find the release at their next daily check: they compare its tag with their own version and install `AutoHush-<version>.dmg`. So the tag must match the app's version, and the DMG must keep its name and be signed with the same team.
 

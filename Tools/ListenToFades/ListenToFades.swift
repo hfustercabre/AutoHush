@@ -17,9 +17,10 @@ import os
 /// test beep (523 Hz) and, for every fade, prints the music's level every
 /// 50 ms next to an ideal straight-line fade, the level every 5 ms around the
 /// moments AutoHush starts and stops playing the sound itself, and any
-/// dropouts or jumps. AutoHush logs fades at debug level, which macOS keeps
-/// only for a live `log stream`: capture one during the test and pass it
-/// with `--log` (compact style), else `log show` is asked, and may find none.
+/// dropouts or jumps. AutoHush gives macOS's log its lines at the debug
+/// level only, which macOS keeps only for a live `log stream`: capture one
+/// during the test and pass it with `--log` (compact style), else `log show`
+/// is asked, which finds none.
 @main
 enum ListenToFades {
     static let defaultDevice = "AutoHushLoopback_UID"
@@ -179,7 +180,7 @@ enum ListenToFades {
             mono[frame] = sum / Double(channels)
         }
         let music = notch(notch(mono, frequency: beep, rate: rate), frequency: beep, rate: rate)
-        let meter = Meter(music: music, rate: rate, start: start)
+        let meter = Meter(music: music, rate: rate)
         let end = start.addingTimeInterval(Double(frames) / rate)
         let events = (log.flatMap { try? String(contentsOfFile: $0, encoding: .utf8) } ?? logShow(from: start, to: end))
             .split(separator: "\n").compactMap(event).filter { $0.time >= start && $0.time <= end }
@@ -218,10 +219,9 @@ enum ListenToFades {
     /// The music's level, 5 ms at a time.
     struct Meter {
         let levels: [Double] // dB, one per 5 ms (10 ms windows)
-        let start: Date
         static let hop = 0.005
 
-        init(music: [Double], rate: Double, start: Date) {
+        init(music: [Double], rate: Double) {
             let hop = Int(rate * Self.hop), window = 2 * hop
             var levels: [Double] = []
             var index = 0
@@ -232,7 +232,6 @@ enum ListenToFades {
                 index += hop
             }
             self.levels = levels
-            self.start = start
         }
 
         func index(_ seconds: Double) -> Int { Int((seconds / Self.hop).rounded()) }

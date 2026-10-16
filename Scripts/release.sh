@@ -5,12 +5,14 @@
 #
 # Steps:
 #   1. runs the test suite, before anything changes
-#   2. sets the version in Resources/Info.plist (build number + 1) and turns
-#      CHANGELOG.md's [Unreleased] section into [<version>] — <date>
-#   3. builds the app, signed with the maintainer's Apple Development
-#      certificate under the developer team's requirement (hardened runtime)
-#   4. packages dist/AutoHush-<version>.dmg
-#   5. writes the release notes into dist/release-notes-<version>.md
+#   2. builds the app with the new version (build number + 1), signed with
+#      the maintainer's Apple Development certificate under the developer
+#      team's requirement (hardened runtime), and packages
+#      dist/AutoHush-<version>.dmg
+#   3. only then sets the version in Resources/Info.plist and turns
+#      CHANGELOG.md's [Unreleased] section into [<version>] — <date>, so a
+#      failed build leaves both as they were
+#   4. writes the release notes into dist/release-notes-<version>.md
 #
 # Once the GitHub release is published, Scripts/update-tap.sh points the
 # Homebrew tap at it.
@@ -40,12 +42,16 @@ grep -q '^## \[Unreleased\]' "$CHANGELOG" || fail "CHANGELOG.md has no [Unreleas
 IDENTITY="$(resolve_signing_identity)"
 # Installed copies accept an update only if it satisfies their designated
 # requirement, which names the developer team. Only an identity issued by Apple
-# with a team has one: not ad hoc, self-signed or any other certificate.
-if [[ -z "$(team_requirement "$IDENTITY")" ]]; then
+# to that team has one: not ad hoc, self-signed, another team's or any other
+# certificate.
+IDENTITY_TEAM="$(identity_team "$IDENTITY")"
+if [[ "$IDENTITY_TEAM" != "$RELEASE_TEAM" ]]; then
     if [[ "$IDENTITY" == "-" ]]; then
         found="the identity is ad hoc (no valid Apple Development certificate was found or selected)"
+    elif [[ -z "$IDENTITY_TEAM" ]]; then
+        found="\"$(identity_name "$IDENTITY")\" has no developer team"
     else
-        found="\"$IDENTITY\" has no developer team"
+        found="\"$(identity_name "$IDENTITY")\" is team $IDENTITY_TEAM's, not $RELEASE_TEAM's"
     fi
     fail "releases must be signed with the maintainer's Apple Development certificate (its developer team), but $found; installed copies would refuse the update. If the certificate expired, renew it in Xcode (Settings → Accounts → Manage Certificates)."
 fi
@@ -55,21 +61,25 @@ step "Running tests"
 # Every test, the slow ones too, even where quick runs are the default.
 env -u AUTOHUSH_QUICK_TESTS swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
 
-# 2. Version and changelog ---------------------------------------------------
+# 2. App and disk image -------------------------------------------------------
+# The bundle gets the new version and build number (build-app.sh sets them in
+# its own Info.plist); Resources/Info.plist and the CHANGELOG change only
+# once it's built.
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))
+SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
+# The team the built app is signed with: anything but $RELEASE_TEAM stops the
+# release here, before the version and the CHANGELOG change.
+TEAM="$(codesign -dv "$APP_BUNDLE" 2>&1 | sed -n 's/^TeamIdentifier=//p')"
+[[ "$TEAM" == "$RELEASE_TEAM" ]] || fail "the app is signed by team ${TEAM:-none}, not $RELEASE_TEAM: installed copies would refuse the update"
+
+# 3. Version and changelog ---------------------------------------------------
 step "Setting version $VERSION ($BUILD_NUMBER)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST"
 sed -i '' "s/^## \[Unreleased\]$/## [$VERSION] — $(date +%Y-%m-%d)/" "$CHANGELOG"
 
-# 3–4. App and disk image -----------------------------------------------------
-SIGNING_IDENTITY="$IDENTITY" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
-
-# 5. Release notes -----------------------------------------------------------
+# 4. Release notes -----------------------------------------------------------
 SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
-# The team the built app is signed with, so an identity from the wrong
-# keychain shows before anything is published.
-TEAM="$(codesign -dv "$APP_BUNDLE" 2>&1 | sed -n 's/^TeamIdentifier=//p')"
 step "Writing the release notes"
 awk -v heading="## [$VERSION]" '
     index($0, heading) == 1 { found = 1; next }
@@ -81,13 +91,13 @@ echo ""
 echo "Release $VERSION prepared:"
 echo "  disk image     $DMG_PATH"
 echo "  SHA-256        $SHA256"
-echo "  signed with    $IDENTITY (not notarized: Gatekeeper asks users to confirm the first launch)"
-echo "  developer team ${TEAM:-none} (must be the last release's)"
+echo "  signed with    $(identity_name "$IDENTITY") (not notarized: Gatekeeper asks users to confirm the first launch)"
+echo "  developer team $TEAM"
 echo "  release notes  $NOTES_PATH"
 echo ""
 echo "Next steps (not done by this script):"
 echo "  git add Resources/Info.plist CHANGELOG.md"
-echo "  git commit -m \"release: $VERSION\" && git tag $TAG       (on wip)"
+echo "  git commit -m \"release: $VERSION\" && git tag -a $TAG -m \"AutoHush $VERSION\"   (on wip)"
 echo "  git switch main && git merge --ff-only wip && git switch wip"
 echo "  git push origin wip main $TAG"
 echo "  Create the GitHub release $TAG, upload $(basename "$DMG_PATH") and paste the release notes."

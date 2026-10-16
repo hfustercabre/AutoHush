@@ -5,8 +5,9 @@ means one thing. Code names are in backticks. See
 [DEVELOPMENT.md](DEVELOPMENT.md) for how the parts work together.
 
 **Chosen player**: the media player the user picked for AutoHush to pause
-and resume: an app such as Spotify, or a Safari web app. There is one at a
-time, or none until the user picks one. In the code it's a `MusicPlayer`.
+and resume: an app such as Spotify, a Safari web app, or an app added with
+Add an App (a checked app). There is one at a time, or none until the user
+picks one. In the code it's a `MusicPlayer`.
 _Avoid_: music app, target.
 
 **Player session** (`PlayerSession`): the chosen player from its start
@@ -37,8 +38,11 @@ icons: the status line, its orange, the menu bar icon.
 writes it; Settings and the welcome, learning and Add a Web App windows
 read it part by part, each window drawn again only when a part it shows
 changes; the menu gets a copy each time it changes (its card follows it
-while open, its rows when it next opens). _Avoid_: model (Settings' model is the windows' own: what they
-alone show, and their actions).
+while open, its rows when it next opens). Add an App's windows (the window,
+Choose an App and the check's panel) read their own model instead,
+`AddAppModel`: its steps, from choosing the app to Use. _Avoid_: model
+(Settings' model is the windows' own: what they alone show, and their
+actions).
 
 **Learning session** (`LearningSession`): learning the chosen web app's
 controls with the user, from choosing it until it's learned, and again
@@ -50,9 +54,11 @@ _Avoid_: learner (that's the player's own part, which reads the page).
 
 **Window watch** (`WindowWatch`): while AutoHush's windows are open,
 follows once a second what they show that macOS doesn't announce: the
-players installed, the permissions, whether notifications are on, launch
-at login, Diagnostics. Each window says what it needs; the watch refreshes
-only what the open ones need, and stops when none is open.
+permissions, whether notifications are on, launch at login, Diagnostics,
+and the players installed while none is chosen (once one is, the
+Applications folders are watched instead). Each window says what it
+needs; the watch refreshes only what the open ones need, and stops when
+none is open.
 
 **User settings** (`UserSettings`): the user's own settings and what
 follows from them: Auto-Pause and its snooze, the apps ignored and the
@@ -100,3 +106,37 @@ phrase names the app, as Siri requires.
 Auto-Pause, On or Off, added in System Settings → Focus. While that Focus
 is on, Auto-Pause follows it; when it ends, `FocusAutoPause` puts back how
 Auto-Pause was, unless the user changed it meanwhile.
+
+**Check** (playercheck, `PlayerCheckRun`): finding out how AutoHush can
+pause and play an app it has no support of its own for: its AppleScript,
+its playback menu, its page's Play/Pause and its row in the Now Playing
+panel are each tried, pausing the app and playing it again, with its window
+in each window state. AutoHush runs it in its helper, playercheck
+(`Contents/Helpers`), from Add an App; Player Check runs the same in a
+window. _Avoid_: test (that's the code's tests), scan.
+
+**Way** (`PlayerSetup.Way`, `CheckResult.WayKind`): one means of pausing
+and playing an app: its script, its menu, its page or the panel; or, when
+none works and the user chooses it, muting it while other apps play
+(`.mute`, its state kept by `MuteState`). A check says how each did: in
+every window state, in some, in none, not there, not tried or not checked.
+_Avoid_: method.
+
+**Window state**: where an app's window is while a check presses it: in
+view, covered, on another desktop, covered there, full screen,
+minimized or hidden. A way that works in every state works wherever the
+user leaves the window.
+
+**Checked app** (`CheckedPlayer`, kind `.checkedApp`): an app added with
+Add an App, offered under "Other Apps" with its "Checked by you" badge, and
+controlled the one way the user chose among those its check found (a setup
+kept before that choice may hold several, a press handed to the next when
+one fails). That way is kept as its **player setup** (`PlayerSetup`).
+_Avoid_: custom player.
+
+**Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,
+but was opened without what it needs to be controlled wherever its window
+is (an Electron app's launch option); `reopen()` quits it and opens it
+again as it needs. The menu and Settings → General say so, with a Reopen
+button; a player the user chose to reopen always (`ReopenChoices`) is
+reopened without asking.

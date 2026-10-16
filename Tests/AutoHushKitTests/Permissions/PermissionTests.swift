@@ -1,6 +1,5 @@
 import Testing
 @testable import AutoHushKit
-import AutoHushTestSupport
 
 @Suite("Permission")
 struct PermissionTests {

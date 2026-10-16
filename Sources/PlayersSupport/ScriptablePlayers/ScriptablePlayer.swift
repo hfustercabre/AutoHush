@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// What AutoHush needs to know about a music app it controls with Apple
@@ -55,12 +54,13 @@ package actor ScriptablePlayer: MusicPlayer {
     package nonisolated var volumeCurve: VolumeCurve { profile.volumeCurve }
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { profile.iconPlaceholder }
 
-    private let logger = Logger(category: "ScriptablePlayer")
-    private let channel: AppleEventChannel
+    private let logger = AutoHushLogger(category: "ScriptablePlayer")
+    private let channel: any AppleEventSending
 
-    package init(profile: ScriptablePlayerProfile) {
+    /// `channel`: its Apple events; tests stand in for them.
+    package init(profile: ScriptablePlayerProfile, channel: (any AppleEventSending)? = nil) {
         self.profile = profile
-        channel = AppleEventChannel(bundleID: profile.bundleID, label: profile.name)
+        self.channel = channel ?? AppleEventChannel(bundleID: profile.bundleID, label: profile.name)
     }
 
     package func verifyControlAccess() async throws {
@@ -75,7 +75,7 @@ package actor ScriptablePlayer: MusicPlayer {
             let reply = try await channel.send(Self.makeGetPlayerStateEvent(processIdentifier:), to: pid)
             return Self.playerState(fromReply: reply)
         } catch {
-            logger.error("\(self.profile.name, privacy: .public) playerState failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("\(self.profile.name, privacy: .public) playerState failed: \(error)")
             return .unknown
         }
     }

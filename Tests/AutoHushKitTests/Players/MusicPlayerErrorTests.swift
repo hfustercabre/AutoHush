@@ -1,0 +1,39 @@
+import Testing
+@testable import AutoHushKit
+
+@Suite("MusicPlayerError")
+struct MusicPlayerErrorTests {
+
+    @Test("automationPermissionDenied has a human-readable description")
+    func automationPermissionDeniedDescription() {
+        let error = MusicPlayerError.automationPermissionDenied
+        #expect(error.errorDescription?.isEmpty == false)
+        #expect(error.localizedDescription.lowercased().contains("automation"))
+    }
+
+    @Test("playerNotRunning has a human-readable description")
+    func playerUnavailableDescription() {
+        let error = MusicPlayerError.playerNotRunning
+        #expect(error.errorDescription?.isEmpty == false)
+        #expect(error.localizedDescription.lowercased().contains("player"))
+    }
+
+    @Test("playerCommandFailed describes its failure, in English for the log")
+    func playerCommandFailedDescription() {
+        let error = MusicPlayerError.playerCommandFailed(.appleEventError(-1712, message: nil))
+        #expect(error.errorDescription == "Controlling the media player failed: OSStatus -1712.")
+        #expect(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")).errorDescription
+                == "Controlling the media player failed: Not understood (OSStatus -1708).")
+        #expect(MusicPlayerError.playerCommandFailed(.menuItemNotFound).errorDescription
+                == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
+    }
+
+    @Test("its English, shown in the control-error alert, has no straight apostrophe")
+    func curlyApostrophes() {
+        let failures: [ControlFailure] = [.menuItemNotFound, .stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored,
+                                          .muteUnavailable, .hearingUnavailable, .nowPlayingHidden]
+        let errors: [MusicPlayerError] = [.automationPermissionDenied, .accessibilityPermissionDenied, .playerNotRunning,
+                                          .playerNotResponding, .stillLearning] + failures.map { .playerCommandFailed($0) }
+        #expect(errors.allSatisfy { $0.errorDescription?.contains("'") == false })
+    }
+}

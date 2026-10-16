@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import OSLog
 import AutoHushKit
 
 /// Reports a music app's state changes without asking the app.
@@ -20,7 +19,7 @@ package final class PlayerStateObserver: NSObject, PlayerStateObserving {
     private let workspaceCenter: NotificationCenter
     private var terminationObserver: (any NSObjectProtocol)?
     private var isObserving = false
-    private let logger = Logger(category: "PlayerStateObserver")
+    private let logger = AutoHushLogger(category: "PlayerStateObserver")
 
     package init(
         notification: Notification.Name,

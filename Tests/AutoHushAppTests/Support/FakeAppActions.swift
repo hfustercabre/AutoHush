@@ -17,6 +17,10 @@ final class FakeAppActions: AppActions {
 
     func choosePlayer(_ bundleID: String) { log.calls.append("player \(bundleID)") }
     func openAddWebApp() { log.calls.append("addWebApp") }
+    func openAddApp() { log.calls.append("addApp") }
+    func removeAddedApp(_ bundleID: String) { log.calls.append("remove \(bundleID)") }
+    func reopenPlayer() { log.calls.append("reopenPlayer") }
+    func unmutePlayer() { log.calls.append("unmutePlayer") }
     func learnControlsAgain() { log.calls.append("learnAgain") }
     func requestPermission(_ permission: Permission) { log.calls.append("warning \(permission.grantTitle)") }
     func finishWelcome() { log.calls.append("finishWelcome") }
@@ -25,6 +29,7 @@ final class FakeAppActions: AppActions {
     func reopenAutoHush() { log.calls.append("reopen") }
     func openSettings(page: SettingsWindowController.Page?) { log.calls.append(page.map { "\($0)" } ?? "settings") }
     func showControlError() { log.calls.append("why") }
+    func showLogs() { log.calls.append("showLogs") }
     func openNotificationSettings() { log.calls.append("notificationSettings") }
     func quit() { log.calls.append("quit") }
 }
@@ -36,6 +41,20 @@ final class FakeUpdateCommands: UpdateCommands {
     init(log: CallLog = CallLog()) { self.log = log }
 
     func checkFromUser() { log.calls.append("checkUpdates") }
+
+    /// `checkNow` waits for `finishCheck()` while this is set.
+    var holdsChecks = false
+    private var heldCheck: CheckedContinuation<Void, Never>?
+
+    func checkNow() async {
+        log.calls.append("checkNow")
+        if holdsChecks { await withCheckedContinuation { heldCheck = $0 } }
+    }
+
+    func finishCheck() {
+        heldCheck?.resume()
+        heldCheck = nil
+    }
     func presentAvailableUpdate() { log.calls.append("update") }
     func setChecksAutomatically(_ enabled: Bool) { log.calls.append("autoUpdate \(enabled)") }
     func setMode(_ mode: AutomaticUpdates) { log.calls.append("updates \(mode.rawValue)") }

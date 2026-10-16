@@ -26,6 +26,8 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     private var _windowLooks = 0
     private var _buttonReads = 0
     private var _blankLooks = 0
+    private var _wordsCurrent = true
+    private var _releases = 0
     /// What a press does; by default it swaps the button's words.
     var onPress: (@Sendable (FakeWebPage, Int) -> Void)?
 
@@ -51,6 +53,13 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
         get { lock.withLock { _blankLooks } }
         set { lock.withLock { _blankLooks = newValue } }
     }
+    /// Whether its words are current (false: a Chromium page out of sight).
+    var wordsCurrent: Bool {
+        get { lock.withLock { _wordsCurrent } }
+        set { lock.withLock { _wordsCurrent = newValue } }
+    }
+    /// How many times its switch was released.
+    var releases: Int { lock.withLock { _releases } }
     var presses: [Int] { lock.withLock { _presses } }
     /// How many times every button was looked for.
     var looks: Int { lock.withLock { _looks } }
@@ -120,6 +129,10 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     }
 
     func isPlayingSound(pid: pid_t) -> Bool { sound }
+
+    func wordsAreCurrent(pid: pid_t) -> Bool { wordsCurrent }
+
+    func release() { lock.withLock { _releases += 1 } }
 
     /// "Play" ↔ "Pause", in any language the tests use.
     func swapWords(of number: Int) {

@@ -1,7 +1,7 @@
 # Builds AutoHush with warnings as errors and runs its tests on every pull
-# request into wip, as CONTRIBUTING.md asks of each change. It reads the code
-# and nothing else: no secrets, no writing, so a fork's pull request runs it
-# as it is.
+# request into wip, as CONTRIBUTING.md asks of each change, then builds
+# AutoHush.app with Scripts/build-app.sh. It reads the code and nothing else:
+# no secrets, no writing, so a fork's pull request runs it as it is.
 name: Build and test
 
 on:
@@ -36,3 +36,21 @@ jobs:
         env:
           AUTOHUSH_QUICK_TESTS: "1"
         run: swift test -Xswiftc -warnings-as-errors
+      - name: Build the app
+        # A debug build signed ad hoc (there's no signing identity here), to
+        # check what only build-app.sh does: the helper copied into the app
+        # and signed, the App Intents metadata, the icon and the string
+        # catalog's sync, whose skip ("no string list for …") is only a
+        # warning in the script.
+        env:
+          SIGNING_IDENTITY: "-"
+          KEEP_PERMISSIONS: "1"
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash Scripts/build-app.sh debug | tee "$RUNNER_TEMP/build-app.log"
+          if grep -F "no string list" "$RUNNER_TEMP/build-app.log"; then
+            echo "::error::build-app.sh skipped the string catalog's sync (no string list for a source, above: two Swift files may share a name)"
+            exit 1
+          fi
+          test -x AutoHush.app/Contents/Helpers/playercheck || { echo "::error::AutoHush.app has no Contents/Helpers/playercheck"; exit 1; }

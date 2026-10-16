@@ -1,4 +1,4 @@
-// Player Check: a window over Tools/PlayerCheck. It lists the apps in the
+// Player Check: a window over Sources/PlayerCheck. It lists the apps in the
 // Applications folders (/Applications, ~/Applications, /System/Applications,
 // with their subfolders: Safari web apps included) that can be in macOS's
 // Now Playing list, those macOS lists now first (playercheck's
@@ -6,7 +6,8 @@
 // confirmed, it runs playercheck on it (opening it first when needed) and
 // shows the ways it could be controlled (each tested with the app's window
 // in every state a player's can be in: ✓ all, ⚠ some, ✗ none), the verdict
-// and the full report; checks are kept between launches. An app whose check
+// (with its developer lines: playercheck --developer) and the full report;
+// checks are kept between launches. An app whose check
 // found a way that works gets Play and Pause buttons, by the first way that
 // worked with its window as it is when pressed (playercheck --window-state),
 // and each way found gets its own (playercheck --play/--pause --via …). An
@@ -195,11 +196,11 @@ struct Way: Identifiable {
 
     /// Its playercheck --via, for the ways that can play and pause: AppleScript
     /// once it worked in the check, whatever its kind (`--via script` handles
-    /// VLC's toggling play too), but before that only as Spotify's (commands
-    /// of their own kind, not tried, aren't offered); the menu, the page, the
-    /// Now Playing panel.
+    /// a play that toggles too), but before that only as the supported
+    /// scriptable players have it (commands of their own kind, not tried,
+    /// aren't offered); the menu, the page, the Now Playing panel.
     var via: String? {
-        if title == "AppleScript", !detail.contains("not as Spotify") { return "script" }
+        if title == "AppleScript", !detail.contains("not as the supported scriptable players") { return "script" }
         if title.hasPrefix("Playback menu") { return "menu" }
         if title.hasPrefix("Page button") { return "page" }
         if title == "Now Playing panel" { return "panel" }
@@ -292,7 +293,7 @@ struct Report {
         section("Verdict").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
     }
     /// What playercheck asks of whoever runs it while it waits ("start
-    /// playing something in Deezer; …"): the app must play for the test.
+    /// playing something in <app>; …"): the app must play for the test.
     /// Asked until it's answered (it plays, it paused, Accessibility is
     /// decided), the wait ends ("stopped…", "it didn't…") or its section
     /// does: a line said meanwhile (a script error, a browser's page count)
@@ -751,7 +752,9 @@ final class Checker {
     private func run(_ tool: URL, on app: InstalledApp) async {
         let run: ToolRun
         do {
-            run = try ToolRun(tool, [app.url.path, "--block-input"])
+            // --developer: the verdict also says how a built-in player of
+            // its kind would be made, as AutoHush's Add an App… doesn't ask.
+            run = try ToolRun(tool, [app.url.path, "--block-input", "--developer"])
         } catch {
             reports[app.id]?.state = .failed("Couldn't run playercheck: \(error.localizedDescription)")
             endAttempt(app.id)
@@ -1519,7 +1522,7 @@ struct CheckPanelView: View {
         return !report.lines[start...].contains { $0.hasPrefix("  mouse and keyboard free again") }
     }
 
-    /// The request ("start playing something in VLC; the test goes on …
+    /// The request ("start playing something in <app>; the test goes on …
     /// (up to 2 minutes). …"): what's asked, then the rest with the time left.
     private func requestNote(_ request: String) -> some View {
         let cut = [request.range(of: "; "), request.range(of: ": ")].compactMap { $0 }.min { $0.lowerBound < $1.lowerBound }
@@ -1601,10 +1604,16 @@ struct PlayerCheckApp: App {
     var body: some Scene {
         Window("Player Check", id: "main") {
             ContentView(checker: delegate.checker)
-                // Never full screen. An AppKit collection behavior set on the
-                // window didn't hold.
-                .windowFullScreenBehavior(.disabled)
+                .neverFullScreen()
         }
         .defaultSize(width: 980, height: 680)
+    }
+}
+
+private extension View {
+    /// Never full screen, from macOS 15; an AppKit collection behavior set
+    /// on the window didn't hold, so before it the green button still can.
+    @ViewBuilder func neverFullScreen() -> some View {
+        if #available(macOS 15, *) { windowFullScreenBehavior(.disabled) } else { self }
     }
 }
