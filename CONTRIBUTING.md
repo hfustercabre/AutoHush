@@ -17,12 +17,12 @@ privately, as [SECURITY.md](SECURITY.md) says.
 
 - **`main`** holds the latest release. It only moves when a new version is
   published.
-- **`wip`** is where development happens. Every change goes there first.
+- **`dev`** is where development happens. Every change goes there first.
 
 ## Proposing a change
 
 1. Fork the repository.
-2. Create a branch from `wip` whose name starts with what it is:
+2. Create a branch from `dev` whose name starts with what it is:
    - **`fix-`** for a bug fix (`fix-vlc-resume`);
    - **`feature-`** for something new (`feature-qobuz`);
    - **`change-`** for a change to how something already works
@@ -31,7 +31,7 @@ privately, as [SECURITY.md](SECURITY.md) says.
    [Build and test](DEVELOPMENT.md#build-and-test)), and that it follows the
    [style guide](STYLE_GUIDE.md). A change to what AutoHush does updates
    its flowcharts in [WORKFLOWS.md](WORKFLOWS.md) too.
-4. Open a pull request into **`wip`**, not `main`, saying what it changes
+4. Open a pull request into **`dev`**, not `main`, saying what it changes
    and why (its template asks for that, and how you checked it).
 
 A check on every pull request flags one whose branch name or target doesn't

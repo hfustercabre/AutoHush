@@ -1,4 +1,4 @@
-# Checks that a pull request follows CONTRIBUTING.md: it goes into wip, from
+# Checks that a pull request follows CONTRIBUTING.md: it goes into dev, from
 # a branch named fix-…, feature-… or change-…. Runs again when the pull
 # request is edited (a new target), so fixing it clears the check.
 name: Pull request rules
@@ -23,8 +23,8 @@ jobs:
           BASE_BRANCH: ${{ github.base_ref }}
         run: |
           problems=0
-          if [ "$BASE_BRANCH" != "wip" ]; then
-            echo "::error title=Target::Open the pull request into wip (see CONTRIBUTING.md)."
+          if [ "$BASE_BRANCH" != "dev" ]; then
+            echo "::error title=Target::Open the pull request into dev (see CONTRIBUTING.md)."
             problems=1
           fi
           case "$HEAD_BRANCH" in
@@ -35,6 +35,6 @@ jobs:
               ;;
           esac
           if [ "$problems" = 0 ]; then
-            echo "Into wip, from a branch named as CONTRIBUTING.md asks."
+            echo "Into dev, from a branch named as CONTRIBUTING.md asks."
           fi
           exit "$problems"

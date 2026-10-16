@@ -1,12 +1,12 @@
 # Builds AutoHush with warnings as errors and runs its tests on every pull
-# request into wip, as CONTRIBUTING.md asks of each change, then builds
+# request into dev, as CONTRIBUTING.md asks of each change, then builds
 # AutoHush.app with Scripts/build-app.sh. It reads the code and nothing else:
 # no secrets, no writing, so a fork's pull request runs it as it is.
 name: Build and test
 
 on:
   pull_request:
-    branches: [wip]
+    branches: [dev]
 
 permissions:
   contents: read

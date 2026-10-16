@@ -1,4 +1,4 @@
-<!-- Thanks! Open it into `wip`, from a branch named fix-…, feature-… or change-… (CONTRIBUTING.md). -->
+<!-- Thanks! Open it into `dev`, from a branch named fix-…, feature-… or change-… (CONTRIBUTING.md). -->
 
 ## What it changes, and why
 
