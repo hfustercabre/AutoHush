@@ -3,7 +3,11 @@ import PlayerCheckKit
 
 // MARK: - What to do, and to which app
 
-let arguments = Array(CommandLine.arguments.dropFirst())
+/// What a test runs the tool with, set before anything reads `arguments`:
+/// the test runner's own command line names no app, and the tool would end.
+nonisolated(unsafe) var argumentsForTests: [String]?
+/// The run's command line, without the tool's own path.
+let arguments = argumentsForTests ?? Array(CommandLine.arguments.dropFirst())
 
 /// What --play and --pause do.
 enum Action: String { case play, pause }

@@ -7,7 +7,7 @@ import AutoHushKit
 struct DiagnosticsFacts: Equatable {
     /// The chosen player's version, when it's installed.
     var playerVersion: String?
-    var playerCanFade = true
+    var playerCanFade: Bool
     /// What controlling the chosen player needs, and whether it's allowed
     /// (`nil`: not known until AutoHush has tried).
     var playerPermission: Permission?
@@ -23,18 +23,18 @@ struct DiagnosticsFacts: Equatable {
     var playerWordsRead: Bool?
     /// `nil` when macOS can't be asked.
     var audioRecording: AudioCapturePermission?
-    var notificationsOff = false
-    var detectionMethod: DetectionMethod = .audioLevels
+    var notificationsOff: Bool
+    var detectionMethod: DetectionMethod
     var timings: TimingSettings = .defaults
     /// E.g. "0.6.1 (19)".
-    var appVersion = ""
-    var launchAtLogin = false
-    var checksForUpdates = true
-    var automaticUpdates: AutomaticUpdates = .install
+    var appVersion: String
+    var launchAtLogin: Bool
+    var checksForUpdates: Bool
+    var automaticUpdates: AutomaticUpdates
     var lastUpdateCheck: Date?
     /// E.g. "27.0.1 (26A434)".
-    var macOS = ""
+    var macOS: String
     /// "Apple silicon" or "Intel".
-    var processor = ""
+    var processor: String
     var now = Date()
 }

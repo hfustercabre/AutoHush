@@ -88,7 +88,7 @@ extension AppDelegate {
     }
 
     /// The list of apps to choose (the first step's window).
-    private func showAppChooser() {
+    func showAppChooser() {
         guard let model = addAppModel else { return }
         if appChooserWindow == nil { appChooserWindow = AppChooserWindowController(model: model) }
         appChooserWindow?.show()
@@ -104,7 +104,7 @@ extension AppDelegate {
     }
 
     /// The warning before the check (W6), for the chosen app.
-    private func showCheckWarning() {
+    func showCheckWarning() {
         guard let model = addAppModel, let app = model.chosen else { return }
         checkWarningWindow?.close()
         let muted = model.permissions.audio == .allowed && !model.antiDot

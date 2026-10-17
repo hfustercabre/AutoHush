@@ -2,6 +2,7 @@ import AppKit
 import CheckedPlayers
 import Foundation
 import os
+import SwiftUI
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -878,6 +879,58 @@ struct AppDelegateTests {
         #expect(alerts.calls == ["Reopen Added?", "Remove Added? (chosen)", "Remove Added? (chosen)", "Remove Kept?"])
         let keptPlayer = try #require(added.player("com.example.kept"))
         #expect(await keptPlayer.releases == 0) // not chosen: nothing to let go of
+    }
+
+    @MainActor
+    @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window; its list of apps and the warning before the check open in windows of their own, a new warning replacing the last, which mutes the app only with Audio Recording allowed outside AntiDot mode; its Start starts the check")
+    func addAppWindows() async throws {
+        let (sut, _) = makeSUT()
+        let world = World()
+        world.playing = true
+        var services = world.services
+        // As AutoHush's own services hand these over.
+        services.showChooser = { [weak sut] in sut?.showAppChooser() }
+        services.showWarning = { [weak sut] in sut?.showCheckWarning() }
+        let model = AddAppModel(services: services)
+        sut.addAppModel = model
+
+        sut.showAddApp()
+        let window = try #require(sut.addAppWindow)
+        #expect(window.isOpen && sut.addAppModel === model)
+        await waitFor { !model.apps.isEmpty } // read at its first step
+        sut.showCheckWarning() // no app chosen yet: no warning
+        #expect(sut.checkWarningWindow == nil)
+
+        model.openChooser()
+        let chooser = try #require(sut.appChooserWindow)
+        #expect(chooser.isOpen)
+        model.choose(world.apps[0])
+        await waitFor { model.stage == .ready }
+        sut.showAddApp() // open: shown as it is
+        #expect(model.stage == .ready && sut.addAppWindow === window)
+
+        model.continueToCheck()
+        let warning = try #require(sut.checkWarningWindow)
+        let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
+        #expect(warning.isOpen && warningView.rootView.muted)
+        world.antiDot = true
+        model.continueToCheck()
+        let unmuted = try #require(sut.checkWarningWindow)
+        let unmutedView = try #require(unmuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
+        await waitFor { !warning.isOpen }
+        #expect(unmuted !== warning && unmuted.isOpen && !unmutedView.rootView.muted)
+
+        unmutedView.rootView.start()
+        await waitFor { world.runs == 1 }
+        #expect(model.stage == .checking && !unmuted.isOpen)
+
+        // Closed (the check stops), then opened again: from its first step.
+        window.close()
+        chooser.close()
+        await waitFor { !window.isOpen }
+        sut.showAddApp()
+        #expect(sut.addAppWindow === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
+        window.close()
     }
 
     // MARK: - Music player

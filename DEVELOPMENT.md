@@ -185,8 +185,9 @@ Sources/
                          --logs and --caches put its logs and caches in AutoHush's folders, --no-taps taps no
                          sound (AntiDot mode)
 Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
-                         fakes); only the players' code names a player, but any test may use real apps
-                         (VLC, Spotify…) as test data
+                         fakes); PlayerCheckTests runs the helper itself as a read-only check of Calculator;
+                         only the players' code names a player, but any test may use real apps (VLC,
+                         Spotify…) as test data
 Tools/                   tools for measuring the fades and checking apps, never part of the app or its disk
                          image; each has a README.md saying what it does and how (Tools/README.md lists them)
   MeasureVolumeCurve/    measures a player's volume curve
