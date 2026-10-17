@@ -39,10 +39,12 @@ struct MoreSettingsRowView: View {
 
     var body: some View {
         content
-            // Arriving, it fades in and drifts down into place; going, the reverse.
-            .opacity(arrived ? 1 : 0)
-            .offset(y: arrived ? 0 : -8)
-            .animation(.spring(duration: 0.35, bounce: 0.2), value: arrived)
+            // Arriving, it fades in and drifts down into place; going, the
+            // reverse. Only those animate: its place, laid out the first time
+            // it shows, would slide in from the side.
+            .animation(.spring(duration: 0.35, bounce: 0.2)) { view in
+                view.opacity(arrived ? 1 : 0).offset(y: arrived ? 0 : -8)
+            }
             .padding(.horizontal, 14)
             .padding(.vertical, 5)
             .frame(width: menuContentWidth, alignment: .leading)

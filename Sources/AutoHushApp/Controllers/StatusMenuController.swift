@@ -91,14 +91,15 @@ final class StatusMenuController: NSObject {
     private let settingsModel: SettingsModel?
     /// More Settings' rows, in order, the chevron last.
     private var moreSettingsRows: [(row: MoreSettingsRow, item: NSMenuItem)] = []
-    /// What's left of a reveal under way: when (seconds in) to do what.
-    private var moreSettingsSteps: [(at: TimeInterval, step: () -> Void)] = []
-    private var moreSettingsStart = Date()
-    private var moreSettingsAnimation: Timer?
-    /// How long the rows take to arrive, one after the other, and how long
-    /// one takes to fade out before its row goes.
-    static let moreSettingsArrival: TimeInterval = 0.2
-    static let moreSettingsLeave: TimeInterval = 0.12
+    /// What's left of a reveal under way (More Settings' rows, or the
+    /// players'): when, in seconds, to do what.
+    private var revealSteps: [(at: TimeInterval, step: () -> Void)] = []
+    private var revealStart = Date()
+    private var revealTimer: Timer?
+    /// How long rows take to arrive, one after the other, and how long one
+    /// takes to fade out before its row goes.
+    static let revealArrival: TimeInterval = 0.2
+    static let revealLeave: TimeInterval = 0.12
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
@@ -156,6 +157,11 @@ final class StatusMenuController: NSObject {
         model.listedRecentSources = status.recentSources()
         model.isChoosingPlayer = false
         model.playerSearch = ""
+        // A reveal under way is over: its rows are made again.
+        revealTimer?.invalidate()
+        revealTimer = nil
+        revealSteps = []
+        model.playerSearchArrived = true
         model.announcesRetryOutcome = false
         playerSearchItem = nil
         playerRows = []
@@ -220,7 +226,7 @@ final class StatusMenuController: NSObject {
     private func fit(_ item: NSMenuItem, changed: Bool = false) {
         guard let view = item.view else { return }
         view.layoutSubtreeIfNeeded() // applies what the model changed, or the size is the old one
-        let size = NSSize(width: max(menuContentWidth, view.frame.width), height: view.fittingSize.height)
+        let size = NSSize(width: menuContentWidth, height: view.fittingSize.height)
         guard view.frame.size != size else { return }
         view.frame.size = size
         if changed { menu.itemChanged(item) }
@@ -293,24 +299,88 @@ final class StatusMenuController: NSObject {
     /// Unfolds the players under the card, or folds them back. They're the
     /// menu's own rows: a second menu can't open from inside an open one.
     /// From `PlayerOption.searchThreshold` players on, a search comes first.
+    /// Unfolds or folds the players under the card: revealed as More
+    /// Settings' rows are (`runReveal`), the search fading and drifting in
+    /// or out; their own rows, drawn by macOS, only come and go.
     private func togglePlayerList() {
         if model.isChoosingPlayer {
-            ([playerSearchItem].compactMap { $0 } + playerRows).forEach(menu.removeItem)
+            let rows = [playerSearchItem].compactMap { $0 } + playerRows
             playerSearchItem = nil
             playerRows = []
             model.playerSearch = ""
+            foldPlayerRows(rows)
         } else if let cardItem {
             let options = offeredPlayers
             var first = menu.index(of: cardItem) + 1
+            // Revealed, they're inserted hidden: rows hidden while the menu
+            // handles the click upset its layout (2026-10-17).
+            let reveals = revealsRows
             if options.isSearchable {
                 let search = hostedItem("playerSearch", PlayerSearchRow(model: model), takesKeyboard: true)
+                search.isHidden = reveals
                 menu.insertItem(search, at: first)
                 playerSearchItem = search
                 first += 1
             }
-            showPlayerRows(options, at: first)
+            showPlayerRows(options, at: first, hidden: reveals)
+            if reveals { unfoldPlayerRows([playerSearchItem].compactMap { $0 } + playerRows) }
         }
         model.isChoosingPlayer.toggle()
+    }
+
+    /// The players' rows in the steps they come and go in: an alternate row
+    /// (⌥: Remove …) with the row before it.
+    private func playerRowSteps(_ rows: [NSMenuItem]) -> [[NSMenuItem]] {
+        rows.reduce(into: []) { steps, row in
+            if row.isAlternate, !steps.isEmpty { steps[steps.count - 1].append(row) } else { steps.append([row]) }
+        }
+    }
+
+    /// Shows `rows`, inserted hidden, one after the other.
+    private func unfoldPlayerRows(_ rows: [NSMenuItem]) {
+        finishReveal()
+        model.playerSearchArrived = false
+        let steps = playerRowSteps(rows)
+        let times = Self.revealTimes(going: 0, coming: steps.count)
+        let reveal = zip(steps, times.coming).flatMap { rows, at -> [(at: TimeInterval, step: () -> Void)] in
+            [(at, { rows.forEach { $0.isHidden = false } }),
+             (at + 1.0 / 60, { [weak self] in self?.model.playerSearchArrived = true })]
+        }
+        runRevealNextTurn(reveal)
+    }
+
+    private func foldPlayerRows(_ rows: [NSMenuItem]) {
+        // The search lets go of the keyboard first: going while it edits,
+        // its row made the menu flash wider (2026-10-17).
+        if let window = rows.first(where: { $0.identifier?.rawValue == "playerSearch" })?.view?.window,
+           let editor = window.firstResponder as? NSView,
+           rows.contains(where: { $0.view.map { editor.isDescendant(of: $0) } ?? false }) {
+            window.makeFirstResponder(nil)
+        }
+        let remove = { [weak self] in
+            guard let self else { return }
+            for row in rows where row.menu === self.menu { self.menu.removeItem(row) }
+        }
+        guard revealsRows else { return remove() }
+        let steps = Array(playerRowSteps(rows).reversed())
+        let times = Self.revealTimes(going: steps.count, coming: 0)
+        // macOS draws the players' rows: they go at their times, without
+        // fading; the menu measures its width again after each (it may widen
+        // for a moment as rows go, 2026-10-17). The search, first of them,
+        // goes last, fading first.
+        let search = rows.first { $0.identifier?.rawValue == "playerSearch" } // its item already let go
+        var reveal: [(at: TimeInterval, step: () -> Void)] = zip(steps, times.going).map { rows, at in
+            let fades = search.map { rows.contains($0) } ?? false
+            return (at + (fades ? Self.revealLeave : 0), { [weak self] in
+                rows.forEach { $0.isHidden = true }
+                self?.narrowRows()
+            })
+        }
+        if let search, let at = zip(steps, times.going).first(where: { $0.0.contains(search) })?.1 {
+            reveal.append((at, { [weak self] in self?.model.playerSearchArrived = false }))
+        }
+        reveal.append((times.end + Self.revealLeave, remove))
+        runRevealNextTurn(reveal)
     }
 
     /// Shows the unfolded players whose names match `search`.
@@ -331,7 +401,7 @@ final class StatusMenuController: NSObject {
     /// under their heading; the apps added through a check under theirs,
     /// then "Add an App…" (E3); the Safari web apps under theirs, and "Add a
     /// Web App…" last. A note first when the search matched none.
-    private func showPlayerRows(_ options: [PlayerOption], at index: Int) {
+    private func showPlayerRows(_ options: [PlayerOption], at index: Int, hidden: Bool = false) {
         let apps = options.filter { $0.kind == .app }
         let checked = options.filter { $0.kind == .checkedApp }
         let webApps = options.filter { $0.kind == .safariWebApp }
@@ -348,7 +418,10 @@ final class StatusMenuController: NSObject {
         if !webApps.isEmpty { rows += [.webAppsHeading(width: menuContentWidth)] + webApps.map(playerRow) }
         rows.append(addRow(PlayerOption.addWebAppTitle, #selector(addWebApp)))
         playerRows = rows
-        for (offset, row) in playerRows.enumerated() { menu.insertItem(row, at: index + offset) }
+        for (offset, row) in playerRows.enumerated() {
+            row.isHidden = hidden
+            menu.insertItem(row, at: index + offset)
+        }
     }
 
     /// "Add an App…" after the apps added through a check; "Add a Web App…"
@@ -417,78 +490,133 @@ final class StatusMenuController: NSObject {
         return moreSettingsRows.map { row, item in (row, item, row.isSwitch || model.showsMoreSettings) }
     }
 
-    /// Shows the rows of More Settings that apply now, at once, ending any
-    /// reveal. Rows are shown or hidden whole: the menu follows that while
-    /// it's open, unlike a row changing its height (2026-10-17).
+    /// Shows the rows of More Settings that apply now, at once. Rows are
+    /// shown or hidden whole: the menu follows that while it's open, unlike
+    /// a row changing its height (2026-10-17).
     private func showMoreSettings() {
-        moreSettingsAnimation?.invalidate()
-        moreSettingsAnimation = nil
-        moreSettingsSteps = []
         for (_, item, shows) in moreSettingsTargets { item.isHidden = !shows }
         model.moreSettingsArrived = Set(MoreSettingsRow.allCases)
     }
 
-    /// Unfolds or folds More Settings.
+    /// Unfolds or folds More Settings: its unfolding rows show or hide on the
+    /// next turn (rows hidden while the menu handles the click crop its top,
+    /// 2026-10-17), revealed (`runReveal`), each fading in and drifting down,
+    /// or fading out, as it comes or goes (`MoreSettingsRowView`).
     private func toggleMoreSettings() {
         model.showsMoreSettings.toggle()
-        revealMoreSettings()
-    }
-
-    /// Shows or hides More Settings' unfolding rows as it unfolds or folds,
-    /// on the next turn: rows hidden while the menu handles the click crop
-    /// its top (2026-10-17). While the menu shows, folding fades the rows
-    /// out from the bottom up, each row going once faded; unfolding brings
-    /// them in from the top down,
-    /// close together at first and easing apart, each fading in and drifting
-    /// down on a soft spring (`MoreSettingsRowView`); at once with Reduce
-    /// Motion, or while it's closed.
-    private func revealMoreSettings() {
         RunLoop.main.perform(inModes: [.common]) { [weak self] in
-            MainActor.assumeIsolated { self?.startMoreSettingsReveal() }
+            MainActor.assumeIsolated { self?.revealMoreSettings() }
         }
     }
 
-    private func startMoreSettingsReveal() {
+    private func revealMoreSettings() {
+        finishReveal()
         let changes = moreSettingsTargets.filter { $0.item.isHidden == $0.shows }
-        guard isMenuOpen, !changes.isEmpty, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
-            return showMoreSettings()
-        }
-        showMoreSettings() // a reveal still under way ends first
-        for change in changes { change.item.isHidden = change.shows } // as they were
+        guard revealsRows, !changes.isEmpty else { return showMoreSettings() }
+        let going = Array(changes.filter { !$0.shows }.reversed()), coming = changes.filter(\.shows)
+        let times = Self.revealTimes(going: going.count, coming: coming.count)
         var steps: [(at: TimeInterval, step: () -> Void)] = []
-        let going = changes.filter { !$0.shows }.reversed()
-        let gap = Self.moreSettingsLeave / 3
-        for (index, change) in going.enumerated() {
-            let at = Double(index) * gap
+        for (change, at) in zip(going, times.going) {
             steps.append((at, { [weak self] in self?.model.moreSettingsArrived.remove(change.row) }))
-            steps.append((at + Self.moreSettingsLeave, { change.item.isHidden = true }))
+            steps.append((at + Self.revealLeave, { change.item.isHidden = true }))
         }
-        let coming = changes.filter(\.shows)
-        let start = going.isEmpty ? 0 : Double(going.count - 1) * gap + Self.moreSettingsLeave
         for change in coming { model.moreSettingsArrived.remove(change.row) }
-        for (index, change) in coming.enumerated() {
-            // Close together at first, easing apart.
-            let at = start + Self.moreSettingsArrival * pow(Double(index) / Double(max(1, coming.count)), 1.4)
+        for (change, at) in zip(coming, times.coming) {
             steps.append((at, { change.item.isHidden = false }))
             steps.append((at + 1.0 / 60, { [weak self] in self?.model.moreSettingsArrived.insert(change.row) }))
         }
-        moreSettingsSteps = steps.sorted { $0.at < $1.at }
-        moreSettingsStart = Date()
-        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.stepMoreSettingsReveal() }
-        }
-        RunLoop.main.add(timer, forMode: .common) // runs while the menu tracks the pointer
-        moreSettingsAnimation = timer
-        stepMoreSettingsReveal()
+        steps.append((times.end, { [weak self] in self?.showMoreSettings() })) // as the settings are now
+        runReveal(steps)
     }
 
-    private func stepMoreSettingsReveal() {
-        let elapsed = Date().timeIntervalSince(moreSettingsStart)
-        while let next = moreSettingsSteps.first, next.at <= elapsed {
-            moreSettingsSteps.removeFirst()
+    // MARK: - Revealing rows
+
+    /// Whether rows come and go over time: while the menu shows, Reduce
+    /// Motion off.
+    private var revealsRows: Bool {
+        isMenuOpen && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+
+    /// When rows come and go, each within `revealArrival`: the rows coming
+    /// arrive from the top down, close together at first and easing apart;
+    /// the rows going leave from the bottom up as that played backwards,
+    /// far apart at first and closing in. A row going that fades (one of
+    /// AutoHush's own) goes `revealLeave` after its time. `end`: when it's
+    /// over.
+    static func revealTimes(going: Int, coming: Int) -> (going: [TimeInterval], coming: [TimeInterval], end: TimeInterval) {
+        func eased(_ count: Int) -> [TimeInterval] {
+            (0..<count).map { revealArrival * pow(Double($0) / Double(max(1, count)), 1.4) }
+        }
+        let arrivals = eased(going)
+        let goingTimes = arrivals.reversed().map { (arrivals.last ?? 0) - $0 }
+        let start = goingTimes.last.map { $0 + revealLeave } ?? 0
+        let comingTimes = eased(coming).map { start + $0 }
+        return (goingTimes, comingTimes, (comingTimes.last ?? start) + 2.0 / 60)
+    }
+
+    /// `runReveal` on the next turn, once the click that asked for it is
+    /// handled (rows hidden during it crop the menu's top, 2026-10-17).
+    private func runRevealNextTurn(_ steps: [(at: TimeInterval, step: () -> Void)]) {
+        pendingReveal = steps
+        RunLoop.main.perform(inModes: [.common]) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, let steps = self.pendingReveal else { return }
+                self.pendingReveal = nil
+                self.runReveal(steps)
+            }
+        }
+    }
+
+    private var pendingReveal: [(at: TimeInterval, step: () -> Void)]?
+
+    /// Runs `steps` at their times, ending first any reveal under way.
+    private func runReveal(_ steps: [(at: TimeInterval, step: () -> Void)]) {
+        finishReveal()
+        revealSteps = steps.sorted { $0.at < $1.at }
+        revealStart = Date()
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.stepReveal() }
+        }
+        RunLoop.main.add(timer, forMode: .common) // runs while the menu tracks the pointer
+        revealTimer = timer
+        stepReveal()
+    }
+
+    private func stepReveal() {
+        let elapsed = Date().timeIntervalSince(revealStart)
+        while let next = revealSteps.first, next.at <= elapsed {
+            revealSteps.removeFirst()
             next.step()
         }
-        if moreSettingsSteps.isEmpty { showMoreSettings() } // as the settings are now
+        if revealSteps.isEmpty {
+            revealTimer?.invalidate()
+            revealTimer = nil
+            narrowRows()
+        }
+    }
+
+    /// Has the menu measure its width again once rows have come or gone:
+    /// rows removed outside a click left it wider than they need (2026-10-17,
+    /// the user's first fold of the players); its custom views back to its
+    /// width first, should they have stretched with it.
+    private func narrowRows() {
+        let rows = menu.items.filter { $0.view != nil }
+        for row in rows where row.view?.frame.width != menuContentWidth { row.view?.frame.size.width = menuContentWidth }
+        // Changing the minimum width is what makes it measure its width again.
+        menu.minimumWidth = menuContentWidth + 1
+        menu.minimumWidth = 0
+        if let row = rows.first { menu.itemChanged(row) }
+        menu.update()
+    }
+
+    /// Ends a reveal under way where it was going.
+    private func finishReveal() {
+        revealTimer?.invalidate()
+        revealTimer = nil
+        let rest = revealSteps
+        revealSteps = []
+        rest.forEach { $0.step() }
+        if !rest.isEmpty { narrowRows() }
     }
 
     // MARK: - Actions
@@ -601,7 +729,7 @@ extension StatusMenuController: NSMenuDelegate {
 
     func menuDidClose(_ menu: NSMenu) {
         isMenuOpen = false
-        showMoreSettings() // a reveal under way ends where it was going
+        finishReveal() // a reveal under way ends where it was going
     }
 }
 

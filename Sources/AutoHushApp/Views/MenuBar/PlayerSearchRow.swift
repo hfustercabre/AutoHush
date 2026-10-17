@@ -12,6 +12,11 @@ struct PlayerSearchRow: View {
             get: { model.playerSearch },
             set: { model.perform(.searchPlayers($0)) }
         ))
+        // Arriving, it fades in and drifts down into place, as More Settings'
+        // rows do; only those animate (`MoreSettingsRowView`).
+        .animation(.spring(duration: 0.35, bounce: 0.2)) { view in
+            view.opacity(model.playerSearchArrived ? 1 : 0).offset(y: model.playerSearchArrived ? 0 : -8)
+        }
         .padding(.horizontal, 14)
         .padding(.vertical, 4)
         .frame(width: menuContentWidth)

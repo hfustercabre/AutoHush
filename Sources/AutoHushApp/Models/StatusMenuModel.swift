@@ -53,6 +53,8 @@ final class StatusMenuModel {
     /// More Settings' rows whose content shows: all but those arriving or
     /// going while its rows are revealed (they fade and drift).
     var moreSettingsArrived = Set(MoreSettingsRow.allCases)
+    /// Whether the players' search shows: not while it arrives or goes.
+    var playerSearchArrived = true
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
     /// An update check asked from the menu runs: its Updates button says so.
