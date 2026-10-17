@@ -12,7 +12,10 @@ import AppKit
     let home: NSRunningApplication?
     let original: WindowState
     private let originalFrame: CGRect
-    private let homeDesktop: Int?
+    /// The desktop the test comes back to: the one shown at the start, or,
+    /// when that was a full screen app's (the checked app's, in front), the
+    /// one its window lands on as it leaves full screen (`normalize`).
+    private var homeDesktop: Int?
     /// The desktop its window goes back to: where it was, or, for one
     /// minimized or hidden, where it shows again (read the first time it's
     /// shown: a minimized window has no desktop of its own until then).
@@ -57,7 +60,9 @@ import AppKit
             .filter { ![pid, home?.processIdentifier ?? 0, getpid()].contains($0.pid) }
             .map { ($0.pid, $0.window) }
         let desktops = Desktops.all()
-        homeDesktop = desktops?.current
+        // A full screen app's desktop goes with its window: no other window can be dragged there.
+        let shownDesktop = desktops?.current
+        homeDesktop = desktops?.spaces.first { $0.id == shownDesktop }?.isFullScreen == true ? nil : shownDesktop
         // Full screen apps' desktops don't count: they go with their window.
         if desktops.map({ $0.spaces.filter { !$0.isFullScreen }.count < 2 }) ?? true {
             let why = desktops == nil ? "macOS's desktops can't be read" : "no other desktop: add one in Mission Control to test it"
@@ -131,6 +136,7 @@ import AppKit
             Thread.sleep(forTimeInterval: 1.2)
         }
         let there = WindowStates.main(of: pid).flatMap { Desktops.of(window: WindowStates.number(of: $0.info)) }
+        if homeDesktop == nil { homeDesktop = there }
         if firstTrip, original == .minimized || original == .hidden { ownDesktop = there ?? homeDesktop }
         firstTrip = false
         if let homeDesktop, let there, there != homeDesktop {
