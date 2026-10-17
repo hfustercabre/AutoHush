@@ -19,6 +19,12 @@ struct MoreSettingsView: View {
         .padding(.top, model.showsMoreSettings ? 6 : 2)
         .padding(.bottom, 2)
         .frame(width: menuContentWidth)
+        // While its row grows or shrinks (unfolding or folding), the rows
+        // keep their size and the chevron stays at the bottom: the top is
+        // cut off, so they slide out from under Ignored Apps.
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxHeight: .infinity, alignment: .bottom)
+        .clipped()
         // Its row follows its height when rows show or hide.
         .onChange(of: layout) { model.perform(.fitMoreSettings) }
     }
