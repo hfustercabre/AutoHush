@@ -78,6 +78,12 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `nil` for one that runs at once (`waitUntilIdle`).
     var pendingResumeWait: Task<Void, Never>?
     var pendingPauseWait: Task<Void, Never>?
+    /// How long an app must play, at most, before the monitor counts it, as
+    /// it last said (`handleStartConfirmationChange`); `nil` until it says.
+    var longestStartConfirmation: TimeInterval?
+    /// A pause taken over (`takeOverPause`) while its resume waits for the
+    /// monitor to find an app still playing: when, and that resume.
+    var takenOver: (at: Date, resume: UUID)?
 
     /// A resume is retried this often, this far apart, while the player does
     /// not answer, or doesn't do what it was told (a page that didn't follow
@@ -87,8 +93,8 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Once auto-pause is back on, the pause for apps already playing waits
     /// their stop grace plus this: a couple of the monitor's ticks.
     package static let remeasureMargin: TimeInterval = 0.5
-    /// After taking over a pause, how long beyond the start confirmation the
-    /// monitor, starting afresh, gets to find an app still playing.
+    /// After taking over a pause, how long the monitor, starting afresh, gets
+    /// beyond the longest start it applies to find an app still playing.
     package static let takeOverMargin: TimeInterval = 1.5
     /// The monitor hears an app up to a couple of its ticks after the app's
     /// sound starts (a new app's levels come from the next tick): a pause seen
@@ -261,9 +267,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// quit to install an update while holding the music paused: if the
     /// player is still paused, it counts as paused by this arbiter, so the
     /// music comes back once no other app plays. Apps still playing are found
-    /// again first; when none is, the music resumes after the start
-    /// confirmation plus `takeOverMargin`. `false` when there was no pause to
-    /// take over: the player isn't paused.
+    /// again first; when none is, the music resumes after the longest start
+    /// the monitor applies (3 s for sound without video in AntiDot mode)
+    /// plus `takeOverMargin`. `false` when there was no pause to take over:
+    /// the player isn't paused.
     @discardableResult
     package func takeOverPause() async -> Bool {
         // Handed over while the Mac sleeps: forgotten, as any pause then.
@@ -274,9 +281,21 @@ package actor PlaybackArbiter: PlaybackArbiting {
         logger.info("[arbiter] took over the pause of the previous AutoHush")
         publishPlaybackState()
         if activeSources.isEmpty {
-            scheduleResume(after: autoPauseEnabled ? configuration.sourceStartConfirmation + Self.takeOverMargin : nil)
+            if autoPauseEnabled { scheduleTakenOverResume(from: clock()) } else { scheduleResume(after: nil) }
         }
         return true
+    }
+
+    /// The monitor says how long an app must play, at most, before it
+    /// counts. A pause taken over before it said (it starts after the
+    /// takeover) waits that long for apps still playing.
+    package func handleStartConfirmationChange(_ longest: TimeInterval) {
+        guard !isShutDown else { return }
+        let known = startConfirmation
+        longestStartConfirmation = longest
+        if longest != known, let takenOver, takenOver.resume == pendingResumeID {
+            scheduleTakenOverResume(from: takenOver.at)
+        }
     }
 
     /// Called whenever the player reports a new state. If the user resumed,
@@ -348,6 +367,21 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// The apps playing now, for the log: their bundle IDs, or "none".
     var playingApps: String {
         activeSources.isEmpty ? "none" : activeSources.sorted().joined(separator: ", ")
+    }
+
+    /// How long an app must play, at most, before the monitor counts it, as
+    /// far as known: until it says, the user's start confirmation.
+    private var startConfirmation: TimeInterval {
+        longestStartConfirmation ?? configuration.sourceStartConfirmation
+    }
+
+    /// Resumes a pause taken over at `takenOverAt` once the monitor, starting
+    /// afresh, has had `startConfirmation` plus `takeOverMargin` to find an
+    /// app still playing.
+    private func scheduleTakenOverResume(from takenOverAt: Date) {
+        let wait = startConfirmation + Self.takeOverMargin - clock().timeIntervalSince(takenOverAt)
+        scheduleResume(after: max(wait, 0))
+        takenOver = pendingResumeID.map { (takenOverAt, $0) }
     }
 
     func livePlayerState() async -> PlayerState {

@@ -100,7 +100,6 @@ package protocol WebPage: Sendable {
 
 extension WebPage {
     package func wordsAreCurrent(pid: pid_t) -> Bool { true }
-    package func release() {}
     package func noteState(playing: Bool, pid: pid_t) {}
 }
 

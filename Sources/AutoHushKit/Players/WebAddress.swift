@@ -5,12 +5,14 @@ import Foundation
 /// a service's sites by country (`CountrySites`).
 package enum WebAddress {
     /// The web address in `text`: http or https, with a host that has a dot
-    /// (or is localhost), and no spaces. Without a scheme, "https://" is
-    /// added: "music.youtube.com" is https://music.youtube.com.
+    /// (or is localhost), and no spaces. Without a scheme at its start,
+    /// "https://" is added: "music.youtube.com" is https://music.youtube.com,
+    /// even with an address in its query ("radio.example.com/?next=https://…").
     package static func url(from text: String) -> URL? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains(where: \.isWhitespace) else { return nil }
-        let withScheme = trimmed.contains("://") ? trimmed : "https://" + trimmed
+        let hasScheme = trimmed.range(of: "^[A-Za-z][A-Za-z0-9+.-]*://", options: .regularExpression) != nil
+        let withScheme = hasScheme ? trimmed : "https://" + trimmed
         guard let components = URLComponents(string: withScheme),
               let scheme = components.scheme?.lowercased(), ["http", "https"].contains(scheme),
               let host = components.host, !host.isEmpty,

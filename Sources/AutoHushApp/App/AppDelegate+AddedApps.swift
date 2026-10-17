@@ -1,6 +1,6 @@
 import AppKit
 import AutoHushKit
-import AutoHushPlayers
+import CheckedPlayers
 import WebAppPlayers
 
 // AppDelegate: the apps added with Add an App, removed by the user.
@@ -16,8 +16,7 @@ extension AppDelegate {
         // up every other main-actor job until it closes.
         RunLoop.main.perform(inModes: [.common]) {
             MainActor.assumeIsolated {
-                NSApp.becomeActive()
-                guard PlayerAlerts.remove(option.name, isChosen: isChosen).runModal() == .alertFirstButtonReturn else { return }
+                guard self.runAlert(PlayerAlerts.remove(option.name, isChosen: isChosen)) == .alertFirstButtonReturn else { return }
                 self.removeAddedApp(option, wasChosen: isChosen)
             }
         }
@@ -33,9 +32,9 @@ extension AppDelegate {
             setChosenPlayer(nil)
             session.releaseLeft(removed)
         }
-        SupportedPlayers.checkedPlayers.forget(option.bundleID)
-        ReopenChoices.setReopensAlways(option.bundleID, false)
-        let kept = KeptCheckStore()
+        checkedPlayers.forget(option.bundleID)
+        ReopenChoices.setReopensAlways(option.bundleID, false, defaults: defaults)
+        let kept = KeptCheckStore(defaults: defaults)
         if kept.load()?.app.bundleID == option.bundleID { kept.forget() }
         logger.notice("\(option.name, privacy: .public) removed from the players added with Add an App")
         if removesChosen {

@@ -88,10 +88,16 @@ struct PermissionButton: View {
     }
 
     private var title: String? {
+        Self.title(for: access, permission: permission, long: long, player: model.chosenPlayerName ?? "")
+    }
+
+    /// Its words while `permission` stands at `access`, for `player`; `nil`
+    /// once it's allowed or not needed: no button then.
+    static func title(for access: PermissionAccess, permission: Permission, long: Bool, player: String) -> String? {
         switch access {
         case .allowed, .notNeeded: nil
         case .playerNotRunning:
-            AddAppText.open(model.chosenPlayerName ?? "")
+            AddAppText.open(player)
         case .needsReopen:
             PermissionText.reopen
         case .notAsked, .denied:

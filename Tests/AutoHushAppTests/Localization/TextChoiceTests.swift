@@ -1,12 +1,15 @@
-import Foundation
+import AppKit
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import CheckedPlayers
 
-/// The texts that pick their words by what they're given: Add an App's
-/// (`AddAppText`) and the permissions' notes (`PermissionText`). Every case
-/// gives a text of its own, so a case mapped to the wrong words shows.
+/// The texts that pick their words by what they're given, wherever they
+/// are: Add an App's (`AddAppText`), the permissions' notes and button,
+/// Settings' choices, the logs window's filters, why a player couldn't be
+/// controlled, the update notices, Add a Web App's problems, and learning's
+/// buttons and notes. Every case gives a text of its own, so a case mapped
+/// to the wrong words shows.
 private func traits(_ framework: CheckedAppTraits.Framework?) -> CheckedAppTraits {
     CheckedAppTraits(scriptable: false, framework: framework, needsLaunchOption: false)
 }
@@ -16,21 +19,23 @@ private func summary(audio: PermissionAccess, automation: PermissionAccess? = ni
     AddAppText.allowedSummary(CheckPermissions(accessibility: true, audio: audio, automation: automation), antiDot: antiDot)
 }
 
-@Suite("AddAppText")
-struct AddAppTextTests {
-    static let app = "Jukebox"
+@Suite("Texts by case")
+@MainActor
+struct TextChoiceTests {
+    nonisolated static let app = "Jukebox"
 
     /// One case of a text, or several that say the same on purpose.
     struct Row {
         let input: String
         let texts: [String]
-        let namesApp: Bool
+        /// What it names, when it takes one: the app, a site, a version.
+        let names: String?
         var text: String { texts[0] }
 
-        init(_ input: String, _ texts: String..., namesApp: Bool = false) {
+        init(_ input: String, _ texts: String..., namesApp: Bool = false, names: String? = nil) {
             self.input = input
             self.texts = texts
-            self.namesApp = namesApp
+            self.names = names ?? (namesApp ? TextChoiceTests.app : nil)
         }
     }
 
@@ -38,10 +43,12 @@ struct AddAppTextTests {
     enum Choice: String, CaseIterable {
         case chosen, otherAppProblem, withoutWarning, allowedSummary, timeLeft, playTitle, checkNote,
              wayTitle, wayNote, stateInSentence, stateLabel, stage, activity, request, checkFailed,
-             controlNote, audioNote
+             controlNote, audioNote, permissionButton, detectionTitle, detectionSummary, unavailableNote,
+             updateTitle, updateExplanation, noticeBody, stepButton, learningNote, controlFailure, controlError,
+             webAppProblem, logsFilter, sortDirection
 
-        var rows: [Row] {
-            let app = AddAppTextTests.app
+        @MainActor var rows: [Row] {
+            let app = TextChoiceTests.app
             switch self {
             case .chosen:
                 return [
@@ -148,23 +155,99 @@ struct AddAppTextTests {
                     Row("needs reopening", PermissionText.audioNote(.needsReopen)),
                     Row("AntiDot", PermissionText.audioNote(.notNeeded)),
                 ]
+            case .permissionButton:
+                func title(_ access: PermissionAccess, _ permission: Permission = .systemAudioRecording, long: Bool = false) -> String {
+                    PermissionButton.title(for: access, permission: permission, long: long, player: app) ?? ""
+                }
+                return [
+                    Row("the player not running", title(.playerNotRunning, .automation(player: app)), namesApp: true),
+                    Row("needs reopening", title(.needsReopen)),
+                    Row("to allow", title(.notAsked), title(.denied)),
+                    Row("to allow, long", title(.notAsked, .automation(player: app), long: true),
+                        title(.denied, .automation(player: app), long: true), namesApp: true),
+                ]
+            case .detectionTitle:
+                return Self.detectionMethods.map { Row("\($0)", $0.title) }
+            case .detectionSummary:
+                return Self.detectionMethods.map { Row("\($0)", $0.summary) }
+            case .unavailableNote:
+                return [
+                    Row("muted only", DetectionSettingsView.unavailableNote(app, mutes: true), namesApp: true),
+                    Row("only its sound tells", DetectionSettingsView.unavailableNote(app, mutes: false), namesApp: true),
+                ]
+            case .updateTitle:
+                return AutomaticUpdates.allCases.map { Row("\($0)", $0.title) }
+            case .updateExplanation:
+                return AutomaticUpdates.allCases.map { Row("\($0)", $0.explanation) }
+            case .noticeBody:
+                let version = AppVersion("0.3.8")!
+                return [
+                    Row("available", UpdateNotice.available(version, running: AppVersion("0.3.7")!).body, names: "0.3.7"),
+                    Row("downloaded", UpdateNotice.downloaded(version).body),
+                    Row("installed", UpdateNotice.installed(version).body),
+                    Row("install failed", UpdateNotice.installFailed(version).body),
+                ]
+            case .stepButton:
+                let buttons: [StepButton] = [.itsPlaying, .itsPaused, .tryAgain, .pauseManually, .addToDock]
+                return buttons.map { Row("\($0)", $0.title) }
+            case .learningNote:
+                let notes: [LearningNote] = [.notHeard, .nothingChanged, .timedOut, .cantSeePage]
+                return notes.map { Row("\($0)", $0.text(app), namesApp: $0 != .timedOut) }
+            case .controlFailure:
+                let failures: [ControlFailure] = [.menuItemNotFound, .stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed,
+                                                  .pressIgnored, .muteUnavailable, .hearingUnavailable, .nowPlayingHidden,
+                                                  .appleEventError(-1708, message: nil)]
+                return failures.map { Row("\($0)", $0.text(player: app), namesApp: true) }
+            case .controlError:
+                func text(_ error: MusicPlayerError) -> String { ControlError(error, player: app).text }
+                return [
+                    Row("no longer allowed", text(.automationPermissionDenied), text(.accessibilityPermissionDenied), namesApp: true),
+                    Row("not running", text(.playerNotRunning), namesApp: true),
+                    Row("not responding", text(.playerNotResponding), namesApp: true),
+                    Row("a command failed, in its failure's words", text(.playerCommandFailed(.pressIgnored)), namesApp: true),
+                ]
+            case .webAppProblem:
+                func problem(_ error: WebAppMakingError, example: String? = nil) -> String {
+                    let model = AddWebAppModel()
+                    model.exampleAddress = example
+                    model.fail(error)
+                    return model.problemText ?? ""
+                }
+                let site = "music.example.com"
+                return [
+                    Row("not a web address", problem(.notAWebAddress)),
+                    Row("not a web address, with an example", problem(.notAWebAddress, example: site), names: site),
+                    Row("no answer", problem(.noAnswer(host: site)), names: site),
+                    Row("no such page", problem(.pageNotFound(host: site)), names: site),
+                    Row("no Accessibility", problem(.accessibilityDenied)),
+                    Row("Safari didn't add it", problem(.browserFailed("no dialog"))),
+                    Row("not found yet", problem(.notFound(name: app)), namesApp: true),
+                ]
+            case .logsFilter:
+                return LogsModel.Range.allCases.map { Row("\($0)", $0.title) } + LogsModel.Levels.allCases.map { Row("\($0)", $0.title) }
+            case .sortDirection:
+                return AppListOrder.Criterion.allCases.flatMap { criterion in
+                    [false, true].map { Row("\(criterion), reversed: \($0)", AppListOrder(criterion: criterion, isReversed: $0).directionTitle) }
+                }
             }
         }
+
+        static let detectionMethods: [DetectionMethod] = [.audioLevels, .playbackSignals, .openStreams]
     }
 
-    @Test("every case gives words of its own, naming the app where it takes one", arguments: Choice.allCases)
+    @Test("every case gives words of its own, naming the app, the site or the version where it takes one", arguments: Choice.allCases)
     func everyCase(_ choice: Choice) {
         let rows = choice.rows
         for row in rows {
             #expect(!row.text.isEmpty, "\(row.input)")
             #expect(Set(row.texts).count == 1, "\(row.input) says the same on purpose: \(row.texts)")
-            if row.namesApp { #expect(row.text.contains(Self.app), "\(row.input): \(row.text)") }
+            if let names = row.names { #expect(row.text.contains(names), "\(row.input): \(row.text)") }
         }
         let shared = Dictionary(grouping: rows, by: \.text).values.filter { $0.count > 1 }.map { $0.map(\.input) }
         #expect(shared.isEmpty, "these cases say the same: \(shared)")
     }
 
-    @Test("the cases whose words matter say them: AppleScript that only toggles, a permission missing, Now Playing hidden, AntiDot, the countdown")
+    @Test("the cases whose words matter say them: AppleScript that only toggles, a permission missing, Now Playing hidden, AntiDot, the countdown; no permission button once it's allowed; a symbol macOS has for each window state")
     func wordsThatMatter() {
         let app = Self.app
         func note(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
@@ -190,5 +273,13 @@ struct AddAppTextTests {
         // The countdown rounds up, and never goes below zero.
         #expect(AddAppText.timeLeft(104.2, for: .play(minutes: 2)) == "You have 1:45 to start it playing.")
         #expect(AddAppText.timeLeft(-3, for: .pause(minutes: 2)) == "You have 0:00 to pause it.")
+        // Allowed, or not needed: no button at all.
+        for access: PermissionAccess in [.allowed, .notNeeded] {
+            #expect(PermissionButton.title(for: access, permission: .automation(player: app), long: true, player: app) == nil)
+        }
+        // The check's warning shows each window state's symbol: one this macOS lacks draws nothing.
+        for state in CheckResult.WindowState.allCases {
+            #expect(NSImage(systemSymbolName: CheckWarningView.symbol(state), accessibilityDescription: nil) != nil, "\(state)")
+        }
     }
 }

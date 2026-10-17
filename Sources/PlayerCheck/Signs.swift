@@ -161,7 +161,7 @@ struct Sign {
         return true
     }
     countPagesBeforePlaying(pid, saying: true)
-    say(CheckReportLine.waiting("start playing something in \(appName); the test goes on as soon as it plays", minutes: Int(seconds / 60))
+    say(CheckReportLine.waitingToPlay(appName, minutes: Int(seconds / 60))
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
     let deadline = Date().addingTimeInterval(seconds)
     // Whoever runs the check may need the mouse and keyboard for it.

@@ -49,6 +49,7 @@ extension AudioMonitor {
         quietProcesses = []
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
+        publishedStartConfirmation = nil
         publishActiveSources()
         latestReport.withLock { $0 = nil }
     }

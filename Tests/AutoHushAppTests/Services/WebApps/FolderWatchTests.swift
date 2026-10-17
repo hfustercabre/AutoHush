@@ -24,8 +24,8 @@ struct FolderWatchTests {
         }
 
         /// Waits until a change beyond `count` is reported.
-        func waitForChange(after count: Int) async {
-            await TestWait.until { changes != count }
+        func waitForChange(after count: Int, sourceLocation: SourceLocation = #_sourceLocation) async {
+            await TestWait.until(sourceLocation: sourceLocation) { changes != count }
         }
     }
 
@@ -71,5 +71,6 @@ struct FolderWatchTests {
     func missingFolder() {
         let missing = FileManager.default.temporaryDirectory.appending(path: "FolderWatchTests-missing-\(UUID().uuidString)")
         #expect(FolderWatch(folder: missing) {} == nil)
+        #expect(FolderWatch.start(missing, {}) == nil) // the app's way of starting one
     }
 }

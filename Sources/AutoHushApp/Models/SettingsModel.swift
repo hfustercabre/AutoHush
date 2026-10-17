@@ -111,8 +111,13 @@ final class SettingsModel {
     /// The version with its build number, e.g. "0.6.1 (19)", for About and
     /// Diagnostics.
     var fullVersion: String? {
+        fullVersion(build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String)
+    }
+
+    /// The same with `build` as this copy's build number: the version alone
+    /// without one.
+    func fullVersion(build: String?) -> String? {
         guard let currentVersion else { return nil }
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
         return build.map { "\(currentVersion) (\($0))" } ?? currentVersion
     }
     /// When updates were last checked for, by hand or automatically.

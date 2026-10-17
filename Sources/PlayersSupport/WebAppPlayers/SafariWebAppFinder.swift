@@ -78,11 +78,13 @@ package struct SafariWebApp: Equatable, Sendable {
     /// other web apps' (they all run the same program); `nil` for any other
     /// process.
     package static func source(forProcess pid: pid_t) -> AudioSource? {
-        guard let app = NSRunningApplication(processIdentifier: pid),
-              app.bundleIdentifier?.hasPrefix(bundleIDPrefix) == true,
-              let url = app.bundleURL,
-              let webApp = SafariWebApp(bundleAt: url)
-        else { return nil }
+        let app = NSRunningApplication(processIdentifier: pid)
+        return source(bundleID: app?.bundleIdentifier, at: app?.bundleURL)
+    }
+
+    /// The web app a process running as `bundleID`, from the bundle at `url`, is.
+    static func source(bundleID: String?, at url: URL?) -> AudioSource? {
+        guard bundleID?.hasPrefix(bundleIDPrefix) == true, let url, let webApp = SafariWebApp(bundleAt: url) else { return nil }
         return AudioSource(id: webApp.bundleID, name: webApp.name, bundlePath: url.path)
     }
 }

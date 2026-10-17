@@ -72,6 +72,10 @@ struct ScriptedAppPlayerTests {
         answers.value = .unknown
         await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await jukebox.play() }
         #expect(app.sent == ["jukeTogl", "jukeTogl"])
+        // Given no other signs at all, it's never sent either.
+        let signless = player(ScriptSetup(commands: .toggle("jukeTogl"), state: nil, hasVolume: false), app: app)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await signless.pause() }
+        #expect(app.sent == ["jukeTogl", "jukeTogl"])
     }
 
     @Test("not running, it isn't asked; a read that fails says nothing, and the next that works tells again")
@@ -89,30 +93,57 @@ struct ScriptedAppPlayerTests {
         #expect(await jukebox.playerState() == .playing)
     }
 
-    @Test("a document's own volume (QuickTime Player's): read from the one playing and set on those playing, then on those its pause paused")
+    @Test("a document's own volume (QuickTime Player's): read from and set on those playing, else on those it fades or paused, never on another (the front one); a play that failed is tried on them again")
     func documentVolume() async throws {
+        // Song A, in front, paused by the user; Song B plays.
         let app = FakeScriptedApp {
             $0.documents = [("Song A", false), ("Song B", true)]
-            $0.documentVolumes = ["Song B": 0.8]
+            $0.documentVolumes = ["Song A": 0.6, "Song B": 0.8]
         }
         let quickTime = player(ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
                                            state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false,
                                            documentVolume: "volu"), app: app)
+        let volumes = { app.state.withLock { $0.documentVolumes } }
         #expect(quickTime.canFade)
         #expect(await quickTime.volume() == 80)
         try await quickTime.setVolume(30)
-        #expect(app.state.withLock { $0.documentVolumes } == ["Song B": 0.3])
+        #expect(volumes() == ["Song A": 0.6, "Song B": 0.3])
+        // Song B stops during the fade-out: the rest of it, and the volume set back, are still Song B's.
+        app.state.withLock { $0.documents[1].playing = false }
+        try await quickTime.setVolume(20)
+        try await quickTime.setVolume(80)
+        #expect(volumes() == ["Song A": 0.6, "Song B": 0.8])
+
+        // Paused: the volume set back meanwhile, and the next fade-in's, are the one it paused.
+        app.state.withLock { $0.documents[1].playing = true }
         try await quickTime.pause()
-        try await quickTime.setVolume(80) // set back while paused: on the one it paused
-        #expect(app.state.withLock { $0.documentVolumes } == ["Song B": 0.8])
-        #expect(app.sent.filter { $0.hasPrefix("set volu") } == ["set volu of Song B 0.30", "set volu of Song B 0.80"])
+        try await quickTime.setVolume(80)
+        #expect(await quickTime.volume() == 80)
+        try await quickTime.setVolume(1)
+        // Its play times out: the volume set back, and the play tried again, still go to Song B.
+        app.state.withLock { $0.failsCommands = true }
+        await #expect(throws: MusicPlayerError.playerNotResponding) { try await quickTime.play() }
+        app.state.withLock { $0.failsCommands = false }
+        try await quickTime.setVolume(80)
+        try await quickTime.play()
+        #expect(app.commands == ["jukePaus Song B", "jukePlay Song B", "jukePlay Song B"])
+        #expect(volumes() == ["Song A": 0.6, "Song B": 0.8])
+
+        // Song B closed: no volume is read or set, not even the front one's.
+        app.state.withLock { $0.documents = [("Song A", false)] }
+        let sent = app.sent.count
+        #expect(await quickTime.volume() == nil)
+        try await quickTime.setVolume(50)
+        #expect(volumes() == ["Song A": 0.6, "Song B": 0.8])
+        #expect(app.sent.dropFirst(sent).allSatisfy { $0.hasSuffix("of docu") }) // only the documents were read
     }
 
-    @Test("by its documents: it plays while one does; a pause goes to each one playing, a play back to those it paused still open, else to the front one; none open, it's stopped")
+    @Test("by its documents: it plays while one does; a pause goes to each one playing, a play back to those it paused still open, never to another (the front one); having paused none (a pause handed over at an update's relaunch), it plays the only one open, none of several; none open, it's stopped")
     func documents() async throws {
         let app = FakeScriptedApp { $0.documents = [("Song A", true), ("Song B", false), ("Song C", true)] }
-        let quickTime = player(ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
-                                           state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false), app: app)
+        let setup = ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
+                                state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false)
+        let quickTime = player(setup, app: app)
         #expect(await quickTime.playerState() == .playing)
         try await quickTime.pause()
         #expect(app.commands == ["jukePaus Song A", "jukePaus Song C"])
@@ -120,19 +151,26 @@ struct ScriptedAppPlayerTests {
         app.state.withLock { _ = $0.documents.removeLast() } // Song C closed meanwhile
         try await quickTime.play()
         #expect(app.commands == ["jukePaus Song A", "jukePaus Song C", "jukePlay Song A"]) // not Song B: it wasn't paused by us
-        // One open, which it didn't pause: the front one is played.
+        // Only one open, which it didn't pause: nothing is played, not even the front one, which the user paused.
         app.state.withLock { $0.documents = [("Song B", false)] }
         #expect(await quickTime.playerState() == .paused)
-        try await quickTime.play()
-        #expect(app.commands.last == "jukePlay front")
-        #expect(await quickTime.playerState() == .playing)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await quickTime.play() }
+        #expect(app.commands.count == 3)
+
+        let relaunched = player(setup, app: app)
+        app.state.withLock { $0.documents = [("Song B", false), ("Song D", false)] }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await relaunched.play() }
+        app.state.withLock { $0.documents = [("Song D", false)] }
+        try await relaunched.play()
+        #expect(app.commands.count == 4 && app.commands.last == "jukePlay Song D")
+
         app.state.withLock { $0.documents = [] }
         #expect(await quickTime.playerState() == .stopped)
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await quickTime.play() }
     }
 
     @MainActor
-    @Test("its volume is read and set within 0–100; its notification is followed when the check saw one, else it's read about once a second, by its playing flag (-1 for its current time: stopped)")
+    @Test("its volume is read and set within 0–100; its notification is followed when the check saw one, else it's read about once a second, by its playing flag (-1 for its current time: stopped; no current time: paused)")
     func volumeAndObserver() async throws {
         let app = FakeScriptedApp()
         let setup = ScriptSetup(commands: .toggle("jukeTogl"), state: .playingFlag(property: "jPly", currentTime: "jTim"), hasVolume: true)
@@ -157,5 +195,8 @@ struct ScriptedAppPlayerTests {
         #expect(await polled.playerState() == .paused)
         app.state.withLock { $0.currentTime = -1 }
         #expect(await polled.playerState() == .stopped)
+        let timeless = player(ScriptSetup(commands: .toggle("jukeTogl"), state: .playingFlag(property: "jPly", currentTime: nil),
+                                          hasVolume: true), app: app)
+        #expect(await timeless.playerState() == .paused)
     }
 }

@@ -1,6 +1,7 @@
 import AppKit
 import AutoHushKit
 import AutoHushPlayers
+import CheckedPlayers
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -26,6 +27,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// back after it.
     let focusAutoPause: FocusAutoPause
     let preferences: Preferences
+    /// The choices kept beside `preferences`: the players reopened always
+    /// (`ReopenChoices`) and Add an App's finished check (`KeptCheckStore`).
+    let defaults: UserDefaults
+    /// Runs AutoHush's alerts (removing an added app, reopening a player,
+    /// the card's info button) and returns the button pressed. Tests replace it.
+    var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
     /// The Settings window's content, kept in sync with the app's state.
     private(set) var settingsModel: SettingsModel!
     var settingsWindowController: SettingsWindowController?
@@ -35,6 +42,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var windowWatch: WindowWatch!
     /// The music players to choose from.
     let players: MusicPlayerCatalog
+    /// The apps added with Add an App, which `players` offers: what each
+    /// one's check found, kept until it's removed.
+    let checkedPlayers: CheckedPlayers
     let locateApp: PlayerOption.Locate
     /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
     var player: (any MusicPlayer)? { session.player }
@@ -97,15 +107,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// How long after a change in one of them the players are checked again.
     let installCheckDelay: Duration
     var installCheck: Task<Void, Never>?
+    /// A quit under way, until the player has its volume back and a pause
+    /// AutoHush held is handed over (`shouldTerminate`).
+    var quitting: Task<Void, Never>?
 
     init(
         preferences: Preferences = Preferences(),
+        defaults: UserDefaults = .standard,
         launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
         updateChecker: UpdateChecker = UpdateChecker(),
         updateInstaller: any UpdateInstalling = UpdateInstaller(),
         updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
+        checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
         makeMonitoring: @escaping PlayerSession.MakeMonitoring = PlayerSession.pipelines(hostedApp: SupportedPlayers.hostedApp(pid:)),
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
         makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
@@ -137,7 +152,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.preferences = preferences
+        self.defaults = defaults
         self.players = players
+        self.checkedPlayers = checkedPlayers
         self.locateApp = locateApp
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow

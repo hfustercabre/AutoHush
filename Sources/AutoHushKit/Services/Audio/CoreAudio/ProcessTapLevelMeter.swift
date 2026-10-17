@@ -202,7 +202,7 @@ final class ProcessTap: @unchecked Sendable {
     }
 
     /// Peak, sum of squares and sample count of one IO cycle's buffers.
-    private static func measure(_ bufferList: UnsafePointer<AudioBufferList>) -> (Float, Double, Int) {
+    static func measure(_ bufferList: UnsafePointer<AudioBufferList>) -> (Float, Double, Int) {
         var peak: Float = 0
         var sumOfSquares: Double = 0
         var total = 0

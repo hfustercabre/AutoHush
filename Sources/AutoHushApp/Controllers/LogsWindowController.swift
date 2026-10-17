@@ -34,9 +34,10 @@ final class LogsWindowController: NSWindowController, NSWindowDelegate {
         window.contentMinSize = Self.minimumSize
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(Self.frameName)
-        window.setFrameAutosaveName(Self.frameName)
         window.title = Self.title
         super.init(window: window)
+        // The controller's, as Settings' (`SettingsWindowController`).
+        windowFrameAutosaveName = Self.frameName
         window.delegate = self
     }
 

@@ -83,6 +83,11 @@ class HostedWindowController: NSWindowController {
     private var pinnedTop: CGFloat?
     private var edgeObservers: [NSObjectProtocol] = []
     static let cornerMargin: CGFloat = 16
+    /// The screen it floats on: the one the user is on, with the pointer
+    /// (tests pick one).
+    var cornerScreen: @MainActor () -> NSScreen? = {
+        NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
+    }
 
     /// A hosting controller for `view` that sizes the window to it.
     static func sizedToFit<Content: View>(_ view: Content) -> NSHostingController<Content> {
@@ -103,9 +108,7 @@ class HostedWindowController: NSWindowController {
                 window.setContentSize(fitting)
             }
             if floatsInCorner {
-                // On the screen the user is on: the one with the pointer.
-                let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
-                if let area = screen?.visibleFrame {
+                if let area = cornerScreen()?.visibleFrame {
                     window.setFrameTopLeftPoint(NSPoint(x: area.maxX - window.frame.width - Self.cornerMargin,
                                                         y: area.maxY - Self.cornerMargin))
                 }

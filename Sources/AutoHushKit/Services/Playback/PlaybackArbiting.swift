@@ -10,4 +10,8 @@ package protocol PlaybackArbiting: Actor {
     /// Whether the player's audio currently comes out of this Mac (as opposed
     /// to another device, e.g. through Spotify Connect).
     func handleLocalPlaybackChange(_ isLocal: Bool) async
+    /// How long an app must play, at most, before the monitor counts it, as
+    /// it judges apps now: longer in AntiDot mode, and while nothing is
+    /// measured.
+    func handleStartConfirmationChange(_ longest: TimeInterval) async
 }

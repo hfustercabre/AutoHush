@@ -28,6 +28,8 @@ final class FakeMonitoring: SessionMonitoring {
     private var resumeWaiters: [CheckedContinuation<Void, Never>]?
     /// How many waits for a resume are over.
     private(set) var resumeWaitsOver = 0
+    /// The apps with sound it reports, as Diagnostics lists them.
+    var audioReport: [ActiveAudioReport.Entry] = []
 
     init(bundleID: String? = nil, setup: PlayerSession.MonitoringSetup? = nil, findsPause: Bool = false,
          onUpdate: (@MainActor (MonitoringPipeline.StatusUpdate) -> Void)? = nil) {
@@ -69,7 +71,7 @@ final class FakeMonitoring: SessionMonitoring {
     func holdResumes(_ held: Bool) { resumesHeld.append(held) }
     func setConfiguration(_ configuration: AppConfiguration) { configurations.append(configuration) }
     func setDetectionMethod(_ method: DetectionMethod) { detectionMethods.append(method) }
-    func activeAudioReport() -> [ActiveAudioReport.Entry] { [] }
+    func activeAudioReport() -> [ActiveAudioReport.Entry] { audioReport }
 }
 
 /// Makes the player session's monitorings as `FakeMonitoring`s, and keeps

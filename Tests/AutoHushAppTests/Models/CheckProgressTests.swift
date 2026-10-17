@@ -46,7 +46,7 @@ struct CheckProgressTests {
     func requests() {
         let asked = progress([Line.Heading.playing.rawValue, Line.blocked + " until its window is put back",
                               Line.waiting("start playing something in Deezer; the test goes on as soon as it plays", minutes: 2)])
-        #expect(asked.request == .play(minutes: 2))
+        #expect(asked.request == .play(minutes: 2) && asked.request?.minutes == 2) // the panel counts down from it
         #expect(asked.requestSince == Date(timeIntervalSince1970: 100))
         #expect(asked.inputBlocked && !asked.blocksInput)
         #expect(progress([Line.waiting("pause Deezer yourself (its own Pause, anywhere): …", minutes: 2)]).request == .pause(minutes: 2))
@@ -55,6 +55,7 @@ struct CheckProgressTests {
                           Line.Heading.windowStates.rawValue]).request == nil)
         #expect(progress([Line.waiting("allow Accessibility for AutoHush", minutes: 3)]).request
             == .allowAccessibility(minutes: 3))
+        #expect(CheckProgress.Request.pause(minutes: 2).minutes == 2 && CheckProgress.Request.allowAccessibility(minutes: 3).minutes == 3)
     }
 
     @Test("the mouse and keyboard are blocked from the check's line until it frees them")

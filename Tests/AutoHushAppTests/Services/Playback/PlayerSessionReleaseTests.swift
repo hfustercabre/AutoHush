@@ -37,8 +37,9 @@ struct PlayerSessionReleaseTests {
     private let other = MockMusicPlayer(bundleID: "com.example.other", name: "Other")
     private let monitorings = FakeMonitorings()
 
-    private func session() async -> PlayerSession {
-        let session = PlayerSession(
+    /// A session with the added app chosen, not started yet.
+    private func makeSession() -> PlayerSession {
+        PlayerSession(
             player: added,
             players: MusicPlayerCatalog(players: [added, other]),
             preferences: Preferences(store: InMemoryPreferenceStore()),
@@ -46,20 +47,38 @@ struct PlayerSessionReleaseTests {
             makeMonitoring: monitorings.make,
             locateApp: { URL(fileURLWithPath: "/Applications/\($0).app") }
         )
+    }
+
+    private func session() async -> PlayerSession {
+        let session = makeSession()
         session.launch()
         await TestWait.until { session.state.health == .ready }
         return session
     }
 
-    @Test("what it turned on in its app goes back off once another is chosen")
+    @Test("what it turned on in its app goes back off once another is chosen, and as AutoHush quits, monitored or not")
     func released() async {
         let session = await session()
         session.choose(other)
         await TestWait.until { await added.releases == 1 }
+        #expect(await added.releases == 1)
         // Chosen again, then another: once more.
         session.choose(added)
         session.choose(other)
         await TestWait.until { await added.releases == 2 }
+        #expect(await added.releases == 2)
+
+        // Chosen again and monitored, then AutoHush quits.
+        session.choose(added)
+        await TestWait.until { session.state.health == .ready }
+        await session.quit()?.value
+        #expect(await added.releases == 3)
+
+        // Quitting before it was ever monitored.
+        let quitting = makeSession().quit()
+        #expect(quitting != nil)
+        await quitting?.value
+        #expect(await added.releases == 4)
     }
 
     @Test("with its pause held, only once that pause is over")
@@ -71,5 +90,6 @@ struct PlayerSessionReleaseTests {
         #expect(await added.releases == 0)
         monitorings.made[0].send(.playback(.musicPlaying))
         await TestWait.until { await added.releases == 1 }
+        #expect(await added.releases == 1)
     }
 }

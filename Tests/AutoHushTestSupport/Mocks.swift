@@ -212,16 +212,43 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
     private var recordedDelays: [TimeInterval] = []
     private let lock = NSLock()
 
+    /// A task that ends once it's cancelled (by the arbiter, or
+    /// `completeNext`). Until then it waits without running, so one the
+    /// arbiter drops uncancelled costs nothing for the rest of the run.
     package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
         lock.withLock {
             recordedDelays.append(delay)
-            let task = Task<Void, Never> {
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .milliseconds(1))
-                }
-            }
+            let hold = Hold()
+            let task = Task<Void, Never> { await hold.untilCancelled() }
             pendingTasks.append(task)
             return task
+        }
+    }
+
+    /// Holds a debounce's task until it's cancelled.
+    private final class Hold: @unchecked Sendable {
+        private let lock = NSLock()
+        private var waiting: CheckedContinuation<Void, Never>?
+        private var cancelled = false
+
+        func untilCancelled() async {
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    let now = lock.withLock { () -> Bool in
+                        guard !cancelled else { return true }
+                        waiting = continuation
+                        return false
+                    }
+                    if now { continuation.resume() }
+                }
+            } onCancel: {
+                let continuation = lock.withLock { () -> CheckedContinuation<Void, Never>? in
+                    cancelled = true
+                    defer { waiting = nil }
+                    return waiting
+                }
+                continuation?.resume()
+            }
         }
     }
 
@@ -249,7 +276,10 @@ package enum StubError: Error, LocalizedError {
 
 // MARK: - InMemoryPreferenceStore
 
-/// Keeps preferences in memory, so tests never write preference files.
+/// Keeps preferences in memory, so tests never write preference files. Each
+/// value is kept as UserDefaults keeps it, as a property list: one that
+/// isn't (a Set, a struct, which UserDefaults can't store) is an issue, and
+/// what's read back is the Foundation form UserDefaults hands back.
 package final class InMemoryPreferenceStore: PreferenceStore {
     package init() {}
     private var values: [String: Any] = [:]
@@ -257,7 +287,17 @@ package final class InMemoryPreferenceStore: PreferenceStore {
     package func object(forKey key: String) -> Any? { values[key] }
 
     package func set(_ value: Any?, forKey key: String) {
-        values[key] = value
+        guard let value else {
+            values[key] = nil
+            return
+        }
+        do {
+            let data = try PropertyListSerialization.data(fromPropertyList: value, format: .binary, options: 0)
+            values[key] = try PropertyListSerialization.propertyList(from: data, format: nil)
+        } catch {
+            Issue.record("\(key) isn't a property list, which UserDefaults can't store: \(value)")
+            values[key] = value
+        }
     }
 }
 

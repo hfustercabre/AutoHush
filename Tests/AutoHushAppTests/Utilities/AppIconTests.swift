@@ -59,8 +59,8 @@ struct AppIconTests {
         #expect(max(tile.redComponent, tile.greenComponent, tile.blueComponent) < 0.2)
     }
 
-    @Test("a Safari web app's icon carries Safari's at its lower right, so it isn't taken for an app of the same name")
-    func webAppBadge() {
+    @Test("a Safari web app's icon carries Safari's at its lower right, so it isn't taken for an app of the same name; a Chromium browser's web app's carries its browser's")
+    func webAppBadge() throws {
         let path = "/System/Applications/Calculator.app"
         let plain = render(AppIcon.image(bundlePath: path, size: 100))
         let webApp = render(AppIcon.webAppImage(bundlePath: path, size: 100))
@@ -72,6 +72,20 @@ struct AppIconTests {
             .icon(size: 100) === AppIcon.webAppImage(bundlePath: path, size: 100))
         #expect(PlayerOption(bundleID: "com.example.app", name: "Calculator", appURL: url)
             .icon(size: 100) === AppIcon.image(bundlePath: path, size: 100))
+
+        // A Chromium browser's web app, added with Add an App (its browser
+        // here Safari, which every Mac has); any other app shows its own.
+        let folder = FileManager.default.temporaryDirectory.appending(path: "AppIconTests-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let browserApp = folder.appending(path: "SoundCloud.app")
+        try FileManager.default.createDirectory(at: browserApp.appending(path: "Contents"), withIntermediateDirectories: true)
+        try (["CFBundleIdentifier": "com.example.browser.app.soundcloud", "CrAppModeShortcutURL": "https://soundcloud.com",
+              "CrBundleIdentifier": "com.apple.Safari"] as NSDictionary).write(to: browserApp.appending(path: "Contents/Info.plist"))
+        let own = render(AppIcon.image(bundlePath: browserApp.path, size: 100))
+        let badged = render(AppIcon.appImage(bundlePath: browserApp.path, size: 100))
+        #expect(color(badged, at: 20, 20) == color(own, at: 20, 20))
+        #expect(color(badged, at: 78, 78) != color(own, at: 78, 78)) // its browser's over it
+        #expect(AppIcon.appImage(bundlePath: path, size: 100) === AppIcon.image(bundlePath: path, size: 100))
     }
 
     @Test("icons are dark when the style says so, or follows a dark appearance")

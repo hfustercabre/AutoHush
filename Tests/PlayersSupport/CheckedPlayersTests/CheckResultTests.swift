@@ -54,13 +54,18 @@ struct CheckResultTests {
         #expect(players.current().isEmpty)
     }
 
-    @Test("an app's traits come from its bundle: Electron's needs its launch option; a dictionary means scripting")
+    @Test("an app's traits come from its bundle: Electron's needs its launch option; CEF is Chromium; Flutter; a browser's web app names its browser; a dictionary means scripting")
     func traits() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("CheckResultTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
-        let electron = folder.appendingPathComponent("Electron.app")
-        try FileManager.default.createDirectory(at: electron.appendingPathComponent("Contents/Frameworks/Electron Framework.framework"),
-                                                withIntermediateDirectories: true)
+        func app(_ name: String, framework: String) throws -> URL {
+            let app = folder.appendingPathComponent("\(name).app")
+            try FileManager.default.createDirectory(at: app.appendingPathComponent("Contents/Frameworks/\(framework).framework"),
+                                                    withIntermediateDirectories: true)
+            return app
+        }
+        let electron = try app("Electron", framework: "Electron Framework")
+        let cef = try app("Embedded", framework: "Chromium Embedded Framework"), flutter = try app("Flutter", framework: "FlutterMacOS")
         let scripted = folder.appendingPathComponent("Scripted.app")
         try FileManager.default.createDirectory(at: scripted.appendingPathComponent("Contents/Resources"), withIntermediateDirectories: true)
         try Data().write(to: scripted.appendingPathComponent("Contents/Resources/Scripted.sdef"))
@@ -74,6 +79,10 @@ struct CheckResultTests {
         #expect(CheckedAppTraits.browser(ofAppAt: chromeApp) == "com.google.Chrome")
         #expect(CheckedAppTraits.browser(ofAppAt: electron) == nil)
         #expect(CheckedAppTraits.of(appAt: electron) == CheckedAppTraits(scriptable: false, framework: .electron, needsLaunchOption: true))
+        #expect(CheckedAppTraits.of(appAt: cef) == CheckedAppTraits(scriptable: false, framework: .chromium, needsLaunchOption: false))
+        #expect(CheckedAppTraits.of(appAt: flutter) == CheckedAppTraits(scriptable: false, framework: .flutter, needsLaunchOption: false))
+        #expect(CheckedAppTraits.of(appAt: chromeApp)
+            == CheckedAppTraits(scriptable: false, framework: .browserWebApp(browserID: "com.google.Chrome"), needsLaunchOption: false))
         #expect(CheckedAppTraits.of(appAt: scripted) == CheckedAppTraits(scriptable: true, framework: nil, needsLaunchOption: false))
     }
 }

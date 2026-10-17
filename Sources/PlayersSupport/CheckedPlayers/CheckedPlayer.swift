@@ -78,7 +78,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
     private nonisolated let parts: Parts
     private let reports: NowPlayingReports?
     /// Its running process, if it runs: AutoHush never launches it.
-    private let processIdentifier: @Sendable () -> pid_t?
+    let processIdentifier: @Sendable () -> pid_t?
+    /// What its process was opened with (`needsReopen`).
+    let processArguments: @Sendable (pid_t) -> [String]
     /// Whether its sound output is on (a process of its own plays).
     private let soundOn: @Sendable (pid_t) -> Bool
     private let levelProbe: any AudioLevelProbing
@@ -94,6 +96,8 @@ package actor CheckedPlayer: MutingMusicPlayer {
     private var mutedPID: pid_t?
     private let assertionHeld: @Sendable (pid_t) -> Bool
     private var assertionSeen = false
+    /// What a stop is timed by (`MuteState.stopTime`).
+    private let clock: @Sendable () -> Date
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Its Now Playing report said it wasn't playing while it was heard: an
     /// app may report only while it's the Now Playing app (Qobuz's said
@@ -109,10 +113,13 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     init(setup: PlayerSetup, parts: Parts, reports: NowPlayingReports?,
-         processIdentifier: (@Sendable () -> pid_t?)? = nil, muter: any AudioMuting = ProcessTapMuter(),
+         processIdentifier: (@Sendable () -> pid_t?)? = nil,
+         processArguments: @escaping @Sendable (pid_t) -> [String] = { ProcessArguments.of($0) },
+         muter: any AudioMuting = ProcessTapMuter(),
          levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
          assertionHeld: @escaping @Sendable (pid_t) -> Bool = CheckedPlayer.holdsAssertion,
+         clock: @escaping @Sendable () -> Date = { Date() },
          pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         self.setup = setup
         self.parts = parts
@@ -120,11 +127,13 @@ package actor CheckedPlayer: MutingMusicPlayer {
         self.processIdentifier = processIdentifier ?? { [bundleID = setup.bundleID] in
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
+        self.processArguments = processArguments
         self.muter = muter
         self.levelProbe = levelProbe
         let sound = OwnedAudioProcesses()
         self.soundOn = soundOn ?? { sound.isPlayingSound(appPID: $0) }
         self.assertionHeld = assertionHeld
+        self.clock = clock
         self.pressSleep = pressSleep
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
@@ -229,7 +238,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
         if parts.mutes {
             // Opened again since it was muted: that mute was the old process's.
             if let mutedPID, mutedPID != pid { endMute() }
-            let (state, unmute) = hush.read(playing: playsNow(pid), at: Date())
+            let (state, unmute) = hush.read(playing: playsNow(pid), at: clock())
             if unmute {
                 liftMute()
                 logger.notice("\(self.name, privacy: .public): unmuted, as it was played again (or stopped after a sleep)")

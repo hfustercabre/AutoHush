@@ -4,12 +4,12 @@ import AutoHushKit
 // AppDelegate: what the menu and the windows show.
 extension AppDelegate {
     /// Shows what the player session knows in the menu and Settings; with no
-    /// player chosen, the status line asks for one, among those listed.
+    /// player chosen, the status line asks for one.
     func showSession() {
         let state = session.state
         let sourcesChanged = state.activeSources != status.activeSources
         var shown = status
-        shown.setHealth(state.health ?? .waitingForPlayer(among: shown.playerOptions))
+        shown.setHealth(state.health ?? .waitingForPlayer)
         shown.setActiveSources(state.activeSources)
         shown.playback = state.playback
         shown.detection = state.detection

@@ -17,6 +17,9 @@ struct AddWebAppView: View {
     let settings: SettingsModel
     let close: () -> Void
 
+    /// The window's width, which its bottom bar's buttons fit in every language.
+    static let width: CGFloat = 440
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
@@ -85,7 +88,7 @@ struct AddWebAppView: View {
                 }
             }
         }
-        .frame(width: 440)
+        .frame(width: Self.width)
         .font(.appBody)
         // VoiceOver hears why the last try failed, as it shows under the field.
         .onChange(of: model.problemText) { _, problem in

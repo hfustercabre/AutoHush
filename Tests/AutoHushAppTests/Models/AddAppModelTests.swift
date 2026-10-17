@@ -21,7 +21,7 @@ struct AddAppModelTests {
         return model
     }
 
-    @Test("the app playing in Now Playing is picked; the others that can play come after those in Now Playing")
+    @Test("the app playing in Now Playing is picked, or the only one there; the others that can play come after those in Now Playing")
     func choosing() async {
         let world = World()
         let model = await model(world)
@@ -30,8 +30,17 @@ struct AddAppModelTests {
         #expect(model.shownApps.others.map(\.name) == ["Other"])
         model.search = "oth"
         #expect(model.shownApps.inNowPlaying.isEmpty && model.shownApps.others.map(\.name) == ["Other"])
-        #expect(model.steps == [.choose, .allow, .play, .check, .use])
+        #expect(model.steps == [.choose, .allow, .play, .check, .use] && model.number(of: .play) == 3)
         #expect(model.mark(of: .choose) == .current && model.mark(of: .allow) == .todo)
+        #expect(!model.canChangeApp) // nothing chosen yet
+
+        // In the list's order, those in Now Playing first: the only one there is picked, playing or not.
+        let paused = World()
+        paused.apps[0].nowPlaying = false
+        #expect(await self.model(paused).selectedID == "com.example.player")
+        let none = World()
+        none.apps[0].nowPlaying = nil
+        #expect(await self.model(none).selectedID == nil)
     }
 
     @Test("choosing in the list, or an app picked on the disk, goes on; Change… starts over with the list")
@@ -51,16 +60,25 @@ struct AddAppModelTests {
         #expect(model.chosen?.bundleID == "com.example.other")
     }
 
-    @Test("an app that isn't open is opened, with its launch option when it needs one")
+    @Test("an app that isn't open is opened, with its launch option when it needs one; one that doesn't open says so, back at the first step")
     func opening() async {
         let world = World()
         world.running = false
         world.traits.needsLaunchOption = true
         let model = await model(world)
         model.continueWithApp()
+        #expect(model.stage == .opening && !model.canChangeApp)
         await TestWait.until { model.currentStep != .choose }
         #expect(world.opened.map(\.1) == [true])
         #expect(!model.needsReopen)
+
+        let failing = World()
+        failing.running = false
+        failing.opens = false
+        let unopened = await self.model(failing)
+        unopened.continueWithApp()
+        await TestWait.until { unopened.openFailed }
+        #expect(unopened.stage == .choosing && failing.opened.count == 1 && unopened.canContinueWithApp)
     }
 
     @Test("permissions are watched until all are allowed; then it waits for the app to play, and it's ready once it plays")
@@ -106,9 +124,10 @@ struct AddAppModelTests {
         #expect(model.stage == .allowing)
         world.permissions.automation = .allowed
         await TestWait.until { model.currentStep == .play }
+        #expect(model.currentStep == .play)
     }
 
-    @Test("an Electron app opened without its option asks before reopening; Skip goes on without")
+    @Test("an Electron app opened without its option asks before reopening, again when it didn't quit; Skip goes on without")
     func reopening() async {
         let world = World()
         world.traits.needsLaunchOption = true
@@ -117,9 +136,17 @@ struct AddAppModelTests {
         model.continueWithApp()
         await TestWait.until { model.stage == .reopenAsked }
         #expect(model.steps.contains(.reopen) && world.reopened == 0)
+        #expect(model.number(of: .reopen) == 3 && model.number(of: .play) == 4 && model.canChangeApp)
+        world.reopens = false // it didn't quit
         model.reopen()
+        #expect(model.stage == .reopening && !model.canChangeApp)
+        await TestWait.until { model.reopenFailed }
+        #expect(model.stage == .reopenAsked && world.reopened == 1)
+        world.reopens = true
+        model.reopen()
+        #expect(!model.reopenFailed)
         await TestWait.until { model.currentStep == .play }
-        #expect(world.reopened == 1 && model.reopenOutcome == .reopened)
+        #expect(world.reopened == 2 && model.reopenOutcome == .reopened)
 
         let other = World()
         other.traits.needsLaunchOption = true
@@ -131,7 +158,7 @@ struct AddAppModelTests {
         #expect(skipping.reopenOutcome == .skipped && skipping.currentStep == .play && other.reopened == 0)
     }
 
-    @Test("it gives up waiting for the app to play after 2 minutes; Try Again waits again")
+    @Test("it gives up waiting for the app to play after 2 minutes, as the window says; Try Again waits again")
     func playTimeout() async {
         let world = World()
         let model = await model(world)
@@ -140,9 +167,12 @@ struct AddAppModelTests {
         world.now = world.now.addingTimeInterval(AddAppModel.playWait)
         await TestWait.until { model.stage == .playTimedOut }
         #expect(model.mark(of: .play) == .failed)
+        let minutes = "\(Int(AddAppModel.playWait / 60)) minutes"
+        #expect(AddAppText.playWaits.contains(minutes) && AddAppText.didNotPlay("Player").contains(minutes))
         world.playing = true
         model.waitForPlaying()
         await TestWait.until { model.stage == .ready }
+        #expect(model.stage == .ready)
     }
 
     /// A model ready for its check.
@@ -159,15 +189,15 @@ struct AddAppModelTests {
         let world = World()
         let model = await ready(world)
         model.continueToCheck()
-        #expect(world.warnings == 1 && model.stage == .ready)
+        #expect(world.warnings == 1 && model.stage == .ready && model.canChangeApp)
         model.startCheck()
-        #expect(model.stage == .checking && model.mark(of: .check) == .busy)
+        #expect(model.stage == .checking && model.mark(of: .check) == .busy && !model.canChangeApp)
         await TestWait.until { world.panel == ["shown"] }
         #expect(model.progress.stage == .testing && world.taps == [true])
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
         #expect(world.panel == ["shown", "hidden"])
-        #expect(model.mark(of: .check) == .done && model.mark(of: .use) == .current)
+        #expect(model.mark(of: .check) == .done && model.mark(of: .use) == .current && !model.nowPlayingHidden)
         model.use()
         #expect(world.used == [result] && world.closed == 1 && world.asksToReopen == [true])
     }
@@ -205,6 +235,7 @@ struct AddAppModelTests {
         #expect(world.run.stopped && model.mark(of: .check) == .failed)
         model.checkAgain()
         await TestWait.until { model.stage == .ready }
+        #expect(model.stage == .ready)
 
         let none = World()
         let empty = await ready(none)
@@ -256,6 +287,7 @@ struct AddAppModelTests {
         model.windowClosed()
         #expect(world.run.stopped)
         await TestWait.until { world.panel == ["shown", "hidden"] }
+        #expect(world.panel == ["shown", "hidden"])
     }
 
     @Test("closing the window closes the warning, and its Start then runs nothing")
@@ -294,7 +326,7 @@ struct AddAppModelTests {
         #expect(world.panel.filter { $0 == "shown" }.count == 2 && world.panel.last == "shown")
     }
 
-    @Test("the app quitting while it's waited for says so; Open opens it and waits again")
+    @Test("the app quitting while it's waited for says so; Open opens it and waits again, or says so again when it doesn't open")
     func appQuits() async {
         let world = World()
         let model = await model(world)
@@ -303,29 +335,46 @@ struct AddAppModelTests {
         world.running = false
         await TestWait.until { model.stage == .playTimedOut }
         #expect(model.appQuit && model.mark(of: .play) == .failed)
+        world.opens = false
+        model.openAppAgain()
+        #expect(model.stage == .opening && !model.appQuit)
+        await TestWait.until { model.appQuit }
+        #expect(model.stage == .playTimedOut && world.opened.count == 1)
+        world.opens = true
         model.openAppAgain()
         await TestWait.until { model.currentStep == .play && !model.appQuit }
-        #expect(world.opened.count == 1)
+        #expect(model.stage == .waitingToPlay(since: world.now) && world.opened.count == 2)
     }
 
-    @Test("a check that couldn't finish says why: the app quit, it's gone, or the log")
+    @Test("a check that couldn't finish says why: the app quit (its result empty too), it's gone, or the log, also when none could start")
     func failureReasons() async {
+        /// Why a check that ends with `end` couldn't finish, `change` made to the world first.
+        func reason(_ end: PlayerCheckEnd, _ change: (World) -> Void = { _ in }) async -> PlayerCheckEnd.Reason? {
+            let world = World()
+            let model = await ready(world)
+            model.startCheck()
+            await TestWait.until { world.panel == ["shown"] }
+            change(world)
+            world.run.finish(end)
+            await TestWait.until { model.stage == .failed }
+            return model.failureReason
+        }
+        #expect(await reason(.failed(1)) { $0.running = false } == .appQuit)
+        // Quit, nothing could be tried: not "no way worked", with Mute It Instead.
+        #expect(await reason(.finished(CheckResult(ways: [], setup: nil))) { $0.running = false } == .appQuit)
+        #expect(await reason(.failed(1)) { $0.exists = false } == .appNotFound)
+        #expect(await reason(.failed(1)) == .other)
+
+        // The helper couldn't start one; Show Log… once there's a log.
         let world = World()
+        world.startsCheck = false
         let model = await ready(world)
         model.startCheck()
-        await TestWait.until { world.panel == ["shown"] }
-        world.running = false
-        world.run.finish(.failed(1))
         await TestWait.until { model.stage == .failed }
-        #expect(model.failureReason == .appQuit)
-
-        let other = World()
-        let failing = await ready(other)
-        failing.startCheck()
-        await TestWait.until { other.panel == ["shown"] }
-        other.run.finish(.failed(1))
-        await TestWait.until { failing.stage == .failed }
-        #expect(failing.failureReason == .other)
+        #expect(model.failureReason == .other && world.panel.isEmpty && !model.canShowLog)
+        world.hasLog = true
+        model.showLog()
+        #expect(model.canShowLog && world.logsShown == 1)
     }
 
     @Test("a finished check is kept until it's used: the window opened again shows it")
@@ -355,9 +404,12 @@ struct AddAppModelTests {
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.menu(menuName: "Playback")]))))
         await TestWait.until { model.result != nil }
-        #expect(model.offersCheckAgain && model.mark(of: .use) == .current)
+        #expect(model.offersCheckAgain && model.mark(of: .use) == .current && model.nowPlayingHidden)
+        model.openMenuBarSettings()
+        #expect(world.menuBarSettingsOpened == 1)
         model.checkAgain()
         await TestWait.until { model.stage == .ready }
+        #expect(model.stage == .ready)
     }
 
     @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")
@@ -410,7 +462,7 @@ struct AddAppModelTests {
         #expect(!world.antiDot && model.choosableWays == [.panel] && model.mark(of: .use) != .failed)
     }
 
-    @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen")
+    @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen, which the window offers")
     func audioAfterReopen() async {
         let world = World()
         world.permissions = CheckPermissions(accessibility: true, audio: .denied)
@@ -420,5 +472,7 @@ struct AddAppModelTests {
         #expect(!model.audioAwaitsReopen)
         model.request(.audioRecording)
         #expect(model.audioAwaitsReopen)
+        model.reopenAutoHush()
+        #expect(world.autoHushReopened == 1)
     }
 }

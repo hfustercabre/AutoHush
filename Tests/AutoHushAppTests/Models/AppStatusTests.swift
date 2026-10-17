@@ -103,17 +103,6 @@ struct AppStatusTests {
         #expect(AppStatus().cardTitle == "AutoHush")
     }
 
-    @Test("only a problem needs attention", arguments: [
-        (AppHealthState.starting, false), (.ready, false), (.needsPlayer("Choose a media player"), true),
-        (.degraded("Jukebox isn’t running"), true), (.needsPermission(.automation(player: "Jukebox")), true),
-        (.failed("Monitor failed hard"), true),
-    ])
-    func needsAttention(health: AppHealthState, attention: Bool) {
-        var status = AppStatus()
-        status.setHealth(health)
-        #expect(status.needsAttention == attention)
-    }
-
     @Test("a pause names the apps that caused it")
     func pauseNamesApps() {
         var status = ready(.pausedByMonitor)
@@ -127,7 +116,7 @@ struct AppStatusTests {
         #expect(status.statusLine == "Paused — another app is playing")
     }
 
-    @Test("an app that stops playing is listed as recently played for 5 minutes, the most recent first, until it plays again")
+    @Test("an app that stops playing is listed as recently played for 5 minutes, the most recent first, until it plays again; so is one playing when monitoring stops")
     func recentlyPlayed() {
         var status = ready()
         let start = Date()
@@ -138,7 +127,11 @@ struct AppStatusTests {
         #expect(status.recentSources(at: start + 30) == [chrome, vlc])
         status.setActiveSources([vlc], now: start + 40) // playing again: under Playing Now only
         #expect(status.recentSources(at: start + 50) == [chrome])
-        #expect(status.recentSources(at: start + 20 + 5 * 60).isEmpty)
+        // Another player chosen: nothing is monitored until it starts.
+        status.setHealth(.starting, now: start + 60)
+        #expect(status.activeSources.isEmpty)
+        #expect(status.recentSources(at: start + 70) == [vlc, chrome])
+        #expect(status.recentSources(at: start + 60 + 5 * 60).isEmpty)
     }
 
     @Test("ignored apps are listed but never named as the cause of a pause")
@@ -152,17 +145,17 @@ struct AppStatusTests {
         #expect(status.statusLine == "Paused — Google Chrome is playing")
     }
 
-    @Test("auto-pause off replaces the status line and dims the icon")
+    @Test("auto-pause off replaces the status line and dims the icon, which VoiceOver says, as the dimming doesn't")
     func autoPauseOff() {
         var status = ready(.musicPlaying)
         status.autoPause = .off
         #expect(status.statusLine == "Auto-Pause is off")
-        #expect(status.dimsIcon)
+        #expect(status.dimsIcon && status.iconAccessibilityLabel == "AutoHush: Auto-Pause is off")
         status.autoPause = .snoozed("until 15:30")
         #expect(status.statusLine == "Auto-Pause is off until 15:30")
-        #expect(status.dimsIcon)
+        #expect(status.dimsIcon && status.iconAccessibilityLabel == "AutoHush: Auto-Pause is off until 15:30")
         status.autoPause = .on
-        #expect(!status.dimsIcon)
+        #expect(!status.dimsIcon && status.iconAccessibilityLabel == "AutoHush: your player is playing")
     }
 
     @Test("while an update waits, the icon shows it, and VoiceOver says so after the icon's label")
@@ -211,10 +204,10 @@ struct AppStatusTests {
         #expect(status.warning == nil)
     }
 
-    @Test("Retry is offered only after a failed start nothing announces the end of", arguments: [
+    @Test("Retry is offered only after a failed start nothing announces the end of; every problem needs attention", arguments: [
         (AppHealthState.retrying("Jukebox isn’t responding"), true), (.failed("Monitor failed hard"), true),
         (.degraded("Jukebox isn’t installed"), false), (.needsPermission(.automation(player: "Jukebox")), false),
-        (.starting, false), (.ready, false),
+        (.needsPlayer("Choose a media player"), false), (.starting, false), (.ready, false),
     ])
     func retryOffered(health: AppHealthState, offered: Bool) {
         var status = AppStatus()

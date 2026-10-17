@@ -1,5 +1,4 @@
-import CoreGraphics
-import Foundation
+import AppKit
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -8,7 +7,7 @@ import AutoHushTestSupport
 @Suite("PlayerOption")
 @MainActor
 struct PlayerOptionTests {
-    @Test("every player in the catalog is offered, in its order, with where it's installed and its placeholder")
+    @Test("every player in the catalog is offered, in its order, with where it's installed and its placeholder, drawn while it isn't")
     func list() {
         let placeholder = PlayerIconPlaceholder(tile: [.init(0x000000)], mark: .init(0x1ED760)) { CGMutablePath() }
         let catalog = MusicPlayerCatalog(players: [
@@ -25,8 +24,7 @@ struct PlayerOptionTests {
         #expect(options.map(\.isInstalled) == [false, true])
         #expect(options[0].iconPlaceholder?.mark == placeholder.mark)
         #expect(options[1].iconPlaceholder == nil)
-        #expect(!options.noneInstalled)
-        #expect([options[0]].noneInstalled)
+        #expect(drawsSomething(options[0].icon(size: 32)))
     }
 
     @Test("players are offered installed first, then the others, each in the catalog's order")
@@ -161,9 +159,9 @@ struct PlayerOptionTests {
         #expect(deezer.kind == .safariWebApp)
         #expect(!deezer.isInstalled && deezer.isClickable)
         #expect(deezer.icon(size: 16).isTemplate)
+        #expect(drawsSomething(deezer.icon(size: 32)))
         #expect(options.map(\.isClickable) == [true, true, true])
         #expect(!PlayerOption(bundleID: "com.example.gone", name: "Gone", appURL: nil).isClickable)
-        #expect(options.onlyInstalled == nil) // two installed
     }
 
     @Test("web apps: tested sites' first, then the tested sites not added, then untested ones; suggestions don't count for the search")
@@ -189,15 +187,6 @@ struct PlayerOptionTests {
         #expect(PlayerOption.untestedBadge == "Untested")
     }
 
-    @Test("the welcome window's note names only the apps that aren't installed, not suggested web apps")
-    func onlyInstalledNoteSkipsSuggestions() {
-        let options = [option("Spotify", installed: true), option("VLC", installed: false),
-                       .suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))]
-        let note = PlayerOption.onlyInstalledNote(among: options)
-        #expect(note?.contains("VLC") == true)
-        #expect(note?.contains("Deezer") == false)
-    }
-
     @Test("from eight players on, they can be searched by name, ignoring case and accents")
     func search() {
         let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Música"]
@@ -219,28 +208,19 @@ struct PlayerOptionTests {
                      appURL: installed ? URL(fileURLWithPath: "/Applications/\(name).app") : nil)
     }
 
-    @Test("with one player installed and others supported, the welcome window names them")
-    func onlyInstalledWithOthers() {
-        let options = [option("First", installed: true), option("Second", installed: false), option("Third", installed: false)]
-        #expect(options.onlyInstalled?.name == "First")
-        #expect(PlayerOption.onlyInstalledNote(among: options)
-            == "First is the only supported media player on this Mac. AutoHush also works with Second and Third.")
-    }
-
-    @Test("with the only supported player installed, it's picked but there's nothing to add")
-    func onlySupportedPlayer() {
-        let options = [option("First", installed: true)]
-        #expect(options.onlyInstalled?.name == "First")
-        #expect(PlayerOption.onlyInstalledNote(among: options) == nil)
-    }
-
-    @Test("with two players installed, or none, nothing is picked and there's no note", arguments: [
-        [true, true, false], [false, false, false],
-    ])
-    func noOnlyInstalled(installed: [Bool]) {
-        let options = zip(["First", "Second", "Third"], installed).map { option($0, installed: $1) }
-        #expect(options.onlyInstalled == nil)
-        #expect(PlayerOption.onlyInstalledNote(among: options) == nil)
+    /// Whether `image`, drawn at 2×, leaves some pixel mostly opaque: an
+    /// image drawn by a handler draws only then.
+    private func drawsSomething(_ image: NSImage) -> Bool {
+        let pixels = Int(image.size.width * 2)
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels,
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
+        return (0..<pixels).contains { x in (0..<pixels).contains { y in (rep.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.5 } }
     }
 
     @Test("apps count as installed only in /Applications, the user's Applications folder and /System/Applications")

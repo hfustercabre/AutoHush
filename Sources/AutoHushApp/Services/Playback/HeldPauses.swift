@@ -33,7 +33,7 @@ final class HeldPauses {
         let monitoring: any HeldMonitoring
         /// Started to take a handed-over pause over: what it reports before
         /// it has (the player's state as it found it) doesn't count.
-        var awaitingTakeOver = false
+        var awaitingTakeOver: Bool
         /// Its player is no longer paused by it: it stops once the resume
         /// under way is over (`end`).
         var isEnding = false

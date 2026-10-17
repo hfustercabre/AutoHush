@@ -87,7 +87,8 @@ struct NowPlayingReportsTests {
         // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does.
         let script = #"printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ]; do sleep 0.01; done; printf '%s\n' "$2"; until [ -e "$3/end" ]; do sleep 0.01; done"#
         let reads = OSAllocatedUnfairLock(initialState: [Date]())
-        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path]) { since in
+        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path],
+                                        isAdministrator: true) { since in
             Thread.sleep(forTimeInterval: 0.1) // the live line comes first
             reads.withLock { $0.append(since) }
             return past
@@ -103,12 +104,13 @@ struct NowPlayingReportsTests {
         try Data().write(to: folder.appendingPathComponent("more"))
         await TestWait.until { reports.state(of: webApp) == .paused }
         #expect(reports.state(of: webApp) == .paused)
+        let ending = Date()
         try Data().write(to: folder.appendingPathComponent("end"))
         // Nothing said once it ended; that question follows it again, its past read back `lookBack`.
         await TestWait.until { reports.state(of: webApp) == nil }
         await TestWait.until { reads.withLock { $0.count } == 2 }
         let again = try #require(reads.withLock { $0.dropFirst().first })
-        #expect(abs(again.timeIntervalSinceNow + NowPlayingReports.firstLookBack) < 5)
+        #expect((ending...Date()).contains(again.addingTimeInterval(NowPlayingReports.firstLookBack)))
     }
 
     @Test("followed until nobody asks for its idle limit, or until stop; a log that can't be opened isn't asked again")
@@ -119,7 +121,7 @@ struct NowPlayingReportsTests {
         let line = #"{"eventMessage":"[com.example.app (\#(getpid())) App ❯] PlaybackState changed from Paused to Playing"}"#
         // Its pid written, its line, then it waits.
         let reports = NowPlayingReports(idleLimit: 0.2, streamCommand: ["/bin/sh", "-c", #"echo $$ > "$1"; printf '%s\n' "$2"; exec sleep 60"#,
-                                                                        "sh", file, line]) { _ in [:] }
+                                                                        "sh", file, line], isAdministrator: true) { _ in [:] }
         func stream() -> pid_t? {
             (try? String(contentsOfFile: file, encoding: .utf8)).flatMap { pid_t($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
         }
@@ -137,7 +139,7 @@ struct NowPlayingReportsTests {
         await TestWait.until { !NowPlayingReports.stillRuns(second) }
         #expect(!NowPlayingReports.stillRuns(second))
 
-        let closed = NowPlayingReports(streamCommand: ["/bin/sh", "-c", "exec sleep 60"]) { _ in nil }
+        let closed = NowPlayingReports(streamCommand: ["/bin/sh", "-c", "exec sleep 60"], isAdministrator: true) { _ in nil }
         #expect(!closed.follow(since: Date()))
         #expect(!closed.isAvailable)
         #expect(closed.state(of: "com.example.app") == nil)

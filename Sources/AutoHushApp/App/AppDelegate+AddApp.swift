@@ -81,6 +81,7 @@ extension AppDelegate {
                 self?.noteAudioRecordingAllowedInSettings()
                 self?.reopen()
             },
+            keptChecks: KeptCheckStore(defaults: defaults),
             use: { [weak self] result, asksToReopen in self?.useCheckedApp(result, asksToReopen: asksToReopen) },
             close: { [weak self] in self?.addAppWindow?.close() }
         )
@@ -114,9 +115,9 @@ extension AppDelegate {
 
     /// Keeps what the check found, then makes the app the player: chosen
     /// again when it was already (checked again, its new setup is used).
-    private func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
+    func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
         guard let setup = result.setup else { return }
-        SupportedPlayers.checkedPlayers.keep(result)
+        checkedPlayers.keep(result)
         logger.notice("Add an App: \(setup.name, privacy: .public) added, by \(setup.ways.map(\.logName).joined(separator: ", "), privacy: .public)")
         refreshPlayerOptions()
         chooseMusicPlayer(setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen)

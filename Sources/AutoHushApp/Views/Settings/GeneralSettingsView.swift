@@ -34,9 +34,6 @@ struct GeneralSettingsView: View {
                         onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() },
                         onAddApp: { model.actions?.openAddApp() },
                         onRemove: { model.actions?.removeAddedApp($0.bundleID) })
-            if model.playerOptions.noneInstalled {
-                NoteLabel(PlayerOption.noneInstalledWarning)
-            }
             Card {
                 SwitchRow(Text("Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), isOn: Binding(
                     get: { model.launchAtLoginEnabled },

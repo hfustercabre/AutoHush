@@ -101,9 +101,13 @@ final class SettingsWindowController: NSWindowController {
         window.contentMaxSize = Self.maximumSize
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(Self.frameName)
-        window.setFrameAutosaveName(Self.frameName)
         window.title = navigation.page.title
         super.init(window: window)
+        // On the controller, once it has the window: a controller gives the
+        // window it gets its own name, on macOS 14 and 15 an empty one too,
+        // which cleared the window's (it opened at its first place and size
+        // at each launch).
+        windowFrameAutosaveName = Self.frameName
         navigation.onChange = { [weak window] page in window?.title = page.title }
     }
 
@@ -118,7 +122,7 @@ final class SettingsWindowController: NSWindowController {
     /// Shows the window on `page` when given. Otherwise a window that was
     /// closed opens on General again, and one still open (minimized too)
     /// keeps its page. Reopened, Diagnostics has every part open again and
-    /// Apps' search is closed.
+    /// Sound Sources' search is closed.
     func show(page: Page? = nil) {
         let reopening = window?.isOpen != true
         if reopening {

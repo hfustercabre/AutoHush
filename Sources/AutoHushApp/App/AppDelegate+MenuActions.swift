@@ -22,10 +22,7 @@ extension AppDelegate {
     /// made to be listed.
     func registerWatchedWindows() {
         windowWatch.register(isOpen: { [weak self] in self?.settingsWindowController?.window?.isOpen == true }) { [weak self] in
-            var needs: Set<WindowWatch.Refresh> = [.notifications, .launchAtLogin, .permissions]
-            if self?.settingsWindowController?.shownPage == .diagnostics { needs.insert(.diagnostics) }
-            if self?.player == nil { needs.insert(.players) }
-            return needs
+            Self.settingsNeeds(page: self?.settingsWindowController?.shownPage, hasPlayer: self?.player != nil)
         }
         windowWatch.register(isOpen: { [weak self] in self?.isShowingPlayerChooser == true }) { [weak self] in
             self?.player == nil ? [.players, .notifications, .permissions] : [.notifications, .permissions]
@@ -35,6 +32,16 @@ extension AppDelegate {
         windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [weak self] in
             self?.webAppAwaitingListing == nil ? [.permissions] : [.permissions, .players]
         }
+    }
+
+    /// What Settings needs followed while it's open, on `page`: the
+    /// notifications, launch at login and the permissions, Diagnostics while
+    /// its page shows, and the players while none is chosen.
+    static func settingsNeeds(page: SettingsWindowController.Page?, hasPlayer: Bool) -> Set<WindowWatch.Refresh> {
+        var needs: Set<WindowWatch.Refresh> = [.notifications, .launchAtLogin, .permissions]
+        if page == .diagnostics { needs.insert(.diagnostics) }
+        if !hasPlayer { needs.insert(.players) }
+        return needs
     }
 
     /// One of the window watch's refreshes.

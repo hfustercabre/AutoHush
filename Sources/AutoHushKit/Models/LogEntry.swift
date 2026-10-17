@@ -2,15 +2,11 @@ import Foundation
 
 /// How much a logged line matters, from least to most (debug lines are
 /// never kept: see `AutoHushLogger`).
-package enum LogLevel: String, Sendable, CaseIterable, Comparable {
-    case info, notice, error, fault
+package enum LogLevel: String, Sendable, CaseIterable {
+    case info, notice, error
 
-    /// Something went wrong: an error or a fault.
-    package var isProblem: Bool { self == .error || self == .fault }
-
-    package static func < (lhs: LogLevel, rhs: LogLevel) -> Bool {
-        allCases.firstIndex(of: lhs)! < allCases.firstIndex(of: rhs)!
-    }
+    /// Something went wrong: an error.
+    package var isProblem: Bool { self == .error }
 }
 
 /// One line of AutoHush's log (`LogFile`).

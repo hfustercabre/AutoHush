@@ -12,6 +12,7 @@ struct SafariWebAppMakerTests {
             ("  https://open.spotify.com/ ", "https://open.spotify.com/"),
             ("http://localhost:8080/player", "http://localhost:8080/player"),
             ("music.amazon.es/?useHorizonte=true", "https://music.amazon.es/?useHorizonte=true"),
+            ("deezer.com/en/?redirect=https://www.deezer.com", "https://deezer.com/en/?redirect=https://www.deezer.com"),
           ])
     func addresses(typed: String, expected: String) {
         #expect(WebAddress.url(from: typed)?.absoluteString == expected)
@@ -164,7 +165,7 @@ struct SafariWebAppMakerTests {
             ("https://play.qobuz.com", "https://play.qobuz.com.example.net/", false),
             ("https://music.amazon.com", "https://music.amazon.evil.co/", false),
             ("https://music.amazon.com", "https://music.amazon.com.br/", true),
-            ("https://music.amazon.com", "https://music.amazon.co.uk/", true),
+            ("https://music.amazon.com", "https://music.amazon.co/", true),
             ("https://music.amazon.de", "https://music.amazon.com/", true),
             ("https://radio.example.com", "https://radio.example.cat/", true),
             ("https://music.amazon.com", "https://music.amazon.bad.co/", false),
@@ -222,7 +223,9 @@ struct SafariWebAppMakerTests {
         setup.safari.holdsDialog = true
         setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
         let task = Task { try await setup.make("play.qobuz.com") }
-        while !setup.safari.log.value.contains("add https://play.qobuz.com") { try await Task.sleep(for: .milliseconds(5)) }
+        defer { task.cancel() }
+        await TestWait.until { setup.safari.log.value.contains("add https://play.qobuz.com") }
+        try #require(setup.safari.log.value.contains("add https://play.qobuz.com"))
         task.cancel()
         await #expect(throws: CancellationError.self) { try await task.value }
         #expect(setup.safari.log.value.last == "cancel dialog")
@@ -261,12 +264,23 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value == ["trusted"])
     }
 
-    @Test("Safari not loading the page is an error")
+    @Test("Safari not opening the address, not loading the page, or without its Add to Dock, is an error, each its own")
     func safariFails() async {
+        let notOpening = Setup()
+        notOpening.safari.opens = false
+        await #expect(throws: WebAppMakingError.browserFailed("Safari couldn't open https://play.qobuz.com")) {
+            try await notOpening.make("play.qobuz.com")
+        }
         let notLoading = Setup()
         notLoading.safari.loads = false
-        await #expect(throws: WebAppMakingError.self) { try await notLoading.make("play.qobuz.com") }
+        await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await notLoading.make("play.qobuz.com") }
         #expect(notLoading.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait"])
+        let noAddToDock = Setup()
+        noAddToDock.safari.addsToDock = false
+        await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
+            try await noAddToDock.make("play.qobuz.com")
+        }
+        #expect(noAddToDock.steps.value.last == .adding)
     }
 
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
@@ -308,11 +322,14 @@ struct SafariWebAppMakerTests {
 final class FakeSafari: SafariDriving, @unchecked Sendable {
     let log = Locked<[String]>([])
     var trusted = true
+    /// Whether it opens an address, and has its Add to Dock (`false`: its menu item or dialog wasn't found).
+    var opens = true
+    var addsToDock = true
     var loads = true
     var onAdd: (@Sendable () -> Void)?
 
     func isTrusted(prompt: Bool) async -> Bool { log.append("trusted"); return trusted }
-    func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return true }
+    func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return opens }
     /// The dialog stays open until the task is cancelled.
     var holdsDialog = false
 
@@ -338,6 +355,7 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
 
     func addToDock(_ url: URL) async -> AddToDockResult {
         log.append("add \(url.absoluteString)")
+        guard addsToDock else { return .unavailable }
         while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
         guard !Task.isCancelled else {
             log.append("cancel dialog")

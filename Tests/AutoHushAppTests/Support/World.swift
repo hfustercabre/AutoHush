@@ -36,6 +36,10 @@ final class World {
                 CheckableApp(bundleID: "com.example.other", name: "Other", url: URL(filePath: "/Applications/Other.app"))]
     var traits = CheckedAppTraits(scriptable: false, framework: nil, needsLaunchOption: false)
     var running = true
+    /// Whether opening the app, reopening it and starting a check go.
+    var opens = true
+    var reopens = true
+    var startsCheck = true
     var runsWithOption: Bool?
     var permissions = CheckPermissions(accessibility: true, audio: .allowed)
     var playing = false
@@ -52,12 +56,22 @@ final class World {
     var antiDot = false
     var taps: [Bool] = []
     var audioRequests = 0
+    var menuBarSettingsOpened = 0
+    var hasLog = false
+    var logsShown = 0
+    var autoHushReopened = 0
     var exists = true
     var run = FakeCheckRun()
     var runs = 0
     /// The running check's report, for lines after its first.
     var report: (@MainActor @Sendable (String) -> Void)?
-    let kept = KeptCheckStore(defaults: UserDefaults(suiteName: "AddAppModelTests-\(UUID().uuidString)")!)
+    /// Kept checks, in a suite of their own, removed with the world.
+    private let keptSuite = "AddAppModelTests-\(UUID().uuidString)"
+    lazy var kept = KeptCheckStore(defaults: UserDefaults(suiteName: keptSuite)!)
+
+    deinit {
+        UserDefaults().removePersistentDomain(forName: keptSuite)
+    }
 
     var services: AddAppServices {
         AddAppServices(
@@ -72,13 +86,14 @@ final class World {
             exists: { _ in self.exists },
             open: { app, option in
                 self.opened.append((app.bundleID, option))
+                guard self.opens else { return false }
                 self.running = true
                 return true
             },
             runsWithLaunchOption: { _ in self.runsWithOption },
             reopen: { _ in
                 self.reopened += 1
-                return true
+                return self.reopens
             },
             permissions: { _, scriptable in
                 var permissions = self.permissions
@@ -88,8 +103,10 @@ final class World {
             request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
             antiDot: { self.antiDot },
             turnOffAntiDot: { self.antiDot = false },
+            openMenuBarSettings: { self.menuBarSettingsOpened += 1 },
             isPlaying: { _, _ in self.playing },
             startCheck: { _, taps, onLine in
+                guard self.startsCheck else { return nil }
                 self.taps.append(taps)
                 self.runs += 1
                 self.report = onLine
@@ -100,6 +117,9 @@ final class World {
             closeWarning: { self.warningsClosed += 1 },
             checkStarted: { _ in self.panel.append("shown") },
             checkEnded: { self.panel.append("hidden") },
+            showLog: { self.logsShown += 1 },
+            hasLog: { self.hasLog },
+            reopenAutoHush: { self.autoHushReopened += 1 },
             keptChecks: kept,
             use: { result, asks in
                 self.used.append(result)
@@ -107,7 +127,9 @@ final class World {
             },
             close: { self.closed += 1 },
             now: { self.now },
-            sleep: { _ in await Task.yield() }
+            // The model's polls a moment apart, not spinning on the main
+            // actor, which every main-actor test shares.
+            sleep: { _ in try? await Task.sleep(for: .milliseconds(5)) }
         )
     }
 }

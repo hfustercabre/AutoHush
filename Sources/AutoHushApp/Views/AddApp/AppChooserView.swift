@@ -12,6 +12,9 @@ struct AppChooserView: View {
     let otherApp: () -> Void
     let close: () -> Void
 
+    /// The window's width, which its bottom bar's buttons fit in every language.
+    static let width: CGFloat = 460
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
@@ -37,7 +40,7 @@ struct AppChooserView: View {
                 .disabled(selected == nil)
             }
         }
-        .frame(width: 460)
+        .frame(width: Self.width)
         .font(.appBody)
         // VoiceOver hears why a pick on the disk can't be checked.
         .onChange(of: model.otherAppProblem) { _, problem in

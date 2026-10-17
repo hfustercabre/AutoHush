@@ -103,6 +103,8 @@ final class WebAppControl: @unchecked Sendable {
         case buttonDisabled
         /// A press didn't take in time; it may still pause the page later.
         case pressIgnored
+        /// A press couldn't be made: nothing was pressed.
+        case pressFailed
         /// Its button said it was paused while it could be heard (an ad).
         case playsAnyway
         /// AutoHush no longer holds the pause (the Mac slept): lifted once
@@ -129,8 +131,8 @@ final class WebAppControl: @unchecked Sendable {
         status: LearningStatusBroadcast,
         muter: any AudioMuting,
         levelProbe: any AudioLevelProbing,
-        mayMute: @escaping @Sendable () -> Bool = { true },
-        pressKey: @escaping @Sendable () -> Void = {},
+        mayMute: @escaping @Sendable () -> Bool,
+        pressKey: @escaping @Sendable () -> Void,
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
     ) {
@@ -235,6 +237,7 @@ final class WebAppControl: @unchecked Sendable {
         }
         guard page.press(button) else {
             logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
+            if state == .playing, mute(pid: pid, reason: .pressFailed) { return }
             throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
         if follows(button, recipe: recipe, from: state, pid: pid) { return }

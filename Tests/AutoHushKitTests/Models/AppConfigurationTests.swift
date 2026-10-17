@@ -22,8 +22,9 @@ struct AppConfigurationTests {
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
         "systemsoundserverd",              // plays notification and alert sounds for every app
-        "com.apple.audio.SomeNewDaemon",   // anything with the com.apple.audio. prefix
-        "com.apple.audio.UnknownHelper",
+        "com.apple.systemsound",
+        "com.apple.springboard",
+        "com.apple.CoreAudio.SomeHelper",  // anything with the com.apple.CoreAudio prefix
     ])
     func rejects(bundleID: String) {
         #expect(AppConfiguration().isMediaSource(bundleID) == false)
@@ -64,7 +65,6 @@ struct AppConfigurationTests {
         let configuration = AppConfiguration()
         #expect(configuration.sourceStartConfirmation == 0.5)
         #expect(configuration.sourceStopGrace == 2)
-        #expect(TimingSettings.defaults.startConfirmation == 0.5)
     }
 
     @Test("in AntiDot mode, sound without video must last at least 3 s, or the user's longer choice")

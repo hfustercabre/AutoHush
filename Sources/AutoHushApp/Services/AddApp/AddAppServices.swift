@@ -7,11 +7,11 @@ import CheckedPlayers
 struct AddAppServices {
     var listApps: @MainActor () async -> [CheckableApp]
     /// The app at a place picked on the disk (Other App…), or why it can't be checked.
-    var appAt: @MainActor (URL) -> Result<CheckableApp, OtherAppProblem> = { _ in .failure(.notAnApp) }
+    var appAt: @MainActor (URL) -> Result<CheckableApp, OtherAppProblem>
     /// The check's helper is in the app: without it, nothing can be checked.
     var hasHelper = true
     /// The window that lists the apps to choose (the first step's).
-    var showChooser: @MainActor () -> Void = {}
+    var showChooser: @MainActor () -> Void
     var closeChooser: @MainActor () -> Void = {}
     var traits: @MainActor (URL) -> CheckedAppTraits
     var isRunning: @MainActor (String) -> Bool
@@ -40,7 +40,7 @@ struct AddAppServices {
     var startCheck: @MainActor (CheckableApp, _ taps: Bool, _ onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)?
     /// The warning before the check (W6), whose Start calls `startCheck()`.
     var showWarning: @MainActor () -> Void
-    var closeWarning: @MainActor () -> Void = {}
+    var closeWarning: @MainActor () -> Void
     /// The check's panel and shade, while it runs.
     var checkStarted: @MainActor (CheckableApp) -> Void
     var checkEnded: @MainActor () -> Void

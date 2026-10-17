@@ -32,11 +32,11 @@ struct PodcastsTests {
         #expect(PodcastsWords.find(in: Data("not a table".utf8)) == nil)
     }
 
-    @Test("the Podcasts app that comes with macOS has words for both, none shared")
+    @Test("this Mac’s Podcasts app (it comes with macOS) has words for both, none shared, as its profile reads them")
     func installedWords() throws {
         let app = URL(fileURLWithPath: "/System/Applications/Podcasts.app")
         try #require(FileManager.default.fileExists(atPath: app.path))
-        let words = try #require(PodcastsWords.read(fromAppAt: app))
+        let words = try #require(MenuPlayerProfile.applePodcasts.readWords(app))
         #expect(words.play.contains("Play") && words.pause.contains("Pause"))
         #expect(words.play.isDisjoint(with: words.pause))
     }

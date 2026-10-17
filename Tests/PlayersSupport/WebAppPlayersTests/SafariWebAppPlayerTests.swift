@@ -56,13 +56,17 @@ struct SafariWebAppPlayerTests {
         }
     }
 
-    @Test("it's a Safari web app, controlled through Accessibility, without fades")
-    func basics() {
+    @Test("it's a Safari web app, controlled through Accessibility, without fades, read about once a second, checking its own presses")
+    func basics() async throws {
         let setup = Setup()
         #expect(setup.player.kind == .safariWebApp)
         #expect(setup.player.name == "YT Music")
         #expect(setup.player.controlPermission == .accessibility(player: "YT Music"))
         #expect(!setup.player.canFade)
+        #expect(await setup.player.volume() == nil)
+        try await setup.player.setVolume(30) // nothing to set
+        #expect(setup.player.stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
+        #expect(setup.player.checksItsPresses) // one the page refuses mutes it: never pressed again by the arbiter
         #expect(setup.player.installedURL == SafariWebAppPlayerTests.app.url)
         #expect(!setup.player.isUntested)
     }
@@ -109,7 +113,7 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
-    @Test("after It's Playing it pauses itself with the Play/Pause key, learns the button that changed, and plays again with it")
+    @Test("after It's Playing it pauses itself with the Play/Pause key, learns the button that changed, and plays again with it, else with the key")
     func pausesByItself() async {
         let setup = Setup()
         setup.showPage()
@@ -131,6 +135,21 @@ struct SafariWebAppPlayerTests {
         #expect(setup.store.recipe(for: Self.app.bundleID) == Self.learned)
         #expect(setup.page.presses == [1]) // played again with the learned button
         #expect(setup.page.buttonsByNumber[1]?.label == "Pause")
+
+        // The page not following the learned button's press: the key plays it again.
+        let ignoring = Setup()
+        ignoring.showPage("Pause")
+        ignoring.page.set(2, label: "Pause")
+        ignoring.page.sound = true
+        #expect(await ignoring.player.markPlaying() == .noted)
+        ignoring.key.onPress = { [page = ignoring.page] in
+            page.set(1, label: "Play")
+            page.set(2, label: "Play")
+        }
+        ignoring.page.onPress = { _, _ in }
+        #expect(await ignoring.player.pauseByItself() == .paused)
+        #expect(ignoring.page.presses == [1])
+        #expect(ignoring.key.count == 2)
     }
 
     @Test("SoundCloud: learned is its bar's Play current, among the player's controls, not a song's tile scrolled out of sight")
@@ -153,6 +172,7 @@ struct SafariWebAppPlayerTests {
         #expect(setup.store.recipe(for: Self.app.bundleID)
             == PlayPauseRecipe(playLabel: "Play current", pauseLabel: "Pause current", places: [bar]))
         #expect(setup.page.presses == [1]) // played again with the bar's button
+        #expect(setup.key.count == 1) // not with the key
     }
 
     @Test("when the Play/Pause key changes nothing on the page, it's pressed again to undo it, and the user pauses it")
@@ -421,14 +441,26 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
-    @Test("a press the page doesn't follow is an error when the web app can't be muted either")
-    func ignoredPress() async {
+    @Test("a press the page doesn't follow is an error when the web app can't be muted either; one that can't be made mutes it too (playing unmutes it, pressing nothing), else is an error")
+    func ignoredPress() async throws {
         let setup = Setup(recipe: Self.learned)
         setup.showPage("Pause")
         setup.page.onPress = { _, _ in }
         setup.muter.canMute = false
-        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await setup.player.pause() }
         #expect(setup.page.presses == [1])
+
+        let failing = Setup(recipe: Self.learned)
+        failing.showPage("Pause")
+        failing.page.pressFails = true
+        try await failing.player.pause()
+        #expect(failing.muter.muted == [4242])
+        #expect(await failing.player.playerState() == .paused)
+        try await failing.player.play()
+        #expect(failing.muter.log == ["mute 4242", "unmute 4242"])
+        failing.muter.canMute = false
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await failing.player.pause() }
+        #expect(failing.muter.log == ["mute 4242", "unmute 4242"])
     }
 
     @Test("another app's page (Electron's, CEF's): it's an app, controlled the same way")
@@ -459,7 +491,7 @@ struct SafariWebAppPlayerTests {
         let setup = Setup(recipe: Self.learned, canMute: false)
         setup.showPage("Pause")
         setup.page.onPress = { _, _ in }
-        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await setup.player.pause() }
         #expect(setup.muter.muted.isEmpty)
     }
 
@@ -656,7 +688,7 @@ struct SafariWebAppPlayerTests {
         #expect(setup.muter.muted.isEmpty)
     }
 
-    @Test("after a sleep, a mute is lifted once the page is silent, and when its pause doesn't take")
+    @Test("after a sleep, a mute is lifted once the page is silent, and when its pause doesn't take or can't be made")
     func forgottenMuteLifted() async throws {
         let silent = Setup(recipe: Self.learned)
         silent.showPage("Play")
@@ -678,6 +710,18 @@ struct SafariWebAppPlayerTests {
         _ = await ignored.player.playerState() // pressed again, and still not followed
         #expect(ignored.page.presses == [1, 1])
         #expect(ignored.muter.muted.isEmpty)
+
+        let failing = Setup(recipe: Self.learned)
+        failing.showPage("Play")
+        failing.page.sound = true
+        failing.probe.audible = true
+        #expect(await failing.player.muteIfPlayingAnyway())
+        await failing.player.forgetPause()
+        failing.page.set(1, label: "Pause") // the song starts after the ad
+        failing.page.pressFails = true
+        _ = await failing.player.playerState()
+        #expect(failing.muter.muted.isEmpty)
+        #expect(failing.page.presses.isEmpty)
     }
 
     @Test("the silent sound a page keeps open after a pause is measured, and not muted")
@@ -763,7 +807,7 @@ struct SafariWebAppPlayerTests {
         setup.player.allowTaps(false)
         setup.showPage("Pause")
         setup.page.buttonsByNumber[1]?.isEnabled = false
-        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.buttonDisabled)) { try await setup.player.pause() }
         #expect(setup.muter.muted.isEmpty)
         #expect(setup.page.presses.isEmpty)
 
@@ -904,7 +948,7 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.polledPlayerState() == .playing) // the sound came on
     }
 
-    @Test("a button missing for a minute while the web app is heard is learned again, keeping the old place")
+    @Test("a button missing for a minute while the web app is heard is learned again, keeping the old place; Learn Again meanwhile starts over")
     func relearns() async {
         let setup = Setup(recipe: Self.learned)
         setup.showPage()
@@ -923,6 +967,16 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.player.learningStatus == .learned)
         #expect(setup.store.recipe(for: Self.app.bundleID)?.places == [Places.fullScreen, Places.playerBar])
+
+        // Missing again, and It's Playing taken: Learn Again starts that learning over.
+        setup.page.buttonsByNumber[1] = nil
+        _ = await setup.player.playerState()
+        setup.clock.advance(by: WebAppControl.missingBeforeLearning)
+        _ = await setup.player.playerState()
+        #expect(await setup.player.markPlaying() == .noted)
+        #expect(setup.player.learningStatus == .learning(hasPlayed: true))
+        await setup.player.learnAgain()
+        #expect(setup.player.learningStatus == .learning(hasPlayed: false))
     }
 
     @Test("a missing button that turns up again ends the learning")
@@ -1024,7 +1078,7 @@ struct SafariWebAppPlayerTests {
         setup.page.buttonsByNumber[1]?.isEnabled = false
         setup.muter.canMute = false
         #expect(await setup.player.playerState() == .playing)
-        await #expect(throws: MusicPlayerError.self) { try await setup.player.pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.buttonDisabled)) { try await setup.player.pause() }
         #expect(setup.page.presses.isEmpty)
     }
 
@@ -1036,8 +1090,8 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .stopped)
     }
 
-    @Test("not running, or without Accessibility, it can't be controlled")
-    func access() async {
+    @Test("not running, or without Accessibility, it can't be controlled; not learned yet, it can")
+    func access() async throws {
         let stopped = Setup(recipe: Self.learned, running: false)
         #expect(await stopped.player.playerState() == .notRunning)
         await #expect(throws: MusicPlayerError.playerNotRunning) { try await stopped.player.verifyControlAccess() }
@@ -1049,8 +1103,7 @@ struct SafariWebAppPlayerTests {
         await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
             try await untrusted.player.verifyControlAccess()
         }
-        untrusted.page.trusted = true
-        try? await untrusted.player.verifyControlAccess() // not learned is fine: it learns while running
+        try await Setup().player.verifyControlAccess() // not learned is fine: it learns while running
     }
 }
 

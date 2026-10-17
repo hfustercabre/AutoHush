@@ -55,11 +55,15 @@ struct MachOFileTests {
         #expect(MachOFile.linkedFrameworks(folder.appendingPathComponent("missing")).isEmpty)
     }
 
-    @Test("why an app can be in Now Playing, from what its binaries link")
+    @Test("why an app can be in Now Playing, from what its binaries link; a browser's web app by its launcher, named by its browser")
     func reasons() throws {
         defer { try? FileManager.default.removeItem(at: folder) }
         let player = folder.appendingPathComponent("Player.app"), electron = folder.appendingPathComponent("Electron.app")
         let plain = folder.appendingPathComponent("Plain.app"), pages = folder.appendingPathComponent("Pages.app")
+        let webApp = folder.appendingPathComponent("Web App.app")
+        try FileManager.default.createDirectory(at: webApp.appendingPathComponent("Contents"), withIntermediateDirectories: true)
+        try (["CrAppModeShortcutURL": "https://example.com/", "CrBundleIdentifier": "com.example.browser"] as NSDictionary)
+            .write(to: webApp.appendingPathComponent("Contents/Info.plist"))
         try MachOSample.write(MachOSample.thin(linking: ["MediaPlayer"]), to: player.appendingPathComponent("Contents/MacOS/Player"))
         try MachOSample.write(MachOSample.thin(linking: ["AppKit"]), to: electron.appendingPathComponent("Contents/MacOS/Electron"))
         try MachOSample.write(MachOSample.thin(linking: ["MediaPlayer"]),
@@ -71,5 +75,7 @@ struct MachOFileTests {
         #expect(NowPlayingReason.of(appAt: plain, bundleID: "com.example.plain") == nil)
         #expect(NowPlayingReason.of(appAt: pages, bundleID: "com.example.pages") == "WebKit, for the pages it shows")
         #expect(NowPlayingReason.of(appAt: plain, bundleID: "com.apple.Safari.WebApp.ABC") == "WebKit, as a Safari web app")
+        // A browser Launch Services doesn't know is named by its bundle ID.
+        #expect(NowPlayingReason.of(appAt: webApp, bundleID: "com.example.browser.app.abc") == "Chromium, as a com.example.browser web app")
     }
 }

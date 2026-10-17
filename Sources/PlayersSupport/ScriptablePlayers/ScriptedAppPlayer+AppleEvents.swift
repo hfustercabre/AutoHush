@@ -39,19 +39,16 @@ extension ScriptedAppPlayer {
     }
 
     /// The object specifier for the app's documents of class `documentClass`:
-    /// the one named `name`, the front one (`name` nil, `front`), or every one.
-    static func documentSpecifier(_ documentClass: String, named name: String?? = .none) -> NSAppleEventDescriptor {
+    /// the one named `name`, or every one (`name` nil).
+    static func documentSpecifier(_ documentClass: String, named name: String? = nil) -> NSAppleEventDescriptor {
         let record = NSAppleEventDescriptor.record()
         let specifier = record.coerce(toDescriptorType: Code.objectSpecifier) ?? record
         specifier.setDescriptor(NSAppleEventDescriptor(typeCode: code(documentClass)), forKeyword: Code.desiredClass)
         specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: Code.container)
         switch name {
-        case .some(.some(let name)):
+        case .some(let name):
             specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("name")), forKeyword: Code.keyForm)
             specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: Code.keyData)
-        case .some(.none):
-            specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("indx")), forKeyword: Code.keyForm)
-            specifier.setDescriptor(NSAppleEventDescriptor(int32: 1), forKeyword: Code.keyData)
         case .none:
             specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("indx")), forKeyword: Code.keyForm)
             var all = code("all ")

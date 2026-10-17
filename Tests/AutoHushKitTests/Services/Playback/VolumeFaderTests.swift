@@ -118,7 +118,7 @@ struct VolumeFaderTests {
         #expect(fadeInSteps == 30)  // 3 s in 0.1 s steps
     }
 
-    @Test("zero fade times turn fading off")
+    @Test("zero fade times turn fading off, also when set later (fades turned off in Settings)")
     func zeroDuration() async throws {
         let player = MockMusicPlayer(state: .playing)
         await player.setVolumeLevel(60)
@@ -126,6 +126,35 @@ struct VolumeFaderTests {
         #expect(try await fader.fadeOutAndPause())
         try await fader.playAndFadeIn()
         #expect(await player.commandLog == ["pause", "play"])
+
+        let turnedOff = makeFader(player) // 2 s and 3 s
+        await turnedOff.setDurations(fadeOut: 0, fadeIn: 0)
+        #expect(try await turnedOff.fadeOutAndPause())
+        try await turnedOff.playAndFadeIn()
+        #expect(await player.commandLog == ["pause", "play", "pause", "play"])
+    }
+
+    @Test("a pause or a play that fails after its fade sets the user's volume back, and forgets it")
+    func failedPressSetsVolumeBack() async throws {
+        let player = MockMusicPlayer(state: .playing, failPauseWith: StubError.failed)
+        await player.setVolumeLevel(60)
+        let fader = makeFader(player)
+
+        await #expect(throws: StubError.self) { try await fader.fadeOutAndPause() }
+        #expect(await player.volumeLevel == 60) // not left faded down, playing near-silent
+        // The user turns it down: the next fade-out comes back to that, not to 60.
+        await player.setVolumeLevel(40)
+        await player.setFailPause(nil)
+        #expect(try await fader.fadeOutAndPause())
+        #expect(await player.volumeLevel == 40)
+
+        await player.setFailPlay(StubError.failed)
+        await #expect(throws: StubError.self) { try await fader.playAndFadeIn() }
+        #expect(await player.volumeLevel == 40) // not left near-silent for the user's next play
+        await player.setVolumeLevel(30)
+        await player.setFailPlay(nil)
+        try await fader.playAndFadeIn()
+        #expect(await player.volumeLevel == 30)
     }
 
     @Test("a cancelled fade-out brings the music back up without pausing")

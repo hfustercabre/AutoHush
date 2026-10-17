@@ -8,8 +8,8 @@ extension CheckedPlayer {
     /// Its page is a way, and it runs without the option.
     package func needsReopen() async -> Bool {
         guard setup.needsLaunchOption, setup.ways.contains(where: { if case .page = $0 { true } else { false } }),
-              let pid = NSRunningApplication.running(bundleID)?.processIdentifier else { return false }
-        return !ProcessArguments.of(pid).contains(PlayerSetup.launchOption)
+              let pid = processIdentifier() else { return false }
+        return !processArguments(pid).contains(PlayerSetup.launchOption)
     }
 
     /// Quits it as a person would (given 15 s, never by force), then opens it

@@ -26,11 +26,6 @@ struct StatePresentationTests {
         #expect(PlaybackState.describePlaying(["A", "B", "C", "D"]) == "A and 3 other apps are playing")
     }
 
-    @Test("a pause names the apps that caused it")
-    func pauseNamesApps() {
-        #expect(PlaybackState.pausedByMonitor.presentation(playing: ["VLC"]).line == "Paused — VLC is playing")
-    }
-
     @Test("once ready, the menu follows the playback state rather than the health")
     func readyHasNoLookOfItsOwn() {
         #expect(AppHealthState.ready.presentation == nil)

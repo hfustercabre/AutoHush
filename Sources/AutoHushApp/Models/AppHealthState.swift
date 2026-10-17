@@ -20,14 +20,10 @@ enum AppHealthState: Equatable, Sendable {
 }
 
 extension AppHealthState {
-    /// Waiting for the user to choose one of `options`, or for one of them to
-    /// be installed.
-    static func waitingForPlayer(among options: [PlayerOption]) -> AppHealthState {
-        guard !options.noneInstalled else {
-            return .needsPlayer(String(localized: "No supported media player is installed",
-                                       comment: "Status line: none of the media players AutoHush works with is installed"))
-        }
-        return .needsPlayer(String(localized: "Choose a media player", comment: "Status line: no media player chosen yet"))
+    /// Waiting for the user to choose a player. Every Mac has some installed:
+    /// macOS itself comes with supported ones.
+    static var waitingForPlayer: AppHealthState {
+        .needsPlayer(String(localized: "Choose a media player", comment: "Status line: no media player chosen yet"))
     }
 
     /// The chosen music player is no longer installed.

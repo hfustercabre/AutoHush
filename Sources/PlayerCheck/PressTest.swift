@@ -346,8 +346,7 @@ import PlayerCheckKit
                 // Its page is out of sight, where its words can't be learned: nobody is asked.
                 learnPageButton(pid: pid)
             } else {
-                say(CheckReportLine.waiting("pause \(appName) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what"
-                    + " changes on it", minutes: 2))
+                say(CheckReportLine.waitingToPause(appName, minutes: 2))
                 let deadline = Date().addingTimeInterval(120)
                 inputBlock.pause()
                 while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }

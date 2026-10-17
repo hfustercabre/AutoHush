@@ -96,7 +96,7 @@ open /Applications/AutoHush.app
 
 ## First launch
 
-AutoHush lives in the menu bar; it shows in the Dock only while one of its windows is open, with the Mac's usual menus and keyboard shortcuts (⌘V to paste, ⌘W to close, ⌘Q to quit, Return and Escape for a window's buttons). The first time it opens, it asks which media player to control. If only one is installed, it's already picked: just click **Continue**. A player counts as installed when it's in /Applications, your own ~/Applications or /System/Applications, not when it's elsewhere, such as on the disk image it came from. You can change your choice any time in the menu or in Settings.
+AutoHush lives in the menu bar; it shows in the Dock only while one of its windows is open, with the Mac's usual menus and keyboard shortcuts (⌘V to paste, ⌘W to close, ⌘Q to quit, Return and Escape for a window's buttons). The first time it opens, it asks which media player to control. A player counts as installed when it's in /Applications, your own ~/Applications or /System/Applications, not when it's elsewhere, such as on the disk image it came from. You can change your choice any time in the menu or in Settings.
 
 <p align="center">
   <picture>
@@ -141,7 +141,7 @@ Click the menu bar icon to see what's going on:
 - **Turn off for** pauses AutoHush itself, from 5 minutes to 24 hours, in one click.
 - **Playing Now** lists the apps playing sound, each with a switch: turn it off for an app that shouldn't interrupt your player, such as a game whose soundtrack you don't mind.
 - **Recently Played**, under it, lists the apps that played in the last 5 minutes, with the same switches: handy for one that stopped before you could switch it off.
-- **Ignored Apps** lists the apps you've switched off. Click one to undo. AutoHush adds BetterDisplay, MonitorControl and Lunar itself the first time they run, since they play only the volume sound.
+- **Ignored Apps** lists the apps you've switched off. Click one to undo. AutoHush adds BetterDisplay, MonitorControl and Lunar itself the first time they run (and again after **Reset List…**), since they play only the volume sound.
 - **The buttons at the bottom** open Settings, check for updates, open Settings → About, and quit. When an update is available, **Updates** turns blue and a row above the buttons offers to install it.
 - **The menu bar icon** shows what's happening: sound bars while your player plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while Auto-Pause is off.
 
@@ -249,7 +249,7 @@ AutoHush keeps the dot to a minimum: it only measures while the answer matters, 
 
 - Your player playing on its own, paused, or on another device: **no dot**.
 - Another app playing over your player: the dot shows while that app has its sound on, plus 2 seconds.
-- An app that keeps its sound on while silent (some players do, paused): the dot shows for its first 10 seconds of silence, then AutoHush stops measuring it until it opens its sound again or tells macOS it plays.
+- An app that keeps its sound on while silent (some players do, paused): the dot shows for its first 10 seconds of silence, then AutoHush stops measuring it until it opens its sound again or tells macOS it plays. An app that keeps telling macOS it plays (a call) stays measured, so its next sound is heard.
 
 **If the dot bothers you, turn on AntiDot mode** (Settings → Detection). AutoHush then never measures any sound, so the dot never appears. Instead, it goes by what apps tell macOS: most players and browsers say "I'm playing, don't go to sleep" while they play, and stop saying it when you pause. It needs no extra permission, and treats every app the same way.
 

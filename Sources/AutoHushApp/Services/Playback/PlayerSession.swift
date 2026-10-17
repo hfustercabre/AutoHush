@@ -46,7 +46,7 @@ final class PlayerSession {
         let settings: MonitoringSettings
         let learnedAssertions: [String: AnnouncedAssertions]
         /// It starts with resumes held (see `PlayerSession.holdResumes`).
-        var resumesHeld = false
+        var resumesHeld: Bool
     }
 
     /// Makes a player's monitoring, whose updates go to the closure.
@@ -63,6 +63,9 @@ final class PlayerSession {
     struct Retries {
         var permissionInterval: TimeInterval = 3
         var delays: ClosedRange<TimeInterval> = 5...60
+        /// Waits between the startup checks after the player launches
+        /// (`startupRetryDelay`); tests stand in for it.
+        var startupWait: @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     }
 
     /// Startup checks after the player launches are retried this often, this
@@ -96,7 +99,8 @@ final class PlayerSession {
 
     /// The chosen player's monitoring, while it runs.
     var monitoring: (any SessionMonitoring)?
-    /// Which monitoring an update comes from: the current one has this.
+    /// Which monitoring an update comes from: the current one has this, and
+    /// none once it's torn down.
     var monitoringToken = UUID()
     /// The monitoring of players AutoHush held paused when the user chose
     /// another, running on to end those pauses (`HeldPauses`).
@@ -153,8 +157,12 @@ final class PlayerSession {
     }
 
     /// Makes `MonitoringPipeline`s, whose processes are named by `hostedApp`
-    /// when their program doesn't say (a Safari web app).
-    static func pipelines(hostedApp: @escaping @Sendable (pid_t) -> AudioSource?) -> MakeMonitoring {
+    /// when their program doesn't say (a Safari web app). Each reads macOS
+    /// through readers of its own, from `readers`; tests stand in for them.
+    static func pipelines(
+        hostedApp: @escaping @Sendable (pid_t) -> AudioSource?,
+        readers: @escaping @MainActor () -> MonitoringPipeline.Readers = { MonitoringPipeline.Readers() }
+    ) -> MakeMonitoring {
         { player, setup, onUpdate in
             MonitoringPipeline(
                 player: player,
@@ -165,6 +173,7 @@ final class PlayerSession {
                 ignoredSourceIDs: setup.settings.ignored,
                 detectionMethod: setup.settings.detection,
                 learnedAssertions: setup.learnedAssertions,
+                readers: readers(),
                 onStatusUpdate: onUpdate
             )
         }

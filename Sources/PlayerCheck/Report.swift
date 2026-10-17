@@ -135,9 +135,8 @@ import PlayerCheckKit
     facts.pageHasPlayPause = page?.toggle != nil
     PlayerKindVerdict.lines(facts, developer: developer).forEach { say($0) }
 
-    // What the page showed. AutoHush has no player kind for apps' pages yet: a
-    // player that learns the page's button, as it learns a Safari web app's,
-    // would be one.
+    // What the page showed: Add an App adds an app whose page's Play/Pause
+    // works, pressed there (`PlayerSetup.Way.page`) as a Safari web app's is.
     guard let page else { return }
     let pageWord = isFlutter ? "interface" : "page"
     let its = pageSwitch.map { "With \(switchName($0)) on, its \(pageWord)" } ?? "Its \(pageWord)"

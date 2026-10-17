@@ -64,18 +64,24 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// after it reads it (`nil`: the log can't be opened): tests stand in.
     private let streamCommand: [String]
     private let readPast: @Sendable (Date) -> [pid_t: Client]?
+    /// Whether this account may read the log (`isAdministrator`).
+    private let administrator: Bool
     private let queue = DispatchQueue(label: "AutoHush.NowPlayingReports", qos: .utility)
 
     /// Read already, whatever the account: what tests stand in for the log with.
     private var given = false
 
     /// `idleLimit` `nil`: followed until `stop` (Player Check's, for one run).
+    /// `isAdministrator`: whether this account may read the log (tests that
+    /// stand in for it, on any account, say yes).
     package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit,
                  streamCommand: [String] = NowPlayingReports.streamCommand,
+                 isAdministrator: Bool = NowPlayingReports.isAdministrator,
                  readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
         self.lookBack = lookBack
         idle = idleLimit
         self.streamCommand = streamCommand
+        administrator = isAdministrator
         self.readPast = readPast
     }
 
@@ -91,7 +97,7 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// Whether the log can be read: an administrator's account (the admin
     /// group) can, until opening it showed otherwise. Told without opening it.
-    package var isAvailable: Bool { lock.withLock { given || (Self.isAdministrator && !failed) } }
+    package var isAvailable: Bool { lock.withLock { given || (administrator && !failed) } }
 
     /// Whether this account is an administrator's: macOS's log opens only to
     /// the admin group (80). Unknown, it's taken as one, and opening the log tells.

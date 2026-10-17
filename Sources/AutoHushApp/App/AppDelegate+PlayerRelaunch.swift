@@ -41,13 +41,11 @@ extension AppDelegate {
     private static let reopenAgainAfter: TimeInterval = 60
 
     /// When AutoHush last reopened each player, by bundle ID, and whether it
-    /// then gave up reopening it by itself (`reopensByItself`).
-    private static var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
+    /// then gave up reopening it by itself (`reopensByItself`). Tests start
+    /// it afresh.
+    static var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
     /// The clock `lastReopens` is stamped and read by. Tests move it on.
     static var now: () -> Date = Date.init
-
-    /// Runs the reopen alert and returns the button pressed. Tests replace it.
-    static var runReopenAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
 
     /// Whether the chosen player runs without what it needs to be controlled
     /// wherever its window is (`MusicPlayer.needsReopen`): the card says so.
@@ -63,7 +61,7 @@ extension AppDelegate {
         Task { [weak self] in
             let needs = await player.needsReopen()
             guard let self, self.player?.bundleID == player.bundleID else { return }
-            if needs, ReopenChoices.reopensAlways(player.bundleID), self.reopensByItself(player) {
+            if needs, ReopenChoices.reopensAlways(player.bundleID, defaults: self.defaults), self.reopensByItself(player) {
                 self.logger.notice("\(player.name, privacy: .public) runs without the option it needs: reopening it, as the user chose")
                 await self.reopen(player)
                 return
@@ -79,8 +77,8 @@ extension AppDelegate {
             RunLoop.main.perform(inModes: [.common]) {
                 MainActor.assumeIsolated {
                     guard self.player?.bundleID == player.bundleID, self.status.playerNeedsReopen else { return }
-                    let (reopens, always) = Self.askToReopen(player.name)
-                    if always { ReopenChoices.setReopensAlways(player.bundleID) }
+                    let (reopens, always) = self.askToReopen(player.name)
+                    if always { ReopenChoices.setReopensAlways(player.bundleID, defaults: self.defaults) }
                     if reopens { Task { await self.reopen(player) } }
                 }
             }
@@ -119,9 +117,9 @@ extension AppDelegate {
     /// The alert when a player that needs reopening is chosen: Reopen (Return)
     /// or Cancel (Escape), which leaves the card saying so; its checkbox
     /// reopens it so from then on without asking.
-    private static func askToReopen(_ name: String) -> (reopens: Bool, always: Bool) {
-        let alert = reopenAlert(name)
-        let reopens = runReopenAlert(alert) == .alertFirstButtonReturn
+    private func askToReopen(_ name: String) -> (reopens: Bool, always: Bool) {
+        let alert = Self.reopenAlert(name)
+        let reopens = runAlert(alert) == .alertFirstButtonReturn
         return (reopens, reopens && alert.suppressionButton?.state == .on)
     }
 

@@ -41,6 +41,7 @@ actor MockLearningPlayer: LearningMusicPlayer {
         var learnAgainCount = 0
         var keepLearnedCount = 0
         var restartCount = 0
+        var markPlayingCount = 0
         /// It's Paused comes as the minute ends: learned instead of restarted.
         var learnedAtTheLastMoment = false
         var selfPause = SelfPause.didntTake
@@ -115,8 +116,14 @@ actor MockLearningPlayer: LearningMusicPlayer {
     /// How many times learning started over (the pause didn't come in time).
     nonisolated var restartCount: Int { state.withLock { $0.restartCount } }
 
+    /// How many times It's Playing (or Pause It Manually) looked at it.
+    nonisolated var markPlayingCount: Int { state.withLock { $0.markPlayingCount } }
+
     func markPlaying() async -> LearningMark {
-        let mark = state.withLock { $0.playingMark }
+        let mark = state.withLock { state in
+            state.markPlayingCount += 1
+            return state.playingMark
+        }
         if mark == .noted { set(.learning(hasPlayed: true)) }
         return mark
     }

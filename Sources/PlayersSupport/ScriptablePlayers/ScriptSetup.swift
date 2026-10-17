@@ -28,7 +28,7 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
 
     package var commands: Commands
     /// Its commands act on a document (QuickTime Player's): a pause goes to
-    /// each one playing, a play to those it paused, else the front one.
+    /// each one playing, a play to those it paused, never another.
     package var actsOnDocuments: Bool
     /// `nil` when it can't be read by script: other signs tell it.
     package var state: State?
@@ -36,7 +36,7 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
     package var hasVolume: Bool
     /// Each document's own volume, by code, 0–1 (QuickTime Player's `audio
     /// volume`), so it can fade: read from and set on its documents playing,
-    /// else those its last pause paused, else the front one. `nil` without one.
+    /// else those it fades or paused, never another. `nil` without one.
     package var documentVolume: String?
 
     package init(commands: Commands, actsOnDocuments: Bool = false, state: State?, hasVolume: Bool, documentVolume: String? = nil) {

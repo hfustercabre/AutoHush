@@ -28,14 +28,14 @@ struct TidalTests {
         #expect(words.pause == ["Pause", "Пауза"])
     }
 
-    @Test("the words are read from the app.asar inside TIDAL's bundle")
+    @Test("the words are read from the app.asar inside TIDAL's bundle, as its profile reads them")
     func wordsOfApp() throws {
         let app = FileManager.default.temporaryDirectory.appending(path: "TIDAL-\(UUID().uuidString).app")
         defer { try? FileManager.default.removeItem(at: app) }
         let resources = app.appending(path: "Contents/Resources")
         try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
         try Data(#"{"t-play": "Reproducir", "t-pause": "Pausa"}"#.utf8).write(to: resources.appending(path: "app.asar"))
-        #expect(TidalWords.read(fromAppAt: app) == PlayPauseWords(play: ["Reproducir"], pause: ["Pausa"]))
+        #expect(MenuPlayerProfile.tidal.readWords(app) == PlayPauseWords(play: ["Reproducir"], pause: ["Pausa"]))
         #expect(TidalWords.read(fromAppAt: app.deletingLastPathComponent()) == nil)
     }
 }

@@ -18,7 +18,7 @@ private final class FakeVLC: AppleEventSending {
         var volume = 256
         /// Every event fails, as when VLC doesn't answer.
         var fails = false
-        /// What was sent, e.g. "get AAPL", "set AAAV 256", "VLC1".
+        /// What was sent, e.g. "ask" (for consent), "get AAPL", "set AAAV 256", "VLC1".
         var sent: [String] = []
     }
 
@@ -39,7 +39,7 @@ private final class FakeVLC: AppleEventSending {
         return pid
     }
 
-    func requestPermission(pid: pid_t) async throws {}
+    func requestPermission(pid: pid_t) async throws { state.withLock { $0.sent.append("ask") } }
 
     func send(_ makeEvent: @escaping @Sendable (pid_t) -> NSAppleEventDescriptor, to pid: pid_t) async throws -> PlayerReply {
         // What the event asks, read before the lock: descriptors aren't Sendable.
@@ -81,11 +81,14 @@ private final class FakeVLC: AppleEventSending {
 
 @Suite("VLC's control")
 struct VLCControlTests {
-    @Test("its state comes from `playing`, then `current time` only while it doesn't play")
-    func state() async {
+    @Test("its consent is asked, then `playing` read, to check access; its state comes from `playing`, then `current time` only while it doesn't play")
+    func state() async throws {
         let playing = FakeVLC()
+        try await VLCPlayer(channel: playing).verifyControlAccess()
+        #expect(playing.sent == ["ask", "get AAPL"])
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await VLCPlayer(channel: FakeVLC { $0.pid = nil }).verifyControlAccess() }
         #expect(await VLCPlayer(channel: playing).playerState() == .playing)
-        #expect(playing.sent == ["get AAPL"])
+        #expect(playing.sent == ["ask", "get AAPL", "get AAPL"])
 
         let paused = FakeVLC { $0.playing = false }
         #expect(await VLCPlayer(channel: paused).playerState() == .paused)

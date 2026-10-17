@@ -99,30 +99,38 @@ package protocol PlayPauseRecipeStore: Sendable {
 /// and written from the players' own queues: `UserDefaults` is thread-safe.
 package struct DefaultsRecipeStore: PlayPauseRecipeStore {
     package static let key = Preferences.webAppButtonsKey
+    /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
+    private let suiteName: String?
 
-    package init() {}
+    package init(suiteName: String? = nil) {
+        self.suiteName = suiteName
+    }
+
+    private var defaults: UserDefaults { suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
 
     package func recipe(for bundleID: String) -> PlayPauseRecipe? {
-        let stored = UserDefaults.standard.dictionary(forKey: Self.key) as? [String: [String: Any]]
+        let stored = defaults.dictionary(forKey: Self.key) as? [String: [String: Any]]
         return stored?[bundleID].flatMap(PlayPauseRecipe.init(propertyList:))
     }
 
     /// Under `Preferences.webAppButtonsLock`: another web app may be saving
     /// its own, or old ones being cleared out, at the same time.
     package func save(_ recipe: PlayPauseRecipe, for bundleID: String) {
+        let defaults = defaults
         Preferences.webAppButtonsLock.withLockUnchecked {
-            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
             stored[bundleID] = recipe.propertyList
-            UserDefaults.standard.set(stored, forKey: Self.key)
+            defaults.set(stored, forKey: Self.key)
         }
     }
 
     /// Under `Preferences.webAppButtonsLock`, like `save`.
     package func forget(for bundleID: String) {
+        let defaults = defaults
         Preferences.webAppButtonsLock.withLockUnchecked {
-            var stored = UserDefaults.standard.dictionary(forKey: Self.key) ?? [:]
+            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
             guard stored.removeValue(forKey: bundleID) != nil else { return }
-            UserDefaults.standard.set(stored, forKey: Self.key)
+            defaults.set(stored, forKey: Self.key)
         }
     }
 }

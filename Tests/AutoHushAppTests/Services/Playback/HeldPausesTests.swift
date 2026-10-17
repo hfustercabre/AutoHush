@@ -18,7 +18,7 @@ struct HeldPausesTests {
 
         #expect(held.takes(.playback(.pausedByMonitor), from: token)) // still holding it
         #expect(held.takes(.detection(.audioLevel), from: token))
-        #expect(monitoring.stops == 0 && !held.isEmpty)
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"]) // not ending: it would stop only later
 
         #expect(held.takes(.playback(.musicPlaying), from: token)) // the other apps stopped: it plays again
         await TestWait.until { monitoring.stops == 1 }
@@ -95,7 +95,7 @@ struct HeldPausesTests {
         let token = UUID()
         held.keep(monitoring, token: token, bundleID: "org.videolan.vlc", awaitingTakeOver: true)
         #expect(held.takes(.playback(.musicIdle), from: token)) // its first look: paused, not by it yet
-        #expect(monitoring.stops == 0)
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"])
         #expect(held.takes(.playback(.pausedByMonitor), from: token)) // taken over
         _ = held.takes(.playback(.musicPlaying), from: token) // then played again
         await TestWait.until { monitoring.stops == 1 }
@@ -116,7 +116,7 @@ struct HeldPausesTests {
         let token = UUID()
         held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
         _ = held.takes(.playback(.unknown), from: token)
-        #expect(monitoring.stops == 0)
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"])
         _ = held.takes(.playback(.musicIdle), from: token) // the user stopped or quit it
         await TestWait.until { monitoring.stops == 1 }
         #expect(monitoring.stops == 1)

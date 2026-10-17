@@ -14,10 +14,17 @@ struct UpdateInstallerTests {
         let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerTests-\(UUID().uuidString)")
         /// The installed app the update replaces.
         var installedApp: URL { folder.appending(path: "Applications/AutoHush.app") }
+        /// What a test that opens no disk image downloads (`StandIn`).
+        var download: URL { folder.appending(path: "download.dmg") }
+        /// Where the installer opened disk images.
+        let mounts = MountLog()
+        /// What the installer moved to the Trash.
+        let trashed = TrashLog()
 
         init() throws {
             try FileManager.default.createDirectory(at: installedApp, withIntermediateDirectories: true)
             try Data("old".utf8).write(to: installedApp.appending(path: "version.txt"))
+            try StandIn.contents.write(to: download)
         }
 
         deinit {
@@ -31,6 +38,14 @@ struct UpdateInstallerTests {
         private var _all: [URLRequest] = []
         var all: [URLRequest] { lock.withLock { _all } }
         func record(_ request: URLRequest) { lock.withLock { _all.append(request) } }
+    }
+
+    /// The files moved to the Trash, in order.
+    private final class TrashLog: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _all: [URL] = []
+        var all: [URL] { lock.withLock { _all } }
+        func record(_ file: URL) { lock.withLock { _all.append(file) } }
     }
 
     /// Counts relaunches and their cancellations.
@@ -47,16 +62,57 @@ struct UpdateInstallerTests {
         }
     }
 
+    /// Where the installer's disk image tools opened images, to check that
+    /// none is left open (this test's own, whatever else runs on the Mac),
+    /// and that the staging folders `prepare` makes beside the installed app
+    /// are gone.
+    private final class MountLog: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _noted: [String] = []
+        /// Each mount point a tool was given, in order.
+        var noted: [String] { lock.withLock { _noted } }
+
+        /// `tools`, each noting where it opens an image.
+        func noting(_ tools: [DiskImageTool]) -> [DiskImageTool] {
+            tools.map { tool in
+                DiskImageTool(path: tool.path, attachArguments: { image, mountPoint in
+                    self.lock.withLock { self._noted.append(mountPoint) }
+                    return tool.attachArguments(image, mountPoint)
+                }, detachArguments: tool.detachArguments)
+            }
+        }
+
+        /// The noted mount points where a volume is still mounted.
+        var stillMounted: [String] {
+            var mounts: UnsafeMutablePointer<statfs>?
+            let count = Int(getmntinfo(&mounts, MNT_NOWAIT))
+            let mounted = Set((0..<count).map { index in
+                withUnsafeBytes(of: mounts![index].f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+            })
+            return noted.filter(mounted.contains)
+        }
+
+        /// Whether a tool was asked to open an image, and every staging
+        /// folder, with any copy of the app in it, is gone.
+        var stagingIsGone: Bool {
+            let folders = Set(noted.map { URL(filePath: $0).deletingLastPathComponent().path })
+            return !folders.isEmpty && folders.allSatisfy { !FileManager.default.fileExists(atPath: $0) }
+        }
+    }
+
+    /// Serving `file`, the scratch's stand-in unless given (a disk image
+    /// test serves the fixture's).
     private func installer(
         _ scratch: Scratch,
-        requirement: String? = Fixture.shared.requirement,
+        requirement: String? = StandIn.requirement,
         status: Int = 200,
-        serving file: URL = Fixture.shared.diskImage,
+        serving file: URL? = nil,
         relaunchLog: RelaunchLog = RelaunchLog(),
         requests: RequestLog = RequestLog(),
         diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
     ) -> UpdateInstaller {
-        UpdateInstaller(
+        let file = file ?? scratch.download
+        return UpdateInstaller(
             appURL: scratch.installedApp,
             requirement: requirement,
             download: { request in
@@ -67,11 +123,12 @@ struct UpdateInstallerTests {
                 return (copy, HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
             },
             relaunch: relaunchLog.relaunch,
-            diskImageTools: diskImageTools
+            diskImageTools: scratch.mounts.noting(diskImageTools),
+            trash: { [trashed = scratch.trashed] in trashed.record($0) }
         )
     }
 
-    private func release(_ version: String = Fixture.version, sha256: String? = Fixture.shared.sha256, diskImage: Bool = true) -> AppRelease {
+    private func release(_ version: String = Fixture.version, sha256: String? = StandIn.sha256, diskImage: Bool = true) -> AppRelease {
         AppRelease(
             version: AppVersion(version)!,
             pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v\(version)")!,
@@ -84,57 +141,64 @@ struct UpdateInstallerTests {
 
     // MARK: - Preparing
 
-    @Test("a genuine update is copied out of its disk image, next to the installed app", .slow)
-    func preparesGenuineUpdate() async throws {
-        try await expectPrepared(openingWith: DiskImageTool.inOrderOfPreference)
-    }
-
-    @Test("diskutil opens and closes the disk image, where macOS has `diskutil image`",
-          .slow, .enabled(if: hasDiskutilImage))
+    @Test("diskutil opens and closes the disk image, as from macOS 27", .slow, .enabled(if: isMacOS27OrLater))
     func opensWithDiskutil() async throws {
         try await expectPrepared(openingWith: [.diskutil])
     }
 
-    @Test("hdiutil opens and closes the disk image, as on macOS 15", .slow)
+    @Test("hdiutil opens and closes the disk image, as before macOS 27", .slow)
     func opensWithHdiutil() async throws {
         try await expectPrepared(openingWith: [.hdiutil])
     }
 
-    @Test("a tool that's missing or fails makes way for the next one", .slow)
+    @Test("diskutil is tried first from macOS 27, hdiutil alone before; a tool that's missing or fails makes way for the next one, also one that can't close the image", .slow)
     func fallsBackToNextTool() async throws {
+        // From macOS 27, which deprecates hdiutil's attach and detach. On 14.4, `diskutil image`
+        // opened images whose files this process couldn't read, and its eject didn't know `force`.
+        let order = isMacOS27OrLater ? ["/usr/sbin/diskutil", "/usr/bin/hdiutil"] : ["/usr/bin/hdiutil"]
+        #expect(DiskImageTool.inOrderOfPreference.map(\.path) == order)
+
         let missing = DiskImageTool(path: "/nonexistent/diskutil", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
         let failing = DiskImageTool(path: "/usr/bin/false", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
-        try await expectPrepared(openingWith: [missing, failing, .hdiutil])
+        // Opens it, then fails to close it, as 14.4's diskutil did.
+        let leaving = DiskImageTool(path: "/usr/bin/hdiutil", attachArguments: DiskImageTool.hdiutil.attachArguments,
+                                    detachArguments: { _ in ["detach", "/nonexistent"] })
+        try await expectPrepared(openingWith: [missing, failing, leaving, .hdiutil])
     }
 
     /// Prepares the fixture's update, opening its disk image with `tools`,
     /// and checks the result.
     private func expectPrepared(openingWith tools: [DiskImageTool]) async throws {
+        let fixture = try Fixture.shared.get()
         let scratch = try Scratch()
-        let update = try await installer(scratch, diskImageTools: tools).prepare(release(), image: nil, allowsConstrainedNetwork: true)
+        let update = try await installer(scratch, requirement: fixture.requirement, serving: fixture.diskImage, diskImageTools: tools)
+            .prepare(release(sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)
 
         #expect(update.version == AppVersion(Fixture.version))
         let info = NSDictionary(contentsOf: update.app.appending(path: "Contents/Info.plist"))
         #expect(info?["CFBundleShortVersionString"] as? String == Fixture.version)
-        #expect(UpdateInstaller.isSigned(update.app, satisfying: Fixture.shared.requirement))
+        #expect(UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
         // Only the app is left: the download is deleted and the image detached.
         let contents = try FileManager.default.contentsOfDirectory(atPath: update.folder.path)
         #expect(contents.sorted() == ["AutoHush.app", "Volume"])
         #expect(try FileManager.default.contentsOfDirectory(atPath: update.folder.appending(path: "Volume").path).isEmpty)
-        #expect(Self.attachedImages().isEmpty)
+        #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
 
         installer(scratch).discard(update)
         #expect(!FileManager.default.fileExists(atPath: update.folder.path))
     }
 
-    @Test("an app signed by anyone else is refused", .slow)
+    @Test("an app signed by anyone else is refused, and nothing is left behind", .slow)
     func refusesOtherSigners() async throws {
+        let fixture = try Fixture.shared.get()
         let scratch = try Scratch()
         let autoHush = #"identifier "com.autohush.AutoHush" and certificate leaf = H"085edf2752c4f31bcdff25dbe14636958d50cdf6""#
         await #expect(throws: UpdateInstallError.notGenuine) {
-            try await installer(scratch, requirement: autoHush).prepare(release(), image: nil, allowsConstrainedNetwork: true)
+            try await installer(scratch, requirement: autoHush, serving: fixture.diskImage)
+                .prepare(release(sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)
         }
-        #expect(Self.attachedImages().isEmpty)
+        #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
+        #expect(scratch.mounts.stagingIsGone)
     }
 
     @Test("a download that doesn't match GitHub's checksum is refused")
@@ -145,7 +209,7 @@ struct UpdateInstallerTests {
         }
     }
 
-    @Test("a download that isn't a disk image is refused", .slow)
+    @Test("a download that isn't a disk image is refused, and its staging folder goes", .slow)
     func refusesNonImage() async throws {
         let scratch = try Scratch()
         let page = scratch.folder.appending(path: "page.html")
@@ -153,15 +217,26 @@ struct UpdateInstallerTests {
         await #expect(throws: UpdateInstallError.damaged) {
             try await installer(scratch, serving: page).prepare(release(sha256: nil), image: nil, allowsConstrainedNetwork: true)
         }
+        #expect(scratch.mounts.stagingIsGone)
     }
 
-    @Test("a disk image holding another version than announced is refused", .slow)
-    func refusesOtherVersion() async throws {
+    @Test("a disk image is refused when its app isn't the version announced or needs a newer macOS than this Mac's, or when AutoHush.app is a link; nothing is left behind",
+          .slow, arguments: [
+            (ImagedApp.needing(macOS: "14.4"), "9.9.9", UpdateInstallError.wrongVersion),
+            (.needing(macOS: "99.0"), Fixture.version, .needsNewerMacOS("99.0")),
+            (.link(to: "/System/Applications/Calculator.app"), Fixture.version, .damaged),
+          ])
+    func refusesUnfitImage(imaged: ImagedApp, announced: String, refusal: UpdateInstallError) async throws {
         let scratch = try Scratch()
-        await #expect(throws: UpdateInstallError.wrongVersion) {
-            try await installer(scratch).prepare(release("9.9.9"), image: nil, allowsConstrainedNetwork: true)
+        let made = imaged == .needing(macOS: "14.4") ? nil : try Fixture(imaged)
+        defer { if let made { try? FileManager.default.removeItem(at: made.diskImage.deletingLastPathComponent()) } }
+        let fixture = try made ?? Fixture.shared.get()
+        await #expect(throws: refusal) {
+            try await installer(scratch, requirement: fixture.requirement, serving: fixture.diskImage)
+                .prepare(release(announced, sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)
         }
-        #expect(Self.attachedImages().isEmpty)
+        #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
+        #expect(scratch.mounts.stagingIsGone)
     }
 
     @Test("a failed download is reported with its HTTP status")
@@ -187,8 +262,8 @@ struct UpdateInstallerTests {
         let scratch = try Scratch()
         let file = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
         let digest = try await installer(scratch).download(release(), to: file, allowsConstrainedNetwork: true)
-        #expect(digest == Fixture.shared.sha256)
-        #expect(UpdateInstaller.sha256(of: file) == Fixture.shared.sha256)
+        #expect(digest == StandIn.sha256)
+        #expect(UpdateInstaller.sha256(of: file) == StandIn.sha256)
     }
 
     @Test("a download that doesn't match GitHub's checksum is deleted")
@@ -211,21 +286,35 @@ struct UpdateInstallerTests {
         #expect(requests.all.map(\.allowsConstrainedNetworkAccess) == [allowed])
     }
 
-    @Test("an update is prepared from a kept image without downloading, and the image stays", .slow)
+    @Test("an update is prepared from a kept image without downloading, and the image stays; the copy isn't marked as downloaded, and changed after signing it would fail the signature check", .slow)
     func preparesFromKeptImage() async throws {
+        let fixture = try Fixture.shared.get()
         let scratch = try Scratch()
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
-        try FileManager.default.copyItem(at: Fixture.shared.diskImage, to: kept)
+        try FileManager.default.copyItem(at: fixture.diskImage, to: kept)
+        let mark = "0083;00000000;Safari;" // downloaded, as a browser marks it
+        #expect(setxattr(kept.path, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) == 0)
         let requests = RequestLog()
-        let sut = installer(scratch, requests: requests)
+        let sut = installer(scratch, requirement: fixture.requirement, requests: requests)
 
-        let update = try await sut.prepare(release(), image: KeptImage(file: kept, sha256: Fixture.shared.sha256),
+        let update = try await sut.prepare(release(sha256: fixture.sha256), image: KeptImage(file: kept, sha256: fixture.sha256),
                                          allowsConstrainedNetwork: true)
 
-        #expect(UpdateInstaller.isSigned(update.app, satisfying: Fixture.shared.requirement))
+        #expect(UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
         #expect(requests.all.isEmpty)
         #expect(FileManager.default.fileExists(atPath: kept.path))
-        #expect(Self.attachedImages().isEmpty)
+        #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
+        let files = FileManager.default.enumerator(at: update.app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
+        for url in [update.app] + files {
+            #expect(getxattr(url.path, "com.apple.quarantine", nil, 0, 0, XATTR_NOFOLLOW) == -1, "\(url.lastPathComponent)")
+        }
+
+        // Its Info.plist, which the signature covers, changed: no longer what was signed.
+        let info = update.app.appending(path: "Contents/Info.plist")
+        let changed = try #require(NSMutableDictionary(contentsOf: info))
+        changed["CFBundleShortVersionString"] = "9.9.9"
+        try changed.write(to: info)
+        #expect(!UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
         sut.discard(update)
     }
 
@@ -235,7 +324,7 @@ struct UpdateInstallerTests {
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
         try Data("not the download".utf8).write(to: kept)
         await #expect(throws: UpdateInstallError.damaged) {
-            try await installer(scratch).prepare(release(), image: KeptImage(file: kept, sha256: Fixture.shared.sha256),
+            try await installer(scratch).prepare(release(), image: KeptImage(file: kept, sha256: StandIn.sha256),
                                          allowsConstrainedNetwork: true)
         }
     }
@@ -305,11 +394,14 @@ struct UpdateInstallerTests {
         #expect(log.cancelled == 0)
     }
 
-    @Test("a failed swap leaves the installed app alone and calls the relaunch off")
+    @Test("a failed swap leaves the installed app alone, calls the relaunch off, and moves the copy prepared to the Trash, its folder gone")
     func failedSwap() throws {
         let scratch = try Scratch()
         let update = try Self.preparedUpdate(next: scratch.installedApp)
-        try FileManager.default.removeItem(at: update.app) // nothing to swap in
+        // The installed app's folder can't be changed: it can't be swapped.
+        let applications = scratch.installedApp.deletingLastPathComponent()
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: applications.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: applications.path) }
         let log = RelaunchLog()
 
         #expect {
@@ -318,9 +410,11 @@ struct UpdateInstallerTests {
             guard case .notReplaced = error as? UpdateInstallError else { return false }
             return true
         }
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: applications.path)
         #expect(try String(contentsOf: scratch.installedApp.appending(path: "version.txt"), encoding: .utf8) == "old")
         #expect(log.cancelled == 1)
-        installer(scratch).discard(update)
+        #expect(scratch.trashed.all == [update.app])
+        #expect(!FileManager.default.fileExists(atPath: update.folder.path))
     }
 
     @Test("the quarantine mark is removed from the app and everything in it")
@@ -340,18 +434,6 @@ struct UpdateInstallerTests {
         }
     }
 
-    /// Where the update disk images this test process opened are still
-    /// mounted: in its own staging folders, which macOS names after it.
-    private static func attachedImages() -> [String] {
-        var mounts: UnsafeMutablePointer<statfs>?
-        let count = Int(getmntinfo(&mounts, MNT_NOWAIT))
-        let staging = "/TemporaryItems/NSIRD_\(ProcessInfo.processInfo.processName)_"
-        return (0..<count).compactMap { index in
-            let path = withUnsafeBytes(of: mounts![index].f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
-            return path.contains(staging) ? path : nil
-        }
-    }
-
     /// A prepared "new" app, in a folder on the same volume as `installed`.
     private static func preparedUpdate(next installed: URL) throws -> PreparedUpdate {
         let folder = try FileManager.default.url(
@@ -364,50 +446,81 @@ struct UpdateInstallerTests {
     }
 }
 
-/// Whether this macOS has `diskutil image` (macOS 15 doesn't).
-private let hasDiskutilImage: Bool = {
-    let process = Process()
-    process.executableURL = URL(filePath: "/usr/sbin/diskutil")
-    process.arguments = ["image", "attach", "--help"]
-    process.standardOutput = FileHandle.nullDevice
-    process.standardError = FileHandle.nullDevice
-    guard (try? process.run()) != nil else { return false }
-    process.waitUntilExit()
-    return process.terminationStatus == 0
-}()
+/// Whether this is macOS 27 or later, where updates open disk images with
+/// `diskutil image` first.
+private let isMacOS27OrLater = ProcessInfo.processInfo.isOperatingSystemAtLeast(
+    OperatingSystemVersion(majorVersion: 27, minorVersion: 0, patchVersion: 0)
+)
 
-/// A release's disk image in miniature, made once per test run: AutoHush.app
+/// What a test's disk image holds as AutoHush.app.
+enum ImagedApp: Equatable, Sendable {
+    /// The app, needing this macOS or later (releases need 14.4).
+    case needing(macOS: String)
+    /// A link to another app, in its place.
+    case link(to: String)
+}
+
+/// What a test that opens no disk image downloads, and the requirement it
+/// gives the installer: a few bytes and a requirement no copy is checked
+/// against, so that only the `.slow` tests make disk images.
+private enum StandIn {
+    static let contents = Data("not a disk image".utf8)
+    static let sha256 = SHA256.hash(data: contents).map { String(format: "%02x", $0) }.joined()
+    static let requirement = #"identifier "com.autohush.AutoHush""#
+}
+
+/// A release's disk image in miniature, for the `.slow` tests: AutoHush.app
 /// (`/usr/bin/true` with an Info.plist), signed ad hoc as
-/// com.autohush.AutoHush, on a compressed disk image.
+/// com.autohush.AutoHush, needing macOS 14.4 as releases do, on a compressed
+/// disk image. The shared one is made once per test run and removed when it
+/// ends; a test makes the others it needs. Should codesign or hdiutil fail,
+/// the tests that need one fail; the others run.
 private struct Fixture: Sendable {
     static let version = "1.2.0"
-    static let shared = try! Fixture()
+    static let shared = Result { () throws -> Fixture in
+        atexit { _ = try? FileManager.default.removeItem(at: Fixture.sharedFolder) }
+        return try Fixture(in: sharedFolder)
+    }
+    /// Where the shared one is made.
+    private static let sharedFolder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
 
     let diskImage: URL
     let sha256: String
     /// The app's designated requirement (its code hash, as it's signed ad hoc).
     let requirement: String
 
-    private init() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
+    init(_ imaged: ImagedApp = .needing(macOS: "14.4"),
+         in folder: URL = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")) throws {
         let app = folder.appending(path: "Image/AutoHush.app")
-        let executable = app.appending(path: "Contents/MacOS/AutoHush")
-        try FileManager.default.createDirectory(at: executable.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: URL(filePath: "/usr/bin/true"), to: executable)
-        let info: [String: Any] = [
-            "CFBundleIdentifier": "com.autohush.AutoHush",
-            "CFBundleExecutable": "AutoHush",
-            "CFBundlePackageType": "APPL",
-            "CFBundleShortVersionString": Self.version,
-        ]
-        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
-            .write(to: app.appending(path: "Contents/Info.plist"))
-        try Self.run("/usr/bin/codesign", ["--force", "--sign", "-", "--identifier", "com.autohush.AutoHush", app.path])
+        switch imaged {
+        case .needing(let minimum):
+            let executable = app.appending(path: "Contents/MacOS/AutoHush")
+            try FileManager.default.createDirectory(at: executable.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: URL(filePath: "/usr/bin/true"), to: executable)
+            let info: [String: Any] = [
+                "CFBundleIdentifier": "com.autohush.AutoHush",
+                "CFBundleExecutable": "AutoHush",
+                "CFBundlePackageType": "APPL",
+                "CFBundleShortVersionString": Self.version,
+                "LSMinimumSystemVersion": minimum,
+            ]
+            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+                .write(to: app.appending(path: "Contents/Info.plist"))
+            try Self.run("/usr/bin/codesign", ["--force", "--sign", "-", "--identifier", "com.autohush.AutoHush", app.path])
+        case .link(let target):
+            try FileManager.default.createDirectory(at: app.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try FileManager.default.createSymbolicLink(at: app, withDestinationURL: URL(filePath: target))
+        }
 
         diskImage = folder.appending(path: "AutoHush.dmg")
-        try Self.run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
-                                          "-volname", "AutoHush", "-srcfolder", folder.appending(path: "Image").path,
-                                          diskImage.path])
+        let contents = folder.appending(path: "Image").path
+        if case .link = imaged {
+            // No signature to keep intact: a hybrid image, made at once, not in seconds.
+            try Self.run("/usr/bin/hdiutil", ["makehybrid", "-quiet", "-hfs", "-o", diskImage.path, contents])
+        } else {
+            try Self.run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
+                                              "-volname", "AutoHush", "-srcfolder", contents, diskImage.path])
+        }
         sha256 = SHA256.hash(data: try Data(contentsOf: diskImage)).map { String(format: "%02x", $0) }.joined()
 
         var code: SecStaticCode?

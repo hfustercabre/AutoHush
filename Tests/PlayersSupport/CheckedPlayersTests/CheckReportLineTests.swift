@@ -13,7 +13,7 @@ struct CheckReportLineTests {
         #expect(CheckReportLine.windowState(in: "  State of mind: fine") == nil)
     }
 
-    @Test("a trial's label tells its way; a request its kind and minutes")
+    @Test("a trial's label tells its way; each request the check makes, its kind and minutes")
     func trialsAndRequests() {
         for way in CheckResult.WayKind.allCases {
             #expect(CheckReportLine.way(ofTrial: "  " + CheckReportLine.trial(way, detail: "a, b") + ": before, playing") == way)
@@ -21,7 +21,13 @@ struct CheckReportLineTests {
         #expect(CheckReportLine.trial(.page, learned: true) == "by its page's learned button")
         let line = CheckReportLine.waiting("pause Jukebox yourself", minutes: 2)
         #expect(line == "  waiting: pause Jukebox yourself (up to 2 minutes)")
-        #expect(CheckReportLine.request(in: line)?.request == .pause && CheckReportLine.request(in: line)?.minutes == 2)
+        let requests: [(line: String, request: CheckReportLine.Request)] = [
+            (CheckReportLine.waitingToPlay("Jukebox", minutes: 2), .play), (CheckReportLine.waitingToPause("Jukebox", minutes: 2), .pause),
+            (CheckReportLine.waitingForAccessibility("AutoHush", minutes: 2), .allowAccessibility),
+        ]
+        for (line, request) in requests {
+            #expect(CheckReportLine.request(in: line)?.request == request && CheckReportLine.request(in: line)?.minutes == 2, "\(line)")
+        }
         #expect(CheckReportLine.request(in: "  it plays") == nil)
         #expect(CheckReportLine.Heading(rawValue: "Press Test") == .pressTest)
     }

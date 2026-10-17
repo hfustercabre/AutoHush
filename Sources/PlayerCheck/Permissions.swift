@@ -40,8 +40,7 @@ import AutoHushKit
     var missing: [String] = []
     if !AXIsProcessTrusted() {
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        say(CheckReportLine.waiting("allow Accessibility for \(holder) in System Settings; the check goes on as soon as it's allowed",
-                                    minutes: 2))
+        say(CheckReportLine.waitingForAccessibility(holder, minutes: 2))
         let deadline = Date().addingTimeInterval(120)
         while !AXIsProcessTrusted(), Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
     }

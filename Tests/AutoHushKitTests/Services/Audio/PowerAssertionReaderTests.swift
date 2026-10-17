@@ -1,4 +1,5 @@
 import Foundation
+import IOKit.pwr_mgt
 import Testing
 @testable import AutoHushKit
 
@@ -30,8 +31,14 @@ struct PowerAssertionReaderTests {
         ])
     }
 
-    @Test("the real system can be read")
-    func readsSystem() {
-        _ = IOKitPowerAssertionReader().assertionsByProcess() // must not crash or require permission
+    @Test("the real system is read: an assertion this process holds is its own, keeping the Mac awake, by its name")
+    func readsSystem() throws {
+        let name = "AutoHush test: PowerAssertionReaderTests"
+        var id = IOPMAssertionID(0)
+        try #require(IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+                                                 IOPMAssertionLevel(kIOPMAssertionLevelOn), name as CFString, &id) == kIOReturnSuccess)
+        defer { IOPMAssertionRelease(id) }
+        // Needs no permission; should macOS change what it answers, every app would be judged by its open stream.
+        #expect(IOKitPowerAssertionReader().assertionsByProcess()[getpid()]?.contains(PowerAssertion(.system, name)) == true)
     }
 }

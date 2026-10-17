@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushKit
 
 @Suite("UpdatePrompt")
 struct UpdatePromptTests {
@@ -57,5 +58,7 @@ struct UpdateNoticeTests {
         #expect(UpdateNotice.installed(version).body == "Click to see what’s new.")
         #expect(UpdateNotice.installFailed(version).title == "Couldn’t update AutoHush to 0.3.8")
         #expect(UpdateNotice.installFailed(version).key == "installFailed 0.3.8")
+        // Settings' choice that leads to “ready to install” says how long the download is kept.
+        #expect(AutomaticUpdates.download.explanation.contains("\(Int(UpdateDownloads.keepFor / 86_400)) days"))
     }
 }

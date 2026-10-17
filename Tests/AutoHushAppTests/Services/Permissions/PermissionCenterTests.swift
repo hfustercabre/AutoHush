@@ -66,8 +66,8 @@ struct PermissionCenterTests {
         #expect(state.control == nil && state.controlAccess == .allowed)
     }
 
-    @Test("each missing permission's button does the right thing")
-    func requests() {
+    @Test("each missing permission's button does the right thing; Allow for Automation asks macOS about the running player")
+    func requests() async {
         let automation = Permission.automation(player: "Jukebox")
         #expect(PermissionCenter.request(for: automation, access: .allowed) == nil)
         #expect(PermissionCenter.request(for: automation, access: .playerNotRunning) == .openPlayer)
@@ -79,5 +79,26 @@ struct PermissionCenterTests {
         #expect(PermissionCenter.request(for: .systemAudioRecording, access: .denied) == .openSettings(.audioCapture))
         #expect(PermissionCenter.request(for: .systemAudioRecording, access: .needsReopen) == .reopen)
         #expect(PermissionCenter.request(for: .systemAudioRecording, access: .notNeeded) == nil)
+
+        // What Automation's button asks of macOS: about the player as it runs, showing its prompt.
+        let asked = CallLog()
+        func recording(running: Bool) -> PermissionCenter {
+            PermissionCenter(system: .init(
+                isTrusted: { true }, promptAccessibility: {},
+                automation: { pid, ask in
+                    await MainActor.run { asked.calls.append("\(pid) \(ask ? "asking" : "reading")") }
+                    return noErr
+                },
+                runningPID: { _ in running ? 4242 : nil },
+                audio: { .granted }, requestAudio: { _ in }, openPane: { _ in }
+            ))
+        }
+        let jukebox = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
+        await recording(running: true).perform(.askMacOS(automation), player: jukebox)
+        #expect(asked.calls == ["4242 asking"])
+        await recording(running: false).perform(.askMacOS(automation), player: jukebox) // nothing to ask about
+        await recording(running: true).perform(.openPlayer, player: jukebox)
+        await recording(running: true).perform(.reopen, player: jukebox)
+        #expect(asked.calls == ["4242 asking"])
     }
 }

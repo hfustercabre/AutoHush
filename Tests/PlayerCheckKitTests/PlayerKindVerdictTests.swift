@@ -62,7 +62,7 @@ struct PlayerKindVerdictTests {
         }
     }
 
-    @Test("a scriptable player is told so in the supported players' words, its profile only for a developer")
+    @Test("a scriptable player is told so in the supported players' words, its profile only for a developer; a scripted pause or play that didn't take is said")
     func scriptablePlayer() {
         var facts = PlayerKindVerdict.Facts(bundleID: "com.example.player")
         facts.scripting = Self.scriptable
@@ -73,13 +73,44 @@ struct PlayerKindVerdictTests {
         ])
         #expect(PlayerKindVerdict.lines(facts, developer: true).contains(
             "  As a built-in player: a ScriptablePlayerProfile with suite fourCharCode(\"abcd\")."))
+        facts.scriptResult = .didNotPause
+        #expect(PlayerKindVerdict.lines(facts, developer: false).last
+            == "  But its scripted pause didn't take: check it by hand before building on it.")
+        facts.scriptResult = .pausedOnly
+        #expect(PlayerKindVerdict.lines(facts, developer: false).last
+            == "  But its scripted play didn't bring it back: check it by hand before building on it.")
     }
 
-    @Test("an app neither scriptable nor with a menu has no developer line")
+    /// Facts whose verdict has nothing for a developer to build on, each
+    /// with its first line.
+    static var withoutDeveloperLines: [(facts: PlayerKindVerdict.Facts, first: String)] {
+        func facts(_ set: (inout PlayerKindVerdict.Facts) -> Void = { _ in }) -> PlayerKindVerdict.Facts {
+            var facts = PlayerKindVerdict.Facts(bundleID: "com.example.player")
+            set(&facts)
+            return facts
+        }
+        return [
+            (facts(), "  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app."),
+            (facts { $0.pageHasPlayPause = true }, "  Neither scriptable nor with a playback menu."),
+            (facts { $0.isRunning = false }, "  No usable scripting; open it and run again to look for a playback menu and a page."),
+            // Add an App adds these through their page, as it says under the verdict.
+            (facts { $0.webAppBrowser = "Chromium" },
+             "  A Chromium web app: Add an App adds these through their page. Its sound is Chromium's, shared with its tabs:"),
+            (facts { $0.menuTitle = "Controls"; $0.menuResult = .pausedOnly },
+             "  Its menu paused it, but pressing it again didn't play it: check it by hand before building on it."),
+            (facts { $0.menuTitle = "Controls"; $0.menuResult = .didNotPause },
+             "  Its menu has Play/Pause, but pressing it didn't take: not controllable that way."),
+            (facts { $0.menuTitle = "Controls" },
+             "  Probably a menu player, as the supported menu players are (menu “Controls”): confirm by testing it while it plays."),
+        ]
+    }
+
+    @Test("with nothing for a developer to build on (no kind, a page only, not running, a browser's web app, a menu that didn't work or wasn't tried), the verdict is the same with --developer")
     func noKind() {
-        var facts = PlayerKindVerdict.Facts(bundleID: "com.example.player")
-        facts.isRunning = true
-        #expect(PlayerKindVerdict.lines(facts, developer: true) == PlayerKindVerdict.lines(facts, developer: false))
-        #expect(PlayerKindVerdict.lines(facts, developer: false).first?.contains("AutoHush can't control it") == true)
+        for (facts, first) in Self.withoutDeveloperLines {
+            let lines = PlayerKindVerdict.lines(facts, developer: false)
+            #expect(PlayerKindVerdict.lines(facts, developer: true) == lines)
+            #expect(lines.first == first)
+        }
     }
 }

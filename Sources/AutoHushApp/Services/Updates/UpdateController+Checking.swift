@@ -18,11 +18,15 @@ extension UpdateController {
     func check(userInitiated: Bool) async {
         resultWanted = resultWanted || userInitiated
         if let checking { return await checking.value }
-        let task = Task { await runCheck() }
+        let task = Task {
+            await runCheck()
+            // As it ends, not once its caller is back: a check asked for in
+            // between would join one that no longer shows its result.
+            checking = nil
+            resultWanted = false
+        }
         checking = task
         await task.value
-        checking = nil
-        resultWanted = false
     }
 
     private func runCheck() async {

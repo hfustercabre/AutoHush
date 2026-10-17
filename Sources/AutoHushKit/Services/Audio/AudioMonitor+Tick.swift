@@ -42,7 +42,7 @@ extension AudioMonitor {
         presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
         // A released process whose output closed is tapped again when it opens.
         let present = Set(candidates.map(\.objectID))
-        quietProcesses.formIntersection(present)
+        quietProcesses = quietProcesses.filter { present.contains($0) }
         updateMeteredProcesses(at: now)
     }
 
@@ -135,13 +135,16 @@ extension AudioMonitor {
         var woken: Set<AudioObjectID> = []
         for process in candidates {
             guard let source = sourceOfProcess[process.objectID] else { continue }
+            let announcing = judgement?.verdicts[source.id] == true
             if quietProcesses.contains(process.objectID) {
                 // Released for its silence: silent until it says it plays.
-                if judgement?.verdicts[source.id] == true { woken.insert(process.objectID) }
+                if announcing { woken.insert(process.objectID) }
                 continue
             }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
-            if let peak, noteSilence(of: process.objectID, peak: peak, at: now) { released.insert(process.objectID) }
+            // One that says it plays stays measured through its silence (a
+            // call's quiet stretch), so what follows is heard.
+            if let peak, noteSilence(of: process.objectID, peak: peak, at: now), !announcing { released.insert(process.objectID) }
             if let peak { levels[source.id] = max(levels[source.id] ?? 0, peak) }
             let verdict = peak == nil ? judgement?.verdicts[source.id] : nil
             if let verdict { verdicts[source.id] = verdict }
@@ -159,12 +162,20 @@ extension AudioMonitor {
 
         // Before source events, so a pause decision in this tick sees it.
         updateLocalPlayback()
+        updateStartConfirmation()
 
         // AntiDot mode: sound without video must last longer (see the type
         // comment); with open streams only, which can't tell video, any sound
-        // (a shorter minimum).
+        // (a shorter minimum). With nothing measured outside AntiDot mode,
+        // each app waits AntiDot mode's minimum for what judged it: what it
+        // tells macOS (the verdicts that decided; none for video), else its
+        // open stream.
         let slowStarts: [String: TimeInterval] = switch detectionMethod {
-        case .audioLevels: [:]
+        case .audioLevels where detectionMode == .audioLevel: [:]
+        case .audioLevels: Dictionary(uniqueKeysWithValues: audible.compactMap { id -> (String, TimeInterval)? in
+            guard verdicts[id] != nil else { return (id, configuration.startConfirmationWithOpenStreams) }
+            return judgement?.showingVideo.contains(id) == true ? nil : (id, configuration.startConfirmationWithoutVideo)
+        })
         case .playbackSignals: judgement.map { judgement in
             Dictionary(uniqueKeysWithValues: audible.subtracting(judgement.showingVideo).map {
                 ($0, configuration.startConfirmationWithoutVideo)
@@ -258,6 +269,21 @@ extension AudioMonitor {
         publishedLocalPlayback = isLocal
         logger.debug("[monitor] music player output on this Mac: \(isLocal, privacy: .public)")
         events.yield(.localPlayback(isLocal))
+    }
+
+    /// Tells the arbiter how long an app must play, at most, before it
+    /// counts, as apps are judged now (see `evaluate`'s slow starts): a pause
+    /// it takes over waits that long for apps still playing.
+    private func updateStartConfirmation() {
+        let longest = switch detectionMethod {
+        case .audioLevels where detectionMode == .audioLevel: configuration.sourceStartConfirmation
+        case .audioLevels: max(configuration.startConfirmationWithoutVideo, configuration.startConfirmationWithOpenStreams)
+        case .playbackSignals: configuration.startConfirmationWithoutVideo
+        case .openStreams: configuration.startConfirmationWithOpenStreams
+        }
+        guard longest != publishedStartConfirmation else { return }
+        publishedStartConfirmation = longest
+        events.yield(.startConfirmation(longest))
     }
 
     func setDetectionMode(_ mode: DetectionMode) {

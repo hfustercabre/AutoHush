@@ -55,13 +55,18 @@ struct ScriptSetupTests {
         #expect(setup == ScriptSetup(commands: .pauseAndPlay(pause: "spfyPaus", play: "spfyPlay"), state: .playerState, hasVolume: true))
     }
 
-    @Test("an app with only a play that toggles, and a playing flag: toggled from the opposite state")
+    @Test("an app with only a play that toggles, and a playing flag: toggled from the opposite state; with a playpause and no state, by its other signs")
     func toggles() throws {
         let setup = try #require(ScriptSetup(dictionary: dictionary(vlc)))
         #expect(setup.commands == .toggle("VLC play"))
         #expect(setup.state == .playingFlag(property: "Plng", currentTime: "pos "))
         #expect(!setup.actsOnDocuments)
         #expect(!setup.hasVolume)
+        let stateless = try #require(ScriptSetup(dictionary: dictionary("""
+            <dictionary><suite name="Jukebox" code="juke"><command name="playpause" code="jukeTogl"/></suite></dictionary>
+            """)))
+        #expect(stateless.commands == .toggle("jukeTogl"))
+        #expect(stateless.state == nil)
     }
 
     @Test("an app whose play and pause act on a document, each with its own playing: by its documents")
@@ -99,10 +104,12 @@ struct ScriptSetupTests {
         let found = try ScriptingDictionary.read(appAt: app("VLC", files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed]), isRunning: false)
         #expect(found?.hasPlayingFlag == true && found?.hasState == true)
         #expect(found?.currentItemName == "nmci" && found?.namesItsSong == true)
-        // Only old .scriptSuite files: only the running app could say, so nothing is read.
+        // Only old .scriptSuite files: only the running app could say, so nothing is read;
+        // running, `sdef` is asked, and finds nothing either (there's no program to ask).
         let old = try app("Old", files: ["Old.scriptSuite": "{}"])
         #expect(ScriptingDictionary.isInBundle(at: old))
         #expect(ScriptingDictionary.read(appAt: old, isRunning: false) == nil)
+        #expect(ScriptingDictionary.read(appAt: old, isRunning: true) == nil)
     }
 
     @Test("an app with no play or pause can't be scripted")
@@ -133,7 +140,7 @@ struct ScriptSetupTests {
         let target = play.paramDescriptor(forKeyword: ScriptablePlayer.Code.directObject)
         #expect(target?.forKeyword(ScriptablePlayer.Code.keyData)?.stringValue == "Song.m4a")
         #expect(target?.forKeyword(ScriptablePlayer.Code.desiredClass)?.typeCodeValue == fourCharCode("docu"))
-        let front = ScriptedAppPlayer.documentSpecifier("docu", named: .some(nil))
-        #expect(front.forKeyword(ScriptablePlayer.Code.keyData)?.int32Value == 1)
+        let every = ScriptedAppPlayer.documentSpecifier("docu")
+        #expect(every.forKeyword(ScriptablePlayer.Code.keyData)?.descriptorType == fourCharCode("abso"))
     }
 }

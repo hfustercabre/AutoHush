@@ -29,6 +29,97 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).ignoredApps.isEmpty)
     }
 
+    /// Everything AutoHush 0.12.1 keeps, as it writes it: the keys, the keys
+    /// inside each value and the stored names of choices. Renaming one would
+    /// reset that setting for everyone updating, every other test passing.
+    @Test("settings saved by 0.12.1 load as they were")
+    func savedBy0121() {
+        let store = InMemoryPreferenceStore()
+        let snoozedUntil = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let checked = snoozedUntil.addingTimeInterval(-3600)
+        let downloaded = snoozedUntil.addingTimeInterval(-7200)
+        let handedOver = snoozedUntil.addingTimeInterval(-60)
+        let sha256 = String(repeating: "ab", count: 32)
+        let saved: [String: Any] = [
+            "autoPauseEnabled": true,
+            "autoPauseSnoozedUntil": snoozedUntil,
+            "ignoredApps": ["us.zoom.xos": "zoom.us", "com.example.chat": "Chat"],
+            "seenApps": [
+                ["id": "com.example.chat", "name": "Chat", "path": "/Applications/Chat.app"],
+                ["id": "com.example.daemon", "name": "daemon"],
+            ],
+            "appListOrder": "name",
+            "appListOrderReversed": true,
+            "timings": [
+                "startConfirmation": 1.5, "stopGrace": 4, "silenceThresholdDB": -50,
+                "fadeOutDuration": 2.5, "fadeInDuration": 3, "fadesEnabled": 0,
+            ] as [String: Double],
+            "checksForUpdatesAutomatically": false,
+            "automaticUpdates": "download",
+            "lastUpdateCheck": checked,
+            "downloadedUpdate": ["version": "0.12.2", "sha256": sha256, "downloadedAt": downloaded] as [String: Any],
+            "expiredUpdateVersion": "0.12.0",
+            "lastUpdateNotice": "downloaded 0.12.2",
+            "lastLaunchedVersion": "0.12.1",
+            "pauseHandedOverAt": handedOver,
+            "pauseHandedOverPlayer": [
+                "at": handedOver, "player": "com.example.jukebox", "chosen": true, "held": ["com.example.radio"],
+            ] as [String: Any],
+            "detectionMethod": "askApps",
+            "playbackAssertions": ["com.example.browser": ["system": ["Playing audio"], "display": ["Video Wake Lock"]]],
+            "musicPlayer": "com.example.jukebox",
+            "playerChoiceIntroduced": true,
+            "webAppPlayPauseButtons": ["com.apple.Safari.WebApp.A": ["play": "Play"], "com.apple.Safari.WebApp.B": ["play": "Play"]],
+        ]
+        for (key, value) in saved { store.set(value, forKey: key) }
+
+        let preferences = Preferences(store: store)
+        #expect(preferences.autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: snoozedUntil))
+        #expect(preferences.focusAutoPause == nil)
+        #expect(preferences.ignoredApps == [AudioSource(id: "com.example.chat", name: "Chat"), AudioSource(id: "us.zoom.xos", name: "zoom.us")])
+        #expect(preferences.appsIgnoredByDefault.isEmpty)
+        #expect(preferences.seenApps == [
+            AudioSource(id: "com.example.chat", name: "Chat", bundlePath: "/Applications/Chat.app"),
+            AudioSource(id: "com.example.daemon", name: "daemon"),
+        ])
+        #expect(preferences.appListOrder == AppListOrder(criterion: .name, isReversed: true))
+        #expect(preferences.timings == TimingSettings(startConfirmation: 1.5, stopGrace: 4, silenceThresholdDB: -50,
+                                                     fadeOutDuration: 2.5, fadeInDuration: 3, fadesEnabled: false))
+        #expect(!preferences.checksForUpdatesAutomatically)
+        #expect(preferences.automaticUpdates == .download)
+        #expect(preferences.lastUpdateCheck == checked)
+        #expect(preferences.downloadedUpdate == DownloadedUpdate(version: "0.12.2", sha256: sha256, downloadedAt: downloaded))
+        #expect(preferences.expiredUpdateVersion == "0.12.0")
+        #expect(preferences.lastUpdateNotice == "downloaded 0.12.2")
+        #expect(preferences.lastLaunchedVersion == "0.12.1")
+        #expect(preferences.pauseHandover == PauseHandover(at: handedOver, player: "com.example.jukebox", held: ["com.example.radio"]))
+        #expect(preferences.detectionMethod == .playbackSignals)
+        #expect(preferences.playbackAssertions == [
+            "com.example.browser": AnnouncedAssertions(system: ["Playing audio"], display: ["Video Wake Lock"]),
+        ])
+        #expect(preferences.musicPlayer == "com.example.jukebox")
+        preferences.forgetWebAppButtons { $0 == "com.apple.Safari.WebApp.B" }
+        #expect((store.object(forKey: "webAppPlayPauseButtons") as? [String: Any]).map { Array($0.keys) } == ["com.apple.Safari.WebApp.A"])
+
+        // What else 0.12.1 writes there, where the values above are the defaults.
+        store.set(false, forKey: "autoPauseEnabled")
+        store.set(nil, forKey: "autoPauseSnoozedUntil")
+        #expect(preferences.autoPause == AutoPauseSetting(isEnabled: false))
+        store.set(["at": handedOver, "chosen": false, "held": ["com.example.radio"]] as [String: Any], forKey: "pauseHandedOverPlayer")
+        #expect(preferences.pauseHandover == PauseHandover(at: handedOver, player: nil, holdsChosen: false, held: ["com.example.radio"]))
+        // The other choices' names (a default's would read as the default anyway).
+        store.set("openStreams", forKey: "detectionMethod")
+        #expect(preferences.detectionMethod == .openStreams)
+        store.set("notify", forKey: "automaticUpdates")
+        #expect(preferences.automaticUpdates == .notify)
+        store.set("state", forKey: "appListOrder")
+        #expect(preferences.appListOrder.criterion == .state)
+        // The player could be chosen already: none is put in for the user who hasn't.
+        store.set(nil, forKey: "musicPlayer")
+        preferences.keepFormerPlayer("com.example.former")
+        #expect(preferences.musicPlayer == nil)
+    }
+
     @Test("auto-pause and its snooze persist")
     func autoPausePersists() {
         let scratch = Scratch()
@@ -110,7 +201,10 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).seenApps == [vlc, chrome])
 
         preferences.recordSeen((0..<60).map { AudioSource(id: "app.\($0)", name: "App \($0)") })
-        #expect(preferences.seenApps.count == Preferences.seenAppsLimit)
+        let kept = preferences.seenApps.map(\.id)
+        #expect(kept.count == Preferences.seenAppsLimit)
+        #expect(kept.first == "app.0")
+        #expect(!kept.contains(vlc.id) && !kept.contains(chrome.id)) // the oldest go
     }
 
     @Test("keeping an app seen adds it at the front once, and leaves a known app where it is")
@@ -175,7 +269,7 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).pauseHandover == both)
     }
 
-    @Test("a handover from AutoHush 0.8.2 or earlier names no player, even with one left from before")
+    @Test("a handover from AutoHush 0.8.2 or earlier names no player, even with one left from before; one from 0.8.3 to 0.11.0 is the chosen player's alone")
     func pauseHandoverFromAnEarlierVersion() {
         let scratch = Scratch()
         let preferences = Preferences(store: scratch.defaults)
@@ -186,6 +280,10 @@ struct PreferencesTests {
         let later = earlier.addingTimeInterval(120)
         scratch.defaults.set(later, forKey: "pauseHandedOverAt")
         #expect(preferences.pauseHandover == PauseHandover(at: later, player: nil))
+
+        // 0.8.3 to 0.11.0 wrote the date and the player only.
+        scratch.defaults.set(["at": later, "player": "com.example.jukebox"], forKey: "pauseHandedOverPlayer")
+        #expect(preferences.pauseHandover == PauseHandover(at: later, player: "com.example.jukebox", holdsChosen: true, held: []))
     }
 
     @Test("the earlier 'install updates automatically' switch becomes the matching choice", arguments: [

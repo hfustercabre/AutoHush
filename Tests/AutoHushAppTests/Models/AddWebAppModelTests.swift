@@ -16,7 +16,7 @@ struct AddWebAppModelTests {
         return model
     }
 
-    @Test("Add to Dock ends the wait with yes; starting over ends it with no")
+    @Test("Add to Dock ends the wait with yes; starting over, or the add cancelled, ends it with no")
     func addAndReset() async {
         let model = readyModel(attempt: 1)
         let added = Task { await model.waitForAdd(attempt: 1) }
@@ -29,14 +29,26 @@ struct AddWebAppModelTests {
         await Task.yield()
         other.reset()
         #expect(await reset.value == false)
+
+        let cancelled = readyModel(attempt: 3)
+        let waiting = Task { await cancelled.waitForAdd(attempt: 3) }
+        await Task.yield()
+        waiting.cancel()
+        #expect(await waiting.value == false)
     }
 
-    @Test("Safari's dialog closed without adding is said under Add to Dock until it's opened again")
+    @Test("a site that asks first has its step, which stays ticked; Safari's dialog closed without adding is said under Add to Dock until it's opened again")
     func closedWithoutAdding() {
-        let model = readyModel(attempt: 1)
+        let model = AddWebAppModel()
+        model.address = "music.youtube.com"
+        model.continueTapped()
+        model.apply(.siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"))
+        #expect(model.siteAsked && model.phase == .siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"))
+        model.apply(.readyToAdd(site: "music.youtube.com"))
+        #expect(model.siteAsked && model.phase == .readyToAdd(site: "music.youtube.com"))
         model.apply(.adding)
         model.apply(.notAdded)
-        model.apply(.readyToAdd(site: "play.qobuz.com"))
+        model.apply(.readyToAdd(site: "music.youtube.com"))
         #expect(model.closedWithoutAdding)
         let ready = AddWebAppView.steps(for: model.phase, closedWithoutAdding: model.closedWithoutAdding, learning: nil)
         #expect(ready.last { $0.button == .addToDock }?.warning != nil)
@@ -46,7 +58,7 @@ struct AddWebAppModelTests {
         #expect(adding.first { $0.state == .current }?.notes.count == 1) // rename it there, then Add
         model.apply(.notAdded)
         model.reset()
-        #expect(!model.closedWithoutAdding)
+        #expect(!model.closedWithoutAdding && !model.siteAsked)
     }
 
     @Test("a cancelled add's late cancel doesn't end a newer add's wait")

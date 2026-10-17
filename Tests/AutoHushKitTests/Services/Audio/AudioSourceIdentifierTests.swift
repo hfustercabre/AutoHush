@@ -31,10 +31,14 @@ struct AudioSourceIdentifierTests {
         #expect(source.bundlePath == url.path)
     }
 
-    @Test("an unknown process falls back to its own bundle ID")
+    @Test("an unknown process falls back to its own bundle ID, not one remembered for its pid")
     func fallback() {
+        let identifier = ProcessAudioSourceIdentifier()
         let process = AudioProcessInfo(objectID: 1, bundleID: "com.example.gone", pid: 999_999)
-        #expect(ProcessAudioSourceIdentifier().source(for: process) == AudioSource(id: "com.example.gone", name: "com.example.gone"))
+        #expect(identifier.source(for: process) == AudioSource(id: "com.example.gone", name: "com.example.gone"))
+        // Its pid reused by another process: that one's own ID.
+        let reused = AudioProcessInfo(objectID: 2, bundleID: "com.example.new", pid: 999_999)
+        #expect(identifier.source(for: reused) == AudioSource(id: "com.example.new", name: "com.example.new"))
     }
 
     @Test("a process without a bundle ID (a command-line program) is named by the app that owns it")

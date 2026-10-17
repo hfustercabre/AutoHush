@@ -3,6 +3,7 @@ import Foundation
 import Testing
 @testable import ScriptablePlayers
 import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("ScriptablePlayer")
 struct ScriptablePlayerTests {
@@ -76,20 +77,26 @@ struct ScriptablePlayerTests {
         #expect(ScriptablePlayer.volume(fromReply: answer, reading: { $0 + 1 }) == volume)
     }
 
-    @Test("a truth value in the reply is read as one, not as a number")
-    func booleanReply() {
+    @Test("a truth value in the reply is read as one, not as a number; a real, a text and a list's items are read as such")
+    func replyValues() {
         #expect(PlayerReply(reply(directObject: NSAppleEventDescriptor(boolean: true))).directObjectBoolean == true)
         let no = PlayerReply(reply(directObject: NSAppleEventDescriptor(boolean: false)))
-        #expect(no.directObjectBoolean == false && no.directObjectInteger == nil)
+        #expect(no.directObjectBoolean == false && no.directObjectInteger == nil && no.directObjectReal == nil)
         #expect(PlayerReply(reply(directObject: NSAppleEventDescriptor(int32: 1))).directObjectBoolean == nil)
-    }
-
-    @Test("any property of the application can be set to a number")
-    func setPropertyEvent() {
-        let set = ScriptablePlayer.makeSetPropertyEvent(fourCharCode("AAAV"), to: 300, processIdentifier: pid)
-        #expect(set.eventClass == fourCharCode("core") && set.eventID == fourCharCode("setd"))
-        #expect(set.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("AAAV"))
-        #expect(set.paramDescriptor(forKeyword: fourCharCode("data"))?.int32Value == 300)
+        // QuickTime Player's: a document's audio volume; one document's name, or two documents' names and whether each plays.
+        #expect(PlayerReply(reply(directObject: NSAppleEventDescriptor(double: 0.8))).directObjectReal == 0.8)
+        let name = PlayerReply(reply(directObject: NSAppleEventDescriptor(string: "Song A")))
+        #expect(name.directObjectText == "Song A" && name.listTexts.isEmpty)
+        let names = NSAppleEventDescriptor.list()
+        names.insert(NSAppleEventDescriptor(string: "Song A"), at: 1)
+        names.insert(NSAppleEventDescriptor(string: "Song B"), at: 2)
+        let flags = NSAppleEventDescriptor.list()
+        flags.insert(NSAppleEventDescriptor(boolean: false), at: 1)
+        flags.insert(NSAppleEventDescriptor(boolean: true), at: 2)
+        #expect(PlayerReply(reply(directObject: names)).listTexts == ["Song A", "Song B"])
+        #expect(PlayerReply(reply(directObject: flags)).listBooleans == [false, true])
+        let none = PlayerReply(reply(directObject: NSAppleEventDescriptor.list())) // no document open
+        #expect(none.listTexts.isEmpty && none.listBooleans.isEmpty && none.directObjectText == nil)
     }
 
     @Test("a reply without a number has no volume")
@@ -183,23 +190,10 @@ struct ScriptablePlayerTests {
 
     // MARK: - Error mapping
 
-    @Test("-1743 error number maps to automationPermissionDenied")
-    func automationDeniedErrorCode() {
-        #expect(ScriptablePlayer.mapError(number: -1743, message: "Not authorized") == .automationPermissionDenied)
-    }
-
-    @Test("sendEvent NSError -1743 maps to automationPermissionDenied")
-    func automationDeniedNSError() {
-        let error = NSError(domain: NSOSStatusErrorDomain, code: -1743)
-
-        #expect(ScriptablePlayer.mapError(error) == .automationPermissionDenied)
-    }
-
-    @Test("procNotFound maps to playerNotRunning")
-    func processNotFound() {
-        let error = NSError(domain: NSOSStatusErrorDomain, code: -600)
-
-        #expect(ScriptablePlayer.mapError(error) == .playerNotRunning)
+    @Test("sendEvent's NSError -1743 maps to automationPermissionDenied, procNotFound to playerNotRunning")
+    func thrownErrors() {
+        #expect(ScriptablePlayer.mapError(NSError(domain: NSOSStatusErrorDomain, code: -1743)) == .automationPermissionDenied)
+        #expect(ScriptablePlayer.mapError(NSError(domain: NSOSStatusErrorDomain, code: -600)) == .playerNotRunning)
     }
 
     @Test("timeouts mean the app is not responding; other error numbers keep their OSStatus")
@@ -272,11 +266,19 @@ struct ScriptablePlayerTests {
 
     @MainActor
     @Test("a player watches its state through its notification")
-    func observer() {
-        let profile = ScriptablePlayerProfile(
-            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
-            stateNotification: Notification.Name("com.example.jukebox.state")
-        )
-        #expect(ScriptablePlayer(profile: profile).makeStateObserver { _ in } is PlayerStateObserver)
+    func observer() async {
+        // A name of this run's own: nothing else posts it.
+        let name = Notification.Name("com.example.jukebox.state.\(UUID().uuidString)")
+        let profile = ScriptablePlayerProfile(bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+                                              stateNotification: name)
+        var states: [PlayerState] = []
+        let observer = ScriptablePlayer(profile: profile).makeStateObserver { states.append($0) }
+        #expect(observer is PlayerStateObserver)
+        observer.start()
+        defer { observer.stop() }
+        DistributedNotificationCenter.default().postNotificationName(name, object: nil, userInfo: ["Player State": "Paused"],
+                                                                     deliverImmediately: true)
+        await TestWait.until { !states.isEmpty }
+        #expect(states == [.paused])
     }
 }

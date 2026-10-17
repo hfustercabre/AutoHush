@@ -30,6 +30,8 @@ struct UpdateControllerTests {
         var answer = NSApplication.ModalResponse.alertFirstButtonReturn
         /// How many times the menu was closed for an alert.
         var menuClosings = 0
+        /// Runs after each status the controller reports is recorded.
+        var afterStatus: @MainActor (String) -> Void = { _ in }
         private(set) var controller: UpdateController!
 
         init(
@@ -55,7 +57,10 @@ struct UpdateControllerTests {
                 quit: { [weak self] in self?.quits += 1 },
                 openURL: { [weak self] in self?.opened.append($0) },
                 onOffer: { [weak self] in self?.offers.append($0) },
-                onStatus: { [weak self] in self?.statuses.append($0) },
+                onStatus: { [weak self] in
+                    self?.statuses.append($0)
+                    self?.afterStatus($0)
+                },
                 onSettingsChange: { [weak self] in self?.settingsChanges += 1 }
             )
             controller.beforePresenting = { [weak self] in self?.menuClosings += 1 }
@@ -85,22 +90,41 @@ struct UpdateControllerTests {
         func makeCheckDue() { preferences.lastUpdateCheck = nil }
     }
 
-    private actor FetchCount {
-        private(set) var value = 0
-        func increment() { value += 1 }
+    /// Counts the fetches, holding each until the test lets them go.
+    private actor HeldFetches {
+        private(set) var count = 0
+        private var isHeld = true
+        private var held: [CheckedContinuation<Void, Never>] = []
+
+        func fetch() async {
+            count += 1
+            if isHeld { await withCheckedContinuation { held.append($0) } }
+        }
+
+        /// Lets the fetches under way go, and every later one at once.
+        func letGo() {
+            isHeld = false
+            held.forEach { $0.resume() }
+            held = []
+        }
     }
 
     private let v030 = AppVersion("0.3.0")!
 
     // MARK: - Checking
 
-    @Test("turning automatic checks off is stored and shown; no check is due then")
-    func automaticChecksSetting() {
+    @Test("turning automatic checks off is stored and shown; no check is due then; turned on again, it checks at once when one is due")
+    func automaticChecksSetting() async {
         let h = Harness(checker: .latestRelease("v0.2.0"))
         h.controller.setChecksAutomatically(false)
         #expect(!h.preferences.checksForUpdatesAutomatically)
         #expect(h.settingsChanges == 1)
         #expect(!h.controller.isCheckDue())
+
+        h.controller.setChecksAutomatically(true) // none has run yet: one is due
+        await TestWait.until { h.statuses.last == "AutoHush 0.2.0 is up to date." }
+        #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
+        #expect(h.settingsChanges == 2)
     }
 
     @Test("the update choice is stored and shown; a choice that notifies asks for permission, if not answered yet")
@@ -115,20 +139,35 @@ struct UpdateControllerTests {
         #expect(h.notifier.permissionRequests == 1)
     }
 
-    @Test("a check asked for while one is under way doesn't start another")
+    @Test("a check asked for while one is under way doesn't start another, and shows the result (Check for Updates… during an automatic check); one asked for just as a check ends starts afresh, and shows its own")
     func overlappingChecks() async {
-        let fetches = FetchCount()
-        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: {
-            await fetches.increment()
-            try? await Task.sleep(for: .milliseconds(50)) // still under way when the second check is asked for
-        }))
+        let fetches = HeldFetches()
+        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: { await fetches.fetch() }))
 
-        async let first: Void = h.controller.check(userInitiated: false)
-        async let second: Void = h.controller.check(userInitiated: false)
-        _ = await (first, second)
+        let automatic = Task { await h.controller.check(userInitiated: false) }
+        await TestWait.until { await fetches.count == 1 }
+        let menu = Task { await h.controller.checkNow() }
+        await TestWait.until { h.controller.resultWanted } // the menu's check joined it
+        await fetches.letGo()
+        await automatic.value
+        await menu.value
 
-        #expect(await fetches.value == 1)
+        #expect(await fetches.count == 1)
         #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
+        #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date"])
+        #expect(h.menuClosings == 1)
+
+        // Asked for once an automatic check has read that nobody asked, before its caller is back.
+        h.afterStatus = { status in
+            guard status == "AutoHush 0.2.0 is up to date." else { return }
+            h.afterStatus = { _ in }
+            Task { await h.controller.checkNow() }
+        }
+        await h.controller.check(userInitiated: false)
+        await TestWait.until { h.alerts.count == 2 }
+        #expect(await fetches.count == 3)
+        #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date", "AutoHush Is Up to Date"])
+        #expect(h.menuClosings == 2)
     }
 
     @Test("a check that finds a newer release offers it and remembers when it ran")
@@ -534,7 +573,7 @@ struct UpdateControllerTests {
         #expect(h.notifier.announced.isEmpty)
     }
 
-    @Test("at launch, a kept download that isn't newer than the running version is deleted")
+    @Test("at launch, a kept download that isn't newer than the running version is deleted, and so is the mark of a version whose download expired")
     func manualUpdateDeletesDownload() throws {
         let h = Harness(checker: .offline, currentVersion: AppVersion("0.3.0"), mode: .download)
         try FileManager.default.createDirectory(at: h.folder, withIntermediateDirectories: true)
@@ -549,6 +588,11 @@ struct UpdateControllerTests {
 
         #expect(h.keptFiles.isEmpty)
         #expect(h.preferences.downloadedUpdate == nil)
+
+        // Its download expired, then the user installed it by hand: it may be downloaded again.
+        h.preferences.expiredUpdateVersion = "0.3.0"
+        h.controller.noteLaunch()
+        #expect(h.preferences.expiredUpdateVersion == nil)
     }
 
     // MARK: - Alerts
@@ -584,18 +628,25 @@ struct UpdateControllerTests {
         #expect(heights[2] == 180)
     }
 
-    @Test("a check asked for says what it found otherwise: up to date (also from a notification that no longer applies), no releases yet, or why it couldn't tell")
+    @Test("a check asked for says what it found otherwise: up to date, no releases yet, or why it couldn't tell; here each is asked for by a click on a notification that no longer applies")
     func checkResults() async {
-        let notFound = UpdateChecker { (Data(), HTTPURLResponse(url: $0.url!, statusCode: 404, httpVersion: nil, headerFields: nil)!) }
+        let answering = { (status: Int, body: String) in
+            UpdateChecker { (Data(body.utf8), HTTPURLResponse(url: $0.url!, statusCode: status, httpVersion: nil, headerFields: nil)!) }
+        }
         let results: [(UpdateChecker, AppVersion?, title: String, message: String)] = [
             (.latestRelease("v0.2.0"), AppVersion("0.2.0"), "AutoHush Is Up to Date", "You have the latest version, 0.2.0."),
-            (notFound, AppVersion("0.2.0"), "No Releases Yet", "No AutoHush release has been published on GitHub yet."),
+            (answering(404, ""), AppVersion("0.2.0"), "No Releases Yet", "No AutoHush release has been published on GitHub yet."),
             (.offline, AppVersion("0.2.0"), "Couldn’t Check for Updates", URLError(.notConnectedToInternet).localizedDescription),
+            (answering(500, ""), AppVersion("0.2.0"), "Couldn’t Check for Updates", "GitHub answered with HTTP status 500."),
+            (answering(200, #"{"tag_name": "latest"}"#), AppVersion("0.2.0"), "Couldn’t Check for Updates",
+             "GitHub’s release information couldn’t be read."),
             (.offline, nil, "Couldn’t Check for Updates", "AutoHush’s version is unknown."),
         ]
-        for (checker, version, title, message) in results {
+        // Notifications about an update available, downloaded or that failed to install, in turn.
+        let clicked: [UpdateNotice.Kind] = [.available, .downloaded, .installFailed]
+        for (index, (checker, version, title, message)) in results.enumerated() {
             let h = Harness(checker: checker, currentVersion: version)
-            h.controller.presentAvailableUpdate() // nothing offered: it checks
+            h.notifier.click(clicked[index % clicked.count], "0.3.0") // nothing offered: it checks
             await TestWait.until { !h.alerts.isEmpty }
             #expect(h.alerts.map(\.messageText) == [title])
             #expect(h.alerts.first?.informativeText == message)
@@ -624,9 +675,21 @@ struct UpdateControllerTests {
 
     // MARK: - Scheduling
 
-    @Test("automatic checks are due daily, and never when turned off")
-    func checkDue() {
+    @Test("the automatic work runs 30 s after launch, then hourly, on one timer at a time; checks are due daily, and never when turned off")
+    func checkDue() async throws {
         let h = Harness(checker: .offline)
+        h.controller.scheduleAutomaticChecks()
+        let first = try #require(h.controller.timer)
+        h.controller.scheduleAutomaticChecks()
+        let timer = try #require(h.controller.timer)
+        defer { timer.invalidate() }
+        #expect(!first.isValid)
+        #expect(timer.isValid && timer.timeInterval == 60 * 60)
+        #expect(abs(timer.fireDate.timeIntervalSinceNow - 30) < 5)
+        timer.fire() // its run: a check is due
+        await TestWait.until { h.statuses.last == "Couldn’t check for updates." }
+        #expect(h.statuses == ["Checking…", "Couldn’t check for updates."])
+
         let now = Date()
         #expect(h.controller.isCheckDue(now: now))
         h.preferences.lastUpdateCheck = now.addingTimeInterval(-3600)

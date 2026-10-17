@@ -54,5 +54,28 @@ struct PanelRowsTests {
         // Two rows playing and nothing to tell them apart: none.
         #expect(PanelRows.row(in: onePlaying + [PanelRow(text: "Other, X – Y", playing: true)], pausing: true, appName: "Deezer",
                               otherApps: [], texts: [], remembered: nil, holdsNowPlaying: true) == nil)
+        // Two rows showing its song (another app may play it too): none, not the one it changed with.
+        let twice = [PanelRow(text: "Some Song, Someone – Album", playing: false), PanelRow(text: "Some Song, Someone – Live", playing: false)]
+        #expect(PanelRows.row(in: twice, pausing: false, appName: "Deezer", otherApps: [], texts: ["Some Song — Someone"],
+                              remembered: twice[0].text, holdsNowPlaying: false) == nil)
+    }
+
+    @Test("macOS 14's panel: a row is a text and the button after it, saying Pause while it plays, in Control Center's words; Next and a button with no text before it aren't rows")
+    func flatRows() {
+        // Each element as its attributes.
+        let children: [[String: String]] = [
+            ["AXRole": "AXButton", "AXDescription": "Play"], // no text before it
+            ["AXRole": "AXStaticText", "AXValue": "Some Song, Someone – Album"],
+            ["AXRole": "AXButton", "AXDescription": "Pause"],
+            ["AXRole": "AXButton", "AXDescription": "Next"],
+            ["AXRole": "AXStaticText", "AXValue": "Other, Someone Else – Live"],
+            ["AXRole": "AXImage"],
+            ["AXRole": "AXButton", "AXDescription": "Reproducir"], // Control Center in Spanish
+            ["AXRole": "AXButton", "AXDescription": "Siguiente"],
+        ]
+        let rows = AccessibilityNowPlayingPanel.flatRows(in: children, words: (play: ["play", "reproducir"], pause: ["pause", "pausa"])) { $0[$1] }
+        #expect(rows.map { $0.row } == [PanelRow(text: "Some Song, Someone – Album", playing: true),
+                                        PanelRow(text: "Other, Someone Else – Live", playing: false)])
+        #expect(rows.map { $0.button["AXDescription"] } == ["Pause", "Reproducir"])
     }
 }

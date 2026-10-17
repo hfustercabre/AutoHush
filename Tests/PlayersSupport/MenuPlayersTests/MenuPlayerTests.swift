@@ -12,6 +12,7 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
     private var _enabled: Bool
     private var _trusted: Bool
     private var _found = true
+    private var _pressFails = false
     private(set) var presses = 0
     private(set) var prompts: [Bool] = []
 
@@ -29,6 +30,11 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
         get { lock.withLock { _found } }
         set { lock.withLock { _found = newValue } }
     }
+    /// Its item can't be pressed (Accessibility refuses): nothing changes.
+    var pressFails: Bool {
+        get { lock.withLock { _pressFails } }
+        set { lock.withLock { _pressFails = newValue } }
+    }
 
     func isTrusted(prompt: Bool) -> Bool {
         lock.withLock {
@@ -43,6 +49,7 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
 
     func pressToggle(pid: pid_t) -> Bool {
         lock.withLock {
+            guard !_pressFails else { return false }
             presses += 1
             _title = _title == "Pause" ? "Play" : "Pause"
             return true
@@ -70,8 +77,8 @@ struct MenuPlayerTests {
         #expect(MenuPlayer.state(of: MenuToggle(title: title, isEnabled: true), words: ambiguous) == .unknown)
     }
 
-    @Test("a menu player is named and identified by its profile, needs Accessibility and has no volume to fade")
-    func identity() async {
+    @Test("a menu player is named and identified by its profile, needs Accessibility, has no volume to fade, and is read about once a second; without its words, its state is unknown")
+    func identity() async throws {
         let jukebox = player(FakeMenu())
         #expect(jukebox.name == "Jukebox")
         #expect(jukebox.bundleID == "com.example.jukebox")
@@ -79,9 +86,12 @@ struct MenuPlayerTests {
         #expect(jukebox.volumeCurve == .linear)
         #expect(!jukebox.canFade)
         #expect(await jukebox.volume() == nil)
+        try await jukebox.setVolume(30) // nothing to set
+        #expect(jukebox.stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
         #expect(jukebox.ownWordsRead == true)
         let wordless = MenuPlayer(profile: Self.profile, menu: FakeMenu(), processIdentifier: { 4242 }, words: { nil })
         #expect(wordless.ownWordsRead == false) // Diagnostics says so
+        #expect(await wordless.playerState() == .unknown)
     }
 
     @Test("its state comes from the menu: not running, no access, nothing to play, playing, paused")
@@ -93,7 +103,7 @@ struct MenuPlayerTests {
         #expect(await player(FakeMenu(title: "Play")).playerState() == .paused)
     }
 
-    @Test("pause and play press the item only from the opposite state")
+    @Test("pause and play press the item only from the opposite state; one that can't be pressed says so")
     func neverBlindToggle() async throws {
         let menu = FakeMenu(title: "Pause")
         let jukebox = player(menu)
@@ -105,12 +115,15 @@ struct MenuPlayerTests {
         #expect(menu.presses == 2 && menu.title == "Pause")
         try await jukebox.play() // already playing
         #expect(menu.presses == 2)
+        menu.pressFails = true
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await jukebox.pause() }
+        #expect(menu.presses == 2 && menu.title == "Pause")
     }
 
     @Test("with its state unknown, nothing is pressed")
     func unknownStateIsNotPressed() async {
         let menu = FakeMenu(title: "Shuffle")
-        await #expect(throws: MusicPlayerError.self) { try await player(menu).pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await player(menu).pause() }
         #expect(menu.presses == 0)
     }
 
@@ -144,7 +157,7 @@ struct MenuPlayerTests {
         #expect(states == [.playing])
     }
 
-    @Test("the words are read once per copy and version of the app")
+    @Test("the words are read once per copy and version of the app: the copy running, else the one Launch Services knows")
     func wordsOfApp() throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayPauseWords-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -172,5 +185,13 @@ struct MenuPlayerTests {
         #expect(PlayPauseWords.words(ofAppAt: broken, read: read) == nil) // no words for Play
         #expect(PlayPauseWords.words(ofAppAt: broken, read: read) == nil) // not read again: Diagnostics asks often
         #expect(reads == ["Running.app", "Other.app", "Broken.app"])
+        // Updated while AutoHush runs: read again.
+        _ = try app("Running", version: "2.1")
+        #expect(PlayPauseWords.words(ofAppAt: running, read: read)?.play == ["Running.app"])
+        #expect(reads == ["Running.app", "Other.app", "Broken.app", "Running.app"])
+        // By bundle ID: an app macOS knows (TextEdit, which no other test reads), none for one it doesn't.
+        #expect(PlayPauseWords.installed(bundleID: "com.apple.TextEdit", read: read)?.play == ["TextEdit.app"])
+        #expect(PlayPauseWords.installed(bundleID: "com.example.none-\(UUID().uuidString)", read: read) == nil)
+        #expect(reads.count == 5)
     }
 }

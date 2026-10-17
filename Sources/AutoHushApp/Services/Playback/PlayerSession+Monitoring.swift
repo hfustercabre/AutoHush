@@ -4,14 +4,21 @@ import AutoHushKit
 // PlayerSession: the monitoring under way.
 extension PlayerSession {
     /// Monitoring for `player`, whose updates come with `token`: the current
-    /// one's are applied; a held pause's stay with `heldPauses`.
+    /// one's are applied, not the last ones of a monitoring stopped while
+    /// they were on their way; a held pause's stay with `heldPauses`. What
+    /// AntiDot learned is the app's, whichever monitoring learned it.
     func makeMonitoring(for player: any MusicPlayer, token: UUID) -> any SessionMonitoring {
         let setup = MonitoringSetup(configuration: configuration(for: player), settings: settings,
                                     learnedAssertions: preferences.playbackAssertions, resumesHeld: resumesHeld)
         return monitoringMaker(player, setup) { [weak self, token] update in
-            guard let self, !self.heldPauses.takes(update, from: token) else { return }
+            guard let self, !self.heldPauses.takes(update, from: token),
+                  token == self.monitoringToken || Self.isLearned(update) else { return }
             self.apply(update)
         }
+    }
+
+    private static func isLearned(_ update: MonitoringPipeline.StatusUpdate) -> Bool {
+        if case .learnedAssertions = update { true } else { false }
     }
 
     /// The engine's configuration: the user's timings, and the player, whose
@@ -60,10 +67,12 @@ extension PlayerSession {
 
     /// Without a monitoring nothing is known about the music: a state it left
     /// behind would otherwise hand over a pause that no longer exists, or
-    /// keep automatic updates from ever finding a quiet moment.
+    /// keep automatic updates from ever finding a quiet moment. Its updates
+    /// still on their way aren't applied either.
     func tearDownMonitoring() {
         monitoring?.stop()
         monitoring = nil
+        monitoringToken = UUID()
         var stopped = state
         stopped.playback = .unknown
         stopped.detection = .pending

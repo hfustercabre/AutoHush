@@ -35,8 +35,8 @@ struct WindowWatchTests {
         }
 
         /// The watch ended a round and waits for the next.
-        func asleep() async {
-            await TestWait.until { self.clock.sleeping == 1 }
+        func asleep(sourceLocation: SourceLocation = #_sourceLocation) async {
+            await TestWait.until(sourceLocation: sourceLocation) { self.clock.sleeping == 1 }
         }
     }
 

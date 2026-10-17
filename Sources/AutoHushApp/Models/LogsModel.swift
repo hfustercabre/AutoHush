@@ -27,7 +27,7 @@ final class LogsModel {
 
     enum Levels: CaseIterable, Hashable {
         case all
-        /// Errors and faults.
+        /// Errors.
         case problems
     }
 

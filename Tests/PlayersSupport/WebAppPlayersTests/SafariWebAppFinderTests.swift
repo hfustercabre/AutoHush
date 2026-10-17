@@ -33,7 +33,7 @@ struct SafariWebAppFinderTests {
         try info.write(to: contents.appending(path: "Info.plist"))
     }
 
-    @Test("the finder lists the web apps by name, and notices changes")
+    @Test("the finder lists the web apps by name, and notices changes; a process running one is that web app")
     func finder() throws {
         let folder = try Self.folder()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -44,8 +44,16 @@ struct SafariWebAppFinderTests {
         #expect(apps.last?.url.lastPathComponent == "YT Music.app")
         #expect(apps.last?.startURL?.host() == "ytmusic.example.com")
 
+        // Its sound is its own, not Safari's shared Web App program's; any other app's isn't a web app's.
+        let amazon = folder.appending(path: "Amazon Music | Listen.app")
+        #expect(SafariWebApp.source(bundleID: SafariWebApp.bundleIDPrefix + "B", at: amazon)
+            == AudioSource(id: SafariWebApp.bundleIDPrefix + "B", name: "Amazon Music", bundlePath: amazon.path))
+        #expect(SafariWebApp.source(bundleID: "com.example.notes", at: folder.appending(path: "Notes.app")) == nil)
+        #expect(SafariWebApp.source(bundleID: SafariWebApp.bundleIDPrefix + "B", at: nil) == nil)
+        #expect(SafariWebApp.source(forProcess: getpid()) == nil) // this test's own process
+
         try FileManager.default.removeItem(at: folder.appending(path: "YT Music.app"))
-        #expect(finder.webApps().count == 2) // a look less than a second old is reused
+        #expect(finder.webApps(maxAge: .infinity).count == 2) // a look younger than its maximum age is reused
         #expect(finder.webApps(maxAge: 0).map(\.name) == ["Amazon Music"])
     }
 

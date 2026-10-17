@@ -7,12 +7,24 @@ import Foundation
 /// AutoHush's own folders.
 struct PlayerCheckHelper: Sendable {
     let url: URL
+    /// Where its checks' logs go: `logsFolder`, unless a test gives its own.
+    var logs = PlayerCheckHelper.logsFolder
+    /// What it learns about apps: `cachesFolder`, unless a test gives its own.
+    var caches = PlayerCheckHelper.cachesFolder
+
+    init(url: URL) {
+        self.url = url
+    }
 
     /// The helper inside AutoHush.app; in a build run straight from .build
     /// (the harness), the one built beside it.
-    static var bundled: PlayerCheckHelper? {
-        let candidates = [Bundle.main.bundleURL.appending(path: "Contents/Helpers/playercheck"),
-                          Bundle.main.executableURL?.deletingLastPathComponent().appending(path: "playercheck")]
+    static var bundled: PlayerCheckHelper? { bundled(in: Bundle.main.bundleURL, beside: Bundle.main.executableURL) }
+
+    /// The helper inside the app at `app`, else the one beside `executable`,
+    /// where it can run.
+    static func bundled(in app: URL, beside executable: URL?) -> PlayerCheckHelper? {
+        let candidates = [app.appending(path: "Contents/Helpers/playercheck"),
+                          executable?.deletingLastPathComponent().appending(path: "playercheck")]
         return candidates.compactMap { $0 }.first { FileManager.default.isExecutableFile(atPath: $0.path) }.map(PlayerCheckHelper.init)
     }
 
@@ -23,7 +35,7 @@ struct PlayerCheckHelper: Sendable {
     static let cachesFolder = FileManager.default.homeDirectoryForCurrentUser
         .appending(path: "Library/Caches/\(Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush")/PlayerCheck")
     /// The folders every run is given.
-    static var folderArguments: [String] { ["--logs", logsFolder.path, "--caches", cachesFolder.path] }
+    var folderArguments: [String] { ["--logs", logs.path, "--caches", caches.path] }
 
     /// How far back the Now Playing list is read: enough for the apps used
     /// lately, without reading back to the Mac's start.
@@ -37,10 +49,11 @@ struct PlayerCheckHelper: Sendable {
     /// took too long).
     func run(_ arguments: [String], timeout: TimeInterval = PlayerCheckHelper.questionTimeout) async -> (status: Int32, output: String) {
         let url = url
+        let arguments = arguments + folderArguments
         return await Task.detached {
             let process = Process()
             process.executableURL = url
-            process.arguments = arguments + Self.folderArguments
+            process.arguments = arguments
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = FileHandle.nullDevice
@@ -120,20 +133,23 @@ struct PlayerCheckHelper: Sendable {
     @MainActor
     func check(_ appURL: URL, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) throws -> PlayerCheckRun {
         let result = FileManager.default.temporaryDirectory.appending(path: "AutoHush check \(UUID().uuidString).json")
-        try? FileManager.default.createDirectory(at: Self.logsFolder, withIntermediateDirectories: true)
-        return try PlayerCheckRun(executable: url, arguments: Self.checkArguments(appURL, result: result, taps: taps),
+        try? FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
+        return try PlayerCheckRun(executable: url, arguments: checkArguments(appURL, result: result, taps: taps),
                                   result: result, onLine: onLine)
     }
 
     /// A check's arguments. --partial: the window said what's missing, and
     /// the check goes on without what isn't needed.
-    static func checkArguments(_ appURL: URL, result: URL, taps: Bool) -> [String] {
+    func checkArguments(_ appURL: URL, result: URL, taps: Bool) -> [String] {
         [appURL.path, "--block-input", "--partial", "--result", result.path] + folderArguments + (taps ? [] : ["--no-taps"])
     }
 
     /// The newest check's log, to show after a check couldn't finish.
-    static var newestLog: URL? {
-        let files = (try? FileManager.default.contentsOfDirectory(at: logsFolder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+    static var newestLog: URL? { newestLog(in: logsFolder) }
+
+    /// The newest log in `folder`.
+    static func newestLog(in folder: URL) -> URL? {
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         return files.max { lhs, rhs in
             let date = { (url: URL) in (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
             return date(lhs) < date(rhs)

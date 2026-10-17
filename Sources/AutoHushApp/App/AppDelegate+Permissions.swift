@@ -56,6 +56,7 @@ extension AppDelegate {
         // Now Playing hidden in the menu bar: the pane where it's shown.
         let opens = status.controlError?.opensMenuBarSettings == true
         InfoAlert.show(alert.title, alert.message,
-                       action: opens ? (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() }) : nil)
+                       action: opens ? (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() }) : nil,
+                       run: runAlert)
     }
 }

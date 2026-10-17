@@ -21,6 +21,8 @@ final class FakeScriptedApp: AppleEventSending {
         /// Each document's `audio volume` (`volu`, 0–1), by name; 1 unless set.
         var documentVolumes: [String: Double] = [:]
         var fails = false
+        /// Its commands time out (it's busy), noted as sent; its reads and sets still answer.
+        var failsCommands = false
         /// Its toggle is taken, but doesn't change it.
         var ignoresToggle = false
         /// What was sent: "ask" (for consent), "get pPlS", "set pVol 30",
@@ -106,6 +108,7 @@ final class FakeScriptedApp: AppleEventSending {
                 return PlayerReply()
             default:
                 state.sent.append(document.map { "\(code) \($0)" } ?? code)
+                if state.failsCommands { throw MusicPlayerError.playerNotResponding }
                 let playing: Bool? = switch code {
                 case "jukeTogl": state.ignoresToggle ? nil : !state.playing
                 case "jukePaus": false

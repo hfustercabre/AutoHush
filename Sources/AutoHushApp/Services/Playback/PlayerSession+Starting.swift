@@ -47,7 +47,7 @@ extension PlayerSession {
             guard generation == startGeneration else { return }
             if retriesLeft > 0, Self.isTransientStartupError(error) {
                 logger.debug("\(player.name, privacy: .public) is not ready yet (\(error)) — retrying")
-                try? await Task.sleep(for: .seconds(Self.startupRetryDelay))
+                await retries.startupWait(.seconds(Self.startupRetryDelay))
                 guard generation == startGeneration else { return } // Retry or another launch took over
                 await start(retriesLeft: retriesLeft - 1)
                 return

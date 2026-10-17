@@ -8,13 +8,13 @@ import CheckedPlayers
 /// all of it as text, for Copy Report.
 enum DiagnosticsReport {
     /// `bundlePath` finds an app's bundle, for its icon; `ways`, the ways an
-    /// app added with Add an App is controlled by (its kept setup's).
+    /// app added with Add an App is controlled by (its player's setup).
     static func snapshot(
         activeAudio: [ActiveAudioReport.Entry],
         status: AppStatus,
         facts: DiagnosticsFacts,
         bundlePath: (String) -> String? = { _ in nil },
-        ways: (String) -> [PlayerSetup.Way]? = DiagnosticsReport.keptWays
+        ways: (String) -> [PlayerSetup.Way]? = { _ in nil }
     ) -> DiagnosticsSnapshot {
         let apps = activeAudio.map { entry in
             DiagnosticsSnapshot.App(
@@ -137,15 +137,18 @@ enum DiagnosticsReport {
     private static func detection(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         let method = describe(status.detection)
         let antiDot = facts.detectionMethod != .audioLevels
+        // Nothing measured with AntiDot mode off (no Audio Recording access,
+        // or before the first level): apps wait AntiDot mode's minimums.
+        let unmeasured = !antiDot && [.pending, .unavailable].contains(status.detection)
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
             Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
             // With open streams only, every app waits at least 2 s.
             Row(label: String(localized: "Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"),
-                value: facts.detectionMethod == .openStreams ? AppConfiguration(timings: facts.timings).startConfirmationWithOpenStreams.secondsText
+                value: facts.detectionMethod == .openStreams || unmeasured ? AppConfiguration(timings: facts.timings).startConfirmationWithOpenStreams.secondsText
                     : facts.timings.startConfirmation.secondsText),
         ]
-        if facts.detectionMethod == .playbackSignals {
+        if facts.detectionMethod == .playbackSignals || unmeasured {
             rows.append(Row(label: String(localized: "Pause playback after, without video",
                                           comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
                             value: AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo.secondsText))
@@ -177,15 +180,16 @@ enum DiagnosticsReport {
         case nil:
             rows.append(Row(label: audio, value: unknown, mark: .neutral))
         }
-        if let permission = facts.playerPermission {
-            let label = switch permission {
-            case .automation(let player):
-                String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Spotify”")
-            case .accessibility(let player):
-                String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”")
-            case .systemAudioRecording:
-                audio
-            }
+        // One muted instead of paused needs only Audio Recording: its row above.
+        let control: String? = switch facts.playerPermission {
+        case .automation(let player)?:
+            String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Spotify”")
+        case .accessibility(let player)?:
+            String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”")
+        case .systemAudioRecording?, nil:
+            nil
+        }
+        if let label = control {
             switch facts.playerPermissionGranted {
             case true?:  rows.append(Row(label: label, value: allowed, mark: .ok))
             case false?: rows.append(Row(label: label, value: notAllowed, mark: .problem))
@@ -307,12 +311,6 @@ enum DiagnosticsReport {
         case .panel: AddAppText.wayTitle(.panel)
         case .mute: PlayerOption.mutedInsteadLabel
         }
-    }
-
-    /// The ways the app with `bundleID` is controlled by, as kept when it
-    /// was added; `nil` for any other player.
-    static func keptWays(_ bundleID: String) -> [PlayerSetup.Way]? {
-        DefaultsPlayerSetupStore().setups().first { $0.bundleID == bundleID }?.ways
     }
 
     /// How AutoHush tells that apps play, right now.

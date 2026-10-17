@@ -131,7 +131,7 @@ struct DiagnosticsReportTests {
         #expect(!plainRows.contains("Last error"))
     }
 
-    @Test("permissions: allowed, refused, not needed in AntiDot mode, and not checked yet, each with its mark")
+    @Test("permissions: allowed, refused, not asked yet, unknown, not needed in AntiDot mode, and not checked yet, each with its mark; Audio Recording once")
     func permissions() throws {
         func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {
             let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(change))
@@ -157,22 +157,36 @@ struct DiagnosticsReportTests {
             $0.detectionMethod = .playbackSignals
             $0.playerPermissionGranted = nil
         }.map(\.value) == ["Not needed in AntiDot mode", "Not checked yet", "Allowed"])
+        // Measuring audio levels: macOS hasn't asked yet, or can't tell.
+        #expect(try rows { $0.audioRecording = .notDetermined }.first == .init(label: "Audio Recording", value: "Not asked yet", mark: .problem))
+        #expect(try rows { $0.audioRecording = nil }.first == .init(label: "Audio Recording", value: "Unknown", mark: .neutral))
+        // An app muted instead of paused needs Audio Recording to control it too: one row, which can't disagree with itself.
+        #expect(try rows {
+            $0.audioRecording = nil
+            $0.playerPermission = .systemAudioRecording
+        } == [
+            .init(label: "Audio Recording", value: "Unknown", mark: .neutral),
+            .init(label: "Notifications", value: "Allowed", mark: .ok),
+        ])
 
         let refused = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts { $0.audioRecording = .denied })
         #expect(refused.sections.first { $0.kind == .permissions }?.summary == "Something’s missing")
     }
 
-    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on, with its longer start without video")
+    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on, with its longer start without video, or every app's with open streams only; AntiDot mode's starts also when nothing is measured with it off")
     func quietReport() {
-        var status = AppStatus()
-        status.setHealth(.ready)
-        status.detection = .playbackSignals
-        let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts {
-            $0.detectionMethod = .playbackSignals
-            $0.playerPermission = nil
-            $0.checksForUpdates = false
-            $0.lastUpdateCheck = nil
-        })
+        func report(_ detection: DetectionMode, _ method: DetectionMethod) -> DiagnosticsSnapshot {
+            var status = AppStatus()
+            status.setHealth(.ready)
+            status.detection = detection
+            return DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts {
+                $0.detectionMethod = method
+                $0.playerPermission = nil
+                $0.checksForUpdates = false
+                $0.lastUpdateCheck = nil
+            })
+        }
+        let snapshot = report(.playbackSignals, .playbackSignals)
         #expect(snapshot.appsSummary == "None")
         #expect(snapshot.text.contains("Apps with Sound\nNo other app is playing sound right now."))
         #expect(snapshot.text.contains("Player: None chosen"))
@@ -182,6 +196,13 @@ struct DiagnosticsReportTests {
         #expect(snapshot.text.contains("Pause playback after: \(half) s\nPause playback after, without video: 3 s\nResume playback after: 2 s"))
         #expect(snapshot.text.contains("Ignored apps: None"))
         #expect(snapshot.text.contains("Updates: Automatic checks off\nLast checked: Never"))
+
+        // Open audio streams only: every app waits at least 2 s.
+        #expect(report(.disabled, .openStreams).text.contains("AntiDot mode: On\nPause playback after: 2 s\nResume playback after: 2 s"))
+        // Measuring levels, without Audio Recording access: AntiDot mode's starts.
+        #expect(report(.unavailable, .audioLevels).text.contains(
+            "Detecting by: Open audio streams (no Audio Recording access)\nAntiDot mode: Off\nPause playback after: 2 s\nPause playback after, without video: 3 s\n"))
+        #expect(report(.audioLevel, .audioLevels).text.contains("AntiDot mode: Off\nPause playback after: \(half) s\nResume playback after: 2 s"))
     }
 
     @Test("a chosen player that isn't installed, or can't fade, says so")
@@ -245,6 +266,7 @@ struct DiagnosticsReportTests {
 
     @Test("each app's line says how AutoHush judges it, and why", arguments: [
         (ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .starting), "org.videolan.vlc — starting"),
+        (.init(id: "com.example.d", state: .starting, isIgnored: true), "com.example.d — starting, ignored"),
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),
          "Safari (com.apple.Safari) — output open, silent, ignored (silence)"),
         (.init(id: "com.example.a", state: .playing, evidence: .announcing),

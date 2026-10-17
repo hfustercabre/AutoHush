@@ -80,7 +80,7 @@ flowchart TD
   NT["Notifications asked once,<br/>for updates (optional)"]
   W["The welcome window:<br/>Choose Your Media Player"]
   K{"Which tile?"}
-  SUP["Supported Apps: Spotify,<br/>Apple Music, VLC, Apple<br/>Podcasts, TIDAL, QuickTime<br/>Player (the only one<br/>installed is already picked)"]
+  SUP["Supported Apps: Spotify,<br/>Apple Music, VLC, Apple<br/>Podcasts, TIDAL, QuickTime<br/>Player"]
   OTH["Other Apps: an app<br/>you added, Checked by you"]
   WEB["Safari Web Apps:<br/>the tested ones first,<br/>any other Untested"]
   ADDAPP["Add an App…"]
@@ -138,9 +138,9 @@ flowchart TD
   S(["Monitoring runs: which<br/>apps have their sound on"])
   F{"Another app?"}
   OWN["The player itself,<br/>system sounds:<br/>never count"]
-  IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run): listed<br/>under Playing Now, never pauses"]
+  IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run, and<br/>after Reset List…): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
-  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays"]
+  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured)"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
   T{"Playing<br/>for 0.5 s?"}
   TONE["Too short: a notification<br/>or chat tone, ignored"]
@@ -390,7 +390,7 @@ flowchart TD
   LATER["Later: the Controls row says<br/>not learned, with Learn<br/>Controls…; nothing is pressed"]
   PRESS["Another app plays: AutoHush<br/>presses the site’s Pause,<br/>without a fade, and checks it"]
   REF{"Did the<br/>site pause?"}
-  MUTE["It won’t (an ad, a disabled<br/>button, a press ignored):<br/>muted instead (Audio Recording,<br/>not in AntiDot mode)"]
+  MUTE["It won’t (an ad, a disabled<br/>button, a press ignored or<br/>failed): muted instead (Audio<br/>Recording, not in AntiDot mode)"]
   REAL["The site can pause<br/>again: paused for real,<br/>and unmuted"]
   RES(["The apps stop: Play<br/>pressed, or the mute lifted"])
   NOMUTE["In AntiDot mode nothing is<br/>muted: an ad (its button says<br/>Play) plays on, nothing shown;<br/>a refused press says<br/>Couldn’t pause"]
@@ -622,7 +622,7 @@ flowchart TD
   PREP["Downloaded, or the kept<br/>download, then checked:<br/>GitHub’s checksum, the version,<br/>the same developer team, and<br/>the macOS it needs"]
   OK{"Checked, and<br/>still quiet?"}
   BUSY["Got busy meanwhile<br/>(automatic): at the next<br/>quiet moment"]
-  ERR["Couldn’t install (it needs a newer<br/>macOS, say): an alert with Open<br/>Release Page if you asked, else a<br/>notification; not tried again<br/>until AutoHush reopens"]
+  ERR["Couldn’t install (it needs a newer<br/>macOS, say): an alert with Open<br/>Release Page if you asked, else a<br/>notification; not tried again<br/>until AutoHush reopens; a copy<br/>not swapped in goes to the Trash"]
   SWAP["The new version<br/>swapped in"]
   QUIT["AutoHush quits: volume<br/>back, the pause it held<br/>handed over"]
   OPEN(["The new version opens in<br/>about a second, takes the<br/>pause over, says it was updated"])
@@ -694,7 +694,7 @@ What the menu’s card says when AutoHush can’t start controlling the player, 
 ```mermaid
 flowchart TD
   R(["Monitoring runs"])
-  AUD["Audio Recording not allowed:<br/>it still works, any open sound<br/>counts, so a paused video<br/>may keep the player paused"]
+  AUD["Audio Recording not allowed:<br/>it still works, as AntiDot mode<br/>does (its waits too): any open<br/>sound counts, so a paused video<br/>may keep the player paused"]
   AUDF["Allow… in the menu or<br/>Detection; switched on in<br/>System Settings: Reopen<br/>AutoHush. Or AntiDot mode"]
   PF["A pause fails or is<br/>ignored: Couldn’t pause —<br/>Safari is playing, with ⓘ"]
   NPH["Now Playing hidden and<br/>couldn’t be shown: ⓘ offers<br/>Open Menu Bar Settings…"]

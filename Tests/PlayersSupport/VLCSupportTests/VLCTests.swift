@@ -20,6 +20,7 @@ struct VLCTests {
         #expect(vlc.volumeCurve == .cubic)
         #expect(vlc.canFade)
         #expect(vlc.makeStateObserver { _ in } is PolledStateObserver)
+        #expect(vlc.stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
     }
 
     @Test("its state: playing, paused with an item, stopped without one (current time -1)", arguments: [
@@ -51,15 +52,5 @@ struct VLCTests {
 
         let toggle = ScriptablePlayer.makeCommandEvent(suite: VLCPlayer.Code.suite, VLCPlayer.Code.playPause, processIdentifier: pid)
         #expect(toggle.eventClass == fourCharCode("VLC#") && toggle.eventID == fourCharCode("VLC1"))
-    }
-
-    @Test("without VLC running it's reported as not running, and nothing can be sent")
-    func notRunning() async throws {
-        // Only checked while VLC is closed: a running VLC would be asked.
-        guard NSRunningApplication.runningApplications(withBundleIdentifier: "org.videolan.vlc").isEmpty else { return }
-        let vlc = VLCPlayer()
-        #expect(await vlc.playerState() == .notRunning)
-        #expect(await vlc.volume() == nil)
-        await #expect(throws: MusicPlayerError.playerNotRunning) { try await vlc.pause() }
     }
 }

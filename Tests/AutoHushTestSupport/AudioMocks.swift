@@ -1,5 +1,6 @@
 import CoreAudio
 import Foundation
+import Testing
 import AutoHushKit
 
 // Stand-ins for what AudioMonitor reads from macOS: the audio processes, their
@@ -34,9 +35,15 @@ package final class MockAudioProcessSnapshotProvider: AudioProcessSnapshotProvid
         lock.withLock { onChange = nil }
     }
 
-    package func waitUntilObserving() {
+    package func waitUntilObserving(sourceLocation: SourceLocation = #_sourceLocation) {
         let deadline = TestWait.deadline
-        while !isObserving, Date() < deadline { usleep(1000) }
+        while !isObserving {
+            guard Date() < deadline else {
+                TestWait.timedOut(at: sourceLocation)
+                return
+            }
+            usleep(1000)
+        }
     }
 
     /// Simulates a HAL change callback and waits until the monitor handled it.
@@ -71,9 +78,13 @@ package final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
     package var stopAllCount: Int { lock.withLock { _stopAllCount } }
 
     /// Waits until exactly these processes are metered, e.g. after a delayed release.
-    package func waitUntilMetered(_ objectIDs: Set<AudioObjectID>) async {
+    package func waitUntilMetered(_ objectIDs: Set<AudioObjectID>, sourceLocation: SourceLocation = #_sourceLocation) async {
         let deadline = TestWait.deadline
-        while lastMetered != objectIDs, Date() < deadline {
+        while lastMetered != objectIDs {
+            guard Date() < deadline else {
+                TestWait.timedOut(at: sourceLocation)
+                return
+            }
             try? await Task.sleep(for: .milliseconds(5))
         }
     }

@@ -44,9 +44,24 @@ package enum AccessibilityWindows {
     /// Whether the function is there.
     package static var isAvailable: Bool { function != nil }
 
-    /// Per process, the first window number found above `elementLimit`: a
-    /// later search starts there, as numbers only grow.
-    private static let farStart = OSAllocatedUnfairLock<[pid_t: UInt64]>(initialState: [:])
+    /// Per process, where its search above `elementLimit` starts.
+    private static let farStart = OSAllocatedUnfairLock<[pid_t: FarStart]>(initialState: [:])
+
+    /// The first window number found above `elementLimit` in a process: a
+    /// later search of it starts there, as numbers only grow. Kept with when
+    /// the process started, as macOS later gives its pid to another process,
+    /// whose windows can have lower numbers.
+    struct FarStart: Sendable {
+        /// When the process started (`startTime(of:)`).
+        let processStart: UInt64
+        let number: UInt64
+
+        /// The number, for a search of the process that has the pid now and
+        /// started at `start`; none when that's another process.
+        func number(inProcessStartedAt start: UInt64?) -> UInt64? {
+            start == processStart ? number : nil
+        }
+    }
 
     /// The process's windows on every Space, minimized ones included; `nil`
     /// when the function is unavailable. Any kind of window counts: a
@@ -57,8 +72,9 @@ package enum AccessibilityWindows {
         token.replaceSubrange(0..<4, with: withUnsafeBytes(of: pid) { Data($0) })
         token.replaceSubrange(8..<12, with: withUnsafeBytes(of: Int32(0x636f_636f)) { Data($0) })
         var found: [UInt64: AXUIElement] = [:]
+        let processStart = startTime(of: pid)
         let numbers = windowNumbers(
-            farStart: farStart.withLock { $0[pid] },
+            farStart: farStart.withLock { $0[pid] }?.number(inProcessStartedAt: processStart),
             hasWindowOutOfSight: { hasWindowOutOfSight(pid: pid) },
             deadline: Date().addingTimeInterval(budget)
         ) { number in
@@ -69,10 +85,19 @@ package enum AccessibilityWindows {
             found[number] = element
             return true
         }
-        if let far = numbers.first(where: { $0 >= elementLimit }) {
-            farStart.withLock { $0[pid] = far }
+        if let far = numbers.first(where: { $0 >= elementLimit }), let processStart {
+            farStart.withLock { $0[pid] = FarStart(processStart: processStart, number: far) }
         }
         return numbers.compactMap { found[$0] }
+    }
+
+    /// When the process started, in microseconds since 1970, as the kernel
+    /// keeps it; `nil` when it can't be read (it quit).
+    static func startTime(of pid: pid_t) -> UInt64? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
+        return info.pbi_start_tvsec * 1_000_000 + info.pbi_start_tvusec
     }
 
     /// The element numbers that are windows (`isWindow`), in order: every

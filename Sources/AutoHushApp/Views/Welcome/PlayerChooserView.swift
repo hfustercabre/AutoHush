@@ -5,16 +5,15 @@ import SwiftUI
 /// apps, then the Safari web apps and the tile that adds one; the user picks
 /// one and continues.
 /// Players that aren't installed come after the installed apps, dimmed, and
-/// can't be picked. When only one is installed, it starts picked. Past
-/// `visibleTileRows` rows of tiles, they scroll. From
+/// can't be picked. Past `visibleTileRows` rows of tiles, they scroll. From
 /// `PlayerOption.searchThreshold` players on, a search narrows them down.
 struct PlayerChooserView: View {
     let model: SettingsModel
     /// The tallest the first page may be: past it, its list scrolls. `nil`:
     /// as tall as the players make it.
     var tallestPage: CGFloat?
-    /// The player the user clicked.
-    @State private var clicked: String?
+    /// The player the user picked.
+    @State private var picked: String?
     @State private var search = ""
 
     /// Rows of tiles shown at most, apps and web apps together: past them,
@@ -29,12 +28,6 @@ struct PlayerChooserView: View {
     static var tallestOnScreen: CGFloat? {
         guard let screen = NSScreen.main else { return nil }
         return screen.visibleFrame.height - HostedWindowController.titleBarHeight - 2 * 20
-    }
-
-    /// The clicked player or, until one is, the only installed one, when
-    /// it can be chosen.
-    private var picked: String? {
-        clicked ?? model.offeredPlayers.onlyInstalled.flatMap { $0.isClickable ? $0.bundleID : nil }
     }
 
     var body: some View {
@@ -75,7 +68,7 @@ struct PlayerChooserView: View {
         .frame(width: Self.width)
     }
 
-    /// The search, the tiles and the note about what's installed.
+    /// The search and the tiles.
     @ViewBuilder private var players: some View {
         if model.playerOptions.isSearchable {
             SearchField(text: $search, onSubmit: returnInSearch)
@@ -88,11 +81,6 @@ struct PlayerChooserView: View {
                     maxVisibleRows: Self.visibleTileRows,
                     holdsHeight: !search.isEmpty, // typing doesn't shrink the window
                     search: search)
-        if model.playerOptions.noneInstalled {
-            NoteLabel(PlayerOption.noneInstalledWarning)
-        } else if let note = PlayerOption.onlyInstalledNote(among: model.playerOptions) {
-            NoteLabel(note, kind: .info)
-        }
     }
 
     /// Its content as tall as it wants, or `limit` tall when that's less: the
@@ -121,7 +109,7 @@ struct PlayerChooserView: View {
     /// A click on a tile: a suggested web app opens "Add a Web App" filled
     /// in; a player is picked.
     private func select(_ option: PlayerOption) {
-        if option.webAddress != nil { model.actions?.choosePlayer(option.bundleID) } else { clicked = option.bundleID }
+        if option.webAddress != nil { model.actions?.choosePlayer(option.bundleID) } else { picked = option.bundleID }
     }
 
     private func continueTapped() {

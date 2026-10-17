@@ -9,6 +9,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Without Audio Recording, a chat tone no longer pauses your player.**
+  With AntiDot mode off and Audio Recording not allowed, AutoHush judges
+  apps as AntiDot mode does, and now waits as long as it does too: 3
+  seconds for sound without video, 2 for an app that tells macOS nothing.
+- **An update that couldn't be swapped in goes to the Trash.** The new
+  version's copy, prepared for the swap, stayed in a hidden folder; the
+  next try prepares a new one.
 - **Settings' Apps page is now Sound Sources.** It lists every app heard
   playing sound, each switched to pause your player or be ignored.
 - **AutoHush runs on macOS 14.4 and later,** not only macOS 15: every
@@ -78,7 +85,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   before you could switch it off is still there.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
-  plays again those it paused, through its AppleScript (macOS asks for
+  plays again only those it paused, through its AppleScript (macOS asks for
   Automation the first time), fading them out and back in as Apple Music.
 - **Add any app that plays as your media player.** **Add an App…**, under
   the new **Other Apps** among the players (in the menu, Settings → General
@@ -164,10 +171,29 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Settings and the logs window keep their size and place on macOS 14
+  and 15.** They opened at their first size and place at every launch.
+- **After an update, a paused player no longer comes back too early in
+  AntiDot mode.** The new copy resumed it after 2 seconds, before AntiDot
+  mode counts sound without video as playing (3 seconds), so the music
+  faded in, then out again. The same went for switching back to a player
+  whose pause AutoHush held.
+- **A web app that can't be pressed is muted instead.** When pressing its
+  Play/Pause failed outright, it went on playing; now it's muted until it
+  can be paused, as when a press doesn't take.
+- **TIDAL and Apple Podcasts updated while AutoHush runs are still read
+  right.** AutoHush kept their old version's words for Play and Pause
+  until it was restarted.
+- **Check for Updates always answers.** Clicked just as an automatic
+  check came back, it showed nothing. And of two update notices waiting
+  for notifications to be allowed, only the newer one shows.
+- **Add a Web App takes an address with another address in it.** Typed
+  without https://, `deezer.com/?redirect=https://…` was refused.
 - **The volume sound of display apps no longer pauses your player.**
   BetterDisplay, MonitorControl and Lunar play it themselves, so AutoHush
-  counted them as playing. It now ignores each the first time it runs,
-  listed under Ignored Apps, where a click stops ignoring it.
+  counted them as playing. It now ignores each the first time it runs
+  (and again after **Reset List…**), listed under Ignored Apps, where a
+  click stops ignoring it.
 - **Open audio streams only ignores notification sounds.** An app's own
   short sound (a chat tone) kept its audio open long enough to pause your
   player. Now any app's audio must stay open 2 seconds first.
@@ -175,7 +201,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   silence.** Some players (Qobuz) keep their sound on while paused, so
   AutoHush measured them, and macOS showed its purple dot, for as long as
   your player played. Now an app silent for 10 seconds isn't measured
-  until it opens its sound again or tells macOS it plays.
+  until it opens its sound again or tells macOS it plays. One that keeps
+  telling macOS it plays, as in a call, stays measured, so what follows
+  a quiet moment is heard.
 - **A web app whose site swaps its Play button for a new Pause one is
   resumed.** YouTube Music does that as it plays (seen on macOS 14.4):
   AutoHush kept reading the button that was gone, called the resume

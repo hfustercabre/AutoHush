@@ -151,7 +151,7 @@ final class UserSettings: AutoPauseControlling {
 
     /// Ignores an app the first time it's seen running (one that plays only
     /// the volume sound), as if the user had switched it off; once the user
-    /// stops ignoring it, it stays so.
+    /// stops ignoring it, it stays so until the list is reset (`forgetAll`).
     func ignoreByDefault(_ source: AudioSource) {
         guard !preferences.appsIgnoredByDefault.contains(source.id) else { return }
         preferences.appsIgnoredByDefault.insert(source.id)
@@ -168,10 +168,12 @@ final class UserSettings: AutoPauseControlling {
     }
 
     /// Empties Settings → Sound Sources: every app is forgotten and none is ignored
-    /// any more. Apps reappear as they play audio.
+    /// any more. Apps reappear as they play audio; one AutoHush ignores by
+    /// itself is ignored again the next time it runs (`ignoreByDefault`).
     func forgetAll() {
         logger.info("Apps: emptied the list, so no app is ignored")
         preferences.seenApps = []
+        preferences.appsIgnoredByDefault = []
         storeIgnoredApps([])
     }
 

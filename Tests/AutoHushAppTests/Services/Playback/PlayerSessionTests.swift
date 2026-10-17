@@ -27,6 +27,8 @@ struct PlayerSessionTests {
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let monitorings = FakeMonitorings()
+        /// The waits between startup checks, each over once the test steps it.
+        let startupWaits = SteppedSleep()
         /// The states a session told, in order, once `record` is called.
         var changes: [PlayerSession.State] = []
 
@@ -45,7 +47,7 @@ struct PlayerSessionTests {
                 locateApp: { [weak self] id in
                     self?.installed.contains(id) == true ? URL(fileURLWithPath: "/Applications/\(id).app") : nil
                 },
-                retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08)
+                retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08, startupWait: startupWaits.sleep)
             )
         }
 
@@ -141,19 +143,22 @@ struct PlayerSessionTests {
     }
 
     @MainActor
-    @Test("a busy or hung player is asked again by itself, less and less often")
+    @Test("a busy or hung player is asked again by itself, less and less often, until Retry starts the waits over")
     func retriesWhilePlayerNotResponding() async {
         let bench = Bench()
         await bench.second.setFailVerify(MusicPlayerError.playerNotResponding)
         let session = bench.makeSession(bench.second)
         session.launch()
-        await TestWait.until { await bench.second.verifyCallCount >= 3 }
+        await TestWait.until { session.failedStarts >= 3 }
+        #expect(session.failedStarts >= 3) // each wait longer than the one before
         #expect(await bench.second.verifyCallCount >= 3)
         #expect(session.state.health == .retrying("Second isn’t responding"))
+        session.retry()
+        #expect(session.failedStarts == 0)
     }
 
     @MainActor
-    @Test("a player that isn't running isn't asked again until it opens; another app opening does nothing")
+    @Test("a player that isn't running isn't asked again until it opens; another app opening does nothing; just opened and not ready, it's asked again a moment later, unless a newer start took over")
     func noRetryWhilePlayerNotRunning() async {
         let bench = Bench()
         await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
@@ -163,6 +168,7 @@ struct PlayerSessionTests {
         await session.waitUntilIdle()
         #expect(await bench.second.verifyCallCount == 1)
         #expect(session.state.health == .degraded("Second isn’t running"))
+        #expect(session.retryTimer == nil) // started on as it opens, not before
 
         session.playerLaunched(Players.first)
         session.playerLaunched("org.videolan.vlc")
@@ -173,6 +179,29 @@ struct PlayerSessionTests {
         #expect(session.state.health == .starting)
         await TestWait.until { session.state.health == .ready }
         #expect(await bench.second.verifyCallCount == 2)
+
+        // Opened again, it isn't ready for the first check: asked again after a moment.
+        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        session.playerLaunched(Players.second)
+        await TestWait.until { bench.startupWaits.sleeping == 1 }
+        await bench.second.setFailVerify(nil)
+        bench.startupWaits.step()
+        await TestWait.until { session.state.health == .ready }
+        #expect(session.state.health == .ready)
+        #expect(await bench.second.verifyCallCount == 4)
+
+        // Again, and Retry is clicked during that moment: its start takes over, the one waiting gives up.
+        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        session.playerLaunched(Players.second)
+        await TestWait.until { bench.startupWaits.sleeping == 1 }
+        await bench.second.setFailVerify(nil)
+        session.retry()
+        await TestWait.until { session.state.health == .ready }
+        bench.startupWaits.step()
+        await session.waitUntilIdle()
+        #expect(await bench.second.verifyCallCount == 6)
+        #expect(bench.monitorings.made.count == 3)
+        #expect(bench.monitorings.made.last?.isStopped == false)
     }
 
     @Test("the waits between automatic starts double up to a ceiling")
@@ -265,7 +294,7 @@ struct PlayerSessionTests {
     }
 
     @MainActor
-    @Test("a monitoring torn down leaves no playback state behind, so no stale pause is handed over")
+    @Test("a monitoring torn down leaves no playback state behind, nor do its last updates, so no stale pause is handed over")
     func playbackStateEndsWithMonitoring() async {
         let bench = Bench()
         let session = await bench.started()
@@ -276,6 +305,12 @@ struct PlayerSessionTests {
         await bench.first.setFailVerify(MusicPlayerError.automationPermissionDenied)
         session.checkAccess()
         await TestWait.until { session.state.health == .needsPermission(.automation(player: "First")) }
+        // What the stopped monitoring still had on its way arrives late: only what AntiDot learned counts.
+        bench.monitorings.made[0].send(.playback(.pausedByMonitor))
+        bench.monitorings.made[0].send(.pauseFailure(.playerCommandFailed(.pressIgnored)))
+        bench.monitorings.made[0].send(.learnedAssertions(Self.vlc.id, AnnouncedAssertions(system: ["Playing audio"])))
+        #expect(session.state.controlError == nil)
+        #expect(bench.preferences.playbackAssertions[Self.vlc.id] == AnnouncedAssertions(system: ["Playing audio"]))
         #expect(session.state.playback == .unknown)
         #expect(session.state.detection == .pending)
         #expect(!session.isHoldingPause)

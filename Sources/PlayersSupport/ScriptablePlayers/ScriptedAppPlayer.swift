@@ -26,8 +26,12 @@ package actor ScriptedAppPlayer: MusicPlayer {
     /// For a toggle without a scripted state: whether it plays, as the
     /// app's other signs tell it (`.unknown`: nothing is sent).
     private let toggleState: @Sendable () async -> PlayerState
-    /// The documents its last pause paused, by name: its play plays them again.
-    private var pausedDocuments: [String] = []
+    /// The documents it fades or paused, by name: those a volume last went to
+    /// while they played, or its last pause paused. While none plays, a
+    /// volume goes to them, and a play plays them again, also after one that
+    /// failed; never another document (the front one, say), which may be one
+    /// the user paused.
+    private var documentsInHand: [String] = []
     /// The last read's failure, logged once until a read works or fails otherwise.
     private var lastFailure: String?
     private let sleep: VolumeFader.Sleep
@@ -164,8 +168,8 @@ package actor ScriptedAppPlayer: MusicPlayer {
     // MARK: - Apple events
 
     /// Sends the command `code` ("spfyPaus"); to documents when its commands
-    /// act on one: a pause to each one playing (noted), a play to those it
-    /// paused that are still open, else the front one.
+    /// act on one: a pause to each one playing (then in hand), a play to
+    /// those in hand still open (`documentsInHand`), never another.
     private func send(_ code: String, pausing: Bool) async throws {
         let pid = try channel.runningProcessIdentifier()
         guard setup.actsOnDocuments, case .documents(let documentClass, _) = setup.state else {
@@ -173,16 +177,9 @@ package actor ScriptedAppPlayer: MusicPlayer {
             return
         }
         let documents = try await documents(of: pid)
-        let targets: [String?]
-        if pausing {
-            pausedDocuments = documents.filter(\.playing).map(\.name)
-            targets = pausedDocuments
-        } else {
-            let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
-            targets = paused.isEmpty ? (documents.isEmpty ? [] : [nil]) : paused
-            pausedDocuments = []
-        }
+        let targets = pausing ? documents.filter(\.playing).map(\.name) : inHand(among: documents)
         guard !targets.isEmpty else { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
+        if pausing { documentsInHand = targets }
         for target in targets {
             _ = try await channel.send({
                 ScriptedAppPlayer.makeCommandEvent(code, to: ScriptedAppPlayer.documentSpecifier(documentClass, named: target), processIdentifier: $0)
@@ -190,16 +187,23 @@ package actor ScriptedAppPlayer: MusicPlayer {
         }
     }
 
-    /// The documents a volume goes to: those playing, else those its last
-    /// pause paused (its volume set back while paused, then faded in), else
-    /// the front one; none with no document open.
-    private func volumeTargets(of pid: pid_t) async throws -> [String?] {
+    /// The documents a volume goes to: those playing, which it fades then
+    /// (in hand), else those in hand still open (the one faded stopped
+    /// during the fade, or its pause paused them: their volume set back,
+    /// then faded in); none otherwise.
+    private func volumeTargets(of pid: pid_t) async throws -> [String] {
         let documents = try await documents(of: pid)
         let playing = documents.filter(\.playing).map(\.name)
-        if !playing.isEmpty { return playing }
-        let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
-        if !paused.isEmpty { return paused }
-        return documents.isEmpty ? [] : [nil]
+        if !playing.isEmpty { documentsInHand = playing }
+        return inHand(among: documents)
+    }
+
+    /// The documents in hand that are among `documents`, those open now.
+    /// With none in hand (a pause handed over by the copy before an update's
+    /// relaunch), the only document open, when just one is.
+    private func inHand(among documents: [(name: String, playing: Bool)]) -> [String] {
+        if documentsInHand.isEmpty, documents.count == 1 { return [documents[0].name] }
+        return documentsInHand.filter { name in documents.contains { $0.name == name } }
     }
 
     /// Its documents' `property` (0–1) as AutoHush's 0–100: the first one's

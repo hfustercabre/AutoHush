@@ -27,6 +27,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     private var _buttonReads = 0
     private var _blankLooks = 0
     private var _wordsCurrent = true
+    private var _pressFails = false
     private var _releases = 0
     /// What a press does; by default it swaps the button's words.
     var onPress: (@Sendable (FakeWebPage, Int) -> Void)?
@@ -57,6 +58,11 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     var wordsCurrent: Bool {
         get { lock.withLock { _wordsCurrent } }
         set { lock.withLock { _wordsCurrent = newValue } }
+    }
+    /// A press can't be made (Accessibility refuses it): nothing is pressed.
+    var pressFails: Bool {
+        get { lock.withLock { _pressFails } }
+        set { lock.withLock { _pressFails = newValue } }
     }
     /// How many times its switch was released.
     var releases: Int { lock.withLock { _releases } }
@@ -122,7 +128,7 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
     }
 
     func press(_ handle: ButtonHandle) -> Bool {
-        guard let number = handle.element.base as? Int, buttonsByNumber[number] != nil else { return false }
+        guard !pressFails, let number = handle.element.base as? Int, buttonsByNumber[number] != nil else { return false }
         lock.withLock { _presses.append(number) }
         if let onPress { onPress(self, number) } else { swapWords(of: number) }
         return true
@@ -134,9 +140,10 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
 
     func release() { lock.withLock { _releases += 1 } }
 
-    /// "Play" ↔ "Pause", in any language the tests use.
+    /// "Play" ↔ "Pause", in any language and on any player bar (SoundCloud's) the tests use.
     func swapWords(of number: Int) {
-        let swaps = ["Play": "Pause", "Pause": "Play", "Reproducir": "Pausar", "Pausar": "Reproducir"]
+        let swaps = ["Play": "Pause", "Pause": "Play", "Reproducir": "Pausar", "Pausar": "Reproducir",
+                     "Play current": "Pause current", "Pause current": "Play current"]
         lock.withLock {
             if let label = _buttons[number]?.label, let other = swaps[label] { _buttons[number]?.label = other }
         }

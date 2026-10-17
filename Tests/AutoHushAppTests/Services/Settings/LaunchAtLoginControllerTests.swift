@@ -6,112 +6,49 @@ import AutoHushTestSupport
 @Suite("LaunchAtLoginController")
 struct LaunchAtLoginControllerTests {
 
-    // MARK: - isEnabled
+    // MARK: - isEnabled, needsApproval
 
     @MainActor
-    @Test("isEnabled is true when status provider returns .enabled")
-    func isEnabledWhenStatusEnabled() {
+    @Test("on only once registered; waiting for the user's approval in Login Items says so",
+          arguments: [(SMAppService.Status.enabled, true, false), (.notRegistered, false, false),
+                      (.requiresApproval, false, true), (.notFound, false, false)])
+    func status(status: SMAppService.Status, isEnabled: Bool, needsApproval: Bool) {
         let controller = LaunchAtLoginController(
-            statusProvider: { .enabled },
+            statusProvider: { status },
             registerAction: { },
             unregisterAction: { },
             openSettingsAction: { }
         )
-        #expect(controller.isEnabled == true)
-    }
-
-    @MainActor
-    @Test("isEnabled is false when status provider returns .notRegistered")
-    func isEnabledWhenStatusNotRegistered() {
-        let controller = LaunchAtLoginController(
-            statusProvider: { .notRegistered },
-            registerAction: { },
-            unregisterAction: { },
-            openSettingsAction: { }
-        )
-        #expect(controller.isEnabled == false)
+        #expect(controller.isEnabled == isEnabled)
+        #expect(controller.needsApproval == needsApproval)
     }
 
     // MARK: - setEnabled
 
     @MainActor
-    @Test("setEnabled(true) calls register and returns success")
-    func enablingCallsRegister() {
-        var registerCount = 0
-        var unregisterCount = 0
+    @Test("on registers, off unregisters, and a failure comes back as one", arguments: [true, false], [true, false])
+    func setEnabled(enabled: Bool, fails: Bool) {
+        var calls: [String] = []
         let controller = LaunchAtLoginController(
             statusProvider: { .notRegistered },
-            registerAction: { registerCount += 1 },
-            unregisterAction: { unregisterCount += 1 },
+            registerAction: {
+                calls.append("register")
+                if fails { throw StubError.failed }
+            },
+            unregisterAction: {
+                calls.append("unregister")
+                if fails { throw StubError.failed }
+            },
             openSettingsAction: { }
         )
 
-        let result = controller.setEnabled(true)
+        let result = controller.setEnabled(enabled)
 
-        #expect(registerCount == 1)
-        #expect(unregisterCount == 0)
-        if case .failure(let error) = result {
-            Issue.record("Expected success, got: \(error)")
+        #expect(calls == [enabled ? "register" : "unregister"])
+        switch result {
+        case .success: #expect(!fails)
+        case .failure(let error): #expect(fails && error.localizedDescription == "stub failed")
         }
-    }
-
-    @MainActor
-    @Test("setEnabled(false) calls unregister and returns success")
-    func disablingCallsUnregister() {
-        var registerCount = 0
-        var unregisterCount = 0
-        let controller = LaunchAtLoginController(
-            statusProvider: { .enabled },
-            registerAction: { registerCount += 1 },
-            unregisterAction: { unregisterCount += 1 },
-            openSettingsAction: { }
-        )
-
-        let result = controller.setEnabled(false)
-
-        #expect(registerCount == 0)
-        #expect(unregisterCount == 1)
-        if case .failure(let error) = result {
-            Issue.record("Expected success, got: \(error)")
-        }
-    }
-
-    @MainActor
-    @Test("setEnabled returns failure when register action throws")
-    func enablingReturnsFailureOnThrow() {
-        let controller = LaunchAtLoginController(
-            statusProvider: { .notRegistered },
-            registerAction: { throw StubError.failed },
-            unregisterAction: { },
-            openSettingsAction: { }
-        )
-
-        let result = controller.setEnabled(true)
-
-        guard case .failure(let error) = result else {
-            Issue.record("Expected failure")
-            return
-        }
-        #expect(error.localizedDescription == "stub failed")
-    }
-
-    @MainActor
-    @Test("setEnabled returns failure when unregister action throws")
-    func disablingReturnsFailureOnThrow() {
-        let controller = LaunchAtLoginController(
-            statusProvider: { .enabled },
-            registerAction: { },
-            unregisterAction: { throw StubError.failed },
-            openSettingsAction: { }
-        )
-
-        let result = controller.setEnabled(false)
-
-        guard case .failure(let error) = result else {
-            Issue.record("Expected failure")
-            return
-        }
-        #expect(error.localizedDescription == "stub failed")
     }
 
     // MARK: - openSystemSettings

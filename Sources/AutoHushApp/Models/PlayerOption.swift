@@ -303,25 +303,6 @@ struct PlayerOption: Equatable, Identifiable {
     static var noneChosenLabel: String {
         String(localized: "None chosen", comment: "Settings → General and Diagnostics: no media player chosen")
     }
-
-    /// Shown in Settings and the welcome window while no supported player is
-    /// installed.
-    static var noneInstalledWarning: String {
-        String(localized: "No supported media player is installed. Install one of these, or add another app under Other Apps, and choose it here.",
-               comment: "Settings and the welcome window, while none of the media players is installed; “Other Apps” is the heading over the apps added with Add an App… (its Add… tile)")
-    }
-
-    /// In the welcome window when one player is installed and others could
-    /// be, e.g. "Spotify is the only supported media player on this Mac.
-    /// AutoHush also works with Apple Music and VLC."; `nil` otherwise.
-    static func onlyInstalledNote(among options: [PlayerOption]) -> String? {
-        guard let only = options.onlyInstalled else { return nil }
-        let others = options.filter { !$0.isInstalled && $0.kind == .app }.map(\.name)
-        guard !others.isEmpty else { return nil }
-        let list = others.formatted(.list(type: .and))
-        return String(localized: "\(only.name) is the only supported media player on this Mac. AutoHush also works with \(list).",
-                      comment: "Welcome window; the installed media player, then the other supported ones, e.g. “Apple Music and VLC”")
-    }
 }
 
 extension [PlayerOption] {
@@ -367,14 +348,5 @@ extension [PlayerOption] {
         let search = search.trimmingCharacters(in: .whitespaces)
         guard !search.isEmpty else { return self }
         return filter { $0.name.localizedStandardContains(search) }
-    }
-
-    /// No supported player is installed: none can be chosen.
-    var noneInstalled: Bool { !contains(where: \.isInstalled) }
-
-    /// The one installed player, when exactly one is.
-    var onlyInstalled: PlayerOption? {
-        let installed = filter(\.isInstalled)
-        return installed.count == 1 ? installed[0] : nil
     }
 }

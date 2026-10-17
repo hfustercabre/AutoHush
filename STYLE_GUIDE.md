@@ -544,7 +544,7 @@ standard ones**:
   Select All ⌘A, Find… ⌘F) and Window (Close ⌘W, Minimize ⌘M, Zoom, Bring
   All to Front), in macOS's own words in every language. The Edit menu is
   what makes text fields take ⌘V and the rest. **Find…** opens Settings →
-  Apps' search while it lists apps, and puts the cursor in the welcome
+  Sound Sources' search while it lists apps, and puts the cursor in the welcome
   window's player search when it has one, in the logs window's search and
   in Add an App's list of apps; it's dimmed wherever there's no search.
   **Minimize** works in every window: Settings, the welcome window, the

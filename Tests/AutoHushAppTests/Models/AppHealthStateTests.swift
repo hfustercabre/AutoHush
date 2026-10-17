@@ -51,11 +51,17 @@ struct AppHealthStateTests {
 
         // Its alert: the button first (Return), OK after it (Escape), the pane opened by the first.
         var buttons: [(String, String)] = [], opened = 0
-        InfoAlert.show("Couldn’t Pause Qobuz", "…", action: ("Open Menu Bar Settings…", { opened += 1 })) { alert in
+        InfoAlert.show("Couldn’t Pause Qobuz", "…", action: (ControlFailure.openMenuBarSettings, { opened += 1 })) { alert in
             buttons = alert.buttons.map { ($0.title, $0.keyEquivalent) }
             return .alertFirstButtonReturn
         }
-        #expect(buttons.map(\.0) == ["Open Menu Bar Settings…", "OK"] && buttons.map(\.1) == ["\r", "\u{1b}"] && opened == 1)
+        #expect(buttons.map(\.0) == [ControlFailure.openMenuBarSettings, "OK"] && buttons.map(\.1) == ["\r", "\u{1b}"] && opened == 1)
+        // The pane as each macOS names it.
+        if #available(macOS 26, *) {
+            #expect(ControlFailure.openMenuBarSettings == "Open Menu Bar Settings…")
+        } else {
+            #expect(ControlFailure.openMenuBarSettings == "Open Control Center Settings…")
+        }
     }
 
     @Test("messages name the player")
@@ -64,13 +70,9 @@ struct AppHealthStateTests {
             == .degraded("Music isn’t running"))
     }
 
-    @Test("while no player is chosen, the status asks for one, or says none is installed")
+    @Test("while no player is chosen, the status asks for one: every Mac has some installed")
     func waitingForPlayer() {
-        let installed = PlayerOption(bundleID: "com.example.a", name: "A", appURL: URL(fileURLWithPath: "/Applications/A.app"))
-        let missing = PlayerOption(bundleID: "com.example.b", name: "B", appURL: nil)
-        #expect(AppHealthState.waitingForPlayer(among: [missing, installed]) == .needsPlayer("Choose a media player"))
-        #expect(AppHealthState.waitingForPlayer(among: [missing])
-            == .needsPlayer("No supported media player is installed"))
+        #expect(AppHealthState.waitingForPlayer == .needsPlayer("Choose a media player"))
     }
 
     @Test("a chosen player that isn't installed is degraded")

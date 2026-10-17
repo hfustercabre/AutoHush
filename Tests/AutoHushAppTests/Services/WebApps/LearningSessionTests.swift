@@ -13,8 +13,8 @@ struct LearningSessionTests {
         MockLearningPlayer(bundleID: id, name: name, status: status)
     }
 
-    private func waitFor(_ condition: @MainActor () -> Bool) async {
-        await TestWait.until(condition)
+    private func waitFor(sourceLocation: SourceLocation = #_sourceLocation, _ condition: @MainActor () -> Bool) async {
+        await TestWait.until(sourceLocation: sourceLocation, condition)
     }
 
     @Test("It's Playing, Pause It Manually and It's Paused go to the player; a click it can't take says why under its step")
@@ -37,11 +37,12 @@ struct LearningSessionTests {
         #expect(session.state.pause.deadline == nil)
 
         // Pause It Manually: the user has a minute to pause it.
+        let asked = Date()
         session.step(.pauseManually)
         await waitFor { session.state.pause.deadline != nil }
         #expect(session.state.pause.mode == .byHand)
         let deadline = session.state.pause.deadline
-        #expect(deadline.map { abs($0.timeIntervalSinceNow - 60) < 2 } == true)
+        #expect(deadline.map { (asked...Date()).contains($0.addingTimeInterval(-60)) } == true)
 
         session.step(.itsPaused)
         await waitFor { session.state.pause.note == .nothingChanged }
@@ -189,7 +190,8 @@ struct LearningSessionTests {
         session.step(.itsPlaying) // answered once the second one is chosen
         session.follow(second)
         first.set(.learned)
-        try? await Task.sleep(for: .milliseconds(50))
+        await waitFor { first.markPlayingCount == 1 } // the first one's answer is on its way
+        await Task.yield()
         #expect(session.state == LearningSession.State(status: .learning(hasPlayed: false), pause: LearningPause()))
 
         // Learning again is the chosen one's.

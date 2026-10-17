@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Testing
 @testable import AutoHushApp
 
@@ -67,17 +67,22 @@ struct OtherInstancesTests {
         #expect(OtherInstances.isOlder(launch: now, pid: 500, than: nil, ownPID: 400))
     }
 
-    @Test("the live list leaves out this process")
-    func liveListSkipsSelf() {
-        // The test runner isn't an app, so only check this process is never listed.
+    @Test("the live list has no copy of an app that isn't running")
+    func liveListWithoutCopies() {
+        // This process isn't listed either way (the test runner isn't an app):
+        // leaving it out is `isOlder`'s, checked in onlyOlderCopiesQuit.
         let instances = OtherInstances.live(bundleIdentifier: "com.autohush.AutoHush.not-running")
         #expect(instances.list().isEmpty)
     }
 
     @Test("a process ID taken by another process since isn't a copy still running, so it's never forced to quit")
-    func reusedProcessID() {
+    func reusedProcessID() throws {
         let instances = OtherInstances.live(bundleIdentifier: "com.autohush.AutoHush.not-running")
-        #expect(!instances.isRunning(getpid())) // running, but not that app
+        #expect(!instances.isRunning(getpid())) // running, but not an app
         #expect(!instances.isRunning(99_999))   // no such process
+        // An app's: running, but another app.
+        let finder = try #require(NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first)
+        #expect(!instances.isRunning(finder.processIdentifier))
+        #expect(OtherInstances.live(bundleIdentifier: "com.apple.finder").isRunning(finder.processIdentifier))
     }
 }

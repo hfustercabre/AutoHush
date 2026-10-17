@@ -14,7 +14,9 @@ enum CheckableApps {
         URL(filePath: "/System/Applications", directoryHint: .isDirectory),
     ]
 
-    static func find(helper: PlayerCheckHelper?, excluding: Set<String>) async -> [CheckableApp] {
+    /// The apps in `folders` (tests give their own).
+    static func find(helper: PlayerCheckHelper?, excluding: Set<String>,
+                     in folders: [URL] = CheckableApps.folders) async -> [CheckableApp] {
         let installed = await Task.detached { installedApps(in: folders, excluding: excluding) }.value
         guard let helper else { return order(installed) }
         async let playing = helper.canPlay(installed.map(\.url))

@@ -60,6 +60,8 @@ struct LogsModelTests {
         longRunning.open()
         await TestWait.until { !longRunning.isLoading }
         #expect(longRunning.shown.map(\.message) == ["earlier launch", "this launch"])
+        // The pop-up names the hours the log keeps.
+        #expect(LogsModel.Range.last24Hours.title == "Last \(Int(LogFile.keptFor / 3600)) Hours")
     }
 
     @Test("the problems only, and a search over the lines and their areas")
@@ -115,15 +117,20 @@ struct LogsModelTests {
         #expect(model.shown.map(\.message) == ["before", "meanwhile", "after the read"])
     }
 
-    @Test("new lines show as they're logged, until the window closes")
+    @Test("new lines show as they're logged, until the window closes; open for over a day, the lines older than 24 hours go")
     func follows() async {
         let log = FakeLog()
-        let model = LogsModel(source: log, launch: now.addingTimeInterval(-3600), now: { [now] in now })
+        let clock = ManualClock(start: now)
+        let model = LogsModel(source: log, launch: now.addingTimeInterval(-3600), now: { clock.now })
         model.open()
         await TestWait.until { !model.isLoading }
         log.log(entry(hoursAgo: 0, "new"))
         await TestWait.until { model.entries.count == 1 }
         #expect(model.shown.map(\.message) == ["new"])
+        clock.advance(by: 25 * 3600)
+        log.log(entry(hoursAgo: -25, "a day later"))
+        await TestWait.until { model.entries.map(\.message) == ["a day later"] }
+        #expect(model.entries.map(\.message) == ["a day later"] && model.shown.map(\.message) == ["a day later"])
         model.close()
         log.log(entry(hoursAgo: 0, "after closing"))
         #expect(log.handlers.isEmpty)

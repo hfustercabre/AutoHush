@@ -13,7 +13,7 @@ struct ChecklistStepTests {
         #expect(StepState.failed.voiceOverValue == "Failed")
     }
 
-    @Test("learning: play is the step to do with It's Playing; paused by hand, It's Paused with the countdown; locked, neither")
+    @Test("learning: play is the step to do with It's Playing; paused by hand, It's Paused with the countdown; locked, neither, VoiceOver hearing the permission and why")
     func learning() {
         let fresh = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false)
         #expect(fresh.map(\.state) == [.current, .todo])
@@ -39,6 +39,8 @@ struct ChecklistStepTests {
         #expect(locked.map(\.state) == [.todo, .todo])
         #expect(locked.allSatisfy { $0.notes.isEmpty && $0.button == nil })
         #expect(locked.currentAnnouncement == nil)
+        #expect(LearningPermissionStep.announcement(.accessibility(player: "YT Music"), name: "YT Music")
+            == "Allow Accessibility access to control YT Music\nAutoHush needs it to see YT Music’s buttons. The steps below unlock once it’s allowed.")
     }
 
     @Test("a click that couldn't be taken says why under the step it's about, and VoiceOver hears it with the step")
@@ -48,6 +50,8 @@ struct ChecklistStepTests {
         #expect(notHeard.currentAnnouncement == "Play something in YT Music\n" + LearningNote.notHeard.text("YT Music"))
         let timedOut = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .timedOut)
         #expect(timedOut[0].warning == LearningNote.timedOut.text("YT Music"))
+        // It says how long the pause was waited for.
+        #expect(LearningNote.timedOut.text("YT Music").hasPrefix("A minute went by") && LearningStatus.pauseWait == 60)
         let cantSee = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, note: .cantSeePage)
         #expect(cantSee[0].warning == LearningNote.cantSeePage.text("YT Music"))
         let nothing = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, note: .nothingChanged,

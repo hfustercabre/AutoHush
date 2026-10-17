@@ -29,8 +29,11 @@ package struct PlayPauseWords: Equatable, Sendable {
     /// The words of the app at `appURL`, read once per copy and version.
     /// When they can't be read (the app changed how it keeps them), it's
     /// logged once per copy and version: AutoHush can't tell its state then.
+    /// Its version is read from its Info.plist each time: a `Bundle` keeps
+    /// the one it read first, so an update while AutoHush runs would be missed.
     package static func words(ofAppAt appURL: URL, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
-        let version = Bundle(url: appURL)?.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let info = CFBundleCopyInfoDictionaryInDirectory(appURL as CFURL) as? [String: Any]
+        let version = info?["CFBundleShortVersionString"] as? String ?? ""
         let key = "\(appURL.path)#\(version)"
         if let cached = cache.withLock({ $0[key] }) { return cached }
         // Not read again for the same copy and version: Diagnostics asks often.

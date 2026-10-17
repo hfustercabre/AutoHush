@@ -332,7 +332,7 @@ package final class Preferences {
 
     /// The apps AutoHush once ignored by itself (`UserSettings.ignoreByDefault`),
     /// by bundle ID, ignored or not now: one the user stopped ignoring isn't
-    /// ignored again.
+    /// ignored again, until the list is reset (`UserSettings.forgetAll`).
     package var appsIgnoredByDefault: Set<String> {
         get { Set(defaults.object(forKey: Key.appsIgnoredByDefault) as? [String] ?? []) }
         set { defaults.set(newValue.sorted(), forKey: Key.appsIgnoredByDefault) }

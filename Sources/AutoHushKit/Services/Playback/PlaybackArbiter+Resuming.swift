@@ -24,6 +24,7 @@ extension PlaybackArbiter {
     }
 
     private func resumeIfStillPending(id: UUID, retriesLeft: Int) async {
+        if takenOver?.resume == id { takenOver = nil } // its wait is over
         guard pendingResumeID == id, !isShutDown, !isAsleep else { return }
         // With auto-pause off, music we paused comes back even while others play.
         guard activeSources.isEmpty || !autoPauseEnabled else { return }

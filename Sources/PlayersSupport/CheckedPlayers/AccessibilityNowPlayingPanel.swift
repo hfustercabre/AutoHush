@@ -141,17 +141,24 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// text, its Play/Pause, its Next), the buttons named only by their
     /// description, in Control Center's language (measured on 14.4).
     static func flatRows(in children: [AXUIElement]) -> [ShownRow] {
-        var rows: [ShownRow] = []
+        flatRows(in: children, words: centerWords) { $0.string($1) }
+    }
+
+    /// The same over any elements, each attribute read by `read`, `words`
+    /// being the Play and Pause it's said in: tests stand in for both.
+    static func flatRows<Element>(in children: [Element], words: (play: Set<String>, pause: Set<String>),
+                                  read: (Element, String) -> String?) -> [(row: PanelRow, button: Element)] {
+        var rows: [(row: PanelRow, button: Element)] = []
         var text: String?
         for child in children {
-            switch child.string(kAXRoleAttribute) {
+            switch read(child, kAXRoleAttribute) {
             case kAXStaticTextRole:
-                text = child.string(kAXValueAttribute)
+                text = read(child, kAXValueAttribute)
             case kAXButtonRole:
-                guard let said = text, !said.isEmpty, let word = child.string(kAXDescriptionAttribute)?.lowercased() else { continue }
+                guard let said = text, !said.isEmpty, let word = read(child, kAXDescriptionAttribute)?.lowercased() else { continue }
                 // It says what a press does: Pause while the row plays.
-                if centerWords.pause.contains(word) { rows.append((PanelRow(text: said, playing: true), child)) }
-                else if centerWords.play.contains(word) { rows.append((PanelRow(text: said, playing: false), child)) }
+                if words.pause.contains(word) { rows.append((PanelRow(text: said, playing: true), child)) }
+                else if words.play.contains(word) { rows.append((PanelRow(text: said, playing: false), child)) }
                 else { continue }
                 text = nil
             default:

@@ -48,10 +48,24 @@ struct PlayPauseRecipeTests {
         #expect(recipe.merging(spanish) == spanish)
     }
 
-    @Test("it's kept as a property list")
+    @Test("it's kept as a property list, in the preferences by web app: each one's saved and forgotten alone")
     func storage() {
         let stored = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar, Places.main])
         #expect(PlayPauseRecipe(propertyList: stored.propertyList) == stored)
         #expect(PlayPauseRecipe(propertyList: ["play": "Play"]) == nil)
+
+        let suite = "AutoHush.PlayPauseRecipeTests.\(UUID().uuidString)"
+        defer { UserDefaults().removePersistentDomain(forName: suite) }
+        let store = DefaultsRecipeStore(suiteName: suite)
+        let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [Places.main])
+        store.save(stored, for: "com.example.a")
+        store.save(spanish, for: "com.example.b")
+        #expect(store.recipe(for: "com.example.a") == stored)
+        #expect(store.recipe(for: "com.example.b") == spanish)
+        store.forget(for: "com.example.a")
+        store.forget(for: "com.example.a") // forgotten already: nothing changes
+        #expect(store.recipe(for: "com.example.a") == nil)
+        #expect(store.recipe(for: "com.example.b") == spanish)
+        #expect(UserDefaults(suiteName: suite)?.dictionary(forKey: Preferences.webAppButtonsKey)?.keys.sorted() == ["com.example.b"])
     }
 }

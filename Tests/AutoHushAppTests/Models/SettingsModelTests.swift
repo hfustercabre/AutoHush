@@ -38,13 +38,14 @@ struct SettingsModelTests {
         model.state.status.ignoredApps = ignored
     }
 
-    @Test("the version shows with its build number for About and Diagnostics, and not at all while unknown")
+    @Test("the version shows with its build number for About and Diagnostics, alone without one, and not at all while unknown")
     func fullVersion() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(model.fullVersion == nil)
+        #expect(model.fullVersion == nil && model.fullVersion(build: "19") == nil)
         model.currentVersion = "1.2.3"
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-        #expect(model.fullVersion == (build.map { "1.2.3 (\($0))" } ?? "1.2.3"))
+        #expect(model.fullVersion(build: "19") == "1.2.3 (19)")
+        #expect(model.fullVersion(build: nil) == "1.2.3")
+        #expect(model.fullVersion?.hasPrefix("1.2.3") == true) // this copy's build, whichever it is
     }
 
     @Test("a login item macOS waits to have allowed shows as such, followed when refreshed")
@@ -146,18 +147,19 @@ struct SettingsModelTests {
         let arc = AudioSource(id: "company.thebrowser.Browser", name: "Arc")
         // Played most recently: Safari, VLC, Chrome, Arc; zoom was ignored without playing.
         show(model, seen: [safari, vlc, chrome, arc], ignored: [vlc, zoom])
+        /// What Sort by says of the way round, then the apps in that order.
         func names(_ criterion: AppListOrder.Criterion, reversed: Bool = false) -> [String] {
             model.setAppListOrder(AppListOrder(criterion: criterion, isReversed: reversed))
-            return model.apps.map(\.source.name)
+            return [model.appListOrder.directionTitle] + model.apps.map(\.source.name)
         }
 
-        #expect(names(.lastPlayed) == ["Safari", "VLC", "Google Chrome", "Arc", "zoom.us"])
-        #expect(names(.lastPlayed, reversed: true) == ["zoom.us", "Arc", "Google Chrome", "VLC", "Safari"])
-        #expect(names(.name) == ["Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
-        #expect(names(.name, reversed: true) == ["zoom.us", "VLC", "Safari", "Google Chrome", "Arc"])
+        #expect(names(.lastPlayed) == ["Newest first", "Safari", "VLC", "Google Chrome", "Arc", "zoom.us"])
+        #expect(names(.lastPlayed, reversed: true) == ["Oldest first", "zoom.us", "Arc", "Google Chrome", "VLC", "Safari"])
+        #expect(names(.name) == ["A to Z", "Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
+        #expect(names(.name, reversed: true) == ["Z to A", "zoom.us", "VLC", "Safari", "Google Chrome", "Arc"])
         // Each group stays A to Z; reversed, only the groups swap.
-        #expect(names(.state) == ["Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
-        #expect(names(.state, reversed: true) == ["VLC", "zoom.us", "Arc", "Google Chrome", "Safari"])
+        #expect(names(.state) == ["Apps that pause playback first", "Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
+        #expect(names(.state, reversed: true) == ["Ignored apps first", "VLC", "zoom.us", "Arc", "Google Chrome", "Safari"])
 
         // New apps arrive in the chosen order.
         model.setAppListOrder(AppListOrder(criterion: .name, isReversed: true))
@@ -313,7 +315,7 @@ struct SettingsModelTests {
         #expect(log.calls.isEmpty)
     }
 
-    @Test("AntiDot mode switches between audio levels and playback signals")
+    @Test("AntiDot mode switches between audio levels and playback signals; each way's summary says the engine's least start")
     func antiDotMode() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(!model.isAntiDotMode)
@@ -326,6 +328,10 @@ struct SettingsModelTests {
         model.setAntiDotMode(false)
         #expect(!model.isAntiDotMode && model.detectionMethod == .audioLevels)
         #expect(model.settings.state.detection == .audioLevels)
+        // How long an app must play before your player pauses, at the least.
+        let configuration = AppConfiguration()
+        #expect(DetectionMethod.playbackSignals.summary.contains("at least \(Int(configuration.minimumStartWithoutVideo)) seconds"))
+        #expect(DetectionMethod.openStreams.summary.contains("at least \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
     @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, or the fades")
@@ -451,8 +457,9 @@ struct SettingsWindowControllerTests {
                       launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
     }
 
-    @Test("has a sidebar of pages in three groups beside the page, and opens on the one asked for, named in the title")
+    @Test("has a sidebar of pages in three groups beside the page, and opens on the one asked for, named in the title; centered the first time")
     func pages() throws {
+        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(SettingsWindowController.frameName)") // never opened before
         let sut = SettingsWindowController(model: makeModel())
         let split = try #require(sut.window?.contentViewController as? NSSplitViewController)
         #expect(split.splitViewItems.count == 2)
@@ -464,6 +471,9 @@ struct SettingsWindowControllerTests {
 
         sut.show(page: .diagnostics)
         defer { sut.close() }
+        let window = try #require(sut.window)
+        let area = try #require(window.screen?.visibleFrame)
+        #expect(abs(window.frame.midX - area.midX) <= 1)
         #expect(sut.shownPage == .diagnostics)
         #expect(sut.window?.title == "Diagnostics")
         sut.show(page: .about) // the menu's About button
@@ -482,7 +492,11 @@ struct SettingsWindowControllerTests {
         #expect(sidebar.minimumThickness == SettingsWindowController.sidebarWidth)
         #expect(sidebar.maximumThickness == SettingsWindowController.sidebarWidth)
         #expect(!sidebar.canCollapse)
-        #expect(window.frameAutosaveName == SettingsWindowController.frameName) // kept between launches
+        // Kept between launches: the controller gives its window its name
+        // (on macOS 14 and 15 it would clear one set before).
+        #expect(sut.windowFrameAutosaveName == SettingsWindowController.frameName)
+        #expect(window.frameAutosaveName == SettingsWindowController.frameName)
+        #expect(window.collectionBehavior.contains(.fullScreenNone)) // never full screen
     }
 
     @Test("closed and opened again, Settings is back on General; while open, it keeps its page")
@@ -515,11 +529,11 @@ struct SettingsWindowControllerTests {
 
         sut.show() // Settings in the menu
         await TestWait.until { !window.isMiniaturized }
-        #expect(sut.shownPage == .detection)
+        #expect(!window.isMiniaturized && sut.shownPage == .detection)
         #expect(model.foldedDiagnostics == [.apps]) // not reopened
     }
 
-    @Test("reopened, Apps' search is closed and every part of Diagnostics open")
+    @Test("reopened, Sound Sources' search is closed and every part of Diagnostics open")
     func reopensFresh() {
         let model = makeModel()
         let sut = SettingsWindowController(model: model)

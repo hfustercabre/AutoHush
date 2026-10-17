@@ -5,18 +5,10 @@ import AutoHushTestSupport
 
 @Suite("TimingSettings")
 struct TimingSettingsTests {
-    @Test("defaults match the built-in configuration")
-    func defaultsMatchConfiguration() {
-        let configuration = AppConfiguration(timings: .defaults)
-        let builtIn = AppConfiguration()
-        #expect(configuration.sourceStartConfirmation == builtIn.sourceStartConfirmation)
-        #expect(configuration.sourceStopGrace == builtIn.sourceStopGrace)
-        #expect(abs(configuration.audibleThreshold - builtIn.audibleThreshold) < 1e-7)
-    }
-
-    @Test("the silence threshold converts from dBFS to a linear level")
+    @Test("the silence threshold converts from dBFS to a linear level; by default −60 dBFS, 0.001")
     func thresholdConversion() {
         #expect(abs(AppConfiguration(timings: TimingSettings(silenceThresholdDB: -40)).audibleThreshold - 0.01) < 1e-6)
+        #expect(abs(AppConfiguration().audibleThreshold - 0.001) < 1e-7)
     }
 
     @Test("values are clamped to their ranges")

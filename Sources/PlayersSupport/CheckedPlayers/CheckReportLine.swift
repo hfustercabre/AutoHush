@@ -30,6 +30,23 @@ package enum CheckReportLine {
         waitingPrefix + text + " (up to \(minutes) minutes)"
     }
 
+    /// The check asks for `app` to be played, and goes on once it plays.
+    package static func waitingToPlay(_ app: String, minutes: Int) -> String {
+        waiting("start playing something in \(app); the test goes on as soon as it plays", minutes: minutes)
+    }
+
+    /// The check asks for `app` to be paused by its own Pause, to learn its
+    /// page's Play/Pause from what changes on it.
+    package static func waitingToPause(_ app: String, minutes: Int) -> String {
+        waiting("pause \(app) yourself (its own Pause, anywhere): the check learns its page's Play/Pause from what changes on it",
+                minutes: minutes)
+    }
+
+    /// The check asks for Accessibility for `holder`, the app it runs in.
+    package static func waitingForAccessibility(_ holder: String, minutes: Int) -> String {
+        waiting("allow Accessibility for \(holder) in System Settings; the check goes on as soon as it's allowed", minutes: minutes)
+    }
+
     /// The request a "  waiting: " line makes, and its minutes; `nil` for any other line.
     package static func request(in line: String) -> (request: Request?, minutes: Int?)? {
         guard line.hasPrefix(waitingPrefix) else { return nil }

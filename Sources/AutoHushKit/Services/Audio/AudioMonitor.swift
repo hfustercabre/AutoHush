@@ -18,7 +18,11 @@ import os
 ///      (`AppConfiguration.startConfirmationWithoutVideo`); with open streams
 ///      only, which can't tell video, every app, for a shorter minimum
 ///      (`startConfirmationWithOpenStreams`: an app's chat tone keeps its
-///      stream open about a second, measured on macOS 14.4).
+///      stream open about a second, measured on macOS 14.4). Outside AntiDot
+///      mode, while nothing can be measured (Audio Recording denied, or not
+///      given yet), apps wait as long, by what judges them: one telling macOS
+///      it plays, the longer minimum unless it shows video; one judged by its
+///      open stream, the shorter.
 ///
 /// Level detection needs the System Audio Recording permission: without it taps
 /// deliver pure silence, which would make every source look stopped. The
@@ -52,6 +56,9 @@ package final class AudioMonitor: @unchecked Sendable {
         /// `heardSince`: for a start, when the app was first heard, if known.
         case source(id: String, isPlaying: Bool, heardSince: Date?)
         case localPlayback(Bool)
+        /// How long an app must play, at most, before it counts, as apps
+        /// are judged now: told at the first look, then when it changes.
+        case startConfirmation(TimeInterval)
         /// Every event sent before it has reached the arbiter (`eventsDelivered`).
         case delivered(@Sendable () -> Void)
     }
@@ -68,7 +75,8 @@ package final class AudioMonitor: @unchecked Sendable {
     /// A source's process measured silent this long loses its tap, which
     /// keeps macOS's recording indicator on (an app keeping its output open
     /// while paused, as Qobuz does). It's tapped again once its output closes
-    /// and opens again, or once it tells macOS it plays.
+    /// and opens again, or once it tells macOS it plays anew: one that keeps
+    /// saying so in silence (a call app through a quiet stretch) isn't.
     static let silentTapRelease: TimeInterval = 10
 
     /// Queue-confined; replaced live by `setConfiguration(_:)`.
@@ -116,7 +124,7 @@ package final class AudioMonitor: @unchecked Sendable {
     /// Since when each tapped source process has been measured silent.
     var silentSince: [AudioObjectID: Date] = [:]
     /// Source processes whose tap was released for their silence: they don't
-    /// count as playing until they're tapped again.
+    /// count as playing until they're tapped again (`silentTapRelease`).
     var quietProcesses: Set<AudioObjectID> = []
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     var permissionStatus: AudioCapturePermission?
@@ -133,6 +141,7 @@ package final class AudioMonitor: @unchecked Sendable {
     private let audioLevelsReleaseDelay: TimeInterval
     var audioLevelsRelease: DispatchWorkItem?
     var publishedLocalPlayback: Bool?
+    var publishedStartConfirmation: TimeInterval?
 
     package init(
         configuration: AppConfiguration,
@@ -180,6 +189,8 @@ package final class AudioMonitor: @unchecked Sendable {
                     await arbiter.handleSourceChange(sourceID: id, isPlaying: isPlaying, heardSince: heardSince)
                 case .localPlayback(let isLocal):
                     await arbiter.handleLocalPlaybackChange(isLocal)
+                case .startConfirmation(let longest):
+                    await arbiter.handleStartConfirmationChange(longest)
                 case .delivered(let done):
                     done()
                 }

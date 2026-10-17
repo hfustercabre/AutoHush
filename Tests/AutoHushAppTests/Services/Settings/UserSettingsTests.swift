@@ -43,11 +43,18 @@ struct UserSettingsTests {
         #expect(preferences.autoPause.snoozedUntil == nil)
     }
 
-    @Test("an expired snooze is cleared as the settings are read")
-    func expiredSnoozeCleared() {
+    @Test("an expired snooze is cleared as the settings are read, and one running out meanwhile once its time is up")
+    func expiredSnoozeCleared() async {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: Date().addingTimeInterval(-60))
         let settings = UserSettings(preferences: preferences)
+        #expect(settings.state.autoPause == .on)
+        #expect(preferences.autoPause.snoozedUntil == nil)
+
+        // Turned off for five minutes, a moment before the end of them.
+        settings.snooze(.fiveMinutes, now: Date().addingTimeInterval(-AutoPauseSnooze.fiveMinutes.duration + 0.05))
+        #expect(!settings.isAutoPauseActive)
+        await TestWait.until { settings.isAutoPauseActive }
         #expect(settings.state.autoPause == .on)
         #expect(preferences.autoPause.snoozedUntil == nil)
     }
@@ -103,7 +110,7 @@ struct UserSettingsTests {
         #expect(preferences.seenApps.isEmpty)
     }
 
-    @Test("an app that plays only the volume sound is ignored once; stopped ignoring, it stays so")
+    @Test("an app that plays only the volume sound is ignored once; stopped ignoring, it stays so until the list is reset")
     func ignoreByDefault() {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let settings = UserSettings(preferences: preferences)
@@ -117,6 +124,11 @@ struct UserSettingsTests {
         settings.ignoreByDefault(display) // opened again
         #expect(settings.state.ignoredApps.isEmpty)
         #expect(UserSettings(preferences: preferences).state.ignoredApps.isEmpty) // after a relaunch too
+
+        // Reset List…: the next time it runs, it's ignored again.
+        settings.forgetAll()
+        settings.ignoreByDefault(display)
+        #expect(settings.state.ignoredApps.map(\.id) == [display.id])
     }
 
     @Test("an app the user already ignores is only noted, not added twice")
@@ -190,8 +202,10 @@ struct UserSettingsTests {
         new.startConfirmation = 1.25
         new.silenceThresholdDB = -45
         new.fadesEnabled = false
+        // Seconds in the region's numbers, as the log writes them ("0,5" in Spain's).
+        let seconds = { (value: Double) in value.formatted(.number.precision(.fractionLength(0...2))) }
         #expect(UserSettings.changes(from: .defaults, to: new) == [
-            "Pause playback after: 0.5 s → 1.25 s",
+            "Pause playback after: \(seconds(0.5)) s → \(seconds(1.25)) s",
             "Silence threshold: -60 dBFS → -45 dBFS",
             "Fade the music: off",
         ])

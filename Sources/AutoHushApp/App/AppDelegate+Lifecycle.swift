@@ -57,21 +57,27 @@ extension AppDelegate {
     /// Waits (briefly) for a fade in progress to give the player its volume
     /// back, so quitting never leaves the music faded down.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // A pause AutoHush is holding is handed over (see `PlayerSession.quit`).
+        shouldTerminate { sender.reply(toApplicationShouldTerminate: true) }
+    }
+
+    /// Quits at once when nothing runs. Otherwise the quit goes on (`reply`,
+    /// once) when the player has its volume back and a pause AutoHush is
+    /// holding is handed over (see `PlayerSession.quit`), or after `wait`.
+    func shouldTerminate(wait: TimeInterval = 1, reply: @escaping @MainActor () -> Void) -> NSApplication.TerminateReply {
         guard let stopping = session.quit() else { return .terminateNow }
         var replied = false
-        let reply: @MainActor () -> Void = {
+        let replyOnce: @MainActor () -> Void = {
             guard !replied else { return }
             replied = true
-            sender.reply(toApplicationShouldTerminate: true)
-        }
-        Task { @MainActor in
-            await stopping.value
             reply()
+        }
+        quitting = Task { @MainActor in
+            await stopping.value
+            replyOnce()
         }
         // Never hang the quit. A timer, not the main queue: it also fires when
         // the quit was asked for from inside a main-actor job.
-        let fallback = Timer(timeInterval: 1, repeats: false) { _ in MainActor.assumeIsolated { reply() } }
+        let fallback = Timer(timeInterval: wait, repeats: false) { _ in MainActor.assumeIsolated { replyOnce() } }
         RunLoop.main.add(fallback, forMode: .common)
         return .terminateLater
     }

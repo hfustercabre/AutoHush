@@ -11,11 +11,13 @@ struct MusicPlayerErrorTests {
         #expect(error.localizedDescription.lowercased().contains("automation"))
     }
 
-    @Test("playerNotRunning has a human-readable description")
-    func playerUnavailableDescription() {
-        let error = MusicPlayerError.playerNotRunning
-        #expect(error.errorDescription?.isEmpty == false)
-        #expect(error.localizedDescription.lowercased().contains("player"))
+    @Test("playerNotRunning, accessibilityPermissionDenied and stillLearning say exactly what bug reports quote", arguments: [
+        (MusicPlayerError.playerNotRunning, "The media player isn’t running or isn’t available."),
+        (.accessibilityPermissionDenied, "AutoHush isn’t allowed Accessibility access to control the media player."),
+        (.stillLearning, "AutoHush is still learning how to control the media player."),
+    ])
+    func exactDescriptions(error: MusicPlayerError, text: String) {
+        #expect(error.errorDescription == text)
     }
 
     @Test("playerCommandFailed describes its failure, in English for the log")

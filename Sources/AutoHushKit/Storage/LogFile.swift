@@ -29,6 +29,11 @@ package final class LogFile: @unchecked Sendable {
         return file
     }
 
+    /// Stops keeping it: lines logged from now on go nowhere (tests).
+    package static func stop() {
+        current.withLock { $0 = nil }
+    }
+
     package let url: URL
     private let now: @Sendable () -> Date
     /// Writes, trims and reads, one at a time.

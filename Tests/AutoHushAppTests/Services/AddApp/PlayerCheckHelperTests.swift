@@ -12,21 +12,12 @@ private final class Report {
 
 @Suite("PlayerCheckHelper")
 struct PlayerCheckHelperTests {
-    /// A stand-in for playercheck in `folder`: a shell script that runs `body`.
-    private static func helper(_ body: String, in folder: URL) throws -> PlayerCheckHelper {
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let url = folder.appending(path: "playercheck")
-        try Data("#!/bin/sh\n\(body)\n".utf8).write(to: url)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
-        return PlayerCheckHelper(url: url)
-    }
-
-    @Test("each question goes to the helper with AutoHush's folders, its answer read; a helper that can't start or takes too long tells nothing")
+    @Test("each question goes to the helper with its folders, its answer read; a helper that can't start or takes too long tells nothing")
     func questions() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
-        let folders = PlayerCheckHelper.folderArguments.joined(separator: " ")
-        let helper = try Self.helper(#"""
+        let folders = "--logs \(folder.path)/Logs --caches \(folder.path)/Caches"
+        let helper = try PlayerCheckHelper.standIn(#"""
             case " $* " in *" \#(folders) "*) ;; *) exit 2 ;; esac
             case "$1" in
             --now-playing-list) [ "$2" = 24 ] && printf 'com.example.player\t412\tPlaying\t1\tPlayer\ncom.example.paused\t300\tPaused\t0\tPaused\n#active\t412\n' ;;
@@ -58,9 +49,8 @@ struct PlayerCheckHelperTests {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
         let log = "check \(UUID().uuidString).log"
-        defer { try? FileManager.default.removeItem(at: PlayerCheckHelper.logsFolder.appending(path: log)) }
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)], setup: nil)
-        let finishing = try Self.helper(#"""
+        let finishing = try PlayerCheckHelper.standIn(#"""
             for argument in "$@"; do
                 case "$last" in --result) result=$argument ;; --logs) logs=$argument ;; esac
                 last=$argument
@@ -77,11 +67,11 @@ struct PlayerCheckHelperTests {
         #expect(await run.waitForEnd() == .finished(found))
         #expect(report.lines.count == 3 && report.lines.prefix(2) == ["Press Test", "  checking /Applications/Player.app, --no-taps"])
         #expect(report.lines.last.map { !FileManager.default.fileExists(atPath: $0) } == true) // read, then removed
-        #expect(PlayerCheckHelper.newestLog?.lastPathComponent == log) // shown after a check that couldn't finish
+        #expect(PlayerCheckHelper.newestLog(in: finishing.logs)?.lastPathComponent == log) // shown after a check that couldn't finish
         run.stop() // ended: nothing to stop
         #expect(await run.waitForEnd() == .finished(found))
 
-        let waiting = try Self.helper(#"""
+        let waiting = try PlayerCheckHelper.standIn(#"""
             trap 'kill $! 2>/dev/null; echo "  put back"; exit 143' TERM
             echo "Press Test"
             sleep 30 &
@@ -93,6 +83,22 @@ struct PlayerCheckHelperTests {
         stopping.stop()
         #expect(await stopping.waitForEnd() == .stopped)
         #expect(stopped.lines == ["Press Test", "  put back"])
+    }
+
+    @Test("the helper is found inside AutoHush.app, or beside the executable of a build run from .build, where it can run")
+    func bundled() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let app = folder.appending(path: "AutoHush.app")
+        let executable = app.appending(path: "Contents/MacOS/AutoHush")
+        #expect(PlayerCheckHelper.bundled(in: app, beside: executable) == nil)
+
+        let inside = try PlayerCheckHelper.standIn("exit 0", in: app.appending(path: "Contents/Helpers"))
+        #expect(PlayerCheckHelper.bundled(in: app, beside: executable)?.url.path == inside.url.path)
+        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: inside.url.path) // can't run
+        #expect(PlayerCheckHelper.bundled(in: app, beside: executable) == nil)
+        let beside = try PlayerCheckHelper.standIn("exit 0", in: executable.deletingLastPathComponent())
+        #expect(PlayerCheckHelper.bundled(in: app, beside: executable)?.url.path == beside.url.path)
     }
 
     @Test("the Now Playing list: each app's bundle ID and whether it plays, apart from those removed and the active line")
@@ -125,10 +131,11 @@ struct PlayerCheckHelperTests {
     func checkArguments() {
         let app = URL(filePath: "/Applications/Deezer.app")
         let result = URL(filePath: "/tmp/result.json")
-        let arguments = PlayerCheckHelper.checkArguments(app, result: result, taps: true)
+        let helper = PlayerCheckHelper(url: URL(filePath: "/usr/bin/true"))
+        let arguments = helper.checkArguments(app, result: result, taps: true)
         #expect(Array(arguments.prefix(5)) == ["/Applications/Deezer.app", "--block-input", "--partial", "--result", "/tmp/result.json"])
-        #expect(arguments.contains("--logs") && arguments.contains("--caches") && !arguments.contains("--no-taps"))
-        #expect(PlayerCheckHelper.checkArguments(app, result: result, taps: false).last == "--no-taps")
+        #expect(Array(arguments.dropFirst(5)) == ["--logs", PlayerCheckHelper.logsFolder.path, "--caches", PlayerCheckHelper.cachesFolder.path])
+        #expect(helper.checkArguments(app, result: result, taps: false).last == "--no-taps")
     }
 
     @Test("how the helper's exit ends a check")

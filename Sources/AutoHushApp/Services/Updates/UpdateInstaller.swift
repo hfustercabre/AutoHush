@@ -115,7 +115,7 @@ protocol UpdateInstalling: Sendable {
 ///    release's version. This is the test macOS uses to keep AutoHush's
 ///    permissions, and nothing but AutoHush signed by its team passes it;
 /// 4. swaps it in for the running app, and has it opened as soon as this one
-///    quits.
+///    quits. A copy that couldn't be swapped in goes to the Trash.
 ///
 /// AutoHush isn't notarized, so Gatekeeper would refuse to open a copy marked
 /// as downloaded. The signature check takes Gatekeeper's place: once a copy
@@ -124,6 +124,8 @@ struct UpdateInstaller: UpdateInstalling {
     typealias Download = @Sendable (URLRequest) async throws -> (URL, URLResponse)
     /// Opens the app at a URL once AutoHush has quit; returns a way to call that off.
     typealias Relaunch = @Sendable (URL) throws -> @Sendable () -> Void
+    /// Moves a file to the Trash.
+    typealias Trash = @Sendable (URL) -> Void
 
     /// Where the running app is installed.
     let appURL: URL
@@ -132,21 +134,25 @@ struct UpdateInstaller: UpdateInstalling {
     let requirement: String?
     private let fetchFile: Download
     private let relaunch: Relaunch
-    /// The tools tried, in order, to open the disk image.
+    /// The tools tried, in order, to open the disk image; when the one that
+    /// opened it can't close it, the others are tried.
     private let diskImageTools: [DiskImageTool]
+    private let trash: Trash
 
     init(
         appURL: URL = Bundle.main.bundleURL,
         requirement: String? = UpdateInstaller.runningAppRequirement(),
         download: @escaping Download = { try await URLSession.updates.download(for: $0) },
         relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit,
-        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
+        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference,
+        trash: @escaping Trash = { try? FileManager.default.trashItem(at: $0, resultingItemURL: nil) }
     ) {
         self.appURL = appURL
         self.requirement = requirement
         self.fetchFile = download
         self.relaunch = relaunch
         self.diskImageTools = diskImageTools
+        self.trash = trash
     }
 
     var unavailability: UpdateInstallUnavailability? {
@@ -211,6 +217,9 @@ struct UpdateInstaller: UpdateInstalling {
             _ = try FileManager.default.replaceItemAt(appURL, withItemAt: update.app)
         } catch {
             cancelRelaunch()
+            // The next try prepares a new copy.
+            if FileManager.default.fileExists(atPath: update.app.path) { trash(update.app) }
+            discard(update)
             throw UpdateInstallError.notReplaced(error.localizedDescription, logReason: LogMessage.englishDescription(of: error))
         }
         discard(update)
@@ -227,7 +236,7 @@ struct UpdateInstaller: UpdateInstalling {
     private func copyApp(outOf imageFile: URL, into folder: URL) async throws -> URL {
         let mountPoint = folder.appending(path: "Volume", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: false)
-        let tool = try await attach(imageFile, at: mountPoint)
+        let opener = try await attach(imageFile, at: mountPoint)
 
         let copied = Result {
             let source = mountPoint.appending(path: "AutoHush.app", directoryHint: .isDirectory)
@@ -237,24 +246,32 @@ struct UpdateInstaller: UpdateInstalling {
             try FileManager.default.copyItem(at: source, to: app)
             return app
         }
-        await detach(mountPoint, with: tool)
+        await detach(mountPoint, openedWith: opener)
         return try copied.get()
     }
 
     /// Opens the disk image at `mountPoint` with the first tool that manages
-    /// to, and returns that tool, to close it again. A tool this macOS lacks
-    /// fails, and the next one is tried.
-    private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> DiskImageTool {
-        for tool in diskImageTools {
+    /// to, and returns that tool's place in `diskImageTools`, to close it
+    /// again. A tool this macOS lacks fails, and the next one is tried.
+    private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> Int {
+        for (index, tool) in diskImageTools.enumerated() {
             let status = try? await Self.run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint)))
-            if status == 0 { return tool }
+            if status == 0 { return index }
         }
         throw UpdateInstallError.damaged
     }
 
-    /// Closes the disk image opened at `mountPoint` with `tool`.
-    private func detach(_ mountPoint: URL, with tool: DiskImageTool) async {
-        _ = try? await Self.run(tool.path, tool.detachArguments(Self.resolvedPath(mountPoint)))
+    /// Closes the disk image opened at `mountPoint` with the tool at
+    /// `opener`, then, while it's still mounted, with the others in turn, so
+    /// that no image stays attached (14.4's diskutil, for one, didn't know
+    /// `eject force`).
+    private func detach(_ mountPoint: URL, openedWith opener: Int) async {
+        let path = Self.resolvedPath(mountPoint)
+        let tool = diskImageTools[opener]
+        _ = try? await Self.run(tool.path, tool.detachArguments(path))
+        for other in diskImageTools[(opener + 1)...] + diskImageTools[..<opener] where Self.isMounted(at: path) {
+            _ = try? await Self.run(other.path, other.detachArguments(path))
+        }
     }
 
     /// Accepts `app` only when it's signed like the running app, intact (every
@@ -359,6 +376,13 @@ struct UpdateInstaller: UpdateInstalling {
         }
     }
 
+    /// Whether a volume is mounted at `path` (resolved, as macOS records it).
+    private static func isMounted(at path: String) -> Bool {
+        var volume = statfs()
+        guard statfs(path, &volume) == 0 else { return false }
+        return withUnsafeBytes(of: volume.f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) } == path
+    }
+
     /// Runs a command-line tool and returns its exit status, without blocking
     /// a thread while it runs.
     private static func run(_ tool: String, _ arguments: [String]) async throws -> Int32 {
@@ -387,7 +411,9 @@ struct DiskImageTool: Sendable {
     /// The arguments that close the image opened at the mount point.
     let detachArguments: @Sendable (_ mountPoint: String) -> [String]
 
-    /// `diskutil image`, which macOS 27 recommends. macOS 15 doesn't have it.
+    /// `diskutil image`, which macOS 27 recommends. macOS 15 doesn't have it;
+    /// 14.4's opened volumes the tests couldn't read, and its eject doesn't
+    /// know `force`.
     static let diskutil = DiskImageTool(
         path: "/usr/sbin/diskutil",
         attachArguments: { ["image", "attach", "--readOnly", "--nobrowse", "--mountPoint", $1, $0] },
@@ -404,8 +430,8 @@ struct DiskImageTool: Sendable {
         detachArguments: { ["detach", $0, "-force"] }
     )
 
-    /// The newer tool first, so updates keep working once macOS removes
-    /// hdiutil's attach and detach; on macOS 15 it fails at once and hdiutil
-    /// takes over.
-    static let inOrderOfPreference = [diskutil, hdiutil]
+    /// From macOS 27, which deprecates hdiutil's attach and detach, the newer
+    /// tool first, so updates keep working once macOS removes them (when it
+    /// fails, hdiutil takes over); before, hdiutil alone.
+    static let inOrderOfPreference: [DiskImageTool] = if #available(macOS 27, *) { [diskutil, hdiutil] } else { [hdiutil] }
 }

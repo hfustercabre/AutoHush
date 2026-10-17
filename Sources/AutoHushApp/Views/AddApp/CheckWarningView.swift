@@ -14,6 +14,9 @@ struct CheckWarningView: View {
     let start: () -> Void
     let cancel: () -> Void
 
+    /// The window's width, which its bottom bar's buttons fit in every language.
+    static let width: CGFloat = 460
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
@@ -68,7 +71,7 @@ struct CheckWarningView: View {
                 .keyboardShortcut(.defaultAction)
             }
         }
-        .frame(width: 460)
+        .frame(width: Self.width)
         .font(.appBody)
     }
 

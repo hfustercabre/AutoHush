@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 @testable import AutoHushApp
 
@@ -12,7 +13,7 @@ struct PlayerTilesTests {
         #expect(PlayerTiles.rowCount(5 + 1) == 2) // five web apps and the add tile
     }
 
-    @Test("five rows are five tiles tall with the gaps between them, so a sixth row scrolls")
+    @Test("five rows are five tiles tall with the gaps between them, so a sixth row scrolls, wherever among the groups it falls")
     func fiveRows() {
         #expect(PlayerTiles.height(ofRows: 0).isZero)
         #expect(PlayerTiles.height(ofRows: 1).isEqual(to: PlayerTiles.tileHeight))
@@ -20,5 +21,19 @@ struct PlayerTilesTests {
         // isEqual(to:): #expect's own `==` on CGFloats fails here even when they're equal.
         #expect(PlayerTiles.height(ofRows: 5).isEqual(to: fiveRows))
         #expect(PlayerChooserView.visibleTileRows == 5)
+
+        // The groups' rows and where their tiles start: the list cuts off a
+        // little under the last row shown, in whichever group it is.
+        let groups: [(rows: Int, top: CGFloat)] = [(rows: 2, top: 30), (rows: 1, top: 150), (rows: 3, top: 230)]
+        func cut(_ rows: Int, content: CGFloat = 500) -> CGFloat {
+            PlayerTiles.visibleHeight(rows: rows, groups: groups, contentHeight: content)
+        }
+        let under = PlayerTiles.rowSpacing + 12
+        #expect(cut(5).isEqual(to: 230 + PlayerTiles.height(ofRows: 2) + under)) // two of the third group's
+        #expect(cut(3).isEqual(to: 150 + PlayerTiles.height(ofRows: 1) + under)) // the second group's last
+        #expect(cut(1).isEqual(to: 30 + PlayerTiles.height(ofRows: 1) + under))
+        #expect(cut(6).isEqual(to: 500)) // every row: all of them
+        #expect(cut(5, content: 300).isEqual(to: 300)) // never more than they are
+        #expect(cut(5, content: 0).isZero) // not measured yet
     }
 }

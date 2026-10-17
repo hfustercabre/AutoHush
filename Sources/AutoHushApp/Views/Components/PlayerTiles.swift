@@ -112,17 +112,23 @@ struct PlayerTiles: View {
         let groups = (apps.isEmpty ? [] : [(rows: Self.rowCount(apps.count), top: appsTop)])
             + [(rows: Self.rowCount(checkedApps.count + 1), top: otherAppsTop), // the add tiles
                (rows: Self.rowCount(webApps.count + 1), top: webAppsTop)]
+        return Self.visibleHeight(rows: rows, groups: groups, contentHeight: contentHeight)
+    }
+
+    /// The same for `groups`, each its rows and where its tiles start, in
+    /// tiles `contentHeight` tall in all (0 until measured).
+    static func visibleHeight(rows: Int, groups: [(rows: Int, top: CGFloat)], contentHeight: CGFloat) -> CGFloat {
         guard groups.map(\.rows).reduce(0, +) > rows, contentHeight > 0 else { return contentHeight }
         var left = rows
         var bottom = contentHeight
         for group in groups {
             if left <= group.rows {
-                bottom = group.top + Self.height(ofRows: left)
+                bottom = group.top + height(ofRows: left)
                 break
             }
             left -= group.rows
         }
-        return min(contentHeight, bottom + Self.rowSpacing + 12)
+        return min(contentHeight, bottom + rowSpacing + 12)
     }
 
     static func rowCount(_ tiles: Int) -> Int { (tiles + columns - 1) / columns }

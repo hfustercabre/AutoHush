@@ -121,9 +121,11 @@ struct AppStatus: Equatable {
     var playerNeedsLevels = false
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
-    mutating func setHealth(_ health: AppHealthState) {
+    /// They join the stopped ones, as when they stop (another player chosen,
+    /// the player quit), so Recently Played lists them.
+    mutating func setHealth(_ health: AppHealthState, now: Date = Date()) {
         self.health = health
-        if health != .ready { activeSources = [] }
+        if health != .ready { setActiveSources([], now: now) }
     }
 
     /// An app that leaves them joins the stopped ones; one playing again
@@ -138,9 +140,11 @@ struct AppStatus: Equatable {
     }
 
     /// The apps that played in the last 5 minutes and play no more, the
-    /// most recent first.
+    /// most recent first; never the chosen player, which doesn't pause
+    /// itself (as `seenApps`): its switch would only store it as ignored.
     func recentSources(at now: Date = Date()) -> [AudioSource] {
-        stoppedSources.filter { now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }.map(\.source)
+        stoppedSources.filter { $0.source.id != chosenPlayerID && now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }
+            .map(\.source)
     }
 
     func isIgnored(_ id: String) -> Bool {
