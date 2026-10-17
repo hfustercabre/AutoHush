@@ -34,6 +34,9 @@ import AutoHushKit
 /// ─────────
 ///   Ignored Apps                  ▸ (click one to stop ignoring it)
 /// ─────────
+///   Detection · Fades · Advanced   (More Settings: folded at first)
+///   ⌄                               (shows or folds them)
+/// ─────────
 ///   Install AutoHush 0.3.8…              (once one is found; Installing… while it installs)
 ///   [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
 /// ```
@@ -84,11 +87,15 @@ final class StatusMenuController: NSObject {
     /// menu is open (the user, 2026-10-16): a switch under Playing Now
     /// changes them at once.
     private var ignoredAppsRows: (separator: NSMenuItem, row: NSMenuItem)?
+    /// Detection's, Fades' and Advanced's settings, as Settings changes them.
+    private let settingsModel: SettingsModel?
+    private var moreSettingsItem: NSMenuItem?
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
-         updates: any UpdateCommands, actions: (any AppActions)?) {
+         updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
         self.status = status
         self.settings = settings
+        self.settingsModel = settingsModel
         self.session = session
         self.updates = updates
         self.actions = actions
@@ -173,6 +180,12 @@ final class StatusMenuController: NSObject {
         menu.addItem(ignoredApps.row)
         ignoredAppsRows = ignoredApps
         showIgnoredApps()
+        if let settingsModel {
+            menu.addItem(.separator())
+            let more = hostedItem("moreSettings", MoreSettingsView(model: model, settings: settingsModel))
+            moreSettingsItem = more
+            menu.addItem(more)
+        }
         menu.addItem(.separator())
         if let offer = status.updateOffer { menu.addItem(updateItem(for: offer)) }
         menu.addItem(hostedItem("toolbar", MenuToolbarView(model: model)))
@@ -399,6 +412,11 @@ final class StatusMenuController: NSObject {
             togglePlayerList()
         case .searchPlayers(let search):
             searchPlayers(search)
+        case .toggleMoreSettings:
+            model.showsMoreSettings.toggle()
+            if let moreSettingsItem { fit(moreSettingsItem, changed: true) }
+        case .fitMoreSettings:
+            if let moreSettingsItem { fit(moreSettingsItem, changed: true) }
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
@@ -433,7 +451,8 @@ final class StatusMenuController: NSObject {
         case .reopenPlayer:       actions?.reopenPlayer()
         case .unmutePlayer:       actions?.unmutePlayer()
         case .quit:               actions?.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry: break // they act in perform(_:)
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .toggleMoreSettings, .fitMoreSettings:
+            break // they act in perform(_:)
         }
     }
 

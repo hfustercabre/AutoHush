@@ -19,6 +19,10 @@ enum StatusMenuCommand: Equatable, Sendable {
     /// Lifts the mute of a player that's muted instead of paused, until the
     /// other apps stop (`AppStatus.offersUnmute`).
     case unmutePlayer
+    /// Shows or folds away More Settings, below Ignored Apps.
+    case toggleMoreSettings
+    /// More Settings' rows changed: its row takes its new height.
+    case fitMoreSettings
     /// Learns the chosen web app's controls in a new learning window.
     case learnControls
     case openSettings
@@ -45,6 +49,9 @@ final class StatusMenuModel {
     var listedRecentSources: [AudioSource] = []
     /// Whether the music players are unfolded under the card.
     var isChoosingPlayer = false
+    /// Whether More Settings shows: folded at first, then as the user left
+    /// it, while AutoHush runs.
+    var showsMoreSettings = false
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
     /// An update check asked from the menu runs: its Updates button says so.

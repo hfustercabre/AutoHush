@@ -12,15 +12,10 @@ struct DetectionSettingsView: View {
     var body: some View {
         SettingsPageScroll {
             Card {
-                SwitchRow(
-                    Text("AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"),
-                    subtitle: Text("Hides the purple recording indicator. Detection is less precise.",
-                                   comment: "Settings, under AntiDot mode"),
-                    isOn: Binding(get: { model.isAntiDotMode }, set: { model.setAntiDotMode($0) })
-                )
+                SettingsSwitchRow(model: model, kind: .antiDot)
                 // A player only its sound tells (muted only, or a Now Playing row
-                // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16).
-                .disabled(!model.isAntiDotMode && model.antiDotUnavailableFor != nil)
+                // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16);
+                // the switch is off and dimmed (`SettingsSwitch.isUnavailable`).
                 if !model.isAntiDotMode, let player = model.antiDotUnavailablePlayer {
                     Text(verbatim: Self.unavailableNote(player.name, mutes: player.pausesByMuting))
                         .captionStyle().fixedSize(horizontal: false, vertical: true)
@@ -48,32 +43,13 @@ struct DetectionSettingsView: View {
 
             SectionHeading(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
             Card {
-                TimingSliderRow(
-                    model: model,
-                    title: Text("Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses"),
-                    keyPath: \.startConfirmation, range: TimingSettings.startConfirmationRange, step: 0.25,
-                    help: Text("How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored.",
-                               comment: "Settings → Detection, under “Pause playback after”")
-                )
+                TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
-                TimingSliderRow(
-                    model: model,
-                    title: Text("Resume playback after", comment: "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes"),
-                    keyPath: \.stopGrace, range: TimingSettings.stopGraceRange, step: 0.5,
-                    help: Text("How long another app must be silent. Bridges gaps between tracks and videos.",
-                               comment: "Settings → Detection, under “Resume playback after”")
-                )
+                TimingSliderRow(model: model, timing: .resumeAfter)
                 // Only measuring audio levels has a threshold: hidden in AntiDot mode.
                 if !model.isAntiDotMode {
                     CardDivider()
-                    TimingSliderRow(
-                        model: model,
-                        title: Text("Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
-                        keyPath: \.silenceThresholdDB, range: TimingSettings.silenceThresholdRange, step: 5,
-                        format: { String(localized: "\(Int($0)) dB", comment: "A sound level in decibels") },
-                        help: Text("Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off).",
-                                   comment: "Settings → Detection, under “Silence threshold”")
-                    )
+                    TimingSliderRow(model: model, timing: .silenceThreshold)
                 }
             }
             RestoreDefaultsButton(isDefault: model.detectionTimingsAreDefaults) { model.restoreDefaultDetectionTimings() }

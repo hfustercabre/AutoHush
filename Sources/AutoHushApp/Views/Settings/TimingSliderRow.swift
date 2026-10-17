@@ -2,25 +2,26 @@ import SwiftUI
 import AutoHushKit
 
 /// One of the timings as Settings → Detection and → Fades show it: its title
-/// and value, the slider, and what it does.
+/// and value, the slider, and what it does; `compact` (the menu's More
+/// Settings), smaller and without what it does. It's changed as it's dragged.
 struct TimingSliderRow: View {
     let model: SettingsModel
-    let title: Text
-    let keyPath: WritableKeyPath<TimingSettings, Double>
-    let range: ClosedRange<Double>
-    let step: Double
-    var format: (Double) -> String = \.secondsText
-    let help: Text
+    let timing: SettingsTiming
+    var compact = false
+
+    private var title: Text { timing.title }
+    private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: compact ? 0 : 4) {
             HStack {
                 title
-                Spacer()
-                Text(format(model.timings[keyPath: keyPath]))
+                Spacer(minLength: 4)
+                Text(timing.format(model.timings[keyPath: keyPath]))
                     .monospacedDigit()
                     .foregroundStyle(.appSecondary)
             }
+            .font(compact ? .appCallout : nil)
             .accessibilityHidden(true) // the slider says both, as its label and value
             Slider(
                 value: Binding(
@@ -31,14 +32,15 @@ struct TimingSliderRow: View {
                         model.setTimings(timings)
                     }
                 ),
-                in: range,
-                step: step
+                in: timing.range,
+                step: timing.step
             ) {
                 title // what VoiceOver says for it; the row shows it above
             }
             .labelsHidden()
-            .accessibilityValue(Text(verbatim: format(model.timings[keyPath: keyPath])))
-            help.captionStyle()
+            .controlSize(compact ? .small : .regular)
+            .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
+            if !compact { timing.help.captionStyle() }
         }
     }
 }

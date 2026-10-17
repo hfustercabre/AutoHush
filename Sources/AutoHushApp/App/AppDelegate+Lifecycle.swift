@@ -51,7 +51,7 @@ extension AppDelegate {
     /// AppDelegate.
     func showStatusMenu() {
         statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
-                                          updates: updates, actions: self)
+                                          updates: updates, actions: self, settingsModel: settingsModel)
     }
 
     /// Waits (briefly) for a fade in progress to give the player its volume

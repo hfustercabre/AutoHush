@@ -464,6 +464,33 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
+    @Test("More Settings sits below Ignored Apps, folded at first; its chevron unfolds Detection's, Fades' and Advanced's settings, the row growing, and they stay as left when the menu opens again; its switches change what Settings does")
+    func moreSettings() {
+        let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
+                                          launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        let sut = StatusMenuController(settings: settings, session: session, updates: updates, actions: actions,
+                                       settingsModel: settingsModel)
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.ignoredApps = [vlc]
+        sut.status = status
+        prepareToOpen(sut)
+        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings", "—", "toolbar"])
+        #expect(!sut.model.showsMoreSettings)
+        let folded = sut.menu.items.first { $0.identifier?.rawValue == "moreSettings" }?.view?.frame.height ?? 0
+
+        sut.model.perform(.toggleMoreSettings)
+        let open = sut.menu.items.first { $0.identifier?.rawValue == "moreSettings" }?.view?.frame.height ?? 0
+        #expect(sut.model.showsMoreSettings && open > folded + 200)
+        prepareToOpen(sut)
+        #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
+
+        SettingsSwitch.levelsMusic.set(true, in: settingsModel)
+        SettingsSwitch.antiDot.set(true, in: settingsModel)
+        #expect(settings.state.timings.levelsMusic && settings.state.detection == .playbackSignals)
+        #expect(SettingsSwitch.levelsMusic.isUnavailable(settingsModel)) // AntiDot mode measures no sound
+    }
+
     @Test("the players are folded again each time the menu opens")
     func playerListFoldsOnOpening() {
         let sut = makeController()

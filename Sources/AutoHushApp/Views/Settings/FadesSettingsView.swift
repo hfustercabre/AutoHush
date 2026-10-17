@@ -11,37 +11,13 @@ struct FadesSettingsView: View {
         SettingsPageScroll {
             Card {
                 Group {
-                    SwitchRow(
-                        Text("Fade playback", comment: "Settings → Fades: the switch that turns the fades on or off"),
-                        subtitle: Text("Out before pausing, and back in when resuming.",
-                                       comment: "Settings → Fades, under “Fade playback”"),
-                        isOn: Binding(
-                            get: { model.timings.fadesEnabled },
-                            set: { enabled in
-                                var timings = model.timings
-                                timings.fadesEnabled = enabled
-                                model.setTimings(timings)
-                            }
-                        )
-                    )
+                    SettingsSwitchRow(model: model, kind: .fades)
                     // The lengths show only while there's something to fade.
                     if model.timings.fadesEnabled && model.playerCanFade {
                         CardDivider()
-                        TimingSliderRow(
-                            model: model,
-                            title: Text("Fade out before pausing", comment: "Settings → Fades: slider for how long playback fades out before it pauses"),
-                            keyPath: \.fadeOutDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                            help: Text("How long playback fades out before it pauses. 0 pauses it at once.",
-                                       comment: "Settings → Fades, under “Fade out before pausing”")
-                        )
+                        TimingSliderRow(model: model, timing: .fadeOut)
                         CardDivider()
-                        TimingSliderRow(
-                            model: model,
-                            title: Text("Fade in when resuming", comment: "Settings → Fades: slider for how long playback fades back in when it resumes"),
-                            keyPath: \.fadeInDuration, range: TimingSettings.fadeDurationRange, step: 0.5,
-                            help: Text("How long playback takes to fade back in once it resumes. 0 resumes at full volume.",
-                                       comment: "Settings → Fades, under “Fade in when resuming”")
-                        )
+                        TimingSliderRow(model: model, timing: .fadeIn)
                     }
                 }
                 .disabled(!model.playerCanFade)
