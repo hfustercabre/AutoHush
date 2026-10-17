@@ -91,10 +91,14 @@ final class StatusMenuController: NSObject {
     private let settingsModel: SettingsModel?
     /// More Settings' rows, in order, the chevron last.
     private var moreSettingsRows: [(row: MoreSettingsRow, item: NSMenuItem)] = []
-    /// Shows or hides its rows one after the other while it unfolds or folds.
+    /// What's left of a reveal under way: when (seconds in) to do what.
+    private var moreSettingsSteps: [(at: TimeInterval, step: () -> Void)] = []
+    private var moreSettingsStart = Date()
     private var moreSettingsAnimation: Timer?
-    /// How long it unfolds or folds: briefly, while the menu shows.
-    static let moreSettingsDuration: TimeInterval = 0.15
+    /// How long the rows take to arrive, one after the other, and how long
+    /// one takes to fade out before its row goes.
+    static let moreSettingsArrival: TimeInterval = 0.2
+    static let moreSettingsLeave: TimeInterval = 0.12
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
@@ -187,8 +191,6 @@ final class StatusMenuController: NSObject {
         showIgnoredApps()
         if let settingsModel {
             menu.addItem(.separator())
-            moreSettingsAnimation?.invalidate()
-            moreSettingsAnimation = nil
             moreSettingsRows = MoreSettingsRow.allCases.map { row in
                 let item = hostedItem("moreSettings.\(row.rawValue)", MoreSettingsRowView(row: row, model: model, settings: settingsModel))
                 menu.addItem(item)
@@ -407,51 +409,87 @@ final class StatusMenuController: NSObject {
         return item
     }
 
-    /// Shows the rows of More Settings that apply now (all hidden but the
-    /// chevron while it's folded). Rows are shown or hidden whole: the menu
-    /// follows that while it's open, unlike a row changing its height.
-    private func showMoreSettings() {
-        guard let settingsModel, moreSettingsAnimation == nil else { return }
-        for (row, item) in moreSettingsRows {
-            item.isHidden = row != .chevron && !(model.showsMoreSettings && row.applies(settingsModel))
+    /// Whether each row of More Settings shows now: those that apply while
+    /// it's unfolded, the chevron always.
+    private var moreSettingsTargets: [(row: MoreSettingsRow, item: NSMenuItem, shows: Bool)] {
+        guard let settingsModel else { return [] }
+        return moreSettingsRows.map { row, item in
+            (row, item, row == .chevron || (model.showsMoreSettings && row.applies(settingsModel)))
         }
     }
 
-    /// Unfolds or folds More Settings: at once while the menu is closed
-    /// (or with Reduce Motion on), else its rows show one after the other
-    /// from the top, or hide from the bottom, over `moreSettingsDuration`.
-    private func toggleMoreSettings() {
+    /// Shows the rows of More Settings that apply now, at once, ending any
+    /// reveal. Rows are shown or hidden whole: the menu follows that while
+    /// it's open, unlike a row changing its height (2026-10-17).
+    private func showMoreSettings() {
         moreSettingsAnimation?.invalidate()
         moreSettingsAnimation = nil
-        model.showsMoreSettings.toggle()
-        guard let settingsModel, isMenuOpen, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
-            return showMoreSettings()
-        }
-        let unfolding = model.showsMoreSettings
-        var steps = moreSettingsRows.filter { $0.row != .chevron && $0.row.applies(settingsModel) }.map(\.item)
-        if !unfolding { steps.reverse() }
-        guard !steps.isEmpty else { return showMoreSettings() }
-        let interval = Self.moreSettingsDuration / Double(steps.count)
-        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.showNextMoreSettingsRow() }
-        }
-        pendingMoreSettingsRows = (steps, unfolding)
-        RunLoop.main.add(timer, forMode: .common) // runs while the menu tracks the pointer
-        moreSettingsAnimation = timer
-        showNextMoreSettingsRow()
+        moreSettingsSteps = []
+        for (_, item, shows) in moreSettingsTargets { item.isHidden = !shows }
+        model.moreSettingsArrived = Set(MoreSettingsRow.allCases)
     }
 
-    /// The rows still to show or hide while More Settings unfolds or folds.
-    private var pendingMoreSettingsRows: (items: [NSMenuItem], showing: Bool) = ([], true)
+    /// Unfolds or folds More Settings.
+    private func toggleMoreSettings() {
+        model.showsMoreSettings.toggle()
+        revealMoreSettings()
+    }
 
-    private func showNextMoreSettingsRow() {
-        guard !pendingMoreSettingsRows.items.isEmpty else {
-            moreSettingsAnimation?.invalidate()
-            moreSettingsAnimation = nil
-            return showMoreSettings() // as the settings are now
+    /// Brings More Settings' rows to what applies now (it unfolded or
+    /// folded, or a switch shows or hides rows), on the next turn: rows
+    /// hidden while the menu handles the click crop its top (2026-10-17).
+    /// While the menu shows, the rows going fade out from the bottom up, each
+    /// row going once faded; then the rows coming arrive from the top down,
+    /// close together at first and easing apart, each fading in and drifting
+    /// down on a soft spring (`MoreSettingsRowView`); at once with Reduce
+    /// Motion, or while it's closed.
+    private func revealMoreSettings() {
+        RunLoop.main.perform(inModes: [.common]) { [weak self] in
+            MainActor.assumeIsolated { self?.startMoreSettingsReveal() }
         }
-        let item = pendingMoreSettingsRows.items.removeFirst()
-        item.isHidden = !pendingMoreSettingsRows.showing
+    }
+
+    private func startMoreSettingsReveal() {
+        let changes = moreSettingsTargets.filter { $0.item.isHidden == $0.shows }
+        guard isMenuOpen, !changes.isEmpty, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            return showMoreSettings()
+        }
+        showMoreSettings() // a reveal still under way ends first
+        for change in changes { change.item.isHidden = change.shows } // as they were
+        var steps: [(at: TimeInterval, step: () -> Void)] = []
+        let going = changes.filter { !$0.shows }.reversed()
+        let gap = Self.moreSettingsLeave / 3
+        for (index, change) in going.enumerated() {
+            let at = Double(index) * gap
+            steps.append((at, { [weak self] in self?.model.moreSettingsArrived.remove(change.row) }))
+            steps.append((at + Self.moreSettingsLeave, { change.item.isHidden = true }))
+        }
+        let coming = changes.filter(\.shows)
+        let start = going.isEmpty ? 0 : Double(going.count - 1) * gap + Self.moreSettingsLeave
+        for change in coming { model.moreSettingsArrived.remove(change.row) }
+        for (index, change) in coming.enumerated() {
+            // Close together at first, easing apart.
+            let at = start + Self.moreSettingsArrival * pow(Double(index) / Double(max(1, coming.count)), 1.4)
+            steps.append((at, { change.item.isHidden = false }))
+            steps.append((at + 1.0 / 60, { [weak self] in self?.model.moreSettingsArrived.insert(change.row) }))
+        }
+        moreSettingsSteps = steps.sorted { $0.at < $1.at }
+        moreSettingsStart = Date()
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.stepMoreSettingsReveal() }
+        }
+        RunLoop.main.add(timer, forMode: .common) // runs while the menu tracks the pointer
+        moreSettingsAnimation = timer
+        stepMoreSettingsReveal()
+    }
+
+    private func stepMoreSettingsReveal() {
+        let elapsed = Date().timeIntervalSince(moreSettingsStart)
+        while let next = moreSettingsSteps.first, next.at <= elapsed {
+            moreSettingsSteps.removeFirst()
+            next.step()
+        }
+        if moreSettingsSteps.isEmpty { showMoreSettings() } // as the settings are now
     }
 
     // MARK: - Actions
@@ -472,11 +510,7 @@ final class StatusMenuController: NSObject {
         case .toggleMoreSettings:
             toggleMoreSettings()
         case .updateMoreSettings:
-            // After the click that changed them: hiding rows while the menu
-            // handles it crops the menu's top (2026-10-17).
-            RunLoop.main.perform(inModes: [.common]) { [weak self] in
-                MainActor.assumeIsolated { self?.showMoreSettings() }
-            }
+            revealMoreSettings()
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
@@ -570,9 +604,7 @@ extension StatusMenuController: NSMenuDelegate {
 
     func menuDidClose(_ menu: NSMenu) {
         isMenuOpen = false
-        moreSettingsAnimation?.invalidate() // ended where it was going
-        moreSettingsAnimation = nil
-        showMoreSettings()
+        showMoreSettings() // a reveal under way ends where it was going
     }
 }
 

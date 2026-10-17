@@ -464,7 +464,7 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
-    @Test("More Settings sits below Ignored Apps, folded at first: its chevron shows Detection's, Fades' and Advanced's rows, each a row of its own, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
+    @Test("More Settings sits below Ignored Apps, folded at first: its chevron shows Detection's, Fades' and Advanced's rows, each a row of its own, once the click is handled, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
@@ -477,28 +477,31 @@ struct StatusMenuControllerTests {
         prepareToOpen(sut)
         #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
         #expect(!sut.model.showsMoreSettings)
+        func settle() { RunLoop.main.run(until: Date() + 0.05) } // once the click is handled
 
         sut.model.perform(.toggleMoreSettings)
+        settle()
         let shown = ["detection", "pauseAfter", "resumeAfter", "silenceThreshold", "fades", "fadeOut", "fadeIn",
                      "advanced", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
         #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detection" }.prefix(shown.count)) == shown)
-        #expect(sut.menu.items.compactMap(\.view).allSatisfy { $0.frame.height > 0 })
+        #expect(sut.model.moreSettingsArrived == Set(MoreSettingsRow.allCases)) // every row's content shows
         prepareToOpen(sut)
         #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
 
         // AntiDot mode: its ways instead of the silence threshold, and leveling dimmed.
         SettingsSwitch.antiDot.set(true, in: settingsModel)
         sut.model.perform(.updateMoreSettings) // as its chevron's row asks when they change
-        RunLoop.main.run(until: Date() + 0.05) // it follows once the click is handled
+        settle()
         #expect(rows(sut.menu).contains("moreSettings.antiDotWays") && !rows(sut.menu).contains("moreSettings.silenceThreshold"))
         #expect(settings.state.detection == .playbackSignals && SettingsSwitch.levelsMusic.isUnavailable(settingsModel))
         // Fades off: their lengths go.
         SettingsSwitch.fades.set(false, in: settingsModel)
         sut.model.perform(.updateMoreSettings)
-        RunLoop.main.run(until: Date() + 0.05)
+        settle()
         #expect(!rows(sut.menu).contains("moreSettings.fadeOut") && !rows(sut.menu).contains("moreSettings.fadeIn"))
 
         sut.model.perform(.toggleMoreSettings)
+        settle()
         #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
     }
 

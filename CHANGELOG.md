@@ -82,7 +82,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **More settings in the menu.** A small arrow under Ignored Apps unfolds
   Detection's, Fades' and Advanced's switches and timings, row by row in
-  a brief animation (none with Reduce Motion); folded at first, it stays
+  a brief animation, as do the rows a switch shows or hides (none with
+  Reduce Motion); folded at first, it stays
   as you left it while AutoHush runs.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the

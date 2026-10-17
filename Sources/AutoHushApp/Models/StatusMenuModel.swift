@@ -52,6 +52,9 @@ final class StatusMenuModel {
     /// Whether More Settings shows: folded at first, then as the user left
     /// it, while AutoHush runs.
     var showsMoreSettings = false
+    /// More Settings' rows whose content shows: all but those arriving or
+    /// going while its rows are revealed (they fade and drift).
+    var moreSettingsArrived = Set(MoreSettingsRow.allCases)
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
     /// An update check asked from the menu runs: its Updates button says so.

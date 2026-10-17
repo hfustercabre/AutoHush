@@ -1,13 +1,11 @@
 import SwiftUI
 import AutoHushKit
 
-/// The rows of the menu's More Settings: Settings → Detection's, → Fades'
-/// and → Advanced's switches and timings, under a small chevron on a pill
-/// (C3) below Ignored Apps. Each is a menu row of its own, shown or hidden
-/// whole: a menu doesn't follow a row whose height changes while it's open
-/// (2026-10-17, its rows drawn at the old height). As in Settings, only
-/// what applies shows: the fades' lengths while they're on, AntiDot mode's
-/// ways while it's on, the silence threshold while it's off.
+/// The rows of the menu's More Settings (`MoreSettingsView`): Settings →
+/// Detection's, → Fades' and → Advanced's switches and timings, above a
+/// small chevron on a pill (C3). As in Settings, only what applies shows:
+/// the fades' lengths while they're on, AntiDot mode's ways while it's on,
+/// the silence threshold while it's off.
 enum MoreSettingsRow: String, CaseIterable {
     case detection, antiDotWays, pauseAfter, resumeAfter, silenceThreshold
     case fades, fadeOut, fadeIn
@@ -34,10 +32,16 @@ struct MoreSettingsRowView: View {
 
     var body: some View {
         content
+            // Arriving, it fades in and drifts down into place; going, the reverse.
+            .opacity(arrived ? 1 : 0)
+            .offset(y: arrived ? 0 : -8)
+            .animation(.spring(duration: 0.35, bounce: 0.2), value: arrived)
             .padding(.horizontal, 14)
             .padding(.vertical, 5)
             .frame(width: menuContentWidth, alignment: .leading)
     }
+
+    private var arrived: Bool { model.moreSettingsArrived.contains(row) }
 
     @ViewBuilder private var content: some View {
         switch row {
