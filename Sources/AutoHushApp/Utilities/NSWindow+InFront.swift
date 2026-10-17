@@ -11,18 +11,19 @@ extension NSWindow {
     /// permission. An inactive app's window would then open behind the
     /// active app's, where the user can't see it.
     ///
-    /// It isn't made to follow the user from desktop to desktop
+    /// It isn't made to follow the user from desktop to desktop for good
     /// (`.moveToActiveSpace`): macOS then gives a desktop the user comes
     /// back to to the app that was active there before, and raises its
-    /// windows over AutoHush's. Taken off another desktop before it shows
-    /// is enough to open it on the user's.
+    /// windows over AutoHush's. Open on another desktop, it follows only
+    /// while it shows (`comeToActiveSpace`). Over a full-screen app, macOS
+    /// takes the user to the desktop it opens on.
     func showInFront() {
         DockPresence.windowWillShow(self)
         if isMiniaturized { deminiaturize(nil) }
         comeToActiveSpace()
+        NSApp.becomeActive()
         makeKeyAndOrderFront(nil)
         orderFrontRegardless()
-        NSApp.becomeActive()
     }
 
     /// On screen, minimized in the Dock, or hidden with AutoHush (⌘H): open
@@ -37,8 +38,15 @@ extension NSWindow {
     }
 
     /// Open on another desktop (the user moved, or another app took them
-    /// there), it's taken off it, to come back on the one they're on.
+    /// there), it's taken off it, to come back on the one they're on: taken
+    /// off alone, AutoHush becoming active took the user to that desktop
+    /// (macOS 27, 2026-10-17), so it follows them for a second.
     private func comeToActiveSpace() {
-        if isVisible, !isOnActiveSpace { orderOut(nil) }
+        guard isVisible, !isOnActiveSpace else { return }
+        orderOut(nil)
+        guard collectionBehavior.insert(.moveToActiveSpace).inserted else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            MainActor.assumeIsolated { _ = self?.collectionBehavior.remove(.moveToActiveSpace) }
+        }
     }
 }

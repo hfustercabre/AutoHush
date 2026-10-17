@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 /// The card at the top of the menu: the music player, what's happening, the
-/// Auto-Pause switch, and the music player choice.
+/// Auto-Pause switch, and the music player choice, its players unfolding
+/// inside it (`MenuPlayerListView`).
 struct StatusCardView: View {
     let model: StatusMenuModel
 
@@ -51,6 +52,11 @@ struct StatusCardView: View {
                 SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
                 Spacer(minLength: 4)
                 playerButton
+            }
+            // The players unfold here, inside the card (M1, 2026-10-17).
+            if model.isChoosingPlayer {
+                MenuPlayerListView(model: model)
+                    .transition(.opacity)
             }
             // A web app's controls: learned or not, and the way to learn
             // them in the learning window (the steps show only there).

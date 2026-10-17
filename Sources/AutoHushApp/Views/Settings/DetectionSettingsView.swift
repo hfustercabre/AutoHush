@@ -11,6 +11,7 @@ struct DetectionSettingsView: View {
 
     var body: some View {
         SettingsPageScroll {
+            SectionHeading(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
             Card {
                 SettingsSwitchRow(model: model, kind: .antiDot)
                 // A player only its sound tells (muted only, or a Now Playing row

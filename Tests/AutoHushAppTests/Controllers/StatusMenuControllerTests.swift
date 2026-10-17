@@ -22,8 +22,8 @@ struct StatusMenuControllerTests {
         updates = FakeUpdateCommands(log: log)
     }
 
-    private func makeController() -> StatusMenuController {
-        StatusMenuController(settings: settings, session: session, updates: updates, actions: actions)
+    private func makeController(settingsModel: SettingsModel? = nil) -> StatusMenuController {
+        StatusMenuController(settings: settings, session: session, updates: updates, actions: actions, settingsModel: settingsModel)
     }
 
     /// Ready to control the Jukebox player, paused for another app.
@@ -35,27 +35,46 @@ struct StatusMenuControllerTests {
         return status
     }
 
-    /// What macOS does before the menu opens: the menu is put together.
-    private func prepareToOpen(_ sut: StatusMenuController) {
-        sut.menuNeedsUpdate(sut.menu)
+    /// The menu opens anew, put together for the status (its panel not shown).
+    private func reopen(_ sut: StatusMenuController) {
+        sut.close()
+        sut.open(showsPanel: false)
     }
 
-    /// The visible rows: a custom view by its identifier, a separator as
-    /// "—", any other row by its title.
-    private func rows(_ menu: NSMenu) -> [String] {
-        menu.items.filter { !$0.isHidden }.map { item in
-            if item.isSeparatorItem { return "—" }
-            return item.view == nil ? item.title : item.identifier?.rawValue ?? "view"
+    /// The menu's parts, in order: a warning by its row's title.
+    private func parts(_ sut: StatusMenuController) -> [String] {
+        sut.model.sections.map { section in
+            switch section {
+            case .card: "card"
+            case .warning(let permission): permission.grantTitle
+            case .reopenAutoHush: PermissionText.reopen
+            case .useAntiDot: PermissionText.useAntiDot
+            case .snooze: "snooze"
+            case .playingNow: "playingNow"
+            case .recentlyPlayed: "recentlyPlayed"
+            case .ignoredApps: "ignoredApps"
+            case .settings: "settings"
+            case .update: "update"
+            case .toolbar: "toolbar"
+            }
         }
     }
 
-    private func item(_ title: String, in menu: NSMenu) throws -> NSMenuItem {
-        try #require(menu.items.first { $0.title == title }, "no menu item \"\(title)\"")
+    /// The unfolded players, by their groups: "[Supported]", "[Other]",
+    /// "[Web]" over their names, and a note when the search matched none.
+    private func playerRows(_ sut: StatusMenuController) -> [String] {
+        let list = sut.model.players
+        var rows: [String] = list.showsSearch ? ["search"] : []
+        if let note = list.noMatchNote { rows.append(note) }
+        if !list.supportedApps.isEmpty { rows += ["[Supported]"] + list.supportedApps.map(\.option.name) }
+        if list.showsOtherApps { rows += ["[Other]"] + list.otherApps.map(\.option.name) }
+        if !list.webApps.isEmpty { rows += ["[Web]"] + list.webApps.map(\.option.name) }
+        return rows
     }
 
-    private func perform(_ item: NSMenuItem) throws {
-        let menu = try #require(item.menu)
-        menu.performActionForItem(at: menu.index(of: item))
+    private func row(_ name: String, in sut: StatusMenuController) throws -> MenuPlayerList.Row {
+        let list = sut.model.players
+        return try #require((list.supportedApps + list.otherApps + list.webApps).first { $0.option.name == name }, "no player \"\(name)\"")
     }
 
     /// Waits until `log` has `count` calls: some commands run once the menu
@@ -66,22 +85,28 @@ struct StatusMenuControllerTests {
 
     // MARK: - Layout
 
-    @Test("the menu is the card, the duration buttons and the toolbar; playing and ignored apps add their parts")
+    @Test("the menu is the card, the duration buttons and the toolbar; playing and ignored apps and the settings add their parts")
     func layout() {
         let sut = makeController()
         defer { sut.remove() }
         sut.status = readyStatus()
-        prepareToOpen(sut)
-        #expect(rows(sut.menu) == ["card", "snooze", "—", "toolbar"])
-        #expect(sut.menu.items.compactMap(\.view).allSatisfy { $0.frame.width >= menuContentWidth && $0.frame.height > 0 })
+        reopen(sut)
+        #expect(parts(sut) == ["card", "snooze", "toolbar"])
 
         var status = readyStatus()
         status.ignoredApps = [vlc]
         status.setActiveSources([vlc, chrome])
         sut.status = status
-        prepareToOpen(sut)
-        #expect(rows(sut.menu) == ["card", "snooze", "—", "playingApps", "—", "Ignored Apps", "—", "toolbar"])
+        reopen(sut)
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.listedSources == [chrome, vlc])
+
+        let withSettings = makeController(settingsModel: SettingsModel(settings: settings, updates: updates, actions: actions,
+                                                                        launchAtLoginController: MockLaunchAtLoginController(isEnabled: false)))
+        defer { withSettings.remove() }
+        withSettings.status = readyStatus()
+        reopen(withSettings)
+        #expect(parts(withSettings) == ["card", "snooze", "settings", "toolbar"])
     }
 
     @Test("Recently Played follows Playing Now, and shows on its own once nothing plays; never the chosen player")
@@ -92,61 +117,59 @@ struct StatusMenuControllerTests {
         status.setActiveSources([vlc, chrome])
         status.setActiveSources([chrome])
         sut.status = status
-        prepareToOpen(sut)
-        #expect(rows(sut.menu) == ["card", "snooze", "—", "playingApps", "recentApps", "—", "toolbar"])
+        reopen(sut)
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "recentlyPlayed", "toolbar"])
         #expect(sut.model.listedRecentSources == [vlc])
 
         status.setActiveSources([])
         sut.status = status
-        prepareToOpen(sut)
-        #expect(rows(sut.menu) == ["card", "snooze", "—", "recentApps", "—", "toolbar"])
+        reopen(sut)
+        #expect(parts(sut) == ["card", "snooze", "recentlyPlayed", "toolbar"])
         #expect(sut.model.listedRecentSources == [chrome, vlc])
 
         // VLC chosen as the player meanwhile: its switch would only store it as ignored.
         status.playerOptions.append(PlayerOption(bundleID: vlc.id, name: "VLC", appURL: URL(fileURLWithPath: "/Applications/VLC.app")))
         status.chosenPlayerID = vlc.id
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
         #expect(sut.model.listedRecentSources == [chrome])
     }
 
-    @Test("the views follow the status at once; rows are added or taken away only when the menu next opens; an update's alert waits for it to close")
-    func rowsWaitForTheNextOpening() async {
+    @Test("the menu follows the status at once, but the apps listed stay as they were until it opens again; closing for an update's alert is at once")
+    func listsWaitForTheNextOpening() async {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         status.setActiveSources([vlc])
         status.setActiveSources([]) // VLC played: under Recently Played
         sut.status = status
-        prepareToOpen(sut)
-        sut.menuWillOpen(sut.menu)
+        reopen(sut)
 
         status.setActiveSources([vlc, chrome]) // VLC plays again, and Chrome
         sut.status = status
         #expect(sut.model.status == status)              // the card shows it
         #expect(sut.model.listedSources.isEmpty)         // no row moves under the pointer
         #expect(sut.model.listedRecentSources == [vlc])
-        #expect(!rows(sut.menu).contains("playingApps"))
+        #expect(!parts(sut).contains("playingNow"))
 
-        // An update's alert shows once the menu has closed.
-        let closed = CallLog()
-        let closing = Task { await sut.closeMenu(); closed.calls.append("closed") }
-        await Task.yield()
-        #expect(closed.calls.isEmpty) // still open
-        sut.menuDidClose(sut.menu)
-        await closing.value
-        #expect(!sut.isMenuOpen && closed.calls == ["closed"])
+        await sut.closeMenu()
+        #expect(!sut.isMenuOpen)
         await sut.closeMenu() // closed already: at once
-        prepareToOpen(sut)
-        #expect(rows(sut.menu).contains("playingApps") && !rows(sut.menu).contains("recentApps"))
+        reopen(sut)
+        #expect(parts(sut).contains("playingNow") && !parts(sut).contains("recentlyPlayed"))
     }
 
-    @Test("the app can bring the status up to date before the menu opens")
+    @Test("the app can bring the status up to date before the menu opens; a closed menu catches up as it opens")
     func updateBeforeOpening() {
         let sut = makeController()
         defer { sut.remove() }
-        prepareToOpen(sut)
-        #expect(log.calls == ["menuWillOpen"])
+        sut.open(showsPanel: false)
+        #expect(log.calls == ["menuWillOpen"] && sut.isMenuOpen)
+        sut.close()
+        sut.status = readyStatus()
+        #expect(sut.model.status != readyStatus()) // until it opens again
+        sut.open(showsPanel: false)
+        #expect(sut.model.status == readyStatus())
     }
 
     @Test("auto-pause off dims the icon, and the card says until when")
@@ -157,14 +180,14 @@ struct StatusMenuControllerTests {
         status.autoPause = .snoozed("until 15:30")
         sut.status = status
         #expect(sut.statusItem.button?.appearsDisabled == true) // at once
-        prepareToOpen(sut)
+        reopen(sut)
         #expect(sut.model.status.statusLine == "Auto-Pause is off until 15:30")
     }
 
     // MARK: - The music player
 
-    @Test("the player button unfolds the players under the card, under “Supported Apps”; one that isn't installed comes last and can't be chosen; every icon shows")
-    func playerList() throws {
+    @Test("the player button unfolds the players inside the card, under “Supported Apps”; one that isn't installed comes last and can't be chosen; choosing one closes the menu first")
+    func playerList() async throws {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
@@ -175,34 +198,27 @@ struct StatusMenuControllerTests {
         ]
         status.chosenPlayerID = "com.example.first"
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
         sut.perform(.togglePlayerList)
         #expect(sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(9) == ["card", "supportedAppsHeading", "First", "Third", "Second", "otherAppsHeading", "Add an App…",
-                                             "Add a Web App…", "snooze"])
-        let heading = sut.menu.items[1]
-        #expect(heading.title == "Supported Apps")
-        #expect(!heading.isEnabled)
-        let players = Array(sut.menu.items[2...4])
-        #expect(players.map(\.state) == [.on, .off, .off])
+        #expect(playerRows(sut) == ["[Supported]", "First", "Third", "Second", "[Other]"])
+        let players = sut.model.players.supportedApps
+        #expect(players.map(\.isChosen) == [true, false, false])
         #expect(players.map(\.isEnabled) == [true, true, false])
         #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
-        #expect(players.allSatisfy { $0.image != nil })
-        if #available(macOS 27, *) {
-            // macOS 27 hides menu items' images unless they ask to show them.
-            #expect((players + [try item("Add a Web App…", in: sut.menu)]).allSatisfy { $0.preferredImageVisibility == .visible })
-        }
-        try perform(players[1])
+
+        sut.perform(.choosePlayer("com.example.third"))
+        #expect(!sut.isMenuOpen)
+        await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "player com.example.third"])
 
-        sut.perform(.togglePlayerList)
-        #expect(!sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+        reopen(sut)
+        #expect(!sut.model.isChoosingPlayer) // folded again each time it opens
     }
 
-    @Test("an app added through a check is offered under Other Apps, before Add an App…, which opens its window, as Add a Web App… opens its own")
-    func checkedApp() throws {
+    @Test("an app added through a check is offered under Other Apps, removable with Option held; Add an App… and Add a Web App… open their windows")
+    func checkedApp() async throws {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
@@ -213,21 +229,18 @@ struct StatusMenuControllerTests {
         ]
         status.chosenPlayerID = "com.example.first"
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(8) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Checked", "Remove Checked…",
-                                             "Add an App…", "Add a Web App…"])
-        let heading = sut.menu.items[3]
-        #expect(heading.title == "Other Apps")
-        #expect(!heading.isEnabled)
-        // Option held: its row removes it, after asking (R5).
-        let remove = try item("Remove Checked…", in: sut.menu)
-        #expect(remove.isAlternate && remove.keyEquivalentModifierMask == .option)
-        try perform(remove)
-        try perform(try item("Add an App…", in: sut.menu))
-        try perform(try item("Add a Web App…", in: sut.menu))
-        #expect(log.calls == ["menuWillOpen", "remove com.example.checked", "addApp", "addWebApp"])
+        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "Checked"])
+        #expect(try row("Checked", in: sut).isRemovable)
+        #expect(try !row("First", in: sut).isRemovable)
+        for command in [StatusMenuCommand.removeAddedApp("com.example.checked"), .addApp, .addWebApp] {
+            sut.perform(command)
+            reopen(sut)
+        }
+        await wait(for: 6, in: log)
+        #expect(log.calls.filter { $0 != "menuWillOpen" } == ["remove com.example.checked", "addApp", "addWebApp"])
     }
 
     @Test("an app added through a check that isn't installed now stays under Other Apps, last, dimmed and “Not installed”; a Chromium browser's web app says whose")
@@ -246,17 +259,16 @@ struct StatusMenuControllerTests {
         ]
         status.chosenPlayerID = "com.example.gone"
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(9) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "SoundCloud",
-                                             "Remove SoundCloud…", "Gone", "Remove Gone…", "Add an App…"])
-        let gone = try item("Gone", in: sut.menu)
-        #expect(!gone.isEnabled && gone.state == .on)
+        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "SoundCloud", "Gone"])
+        let gone = try row("Gone", in: sut)
+        #expect(!gone.isEnabled && gone.isChosen)
         #expect(gone.subtitle == "Not installed")
-        let soundCloud = try item("SoundCloud", in: sut.menu)
+        let soundCloud = try row("SoundCloud", in: sut)
         #expect(soundCloud.isEnabled)
-        #expect(soundCloud.accessibilityLabel() == "SoundCloud, Google Chrome web app")
+        #expect(soundCloud.accessibilityLabel == "SoundCloud, Google Chrome web app")
     }
 
     @Test("an app that can only be muted says so; in AntiDot mode it's dimmed, saying why, and stays checked when chosen")
@@ -274,25 +286,24 @@ struct StatusMenuControllerTests {
         ]
         status.chosenPlayerID = muted.bundleID
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
         sut.perform(.togglePlayerList)
-        let row = try item("Muted", in: sut.menu)
-        #expect(row.isEnabled && row.state == .on)
-        #expect(row.subtitle == "Muted instead of paused")
-        #expect(row.toolTip == nil)
+        let shown = try row("Muted", in: sut)
+        #expect(shown.isEnabled && shown.isChosen)
+        #expect(shown.subtitle == "Muted instead of paused")
+        #expect(shown.help == nil)
 
         settings.setDetectionMethod(.playbackSignals)
-        prepareToOpen(sut)
+        reopen(sut)
         sut.perform(.togglePlayerList)
-        let dimmed = try item("Muted", in: sut.menu)
-        #expect(!dimmed.isEnabled && dimmed.state == .on)
+        let dimmed = try row("Muted", in: sut)
+        #expect(!dimmed.isEnabled && dimmed.isChosen)
         #expect(dimmed.subtitle == "Not in AntiDot mode")
-        #expect(dimmed.toolTip == muted.antiDotModeReason)
-        #expect(dimmed.accessibilityHelp() == muted.antiDotModeReason)
-        #expect(try item("First", in: sut.menu).isEnabled)
+        #expect(dimmed.help == muted.antiDotModeReason)
+        #expect(try row("First", in: sut).isEnabled)
     }
 
-    @Test("a suggested web app is offered after the web apps, can be clicked, and goes the way a player does")
+    @Test("a suggested web app is offered after the web apps, can be chosen, and says how")
     func suggestedWebApp() throws {
         let sut = makeController()
         defer { sut.remove() }
@@ -304,24 +315,16 @@ struct StatusMenuControllerTests {
         ]
         status.chosenPlayerID = "com.example.first"
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(8) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Add an App…",
-                                             "webAppsHeading", "Deezer", "Add a Web App…"])
-        let heading = sut.menu.items[5] // drawn: a section header can't show the "Experimental" badge
-        #expect(heading.title == "Safari Web Apps")
-        #expect(!heading.isEnabled)
-        #expect((heading.view?.frame.height ?? 0) > 20) // the note under it too
-        let row = sut.menu.items[6]
-        #expect(row.isEnabled)
-        #expect(row.subtitle == "Click to add") // as its tile says
-        #expect(row.image?.isTemplate == true)
-        try perform(row)
-        #expect(log.calls == ["menuWillOpen", "player \(suggestion.bundleID)"])
+        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "[Web]", "Deezer"])
+        let deezer = try row("Deezer", in: sut)
+        #expect(deezer.isEnabled)
+        #expect(deezer.subtitle == "Click to add") // as its tile says
     }
 
-    @Test("a web app's controls are learned from the card's Controls row, learned or not; no other row offers it, and no steps show")
+    @Test("a web app's controls are learned from the card's Controls row; nothing else in the menu is about learning")
     func learnControls() async throws {
         let sut = makeController()
         defer { sut.remove() }
@@ -336,13 +339,9 @@ struct StatusMenuControllerTests {
         for learning in [LearningStatus.learned, .learning(hasPlayed: false), .learning(hasPlayed: true)] {
             status.learning = learning
             sut.status = status
-            prepareToOpen(sut)
+            reopen(sut)
             #expect(sut.model.status.canLearnControlsAgain) // the card shows its Controls row
-            #expect(rows(sut.menu).prefix(2) == ["card", "snooze"]) // nothing else about learning
-            sut.perform(.togglePlayerList)
-            #expect(rows(sut.menu).prefix(8) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Add an App…",
-                                                 "webAppsHeading", "YT Music", "Add a Web App…"])
-            sut.perform(.togglePlayerList)
+            #expect(parts(sut) == ["card", "snooze", "toolbar"])
         }
 
         // Its button: the menu closes, and a new learning window opens.
@@ -354,80 +353,39 @@ struct StatusMenuControllerTests {
         status.chosenPlayerID = "com.example.first"
         status.learning = nil
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
         #expect(!sut.model.status.canLearnControlsAgain)
     }
 
-    @Test("an untested web app comes last, its name followed by an “Untested” badge")
-    func untestedWebApp() {
+    @Test("an untested web app comes last, with an “Untested” badge VoiceOver reads; a web app named as an app is says it's a Safari web app")
+    func untestedWebApp() throws {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud",
                                     appURL: URL(fileURLWithPath: "/Applications/SoundCloud.app"), kind: .safariWebApp)
         untested.isUntested = true
+        var named = PlayerOption(bundleID: "com.apple.Safari.WebApp.M", name: "First",
+                                 appURL: URL(fileURLWithPath: "/Applications/First Web.app"), kind: .safariWebApp)
+        named.isUntested = true
         status.playerOptions = [
             PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
             untested,
+            named,
             .suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com")),
         ]
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(8) == ["card", "supportedAppsHeading", "First", "otherAppsHeading", "Add an App…",
-                                             "webAppsHeading", "Deezer", "SoundCloud"])
-        let row = sut.menu.items[7]
-        #expect(row.title == "SoundCloud")
-        #expect(row.attributedTitle?.string.hasPrefix("SoundCloud") == true)
-        #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
-        #expect(sut.menu.items[6].attributedTitle == nil) // a tested one has no badge
-        #expect(row.accessibilityLabel()?.contains("Safari web app") != true) // no app has its name
+        let web = sut.model.players.webApps
+        #expect(web.map(\.option.name) == ["Deezer", "SoundCloud", "First"])
+        #expect(web[1].accessibilityLabel == "SoundCloud, Untested")
+        #expect(web[2].accessibilityLabel == "First, Safari web app, Untested")
+        #expect(sut.model.players.supportedApps[0].accessibilityLabel == "First")
     }
 
-    @Test("a web app named as an app is is read as a Safari web app, with its badge")
-    func webAppNamedAsApp() {
-        let sut = makeController()
-        defer { sut.remove() }
-        var status = readyStatus()
-        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.M", name: "First",
-                                    appURL: URL(fileURLWithPath: "/Applications/First Web.app"), kind: .safariWebApp)
-        untested.isUntested = true
-        status.playerOptions = [
-            PlayerOption(bundleID: "com.example.first", name: "First", appURL: URL(fileURLWithPath: "/Applications/First.app")),
-            untested,
-        ]
-        sut.status = status
-        prepareToOpen(sut)
-        sut.perform(.togglePlayerList)
-        let rows = sut.menu.items.filter { $0.title == "First" }
-        #expect(rows.count == 2)
-        #expect(rows[0].accessibilityLabel()?.contains("Safari web app") != true)
-        #expect(rows[1].accessibilityLabel() == "First, Safari web app, Untested")
-    }
-
-    @Test("a long untested name is cut short with “…”, so its badge still shows; its plain title stays whole")
-    func longUntestedName() throws {
-        let sut = makeController()
-        defer { sut.remove() }
-        var status = readyStatus()
-        let long = "A Music Service With A Very Long Name That Goes On And On Well Past The Menu's Edge"
-        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.L", name: long,
-                                    appURL: URL(fileURLWithPath: "/Applications/Long.app"), kind: .safariWebApp)
-        untested.isUntested = true
-        status.playerOptions = [untested]
-        sut.status = status
-        prepareToOpen(sut)
-        sut.perform(.togglePlayerList)
-        let row = try #require(sut.menu.items.first { $0.title == long })
-        let shown = row.attributedTitle?.string ?? ""
-        #expect(shown.contains("…"))
-        #expect(!shown.contains("Edge"))
-        #expect(row.attributedTitle?.containsAttachments(in: NSRange(location: 0, length: row.attributedTitle?.length ?? 0)) == true)
-        #expect(NSMenuItem.truncated("Short", toFit: 500, font: StatusMenuController.rowFont) == "Short")
-    }
-
-    @Test("from eight players on, a search comes first and narrows them down; fewer have none")
-    func playerSearch() {
+    @Test("from eight players on, a search comes first and narrows them down; fewer have none; ↑ ↓ move among them and Return chooses")
+    func playerSearch() async {
         let sut = makeController()
         defer { sut.remove() }
         let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Deezer", "Música"]
@@ -436,96 +394,79 @@ struct StatusMenuControllerTests {
             PlayerOption(bundleID: "com.example.\($0)", name: $0, appURL: $0 == "Deezer" ? nil : URL(fileURLWithPath: "/Applications/\($0).app"))
         }
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(11) == ["card", "playerSearch", "supportedAppsHeading", "Spotify", "Apple Music", "VLC",
-                                              "Apple Podcasts", "TIDAL", "Qobuz", "Música", "Deezer"])
+        #expect(playerRows(sut).prefix(10) == ["search", "[Supported]", "Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL",
+                                               "Qobuz", "Música", "Deezer"])
         sut.perform(.searchPlayers("MUSI"))
         #expect(sut.model.playerSearch == "MUSI")
-        #expect(rows(sut.menu).prefix(8) == ["card", "playerSearch", "supportedAppsHeading", "Apple Music", "Música", "Add an App…",
-                                             "Add a Web App…", "snooze"])
+        #expect(playerRows(sut) == ["search", "[Supported]", "Apple Music", "Música"])
         sut.perform(.searchPlayers("zz"))
-        #expect(rows(sut.menu).prefix(6) == ["card", "playerSearch", "No players match “zz”.", "Add an App…", "Add a Web App…", "snooze"])
-        #expect(sut.menu.items[2].isEnabled == false)
-        sut.perform(.searchPlayers(""))
-        #expect(rows(sut.menu).count(where: { names.contains($0) }) == 8)
+        #expect(playerRows(sut) == ["search", "No players match “zz”."])
 
-        sut.perform(.togglePlayerList) // folded: the search goes, and what was typed with it
-        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+        // The arrows stop at the ends, and skip a player that can't be chosen.
+        sut.perform(.searchPlayers(""))
+        sut.perform(.moveHighlight(-1))
+        #expect(sut.model.highlightedPlayerID == "com.example.Música") // the last choosable: not Deezer
+        sut.perform(.moveHighlight(1))
+        #expect(sut.model.highlightedPlayerID == "com.example.Música")
+        sut.perform(.searchPlayers("music"))
+        sut.perform(.moveHighlight(-1))
+        #expect(sut.model.highlightedPlayerID == "com.example.Apple Music")
+        sut.perform(.chooseHighlighted)
+        await wait(for: 2, in: log)
+        #expect(log.calls == ["menuWillOpen", "player com.example.Apple Music"])
+
+        reopen(sut)
+        sut.perform(.togglePlayerList)
+        sut.perform(.searchPlayers("vl"))
+        sut.perform(.togglePlayerList) // folded: what was typed goes with it
         #expect(sut.model.playerSearch.isEmpty)
         sut.perform(.searchPlayers("a")) // a closing field handing its text back changes nothing
-        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+        #expect(sut.model.playerSearch.isEmpty)
 
         status.playerOptions.removeLast()
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
         sut.perform(.togglePlayerList)
-        #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
+        #expect(playerRows(sut).first == "[Supported]") // seven: no search
     }
 
-    @Test("below Ignored Apps, Detection's, Fades' and Advanced's switches always show; the chevron unfolds the pages' names, their timings and AntiDot mode's ways, each a row of its own, once the click is handled, and they stay as left when the menu opens again; what doesn't apply is greyed out, never hidden")
+    // MARK: - The settings
+
+    @Test("the settings' switches always show; the chevron unfolds their timings, and they stay as left when the menu opens again")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
-        let sut = StatusMenuController(settings: settings, session: session, updates: updates, actions: actions,
-                                       settingsModel: settingsModel)
-        defer { sut.remove() }
-        var status = readyStatus()
-        status.ignoredApps = [vlc]
-        sut.status = status
-        prepareToOpen(sut)
-        #expect(rows(sut.menu).suffix(9) == ["Ignored Apps", "—", "moreSettings.antiDot", "moreSettings.fades", "moreSettings.levelsMusic", "moreSettings.staysPausedAfterCalls", "moreSettings.chevron", "—", "toolbar"])
-        #expect(!sut.model.showsMoreSettings)
-        func settle() { RunLoop.main.run(until: Date() + 0.05) } // once the click is handled
-
-        sut.model.perform(.toggleMoreSettings)
-        settle()
-        let shown = ["detectionHeading", "antiDot", "antiDotWays", "pauseAfter", "resumeAfter", "silenceThreshold", "fadesHeading", "fades",
-                     "fadeOut", "fadeIn", "advancedHeading", "levelsMusic", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
-        #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detectionHeading" }.prefix(shown.count)) == shown)
-        #expect(sut.model.moreSettingsArrived == Set(MoreSettingsRow.allCases)) // every row's content shows
-        prepareToOpen(sut)
-        #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
-
-        // Nothing hides when the settings change: what doesn't apply is greyed out instead.
-        let unfolded = rows(sut.menu)
-        SettingsSwitch.antiDot.set(true, in: settingsModel)
-        SettingsSwitch.fades.set(false, in: settingsModel)
-        settle()
-        #expect(rows(sut.menu) == unfolded && unfolded.contains("moreSettings.antiDotWays"))
-        #expect(!MoreSettingsRow.silenceThreshold.applies(settingsModel) && MoreSettingsRow.antiDotWays.applies(settingsModel))
-        #expect(!MoreSettingsRow.fadeOut.applies(settingsModel) && SettingsSwitch.levelsMusic.isUnavailable(settingsModel))
-
-        sut.model.perform(.toggleMoreSettings)
-        settle()
-        #expect(rows(sut.menu).suffix(9) == ["Ignored Apps", "—", "moreSettings.antiDot", "moreSettings.fades", "moreSettings.levelsMusic", "moreSettings.staysPausedAfterCalls", "moreSettings.chevron", "—", "toolbar"])
-    }
-
-    @Test("the players are folded again each time the menu opens")
-    func playerListFoldsOnOpening() {
-        let sut = makeController()
+        let sut = makeController(settingsModel: settingsModel)
         defer { sut.remove() }
         sut.status = readyStatus()
-        prepareToOpen(sut)
-        sut.perform(.togglePlayerList)
-        prepareToOpen(sut)
-        #expect(!sut.model.isChoosingPlayer)
-        #expect(rows(sut.menu).prefix(2) == ["card", "snooze"])
+        reopen(sut)
+        #expect(parts(sut).contains("settings") && !sut.model.showsMoreSettings)
+        sut.perform(.toggleMoreSettings)
+        reopen(sut)
+        #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
+        sut.perform(.toggleMoreSettings)
+        #expect(!sut.model.showsMoreSettings && sut.isMenuOpen)
+        #expect(log.calls.allSatisfy { $0 == "menuWillOpen" })
     }
 
     // MARK: - Commands
 
-    @Test("switches act at once and keep the menu open")
+    @Test("switches and folding act at once and keep the menu open")
     func switches() {
         let sut = makeController()
         defer { sut.remove() }
+        sut.open(showsPanel: false)
         // As the menu's views send them.
         sut.model.perform(.toggleAutoPause)
         sut.model.perform(.setIgnored(chrome, true))
+        sut.model.perform(.toggleIgnoredApps)
         #expect(settings.state.autoPause == .off)
         #expect(settings.state.ignoredApps.map(\.id) == [chrome.id])
-        #expect(log.calls.isEmpty)
+        #expect(sut.model.showsIgnoredApps && sut.isMenuOpen)
+        #expect(log.calls == ["menuWillOpen"])
     }
 
     @Test("buttons close the menu, then act")
@@ -604,139 +545,79 @@ struct StatusMenuControllerTests {
         #expect(sut.model.announcesRetryOutcome)
     }
 
-    @Test("no row has a keyboard shortcut, in any state")
-    func noShortcuts() {
-        let sut = makeController()
-        defer { sut.remove() }
-        func allItems(_ menu: NSMenu) -> [NSMenuItem] {
-            menu.items.flatMap { [$0] + ($0.submenu.map(allItems) ?? []) }
-        }
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
-        // A failed start, an ignored app and an update found, every row showing.
-        var failed = AppStatus()
-        failed.choosePlayer(named: "Jukebox")
-        failed.setHealth(.retrying("Jukebox isn’t responding"))
-        failed.ignoredApps = [vlc]
-        failed.updateOffer = UpdateOffer(release: release, state: .available)
-        // Paused for apps playing and played, Audio Recording missing, an
-        // app added through a check among the players, an update installing.
-        var paused = readyStatus()
-        paused.playerOptions.append(PlayerOption(bundleID: "com.example.checked", name: "Checked",
-                                                 appURL: URL(fileURLWithPath: "/Applications/Checked.app"), kind: .checkedApp))
-        paused.detection = .unavailable
-        paused.setActiveSources([vlc, chrome])
-        paused.setActiveSources([chrome])
-        paused.updateOffer = UpdateOffer(release: release, state: .installing)
-        for status in [failed, paused] {
-            sut.status = status
-            prepareToOpen(sut)
-            sut.perform(.togglePlayerList)
-            #expect(allItems(sut.menu).allSatisfy { $0.keyEquivalent.isEmpty })
-        }
-        sut.status = failed
-        prepareToOpen(sut)
-        #expect(!sut.menu.items.contains { $0.isHidden })
-    }
-
     // MARK: - Rows
 
-    @Test("ignored apps can be un-ignored from their own submenu")
-    func ignoredAppsSubmenu() throws {
-        let sut = makeController()
-        defer { sut.remove() }
-        settings.setIgnored(vlc, true)
-        var status = readyStatus()
-        status.ignoredApps = [vlc]
-        sut.status = status
-        prepareToOpen(sut)
-
-        let submenu = try #require(try item("Ignored Apps", in: sut.menu).submenu)
-        #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
-        try perform(submenu.items[1])
-        #expect(log.calls == ["menuWillOpen"])
-        #expect(settings.state.ignoredApps.isEmpty)
-    }
-
-    @Test("Ignored Apps follows the switches while the menu is open: it shows, lists and goes")
-    func ignoredAppsFollowWhileOpen() throws {
+    @Test("ignored apps fold out under their row; one clicked stops being ignored; the row follows the switches while the menu is open")
+    func ignoredApps() {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         status.setActiveSources([vlc, chrome])
         sut.status = status
-        prepareToOpen(sut)
-        sut.menuWillOpen(sut.menu)
-        #expect(!rows(sut.menu).contains("Ignored Apps"))
+        reopen(sut)
+        #expect(!parts(sut).contains("ignoredApps"))
 
         status.ignoredApps = [vlc]
         sut.status = status
-        #expect(rows(sut.menu) == ["card", "snooze", "—", "playingApps", "—", "Ignored Apps", "—", "toolbar"])
-        let submenu = try #require(try item("Ignored Apps", in: sut.menu).submenu)
-        #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", "VLC"])
-
-        status.ignoredApps = [chrome, vlc]
-        sut.status = status
-        #expect(submenu.items.map(\.title) == ["Click an app to stop ignoring it", chrome.name, "VLC"])
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
+        #expect(!sut.model.showsIgnoredApps) // folded
+        sut.perform(.toggleIgnoredApps)
+        settings.setIgnored(vlc, true)
+        sut.perform(.setIgnored(vlc, false)) // as its row sends it
+        #expect(settings.state.ignoredApps.isEmpty && sut.isMenuOpen)
 
         status.ignoredApps = []
         sut.status = status
-        #expect(!rows(sut.menu).contains("Ignored Apps"))
-        sut.menuDidClose(sut.menu)
+        #expect(!parts(sut).contains("ignoredApps"))
+        reopen(sut)
+        #expect(!sut.model.showsIgnoredApps) // folded again each time it opens
     }
 
-    @Test("once the user went to allow audio recording, its row reopens AutoHush")
-    func reopenItem() throws {
+    @Test("once the user went to allow audio recording, its row reopens AutoHush, and AntiDot mode is offered instead")
+    func reopenRow() async {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
         status.detection = .unavailable
         status.awaitsReopenForAudioRecording = true
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
-        #expect(rows(sut.menu).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
-        try perform(try item("Reopen AutoHush", in: sut.menu))
-        try perform(try item("Use AntiDot Mode Instead", in: sut.menu))
+        #expect(parts(sut).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
+        sut.perform(.reopenAutoHush)
+        sut.perform(.useAntiDotMode)
+        await TestWait.until { settings.state.detection == .playbackSignals }
         #expect(log.calls == ["menuWillOpen", "reopen"])
-        #expect(settings.state.detection == .playbackSignals)
     }
 
-    @Test("a warning appears under the card as one actionable row")
-    func warningItem() throws {
+    @Test("a warning appears under the card as one row that asks for what's missing")
+    func warningRow() async {
         let sut = makeController()
         defer { sut.remove() }
         var status = AppStatus()
         status.choosePlayer(named: "Jukebox")
         status.setHealth(.needsPermission(.automation(player: "Jukebox")))
         sut.status = status
-        prepareToOpen(sut)
+        reopen(sut)
 
-        #expect(rows(sut.menu).prefix(3) == ["card", "Allow Jukebox Automation Access…", "snooze"])
-        try perform(try item("Allow Jukebox Automation Access…", in: sut.menu))
+        #expect(parts(sut).prefix(3) == ["card", "Allow Jukebox Automation Access…", "snooze"])
+        sut.perform(.resolveWarning(.automation(player: "Jukebox")))
+        await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "warning Allow Jukebox Automation Access…"])
     }
 
-    @Test("once an update is found, a row above the toolbar shows it, greyed out while it installs",
-          arguments: [UpdateOffer.State.available, .downloaded])
-    func updateItem(state: UpdateOffer.State) throws {
+    @Test("once an update is found, a row above the toolbar shows it", arguments: [UpdateOffer.State.available, .downloaded, .installing])
+    func updateRow(state: UpdateOffer.State) async {
         let sut = makeController()
         defer { sut.remove() }
         let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
         var status = readyStatus()
         status.updateOffer = UpdateOffer(release: release, state: state)
         sut.status = status
-        prepareToOpen(sut)
-        #expect(rows(sut.menu).suffix(2) == ["Install AutoHush 0.3.0…", "toolbar"])
-        let install = try item("Install AutoHush 0.3.0…", in: sut.menu)
-        #expect(install.image != nil)
-        try perform(install)
+        reopen(sut)
+        #expect(parts(sut).suffix(2) == ["update", "toolbar"])
+        sut.perform(.showUpdate)
+        await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "update"])
-
-        status.updateOffer = UpdateOffer(release: release, state: .installing)
-        sut.status = status
-        prepareToOpen(sut)
-        let installing = try item("Installing AutoHush 0.3.0…", in: sut.menu)
-        #expect(installing.action == nil)
-        #expect(!installing.isEnabled)
     }
 }

@@ -47,7 +47,7 @@ The words used for the parts below are in the [glossary](GLOSSARY.md).
 AppDelegate ── lifecycle, choosing the player, the windows, wiring features to the engine
   ├── AppState ── the one AppStatus: what the menu and the windows show, written by AppDelegate only
   ├── UserSettings ── the user's settings (Auto-Pause and its snooze, the apps, timings, detection), stored in Preferences
-  ├── StatusMenuController ── renders AppStatus into the menu bar item and menu
+  ├── StatusMenuController ── renders AppStatus into the menu bar item and its panel (MenuPanel)
   ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState (and UserSettings for what only Settings shows)
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying, downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by itself after a failed start, when it opens), checks access again, keeps the held pauses and the hand-over
@@ -100,7 +100,8 @@ Sources/
     Models/              the app-wide state: AppState, which holds AppStatus (what the menu and the windows
                          show, with UpdateOffer), SettingsModel (what only the windows show, and their
                          actions), StatePresentation (the status's icons and text), AppHealthState,
-                         StatusMenuModel, AddWebAppModel, PlayerOption (each player and whether it's
+                         StatusMenuModel (the menu's parts, MenuSection), MenuPlayerList (the menu's
+                         players), AddWebAppModel, PlayerOption (each player and whether it's
                          installed), AppActions (what only AppDelegate does), UpdateCommands,
                          SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
                          the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
@@ -130,7 +131,8 @@ Sources/
                          what adding an app does outside its model; CheckableApps: the apps Add an App offers;
                          AppPlaying: whether the chosen app plays, by its level, or by its open output without
                          Audio Recording or in AntiDot mode)
-    Controllers/         AppKit's window and menu controllers: StatusMenuController, SettingsWindowController,
+    Controllers/         AppKit's window and menu controllers: StatusMenuController, MenuPanel (the menu's
+                         window), SettingsWindowController,
                          PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base),
                          LogsWindowController, AddAppWindowController, AppChooserWindowController (the apps to
@@ -140,8 +142,8 @@ Sources/
                          its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
                          colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
                          ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
-                         views, its drawn rows (NSMenuItem+PlayerList, MenuContentWidth) and MenuBarIcon,
-                         drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
+                         panel: MenuPanelView, its player list, settings and row style, MenuContentWidth,
+                         and MenuBarIcon, drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
                          WebApps/ (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what they say)

@@ -38,6 +38,30 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
+    /// What it does in a few words, under it in the menu (Settings has `subtitle`).
+    var shortExplanation: Text {
+        switch self {
+        case .antiDot:
+            Text("No purple dot, less precise.", comment: "The menu, under AntiDot mode: what it does, in a few words")
+        case .fades:
+            Text("Fades out and back in.", comment: "The menu, under Fade playback: what it does, in a few words")
+        case .levelsMusic:
+            Text("Matches quieter apps’ volume.", comment: "The menu, under Level the music: what it does, in a few words (it lowers the Mac’s volume as the music resumes after quieter apps)")
+        case .staysPausedAfterCalls:
+            Text("No resume after a call.", comment: "The menu, under Stay paused after calls: what it does, in a few words")
+        }
+    }
+
+    /// Its symbol in the menu, in the accent color while it's on.
+    var symbol: String {
+        switch self {
+        case .antiDot: "eye.slash"
+        case .fades: "wave.3.right"
+        case .levelsMusic: "slider.horizontal.below.rectangle"
+        case .staysPausedAfterCalls: "phone.down"
+        }
+    }
+
     /// Off and dimmed: AntiDot mode with a player only its sound tells
     /// about, the fades with a player AutoHush can't fade, leveling in
     /// AntiDot mode (which measures no sound).

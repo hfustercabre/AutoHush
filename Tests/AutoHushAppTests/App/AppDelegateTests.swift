@@ -1524,15 +1524,15 @@ struct AppDelegateTests {
 
         // A player chosen from its list is AppDelegate's to choose.
         await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
-        menu.menuNeedsUpdate(menu.menu)
-        menu.menuWillOpen(menu.menu)
+        menu.open(showsPanel: false)
         #expect(!sut.isQuietMoment) // the menu is open
         menu.perform(.togglePlayerList)
-        let second = try #require(menu.menu.items.first { $0.title == "Second" })
-        menu.menu.performActionForItem(at: menu.menu.index(of: second))
+        #expect(menu.model.players.supportedApps.contains { $0.id == Players.second })
+        menu.perform(.choosePlayer(Players.second)) // the menu closes, then it's chosen
+        await TestWait.until { sut.player?.bundleID == Players.second }
         #expect(sut.player?.bundleID == Players.second)
         #expect(menu.status.chosenPlayerID == Players.second)
-        menu.menuDidClose(menu.menu)
+        #expect(!menu.isMenuOpen)
 
         // Its start failed: Retry is the player session's.
         await TestWait.until { sut.status.canRetry }

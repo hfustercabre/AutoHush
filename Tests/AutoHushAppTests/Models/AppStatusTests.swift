@@ -116,7 +116,7 @@ struct AppStatusTests {
         #expect(status.statusLine == "Paused — another app is playing")
     }
 
-    @Test("an app that stops playing is listed as recently played for 5 minutes, the most recent first, until it plays again; so is one playing when monitoring stops")
+    @Test("an app that stops playing is listed as recently played for 30 minutes, the most recent first, until it plays again; so is one playing when monitoring stops")
     func recentlyPlayed() {
         var status = ready()
         let start = Date()
@@ -131,7 +131,8 @@ struct AppStatusTests {
         status.setHealth(.starting, now: start + 60)
         #expect(status.activeSources.isEmpty)
         #expect(status.recentSources(at: start + 70) == [vlc, chrome])
-        #expect(status.recentSources(at: start + 60 + 5 * 60).isEmpty)
+        #expect(status.recentSources(at: start + 60 + 29 * 60) == [vlc, chrome])
+        #expect(status.recentSources(at: start + 60 + 30 * 60).isEmpty)
     }
 
     @Test("ignored apps are listed but never named as the cause of a pause")

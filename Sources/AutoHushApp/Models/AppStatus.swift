@@ -81,8 +81,8 @@ struct AppStatus: Equatable {
         let stoppedAt: Date
     }
     /// How long an app that stopped playing stays under "Recently Played"
-    /// (the user, 2026-10-16).
-    static let recentlyPlayedFor: TimeInterval = 5 * 60
+    /// (the user, 2026-10-16; 30 minutes from 2026-10-17, was 5).
+    static let recentlyPlayedFor: TimeInterval = 30 * 60
     /// The apps that played sound, the most recent first, and the ones the
     /// user ignores; never the chosen player, which doesn't pause itself.
     var seenApps: [AudioSource] = []

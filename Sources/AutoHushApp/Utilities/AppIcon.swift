@@ -15,17 +15,20 @@ enum AppIcon {
         image(bundlePath: source.bundlePath, id: source.id, players: players, size: size)
     }
 
-    /// The icon of the app at `bundlePath`; the generic app icon without one.
-    /// When the app is a supported player (its bundle ID `id` is among
-    /// `players`) that isn't installed and isn't there, its placeholder, as
-    /// wherever players are offered: the disk is looked at only then. Another
-    /// app that was deleted shows what macOS gives it.
+    /// The icon of the app at `bundlePath`; without one, of the app macOS
+    /// knows by the bundle ID `id` (an ignored app is kept by its ID and
+    /// name only); the generic app icon when there's neither. When the app
+    /// is a supported player (`id` is among `players`) that isn't installed
+    /// and isn't there, its placeholder, as wherever players are offered: the
+    /// disk is looked at only then. Another app that was deleted shows what
+    /// macOS gives it.
     static func image(bundlePath: String?, id: String? = nil, players: [PlayerOption] = [], size: CGFloat = 16) -> NSImage {
         if let id, let player = players.first(where: { $0.bundleID == id }), !player.isInstalled,
            let placeholder = player.iconPlaceholder,
            !(bundlePath.map { FileManager.default.fileExists(atPath: $0) } ?? false) {
             return image(placeholder: placeholder, id: id, size: size)
         }
+        let bundlePath = bundlePath ?? id.flatMap(installedPath)
         let key = "\(bundlePath ?? "")#\(size)"
         if let cached = cache[key] { return cached }
         let image = (bundlePath.map { NSWorkspace.shared.icon(forFile: $0) }
@@ -34,6 +37,15 @@ enum AppIcon {
         cache[key] = image
         return image
     }
+
+    /// Where macOS has the app with bundle ID `id`, looked up once.
+    private static func installedPath(_ id: String) -> String? {
+        if let known = installedPaths[id] { return known }
+        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path
+        installedPaths[id] = path
+        return path
+    }
+    private static var installedPaths: [String: String?] = [:]
 
     /// Safari's own icon (its app in /Applications is a link into the
     /// system), looked up once rather than at every redraw.

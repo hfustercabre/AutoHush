@@ -120,4 +120,14 @@ struct AppIconTests {
                                      iconPlaceholder: placeholder)
         #expect(AppIcon.image(for: source, players: [installed], size: 20) !== placeholderIcon)
     }
+
+    @Test("an app kept by its bundle ID only, as ignored apps are, shows its own icon, found by that ID; an unknown one the generic icon")
+    func iconByBundleID() throws {
+        let path = try #require(NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.path)
+        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
+        #expect(AppIcon.image(for: safari, size: 20) === AppIcon.image(bundlePath: path, size: 20))
+        #expect(AppIcon.image(for: safari, size: 20) !== AppIcon.image(bundlePath: nil, size: 20))
+        let unknown = AudioSource(id: "com.example.not-installed", name: "Not Installed")
+        #expect(AppIcon.image(for: unknown, size: 20) === AppIcon.image(bundlePath: nil, size: 20))
+    }
 }

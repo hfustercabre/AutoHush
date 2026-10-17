@@ -2,62 +2,39 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 
-/// Owns the menu bar item and its menu, and renders an `AppStatus` into them.
+/// Owns the menu bar item and the menu it opens, and renders an `AppStatus`
+/// into them. The menu is AutoHush's own panel (`MenuPanel`, the user's
+/// choice, 2026-10-17), so its parts fold and unfold smoothly:
 ///
 /// ```text
 /// ╭────────────────────────────────────────────────╮
 /// │ [icon] Spotify                             (●) │  the card: the player, what's
 /// │        Paused — Safari is playing   Auto-Pause │  happening, the Auto-Pause switch;
-/// │        [Retry] · [Reopen] · [Unmute]           │  a chip when one helps (below)
+/// │        [Retry] · [Reopen] · [Unmute]           │  a chip when one helps
 /// │ ────────────────────────────────────────────── │
-/// │ Media player                  [icon] Spotify ⌄ │  unfolds the players under it
-/// │ ────────────────────────────────────────────── │
-/// │ Controls                     [Learn Controls…] │  (a web app: whether its
-/// │ Not learned yet: …                             │  controls are learned)
+/// │ Media player                  [icon] Spotify ⌄ │  unfolds the players here (M1):
+/// │ [Search] · Supported Apps · Other Apps ·       │  a line between their groups;
+/// │ Add an App… · Safari Web Apps · Add a Web App… │  ↑ ↓ and Return choose one
+/// │ Controls                     [Learn Controls…] │  (a web app's controls)
 /// ╰────────────────────────────────────────────────╯
-/// [Search]   (while unfolded, with 8 players or more; typing narrows them down)
-///   Supported Apps                                   (while unfolded)
-/// ✓ [icon] Spotify · Apple Music · (one not installed, dimmed)
-///   Other Apps  Checked by you · [icon] Deezer …     (the apps added through a check)
-///   ⊕ Add an App…                                    (checks an app and adds it)
-///   Safari Web Apps · [icon] YT Music …              (the web apps, if any)
-///   ⊕ Add a Web App…                                 (makes a website one)
-/// ⚠ Allow Audio Recording Access…        (only when something needs fixing)
-///   Turn off for
-///   [5 min] [15 min] [30 min] [1 hr] [24 hr]
-/// ─────────
-///   Playing Now
-///   [icon] Safari   Pauses your player                 (●)
-///   [icon] VLC      Ignored — your player keeps playing ( )
-///   Recently Played                  (the apps that played in the last 5 minutes)
-///   [icon] Messages Pauses your player                 (●)
-/// ─────────
-///   Ignored Apps                  ▸ (click one to stop ignoring it)
-/// ─────────
-///   Detection · Fades · Advanced   (More Settings: folded at first)
-///   ⌄                               (shows or folds them)
-/// ─────────
-///   Install AutoHush 0.3.8…              (once one is found; Installing… while it installs)
-///   [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
+///  ⚠ Allow Audio Recording Access…        (only when something needs fixing)
+///  Turn off for  [5 min] [15 min] [30 min] [1 hr] [24 hr]
+///  ─────  Playing Now · Recently Played  (each app with its switch)
+///  ─────  Ignored Apps                 1 ⌄  (folds out: click one to stop ignoring it)
+///  ─────  [AntiDot mode] [Fade playback] [Level the music · Stay paused after calls]
+///                       ⌄                (unfolds Detection's, Fades' and Advanced's
+///                                         names and timings, each part in a card: Q)
+///  ─────  Install AutoHush 0.3.8…        (once one is found)
+///  [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
 /// ```
 ///
-/// The card's chips: Retry after a failed start, Reopen while the player
-/// needs reopening (an app added through a check), Unmute while a player
-/// that can only be muted is muted for another app.
-///
-/// The card, the duration buttons, the playing apps and the toolbar are
-/// SwiftUI views; they follow `status` even while the menu is open, as
-/// Ignored Apps does. The other rows are rebuilt each time it opens. Its rows have no keyboard
-/// shortcuts: AutoHush has none of its own (its menu bar, while a window is
-/// open, has the Mac's standard ones: `MainMenu`).
+/// The menu follows `status` while it's open, but the apps listed under
+/// Playing Now and Recently Played are fixed then, so no row moves under the
+/// pointer. It closes on a click outside it, on Escape, when the desktop
+/// changes, and before anything opens a window. It has no keyboard
+/// shortcuts: AutoHush has none of its own.
 @MainActor
 final class StatusMenuController: NSObject {
-    /// Carries a menu item's argument to its action.
-    private final class Payload<Value>: NSObject {
-        let value: Value
-        init(_ value: Value) { self.value = value }
-    }
-
     /// The engine reports its state often (on every track change, for one),
     /// mostly without a change to show.
     var status: AppStatus {
@@ -65,41 +42,26 @@ final class StatusMenuController: NSObject {
     }
 
     let statusItem: NSStatusItem
-    let menu = NSMenu()
-    /// What the menu's custom views show.
+    /// What the menu shows.
     let model: StatusMenuModel
+    /// The menu's window, made the first time it opens.
+    private(set) var panel: MenuPanel?
+    private(set) var isMenuOpen = false
 
-    /// What the menu's items do: the user's settings, Retry, the updates,
-    /// and what only AppDelegate does.
+    /// What the menu's controls change: the user's settings, Retry, the
+    /// updates, and what only AppDelegate does.
     private let settings: UserSettings
     private let session: PlayerSession
     private let updates: any UpdateCommands
     private weak var actions: (any AppActions)?
-    private(set) var isMenuOpen = false
-    /// The card at the top, and the players unfolded under it, with their
-    /// search when there are enough of them.
-    private var cardItem: NSMenuItem?
-    /// The search over the unfolded players, while it shows.
-    private var playerSearchItem: NSMenuItem?
-    private var playerRows: [NSMenuItem] = []
-    /// Ignored Apps and the separator above it, hidden while no app is
-    /// ignored. Unlike the other rows, they follow the ignored apps while the
-    /// menu is open (the user, 2026-10-16): a switch under Playing Now
-    /// changes them at once.
-    private var ignoredAppsRows: (separator: NSMenuItem, row: NSMenuItem)?
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
     private let settingsModel: SettingsModel?
-    /// More Settings' rows, in order, the chevron last.
-    private var moreSettingsRows: [(row: MoreSettingsRow, item: NSMenuItem)] = []
-    /// What's left of a reveal under way (More Settings' rows, or the
-    /// players'): when, in seconds, to do what.
-    private var revealSteps: [(at: TimeInterval, step: () -> Void)] = []
-    private var revealStart = Date()
-    private var revealTimer: Timer?
-    /// How long rows take to arrive, one after the other, and how long one
-    /// takes to fade out before its row goes.
-    static let revealArrival: TimeInterval = 0.2
-    static let revealLeave: TimeInterval = 0.12
+    /// What closes the menu (clicks elsewhere, another desktop) and what it
+    /// follows while open (Option, for an added app's Remove).
+    private var monitors: [Any] = []
+    private var spaceObserver: NSObjectProtocol?
+    /// The content's height, as last measured.
+    private var contentHeight: CGFloat = 0
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
@@ -112,32 +74,32 @@ final class StatusMenuController: NSObject {
         model = StatusMenuModel(status: status)
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
+        model.hasSettings = settingsModel != nil
         model.perform = { [weak self] in self?.perform($0) }
-        menu.autoenablesItems = false
-        menu.font = Self.rowFont
-        menu.delegate = self
-        statusItem.menu = menu
+        if let button = statusItem.button {
+            button.target = self
+            button.action = #selector(statusItemClicked)
+            // As a menu does: it opens as the button goes down.
+            button.sendAction(on: [.leftMouseDown, .rightMouseDown])
+        }
         renderIcon()
-        rebuild()
+        prepareContent()
     }
 
     /// Removes the item from the menu bar (tests clean up with it).
     func remove() {
+        close()
         NSStatusBar.system.removeStatusItem(statusItem)
     }
 
     // MARK: - Rendering
 
-    /// The icon follows at once, and the custom views while the menu is open;
-    /// the rows are rebuilt when it next opens, so none moves under the
-    /// pointer. A closed menu's views aren't updated: `rebuild()` catches
-    /// them up when it opens.
+    /// The icon follows at once, and the menu while it's open; a closed
+    /// menu catches up when it next opens (`prepareContent`).
     private func render() {
         renderIcon()
         guard isMenuOpen else { return }
         model.status = status
-        if let cardItem { fit(cardItem, changed: true) } // the status line may wrap anew
-        showIgnoredApps()
     }
 
     private func renderIcon() {
@@ -150,480 +112,158 @@ final class StatusMenuController: NSObject {
         button.appearsDisabled = status.dimsIcon
     }
 
-    /// Puts the menu together for `status`.
-    private func rebuild() {
+    /// Gets the menu ready for `status` as it opens: the apps listed now,
+    /// the players and Ignored Apps folded, the settings as left.
+    private func prepareContent() {
         model.status = status
         model.listedSources = status.activeSources
         model.listedRecentSources = status.recentSources()
         model.isChoosingPlayer = false
         model.playerSearch = ""
-        // A reveal under way is over: its rows are made again.
-        revealTimer?.invalidate()
-        revealTimer = nil
-        revealSteps = []
-        model.playerSearchArrived = true
+        model.highlightedPlayerID = nil
+        model.showsIgnoredApps = false
+        model.isAntiDotMode = settings.state.detection != .audioLevels
+        model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
         model.announcesRetryOutcome = false
-        playerSearchItem = nil
-        playerRows = []
-        menu.removeAllItems()
-
-        let card = hostedItem("card", StatusCardView(model: model))
-        cardItem = card
-        menu.addItem(card)
-        if let warning = status.warning {
-            menu.addItem(warningItem(for: warning))
-            // Not for a player that can only be muted: AntiDot mode can't mute it.
-            if warning == .systemAudioRecording, !status.playerNeedsLevels {
-                // Its title lines up with the warning's, after its symbol.
-                let antiDot = item(PermissionText.useAntiDot, #selector(useAntiDotMode))
-                antiDot.shownImage = NSImage(size: menu.items.last?.image?.size ?? .zero)
-                menu.addItem(antiDot)
-            }
-        }
-        menu.addItem(hostedItem("snooze", SnoozeBarView(model: model)))
-        if !model.listedSources.isEmpty || !model.listedRecentSources.isEmpty {
-            menu.addItem(.separator())
-        }
-        if !model.listedSources.isEmpty {
-            menu.addItem(hostedItem("playingApps", PlayingAppsView(model: model, list: .playingNow)))
-        }
-        if !model.listedRecentSources.isEmpty {
-            menu.addItem(hostedItem("recentApps", PlayingAppsView(model: model, list: .recentlyPlayed)))
-        }
-        let ignoredApps = (separator: NSMenuItem.separator(), row: ignoredAppsItem())
-        menu.addItem(ignoredApps.separator)
-        menu.addItem(ignoredApps.row)
-        ignoredAppsRows = ignoredApps
-        showIgnoredApps()
-        if let settingsModel {
-            menu.addItem(.separator())
-            moreSettingsRows = MoreSettingsRow.allCases.map { row in
-                let item = hostedItem("moreSettings.\(row.rawValue)", MoreSettingsRowView(row: row, model: model, settings: settingsModel))
-                menu.addItem(item)
-                return (row, item)
-            }
-            showMoreSettings()
-        }
-        menu.addItem(.separator())
-        if let offer = status.updateOffer { menu.addItem(updateItem(for: offer)) }
-        menu.addItem(hostedItem("toolbar", MenuToolbarView(model: model)))
     }
 
-    /// A row showing `view`, as wide as the menu; one that `takesKeyboard`
-    /// gets what's typed while it shows.
-    private func hostedItem<Content: View>(_ identifier: String, _ view: Content, takesKeyboard: Bool = false) -> NSMenuItem {
-        let item = NSMenuItem()
-        item.identifier = NSUserInterfaceItemIdentifier(identifier)
-        let root = view.font(.appBody)
-        let hosting = takesKeyboard ? KeyboardTakingHostingView(rootView: root) : NSHostingView(rootView: root)
-        hosting.autoresizingMask = [.width]
-        item.view = hosting
-        fit(item)
-        return item
+    // MARK: - Opening and closing
+
+    @objc private func statusItemClicked() {
+        isMenuOpen ? close() : open()
     }
 
-    /// Sizes a custom view's row to what it shows now.
-    private func fit(_ item: NSMenuItem, changed: Bool = false) {
-        guard let view = item.view else { return }
-        view.layoutSubtreeIfNeeded() // applies what the model changed, or the size is the old one
-        let size = NSSize(width: menuContentWidth, height: view.fittingSize.height)
-        guard view.frame.size != size else { return }
-        view.frame.size = size
-        if changed { menu.itemChanged(item) }
+    /// Opens the menu under its menu bar item, the app first bringing the
+    /// status up to date (`AppActions.menuWillOpen`). `showsPanel` off: the
+    /// menu is ready and counts as open, but nothing shows (tests).
+    func open(showsPanel: Bool = true) {
+        guard !isMenuOpen else { return }
+        actions?.menuWillOpen()
+        prepareContent()
+        isMenuOpen = true
+        guard showsPanel else { return }
+        let panel = self.panel ?? makePanel()
+        self.panel = panel
+        // Its content as it opens, measured before it's placed.
+        panel.contentView?.layoutSubtreeIfNeeded()
+        placePanel(panel)
+        panel.orderFrontRegardless()
+        panel.makeKey()
+        statusItem.button?.highlight(true)
+        watchWhileOpen()
     }
 
-    private func warningItem(for warning: Permission) -> NSMenuItem {
-        let item = status.offersReopen
-            ? item(PermissionText.reopen, #selector(reopen))
-            : item(warning.grantTitle, #selector(resolveWarning(_:)), payload: Payload(warning))
-        let description = String(localized: "Warning", comment: "VoiceOver label: this menu item needs attention")
-        item.shownImage = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: description)
-        return item
+    /// Closes the menu, at once.
+    func close() {
+        guard isMenuOpen else { return }
+        isMenuOpen = false
+        panel?.orderOut(nil)
+        statusItem.button?.highlight(false)
+        monitors.forEach(NSEvent.removeMonitor)
+        monitors = []
+        if let spaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver) }
+        spaceObserver = nil
     }
 
-    /// "Install AutoHush 0.3.8…", which shows the update found; while it
-    /// installs, a greyed-out "Installing…".
-    private func updateItem(for offer: UpdateOffer) -> NSMenuItem {
-        let version = offer.release.version.description
-        if offer.state == .installing {
-            let title = String(localized: "Installing AutoHush \(version)…",
-                               comment: "Menu item, greyed out while an update installs; %@ is its version")
-            let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-            row.isEnabled = false
-            return row
-        }
-        let title = String(localized: "Install AutoHush \(version)…",
-                           comment: "Menu item: shows the update found; %@ is its version")
-        let item = item(title, #selector(showAvailableUpdate))
-        let description = String(localized: "Update", comment: "VoiceOver label of the update icon")
-        item.shownImage = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: description)
-        return item
+    /// Closes the menu if it's open: an alert, such as an update check's
+    /// result, can't show over it.
+    func closeMenu() async {
+        close()
     }
 
-    private func ignoredAppsItem() -> NSMenuItem {
-        let row = NSMenuItem(title: String(localized: "Ignored Apps", comment: "Menu item"), action: nil, keyEquivalent: "")
-        row.shownImage = NSImage(systemSymbolName: "speaker.slash", accessibilityDescription: nil)
-        let submenu = NSMenu()
-        submenu.autoenablesItems = false
-        submenu.font = Self.rowFont
-        row.submenu = submenu
-        return row
+    private func makePanel() -> MenuPanel {
+        let view = MenuPanelView(model: model, settings: settingsModel) { [weak self] in self?.contentHeightChanged($0) }
+        let hosting = NSHostingView(rootView: view)
+        hosting.sizingOptions = []
+        hosting.safeAreaRegions = [] // under the hidden title bar too
+        // A size to lay out in before the panel has its own: with none, its
+        // content measures nothing.
+        hosting.frame = NSRect(x: 0, y: 0, width: menuContentWidth, height: 600)
+        let panel = MenuPanel(content: hosting)
+        panel.onCancel = { [weak self] in self?.close() }
+        panel.onKey = { [weak self] in self?.handleKey($0) ?? false }
+        hosting.layoutSubtreeIfNeeded()
+        contentHeight = max(contentHeight, hosting.fittingSize.height)
+        return panel
     }
 
-    /// Lists the ignored apps under Ignored Apps, shown while there's one.
-    private func showIgnoredApps() {
-        guard let (separator, row) = ignoredAppsRows, let submenu = row.submenu else { return }
-        let apps = status.ignoredApps
-        separator.isHidden = apps.isEmpty
-        row.isHidden = apps.isEmpty
-        let shown = submenu.items.dropFirst().compactMap { ($0.representedObject as? Payload<(AudioSource, Bool)>)?.value.0 }
-        guard shown != apps else { return }
-        submenu.removeAllItems()
-        let hintTitle = String(localized: "Click an app to stop ignoring it", comment: "Hint atop the Ignored Apps submenu")
-        let hint = NSMenuItem(title: hintTitle, action: nil, keyEquivalent: "")
-        hint.isEnabled = false
-        submenu.addItem(hint)
-        for app in apps {
-            let entry = item(app.name, #selector(toggleIgnored(_:)), payload: Payload((app, false)))
-            entry.state = .on
-            submenu.addItem(entry)
-        }
+    /// Under the menu bar item, its left edge at the item's (kept on the
+    /// screen), as tall as its content but never past the screen's bottom.
+    private func placePanel(_ panel: MenuPanel) {
+        guard let button = statusItem.button, let window = button.window,
+              let screen = window.screen ?? NSScreen.main else { return }
+        let item = window.convertToScreen(button.convert(button.bounds, to: nil))
+        let visible = screen.visibleFrame
+        let width = menuContentWidth
+        let x = min(max(item.minX, visible.minX + 6), visible.maxX - width - 6)
+        let top = min(item.minY - 4, visible.maxY)
+        let height = min(contentHeight, top - visible.minY - 6)
+        panel.setFrame(NSRect(x: x, y: top - height, width: width, height: height), display: true)
+        panel.invalidateShadow()
     }
 
-    /// The rows the menu draws itself, a step above the system's menu font,
-    /// like the custom views' text (`Font.appBody`).
-    static let rowFont = NSFont.menuFont(ofSize: NSFont.menuFont(ofSize: 0).pointSize + 1)
-
-    // MARK: - The music players
-
-    /// Unfolds the players under the card, or folds them back. They're the
-    /// menu's own rows: a second menu can't open from inside an open one.
-    /// From `PlayerOption.searchThreshold` players on, a search comes first.
-    /// Unfolds or folds the players under the card: revealed as More
-    /// Settings' rows are (`runReveal`), the search fading and drifting in
-    /// or out; their own rows, drawn by macOS, only come and go.
-    private func togglePlayerList() {
-        if model.isChoosingPlayer {
-            let rows = [playerSearchItem].compactMap { $0 } + playerRows
-            playerSearchItem = nil
-            playerRows = []
-            model.playerSearch = ""
-            foldPlayerRows(rows)
-        } else if let cardItem {
-            let options = offeredPlayers
-            var first = menu.index(of: cardItem) + 1
-            // Revealed, they're inserted hidden: rows hidden while the menu
-            // handles the click upset its layout (2026-10-17).
-            let reveals = revealsRows
-            if options.isSearchable {
-                let search = hostedItem("playerSearch", PlayerSearchRow(model: model), takesKeyboard: true)
-                search.isHidden = reveals
-                menu.insertItem(search, at: first)
-                playerSearchItem = search
-                first += 1
-            }
-            showPlayerRows(options, at: first, hidden: reveals)
-            if reveals { unfoldPlayerRows([playerSearchItem].compactMap { $0 } + playerRows) }
-        }
-        model.isChoosingPlayer.toggle()
+    /// The content's height changed (a part folded or unfolded, the status
+    /// line wrapped): the panel follows, animated while it shows.
+    private func contentHeightChanged(_ height: CGFloat) {
+        contentHeight = height
+        guard isMenuOpen, let panel, panel.isVisible, let screen = panel.screen else { return }
+        let room = panel.frame.maxY - screen.visibleFrame.minY - 6
+        panel.setContentHeight(min(height, room), animated: !Self.reducesMotion)
     }
 
-    /// The players' rows in the steps they come and go in: an alternate row
-    /// (⌥: Remove …) with the row before it.
-    private func playerRowSteps(_ rows: [NSMenuItem]) -> [[NSMenuItem]] {
-        rows.reduce(into: []) { steps, row in
-            if row.isAlternate, !steps.isEmpty { steps[steps.count - 1].append(row) } else { steps.append([row]) }
-        }
-    }
-
-    /// Shows `rows`, inserted hidden, one after the other.
-    private func unfoldPlayerRows(_ rows: [NSMenuItem]) {
-        finishReveal()
-        model.playerSearchArrived = false
-        let steps = playerRowSteps(rows)
-        let times = Self.revealTimes(going: 0, coming: steps.count)
-        let reveal = zip(steps, times.coming).flatMap { rows, at -> [(at: TimeInterval, step: () -> Void)] in
-            [(at, { rows.forEach { $0.isHidden = false } }),
-             (at + 1.0 / 60, { [weak self] in self?.model.playerSearchArrived = true })]
-        }
-        runRevealNextTurn(reveal)
-    }
-
-    private func foldPlayerRows(_ rows: [NSMenuItem]) {
-        // The search lets go of the keyboard first: going while it edits,
-        // its row made the menu flash wider (2026-10-17).
-        if let window = rows.first(where: { $0.identifier?.rawValue == "playerSearch" })?.view?.window,
-           let editor = window.firstResponder as? NSView,
-           rows.contains(where: { $0.view.map { editor.isDescendant(of: $0) } ?? false }) {
-            window.makeFirstResponder(nil)
-        }
-        let remove = { [weak self] in
-            guard let self else { return }
-            for row in rows where row.menu === self.menu { self.menu.removeItem(row) }
-        }
-        guard revealsRows else { return remove() }
-        let steps = Array(playerRowSteps(rows).reversed())
-        let times = Self.revealTimes(going: steps.count, coming: 0)
-        // macOS draws the players' rows: they go at their times, without
-        // fading; the menu measures its width again after each (it may widen
-        // for a moment as rows go, 2026-10-17). The search, first of them,
-        // goes last, fading first.
-        let search = rows.first { $0.identifier?.rawValue == "playerSearch" } // its item already let go
-        var reveal: [(at: TimeInterval, step: () -> Void)] = zip(steps, times.going).map { rows, at in
-            let fades = search.map { rows.contains($0) } ?? false
-            return (at + (fades ? Self.revealLeave : 0), { [weak self] in
-                rows.forEach { $0.isHidden = true }
-                self?.narrowRows()
-            })
-        }
-        if let search, let at = zip(steps, times.going).first(where: { $0.0.contains(search) })?.1 {
-            reveal.append((at, { [weak self] in self?.model.playerSearchArrived = false }))
-        }
-        reveal.append((times.end + Self.revealLeave, remove))
-        runRevealNextTurn(reveal)
-    }
-
-    /// Shows the unfolded players whose names match `search`.
-    private func searchPlayers(_ search: String) {
-        guard let playerSearchItem else { return } // folded meanwhile
-        model.playerSearch = search
-        playerRows.forEach(menu.removeItem)
-        showPlayerRows(offeredPlayers.matching(search), at: menu.index(of: playerSearchItem) + 1)
-    }
-
-    /// The players as the menu offers them: in AntiDot mode, the apps that
-    /// can only be muted can't be chosen.
-    private var offeredPlayers: [PlayerOption] {
-        status.playerOptions.inAntiDotMode(settings.state.detection != .audioLevels).offered
-    }
-
-    /// Inserts a row for each of `options` at `index`: the supported apps
-    /// under their heading; the apps added through a check under theirs,
-    /// then "Add an App…" (E3); the Safari web apps under theirs, and "Add a
-    /// Web App…" last. A note first when the search matched none.
-    private func showPlayerRows(_ options: [PlayerOption], at index: Int, hidden: Bool = false) {
-        let apps = options.filter { $0.kind == .app }
-        let checked = options.filter { $0.kind == .checkedApp }
-        let webApps = options.filter { $0.kind == .safariWebApp }
-        var rows: [NSMenuItem] = []
-        if options.isEmpty {
-            let note = NSMenuItem(title: PlayerOption.noMatchNote(model.playerSearch), action: nil, keyEquivalent: "")
-            note.isEnabled = false
-            rows.append(note)
-        }
-        if !apps.isEmpty { rows += [.supportedAppsHeading(width: menuContentWidth)] + apps.map(playerRow) }
-        // While a search narrows the players, the heading shows only over a match.
-        if !checked.isEmpty || model.playerSearch.isEmpty { rows.append(.otherAppsHeading(width: menuContentWidth, isEmpty: checked.isEmpty)) }
-        rows += checked.flatMap { [playerRow(for: $0), removeRow(for: $0)] } + [addRow(PlayerOption.addAppTitle, #selector(addApp))]
-        if !webApps.isEmpty { rows += [.webAppsHeading(width: menuContentWidth)] + webApps.map(playerRow) }
-        rows.append(addRow(PlayerOption.addWebAppTitle, #selector(addWebApp)))
-        playerRows = rows
-        for (offset, row) in playerRows.enumerated() {
-            row.isHidden = hidden
-            menu.insertItem(row, at: index + offset)
-        }
-    }
-
-    /// "Add an App…" after the apps added through a check; "Add a Web App…"
-    /// last under the players.
-    private func addRow(_ title: String, _ action: Selector) -> NSMenuItem {
-        let row = item(title, action)
-        row.shownImage = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil)
-        return row
-    }
-
-    /// A player to choose, checked when chosen. One that isn't installed
-    /// can't be, and comes after those that are; a suggested web app opens
-    /// "Add a Web App" filled in. In AntiDot mode, an app that can only be
-    /// muted can't be either, and says why (still checked when chosen: the
-    /// card says it can't be controlled).
-    private func playerRow(for option: PlayerOption) -> NSMenuItem {
-        let row = item(option.name, #selector(choosePlayer(_:)), payload: Payload(option.bundleID))
-        row.shownImage = option.icon(size: 16)
-        row.state = option.bundleID == status.chosenPlayerID ? .on : .off
-        if option.isUntested {
-            // The row's title starts about 37 pt in and ends 16 pt short of
-            // the menu's edge.
-            row.setTitle(option.name, badge: PlayerOption.untestedBadge, font: Self.rowFont, maxWidth: menuContentWidth - 56)
-        }
-        row.isEnabled = option.isClickable
-        if !option.isInstalled {
-            row.subtitle = option.webAddress != nil ? PlayerOption.clickToAddLabel : PlayerOption.notInstalledLabel
-        } else if option.isUnavailableInAntiDotMode {
-            row.subtitle = PlayerOption.antiDotModeLabel
-            row.toolTip = option.antiDotModeReason
-            row.setAccessibilityHelp(option.antiDotModeReason)
-        } else if option.pausesByMuting {
-            row.subtitle = PlayerOption.mutedInsteadLabel
-        }
-        // VoiceOver can't see an icon's badge: a Safari web app named as an
-        // app is says so, as a Chromium browser's web app says whose it is.
-        let spoken = option.spokenName(among: status.playerOptions)
-        if spoken != option.name || option.isUntested {
-            row.setAccessibilityLabel(option.isUntested ? "\(spoken), \(PlayerOption.untestedBadge)" : spoken)
-        }
-        return row
-    }
-
-    /// An added app's row while Option is held: removes it, after asking
-    /// (R5, the user's pick, 2026-10-15; macOS's alternate menu items).
-    private func removeRow(for option: PlayerOption) -> NSMenuItem {
-        let row = item(PlayerOption.removeTitle(option.name), #selector(removeAddedApp(_:)), payload: Payload(option.bundleID))
-        row.shownImage = option.icon(size: 16)
-        row.isAlternate = true
-        row.keyEquivalentModifierMask = .option
-        return row
-    }
-
-    private func item(_ title: String, _ action: Selector, payload: NSObject? = nil) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
-        item.target = self
-        item.representedObject = payload
-        return item
-    }
-
-    /// Whether each row of More Settings shows now: the switches and the
-    /// chevron always, the rest while it's unfolded (greyed out when they
-    /// don't apply).
-    private var moreSettingsTargets: [(row: MoreSettingsRow, item: NSMenuItem, shows: Bool)] {
-        guard settingsModel != nil else { return [] }
-        return moreSettingsRows.map { row, item in (row, item, row.isSwitch || model.showsMoreSettings) }
-    }
-
-    /// Shows the rows of More Settings that apply now, at once. Rows are
-    /// shown or hidden whole: the menu follows that while it's open, unlike
-    /// a row changing its height (2026-10-17).
-    private func showMoreSettings() {
-        for (_, item, shows) in moreSettingsTargets { item.isHidden = !shows }
-        model.moreSettingsArrived = Set(MoreSettingsRow.allCases)
-    }
-
-    /// Unfolds or folds More Settings: its unfolding rows show or hide on the
-    /// next turn (rows hidden while the menu handles the click crop its top,
-    /// 2026-10-17), revealed (`runReveal`), each fading in and drifting down,
-    /// or fading out, as it comes or goes (`MoreSettingsRowView`).
-    private func toggleMoreSettings() {
-        model.showsMoreSettings.toggle()
-        RunLoop.main.perform(inModes: [.common]) { [weak self] in
-            MainActor.assumeIsolated { self?.revealMoreSettings() }
-        }
-    }
-
-    private func revealMoreSettings() {
-        finishReveal()
-        let changes = moreSettingsTargets.filter { $0.item.isHidden == $0.shows }
-        guard revealsRows, !changes.isEmpty else { return showMoreSettings() }
-        let going = Array(changes.filter { !$0.shows }.reversed()), coming = changes.filter(\.shows)
-        let times = Self.revealTimes(going: going.count, coming: coming.count)
-        var steps: [(at: TimeInterval, step: () -> Void)] = []
-        for (change, at) in zip(going, times.going) {
-            steps.append((at, { [weak self] in self?.model.moreSettingsArrived.remove(change.row) }))
-            steps.append((at + Self.revealLeave, { change.item.isHidden = true }))
-        }
-        for change in coming { model.moreSettingsArrived.remove(change.row) }
-        for (change, at) in zip(coming, times.coming) {
-            steps.append((at, { change.item.isHidden = false }))
-            steps.append((at + 1.0 / 60, { [weak self] in self?.model.moreSettingsArrived.insert(change.row) }))
-        }
-        steps.append((times.end, { [weak self] in self?.showMoreSettings() })) // as the settings are now
-        runReveal(steps)
-    }
-
-    // MARK: - Revealing rows
-
-    /// Whether rows come and go over time: while the menu shows, Reduce
-    /// Motion off.
-    private var revealsRows: Bool {
-        isMenuOpen && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-    }
-
-    /// When rows come and go, each within `revealArrival`: the rows coming
-    /// arrive from the top down, close together at first and easing apart;
-    /// the rows going leave from the bottom up as that played backwards,
-    /// far apart at first and closing in. A row going that fades (one of
-    /// AutoHush's own) goes `revealLeave` after its time. `end`: when it's
-    /// over.
-    static func revealTimes(going: Int, coming: Int) -> (going: [TimeInterval], coming: [TimeInterval], end: TimeInterval) {
-        func eased(_ count: Int) -> [TimeInterval] {
-            (0..<count).map { revealArrival * pow(Double($0) / Double(max(1, count)), 1.4) }
-        }
-        let arrivals = eased(going)
-        let goingTimes = arrivals.reversed().map { (arrivals.last ?? 0) - $0 }
-        let start = goingTimes.last.map { $0 + revealLeave } ?? 0
-        let comingTimes = eased(coming).map { start + $0 }
-        return (goingTimes, comingTimes, (comingTimes.last ?? start) + 2.0 / 60)
-    }
-
-    /// `runReveal` on the next turn, once the click that asked for it is
-    /// handled (rows hidden during it crop the menu's top, 2026-10-17).
-    private func runRevealNextTurn(_ steps: [(at: TimeInterval, step: () -> Void)]) {
-        pendingReveal = steps
-        RunLoop.main.perform(inModes: [.common]) { [weak self] in
+    /// Closes the menu on a click outside it (in another app, or another of
+    /// AutoHush's windows), or on another desktop; follows Option.
+    private func watchWhileOpen() {
+        let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
+            MainActor.assumeIsolated { self?.close() }
+        }) { monitors.append(global) }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
+            let isFlags = event.type == .flagsChanged
+            let optionHeld = event.modifierFlags.contains(.option)
+            let windowNumber = event.windowNumber
             MainActor.assumeIsolated {
-                guard let self, let steps = self.pendingReveal else { return }
-                self.pendingReveal = nil
-                self.runReveal(steps)
+                guard let self else { return }
+                if isFlags {
+                    self.model.isOptionHeld = optionHeld
+                } else if windowNumber != self.panel?.windowNumber, windowNumber != self.statusItem.button?.window?.windowNumber {
+                    self.close()
+                }
             }
-        }
+            return event
+        }) { monitors.append(local) }
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in MainActor.assumeIsolated { self?.close() } }
     }
 
-    private var pendingReveal: [(at: TimeInterval, step: () -> Void)]?
-
-    /// Runs `steps` at their times, ending first any reveal under way.
-    private func runReveal(_ steps: [(at: TimeInterval, step: () -> Void)]) {
-        finishReveal()
-        revealSteps = steps.sorted { $0.at < $1.at }
-        revealStart = Date()
-        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.stepReveal() }
+    /// ↑ ↓ move among the unfolded players and Return chooses, as in a
+    /// menu (the search takes them itself while it has the keyboard).
+    private func handleKey(_ event: NSEvent) -> Bool {
+        guard model.isChoosingPlayer else { return false }
+        switch event.keyCode {
+        case 126: perform(.moveHighlight(-1))
+        case 125: perform(.moveHighlight(1))
+        case 36, 76: perform(.chooseHighlighted)
+        default: return false
         }
-        RunLoop.main.add(timer, forMode: .common) // runs while the menu tracks the pointer
-        revealTimer = timer
-        stepReveal()
+        return true
     }
 
-    private func stepReveal() {
-        let elapsed = Date().timeIntervalSince(revealStart)
-        while let next = revealSteps.first, next.at <= elapsed {
-            revealSteps.removeFirst()
-            next.step()
-        }
-        if revealSteps.isEmpty {
-            revealTimer?.invalidate()
-            revealTimer = nil
-            narrowRows()
-        }
+    private static var reducesMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
 
-    /// Has the menu measure its width again once rows have come or gone:
-    /// rows removed outside a click left it wider than they need (2026-10-17,
-    /// the user's first fold of the players); its custom views back to its
-    /// width first, should they have stretched with it.
-    private func narrowRows() {
-        let rows = menu.items.filter { $0.view != nil }
-        for row in rows where row.view?.frame.width != menuContentWidth { row.view?.frame.size.width = menuContentWidth }
-        // Changing the minimum width is what makes it measure its width again.
-        menu.minimumWidth = menuContentWidth + 1
-        menu.minimumWidth = 0
-        if let row = rows.first { menu.itemChanged(row) }
-        menu.update()
-    }
-
-    /// Ends a reveal under way where it was going.
-    private func finishReveal() {
-        revealTimer?.invalidate()
-        revealTimer = nil
-        let rest = revealSteps
-        revealSteps = []
-        rest.forEach { $0.step() }
-        if !rest.isEmpty { narrowRows() }
+    /// Folds or unfolds a part of the menu, smoothly unless Reduce Motion is on.
+    private func animated(_ change: () -> Void) {
+        withAnimation(Self.reducesMotion ? nil : MenuPanelView.animation, change)
     }
 
     // MARK: - Actions
 
-    /// What the custom views ask for. Switches, the player list and its
-    /// search act at once and keep the menu open; the rest close it first,
-    /// as its rows do.
+    /// What the menu's controls ask for. Switches, folding and the players'
+    /// search act at once and keep the menu open; what opens a window or
+    /// chooses something closes it first, as a menu's rows do.
     func perform(_ command: StatusMenuCommand) {
         switch command {
         case .toggleAutoPause:
@@ -631,11 +271,26 @@ final class StatusMenuController: NSObject {
         case .setIgnored(let source, let ignored):
             settings.setIgnored(source, ignored)
         case .togglePlayerList:
-            togglePlayerList()
+            animated {
+                model.isChoosingPlayer.toggle()
+                model.playerSearch = ""
+                model.highlightedPlayerID = nil
+            }
         case .searchPlayers(let search):
-            searchPlayers(search)
+            guard model.isChoosingPlayer else { return } // a closing field handing its text back
+            model.playerSearch = search
+            if let highlighted = model.highlightedPlayerID, !model.players.choosable.contains(where: { $0.id == highlighted }) {
+                model.highlightedPlayerID = nil
+            }
+        case .moveHighlight(let step):
+            model.highlightedPlayerID = model.players.highlight(from: model.highlightedPlayerID, by: step)
+        case .chooseHighlighted:
+            guard let id = model.highlightedPlayerID ?? model.players.choosable.first?.id else { return }
+            perform(.choosePlayer(id))
         case .toggleMoreSettings:
-            toggleMoreSettings()
+            animated { model.showsMoreSettings.toggle() }
+        case .toggleIgnoredApps:
+            animated { model.showsIgnoredApps.toggle() }
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
@@ -648,10 +303,11 @@ final class StatusMenuController: NSObject {
                 await self?.updates.checkNow()
                 self?.model.isCheckingForUpdates = false
             }
-        case .snooze, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls, .reopenPlayer,
-             .unmutePlayer, .quit:
-            menu.cancelTracking()
-            // Once the menu has closed, as for its own rows.
+        case .snooze, .choosePlayer, .removeAddedApp, .addApp, .addWebApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
+             .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
+             .reopenPlayer, .unmutePlayer, .quit:
+            close()
+            // Once the menu has closed, as for a menu's rows.
             RunLoop.main.perform(inModes: [.default]) { [weak self] in
                 MainActor.assumeIsolated { self?.run(command) }
             }
@@ -660,106 +316,27 @@ final class StatusMenuController: NSObject {
 
     private func run(_ command: StatusMenuCommand) {
         switch command {
-        case .snooze(let snooze): settings.snooze(snooze)
-        case .openSettings:       actions?.openSettings(page: nil)
-        case .showDiagnostics:    actions?.openSettings(page: .diagnostics)
-        case .updates:            updates.presentAvailableUpdate() // checking keeps the menu open: `perform`
-        case .showAbout:          actions?.openSettings(page: .about)
-        case .showControlError:   actions?.showControlError()
-        case .learnControls:      actions?.learnControlsAgain()
-        case .reopenPlayer:       actions?.reopenPlayer()
-        case .unmutePlayer:       actions?.unmutePlayer()
-        case .quit:               actions?.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .toggleMoreSettings:
+        case .snooze(let snooze):        settings.snooze(snooze)
+        case .choosePlayer(let id):      actions?.choosePlayer(id)
+        case .removeAddedApp(let id):    actions?.removeAddedApp(id)
+        case .addApp:                    actions?.openAddApp()
+        case .addWebApp:                 actions?.openAddWebApp()
+        case .resolveWarning(let need):  actions?.requestPermission(need)
+        case .reopenAutoHush:            actions?.reopenAutoHush()
+        case .useAntiDotMode:            settings.setDetectionMethod(.playbackSignals)
+        case .showUpdate:                updates.presentAvailableUpdate()
+        case .openSettings:              actions?.openSettings(page: nil)
+        case .showDiagnostics:           actions?.openSettings(page: .diagnostics)
+        case .updates:                   updates.presentAvailableUpdate() // checking keeps the menu open: `perform`
+        case .showAbout:                 actions?.openSettings(page: .about)
+        case .showControlError:          actions?.showControlError()
+        case .learnControls:             actions?.learnControlsAgain()
+        case .reopenPlayer:              actions?.reopenPlayer()
+        case .unmutePlayer:              actions?.unmutePlayer()
+        case .quit:                      actions?.quit()
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .moveHighlight, .chooseHighlighted,
+             .toggleMoreSettings, .toggleIgnoredApps, .retry:
             break // they act in perform(_:)
-        }
-    }
-
-    /// Closes the menu if it's open, and returns once it has: an alert, such
-    /// as an update check's result, can't show over it.
-    func closeMenu() async {
-        guard isMenuOpen else { return }
-        menu.cancelTracking()
-        let deadline = ContinuousClock.now + .seconds(1)
-        while isMenuOpen, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(20)) }
-    }
-
-    @objc private func showAvailableUpdate() { updates.presentAvailableUpdate() }
-
-    @objc private func addWebApp() { actions?.openAddWebApp() }
-    @objc private func addApp() { actions?.openAddApp() }
-
-    @objc private func reopen() { actions?.reopenAutoHush() }
-
-    @objc private func useAntiDotMode() { settings.setDetectionMethod(.playbackSignals) }
-
-    @objc private func removeAddedApp(_ sender: NSMenuItem) {
-        guard let payload = sender.representedObject as? Payload<String> else { return }
-        actions?.removeAddedApp(payload.value)
-    }
-
-    @objc private func choosePlayer(_ sender: NSMenuItem) {
-        guard let payload = sender.representedObject as? Payload<String> else { return }
-        actions?.choosePlayer(payload.value)
-    }
-
-    @objc private func toggleIgnored(_ sender: NSMenuItem) {
-        guard let payload = sender.representedObject as? Payload<(AudioSource, Bool)> else { return }
-        settings.setIgnored(payload.value.0, payload.value.1)
-    }
-
-    @objc private func resolveWarning(_ sender: NSMenuItem) {
-        guard let payload = sender.representedObject as? Payload<Permission> else { return }
-        actions?.requestPermission(payload.value)
-    }
-}
-
-// MARK: - NSMenuDelegate
-
-extension StatusMenuController: NSMenuDelegate {
-    /// Called before the menu opens, while it can still be rebuilt.
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        actions?.menuWillOpen()
-        rebuild()
-    }
-
-    func menuWillOpen(_ menu: NSMenu) {
-        isMenuOpen = true
-    }
-
-    func menuDidClose(_ menu: NSMenu) {
-        isMenuOpen = false
-        finishReveal() // a reveal under way ends where it was going
-    }
-}
-
-/// A menu row whose text field takes what's typed as soon as the row is in
-/// the menu's window: SwiftUI's focus doesn't reach into an open menu, so
-/// the field becomes AppKit's first responder instead.
-private final class KeyboardTakingHostingView<Content: View>: NSHostingView<Content> {
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        guard let window else { return }
-        // Once SwiftUI has put its field in: on the run loop's next turn, in
-        // its common modes, which include the open menu's tracking.
-        RunLoop.main.perform(inModes: [.common]) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, let field = self.firstEditableTextField, window.makeFirstResponder(field) else { return }
-                // The text it edits shows on the field's own background.
-                (field.currentEditor() as? NSTextView)?.drawsBackground = false
-            }
-        }
-    }
-}
-
-private extension NSMenuItem {
-    /// Its image, always shown: from macOS 27, AppKit hides menu items'
-    /// images in apps built with its SDK unless an item asks to show its own.
-    var shownImage: NSImage? {
-        get { image }
-        set {
-            image = newValue
-            if #available(macOS 27, *) { preferredImageVisibility = .visible }
         }
     }
 }

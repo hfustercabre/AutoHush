@@ -9,6 +9,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **The menu is AutoHush's own panel,** so its parts fold and unfold
+  smoothly, the panel's height following (at once with Reduce Motion). The
+  players unfold inside the card, with lines between their groups and a
+  checkmark on yours; ↑ and ↓ move through them and Return chooses. Ignored
+  Apps unfolds under its row. Escape or a click elsewhere closes it, and it
+  follows Reduce Transparency and Increase Contrast, as menus do.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
@@ -86,10 +92,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
-  and Advanced's switches; a small arrow unfolds their timings too, row by
-  row in a brief animation (none with Reduce Motion), as the players do
-  now when you unfold them under the card; folded at first, it stays as
-  you left it while AutoHush runs.
+  and Advanced's switches, each with a few words on what it does and its
+  symbol in blue while it's on; a small arrow unfolds their timings too,
+  under each section's name. Folded at first, it stays as you left it
+  while AutoHush runs. Settings → Detection has a "Modes" heading over
+  AntiDot mode, as the menu does.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the
   Mac's volume lowered to match (10 dB at most), until the next pause, when
@@ -100,7 +107,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   player isn't resumed when a call (an app using the microphone) came
   while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
-  played in the last 5 minutes, each with its switch, so one that stopped
+  played in the last 30 minutes, each with its switch, so one that stopped
   before you could switch it off is still there.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
