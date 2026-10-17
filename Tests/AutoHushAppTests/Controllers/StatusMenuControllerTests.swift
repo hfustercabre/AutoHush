@@ -464,7 +464,7 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
-    @Test("More Settings sits below Ignored Apps, folded at first; its chevron unfolds Detection's, Fades' and Advanced's settings, the row growing, and they stay as left when the menu opens again; its switches change what Settings does")
+    @Test("More Settings sits below Ignored Apps, folded at first: its chevron shows Detection's, Fades' and Advanced's rows, each a row of its own, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
@@ -475,20 +475,31 @@ struct StatusMenuControllerTests {
         status.ignoredApps = [vlc]
         sut.status = status
         prepareToOpen(sut)
-        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings", "—", "toolbar"])
+        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
         #expect(!sut.model.showsMoreSettings)
-        let folded = sut.menu.items.first { $0.identifier?.rawValue == "moreSettings" }?.view?.frame.height ?? 0
 
         sut.model.perform(.toggleMoreSettings)
-        let open = sut.menu.items.first { $0.identifier?.rawValue == "moreSettings" }?.view?.frame.height ?? 0
-        #expect(sut.model.showsMoreSettings && open > folded + 200)
+        let shown = ["detection", "pauseAfter", "resumeAfter", "silenceThreshold", "fades", "fadeOut", "fadeIn",
+                     "advanced", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
+        #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detection" }.prefix(shown.count)) == shown)
+        #expect(sut.menu.items.compactMap(\.view).allSatisfy { $0.frame.height > 0 })
         prepareToOpen(sut)
         #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
 
-        SettingsSwitch.levelsMusic.set(true, in: settingsModel)
+        // AntiDot mode: its ways instead of the silence threshold, and leveling dimmed.
         SettingsSwitch.antiDot.set(true, in: settingsModel)
-        #expect(settings.state.timings.levelsMusic && settings.state.detection == .playbackSignals)
-        #expect(SettingsSwitch.levelsMusic.isUnavailable(settingsModel)) // AntiDot mode measures no sound
+        sut.model.perform(.updateMoreSettings) // as its chevron's row asks when they change
+        RunLoop.main.run(until: Date() + 0.05) // it follows once the click is handled
+        #expect(rows(sut.menu).contains("moreSettings.antiDotWays") && !rows(sut.menu).contains("moreSettings.silenceThreshold"))
+        #expect(settings.state.detection == .playbackSignals && SettingsSwitch.levelsMusic.isUnavailable(settingsModel))
+        // Fades off: their lengths go.
+        SettingsSwitch.fades.set(false, in: settingsModel)
+        sut.model.perform(.updateMoreSettings)
+        RunLoop.main.run(until: Date() + 0.05)
+        #expect(!rows(sut.menu).contains("moreSettings.fadeOut") && !rows(sut.menu).contains("moreSettings.fadeIn"))
+
+        sut.model.perform(.toggleMoreSettings)
+        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
     }
 
     @Test("the players are folded again each time the menu opens")

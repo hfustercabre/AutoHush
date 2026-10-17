@@ -21,8 +21,8 @@ enum StatusMenuCommand: Equatable, Sendable {
     case unmutePlayer
     /// Shows or folds away More Settings, below Ignored Apps.
     case toggleMoreSettings
-    /// More Settings' rows changed: its row takes its new height.
-    case fitMoreSettings
+    /// The settings changed what More Settings shows: its rows follow.
+    case updateMoreSettings
     /// Learns the chosen web app's controls in a new learning window.
     case learnControls
     case openSettings
