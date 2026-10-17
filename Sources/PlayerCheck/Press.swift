@@ -1,4 +1,5 @@
 import AppKit
+import PlayerCheckKit
 
 // MARK: - Play or pause (--play, --pause)
 

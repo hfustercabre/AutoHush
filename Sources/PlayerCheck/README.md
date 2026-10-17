@@ -58,7 +58,8 @@ subject: `main.swift` runs the steps in the report's order, and each
 file holds one subject (`Scripting`, `Menu`, `Page`, `WindowStates`,
 `Signs`, `PressTest`, `Report`, …). `Kit/` is PlayerCheckKit, the parts
 that need no app to check (its command line, an app's binaries, what the
-log leaves out, what's kept), so tests reach them.
+log leaves out, what's kept, how a press is judged, how a stop is handled,
+what the check found made into its result), so tests reach them.
 
 ## Permissions
 

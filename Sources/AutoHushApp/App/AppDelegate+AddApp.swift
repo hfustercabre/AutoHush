@@ -11,8 +11,6 @@ extension AppDelegate {
         let model = addAppModel ?? AddAppModel(services: liveAddAppServices())
         addAppModel = model
         if addAppWindow == nil { addAppWindow = AddAppWindowController(model: model) }
-        model.services.antiDot = { [weak self] in self?.preferences.detectionMethod != .audioLevels }
-        model.services.turnOffAntiDot = { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) }
         model.services.openMenuBarSettings = { SystemSettingsPane.menuBar.open() }
         if addAppWindow?.isOpen != true { model.reset() }
         addAppWindow?.show()
@@ -44,6 +42,8 @@ extension AppDelegate {
             reopen: { app in await helper?.reopenWithLaunchOption(app.url) ?? false },
             permissions: { app, scriptable in await Self.checkPermissions(app, scriptable: scriptable) },
             request: { permission, app, current in await Self.request(permission, app: app, current: current) },
+            antiDot: { [weak self] in self?.preferences.detectionMethod != .audioLevels },
+            turnOffAntiDot: { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) },
             isPlaying: { [weak self] app, traits in
                 // A browser's web app plays through its browser.
                 let source = if case .browserWebApp(let browser)? = traits.framework { browser } else { app.bundleID }

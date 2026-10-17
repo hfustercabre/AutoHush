@@ -126,7 +126,8 @@ let package = Package(
             exclude: ["README.md", "Kit"]
         ),
         // The check's parts that need no app to check: reading its command
-        // line and an app's binaries, what its log leaves out, what it keeps.
+        // line and an app's binaries, what its log leaves out, what it keeps,
+        // judging a press, handling a stop, and what it found as its result.
         .target(
             name: "PlayerCheckKit",
             dependencies: ["AutoHushKit", "WebAppPlayers", "CheckedPlayers", "ScriptablePlayers"],

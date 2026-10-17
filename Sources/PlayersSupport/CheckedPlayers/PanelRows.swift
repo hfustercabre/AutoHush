@@ -72,4 +72,15 @@ package enum PanelRows {
         }
         return !asToggle && pausing && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil
     }
+
+    /// The app's own row when it doesn't follow the app: its sound says the
+    /// app isn't as wanted yet (heard while `pausing`, silent while playing
+    /// it), so the row is pressed as a toggle, as AutoHush presses such a row
+    /// (`PlayerSetup.panelRowIsStale`). `nil` otherwise, or unmeasured.
+    package static func staleRow(in rows: [PanelRow], pausing: Bool, heard: Bool?, appName: String, otherApps: Set<String>,
+                                 texts: [String], remembered: String?) -> PanelRow? {
+        guard heard == pausing else { return nil }
+        return row(in: rows, pausing: pausing, appName: appName, otherApps: otherApps, texts: texts,
+                   remembered: remembered, holdsNowPlaying: false, asToggle: true)
+    }
 }

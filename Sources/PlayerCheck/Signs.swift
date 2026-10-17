@@ -5,54 +5,8 @@ import PlayerCheckKit
 
 // MARK: - Whether it plays
 
-/// The signs of whether it plays, surest first: its scripted state, what it
-/// reports to Now Playing, its page's Play/Pause (while its word is current),
-/// its level (as AutoHush hears it), its keep-awake assertion (as AntiDot
-/// mode reads it), its menu's state (as AutoHush's MenuPlayer reads it).
-/// A menu's word may change late by itself (one said Play while playing,
-/// then Pause a second later, with nothing pressed), so it comes last.
-enum SignKind: CaseIterable { case script, report, page, level, awake, menu }
-
-/// What can be seen of whether it plays: the menu's first item, its
-/// scripted state, what it reports to Now Playing, its page's Play/Pause,
-/// its sound output, its level (when measured) and its keep-awake assertion.
-struct Look {
-    var menuTitle: String?
-    /// As its menu's item tells it (`menuState`): stopped while disabled.
-    var menuState: PlayerState?
-    var state: PlayerState?
-    /// What it reports to Now Playing, as the log says it ("Playing", "Paused"…).
-    var reported: String?
-    var pageToggle: String?
-    /// Whether `pageToggle`'s word is current (`pageWordCurrent`); a stale
-    /// one is shown, but nothing is judged by it.
-    var pageCurrent = true
-    var sounding: Bool
-    /// Heard by its level; nil when not measured.
-    var audible: Bool? = nil
-    /// As its keep-awake assertions tell it (`awake`); nil while they don't.
-    var awake: Bool? = nil
-
-    /// What one sign says; nil when it says nothing (not read, or a page's
-    /// stale or unknown word).
-    @MainActor func says(_ kind: SignKind) -> PlayerState? {
-        switch kind {
-        case .script: state
-        case .report: reported.map(NowPlayingReports.state(reported:))
-        case .page: pageCurrent ? pageToggle.flatMap(wordSays) : nil
-        case .level: audible.map { $0 ? .playing : .paused }
-        case .awake: awake.map { $0 ? .playing : .paused }
-        case .menu: menuState
-        }
-    }
-    /// The surest sign that says something.
-    @MainActor var surest: SignKind? { SignKind.allCases.first { says($0) != nil } }
-    /// Stopped, as its surest state tells it: its scripted state, else what
-    /// it reports to Now Playing, else its menu's item (disabled). A track
-    /// that ends leaves it so (one with a playing flag said stopped, not paused).
-    @MainActor var stopped: Bool { [SignKind.script, .report, .menu].lazy.compactMap(says).first == .stopped }
-
-    /// What it shows, its menu's and page's words only (`shown`).
+/// What a look shows, for the log: its menu's and page's words only (`shown`).
+extension Look {
     @MainActor var line: String {
         [menuTitle.map { "menu \(shown($0))" + (menuState == .stopped ? " (disabled)" : "") }, state.map { "state \($0.rawValue)" },
          reported.map { "reports \($0.lowercased())" },
@@ -80,9 +34,10 @@ struct Look {
         noteHeard(against: reported)
         if reportIsStale { reported = nil }
     }
+    let pageToggle = page?.toggle == nil ? nil : pageToggleLabel(pid)
     return Look(menuTitle: toggle?.title, menuState: toggle.flatMap(menuState), state: state,
                 reported: reported,
-                pageToggle: page?.toggle == nil ? nil : pageToggleLabel(pid), pageCurrent: pageWordCurrent,
+                pageToggle: pageToggle, pageSays: pageToggle.flatMap(wordSays), pageCurrent: pageWordCurrent,
                 sounding: sounding, audible: heard, awake: awake(pid, sounding: sounding))
 }
 
@@ -115,26 +70,6 @@ struct Look {
         }
     }
     return now.sounding
-}
-
-/// Whether a press took, judged by the surest sign the app showed before
-/// it (`Look.surest`); with none, by its menu's word changing or its sound.
-struct Sign {
-    let before: Look
-    let kind: SignKind?
-    @MainActor init(before: Look) {
-        self.before = before
-        kind = before.surest
-    }
-    var byLevel: Bool { kind == .level }
-    @MainActor func paused(_ now: Look) -> Bool {
-        guard let kind else { return now.menuTitle != before.menuTitle || !now.sounding }
-        return now.says(kind).map { $0 != .playing } ?? false
-    }
-    @MainActor func playing(_ now: Look) -> Bool {
-        guard let kind else { return now.sounding }
-        return now.says(kind) == .playing
-    }
 }
 
 /// Waits up to `seconds`, running the run loop (for notifications), until

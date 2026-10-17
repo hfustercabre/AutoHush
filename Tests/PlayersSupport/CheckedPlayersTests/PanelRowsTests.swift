@@ -29,7 +29,7 @@ struct PanelRowsTests {
         #expect(PanelRows.appRows(rows, appName: "VLC", otherApps: ["QuickTime Player"], texts: ["QuickTime Player"]).isEmpty)
     }
 
-    @Test("as a toggle, the app's own row is pressed whatever it shows, and never the only one playing")
+    @Test("as a toggle, the app's own row is pressed whatever it shows, and never the only one playing; a row that doesn't follow its app is one while its sound says otherwise")
     func asToggle() {
         let rows = [PanelRow(text: "Qobuz,  – ", playing: false), PanelRow(text: "Song, Artist – Album", playing: true)]
         let own = PanelRows.row(in: rows, pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: true, asToggle: true)
@@ -38,6 +38,12 @@ struct PanelRowsTests {
         #expect(PanelRows.row(in: rows, pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: false) == nil)
         #expect(PanelRows.row(in: [rows[1]], pausing: true, appName: "Qobuz", otherApps: [], texts: [], remembered: nil, holdsNowPlaying: true,
                               asToggle: true) == nil)
+        // Its row shows paused while it's heard (pausing), or playing while it's silent (playing it): stale.
+        func stale(pausing: Bool, heard: Bool?) -> PanelRow? {
+            PanelRows.staleRow(in: rows, pausing: pausing, heard: heard, appName: "Qobuz", otherApps: [], texts: [], remembered: nil)
+        }
+        #expect(stale(pausing: true, heard: true) == rows[0] && stale(pausing: false, heard: false) == rows[0])
+        #expect(stale(pausing: true, heard: false) == nil && stale(pausing: false, heard: true) == nil && stale(pausing: true, heard: nil) == nil)
     }
 
     @Test("the row to press: its song's, else the one it changed with before, else the only one playing while it holds Now Playing")

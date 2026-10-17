@@ -189,12 +189,11 @@ struct PanelRead {
     }
 }
 
-/// A row that doesn't follow the app: its own showing the other state while
-/// its sound says it isn't as wanted yet (heard while it shows paused,
-/// silent while it shows playing), pressed as a toggle as AutoHush presses
-/// such a row (`PlayerSetup.panelRowIsStale`), and kept so (`panelRowStale`).
+/// A row that doesn't follow the app (`PanelRows.staleRow`), pressed as a
+/// toggle, and kept so (`panelRowStale`).
 @MainActor func staleRow(in rows: [PanelRow], pausing: Bool, read: PanelRead, remembered: String?) -> PanelRow? {
-    guard read.heard == pausing, let own = read.row(in: rows, pausing: pausing, remembered: remembered, asToggle: true) else { return nil }
+    guard let own = PanelRows.staleRow(in: rows, pausing: pausing, heard: read.heard, appName: appName, otherApps: read.otherApps,
+                                       texts: read.texts.all, remembered: remembered) else { return nil }
     log("    its row shows \(pausing ? "Play" : "Pause") while it's \(pausing ? "heard" : "silent"): pressed as a toggle")
     panelRowStale = true
     return own
