@@ -32,7 +32,7 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu: the card,<br/>Auto-Pause, Turn off for,<br/>Playing Now, Recently Played,<br/>Ignored Apps, more settings<br/>(folded at first)"]
+  MENU["The menu bar menu: the card,<br/>Auto-Pause, Turn off for,<br/>Playing Now, Recently Played,<br/>Ignored Apps, the settings'<br/>switches (their timings<br/>folded at first)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]

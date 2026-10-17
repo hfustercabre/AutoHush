@@ -464,7 +464,7 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
-    @Test("More Settings sits below Ignored Apps, folded at first: its chevron shows Detection's, Fades' and Advanced's rows, each a row of its own, once the click is handled, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
+    @Test("below Ignored Apps, Detection's, Fades' and Advanced's switches always show; the chevron unfolds the pages' names, their timings and AntiDot mode's ways, each a row of its own, once the click is handled, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
@@ -475,15 +475,15 @@ struct StatusMenuControllerTests {
         status.ignoredApps = [vlc]
         sut.status = status
         prepareToOpen(sut)
-        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
+        #expect(rows(sut.menu).suffix(9) == ["Ignored Apps", "—", "moreSettings.antiDot", "moreSettings.fades", "moreSettings.levelsMusic", "moreSettings.staysPausedAfterCalls", "moreSettings.chevron", "—", "toolbar"])
         #expect(!sut.model.showsMoreSettings)
         func settle() { RunLoop.main.run(until: Date() + 0.05) } // once the click is handled
 
         sut.model.perform(.toggleMoreSettings)
         settle()
-        let shown = ["detection", "pauseAfter", "resumeAfter", "silenceThreshold", "fades", "fadeOut", "fadeIn",
-                     "advanced", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
-        #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detection" }.prefix(shown.count)) == shown)
+        let shown = ["detectionHeading", "antiDot", "pauseAfter", "resumeAfter", "silenceThreshold", "fadesHeading", "fades",
+                     "fadeOut", "fadeIn", "advancedHeading", "levelsMusic", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
+        #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detectionHeading" }.prefix(shown.count)) == shown)
         #expect(sut.model.moreSettingsArrived == Set(MoreSettingsRow.allCases)) // every row's content shows
         prepareToOpen(sut)
         #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
@@ -502,7 +502,7 @@ struct StatusMenuControllerTests {
 
         sut.model.perform(.toggleMoreSettings)
         settle()
-        #expect(rows(sut.menu).suffix(5) == ["Ignored Apps", "—", "moreSettings.chevron", "—", "toolbar"])
+        #expect(rows(sut.menu).suffix(9) == ["Ignored Apps", "—", "moreSettings.antiDot", "moreSettings.fades", "moreSettings.levelsMusic", "moreSettings.staysPausedAfterCalls", "moreSettings.chevron", "—", "toolbar"])
     }
 
     @Test("the players are folded again each time the menu opens")

@@ -409,12 +409,12 @@ final class StatusMenuController: NSObject {
         return item
     }
 
-    /// Whether each row of More Settings shows now: those that apply while
-    /// it's unfolded, the chevron always.
+    /// Whether each row of More Settings shows now: the switches and the
+    /// chevron always, the rest while it's unfolded and they apply.
     private var moreSettingsTargets: [(row: MoreSettingsRow, item: NSMenuItem, shows: Bool)] {
         guard let settingsModel else { return [] }
         return moreSettingsRows.map { row, item in
-            (row, item, row == .chevron || (model.showsMoreSettings && row.applies(settingsModel)))
+            (row, item, row.isSwitch || (model.showsMoreSettings && row.applies(settingsModel)))
         }
     }
 

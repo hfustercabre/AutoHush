@@ -1,17 +1,23 @@
 import SwiftUI
 import AutoHushKit
 
-/// The rows of the menu's More Settings (`MoreSettingsView`): Settings →
-/// Detection's, → Fades' and → Advanced's switches and timings, above a
-/// small chevron on a pill (C3). As in Settings, only what applies shows:
-/// the fades' lengths while they're on, AntiDot mode's ways while it's on,
-/// the silence threshold while it's off.
+/// The rows of the menu's settings, below Ignored Apps: Settings →
+/// Detection's, → Fades' and → Advanced's switches, always shown (the user,
+/// 2026-10-17), and the pages' names, their timings and AntiDot mode's ways,
+/// shown only while unfolded, above a small chevron on a pill (C3). As in Settings, only
+/// what applies shows: the fades' lengths while they're on, AntiDot mode's
+/// ways while it's on, the silence threshold while it's off.
 enum MoreSettingsRow: String, CaseIterable {
-    case detection, antiDotWays, pauseAfter, resumeAfter, silenceThreshold
-    case fades, fadeOut, fadeIn
-    case advanced, staysPausedAfterCalls
+    case detectionHeading, antiDot, antiDotWays, pauseAfter, resumeAfter, silenceThreshold
+    case fadesHeading, fades, fadeOut, fadeIn
+    case advancedHeading, levelsMusic, staysPausedAfterCalls
     /// Shows or folds the others; always shown.
     case chevron
+
+    /// A switch (or the chevron): shown folded too.
+    var isSwitch: Bool {
+        [.antiDot, .fades, .levelsMusic, .staysPausedAfterCalls, .chevron].contains(self)
+    }
 
     /// Whether it shows, More Settings unfolded.
     @MainActor func applies(_ settings: SettingsModel) -> Bool {
@@ -45,8 +51,8 @@ struct MoreSettingsRowView: View {
 
     @ViewBuilder private var content: some View {
         switch row {
-        case .detection:
-            heading(.detection) { SettingsSwitchRow(model: settings, kind: .antiDot, showsSubtitle: false) }
+        case .detectionHeading: heading(.detection)
+        case .antiDot: SettingsSwitchRow(model: settings, kind: .antiDot, showsSubtitle: false)
         case .antiDotWays:
             ChoiceChips(
                 options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
@@ -56,18 +62,16 @@ struct MoreSettingsRowView: View {
         case .pauseAfter: TimingSliderRow(model: settings, timing: .pauseAfter, compact: true)
         case .resumeAfter: TimingSliderRow(model: settings, timing: .resumeAfter, compact: true)
         case .silenceThreshold: TimingSliderRow(model: settings, timing: .silenceThreshold, compact: true)
+        case .fadesHeading: heading(.fades)
         case .fades:
-            heading(.fades) {
-                SettingsSwitchRow(model: settings, kind: .fades, showsSubtitle: false)
-                    .opacity(settings.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
-            }
+            SettingsSwitchRow(model: settings, kind: .fades, showsSubtitle: false)
+                .opacity(settings.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
         case .fadeOut: TimingSliderRow(model: settings, timing: .fadeOut, compact: true)
         case .fadeIn: TimingSliderRow(model: settings, timing: .fadeIn, compact: true)
-        case .advanced:
-            heading(.advanced) {
-                SettingsSwitchRow(model: settings, kind: .levelsMusic, showsSubtitle: false)
-                    .opacity(settings.isAntiDotMode ? 0.45 : 1)
-            }
+        case .advancedHeading: heading(.advanced)
+        case .levelsMusic:
+            SettingsSwitchRow(model: settings, kind: .levelsMusic, showsSubtitle: false)
+                .opacity(settings.isAntiDotMode ? 0.45 : 1)
         case .staysPausedAfterCalls:
             SettingsSwitchRow(model: settings, kind: .staysPausedAfterCalls, showsSubtitle: false)
         case .chevron:
@@ -77,14 +81,11 @@ struct MoreSettingsRowView: View {
         }
     }
 
-    /// A page's name over its first row.
-    private func heading<Row: View>(_ page: SettingsWindowController.Page, @ViewBuilder row: () -> Row) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(Text(verbatim: page.title))
-                .accessibilityAddTraits(.isHeader)
-                .padding(.top, page == .detection ? 0 : 4)
-            row()
-        }
+    /// A page's name, over its rows (unfolded only).
+    private func heading(_ page: SettingsWindowController.Page) -> some View {
+        SectionLabel(Text(verbatim: page.title))
+            .accessibilityAddTraits(.isHeader)
+            .padding(.top, page == .detection ? 0 : 4)
     }
 
     /// What decides which rows show.

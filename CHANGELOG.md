@@ -80,11 +80,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **More settings in the menu.** A small arrow under Ignored Apps unfolds
-  Detection's, Fades' and Advanced's switches and timings, row by row in
-  a brief animation, as do the rows a switch shows or hides (none with
-  Reduce Motion); folded at first, it stays
-  as you left it while AutoHush runs.
+- **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
+  and Advanced's switches; a small arrow unfolds their timings too, row by
+  row in a brief animation, as do the rows a switch shows or hides (none
+  with Reduce Motion); folded at first, it stays as you left it while
+  AutoHush runs.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the
   Mac's volume lowered to match (10 dB at most), until the next pause, when
