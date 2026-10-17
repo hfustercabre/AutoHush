@@ -29,14 +29,19 @@ struct DetectionSettingsView: View {
                         VStack(alignment: .leading, spacing: 6) { audioButtons }
                     }
                 }
-                if model.isAntiDotMode {
-                    CardDivider()
+                // AntiDot mode's ways: greyed out while it's off, what each does
+                // only while it's on.
+                CardDivider()
+                VStack(alignment: .leading, spacing: 10) {
                     SectionLabel(Text("Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps"))
                     ChoiceChips(
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: model.detectionMethod,
                         onSelect: { model.setDetectionMethod($0) }
                     )
+                }
+                .unavailable(!model.isAntiDotMode)
+                if model.isAntiDotMode {
                     Text(model.detectionMethod.summary).captionStyle()
                 }
             }
@@ -46,11 +51,10 @@ struct DetectionSettingsView: View {
                 TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
                 TimingSliderRow(model: model, timing: .resumeAfter)
-                // Only measuring audio levels has a threshold: hidden in AntiDot mode.
-                if !model.isAntiDotMode {
-                    CardDivider()
-                    TimingSliderRow(model: model, timing: .silenceThreshold)
-                }
+                // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
+                CardDivider()
+                TimingSliderRow(model: model, timing: .silenceThreshold)
+                    .unavailable(model.isAntiDotMode)
             }
             RestoreDefaultsButton(isDefault: model.detectionTimingsAreDefaults) { model.restoreDefaultDetectionTimings() }
         }

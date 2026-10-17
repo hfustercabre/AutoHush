@@ -4,9 +4,10 @@ import AutoHushKit
 /// The rows of the menu's settings, below Ignored Apps: Settings →
 /// Detection's, → Fades' and → Advanced's switches, always shown (the user,
 /// 2026-10-17), and the pages' names, their timings and AntiDot mode's ways,
-/// shown only while unfolded, above a small chevron on a pill (C3). As in Settings, only
-/// what applies shows: the fades' lengths while they're on, AntiDot mode's
-/// ways while it's on, the silence threshold while it's off.
+/// shown only while unfolded, above a small chevron on a pill (C3). As in
+/// Settings, what doesn't apply is greyed out: the fades' lengths while
+/// they're off, AntiDot mode's ways while it's off, the silence threshold
+/// while it's on.
 enum MoreSettingsRow: String, CaseIterable {
     case detectionHeading, antiDot, antiDotWays, pauseAfter, resumeAfter, silenceThreshold
     case fadesHeading, fades, fadeOut, fadeIn
@@ -19,7 +20,7 @@ enum MoreSettingsRow: String, CaseIterable {
         [.antiDot, .fades, .levelsMusic, .staysPausedAfterCalls, .chevron].contains(self)
     }
 
-    /// Whether it shows, More Settings unfolded.
+    /// Whether it can be used now; greyed out otherwise.
     @MainActor func applies(_ settings: SettingsModel) -> Bool {
         switch self {
         case .antiDotWays: settings.isAntiDotMode
@@ -52,32 +53,26 @@ struct MoreSettingsRowView: View {
     @ViewBuilder private var content: some View {
         switch row {
         case .detectionHeading: heading(.detection)
-        case .antiDot: SettingsSwitchRow(model: settings, kind: .antiDot, showsSubtitle: false)
+        case .antiDot: switchRow(.antiDot)
         case .antiDotWays:
             ChoiceChips(
                 options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                 selection: settings.detectionMethod,
                 onSelect: { settings.setDetectionMethod($0) }
             )
+            .unavailable(!row.applies(settings))
         case .pauseAfter: TimingSliderRow(model: settings, timing: .pauseAfter, compact: true)
         case .resumeAfter: TimingSliderRow(model: settings, timing: .resumeAfter, compact: true)
-        case .silenceThreshold: TimingSliderRow(model: settings, timing: .silenceThreshold, compact: true)
+        case .silenceThreshold:
+            TimingSliderRow(model: settings, timing: .silenceThreshold, compact: true).unavailable(!row.applies(settings))
         case .fadesHeading: heading(.fades)
-        case .fades:
-            SettingsSwitchRow(model: settings, kind: .fades, showsSubtitle: false)
-                .opacity(settings.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
-        case .fadeOut: TimingSliderRow(model: settings, timing: .fadeOut, compact: true)
-        case .fadeIn: TimingSliderRow(model: settings, timing: .fadeIn, compact: true)
+        case .fades: switchRow(.fades)
+        case .fadeOut: TimingSliderRow(model: settings, timing: .fadeOut, compact: true).unavailable(!row.applies(settings))
+        case .fadeIn: TimingSliderRow(model: settings, timing: .fadeIn, compact: true).unavailable(!row.applies(settings))
         case .advancedHeading: heading(.advanced)
-        case .levelsMusic:
-            SettingsSwitchRow(model: settings, kind: .levelsMusic, showsSubtitle: false)
-                .opacity(settings.isAntiDotMode ? 0.45 : 1)
-        case .staysPausedAfterCalls:
-            SettingsSwitchRow(model: settings, kind: .staysPausedAfterCalls, showsSubtitle: false)
-        case .chevron:
-            chevron
-                // The rows that apply follow the settings while the menu shows.
-                .onChange(of: layout) { model.perform(.updateMoreSettings) }
+        case .levelsMusic: switchRow(.levelsMusic)
+        case .staysPausedAfterCalls: switchRow(.staysPausedAfterCalls)
+        case .chevron: chevron
         }
     }
 
@@ -88,9 +83,11 @@ struct MoreSettingsRowView: View {
             .padding(.top, page == .detection ? 0 : 4)
     }
 
-    /// What decides which rows show.
-    private var layout: [Bool] {
-        [settings.isAntiDotMode, settings.timings.fadesEnabled, settings.playerCanFade]
+    /// One of the switches, without what it does, greyed out when it can't
+    /// be changed now.
+    private func switchRow(_ kind: SettingsSwitch) -> some View {
+        SettingsSwitchRow(model: settings, kind: kind, showsSubtitle: false)
+            .unavailable(kind.isUnavailable(settings))
     }
 
     /// A small chevron on a pill, centered: down while folded, up while not.

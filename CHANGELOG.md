@@ -9,6 +9,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Options that don't apply are greyed out, never hidden**, in Settings
+  and in the menu: the fade lengths while fades are off, the silence
+  threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
+  off, and what happens when an update is found while automatic checks
+  are off.
 - **Without Audio Recording, a chat tone no longer pauses your player.**
   With AntiDot mode off and Audio Recording not allowed, AutoHush judges
   apps as AntiDot mode does, and now waits as long as it does too: 3
@@ -82,9 +87,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
   and Advanced's switches; a small arrow unfolds their timings too, row by
-  row in a brief animation, as do the rows a switch shows or hides (none
-  with Reduce Motion); folded at first, it stays as you left it while
-  AutoHush runs.
+  row in a brief animation (none with Reduce Motion); folded at first, it
+  stays as you left it while AutoHush runs.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the
   Mac's volume lowered to match (10 dB at most), until the next pause, when

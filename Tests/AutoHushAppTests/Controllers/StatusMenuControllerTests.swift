@@ -464,7 +464,7 @@ struct StatusMenuControllerTests {
         #expect(rows(sut.menu).prefix(3) == ["card", "supportedAppsHeading", "Spotify"]) // seven: no search
     }
 
-    @Test("below Ignored Apps, Detection's, Fades' and Advanced's switches always show; the chevron unfolds the pages' names, their timings and AntiDot mode's ways, each a row of its own, once the click is handled, and they stay as left when the menu opens again; only the rows that apply show, following the settings")
+    @Test("below Ignored Apps, Detection's, Fades' and Advanced's switches always show; the chevron unfolds the pages' names, their timings and AntiDot mode's ways, each a row of its own, once the click is handled, and they stay as left when the menu opens again; what doesn't apply is greyed out, never hidden")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
@@ -481,24 +481,21 @@ struct StatusMenuControllerTests {
 
         sut.model.perform(.toggleMoreSettings)
         settle()
-        let shown = ["detectionHeading", "antiDot", "pauseAfter", "resumeAfter", "silenceThreshold", "fadesHeading", "fades",
+        let shown = ["detectionHeading", "antiDot", "antiDotWays", "pauseAfter", "resumeAfter", "silenceThreshold", "fadesHeading", "fades",
                      "fadeOut", "fadeIn", "advancedHeading", "levelsMusic", "staysPausedAfterCalls", "chevron"].map { "moreSettings.\($0)" }
         #expect(Array(rows(sut.menu).drop { $0 != "moreSettings.detectionHeading" }.prefix(shown.count)) == shown)
         #expect(sut.model.moreSettingsArrived == Set(MoreSettingsRow.allCases)) // every row's content shows
         prepareToOpen(sut)
         #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
 
-        // AntiDot mode: its ways instead of the silence threshold, and leveling dimmed.
+        // Nothing hides when the settings change: what doesn't apply is greyed out instead.
+        let unfolded = rows(sut.menu)
         SettingsSwitch.antiDot.set(true, in: settingsModel)
-        sut.model.perform(.updateMoreSettings) // as its chevron's row asks when they change
-        settle()
-        #expect(rows(sut.menu).contains("moreSettings.antiDotWays") && !rows(sut.menu).contains("moreSettings.silenceThreshold"))
-        #expect(settings.state.detection == .playbackSignals && SettingsSwitch.levelsMusic.isUnavailable(settingsModel))
-        // Fades off: their lengths go.
         SettingsSwitch.fades.set(false, in: settingsModel)
-        sut.model.perform(.updateMoreSettings)
         settle()
-        #expect(!rows(sut.menu).contains("moreSettings.fadeOut") && !rows(sut.menu).contains("moreSettings.fadeIn"))
+        #expect(rows(sut.menu) == unfolded && unfolded.contains("moreSettings.antiDotWays"))
+        #expect(!MoreSettingsRow.silenceThreshold.applies(settingsModel) && MoreSettingsRow.antiDotWays.applies(settingsModel))
+        #expect(!MoreSettingsRow.fadeOut.applies(settingsModel) && SettingsSwitch.levelsMusic.isUnavailable(settingsModel))
 
         sut.model.perform(.toggleMoreSettings)
         settle()

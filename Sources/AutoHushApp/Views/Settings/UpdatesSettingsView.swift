@@ -13,9 +13,9 @@ struct UpdatesSettingsView: View {
                     get: { model.checksForUpdatesAutomatically },
                     set: { model.updates.setChecksAutomatically($0) }
                 ))
-                // What checks lead to only matters while they run.
-                if model.checksForUpdatesAutomatically {
-                    CardDivider()
+                // What checks lead to only matters while they run: greyed out otherwise.
+                CardDivider()
+                VStack(alignment: .leading, spacing: 10) {
                     SectionLabel(Text("When an update is found", comment: "Settings → Updates: lead-in to what happens when an update is found"))
                     ChoiceChips(
                         options: [AutomaticUpdates.notify, .download, .install].map { .init(title: $0.title, value: $0) },
@@ -25,6 +25,9 @@ struct UpdatesSettingsView: View {
                     )
                     .disabled(model.updateInstallNote != nil)
                     Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
+                }
+                .unavailable(!model.checksForUpdatesAutomatically)
+                if model.checksForUpdatesAutomatically {
                     // Every choice still works: the menu bar icon says what a notification would.
                     if model.notificationsOff {
                         Text(verbatim: Self.notificationsOffNote).captionStyle()

@@ -12,16 +12,17 @@ struct FadesSettingsView: View {
             Card {
                 Group {
                     SettingsSwitchRow(model: model, kind: .fades)
-                    // The lengths show only while there's something to fade.
-                    if model.timings.fadesEnabled && model.playerCanFade {
+                    // The lengths, greyed out while the fades are off (the whole
+                    // card is, with a player AutoHush can't fade).
+                    Group {
                         CardDivider()
                         TimingSliderRow(model: model, timing: .fadeOut)
                         CardDivider()
                         TimingSliderRow(model: model, timing: .fadeIn)
                     }
+                    .unavailable(!model.timings.fadesEnabled && model.playerCanFade)
                 }
-                .disabled(!model.playerCanFade)
-                .opacity(model.playerCanFade ? 1 : 0.45) // a disabled switch alone barely shows it
+                .unavailable(!model.playerCanFade)
                 if !model.playerCanFade, let player = model.chosenPlayerName {
                     NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
                                      comment: "Settings → Fades, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),

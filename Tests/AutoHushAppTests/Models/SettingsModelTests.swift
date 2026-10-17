@@ -362,7 +362,7 @@ struct SettingsModelTests {
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                                 fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false))
 
-        // In AntiDot mode the silence threshold is hidden: it neither lights
+        // In AntiDot mode the silence threshold is greyed out: it neither lights
         // Restore Defaults nor is restored.
         model.setTimings(TimingSettings(silenceThresholdDB: -40))
         #expect(!model.detectionTimingsAreDefaults)

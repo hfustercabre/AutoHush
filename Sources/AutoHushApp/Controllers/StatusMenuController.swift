@@ -410,12 +410,11 @@ final class StatusMenuController: NSObject {
     }
 
     /// Whether each row of More Settings shows now: the switches and the
-    /// chevron always, the rest while it's unfolded and they apply.
+    /// chevron always, the rest while it's unfolded (greyed out when they
+    /// don't apply).
     private var moreSettingsTargets: [(row: MoreSettingsRow, item: NSMenuItem, shows: Bool)] {
-        guard let settingsModel else { return [] }
-        return moreSettingsRows.map { row, item in
-            (row, item, row.isSwitch || (model.showsMoreSettings && row.applies(settingsModel)))
-        }
+        guard settingsModel != nil else { return [] }
+        return moreSettingsRows.map { row, item in (row, item, row.isSwitch || model.showsMoreSettings) }
     }
 
     /// Shows the rows of More Settings that apply now, at once, ending any
@@ -435,11 +434,11 @@ final class StatusMenuController: NSObject {
         revealMoreSettings()
     }
 
-    /// Brings More Settings' rows to what applies now (it unfolded or
-    /// folded, or a switch shows or hides rows), on the next turn: rows
-    /// hidden while the menu handles the click crop its top (2026-10-17).
-    /// While the menu shows, the rows going fade out from the bottom up, each
-    /// row going once faded; then the rows coming arrive from the top down,
+    /// Shows or hides More Settings' unfolding rows as it unfolds or folds,
+    /// on the next turn: rows hidden while the menu handles the click crop
+    /// its top (2026-10-17). While the menu shows, folding fades the rows
+    /// out from the bottom up, each row going once faded; unfolding brings
+    /// them in from the top down,
     /// close together at first and easing apart, each fading in and drifting
     /// down on a soft spring (`MoreSettingsRowView`); at once with Reduce
     /// Motion, or while it's closed.
@@ -509,8 +508,6 @@ final class StatusMenuController: NSObject {
             searchPlayers(search)
         case .toggleMoreSettings:
             toggleMoreSettings()
-        case .updateMoreSettings:
-            revealMoreSettings()
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
@@ -545,7 +542,7 @@ final class StatusMenuController: NSObject {
         case .reopenPlayer:       actions?.reopenPlayer()
         case .unmutePlayer:       actions?.unmutePlayer()
         case .quit:               actions?.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .toggleMoreSettings, .updateMoreSettings:
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .retry, .toggleMoreSettings:
             break // they act in perform(_:)
         }
     }
