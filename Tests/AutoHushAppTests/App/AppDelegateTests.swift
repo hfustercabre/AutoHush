@@ -1393,6 +1393,24 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("while Settings is open, the window watch follows what its page needs: launch at login, switched on in System Settings")
+    func watchFollowsSettings() async {
+        let scratch = Scratch()
+        let clock = SteppedSleep()
+        let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
+        sut.settingsWindowController = SettingsWindowController(model: sut.settingsModel)
+        sut.settingsWindowController?.show(page: .general)
+        defer { sut.settingsWindowController?.close() }
+        sut.windowWatch.wake()
+        await waitFor { clock.sleeping == 1 }
+        #expect(!sut.settingsModel.launchAtLoginEnabled)
+        scratch.launchAtLogin.isEnabled = true
+        clock.step()
+        await waitFor { sut.settingsModel.launchAtLoginEnabled }
+        #expect(sut.settingsModel.launchAtLoginEnabled)
+    }
+
+    @MainActor
     @Test("while only the learning window shows, the permissions are followed, not the players")
     func watchFollowsLearning() async {
         let scratch = Scratch()

@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -277,6 +278,13 @@ struct TextChoiceTests {
         for access: PermissionAccess in [.allowed, .notNeeded] {
             #expect(PermissionButton.title(for: access, permission: .automation(player: app), long: true, player: app) == nil)
         }
+        // As drawn: a button with its words, none once allowed.
+        let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), actions: FakeAppActions(),
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        func drawnWidth(_ access: PermissionAccess) -> CGFloat {
+            NSHostingView(rootView: PermissionButton(model: model, permission: .systemAudioRecording, access: access)).fittingSize.width
+        }
+        #expect(drawnWidth(.denied) > 0 && drawnWidth(.allowed) == 0)
         // The check's warning shows each window state's symbol: one this macOS lacks draws nothing.
         for state in CheckResult.WindowState.allCases {
             #expect(NSImage(systemSymbolName: CheckWarningView.symbol(state), accessibilityDescription: nil) != nil, "\(state)")

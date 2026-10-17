@@ -18,6 +18,11 @@ struct UpdateNotifierTests {
         /// The notices shown, by their keys.
         private(set) var shown: [String] = []
         private(set) var removals = 0
+        /// How many times the permission was asked for.
+        private(set) var requests = 0
+        /// Showing a notice fails while this holds; each try is counted.
+        var addFails = false
+        private(set) var adds = 0
         let sleep = SteppedSleep()
 
         var center: SystemUpdateNotifier.Center {
@@ -26,8 +31,12 @@ struct UpdateNotifierTests {
                     self.statusReads += 1
                     return self.status
                 },
-                requestAuthorization: {},
-                add: { self.shown.append($0.key) },
+                requestAuthorization: { self.requests += 1 },
+                add: {
+                    self.adds += 1
+                    if self.addFails { throw CocoaError(.featureUnsupported) }
+                    self.shown.append($0.key)
+                },
                 remove: { self.removals += 1 },
                 sleep: { await self.sleep.sleep($0) }
             )
@@ -63,5 +72,31 @@ struct UpdateNotifierTests {
         await TestWait.until { fake.statusReads > reads } // the answer is in
         #expect(fake.shown == ["downloaded 0.3.0"])
         #expect(fake.removals == 1)
+    }
+
+    @Test("with notifications off nothing shows; a notice that can't be shown is logged and the next one shows; the permission is asked for only while undetermined, and read as not asked, off or allowed")
+    func offAndFailed() async {
+        let fake = FakeCenter()
+        let notifier = SystemUpdateNotifier(center: fake.center)
+        fake.status = .denied
+        #expect(await notifier.permission() == .off)
+        notifier.requestPermission() // refused already: not asked again
+        notifier.announce(.downloaded(v030))
+        await TestWait.until { fake.statusReads == 4 } // the permission, the request's look, the notice's two
+        #expect(fake.shown.isEmpty && fake.requests == 1) // only the notice's own ask, which macOS answers by itself
+
+        fake.status = .notDetermined
+        #expect(await notifier.permission() == .notAsked)
+        notifier.requestPermission()
+        await TestWait.until { fake.requests == 2 }
+        fake.status = .authorized
+        #expect(await notifier.permission() == .allowed)
+        fake.addFails = true
+        notifier.announce(.downloaded(v030))
+        await TestWait.until { fake.adds == 1 }
+        fake.addFails = false
+        notifier.announce(.downloaded(AppVersion("0.3.1")!))
+        await TestWait.until { !fake.shown.isEmpty }
+        #expect(fake.shown == ["downloaded 0.3.1"] && fake.adds == 2)
     }
 }

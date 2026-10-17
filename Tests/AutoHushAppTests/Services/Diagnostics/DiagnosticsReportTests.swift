@@ -215,15 +215,20 @@ struct DiagnosticsReportTests {
         #expect(rows.last?.value == "No")
     }
 
-    @Test("an app added with Add an App says the ways it's controlled by, in order; one muted instead says so")
+    @Test("an app added with Add an App says the ways it's controlled by, in order; one muted instead says so; with its ways unknown, nothing")
     func checkedApp() throws {
-        func player(_ ways: [PlayerSetup.Way], mutes: Bool = false) throws -> DiagnosticsSnapshot.Section {
+        func player(_ ways: [PlayerSetup.Way]?, mutes: Bool = false) throws -> DiagnosticsSnapshot.Section {
             var status = workingStatus()
             status.playerOptions = [PlayerOption(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
                                                  kind: .checkedApp, pausesByMuting: mutes)]
-            let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts(), ways: { $0 == "com.example.jukebox" ? ways : nil })
+            let snapshot = if let ways {
+                DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts(), ways: { $0 == "com.example.jukebox" ? ways : nil })
+            } else {
+                DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts())
+            }
             return try #require(snapshot.sections.first { $0.kind == .player })
         }
+        #expect(try player(nil).rows.allSatisfy { $0.label != "Controlled by" })
         let paused = try player([.menu(menuName: "Controls"), .panel(rememberedRow: nil)])
         #expect(paused.rows.contains(.init(label: "State", value: "Paused by AutoHush")))
         #expect(paused.rows.contains(.init(label: "Controlled by", value: "Its playback menu\nThe menu bar’s Now Playing panel")))
