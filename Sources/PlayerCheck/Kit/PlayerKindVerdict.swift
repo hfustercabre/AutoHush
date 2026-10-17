@@ -49,7 +49,8 @@ package enum PlayerKindVerdict {
             say("  A Safari web app: AutoHush learns its page's Play/Pause button.")
             sayForDevelopers("  WebAppPlayers controls it: test the site live, then add it to SupportedPlayers.testedWebApps.")
         } else if let browser = facts.webAppBrowser {
-            say("  A \(browser) web app: Add an App adds these through their page. Its sound is \(browser)'s, shared with its tabs:")
+            // Any Chromium browser's (Chrome, Brave, Edge…): what Add an App does with it comes below.
+            say("  A Chromium web app. Its sound is \(browser)'s, shared with its tabs:")
             say("  another page of \(browser) playing (a tab, a call, another web app) shows as one more “Playing audio” assertion.")
         } else if let scripting = facts.scripting, scripting.fitsScriptablePlayer, let suite = scripting.suite {
             say("  A scriptable player, as the supported scriptable players are: its own pause and play, and its state.")

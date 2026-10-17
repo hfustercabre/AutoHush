@@ -93,9 +93,8 @@ struct PlayerKindVerdictTests {
             (facts(), "  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app."),
             (facts { $0.pageHasPlayPause = true }, "  Neither scriptable nor with a playback menu."),
             (facts { $0.isRunning = false }, "  No usable scripting; open it and run again to look for a playback menu and a page."),
-            // Add an App adds these through their page, as it says under the verdict.
-            (facts { $0.webAppBrowser = "Chromium" },
-             "  A Chromium web app: Add an App adds these through their page. Its sound is Chromium's, shared with its tabs:"),
+            // Any Chromium browser's, named so; its sound is its own browser's.
+            (facts { $0.webAppBrowser = "Brave Browser" }, "  A Chromium web app. Its sound is Brave Browser's, shared with its tabs:"),
             (facts { $0.menuTitle = "Controls"; $0.menuResult = .pausedOnly },
              "  Its menu paused it, but pressing it again didn't play it: check it by hand before building on it."),
             (facts { $0.menuTitle = "Controls"; $0.menuResult = .didNotPause },
