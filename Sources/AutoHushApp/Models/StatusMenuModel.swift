@@ -22,8 +22,9 @@ enum StatusMenuCommand: Equatable, Sendable {
     case removeAddedApp(String)
     case addApp
     case addWebApp
-    /// Shows or folds away the settings' timings, under their switches.
-    case toggleMoreSettings
+    /// Shows or folds away a settings part's other settings (Detection's
+    /// ways and timings, the fades' lengths), under its switch.
+    case toggleSettings(MenuSettingsPart)
     /// Shows or folds away the ignored apps, under Ignored Apps.
     case toggleIgnoredApps
     /// Tries starting again after a failed start.
@@ -62,15 +63,25 @@ enum MenuSection: Equatable {
     case reopenAutoHush
     /// Under Audio Recording's warning: AntiDot mode instead.
     case useAntiDot
+    /// The media player's row, under the card: the players unfold there.
+    case mediaPlayer
     case snooze
     case playingNow
     case recentlyPlayed
     case ignoredApps
-    /// Detection's, Fades' and Advanced's switches, their timings folded.
+    /// Detection's, Fades' and Advanced's switches, each part's other
+    /// settings folded (`MenuSettingsPart`).
     case settings
     /// The update found, or being installed.
     case update
     case toolbar
+}
+
+/// A settings part of the menu that has more than its switches, folded
+/// away under it (F3, the user's pick, 2026-10-18): Detection's ways and
+/// timings, Fades' lengths. Advanced has nothing more.
+enum MenuSettingsPart: Hashable, Sendable {
+    case detection, fades
 }
 
 /// What the menu shows. Unlike the status, the apps listed are fixed while
@@ -94,9 +105,9 @@ final class StatusMenuModel {
     var isAntiDotMode = false
     /// Option is held: an added app's row removes it instead.
     var isOptionHeld = false
-    /// Whether the settings' timings show: folded at first, then as the
-    /// user left them, while AutoHush runs.
-    var showsMoreSettings = false
+    /// The settings parts whose other settings show: folded at first, then
+    /// each as the user left it, while AutoHush runs.
+    var unfoldedSettings: Set<MenuSettingsPart> = []
     /// Whether the ignored apps show under Ignored Apps.
     var showsIgnoredApps = false
     /// The menu shows Detection's, Fades' and Advanced's settings.
@@ -118,11 +129,11 @@ final class StatusMenuModel {
                        antiDotMode: isAntiDotMode, search: playerSearch)
     }
 
-    /// The menu's parts, in order: the card, a warning and its fix, Turn
-    /// off for, the apps playing and played, Ignored Apps (while one is),
-    /// the settings, the update found, and the buttons.
+    /// The menu's parts, in order: the card, the media player, a warning
+    /// and its fix, Turn off for, the apps playing and played, Ignored Apps
+    /// (while one is), the settings, the update found, and the buttons.
     var sections: [MenuSection] {
-        var sections: [MenuSection] = [.card]
+        var sections: [MenuSection] = [.card, .mediaPlayer]
         if let warning = status.warning {
             sections.append(status.offersReopen ? .reopenAutoHush : .warning(warning))
             // Not for a player that can only be muted: AntiDot mode can't mute it.

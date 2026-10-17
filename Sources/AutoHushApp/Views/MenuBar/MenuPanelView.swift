@@ -2,11 +2,14 @@ import SwiftUI
 import AutoHushKit
 
 /// Everything the menu shows, in `StatusMenuModel.sections`' order: the
-/// card (its players unfolding inside it), a warning and its fix, Turn off
-/// for, Playing Now and Recently Played, Ignored Apps (folding), the
-/// settings, the update found, and the buttons. It folds and unfolds its
-/// parts in `MenuPanelView.animation`, the panel's height following
-/// (`MenuPanel`); it reports its height to the panel (`onHeight`).
+/// card, the media player (its players unfolding under it), a warning and
+/// its fix, Turn off for, Playing Now and Recently Played, Ignored Apps
+/// (folding), the settings, the update found, and the buttons. As in
+/// macOS's own menu bar menus (Wi-Fi's), the card and the buttons stay put
+/// and only what's between them scrolls, between lines, when the panel is
+/// taller than the screen (P1, the user's pick, 2026-10-18). It folds and
+/// unfolds its parts in `MenuPanelView.animation`, the panel's height
+/// following (`MenuPanel`); it reports its height to the panel (`onHeight`).
 struct MenuPanelView: View {
     let model: StatusMenuModel
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
@@ -17,35 +20,62 @@ struct MenuPanelView: View {
     /// height follows.
     static let animation = Animation.smooth(duration: MenuPanel.resizeDuration)
 
+    /// The heights of the card (and the line under it), of what scrolls,
+    /// and of the buttons (and the line over them): the panel's is their sum.
+    @State private var topHeight: CGFloat = 0
+    @State private var middleHeight: CGFloat = 0
+    @State private var bottomHeight: CGFloat = 0
+
+    private var sections: [(index: Int, section: MenuSection)] {
+        model.sections.enumerated().map { ($0.offset, $0.element) }
+    }
+
     var body: some View {
-        ScrollView {
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
-                ForEach(Array(model.sections.enumerated()), id: \.offset) { index, section in
-                    if needsLine(before: section, at: index) { line }
-                    view(for: section)
-                }
+                ForEach(sections.filter { $0.section == .card }, id: \.index) { view(for: $0.section) }
+                line
             }
-            .padding(.vertical, 5)
-            .font(.appBody)
+            .padding(.top, 5)
             .fixedSize(horizontal: false, vertical: true)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                onHeight(height)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topHeight = $0; report() }
+            ScrollView {
+                VStack(spacing: 0) {
+                    let middle = sections.filter { $0.section != .card && $0.section != .toolbar }
+                    ForEach(middle, id: \.index) { part in
+                        if part.index != middle.first?.index, needsLine(before: part.section, at: part.index) { line }
+                        view(for: part.section)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { middleHeight = $0; report() }
             }
+            .scrollIndicators(.automatic)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: middleHeight)
+            VStack(spacing: 0) {
+                line
+                ForEach(sections.filter { $0.section == .toolbar }, id: \.index) { view(for: $0.section) }
+            }
+            .padding(.bottom, 5)
+            .fixedSize(horizontal: false, vertical: true)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomHeight = $0; report() }
         }
-        .scrollIndicators(.automatic)
-        .scrollBounceBehavior(.basedOnSize)
+        .font(.appBody)
         .frame(width: menuContentWidth)
+    }
+
+    private func report() {
+        onHeight(topHeight + middleHeight + bottomHeight)
     }
 
     /// A line between the parts, where the menu had its separators.
     private func needsLine(before section: MenuSection, at index: Int) -> Bool {
         let previous = index > 0 ? model.sections[index - 1] : nil
         switch section {
-        case .playingNow: return true
+        case .warning, .reopenAutoHush, .snooze, .playingNow: return true
         case .recentlyPlayed: return previous != .playingNow
-        case .ignoredApps, .settings: return true
-        case .update: return true
-        case .toolbar: return previous != .update
+        case .ignoredApps, .settings, .update: return true
         default: return false
         }
     }
@@ -57,6 +87,7 @@ struct MenuPanelView: View {
     @ViewBuilder private func view(for section: MenuSection) -> some View {
         switch section {
         case .card: StatusCardView(model: model)
+        case .mediaPlayer: MenuMediaPlayerView(model: model)
         case .warning(let permission):
             actionRow(permission.grantTitle, symbol: "exclamationmark.triangle.fill", .resolveWarning(permission))
         case .reopenAutoHush:
@@ -138,7 +169,7 @@ struct MenuIgnoredAppsView: View {
                         .foregroundStyle(.appSecondary)
                         .accessibilityHidden(true)
                     Image(systemName: model.showsIgnoredApps ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(.appSecondary)
                         .accessibilityHidden(true)
                 }

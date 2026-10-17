@@ -32,7 +32,7 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu, AutoHush's<br/>own panel: the card (the players<br/>unfold inside it), Auto-Pause,<br/>Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(folded), the settings' switches<br/>(their timings folded at first)"]
+  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause<br/>(they stay put), Media player (the<br/>players unfold under it), Turn off<br/>for, Playing Now, Recently Played,<br/>Ignored Apps (folded), the settings'<br/>switches (each part's other settings<br/>folded at first)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]

@@ -28,8 +28,9 @@ struct FadesSettingsView: View {
                                      comment: "Settings → Fades, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),
                               kind: .info)
                 }
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
             }
-            RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
         }
     }
 }

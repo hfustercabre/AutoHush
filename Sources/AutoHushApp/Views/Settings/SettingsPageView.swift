@@ -19,21 +19,20 @@ struct SettingsPageView: View {
             case .about: AboutSettingsView(model: model)
             }
         }
-        .font(.appBody)
+        // No font of its own: macOS's form sets its rows' and titles'.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 
-/// A Settings page's cards, as wide as the page and scrolling when the
-/// window is shorter than they are.
+/// A Settings page's content as macOS's grouped form, as System Settings'
+/// pages are (the user, 2026-10-17): its `Card`s are the form's sections,
+/// drawn and spaced by macOS, and it scrolls by itself.
 struct SettingsPageScroll<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) { content }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        Form { content }
+            .formStyle(.grouped)
+            .environment(\.cardsAreFormSections, true)
     }
 }

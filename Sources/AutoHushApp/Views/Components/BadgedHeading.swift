@@ -8,16 +8,13 @@ struct BadgedHeading: View {
     /// None while there's nothing for it to qualify.
     let badge: String?
     let note: String
-    /// The heading's own font: menus draw theirs a little larger than
-    /// `SectionLabel`.
-    var font: Font = .appCaption
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
                 Text(verbatim: title)
-                    .font(font)
-                    .foregroundStyle(.appSecondary)
+                    .font(.appHeadline) // as `SectionLabel`
+                    .foregroundStyle(.primary)
                 if let badge { HeadingBadge(text: badge) }
             }
             .accessibilityElement(children: .combine)

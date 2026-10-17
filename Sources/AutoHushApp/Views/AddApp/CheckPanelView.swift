@@ -103,7 +103,7 @@ struct CheckPanelView: View {
                 ForEach(1...max(step.count, 1), id: \.self) { index in
                     Capsule()
                         .fill(index < step.index ? AnyShapeStyle(Color.accentColor)
-                              : index == step.index ? AnyShapeStyle(Color.accentColor.opacity(0.45)) : AnyShapeStyle(.switchOffFill))
+                              : index == step.index ? AnyShapeStyle(Color.accentColor.opacity(0.45)) : AnyShapeStyle(Color(nsColor: .tertiarySystemFill)))
                         .frame(height: 5)
                 }
             }

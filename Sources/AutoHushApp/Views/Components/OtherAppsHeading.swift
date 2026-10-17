@@ -7,10 +7,9 @@ import SwiftUI
 /// (2026-10-16), so it doesn't read as if some were checked.
 struct OtherAppsHeading: View {
     var isEmpty = false
-    var font: Font = .appCaption
 
     var body: some View {
         BadgedHeading(title: PlayerOption.otherAppsHeading, badge: isEmpty ? nil : PlayerOption.checkedByYouBadge,
-                      note: isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote, font: font)
+                      note: isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote)
     }
 }

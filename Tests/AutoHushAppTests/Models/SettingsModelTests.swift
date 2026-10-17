@@ -495,8 +495,11 @@ struct SettingsWindowControllerTests {
         let sut = SettingsWindowController(model: makeModel())
         let window = try #require(sut.window)
         #expect(window.styleMask.contains(.resizable))
-        #expect(window.contentMinSize == NSSize(width: 715, height: 560))
-        #expect(window.contentMaxSize == NSSize(width: 875, height: 900))
+        // At least 715 × 560, wider when a choice needs it in the app's language.
+        #expect(window.contentMinSize == SettingsWindowController.minimumSize)
+        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 560)
+        #expect(window.contentMaxSize == SettingsWindowController.maximumSize)
+        #expect(window.contentMaxSize.width >= 875 && window.contentMaxSize.height == 900)
         let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)
         #expect(sidebar.minimumThickness == SettingsWindowController.sidebarWidth)
         #expect(sidebar.maximumThickness == SettingsWindowController.sidebarWidth)

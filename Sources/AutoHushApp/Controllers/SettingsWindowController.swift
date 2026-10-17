@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import AutoHushKit
 
 /// The Settings window, laid out as System Settings: a sidebar of pages, and
 /// the page chosen beside it, its name in the toolbar. The user resizes it
@@ -54,10 +55,20 @@ final class SettingsWindowController: NSWindowController {
 
     /// The sidebar's width, whatever the window's.
     static let sidebarWidth: CGFloat = 235
-    /// The page between 480 and 640 pt wide; tall enough for the whole
-    /// sidebar, foot included.
-    static let minimumSize = NSSize(width: sidebarWidth + 480, height: 560)
-    static let maximumSize = NSSize(width: sidebarWidth + 640, height: 900)
+    /// The page between 480 and 640 pt wide, wider when a choice needs it
+    /// in the app's language (the user, 2026-10-17: "make the minimum width
+    /// respect the content"); tall enough for the whole sidebar, foot
+    /// included.
+    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 560) }
+    static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
+
+    /// The page's least width: 480, or the widest choice (`ChoiceChips`)
+    /// with the form's margins around it (20 pt to its box, 10 in it, a side).
+    private static let leastPageWidth: CGFloat = {
+        let choices = [[AutomaticUpdates.notify, .download, .install].map(\.title),
+                       [DetectionMethod.playbackSignals, .openStreams].map(\.title)]
+        return max(480, (choices.map { ChoiceChips<Never>.fittingWidth($0) }.max() ?? 0) + 2 * (20 + 10))
+    }()
     static let initialSize = NSSize(width: 760, height: 620)
     /// Where macOS keeps the window's place and size between launches.
     static let frameName = "Settings"
@@ -104,6 +115,10 @@ final class SettingsWindowController: NSWindowController {
         window.contentMaxSize = Self.maximumSize
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(Self.frameName)
+        // A size kept from before a choice needed more room, or another language.
+        if let content = window.contentView?.frame.size, content.width < Self.minimumSize.width {
+            window.setContentSize(NSSize(width: Self.minimumSize.width, height: max(content.height, Self.minimumSize.height)))
+        }
         window.title = navigation.page.title
         super.init(window: window)
         // On the controller, once it has the window: a controller gives the

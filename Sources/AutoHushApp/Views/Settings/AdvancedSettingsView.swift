@@ -19,8 +19,9 @@ struct AdvancedSettingsView: View {
             }
             Card {
                 SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.advancedAreDefaults) { model.restoreDefaultAdvanced() }
             }
-            RestoreDefaultsButton(isDefault: model.advancedAreDefaults) { model.restoreDefaultAdvanced() }
         }
     }
 

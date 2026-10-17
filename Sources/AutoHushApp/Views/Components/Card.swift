@@ -1,35 +1,114 @@
 import SwiftUI
 
-/// A group of controls on a rounded, tinted background: the menu's card,
-/// and each group in Settings. On macOS 26 and later it's a Liquid Glass
-/// panel, a little rounder and roomier.
-struct Card<Content: View>: View {
+extension EnvironmentValues {
+    /// Inside Settings' pages, built as macOS's grouped forms
+    /// (`SettingsPageScroll`): there a `Card` is the form's section.
+    @Entry var cardsAreFormSections = false
+}
+
+/// A group of controls, drawn by macOS (the user, 2026-10-17: "use the same
+/// that macOS is using"): in Settings, a section of macOS's grouped form,
+/// its title (and note) over it and its footer under it, as System
+/// Settings' are; in the other windows, macOS's group box; the menu's card,
+/// clear Liquid Glass from macOS 26 (`clearGlass`).
+struct Card<Content: View, Footer: View>: View {
+    var title: Text?
+    /// A badge after the title, e.g. "Experimental".
+    var badge: String?
+    /// What the group is, under its title.
+    var note: Text?
+    /// A header of its own instead of a title: Diagnostics' folding parts,
+    /// Sound Sources' sort and search.
+    var heading: AnyView?
     var padding: CGFloat = 12
-    /// Clear glass, which casts no shadow: for a card whose view ends just
-    /// under it, where the regular glass's shadow would be cut off in a
-    /// straight line (the menu's card, in its row).
+    /// The menu's card: clear Liquid Glass from macOS 26, which casts no
+    /// shadow (the regular glass's would be cut off in a straight line under
+    /// it, in its row).
     var clearGlass = false
     @ViewBuilder let content: Content
+    @ViewBuilder let footer: Footer
+    @Environment(\.cardsAreFormSections) private var isFormSection
+
+    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil, padding: CGFloat = 12,
+         clearGlass: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
+        self.title = title
+        self.badge = badge
+        self.note = note
+        self.heading = heading
+        self.padding = padding
+        self.clearGlass = clearGlass
+        self.content = content()
+        self.footer = footer()
+    }
 
     @ViewBuilder var body: some View {
-        if #available(macOS 26, *) {
+        if isFormSection {
+            Section { content } header: { header } footer: { footer }
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                header.font(.appHeadline).padding(.leading, 4)
+                box
+                footer
+            }
+        }
+    }
+
+    /// The title, its badge and the note under them; nothing without them.
+    @ViewBuilder private var header: some View {
+        if let heading {
+            heading.textCase(nil)
+        } else if title != nil || note != nil {
+            VStack(alignment: .leading, spacing: 2) {
+                if let title {
+                    HStack(spacing: 6) {
+                        title
+                        if let badge { HeadingBadge(text: badge) }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isHeader)
+                }
+                if let note {
+                    note.font(.appCaption).fontWeight(.regular).foregroundStyle(.appSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .textCase(nil)
+        }
+    }
+
+    @ViewBuilder private var box: some View {
+        if #available(macOS 26, *), clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(padding + 2)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .glassEffect(clearGlass ? .clear : .regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        } else {
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        } else if clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(padding)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 12).fill(.cardFill))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.cardBorder, lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
+        } else {
+            GroupBox {
+                VStack(alignment: .leading, spacing: 10) { content }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 }
 
-/// The line between two rows of a card.
+extension Card where Footer == EmptyView {
+    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil, padding: CGFloat = 12,
+         clearGlass: Bool = false, @ViewBuilder content: () -> Content) {
+        self.init(title, badge: badge, note: note, heading: heading, padding: padding, clearGlass: clearGlass,
+                  content: content, footer: { EmptyView() })
+    }
+}
+
+/// The line between two rows of a card; a form draws its own.
 struct CardDivider: View {
+    @Environment(\.cardsAreFormSections) private var isFormSection
+
     var body: some View {
-        Divider().opacity(0.5)
+        if !isFormSection { Divider().opacity(0.5) }
     }
 }

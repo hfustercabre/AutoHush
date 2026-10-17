@@ -13,16 +13,9 @@ struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
     /// The height of the list (with its note), and of the room it has.
-    @State private var listHeight: CGFloat = 0
-    @State private var roomHeight: CGFloat = 0
 
     var body: some View {
-        // In a scroll view that doesn't scroll, as tall as the page: the
-        // toolbar above then looks as on the other pages, which scroll.
-        ScrollView {
-            page.containerRelativeFrame([.horizontal, .vertical])
-        }
-        .scrollDisabled(true)
+        page
         // Settings' window is kept when closed: a selection doesn't outlive it.
         .onDisappear { model.clearSelection() }
     }
@@ -30,40 +23,33 @@ struct AppsSettingsView: View {
     /// The heading, the list that scrolls, and the buttons.
     private var page: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    Card {
-                        if model.apps.isEmpty {
-                            Text("Apps appear here once they have played audio.", comment: "Settings → Sound Sources, while the list is empty")
-                                .foregroundStyle(.appSecondary)
-                        } else if model.shownApps.isEmpty, let search = model.appSearch {
-                            Text(verbatim: String(localized: "No apps match “\(search)”.",
-                                                  comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed"))
-                                .foregroundStyle(.appSecondary)
-                        }
-                        ForEach(Array(model.shownApps.enumerated()), id: \.element.id) { index, row in
-                            if index > 0 { CardDivider() }
-                            appRow(row)
-                        }
+            // The list as a section of macOS's grouped form, its sort and search over it.
+            Form {
+                Card(heading: AnyView(header)) {
+                    if model.apps.isEmpty {
+                        Text("Apps appear here once they have played audio.", comment: "Settings → Sound Sources, while the list is empty")
+                            .foregroundStyle(.appSecondary)
+                    } else if model.shownApps.isEmpty, let search = model.appSearch {
+                        Text(verbatim: String(localized: "No apps match “\(search)”.",
+                                              comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed"))
+                            .foregroundStyle(.appSecondary)
                     }
-                    .animation(.default, value: model.apps)
+                    ForEach(Array(model.shownApps.enumerated()), id: \.element.id) { index, row in
+                        if index > 0 { CardDivider() }
+                        appRow(row)
+                    }
+                } footer: {
                     Text("Turn an app off to keep your player playing while it makes sound. Select an app to remove it from the list.",
                          comment: "Settings → Sound Sources, under the list; “Select” as in clicking an app in the list")
                         .captionStyle()
-                        .padding(.horizontal, 4)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-                .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 }
+                .animation(.default, value: model.apps)
             }
-            .onGeometryChange(for: CGFloat.self, of: \.size.height) { roomHeight = $0 }
+            .formStyle(.grouped)
+            .environment(\.cardsAreFormSections, true)
             // Each button on one line, in every language: three of them leave
             // little room.
-            BottomBar(showsDivider: listHeight > roomHeight + 1) {
+            BottomBar {
                 Button { chooseAppToIgnore() } label: {
                     Text("Ignore Another App…", comment: "Settings → Sound Sources: button that opens a panel to pick an app that never pauses your player")
                 }

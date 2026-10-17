@@ -46,6 +46,7 @@ struct StatusMenuControllerTests {
         sut.model.sections.map { section in
             switch section {
             case .card: "card"
+            case .mediaPlayer: "mediaPlayer"
             case .warning(let permission): permission.grantTitle
             case .reopenAutoHush: PermissionText.reopen
             case .useAntiDot: PermissionText.useAntiDot
@@ -91,14 +92,14 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         sut.status = readyStatus()
         reopen(sut)
-        #expect(parts(sut) == ["card", "snooze", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "toolbar"])
 
         var status = readyStatus()
         status.ignoredApps = [vlc]
         status.setActiveSources([vlc, chrome])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.listedSources == [chrome, vlc])
 
         let withSettings = makeController(settingsModel: SettingsModel(settings: settings, updates: updates, actions: actions,
@@ -106,7 +107,7 @@ struct StatusMenuControllerTests {
         defer { withSettings.remove() }
         withSettings.status = readyStatus()
         reopen(withSettings)
-        #expect(parts(withSettings) == ["card", "snooze", "settings", "toolbar"])
+        #expect(parts(withSettings) == ["card", "mediaPlayer", "snooze", "settings", "toolbar"])
     }
 
     @Test("Recently Played follows Playing Now, and shows on its own once nothing plays; never the chosen player")
@@ -118,13 +119,13 @@ struct StatusMenuControllerTests {
         status.setActiveSources([chrome])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "snooze", "playingNow", "recentlyPlayed", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "recentlyPlayed", "toolbar"])
         #expect(sut.model.listedRecentSources == [vlc])
 
         status.setActiveSources([])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "snooze", "recentlyPlayed", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "recentlyPlayed", "toolbar"])
         #expect(sut.model.listedRecentSources == [chrome, vlc])
 
         // VLC chosen as the player meanwhile: its switch would only store it as ignored.
@@ -341,7 +342,7 @@ struct StatusMenuControllerTests {
             sut.status = status
             reopen(sut)
             #expect(sut.model.status.canLearnControlsAgain) // the card shows its Controls row
-            #expect(parts(sut) == ["card", "snooze", "toolbar"])
+            #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "toolbar"])
         }
 
         // Its button: the menu closes, and a new learning window opens.
@@ -435,7 +436,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - The settings
 
-    @Test("the settings' switches always show; the chevron unfolds their timings, and they stay as left when the menu opens again")
+    @Test("the settings' switches always show; each part's chevron unfolds its other settings on its own, and they stay as left when the menu opens again")
     func moreSettings() {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
@@ -443,12 +444,14 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         sut.status = readyStatus()
         reopen(sut)
-        #expect(parts(sut).contains("settings") && !sut.model.showsMoreSettings)
-        sut.perform(.toggleMoreSettings)
+        #expect(parts(sut).contains("settings") && sut.model.unfoldedSettings.isEmpty)
+        sut.perform(.toggleSettings(.detection))
         reopen(sut)
-        #expect(sut.model.showsMoreSettings) // kept, unlike the players' list
-        sut.perform(.toggleMoreSettings)
-        #expect(!sut.model.showsMoreSettings && sut.isMenuOpen)
+        #expect(sut.model.unfoldedSettings == [.detection]) // kept, unlike the players' list
+        sut.perform(.toggleSettings(.fades))
+        #expect(sut.model.unfoldedSettings == [.detection, .fades])
+        sut.perform(.toggleSettings(.detection))
+        #expect(sut.model.unfoldedSettings == [.fades] && sut.isMenuOpen)
         #expect(log.calls.allSatisfy { $0 == "menuWillOpen" })
     }
 
@@ -559,7 +562,7 @@ struct StatusMenuControllerTests {
 
         status.ignoredApps = [vlc]
         sut.status = status
-        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(!sut.model.showsIgnoredApps) // folded
         sut.perform(.toggleIgnoredApps)
         settings.setIgnored(vlc, true)
@@ -583,7 +586,7 @@ struct StatusMenuControllerTests {
         sut.status = status
         reopen(sut)
 
-        #expect(parts(sut).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
+        #expect(parts(sut).prefix(5) == ["card", "mediaPlayer", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
         sut.perform(.reopenAutoHush)
         sut.perform(.useAntiDotMode)
         await TestWait.until { settings.state.detection == .playbackSignals }
@@ -600,7 +603,7 @@ struct StatusMenuControllerTests {
         sut.status = status
         reopen(sut)
 
-        #expect(parts(sut).prefix(3) == ["card", "Allow Jukebox Automation Access…", "snooze"])
+        #expect(parts(sut).prefix(4) == ["card", "mediaPlayer", "Allow Jukebox Automation Access…", "snooze"])
         sut.perform(.resolveWarning(.automation(player: "Jukebox")))
         await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "warning Allow Jukebox Automation Access…"])

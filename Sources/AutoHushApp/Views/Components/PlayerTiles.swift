@@ -9,7 +9,9 @@ import SwiftUI
 /// AntiDot mode keeps it from being chosen (an app only its sound tells
 /// about).
 /// Settings → General and the welcome window show them; the menu keeps its
-/// rows.
+/// rows. Without `maxVisibleRows` (Settings → General), each group is a card
+/// of its own, its title and note above it, as System Settings' sections
+/// (the user, 2026-10-17: H3 with H2's notes).
 ///
 /// With `maxVisibleRows`, the card shows that many rows of tiles at most,
 /// counting both groups, and they scroll inside it past them (the card
@@ -56,6 +58,30 @@ struct PlayerTiles: View {
     private enum Adds { case app, webApp }
 
     var body: some View {
+        if maxVisibleRows == nil { sections } else { card }
+    }
+
+    /// Each group in a card of its own (in Settings, a section of its form),
+    /// its title, badge and note above it.
+    @ViewBuilder private var sections: some View {
+        if apps.isEmpty && checkedApps.isEmpty && webApps.isEmpty && !search.isEmpty {
+            Text(verbatim: PlayerOption.noMatchNote(search)).foregroundStyle(.appSecondary)
+        }
+        if !apps.isEmpty {
+            Card(Text(verbatim: PlayerOption.supportedAppsHeading)) { grid(apps, adds: nil) }
+        }
+        Card(Text(verbatim: PlayerOption.otherAppsHeading), badge: checkedApps.isEmpty ? nil : PlayerOption.checkedByYouBadge,
+             note: Text(verbatim: checkedApps.isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote)) {
+            grid(checkedApps, adds: .app)
+        }
+        Card(Text(verbatim: PlayerOption.webAppsHeading), badge: PlayerOption.experimentalBadge,
+             note: Text(verbatim: PlayerOption.webAppsNote)) {
+            grid(webApps, adds: .webApp)
+        }
+    }
+
+    /// All the groups in one card, scrolling past `maxVisibleRows` (the welcome window).
+    private var card: some View {
         Card {
             if let maxVisibleRows {
                 ScrollView {
@@ -220,7 +246,7 @@ struct PlayerTiles: View {
         Button(action: adds == .app ? onAddApp : onAddWebApp) {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.body.weight(.medium))
                     .frame(width: Self.iconSize, height: Self.iconSize)
                     .accessibilityHidden(true)
                 Text("Add…", comment: "The last tile of the Safari web apps and of the other apps (Settings → General, the welcome window): adds a website as a web app, or checks an app and adds it")
@@ -259,7 +285,7 @@ private struct RemovableTile<Content: View>: View {
                 if isHovered || focus != nil {
                     Button(action: remove) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
+                            .font(.title3)
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(.white, .appSecondary)
                     }

@@ -1,9 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// The card at the top of the menu: the music player, what's happening, the
-/// Auto-Pause switch, and the music player choice, its players unfolding
-/// inside it (`MenuPlayerListView`).
+/// The card at the top of the menu, which stays put while the rest scrolls:
+/// the music player, what's happening and the Auto-Pause switch (the
+/// player's choice is under it, `MenuMediaPlayerView`).
 struct StatusCardView: View {
     let model: StatusMenuModel
 
@@ -46,17 +46,6 @@ struct StatusCardView: View {
                         .fixedSize() // whole, in every language: the status line wraps instead
                         .accessibilityHidden(true)
                 }
-            }
-            CardDivider()
-            HStack(spacing: 6) {
-                SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
-                Spacer(minLength: 4)
-                playerButton
-            }
-            // The players unfold here, inside the card (M1, 2026-10-17).
-            if model.isChoosingPlayer {
-                MenuPlayerListView(model: model)
-                    .transition(.opacity)
             }
             // A web app's controls: learned or not, and the way to learn
             // them in the learning window (the steps show only there).
@@ -146,26 +135,6 @@ struct StatusCardView: View {
         }
         .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
         .padding(.top, 4)
-    }
-
-    /// The chosen player, or "Choose…"; unfolds the players under the card.
-    private var playerButton: some View {
-        Button { model.perform(.togglePlayerList) } label: {
-            HStack(spacing: 6) {
-                if status.chosenPlayer != nil { playerIcon(size: 16) }
-                Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu's card, on the button that unfolds the media players, while none is chosen"))
-                    .font(.appCallout)
-                Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.appSecondary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(ChipButtonStyle(cornerRadius: 6))
-        .accessibilityValue(model.isChoosingPlayer ? AccessibilityText.expanded : AccessibilityText.collapsed)
-        .padding(.trailing, -6)
     }
 
     /// The chosen player's icon; AutoHush's own while none is chosen, and

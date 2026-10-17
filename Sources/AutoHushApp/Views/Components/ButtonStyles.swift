@@ -1,91 +1,58 @@
 import SwiftUI
 
-/// A switch drawn in the accent color, the same in the menu and in Settings.
-/// The system's switch would be grey in the menu: menus draw it inactive,
-/// since AutoHush doesn't become the active app when its menu opens.
+/// macOS's own switch (the user, 2026-10-17), the same in the menu and in
+/// Settings. `width` and `height` are kept for callers; macOS sizes it.
 struct PillToggleStyle: ToggleStyle {
     var width: CGFloat = 36
     var height: CGFloat = 21
 
     func makeBody(configuration: Configuration) -> some View {
-        Button { configuration.isOn.toggle() } label: {
-            Capsule()
-                .fill(configuration.isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.switchOffFill))
-                .frame(width: width, height: height)
-                .overlay(alignment: configuration.isOn ? .trailing : .leading) {
-                    Circle().fill(.white).shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5).padding(2)
-                }
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        // VoiceOver gets a switch with its label.
-        .accessibilityRepresentation {
-            Toggle(isOn: configuration.$isOn) { configuration.label }
-        }
+        Toggle(isOn: configuration.$isOn) { configuration.label }
+            .toggleStyle(.switch)
+            .labelsHidden()
     }
 }
 
-/// A rounded button that lights up under the pointer, like the menu's rows.
-/// Filled, it's a chip, as for the menu's duration buttons and Settings'
-/// buttons; selected, it's filled with the accent color. On macOS 26 and
-/// later a filled chip is Liquid Glass (tinted with the accent color when
-/// selected); a button's chip (`padded`) is then a capsule.
-struct ChipButtonStyle: ButtonStyle {
+/// A button in macOS's own styles (the user, 2026-10-17): filled, a push
+/// button (`.bordered`), prominent while selected (the main button, the
+/// chosen chip); unfilled, a plain label that lights up under the pointer,
+/// like the menu's rows (the menu's toolbar, the players' tiles).
+struct ChipButtonStyle: PrimitiveButtonStyle {
     var filled = false
     var isSelected = false
     var cornerRadius: CGFloat = 8
-    /// Room around a plain label, such as a text button's title; off for
-    /// labels that make their own.
+    /// Kept for callers: a push button makes its own room.
     var padded = false
 
     @ViewBuilder func makeBody(configuration: Configuration) -> some View {
-        if #available(macOS 26, *), filled {
-            GlassChip(isSelected: isSelected, shape: padded ? AnyShape(Capsule()) : AnyShape(RoundedRectangle(cornerRadius: 12, style: .continuous))) {
-                configuration.label
-                    .padding(.horizontal, padded ? 14 : 0)
-                    .padding(.vertical, padded ? 6 : 0)
-            }
+        if filled && isSelected {
+            Button(configuration).buttonStyle(.borderedProminent)
+        } else if filled {
+            Button(configuration).buttonStyle(.bordered)
         } else {
-            HoverHighlight(isPressed: configuration.isPressed, filled: filled, isSelected: isSelected, cornerRadius: cornerRadius) {
-                configuration.label
-                    .padding(.horizontal, padded ? 12 : 0)
-                    .padding(.vertical, padded ? 5 : 0)
-            }
+            Button(configuration).buttonStyle(HoverHighlight(cornerRadius: cornerRadius))
         }
     }
 
-    /// A filled chip as Liquid Glass, which lights up under the pointer and
-    /// when pressed by itself (`interactive`).
-    @available(macOS 26, *)
-    private struct GlassChip<Label: View>: View {
-        let isSelected: Bool
-        let shape: AnyShape
-        @ViewBuilder let label: Label
-        @Environment(\.isEnabled) private var isEnabled
-
-        var body: some View {
-            label
-                // Disabled, the glass loses most of its tint: white text on it
-                // can't be read in light mode, the primary color (dimmed) can.
-                .foregroundStyle(isSelected && isEnabled ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
-                .glassEffect(isSelected ? .regular.tint(.accentColor).interactive() : .regular.interactive(), in: shape)
-                .contentShape(shape)
-                .opacity(isEnabled ? 1 : 0.45)
-        }
-    }
-
-    private struct HoverHighlight<Label: View>: View {
-        let isPressed: Bool
-        let filled: Bool
-        let isSelected: Bool
+    /// A label that lights up under the pointer, and a step more while pressed.
+    private struct HoverHighlight: ButtonStyle {
         let cornerRadius: CGFloat
-        @ViewBuilder let label: Label
+
+        func makeBody(configuration: Configuration) -> some View {
+            Lit(label: configuration.label, isPressed: configuration.isPressed, cornerRadius: cornerRadius)
+        }
+    }
+
+    private struct Lit<Label: View>: View {
+        let label: Label
+        let isPressed: Bool
+        let cornerRadius: CGFloat
         @State private var isHovered = false
         @Environment(\.isEnabled) private var isEnabled
 
         var body: some View {
             label
-                .foregroundStyle(isSelected && isEnabled ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                .foregroundStyle(.primary)
                 .background(RoundedRectangle(cornerRadius: cornerRadius).fill(fill))
                 .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
                 .opacity(isEnabled ? 1 : 0.45)
@@ -93,16 +60,14 @@ struct ChipButtonStyle: ButtonStyle {
         }
 
         private var fill: AnyShapeStyle {
-            if isSelected { return AnyShapeStyle(Color.accentColor.opacity(isPressed ? 0.8 : 1)) }
-            guard isEnabled else { return filled ? AnyShapeStyle(.chipFill) : AnyShapeStyle(.clear) }
+            guard isEnabled else { return AnyShapeStyle(.clear) }
             if isPressed { return AnyShapeStyle(.tertiary) }
-            if isHovered { return AnyShapeStyle(.chipHoverFill) }
-            return filled ? AnyShapeStyle(.chipFill) : AnyShapeStyle(.clear)
+            return isHovered ? AnyShapeStyle(.chipHoverFill) : AnyShapeStyle(.clear)
         }
     }
 }
 
-extension ButtonStyle where Self == ChipButtonStyle {
-    /// A filled chip, the look of Settings' buttons.
+extension PrimitiveButtonStyle where Self == ChipButtonStyle {
+    /// A push button, the look of Settings' buttons.
     static var chip: ChipButtonStyle { ChipButtonStyle(filled: true, padded: true) }
 }

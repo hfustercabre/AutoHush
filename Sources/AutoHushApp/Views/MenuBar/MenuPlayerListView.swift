@@ -1,8 +1,8 @@
 import SwiftUI
 import AutoHushKit
 
-/// The music players unfolded inside the menu's card, under "Media player"
-/// (M1, the user's pick, 2026-10-17): the search (from
+/// The music players unfolded under the menu's "Media player" row
+/// (`MenuMediaPlayerView`; M1, the user's pick, 2026-10-17): the search (from
 /// `PlayerOption.searchThreshold` players on), then the supported apps, the
 /// apps added with Add an App (and Add an App…) and the Safari web apps (and
 /// Add a Web App…), a line between them. The chosen one is checked; ↑ and ↓
@@ -25,9 +25,10 @@ struct MenuPlayerListView: View {
             }
             if !list.supportedApps.isEmpty {
                 CardDivider()
+                // A title as the other groups' (the user, 2026-10-18).
                 Text(verbatim: PlayerOption.supportedAppsHeading)
-                    .font(.appCaption)
-                    .foregroundStyle(.appSecondary)
+                    .font(.appHeadline)
+                    .foregroundStyle(.primary)
                     .accessibilityAddTraits(.isHeader)
                 rows(list.supportedApps)
             }
@@ -70,7 +71,7 @@ struct MenuPlayerListView: View {
                         Spacer(minLength: 4)
                         if row.isChosen, !removes {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.callout.weight(.semibold))
                                 .accessibilityHidden(true)
                         }
                     }

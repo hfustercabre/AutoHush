@@ -142,7 +142,7 @@ Sources/
                          its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
                          colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
                          ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
-                         panel: MenuPanelView, its player list, settings and row style, MenuContentWidth,
+                         panel: MenuPanelView, its media player row and list, settings and row style, MenuContentWidth,
                          and MenuBarIcon, drawn in code), Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/,
                          WebApps/ (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning

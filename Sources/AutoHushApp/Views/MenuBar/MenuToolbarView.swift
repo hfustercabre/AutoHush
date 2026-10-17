@@ -29,7 +29,7 @@ struct MenuToolbarView: View {
         Button { model.perform(command()) } label: {
             VStack(spacing: 3) {
                 Image(systemName: symbol)
-                    .font(.system(size: 15))
+                    .font(.title3)
                     .foregroundStyle(tint.map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary))
                     .accessibilityHidden(true) // the title says it
                 title

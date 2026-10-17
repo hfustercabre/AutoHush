@@ -3,43 +3,32 @@ import SwiftUI
 
 /// Settings → Diagnostics: how AutoHush is doing, every app with its sound
 /// on and how AutoHush judges it, then the music player, the detection, the
-/// permissions, AutoHush and the Mac, kept up to date while shown. Each part
-/// folds away under its heading, leaving a one-line summary; the page
-/// scrolls, and Copy Report stays at the window's foot.
+/// permissions, AutoHush and the Mac, kept up to date while shown, as
+/// macOS's grouped form. Each part folds away under its heading, leaving a
+/// one-line summary; the form scrolls, and Copy Report stays at the
+/// window's foot.
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
     @State private var copied = false
-    /// The height of the parts, and of the room they have: the line above
-    /// the foot shows only while they scroll under it, as on Apps.
-    @State private var partsHeight: CGFloat = 0
-    @State private var roomHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    // At the top, not beside the buttons at its foot: there
-                    // it left them too little room in several languages.
-                    Text("Updated as it happens.", comment: "Settings → Diagnostics, at the top of the page: what it shows is kept up to date")
-                        .captionStyle()
-                    if let diagnostics = model.diagnostics {
-                        overview(diagnostics.overview)
-                        part(.apps, title: DiagnosticsReport.appsTitle, symbol: "speaker.wave.2", summary: diagnostics.appsSummary) {
-                            apps(diagnostics.apps)
-                        }
-                        ForEach(diagnostics.sections) { section in
-                            part(.section(section.kind), title: section.title, symbol: symbol(for: section.kind),
-                                 summary: section.summary) {
-                                rows(section.rows)
-                            }
+            Form {
+                if let diagnostics = model.diagnostics {
+                    overview(diagnostics.overview)
+                    part(.apps, title: DiagnosticsReport.appsTitle, symbol: "speaker.wave.2", summary: diagnostics.appsSummary) {
+                        apps(diagnostics.apps)
+                    }
+                    ForEach(diagnostics.sections) { section in
+                        part(.section(section.kind), title: section.title, symbol: symbol(for: section.kind),
+                             summary: section.summary) {
+                            rows(section.rows)
                         }
                     }
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .onGeometryChange(for: CGFloat.self, of: \.size.height) { partsHeight = $0 }
             }
-            .onGeometryChange(for: CGFloat.self, of: \.size.height) { roomHeight = $0 }
+            .formStyle(.grouped)
+            .environment(\.cardsAreFormSections, true)
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -50,7 +39,9 @@ struct DiagnosticsSettingsView: View {
 
     /// How AutoHush is doing, at a glance.
     private func overview(_ overview: DiagnosticsSnapshot.Overview) -> some View {
-        Card {
+        // At the top, not beside the buttons at its foot: there it left them
+        // too little room in several languages.
+        Card(note: Text("Updated as it happens.", comment: "Settings → Diagnostics, at the top of the page: what it shows is kept up to date")) {
             HStack(spacing: 12) {
                 Group {
                     switch overview.kind {
@@ -60,7 +51,7 @@ struct DiagnosticsSettingsView: View {
                     case .starting: Image(systemName: "hourglass").foregroundStyle(.appSecondary)
                     }
                 }
-                .font(.system(size: 28))
+                .font(.largeTitle)
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: overview.title).font(.appHeadline)
@@ -77,8 +68,8 @@ struct DiagnosticsSettingsView: View {
     private func part(_ id: DiagnosticsSnapshot.Part, title: String, symbol: String, summary: String,
                       @ViewBuilder content: () -> some View) -> some View {
         let isOpen = !model.foldedDiagnostics.contains(id)
-        return VStack(alignment: .leading, spacing: 8) {
-            Button {
+        // A section of the form, its folding title over it.
+        return Card(heading: AnyView(Button {
                 if isOpen { model.foldedDiagnostics.insert(id) } else { model.foldedDiagnostics.remove(id) }
             } label: {
                 HStack(spacing: 7) {
@@ -98,7 +89,7 @@ struct DiagnosticsSettingsView: View {
                     // way the language reads: right to left, SwiftUI mirrors
                     // both the symbol and the turn.
                     Image(systemName: "chevron.forward")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.appSecondary)
                         .rotationEffect(.degrees(isOpen ? 90 : 0))
                         .accessibilityHidden(true)
@@ -109,14 +100,13 @@ struct DiagnosticsSettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isHeader)
-            .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)
-            .padding(.top, 6)
+            .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed))) {
             if isOpen { content() }
         }
     }
 
     private func apps(_ apps: [DiagnosticsSnapshot.App]) -> some View {
-        Card {
+        Group {
             if apps.isEmpty {
                 Text(verbatim: DiagnosticsReport.noAudio).foregroundStyle(.appSecondary)
             }
@@ -141,7 +131,7 @@ struct DiagnosticsSettingsView: View {
 
     /// Each fact: its label on the left, its value on the right.
     private func rows(_ rows: [DiagnosticsSnapshot.Row]) -> some View {
-        Card {
+        Group {
             ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
                 if index > 0 { CardDivider() }
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -184,7 +174,7 @@ struct DiagnosticsSettingsView: View {
     // MARK: - Copy Report
 
     private var footer: some View {
-        BottomBar(showsDivider: partsHeight > roomHeight + 1) {
+        BottomBar {
             Spacer()
             Button { model.actions?.showLogs() } label: {
                 Text("Show Logs…", comment: "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs")

@@ -2,40 +2,42 @@ import SwiftUI
 import AutoHushKit
 
 /// The menu's settings, below Ignored Apps, each part between lines (the
-/// user, 2026-10-17: no cards): Detection's, Fades' and
-/// Advanced's switches, each with its symbol (in the accent color while
-/// it's on) and what it does in a few words; the chevron under them
-/// unfolds the pages' names and the rest in their places: AntiDot mode's
-/// ways under it (Detection's "Modes"), Detection's timings in a part of
-/// their own ("Timing"), the fades' lengths under Fade playback. As in
+/// user, 2026-10-17: no cards) under its page's title (2026-10-18):
+/// Detection's, Fades' and Advanced's switches, each with its symbol (in
+/// the accent color while it's on) and what it does in a few words. A part
+/// with more than its switches has a small chevron pill under it (F3, the
+/// user's pick, 2026-10-18) that unfolds the rest in its place: AntiDot
+/// mode's ways under it ("Modes") and Detection's timings ("Timing"); the
+/// fades' lengths under Fade playback. Advanced has nothing more. As in
 /// Settings, what doesn't apply is greyed out, never hidden.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
     let settings: SettingsModel
 
-    private var isOpen: Bool { model.showsMoreSettings }
+    private func isOpen(_ part: MenuSettingsPart) -> Bool { model.unfoldedSettings.contains(part) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if isOpen {
-                pageName(.detection)
+            pageName(.detection)
+            if isOpen(.detection) {
                 innerTitle(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
             }
             part {
                 switchRow(.antiDot)
-                if isOpen {
+                if isOpen(.detection) {
                     ChoiceChips(
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: settings.detectionMethod,
                         onSelect: { settings.setDetectionMethod($0) }
                     )
+                    .controlSize(.small) // C2: both words fit
                     .unavailable(!settings.isAntiDotMode)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
                     .transition(.opacity)
                 }
             }
-            if isOpen {
+            if isOpen(.detection) {
                 line
                 innerTitle(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
                 part {
@@ -44,11 +46,12 @@ struct MenuSettingsView: View {
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
             }
+            chevron(.detection, page: .detection)
             line
-            if isOpen { pageName(.fades) }
+            pageName(.fades)
             part {
                 switchRow(.fades)
-                if isOpen {
+                if isOpen(.fades) {
                     Group {
                         slider(.fadeOut)
                         slider(.fadeIn)
@@ -56,8 +59,9 @@ struct MenuSettingsView: View {
                     .unavailable(!settings.timings.fadesEnabled && settings.playerCanFade)
                 }
             }
+            chevron(.fades, page: .fades)
             line
-            if isOpen { pageName(.advanced) }
+            pageName(.advanced)
             part {
                 switchRow(.levelsMusic)
             }
@@ -65,7 +69,6 @@ struct MenuSettingsView: View {
             part {
                 switchRow(.staysPausedAfterCalls)
             }
-            chevron
         }
         .frame(width: menuContentWidth)
     }
@@ -90,7 +93,7 @@ struct MenuSettingsView: View {
         let isOn = kind.isOn(settings)
         return HStack(spacing: 10) {
             Image(systemName: kind.symbol)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
                 .frame(width: 22)
                 .accessibilityHidden(true)
@@ -111,7 +114,7 @@ struct MenuSettingsView: View {
             .transition(.opacity)
     }
 
-    /// A Settings page's name over its part (unfolded only).
+    /// A Settings page's name over its part.
     private func pageName(_ page: SettingsWindowController.Page) -> some View {
         SectionLabel(Text(verbatim: page.title))
             .accessibilityAddTraits(.isHeader)
@@ -121,23 +124,24 @@ struct MenuSettingsView: View {
             .transition(.opacity)
     }
 
-    /// A title inside a page's part ("Modes", "Timing"): smaller and lighter.
+    /// A title inside a page's part ("Modes", "Timing"): a description's size, grey.
     private func innerTitle(_ title: Text) -> some View {
         title
-            .textCase(.uppercase)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.tertiary)
+            .font(.appCaption)
+            .foregroundStyle(.appSecondary)
             .accessibilityAddTraits(.isHeader)
             .padding(.horizontal, 14)
             .padding(.top, 4)
             .transition(.opacity)
     }
 
-    /// A small chevron on a pill (C3), centered: down while folded, up while not.
-    private var chevron: some View {
-        Button { model.perform(.toggleMoreSettings) } label: {
-            Image(systemName: isOpen ? "chevron.up" : "chevron.down")
-                .font(.system(size: 10, weight: .bold))
+    /// A small chevron on a pill (C3), centered under a part: down while
+    /// its other settings are folded, up while they show.
+    private func chevron(_ part: MenuSettingsPart, page: SettingsWindowController.Page) -> some View {
+        let title = isOpen(part) ? Self.hideTitle : Self.showTitle
+        return Button { model.perform(.toggleSettings(part)) } label: {
+            Image(systemName: isOpen(part) ? "chevron.up" : "chevron.down")
+                .font(.caption.weight(.bold))
                 .foregroundStyle(.appSecondary)
                 .frame(width: 44, height: 16)
                 .background(Capsule().fill(.chipFill))
@@ -146,15 +150,16 @@ struct MenuSettingsView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(Text(verbatim: isOpen ? Self.hideTitle : Self.showTitle))
-        .accessibilityLabel(Text(verbatim: isOpen ? Self.hideTitle : Self.showTitle))
+        .help(Text(verbatim: title))
+        // Two of them: VoiceOver hears whose.
+        .accessibilityLabel(Text(verbatim: "\(page.title), \(title)"))
     }
 
     static var showTitle: String {
-        String(localized: "Show More Settings", comment: "Menu: the chevron below Ignored Apps that shows Detection’s, Fades’ and Advanced’s settings (its tooltip and VoiceOver label)")
+        String(localized: "Show More Settings", comment: "Menu: the chevron under Detection’s or Fades’ switch that shows the rest of that part’s settings (its tooltip; VoiceOver says the part’s name before it)")
     }
 
     static var hideTitle: String {
-        String(localized: "Hide More Settings", comment: "Menu: the chevron that folds Detection’s, Fades’ and Advanced’s settings away again (its tooltip and VoiceOver label)")
+        String(localized: "Hide More Settings", comment: "Menu: the chevron that folds the rest of Detection’s or Fades’ settings away again (its tooltip; VoiceOver says the part’s name before it)")
     }
 }

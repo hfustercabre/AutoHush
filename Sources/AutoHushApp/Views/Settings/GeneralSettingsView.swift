@@ -54,11 +54,10 @@ struct GeneralSettingsView: View {
     /// the menu's card has them) and what works; what it lacks and the way
     /// to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
-        Card {
+        Card(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player")) {
             HStack(alignment: .center, spacing: 12) {
                 playerIcon
                 VStack(alignment: .leading, spacing: 2) {
-                    SectionLabel(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player"))
                     Text(verbatim: model.chosenPlayerName ?? PlayerOption.noneChosenLabel)
                         .font(.appHeadline)
                         .fixedSize(horizontal: false, vertical: true)

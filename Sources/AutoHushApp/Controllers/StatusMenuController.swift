@@ -287,8 +287,10 @@ final class StatusMenuController: NSObject {
         case .chooseHighlighted:
             guard let id = model.highlightedPlayerID ?? model.players.choosable.first?.id else { return }
             perform(.choosePlayer(id))
-        case .toggleMoreSettings:
-            animated { model.showsMoreSettings.toggle() }
+        case .toggleSettings(let part):
+            animated {
+                if model.unfoldedSettings.contains(part) { model.unfoldedSettings.remove(part) } else { model.unfoldedSettings.insert(part) }
+            }
         case .toggleIgnoredApps:
             animated { model.showsIgnoredApps.toggle() }
         case .retry:
@@ -335,7 +337,7 @@ final class StatusMenuController: NSObject {
         case .unmutePlayer:              actions?.unmutePlayer()
         case .quit:                      actions?.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .moveHighlight, .chooseHighlighted,
-             .toggleMoreSettings, .toggleIgnoredApps, .retry:
+             .toggleSettings, .toggleIgnoredApps, .retry:
             break // they act in perform(_:)
         }
     }

@@ -9,9 +9,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **AutoHush looks like the macOS it runs on.** Its text uses macOS's text
+  styles and sizes, its switches, buttons, choices and sliders are macOS's
+  own, and its colors are macOS's, in light and dark mode. Settings' pages
+  are macOS's grouped forms, as System Settings', with each section's title
+  over its box, and the players in Settings → General are grouped the same
+  way, each group's note under its title. The other windows use macOS's
+  group boxes, and the menu's section titles match Settings'. Liquid Glass
+  stays for the menu's card.
 - **The menu is AutoHush's own panel,** so its parts fold and unfold
   smoothly, the panel's height following (at once with Reduce Motion). The
-  players unfold inside the card, with lines between their groups and a
+  card and the buttons stay put, and only what's between them scrolls when
+  the menu is taller than the screen, as in macOS's own menus. The players
+  unfold under the Media player row, with lines between their groups and a
   checkmark on yours; ↑ and ↓ move through them and Return chooses. Ignored
   Apps unfolds under its row. Escape or a click elsewhere closes it, and it
   follows Reduce Transparency and Increase Contrast, as menus do.
@@ -92,10 +102,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
-  and Advanced's switches, each with a few words on what it does and its
-  symbol in blue while it's on; a small arrow unfolds their timings too,
-  under each section's name. Folded at first, it stays as you left it
-  while AutoHush runs. Settings → Detection has a "Modes" heading over
+  and Advanced's switches, each under its section's name, with a few words
+  on what it does and its symbol in blue while it's on. A small arrow under
+  Detection unfolds its ways and timings, and one under Fades its lengths.
+  Folded at first, each stays as you left it while AutoHush runs. Settings → Detection has a "Modes" heading over
   AntiDot mode, as the menu does.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the

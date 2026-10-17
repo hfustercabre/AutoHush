@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// A small heading over a group of controls: a card, or the menu's buttons.
+/// A section's title, as System Settings' (the user, 2026-10-17, H3): bold
+/// and primary at body size, outside the group it names: the menu's
+/// sections ("Turn off for", "Playing Now", More Settings' pages).
 struct SectionLabel: View {
     let title: Text
 
     init(_ title: Text) { self.title = title }
 
     var body: some View {
-        title.font(.appCaption).foregroundStyle(.appSecondary)
+        title.font(.appHeadline).foregroundStyle(.primary)
     }
 }
 
@@ -30,9 +32,9 @@ struct HeadingBadge: View {
     }
 }
 
-/// The heading over a card in Settings, e.g. "Timing": a section label in
-/// line with the card's text, with room above it unless it's the first
-/// thing on its tab.
+/// The title over a card in Settings and the other windows, e.g. "Timing",
+/// outside it as System Settings' are: a section label in line with the
+/// card's text, with room above it unless it's the first thing on its tab.
 struct SectionHeading: View {
     let title: Text
     var isFirst = false

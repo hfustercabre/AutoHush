@@ -11,8 +11,7 @@ struct DetectionSettingsView: View {
 
     var body: some View {
         SettingsPageScroll {
-            SectionHeading(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
-            Card {
+            Card(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode")) {
                 SettingsSwitchRow(model: model, kind: .antiDot)
                 // A player only its sound tells (muted only, or a Now Playing row
                 // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16);
@@ -34,7 +33,7 @@ struct DetectionSettingsView: View {
                 // only while it's on.
                 CardDivider()
                 VStack(alignment: .leading, spacing: 10) {
-                    SectionLabel(Text("Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps"))
+                    Text("Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps") // a row's title
                     ChoiceChips(
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: model.detectionMethod,
@@ -47,8 +46,7 @@ struct DetectionSettingsView: View {
                 }
             }
 
-            SectionHeading(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
-            Card {
+            Card(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")) {
                 TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
                 TimingSliderRow(model: model, timing: .resumeAfter)
@@ -56,8 +54,9 @@ struct DetectionSettingsView: View {
                 CardDivider()
                 TimingSliderRow(model: model, timing: .silenceThreshold)
                     .unavailable(model.isAntiDotMode)
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.detectionTimingsAreDefaults) { model.restoreDefaultDetectionTimings() }
             }
-            RestoreDefaultsButton(isDefault: model.detectionTimingsAreDefaults) { model.restoreDefaultDetectionTimings() }
         }
     }
 

@@ -56941,7 +56941,7 @@
       }
     },
     "Hide More Settings" : {
-      "comment" : "Menu: the chevron that folds Detection’s, Fades’ and Advanced’s settings away again (its tooltip and VoiceOver label)",
+      "comment" : "Menu: the chevron that folds the rest of Detection’s or Fades’ settings away again (its tooltip; VoiceOver says the part’s name before it)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103966,7 +103966,7 @@
       }
     },
     "Show More Settings" : {
-      "comment" : "Menu: the chevron below Ignored Apps that shows Detection’s, Fades’ and Advanced’s settings (its tooltip and VoiceOver label)",
+      "comment" : "Menu: the chevron under Detection’s or Fades’ switch that shows the rest of that part’s settings (its tooltip; VoiceOver says the part’s name before it)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
