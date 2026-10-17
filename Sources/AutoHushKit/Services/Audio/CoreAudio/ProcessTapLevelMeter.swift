@@ -14,7 +14,16 @@ package protocol AudioLevelMetering: AnyObject, Sendable {
     /// Peak absolute sample value per metered process since the previous call.
     /// Processes whose tap could not be created are absent from the result.
     func drainPeaks() -> [AudioObjectID: Float]
+    /// Peak and average level per metered process since the previous call.
+    func drainLevels() -> [AudioObjectID: AudioLevel]
     func stopAll()
+}
+
+extension AudioLevelMetering {
+    /// For a meter that only knows peaks: each one as its average too.
+    package func drainLevels() -> [AudioObjectID: AudioLevel] {
+        drainPeaks().mapValues { AudioLevel(peak: $0, rms: $0) }
+    }
 }
 
 /// How loud a process was over a stretch of time.
@@ -72,7 +81,7 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
     }
 
     /// Peak and average level per metered process since the previous call
-    /// (used by the volume-curve tool; AutoHush itself only needs peaks).
+    /// (the volume-curve tool, and leveling the music).
     package func drainLevels() -> [AudioObjectID: AudioLevel] {
         taps.mapValues { $0.drainLevel() }
     }

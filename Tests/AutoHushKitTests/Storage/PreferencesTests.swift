@@ -53,6 +53,7 @@ struct PreferencesTests {
             "timings": [
                 "startConfirmation": 1.5, "stopGrace": 4, "silenceThresholdDB": -50,
                 "fadeOutDuration": 2.5, "fadeInDuration": 3, "fadesEnabled": 0,
+                "levelsMusic": 1, "staysPausedAfterCalls": 1,
             ] as [String: Double],
             "checksForUpdatesAutomatically": false,
             "automaticUpdates": "download",
@@ -84,7 +85,8 @@ struct PreferencesTests {
         ])
         #expect(preferences.appListOrder == AppListOrder(criterion: .name, isReversed: true))
         #expect(preferences.timings == TimingSettings(startConfirmation: 1.5, stopGrace: 4, silenceThresholdDB: -50,
-                                                     fadeOutDuration: 2.5, fadeInDuration: 3, fadesEnabled: false))
+                                                     fadeOutDuration: 2.5, fadeInDuration: 3, fadesEnabled: false,
+                                                     levelsMusic: true, staysPausedAfterCalls: true))
         #expect(!preferences.checksForUpdatesAutomatically)
         #expect(preferences.automaticUpdates == .download)
         #expect(preferences.lastUpdateCheck == checked)
@@ -180,11 +182,14 @@ struct PreferencesTests {
         #expect(Preferences(store: scratch.defaults).timings.fadeInDuration == 0)
     }
 
-    @Test("fades turned off persist with their durations, and timings stored before the switch keep fades on")
+    @Test("fades turned off persist with their durations, as Settings → Advanced's switches do, and timings stored before the switches keep fades on and the others off")
     func fadesSwitchPersists() {
         let scratch = Scratch()
         Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false)
         #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
+        let advanced = TimingSettings(levelsMusic: true, staysPausedAfterCalls: true)
+        Preferences(store: scratch.defaults).timings = advanced
+        #expect(Preferences(store: scratch.defaults).timings == advanced)
         scratch.defaults.set(["fadeOutDuration": 1.5], forKey: "timings") // as 0.7.0 stored them
         #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 1.5))
     }

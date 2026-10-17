@@ -241,6 +241,36 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
+    @Test("with Level the music on, the player is measured while another app is; its loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume; an app using its microphone is reported in a call")
+    func levelsMusic() async throws {
+        var configuration = Self.config()
+        configuration.levelsMusic = true
+        let h = Harness(configuration: configuration, permission: MockAudioCapturePermission(.granted))
+        h.start()
+        let player = Self.process(1, TestPlayer.bundleID), safari = Self.process(2, "com.apple.Safari")
+        h.step([player], peaks: [1: 0.1])
+        #expect(h.meter.lastMetered == []) // the music alone: no tap
+        h.step(after: 0.25, [player, safari], peaks: [1: 0.1, 2: 0])
+        #expect(h.meter.lastMetered == [1, 2])
+        for _ in 0..<4 { h.step(after: 0.25) }
+        #expect(await h.monitor.resumeOffsetDB() == nil) // not paused
+
+        h.monitor.setMusicPaused(true)
+        h.provider.flush()
+        let call = AudioProcessInfo(objectID: 3, bundleID: "us.zoom.xos", pid: 1003, isRunningInput: true)
+        h.step(after: 0.25, [player, safari, call], peaks: [1: 0, 2: 0.05, 3: 0.5]) // the call's loud voice doesn't count
+        for _ in 0..<4 { h.step(after: 0.25) }
+        let offset = try #require(await h.monitor.resumeOffsetDB())
+        #expect(abs(offset + 6.02) < 0.05) // Safari was 6 dB quieter than the music
+
+        h.step(after: 0.25, [player, safari])
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.log.filter { $0.contains("call") } == ["call us.zoom.xos", "no call us.zoom.xos"])
+        h.monitor.setMusicPaused(false)
+        #expect(await h.monitor.resumeOffsetDB() == nil) // resumed: forgotten
+        h.monitor.stop()
+    }
+
     @Test("with the permission granted, the player itself is never tapped")
     func playerNotTappedWithPermission() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
@@ -1171,6 +1201,10 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
 
     func handleStartConfirmationChange(_ longest: TimeInterval) async {
         startConfirmations.append(longest)
+    }
+
+    func handleCallChange(sourceID: String, inCall: Bool) async {
+        log.append("\(inCall ? "call" : "no call") \(sourceID)")
     }
 
     func waitForPlayerLocal(count: Int, sourceLocation: SourceLocation = #_sourceLocation) async {

@@ -25,10 +25,18 @@ package actor PlaybackArbiter: PlaybackArbiting {
     let fader: VolumeFader
     /// True while the music fades out ahead of a pause.
     var isFadingOut = false
-    private var configuration: AppConfiguration
+    var configuration: AppConfiguration
     let debounceScheduler: PlaybackArbiterDebounceScheduling
     let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
     let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
+    /// Whether the music is paused by us now, for its loudness and the
+    /// apps' (`AudioMonitor.setMusicPaused`).
+    let onPausedByUsChange: @Sendable (Bool) -> Void
+    /// Lowers the Mac's volume as the music resumes after quieter apps, by
+    /// `resumeOffset` (Settings → Advanced, `levelsMusic`).
+    let volumeLeveler: (any ResumeLeveling)?
+    let resumeOffset: @Sendable () async -> Float?
+    var publishedPausedByUs: Bool?
     /// Why the music couldn't be paused, then `nil` once that's over.
     private let onPauseFailure: @Sendable (MusicPlayerError?) -> Void
     /// The last pause failed, while other apps play: the music plays on.
@@ -62,6 +70,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
     var playsLocally = true
     var autoPauseEnabled: Bool
     var activeSources: Set<String> = []
+    /// The apps playing with their microphone on (calls).
+    var callSources: Set<String> = []
+    /// A call came during our pause (or the fade-out before it): with
+    /// `AppConfiguration.staysPausedAfterCalls`, the music isn't resumed.
+    var callDuringPause = false
     var pendingResumeTask: Task<Void, Never>?
     var pendingResumeID: UUID?
     /// The resume under way: the player plays and fades back in
@@ -120,6 +133,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
         resumesHeld: Bool = false,
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        volumeLeveler: (any ResumeLeveling)? = nil,
+        resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
     ) {
         self.player = player
@@ -136,6 +152,9 @@ package actor PlaybackArbiter: PlaybackArbiting {
         self.resumesHeld = resumesHeld
         self.onPlaybackStateChange = onPlaybackStateChange
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
+        self.onPausedByUsChange = onPausedByUsChange
+        self.volumeLeveler = volumeLeveler
+        self.resumeOffset = resumeOffset
         self.onPauseFailure = onPauseFailure
     }
 
@@ -151,6 +170,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingPause() // this app pauses the music now
             activeSources.insert(sourceID)
             logActiveSources(after: "\(sourceID) started playing")
+            noteCalls()
             guard !isAsleep else {
                 publishPlaybackState()
                 return
@@ -175,9 +195,25 @@ package actor PlaybackArbiter: PlaybackArbiting {
         }
     }
 
+    package func handleCallChange(sourceID: String, inCall: Bool) async {
+        guard !isShutDown else { return }
+        if inCall { callSources.insert(sourceID) } else { callSources.remove(sourceID) }
+        logger.info("[arbiter] \(sourceID, privacy: .public) \(inCall ? "is in a call (its microphone is on)" : "is no longer in a call", privacy: .public)")
+        noteCalls()
+    }
+
+    /// Notes a call among the apps playing while the music is paused by us,
+    /// or fades out to be.
+    func noteCalls() {
+        guard pausedByUs || isFadingOut, !callDuringPause, !callSources.isDisjoint(with: activeSources) else { return }
+        callDuringPause = true
+        logger.info("[arbiter] a call came during the pause")
+    }
+
     /// Applies new settings.
     package func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
+        if !configuration.levelsMusic { volumeLeveler?.restoreNow() }
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
     }
 
@@ -354,6 +390,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
+        volumeLeveler?.restoreNow() // nor the Mac's volume lowered
     }
 
     // MARK: - Private

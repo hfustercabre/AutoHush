@@ -10,10 +10,10 @@ import SwiftUI
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, apps, detection, fades, diagnostics, updates, about
+        case general, apps, detection, fades, advanced, diagnostics, updates, about
 
         /// The sidebar's groups of pages, a gap between each.
-        static let groups: [[Page]] = [[.general, .apps], [.detection, .fades], [.diagnostics, .updates, .about]]
+        static let groups: [[Page]] = [[.general, .apps], [.detection, .fades, .advanced], [.diagnostics, .updates, .about]]
 
         var title: String {
             switch self {
@@ -25,6 +25,8 @@ final class SettingsWindowController: NSWindowController {
                 String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
             case .fades:
                 String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player")
+            case .advanced:
+                String(localized: "Advanced", comment: "Settings: a page in the sidebar: leveling the music, and staying paused after calls")
             case .diagnostics:
                 String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
             case .updates:
@@ -42,6 +44,7 @@ final class SettingsWindowController: NSWindowController {
             case .apps: "square.grid.2x2.fill"
             case .detection: "waveform"
             case .fades: "speaker.wave.2.fill"
+            case .advanced: "slider.horizontal.3"
             case .diagnostics: "stethoscope"
             case .updates: "arrow.down.circle.fill"
             case .about: "info.circle.fill"

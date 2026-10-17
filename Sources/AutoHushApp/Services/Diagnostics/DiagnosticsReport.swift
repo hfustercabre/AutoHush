@@ -232,6 +232,11 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
                         Row(label: String(localized: "Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"), value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
+                        // Off in AntiDot mode, which measures no sound, whatever the switch.
+                        Row(label: String(localized: "Level the music", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your music resumes after quieter apps"),
+                            value: facts.timings.levelsMusic && facts.detectionMethod == .audioLevels ? on : off),
+                        Row(label: String(localized: "Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your music paused after a call"),
+                            value: facts.timings.staysPausedAfterCalls ? on : off),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
                         Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"), value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),

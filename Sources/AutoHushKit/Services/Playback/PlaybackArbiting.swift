@@ -14,4 +14,6 @@ package protocol PlaybackArbiting: Actor {
     /// it judges apps now: longer in AntiDot mode, and while nothing is
     /// measured.
     func handleStartConfirmationChange(_ longest: TimeInterval) async
+    /// Whether the app plays with its microphone on: in a call.
+    func handleCallChange(sourceID: String, inCall: Bool) async
 }

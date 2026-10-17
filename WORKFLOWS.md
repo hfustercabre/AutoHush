@@ -158,6 +158,9 @@ flowchart TD
   CHK{"Still paused as<br/>AutoHush left it?"}
   USER["Not resumed: you played,<br/>paused or quit it yourself"]
   RETRY["No answer: tried twice<br/>more, a second apart"]
+  CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
+  STAY["Stays paused: you<br/>play it when ready"]
+  LVL["Level the music on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -182,15 +185,18 @@ flowchart TD
   Q -->|"yes"| CHK
   CHK -->|"no"| USER
   CHK -->|"no answer"| RETRY --> CHK
-  CHK -->|"yes"| FI
+  CHK -->|"yes"| CALL
+  CALL -->|"yes"| STAY
+  CALL -->|"no"| FI
+  CALL -.->|"no, and quieter apps"| LVL --> FI
 
   class FAIL warn
-  class FI,USER,YOURS done
+  class FI,USER,YOURS,STAY done
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, and the fades Settings → Fades’; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, and Stay paused after calls and Level the music (both off by default) Settings → Advanced’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 

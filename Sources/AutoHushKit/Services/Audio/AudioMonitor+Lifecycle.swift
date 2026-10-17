@@ -34,6 +34,8 @@ extension AudioMonitor {
         audioLevelsRelease = nil
         snapshotProvider.stopObserving()
         levelMeter?.stopAll()
+        resumeLevel = ResumeLevel()
+        callSourceIDs = []
 
         candidates = []
         playerProcesses = []

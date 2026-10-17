@@ -45,6 +45,16 @@ package struct AppConfiguration: Sendable {
         max(sourceStartConfirmation, minimumStartWithOpenStreams)
     }
 
+    /// Whether the music resumes with the Mac's volume lowered to the
+    /// quieter apps' level (Settings → Advanced; `ResumeLevel`).
+    package var levelsMusic: Bool
+    /// The most the volume is lowered, in dB, and the least worth doing.
+    package var levelingMaxCutDB: Float = 10
+    package var levelingMinCutDB: Float = 2
+    /// Whether the music stays paused after a call during AutoHush's pause
+    /// (Settings → Advanced).
+    package var staysPausedAfterCalls: Bool
+
     /// Inaudible gaps shorter than this do not restart the start confirmation.
     package var audibleGapTolerance: TimeInterval = 0.5
 
@@ -91,6 +101,8 @@ package struct AppConfiguration: Sendable {
         audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
         fadeOutDuration = timings.fadesEnabled ? timings.fadeOutDuration : 0
         fadeInDuration = timings.fadesEnabled ? timings.fadeInDuration : 0
+        levelsMusic = timings.levelsMusic
+        staysPausedAfterCalls = timings.staysPausedAfterCalls
     }
 
     /// True for the chosen music player's own app, or one of its helpers

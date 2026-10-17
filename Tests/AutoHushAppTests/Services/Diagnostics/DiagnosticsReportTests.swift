@@ -65,6 +65,8 @@ struct DiagnosticsReportTests {
             Version: 0.6.1 (19)
             Auto-Pause: On
             Ignored apps: VLC
+            Level the music: Off
+            Stay paused after calls: Off
             Launch at login: On
             Updates: Install it automatically
             Last checked: 1 hour ago
@@ -173,7 +175,7 @@ struct DiagnosticsReportTests {
         #expect(refused.sections.first { $0.kind == .permissions }?.summary == "Something’s missing")
     }
 
-    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on, with its longer start without video, or every app's with open streams only; AntiDot mode's starts also when nothing is measured with it off")
+    @Test("says when nothing plays, no player is chosen, nothing is ignored, and AntiDot mode is on (leveling off with it), with its longer start without video, or every app's with open streams only; AntiDot mode's starts also when nothing is measured with it off")
     func quietReport() {
         func report(_ detection: DetectionMode, _ method: DetectionMethod) -> DiagnosticsSnapshot {
             var status = AppStatus()
@@ -184,6 +186,8 @@ struct DiagnosticsReportTests {
                 $0.playerPermission = nil
                 $0.checksForUpdates = false
                 $0.lastUpdateCheck = nil
+                $0.timings.levelsMusic = true
+                $0.timings.staysPausedAfterCalls = true
             })
         }
         let snapshot = report(.playbackSignals, .playbackSignals)
@@ -195,6 +199,7 @@ struct DiagnosticsReportTests {
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         #expect(snapshot.text.contains("Pause playback after: \(half) s\nPause playback after, without video: 3 s\nResume playback after: 2 s"))
         #expect(snapshot.text.contains("Ignored apps: None"))
+        #expect(snapshot.text.contains("Level the music: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
         #expect(snapshot.text.contains("Updates: Automatic checks off\nLast checked: Never"))
 
         // Open audio streams only: every app waits at least 2 s.

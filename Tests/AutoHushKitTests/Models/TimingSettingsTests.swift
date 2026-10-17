@@ -28,6 +28,15 @@ struct TimingSettingsTests {
         #expect(on.fadeOutDuration == 3 && on.fadeInDuration == 4)
     }
 
+    @Test("Level other apps and Stay paused after calls are off by default, and reach the configuration")
+    func advancedSwitches() {
+        #expect(!TimingSettings.defaults.levelsMusic && !TimingSettings.defaults.staysPausedAfterCalls)
+        let on = TimingSettings(levelsMusic: true, staysPausedAfterCalls: true)
+        #expect(on.clamped == on)
+        let configuration = AppConfiguration(timings: on)
+        #expect(configuration.levelsMusic && configuration.staysPausedAfterCalls)
+    }
+
     @Test("an app counts as stopped after at least a second of silence")
     func stopGraceMinimum() {
         #expect(TimingSettings(stopGrace: 0).clamped.stopGrace == 1)

@@ -6,11 +6,14 @@ package struct AudioProcessInfo: Equatable, Sendable {
     package let objectID: AudioObjectID
     package let bundleID: String
     package let pid: pid_t
+    /// Whether its input runs too (the microphone, as in a call).
+    package let isRunningInput: Bool
 
-    package init(objectID: AudioObjectID, bundleID: String, pid: pid_t) {
+    package init(objectID: AudioObjectID, bundleID: String, pid: pid_t, isRunningInput: Bool = false) {
         self.objectID = objectID
         self.bundleID = bundleID
         self.pid = pid
+        self.isRunningInput = isRunningInput
     }
 }
 
@@ -60,7 +63,8 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
                   let bundleID = CoreAudioProperty.string(kAudioProcessPropertyBundleID, of: objectID)
             else { return nil }
             let pid = CoreAudioProperty.value(kAudioProcessPropertyPID, of: objectID, initial: pid_t(0)) ?? 0
-            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid)
+            let input = CoreAudioProperty.value(kAudioProcessPropertyIsRunningInput, of: objectID, initial: UInt32(0)) == 1
+            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid, isRunningInput: input)
         }
     }
 

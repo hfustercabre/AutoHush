@@ -105,7 +105,7 @@ package final class Preferences {
     }
 
     /// Each timing's key in the stored dictionary. A missing key keeps its default.
-    /// Whether fades are on is stored there too, as 1 or 0 (`fadesEnabledKey`).
+    /// The switches are stored there too, as 1 or 0 (`switchKeys`).
     private static let timingKeys: [(key: String, value: WritableKeyPath<TimingSettings, Double>)] = [
         ("startConfirmation", \.startConfirmation),
         ("stopGrace", \.stopGrace),
@@ -113,7 +113,11 @@ package final class Preferences {
         ("fadeOutDuration", \.fadeOutDuration),
         ("fadeInDuration", \.fadeInDuration),
     ]
-    private static let fadesEnabledKey = "fadesEnabled"
+    private static let switchKeys: [(key: String, value: WritableKeyPath<TimingSettings, Bool>)] = [
+        ("fadesEnabled", \.fadesEnabled),
+        ("levelsMusic", \.levelsMusic),
+        ("staysPausedAfterCalls", \.staysPausedAfterCalls),
+    ]
 
     package var timings: TimingSettings {
         get {
@@ -122,13 +126,15 @@ package final class Preferences {
             for (key, value) in Self.timingKeys {
                 if let number = stored[key] { timings[keyPath: value] = number }
             }
-            if let enabled = stored[Self.fadesEnabledKey] { timings.fadesEnabled = enabled != 0 }
+            for (key, value) in Self.switchKeys {
+                if let number = stored[key] { timings[keyPath: value] = number != 0 }
+            }
             return timings.clamped
         }
         set {
             let value = newValue.clamped
             var stored = Dictionary(uniqueKeysWithValues: Self.timingKeys.map { ($0.key, value[keyPath: $0.value]) })
-            stored[Self.fadesEnabledKey] = value.fadesEnabled ? 1 : 0
+            for (key, path) in Self.switchKeys { stored[key] = value[keyPath: path] ? 1 : 0 }
             defaults.set(stored, forKey: Key.timings)
         }
     }

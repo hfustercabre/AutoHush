@@ -13,6 +13,7 @@ struct SettingsPageView: View {
             case .apps: AppsSettingsView(model: model)
             case .detection: DetectionSettingsView(model: model)
             case .fades: FadesSettingsView(model: model)
+            case .advanced: AdvancedSettingsView(model: model)
             case .diagnostics: DiagnosticsSettingsView(model: model)
             case .updates: UpdatesSettingsView(model: model)
             case .about: AboutSettingsView(model: model)

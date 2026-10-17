@@ -241,6 +241,10 @@ final class UserSettings: AutoPauseControlling {
         ]
         var lines = rows.filter { $0.1 != $0.2 }.map { "\($0.0): \($0.3($0.1)) → \($0.3($0.2))" }
         if old.fadesEnabled != new.fadesEnabled { lines.append("Fade the music: \(new.fadesEnabled ? "on" : "off")") }
+        if old.levelsMusic != new.levelsMusic { lines.append("Level the music: \(new.levelsMusic ? "on" : "off")") }
+        if old.staysPausedAfterCalls != new.staysPausedAfterCalls {
+            lines.append("Stay paused after calls: \(new.staysPausedAfterCalls ? "on" : "off")")
+        }
         return lines
     }
 

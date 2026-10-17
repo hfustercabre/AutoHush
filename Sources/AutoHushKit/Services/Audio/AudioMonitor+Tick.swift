@@ -43,7 +43,17 @@ extension AudioMonitor {
         // A released process whose output closed is tapped again when it opens.
         let present = Set(candidates.map(\.objectID))
         quietProcesses = quietProcesses.filter { present.contains($0) }
+        updateCalls()
         updateMeteredProcesses(at: now)
+    }
+
+    /// Tells the arbiter which apps play with their microphone on (calls).
+    private func updateCalls() {
+        let calls = Set(candidates.filter(\.isRunningInput).compactMap { sourceOfProcess[$0.objectID]?.id })
+            .subtracting(ignoredSourceIDs)
+        for id in calls.subtracting(callSourceIDs).sorted() { events.yield(.call(id: id, inCall: true)) }
+        for id in callSourceIDs.subtracting(calls).sorted() { events.yield(.call(id: id, inCall: false)) }
+        callSourceIDs = calls
     }
 
     /// Re-reads the System Audio Recording permission (at most every few
@@ -108,19 +118,28 @@ extension AudioMonitor {
         guard let levelMeter else { return }
         // The player is tapped only to prove the permission when TCC cannot be read.
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
-        let metered = shouldMeterLevels ? candidates.filter {
+        var metered = shouldMeterLevels ? candidates.filter {
             (sourceOfProcess[$0.objectID] != nil && !quietProcesses.contains($0.objectID))
                 || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
         } : []
         let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
+        // Leveling the music: the music too, for its loudness, but only while
+        // another app is measured, so the recording indicator isn't on for the
+        // music alone.
+        if configuration.levelsMusic, detectionMode == .audioLevel, !tapsPlayer,
+           metered.contains(where: { sourceOfProcess[$0.objectID] != nil }) {
+            metered += candidates.filter { playerProcesses.contains($0.objectID) }
+        }
         // May block while macOS shows the System Audio Recording prompt.
         levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
     }
 
     private func evaluate(at now: Date) {
-        let peaks = levelMeter?.drainPeaks() ?? [:]
+        let measured = levelMeter?.drainLevels() ?? [:]
+        let peaks = measured.mapValues(\.peak)
         updateDetectionMode(peaks: peaks, at: now)
+        updateResumeLevel(levels: measured, at: now)
 
         var audible: Set<String> = []
         var levels: [String: Float] = [:]

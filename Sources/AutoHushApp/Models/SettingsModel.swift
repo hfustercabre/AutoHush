@@ -169,6 +169,8 @@ final class SettingsModel {
     var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection(threshold: !isAntiDotMode) == timings }
     /// The fades (the switch and both lengths) are their defaults.
     var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
+    /// Advanced's switches are their defaults (both off).
+    var advancedAreDefaults: Bool { timings.withDefaultAdvanced == timings }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
     /// is up to date.", "Checking…"), or this version before any check.
@@ -332,6 +334,10 @@ final class SettingsModel {
         setTimings(timings.withDefaultFades)
     }
 
+    func restoreDefaultAdvanced() {
+        setTimings(timings.withDefaultAdvanced)
+    }
+
     // MARK: - The apps' rows
 
     /// A row for each app that played audio, ranked the most recent first,
@@ -383,6 +389,14 @@ private extension TimingSettings {
         timings.fadesEnabled = TimingSettings.defaults.fadesEnabled
         timings.fadeOutDuration = TimingSettings.defaults.fadeOutDuration
         timings.fadeInDuration = TimingSettings.defaults.fadeInDuration
+        return timings
+    }
+
+    /// These timings with Advanced's switches back to their defaults.
+    var withDefaultAdvanced: TimingSettings {
+        var timings = self
+        timings.levelsMusic = TimingSettings.defaults.levelsMusic
+        timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings
     }
 }

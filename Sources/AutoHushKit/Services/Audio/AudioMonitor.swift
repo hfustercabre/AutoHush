@@ -59,6 +59,8 @@ package final class AudioMonitor: @unchecked Sendable {
         /// How long an app must play, at most, before it counts, as apps
         /// are judged now: told at the first look, then when it changes.
         case startConfirmation(TimeInterval)
+        /// An app playing with its microphone on (a call), or no longer.
+        case call(id: String, inCall: Bool)
         /// Every event sent before it has reached the arbiter (`eventsDelivered`).
         case delivered(@Sendable () -> Void)
     }
@@ -142,6 +144,11 @@ package final class AudioMonitor: @unchecked Sendable {
     var audioLevelsRelease: DispatchWorkItem?
     var publishedLocalPlayback: Bool?
     var publishedStartConfirmation: TimeInterval?
+    /// The apps playing with their microphone on (calls), as last told.
+    var callSourceIDs: Set<String> = []
+    /// How loud the music was before AutoHush's pause, and the apps
+    /// during it (Settings → Advanced).
+    var resumeLevel = ResumeLevel()
 
     package init(
         configuration: AppConfiguration,
@@ -191,6 +198,8 @@ package final class AudioMonitor: @unchecked Sendable {
                     await arbiter.handleLocalPlaybackChange(isLocal)
                 case .startConfirmation(let longest):
                     await arbiter.handleStartConfirmationChange(longest)
+                case .call(let id, let inCall):
+                    await arbiter.handleCallChange(sourceID: id, inCall: inCall)
                 case .delivered(let done):
                     done()
                 }
@@ -271,6 +280,37 @@ package final class AudioMonitor: @unchecked Sendable {
                 self.queue.asyncAfter(deadline: .now() + self.audioLevelsReleaseDelay, execute: release)
             }
         }
+    }
+
+    /// Whether the music is paused by AutoHush: its loudness just before
+    /// is noted, and the apps' during the pause (with `levelsMusic`).
+    package func setMusicPaused(_ paused: Bool) {
+        queue.async {
+            if !paused, let apps = self.resumeLevel.appsLevel {
+                self.logger.info("[level] the apps' loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
+            }
+            self.resumeLevel.setMusicPaused(paused, at: self.clock())
+            if paused, let reference = self.resumeLevel.reference {
+                self.logger.info("[level] the music's loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
+            }
+        }
+    }
+
+    /// How far (dB, below 0) to lower the Mac's volume as the music
+    /// resumes: `nil` unless the apps it was paused for were quieter, or
+    /// with `levelsMusic` off or levels unmeasured (AntiDot mode).
+    package func resumeOffsetDB() async -> Float? {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return continuation.resume(returning: nil) }
+                continuation.resume(returning: self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB,
+                                                                         minCut: self.configuration.levelingMinCutDB))
+            }
+        }
+    }
+
+    private static func dBFS(_ rms: Float) -> String {
+        String(format: "%.1f", 20 * log10(max(rms, 0.0001)))
     }
 
     /// Replaces the sources that must never pause the music. Playing sources

@@ -1,6 +1,7 @@
 import Foundation
 
-/// The timings users can tune in Settings → Detection and → Fades.
+/// The timings users can tune in Settings → Detection and → Fades, and the
+/// switches of Settings → Advanced.
 package struct TimingSettings: Equatable, Sendable {
     /// Seconds another app must be audible before the music pauses.
     package var startConfirmation: TimeInterval
@@ -16,6 +17,13 @@ package struct TimingSettings: Equatable, Sendable {
     /// Whether the music fades at all; off, it pauses and resumes at once,
     /// whatever the fade durations say.
     package var fadesEnabled: Bool
+    /// Whether the music resumes with the Mac's volume lowered to the level
+    /// of the quieter apps it was paused for (calls aside), until its next
+    /// pause.
+    package var levelsMusic: Bool
+    /// Whether the music stays paused when the apps stop after a call came
+    /// during AutoHush's pause.
+    package var staysPausedAfterCalls: Bool
 
     package init(
         startConfirmation: TimeInterval = 0.5,
@@ -23,7 +31,9 @@ package struct TimingSettings: Equatable, Sendable {
         silenceThresholdDB: Double = -60,
         fadeOutDuration: TimeInterval = 1,
         fadeInDuration: TimeInterval = 2,
-        fadesEnabled: Bool = true
+        fadesEnabled: Bool = true,
+        levelsMusic: Bool = false,
+        staysPausedAfterCalls: Bool = false
     ) {
         self.startConfirmation = startConfirmation
         self.stopGrace = stopGrace
@@ -31,6 +41,8 @@ package struct TimingSettings: Equatable, Sendable {
         self.fadeOutDuration = fadeOutDuration
         self.fadeInDuration = fadeInDuration
         self.fadesEnabled = fadesEnabled
+        self.levelsMusic = levelsMusic
+        self.staysPausedAfterCalls = staysPausedAfterCalls
     }
 
     package static let defaults = TimingSettings()
@@ -50,7 +62,9 @@ package struct TimingSettings: Equatable, Sendable {
             silenceThresholdDB: silenceThresholdDB.clamped(to: Self.silenceThresholdRange),
             fadeOutDuration: fadeOutDuration.clamped(to: Self.fadeDurationRange),
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
-            fadesEnabled: fadesEnabled
+            fadesEnabled: fadesEnabled,
+            levelsMusic: levelsMusic,
+            staysPausedAfterCalls: staysPausedAfterCalls
         )
     }
 }

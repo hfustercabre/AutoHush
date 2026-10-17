@@ -10,6 +10,11 @@ extension PlaybackArbiter {
             publishedAudioLevelsNeeded = needed
             onAudioLevelsNeededChange(needed)
         }
+        if pausedByUs != publishedPausedByUs {
+            publishedPausedByUs = pausedByUs
+            if !pausedByUs { callDuringPause = false } // that pause is over
+            onPausedByUsChange(pausedByUs)
+        }
     }
 
     /// Audio levels only matter while they can change a decision: whether to

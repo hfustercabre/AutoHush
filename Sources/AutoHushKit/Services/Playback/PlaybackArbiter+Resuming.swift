@@ -37,6 +37,12 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
+        guard !(configuration.staysPausedAfterCalls && callDuringPause) else {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: a call came during the pause (Stay paused after calls)")
+            pausedByUs = false
+            publishPlaybackState()
+            return
+        }
         await resumeNow(id: id, retriesLeft: retriesLeft)
     }
 
@@ -57,6 +63,13 @@ extension PlaybackArbiter {
             pausedByUs = false
             publishPlaybackState()
             return
+        }
+
+        // After quieter apps, the Mac's volume lowered to their level first,
+        // while nothing plays (Settings → Advanced).
+        if configuration.levelsMusic, let volumeLeveler, let offset = await resumeOffset() {
+            guard !isShutDown, pendingResumeID == id else { return }
+            volumeLeveler.lower(by: offset)
         }
 
         // Forget the pending resume without cancelling it: this may be running

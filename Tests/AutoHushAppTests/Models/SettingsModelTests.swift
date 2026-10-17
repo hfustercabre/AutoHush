@@ -334,24 +334,33 @@ struct SettingsModelTests {
         #expect(DetectionMethod.openStreams.summary.contains("at least \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
-    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, or the fades")
+    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, the fades, or Advanced's switches")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                     fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false)
+                                     fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                     levelsMusic: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
-        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults)
+        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.advancedAreDefaults)
 
         model.restoreDefaultDetectionTimings()
         #expect(model.detectionTimingsAreDefaults)
-        #expect(!model.fadesAreDefaults) // the other page keeps its own
-        #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false))
+        #expect(!model.fadesAreDefaults) // the other pages keep their own
+        #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                                levelsMusic: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
         model.restoreDefaultFades()
         #expect(model.fadesAreDefaults)
         #expect(!model.detectionTimingsAreDefaults)
-        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40))
+        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                                levelsMusic: true, staysPausedAfterCalls: true))
+
+        model.setTimings(changed)
+        model.restoreDefaultAdvanced()
+        #expect(model.advancedAreDefaults)
+        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false))
 
         // In AntiDot mode the silence threshold is hidden: it neither lights
         // Restore Defaults nor is restored.
@@ -465,7 +474,7 @@ struct SettingsWindowControllerTests {
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
         #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Sound Sources"], ["Detection", "Fades"], ["Diagnostics", "Updates", "About"]])
+                == [["General", "Sound Sources"], ["Detection", "Fades", "Advanced"], ["Diagnostics", "Updates", "About"]])
         #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
         #expect(sut.shownPage == nil) // not on screen
 

@@ -80,6 +80,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Level the music** (Settings → Advanced, off by default). When the apps
+  your player was paused for were quieter than it, it resumes with the
+  Mac's volume lowered to match (10 dB at most), until the next pause, when
+  the volume goes back up as it fades out. Calls don't count, and a volume
+  you change meanwhile stays yours. It needs an output with a volume
+  control, and isn't available in AntiDot mode.
+- **Stay paused after calls** (Settings → Advanced, off by default): your
+  player isn't resumed when a call (an app using the microphone) came
+  while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
   played in the last 5 minutes, each with its switch, so one that stopped
   before you could switch it off is still there.

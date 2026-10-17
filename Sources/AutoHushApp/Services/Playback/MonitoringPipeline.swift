@@ -49,6 +49,9 @@ final class MonitoringPipeline {
     struct Readers {
         var processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider()
         var levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter()
+        /// Lowers the Mac's volume as the music resumes after quieter apps
+        /// (Settings → Advanced).
+        var volumeLeveler: (any ResumeLeveling)? = SystemVolumeLeveler()
         var audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission()
         var powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
     }
@@ -81,6 +84,9 @@ final class MonitoringPipeline {
             resumesHeld: resumesHeld,
             onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
             onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) },
+            onPausedByUsChange: { monitorLink.monitor?.setMusicPaused($0) },
+            volumeLeveler: readers.volumeLeveler,
+            resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
             onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
         )
         let monitor = AudioMonitor(
