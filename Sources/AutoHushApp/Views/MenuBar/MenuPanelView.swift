@@ -52,7 +52,11 @@ struct MenuPanelView: View {
             }
             .scrollIndicators(.automatic)
             .scrollBounceBehavior(.basedOnSize)
-            .frame(maxHeight: middleHeight)
+            // It fills what the panel leaves between the card and the
+            // buttons, as the panel's height follows the content's: sized
+            // to its content, the parts shorter than a shrinking panel were
+            // centered in it, and dropped for a moment as a part folded.
+            .frame(idealHeight: middleHeight, maxHeight: .infinity)
             VStack(spacing: 0) {
                 line
                 ForEach(sections.filter { $0.section == .toolbar }, id: \.index) { view(for: $0.section) }
@@ -63,6 +67,7 @@ struct MenuPanelView: View {
         }
         .font(.appBody)
         .frame(width: menuContentWidth)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func report() {
