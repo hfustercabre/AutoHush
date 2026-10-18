@@ -32,12 +32,12 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media player (the players unfold<br/>under it), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(folded), the settings' switches<br/>(each part's other settings folded<br/>at first), the buttons (the card<br/>and the buttons stay put)"]
+  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media Player (the players unfold<br/>under it), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(folded), the settings' switches<br/>(each part's other settings folded<br/>at first), the buttons (the card<br/>and the buttons stay put)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Advanced (Level the music,<br/>Stay paused after calls),<br/>Diagnostics"]
+  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Advanced (Level the volume,<br/>Stay paused after calls),<br/>Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -160,7 +160,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the music on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(after a crash: at the next<br/>launch, if still lowered)"]
+  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(after a crash: at the next<br/>launch, if still lowered)"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -196,7 +196,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, and Stay paused after calls and Level the music (both off by default) Settings → Advanced’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, and Stay paused after calls and Level the volume (both off by default) Settings → Advanced’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 

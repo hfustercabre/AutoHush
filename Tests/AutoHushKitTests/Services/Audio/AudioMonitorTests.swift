@@ -241,7 +241,7 @@ struct AudioMonitorTests {
         h.monitor.stop()
     }
 
-    @Test("with Level the music on, the player is measured while another app is; its loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume; an app using its microphone is reported in a call")
+    @Test("with Level the volume on, the player is measured while another app is; its loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume; an app using its microphone is reported in a call")
     func levelsMusic() async throws {
         var configuration = Self.config()
         configuration.levelsMusic = true

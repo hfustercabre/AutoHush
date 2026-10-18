@@ -65,7 +65,7 @@ struct DiagnosticsReportTests {
             Version: 0.6.1 (19)
             Auto-Pause: On
             Ignored apps: VLC
-            Level the music: Off
+            Level the volume: Off
             Stay paused after calls: Off
             Launch at login: On
             Updates: Install it automatically
@@ -199,7 +199,7 @@ struct DiagnosticsReportTests {
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         #expect(snapshot.text.contains("Pause playback after: \(half) s\nPause playback after, without video: 3 s\nResume playback after: 2 s"))
         #expect(snapshot.text.contains("Ignored apps: None"))
-        #expect(snapshot.text.contains("Level the music: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
+        #expect(snapshot.text.contains("Level the volume: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
         #expect(snapshot.text.contains("Updates: Automatic checks off\nLast checked: Never"))
 
         // Open audio streams only: every app waits at least 2 s.

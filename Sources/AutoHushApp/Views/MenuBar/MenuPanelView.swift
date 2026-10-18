@@ -11,7 +11,7 @@ import AutoHushKit
 /// unfolds its parts in `MenuPanelView.animation`, the panel's height
 /// following (`MenuPanel`); it reports its height to the panel (`onHeight`).
 /// While more is below what shows, the last rows fade out over a small
-/// chevron (C4, the user's pick, 2026-10-18).
+/// chevron (C4, the user's pick, 2026-10-18; the chevron alone before macOS 26).
 struct MenuPanelView: View {
     let model: StatusMenuModel
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
@@ -27,9 +27,18 @@ struct MenuPanelView: View {
     @State private var topHeight: CGFloat = 0
     @State private var middleHeight: CGFloat = 0
     @State private var bottomHeight: CGFloat = 0
-    /// More of the middle is below what shows (it's taller than the screen
-    /// leaves, and not scrolled to its end).
-    @State private var moreBelow = false
+    /// How far down the middle shows, while it's taller than the screen
+    /// leaves (`nil` while all of it shows).
+    @State private var reach: ScrollReach?
+    private var moreBelow: Bool { reach?.moreBelow ?? false }
+    /// How tall the rows' fade is at the bottom edge while more is below.
+    static let fadeHeight: CGFloat = 32
+    /// The rows fade only from macOS 26: before, the mask takes their
+    /// vibrancy, every row dimmer while it's on (measured on 14.4 and 15,
+    /// 2026-10-18), so the chevron alone says more is below.
+    static var fadesRows: Bool {
+        if #available(macOS 26, *) { true } else { false }
+    }
 
     private var sections: [(index: Int, section: MenuSection)] {
         model.sections.enumerated().map { ($0.offset, $0.element) }
@@ -54,13 +63,16 @@ struct MenuPanelView: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { middleHeight = $0; report() }
-                .background { MoreBelowReader.contentEnd }
+                .background { MoreBelowReader.contentFrame }
+                // The rows themselves fade out at the bottom edge, so the
+                // menu's own material shows through (the user, 2026-10-18).
+                .mask(alignment: .top) { fadeMask }
             }
             .scrollIndicators(.automatic)
             .scrollBounceBehavior(.basedOnSize)
-            .modifier(MoreBelowReader(moreBelow: $moreBelow))
+            .modifier(MoreBelowReader(reach: $reach))
             .overlay(alignment: .bottom) {
-                if moreBelow { moreBelowCue.transition(.opacity) }
+                if moreBelow { moreBelowChevron.transition(.opacity) }
             }
             .animation(.easeOut(duration: 0.15), value: moreBelow)
             // It fills what the panel leaves between the card and the
@@ -85,22 +97,32 @@ struct MenuPanelView: View {
         onHeight(topHeight + middleHeight + bottomHeight)
     }
 
-    /// The last rows fading out, a small chevron over them: there's more
-    /// below. Drawn over the rows (a mask doesn't reach AppKit's scroll
-    /// view), in the menu's background color.
-    private var moreBelowCue: some View {
-        ZStack(alignment: .bottom) {
-            LinearGradient(stops: [.init(color: Color.menuBackground.opacity(0), location: 0),
-                                   .init(color: Color.menuBackground, location: 0.75)],
-                           startPoint: .top, endPoint: .bottom)
-                .frame(height: 60)
-            Image(systemName: "chevron.compact.down")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.appSecondary)
-                .padding(.bottom, 2)
+    /// The rows' mask: whole, but for their last `fadeHeight` above the
+    /// bottom edge while more is below, which fades to clear. It's in the
+    /// rows' own space (a mask on the scroll view doesn't reach AppKit's),
+    /// so it moves with the scrolling to stay at the edge.
+    @ViewBuilder private var fadeMask: some View {
+        if let reach, reach.moreBelow, Self.fadesRows {
+            VStack(spacing: 0) {
+                Rectangle().frame(height: max(0, reach.visibleBottom - Self.fadeHeight))
+                LinearGradient(colors: [.black, .black.opacity(0)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: Self.fadeHeight)
+                Spacer(minLength: 0)
+            }
+        } else {
+            Rectangle()
         }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true) // VoiceOver reaches the rows below by itself
+    }
+
+    /// A small chevron at the bottom edge, over the fading rows: there's
+    /// more below.
+    private var moreBelowChevron: some View {
+        Image(systemName: "chevron.compact.down")
+            .font(.title3.weight(.semibold))
+            .foregroundStyle(.appSecondary)
+            .padding(.bottom, 2)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true) // VoiceOver reaches the rows below by itself
     }
 
     /// A line between the parts, where the menu had its separators.
@@ -184,94 +206,121 @@ struct MenuPanelView: View {
     }
 }
 
-/// "Ignored Apps": the apps switched off, folded under their row; unfolded,
-/// a click on one stops ignoring it. It follows the switches under Playing
-/// Now while the menu is open.
+/// "Ignored Apps": the apps switched off (V5, the user's pick, 2026-10-18),
+/// as the settings' parts: the title over a row with up to three of their
+/// icons, their names and what they are, and a chevron; unfolded, the apps
+/// under it, a click on one stops ignoring it. It follows the switches under
+/// Playing Now while the menu is open.
 struct MenuIgnoredAppsView: View {
     let model: StatusMenuModel
 
+    private var apps: [AudioSource] { model.status.ignoredApps }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Button { model.perform(.toggleIgnoredApps) } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "speaker.slash")
-                        .frame(width: 18)
-                        .accessibilityHidden(true)
-                    Text("Ignored Apps", comment: "Menu item")
-                    Spacer()
-                    Text(verbatim: model.status.ignoredApps.count.formatted())
-                        .foregroundStyle(.appSecondary)
-                        .accessibilityHidden(true)
-                    Image(systemName: model.showsIgnoredApps ? "chevron.up" : "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.appSecondary)
-                        .accessibilityHidden(true)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            MenuPartTitle(Text("Ignored Apps", comment: "The menu: heading over the apps that don’t pause your player"))
+            MenuFoldingRow(title: Self.names(of: apps.map(\.name)),
+                           subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
+                           leadingWidth: 32, isOpen: model.showsIgnoredApps,
+                           action: { model.perform(.toggleIgnoredApps) }) {
+                iconStack
             }
-            .buttonStyle(MenuRowButtonStyle())
-            // How many, then whether they show: the count is hidden as text.
-            .accessibilityValue(Text(verbatim: "\(model.status.ignoredApps.count.formatted()), ")
-                                + (model.showsIgnoredApps ? AccessibilityText.expanded : AccessibilityText.collapsed))
             if model.showsIgnoredApps {
-                Text("Click an app to stop ignoring it", comment: "The menu: hint atop the ignored apps, unfolded under the Ignored Apps row")
-                    .captionStyle()
-                    .padding(.horizontal, 32)
-                    .transition(.opacity)
-                ForEach(model.status.ignoredApps, id: \.self) { app in
+                ForEach(apps, id: \.self) { app in
                     Button { model.perform(.setIgnored(app, false)) } label: {
                         HStack(spacing: 8) {
-                            Image(nsImage: AppIcon.image(for: app, players: model.status.playerOptions, size: 18))
-                                .resizable()
-                                .frame(width: 18, height: 18)
-                                .accessibilityHidden(true)
+                            icon(app)
                             Text(verbatim: app.name).lineLimit(1)
                         }
                         .padding(.leading, 24)
                     }
                     .buttonStyle(MenuRowButtonStyle())
+                    .help(Text("Click an app to stop ignoring it", comment: "The menu: the tooltip of each ignored app, unfolded under Ignored Apps"))
+                    .padding(.horizontal, 8)
                     .transition(.opacity)
                 }
             }
         }
-        .padding(.horizontal, 8)
         .frame(width: menuContentWidth)
+    }
+
+    /// The apps' names in a few words: one or two named; from three on, the
+    /// first two and how many more.
+    static func names(of names: [String]) -> String {
+        switch names.count {
+        case 0: ""
+        case 1: names[0]
+        case 2: ListFormatter.localizedString(byJoining: names)
+        default:
+            String(localized: "\(names[0]), \(names[1]) and \(names.count - 2) more",
+                   comment: "The menu, Ignored Apps: the first two ignored apps' names, then how many others there are (1 or more)")
+        }
+    }
+
+    private func icon(_ app: AudioSource) -> some View {
+        Image(nsImage: AppIcon.image(for: app, players: model.status.playerOptions, size: 18))
+            .resizable()
+            .frame(width: 18, height: 18)
+            .accessibilityHidden(true)
+    }
+
+    /// Up to three of the apps' icons, overlapping.
+    private var iconStack: some View {
+        ZStack(alignment: .leading) {
+            ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in
+                icon(app).offset(x: CGFloat(index) * 7)
+            }
+        }
     }
 }
 
-/// Whether a scroll view has more below what shows: from macOS 15 by its
-/// scroll geometry; on macOS 14 by where its content ends in it.
+/// How far down a scroll view's content shows.
+struct ScrollReach: Equatable {
+    /// The bottom edge of what shows, in the content's own space.
+    var visibleBottom: CGFloat
+    var contentHeight: CGFloat
+    var moreBelow: Bool { visibleBottom < contentHeight - 1 }
+}
+
+/// How far down a scroll view's content shows: from macOS 15 by its scroll
+/// geometry; on macOS 14 by where its content is in it.
 private struct MoreBelowReader: ViewModifier {
-    @Binding var moreBelow: Bool
+    @Binding var reach: ScrollReach?
     @State private var height: CGFloat = 0
-    @State private var contentEnd: CGFloat = 0
+    @State private var contentFrame: CGRect = .zero
 
     func body(content: Content) -> some View {
         if #available(macOS 15, *) {
-            content.onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentOffset.y + geometry.containerSize.height < geometry.contentSize.height - 1
-            } action: { _, below in moreBelow = below }
+            content.onScrollGeometryChange(for: ScrollReach.self) { geometry in
+                ScrollReach(visibleBottom: geometry.contentOffset.y + geometry.containerSize.height,
+                            contentHeight: geometry.contentSize.height)
+            } action: { _, new in reach = new }
         } else {
             content
                 .coordinateSpace(.named(Self.space))
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0; update() }
-                .onPreferenceChange(ContentEnd.self) { end in
-                    MainActor.assumeIsolated { contentEnd = end; update() }
+                .onPreferenceChange(ContentFrame.self) { frame in
+                    MainActor.assumeIsolated { contentFrame = frame ?? .zero; update() }
                 }
         }
     }
 
-    private func update() { moreBelow = contentEnd > height + 1 }
+    private func update() {
+        reach = ScrollReach(visibleBottom: height - contentFrame.minY, contentHeight: contentFrame.height)
+    }
 
     static let space = "menuScroll"
 
-    /// Behind the scrolled content: where it ends (macOS 14 only reads it).
-    static var contentEnd: some View {
-        GeometryReader { Color.clear.preference(key: ContentEnd.self, value: $0.frame(in: .named(space)).maxY) }
+    /// Behind the scrolled content: where it is (macOS 14 only reads it).
+    static var contentFrame: some View {
+        GeometryReader { Color.clear.preference(key: ContentFrame.self, value: $0.frame(in: .named(space))) }
     }
 
-    /// Where the scrolled content ends, in the scroll view's own space.
-    struct ContentEnd: PreferenceKey {
-        static let defaultValue: CGFloat = 0
-        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+    /// Where the scrolled content is, in the scroll view's own space. Views
+    /// that don't set it give `nil`, which mustn't replace the frame (macOS
+    /// 14 reduces them in after it: measured on 14.4, 2026-10-18).
+    struct ContentFrame: PreferenceKey {
+        static let defaultValue: CGRect? = nil
+        static func reduce(value: inout CGRect?, nextValue: () -> CGRect?) { value = nextValue() ?? value }
     }
 }

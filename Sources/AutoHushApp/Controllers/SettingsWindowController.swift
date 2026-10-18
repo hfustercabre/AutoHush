@@ -170,6 +170,12 @@ private final class SettingsToolbarDelegate: NSObject, NSToolbarDelegate {
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [.sidebarTrackingSeparator]
     }
+
+    /// No items of its own (macOS 14 logs the delegate as invalid without it).
+    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
+                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        nil
+    }
 }
 
 /// The split view without a line between the sidebar and the page: the

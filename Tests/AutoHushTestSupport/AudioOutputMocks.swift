@@ -3,7 +3,7 @@ import Foundation
 import AutoHushKit
 
 // Stand-ins for the Mac's outputs: their mutes (Add an App's check) and
-// their volume (Level the music). Shared by the engine's tests and the
+// their volume (Level the volume). Shared by the engine's tests and the
 // app's (AppDelegate), so no test mutes or turns down the machine it runs on.
 
 /// Outputs and their mutes, in memory: sound plays through 7 (the built-in

@@ -251,7 +251,7 @@ struct PlaybackArbiterTests {
         #expect(await run(staysPaused: false, call: "us.zoom.xos") == 1)
     }
 
-    @Test("with Level the music on, the Mac's volume is put back as the music fades out for an app, and lowered by the monitor's offset before it resumes; off, never lowered, and turning it off or stopping puts it back at once")
+    @Test("with Level the volume on, the Mac's volume is put back as the music fades out for an app, and lowered by the monitor's offset before it resumes; off, never lowered, and turning it off or stopping puts it back at once")
     func levelsMusic() async {
         func run(levels: Bool, offset: Float?) async -> (log: [String], plays: Int) {
             var configuration = AppConfiguration.testing
@@ -1670,7 +1670,7 @@ struct PlaybackArbiterTests {
         #expect(await player.commandLog.isEmpty)
     }
 
-    @Test("with Level the music on, a resume that never takes puts the Mac's volume back as it gives up, not while it retries")
+    @Test("with Level the volume on, a resume that never takes puts the Mac's volume back as it gives up, not while it retries")
     func levelingGivesUpWithResume() async {
         var configuration = AppConfiguration.testing
         configuration.levelsMusic = true

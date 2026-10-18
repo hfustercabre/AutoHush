@@ -25,7 +25,7 @@ import AutoHushKit
 ///                     ⌄                   name; an arrow unfolds the rest of a
 ///  ─────  Fades       Fade playback       part in its place: F3)
 ///                     ⌄
-///  ─────  Advanced    Level the music · Stay paused after calls
+///  ─────  Advanced    Level the volume · Stay paused after calls
 ///  ─────  Install AutoHush 0.3.8…        (once one is found)
 ///  [Settings]  [Updates]  [About]  [Quit]   (pinned; ⌥-click Settings: Diagnostics)
 /// ```

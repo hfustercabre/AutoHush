@@ -54,7 +54,7 @@ struct GeneralSettingsView: View {
     /// the menu's card has them) and what works; what it lacks and the way
     /// to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
-        Card(Text("Media Player", comment: "Settings → General and Diagnostics: heading over the media player")) {
+        Card(Text("Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")) {
             HStack(alignment: .center, spacing: 12) {
                 playerIcon
                 VStack(alignment: .leading, spacing: 2) {

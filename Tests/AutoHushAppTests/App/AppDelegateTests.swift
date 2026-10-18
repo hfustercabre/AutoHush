@@ -1013,7 +1013,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("the Mac's volume lowered for the music (Level the music) is put back as AutoHush quits, and at the next launch after a crash")
+    @Test("the Mac's volume lowered for the music (Level the volume) is put back as AutoHush quits, and at the next launch after a crash")
     func loweredVolumePutBack() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)

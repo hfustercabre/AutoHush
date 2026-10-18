@@ -9264,6 +9264,221 @@
         }
       }
     },
+    "%@, %@ and %lld more" : {
+      "comment" : "The menu, Ignored Apps: the first two ignored apps' names, then how many others there are (1 or more)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ و%2$@ و%3$lld غيرها"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ i %3$lld més"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ a ještě %3$lld"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ og %3$lld mere"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ und %3$lld weitere"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ και %3$lld ακόμα"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@ and %3$lld more"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ y %3$lld más"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ y %3$lld más"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ ja %3$lld lisää"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ et %3$lld de plus"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ et %3$lld de plus"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ और %3$lld अन्य"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ i još %3$lld"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ és még %3$lld"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@, dan %3$lld lainnya"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ e %3$lld in più"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@、%2$@ほか%3$lld個"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ 외 %3$lld개"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ og %3$lld til"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ en nog %3$lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ i jeszcze %3$lld"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ e mais %3$lld"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ e mais %3$lld"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ și încă %3$lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ и ещё %3$lld"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ a ešte %3$lld"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ in še %3$lld"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ och %3$lld till"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ ve %3$lld tane daha"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ і ще %3$lld"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@ và %3$lld ứng dụng khác"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@、%2$@ 和另外 %3$lld 個"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@、%2$@ 和另外 %3$lld 个"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@、%2$@ 和另外 %3$lld 個"
+          }
+        }
+      }
+    },
     "%@, %@ web app" : {
       "comment" : "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, e.g. SoundCloud, the second the browser, e.g. Google Chrome",
       "localizations" : {
@@ -17642,6 +17857,215 @@
         }
       }
     },
+    "Added with Add an App" : {
+      "comment" : "The menu, under the chosen media player's name: an app the user added through Add an App's check",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُضيف عبر إضافة تطبيق"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afegida amb Afegeix una app"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Přidáno pomocí Přidat aplikaci"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilføjet med Tilføj en app"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit „App hinzufügen“ hinzugefügt"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Προστέθηκε με την Προσθήκη εφαρμογής"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadida con Añadir una app"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregada con Agregar una app"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisätty Lisää appi -toiminnolla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutée avec « Ajouter une app »"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutée avec « Ajouter une app »"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘ऐप जोड़ें’ से जोड़ा गया"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodano pomoću Dodaj aplikaciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az App hozzáadása funkcióval hozzáadva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ditambahkan dengan Tambahkan App"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiunta con Aggiungi un’app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「Appを追加」で追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 추가로 추가됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lagt til med Legg til en app"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toegevoegd met Voeg een app toe"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodana przez Dodaj aplikację"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionado com Adicionar um App"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionada com Adicionar uma app"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugată cu Adăugați o aplicație"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавлено через «Добавить приложение»"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridané cez Pridať apku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodano z Dodaj aplikacijo"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillagd med Lägg till en app"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama Ekle ile eklendi"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додано через «Додати програму»"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã thêm bằng Thêm ứng dụng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以「加入 App」加入"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过“添加 App”添加"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以「加入 App」加入"
+          }
+        }
+      }
+    },
     "Address" : {
       "comment" : "Add a Web App window: the heading over the field for the website's address",
       "localizations" : {
@@ -18269,211 +18693,211 @@
         }
       }
     },
-    "After quieter apps, it resumes with the Mac’s volume lowered to match, until the next pause. Calls don’t count." : {
-      "comment" : "Settings → Advanced, under “Level the music”; a call is an app using the microphone",
+    "After quieter apps, your player resumes with the Mac’s volume lowered to match, until the next pause. Calls don’t count." : {
+      "comment" : "Settings → Advanced, under “Level the volume”; a call is an app using the microphone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "بعد تطبيقات أهدأ، تُستأنف بخفض مستوى صوت Mac ليطابقها، حتى الإيقاف المؤقت التالي. المكالمات لا تُحتسب."
+            "value" : "بعد تطبيقات أهدأ، يُستأنف مشغّلك بخفض مستوى صوت Mac ليطابقها، حتى الإيقاف المؤقت التالي. المكالمات لا تُحتسب."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Després d’apps més baixes, es reprèn amb el volum del Mac abaixat per igualar-les, fins a la pausa següent. Les trucades no compten."
+            "value" : "Després d’apps més baixes, el reproductor es reprèn amb el volum del Mac abaixat per igualar-les, fins a la pausa següent. Les trucades no compten."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Po tišších aplikacích se obnoví se snížením hlasitosti Macu na jejich úroveň, až do další pauzy. Hovory se nepočítají."
+            "value" : "Po tišších aplikacích se váš přehrávač obnoví se snížením hlasitosti Macu na jejich úroveň, až do další pauzy. Hovory se nepočítají."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Efter mere stille apps genoptages den med Mac’ens lydstyrke sænket til deres niveau, indtil næste pause. Opkald tæller ikke."
+            "value" : "Efter mere stille apps genoptages din afspiller med Mac’ens lydstyrke sænket til deres niveau, indtil næste pause. Opkald tæller ikke."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nach leiseren Apps wird sie mit verringerter Mac-Lautstärke fortgesetzt, bis zur nächsten Pause. Anrufe zählen nicht."
+            "value" : "Nach leiseren Apps wird dein Player mit verringerter Mac-Lautstärke fortgesetzt, bis zur nächsten Pause. Anrufe zählen nicht."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Μετά από πιο ήσυχες εφαρμογές, συνεχίζει με την ένταση του Mac χαμηλωμένη στο επίπεδό τους, έως την επόμενη παύση. Οι κλήσεις δεν μετράνε."
+            "value" : "Μετά από πιο ήσυχες εφαρμογές, η εφαρμογή αναπαραγωγής σας συνεχίζει με την ένταση του Mac χαμηλωμένη στο επίπεδό τους, έως την επόμενη παύση. Οι κλήσεις δεν μετράνε."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tras apps más bajas, se reanuda con el volumen del Mac bajado para igualarlas, hasta la siguiente pausa. Las llamadas no cuentan."
+            "value" : "Tras apps más bajas, tu reproductor se reanuda con el volumen del Mac bajado para igualarlas, hasta la siguiente pausa. Las llamadas no cuentan."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tras apps más bajas, se reanuda con el volumen de la Mac bajado para igualarlas, hasta la siguiente pausa. Las llamadas no cuentan."
+            "value" : "Tras apps más bajas, tu reproductor se reanuda con el volumen de la Mac bajado para igualarlas, hasta la siguiente pausa. Las llamadas no cuentan."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hiljaisempien appien jälkeen se jatkuu Macin äänenvoimakkuus niiden tasolle laskettuna seuraavaan taukoon asti. Puheluita ei lasketa."
+            "value" : "Hiljaisempien appien jälkeen soittimesi jatkaa Macin äänenvoimakkuus niiden tasolle laskettuna seuraavaan taukoon asti. Puheluita ei lasketa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Après des apps plus faibles, elle reprend avec le volume du Mac baissé à leur niveau, jusqu’à la pause suivante. Les appels ne comptent pas."
+            "value" : "Après des apps plus faibles, votre lecteur reprend avec le volume du Mac baissé à leur niveau, jusqu’à la pause suivante. Les appels ne comptent pas."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Après des apps plus faibles, elle reprend avec le volume du Mac baissé à leur niveau, jusqu’à la pause suivante. Les appels ne comptent pas."
+            "value" : "Après des apps plus faibles, votre lecteur reprend avec le volume du Mac baissé à leur niveau, jusqu’à la pause suivante. Les appels ne comptent pas."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "शांत ऐप्स के बाद, यह Mac की आवाज़ को उनके स्तर तक कम करके फिर से शुरू होता है, अगले पॉज़ तक। कॉल नहीं गिने जाते।"
+            "value" : "शांत ऐप्स के बाद, आपका प्लेयर Mac की आवाज़ को उनके स्तर तक कम करके फिर से शुरू होता है, अगले पॉज़ तक। कॉल नहीं गिने जाते।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nakon tiših aplikacija nastavlja se uz glasnoću Maca smanjenu na njihovu razinu, do sljedeće pauze. Pozivi se ne računaju."
+            "value" : "Nakon tiših aplikacija vaš se reproduktor nastavlja uz glasnoću Maca smanjenu na njihovu razinu, do sljedeće pauze. Pozivi se ne računaju."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Halkabb appok után a Mac hangerejét az ő szintjükre csökkentve folytatódik, a következő szünetig. A hívások nem számítanak."
+            "value" : "Halkabb appok után a lejátszója a Mac hangerejét az ő szintjükre csökkentve folytatódik, a következő szünetig. A hívások nem számítanak."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Setelah app yang lebih pelan, musik dilanjutkan dengan volume Mac diturunkan agar sama, hingga jeda berikutnya. Panggilan tidak dihitung."
+            "value" : "Setelah app yang lebih pelan, pemutar Anda dilanjutkan dengan volume Mac diturunkan agar sama, hingga jeda berikutnya. Panggilan tidak dihitung."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dopo app più basse, riprende con il volume del Mac abbassato al loro livello, fino alla pausa successiva. Le chiamate non contano."
+            "value" : "Dopo app più basse, il lettore riprende con il volume del Mac abbassato al loro livello, fino alla pausa successiva. Le chiamate non contano."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "より静かなアプリの後は、Macの音量をそれに合わせて下げて再開し、次の一時停止まで保ちます。通話は対象外です。"
+            "value" : "より静かなアプリの後は、Macの音量をそれに合わせて下げてプレーヤーを再開し、次の一時停止まで保ちます。通話は対象外です。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "더 조용한 앱 이후에는 Mac 음량을 그에 맞게 낮춘 채 재개되며, 다음 일시 정지까지 유지됩니다. 통화는 제외됩니다."
+            "value" : "더 조용한 앱 이후에는 Mac 음량을 그에 맞게 낮춘 채 플레이어가 재개되며, 다음 일시 정지까지 유지됩니다. 통화는 제외됩니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etter stillere apper fortsetter den med Mac-volumet senket til deres nivå, til neste pause. Samtaler teller ikke."
+            "value" : "Etter stillere apper fortsetter spilleren din med Mac-volumet senket til deres nivå, til neste pause. Samtaler teller ikke."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na stillere apps wordt ze hervat met het Mac-volume verlaagd tot hun niveau, tot de volgende pauze. Gesprekken tellen niet mee."
+            "value" : "Na stillere apps wordt je speler hervat met het Mac-volume verlaagd tot hun niveau, tot de volgende pauze. Gesprekken tellen niet mee."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Po cichszych aplikacjach wznawia się z głośnością Maca obniżoną do ich poziomu, aż do następnej pauzy. Połączenia się nie liczą."
+            "value" : "Po cichszych aplikacjach Twój odtwarzacz wznawia się z głośnością Maca obniżoną do ich poziomu, aż do następnej pauzy. Połączenia się nie liczą."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Após apps mais baixos, ela retoma com o volume do Mac reduzido para igualar, até a próxima pausa. Chamadas não contam."
+            "value" : "Após apps mais baixos, seu player retoma com o volume do Mac reduzido para igualar, até a próxima pausa. Chamadas não contam."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Após apps mais baixas, retoma com o volume do Mac reduzido para igualar, até à pausa seguinte. As chamadas não contam."
+            "value" : "Após apps mais baixas, o seu leitor retoma com o volume do Mac reduzido para igualar, até à pausa seguinte. As chamadas não contam."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "După aplicații mai silențioase, se reia cu volumul Macului coborât la nivelul lor, până la următoarea pauză. Apelurile nu contează."
+            "value" : "După aplicații mai silențioase, playerul dvs. se reia cu volumul Macului coborât la nivelul lor, până la următoarea pauză. Apelurile nu contează."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "После более тихих программ она возобновляется с громкостью Mac, сниженной до их уровня, до следующей паузы. Звонки не учитываются."
+            "value" : "После более тихих программ ваш плеер возобновляется с громкостью Mac, сниженной до их уровня, до следующей паузы. Звонки не учитываются."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Po tichších aplikáciách sa obnoví so znížením hlasitosti Macu na ich úroveň, až do ďalšej pauzy. Hovory sa nepočítajú."
+            "value" : "Po tichších aplikáciách sa váš prehrávač obnoví so znížením hlasitosti Macu na ich úroveň, až do ďalšej pauzy. Hovory sa nepočítajú."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Po tišjih aplikacijah se nadaljuje z glasnostjo Maca, znižano na njihovo raven, do naslednjega premora. Klici se ne štejejo."
+            "value" : "Po tišjih aplikacijah se vaš predvajalnik nadaljuje z glasnostjo Maca, znižano na njihovo raven, do naslednjega premora. Klici se ne štejejo."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Efter tystare appar återupptas den med Macens volym sänkt till deras nivå, tills nästa paus. Samtal räknas inte."
+            "value" : "Efter tystare appar återupptas din spelare med Macens volym sänkt till deras nivå, tills nästa paus. Samtal räknas inte."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Daha sessiz uygulamalardan sonra Mac’in sesi onlara uyacak şekilde kısılarak, sonraki duraklatmaya kadar sürer. Aramalar sayılmaz."
+            "value" : "Daha sessiz uygulamalardan sonra oynatıcınız, Mac’in sesi onlara uyacak şekilde kısılarak sonraki duraklatmaya kadar sürer. Aramalar sayılmaz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Після тихіших програм вона відновлюється зі зниженою до їхнього рівня гучністю Mac, до наступної паузи. Дзвінки не враховуються."
+            "value" : "Після тихіших програм ваш програвач відновлюється зі зниженою до їхнього рівня гучністю Mac, до наступної паузи. Дзвінки не враховуються."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sau các ứng dụng nhỏ tiếng hơn, nhạc tiếp tục với âm lượng Mac được giảm cho khớp, đến lần tạm dừng tiếp theo. Cuộc gọi không được tính."
+            "value" : "Sau các ứng dụng nhỏ tiếng hơn, trình phát của bạn tiếp tục với âm lượng Mac được giảm cho khớp, đến lần tạm dừng tiếp theo. Cuộc gọi không được tính."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在較安靜的 App 之後，音樂恢復時會將 Mac 音量調低以配合，直到下次暫停。通話不計入。"
+            "value" : "在較安靜的 App 之後，你的播放器恢復時會將 Mac 音量調低以配合，直到下次暫停。通話不計入。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在较安静的 App 之后，音乐恢复时会将 Mac 音量调低以匹配，直到下次暂停。通话不计入。"
+            "value" : "在较安静的 App 之后，你的播放器恢复时会将 Mac 音量调低以匹配，直到下次暂停。通话不计入。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在較安靜的 App 之後，音樂恢復時會將 Mac 音量調低以配合，直到下次暫停。通話不計入。"
+            "value" : "在較安靜的 App 之後，你的播放器恢復時會將 Mac 音量調低以配合，直到下次暫停。通話不計入。"
           }
         }
       }
@@ -33323,6 +33747,215 @@
         }
       }
     },
+    "AutoHush takes over your Mac to pause and play %@ every way it can." : {
+      "comment" : "The window shown before a check starts, at its top beside the app's icon (how long it takes is in its foot: “About 3 minutes”); %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتولى AutoHush التحكم في جهاز Mac لإيقاف %@ مؤقتًا وتشغيله بكل طريقة ممكنة."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush pren el control del Mac per posar en pausa i reproduir %@ de totes les maneres que pugui."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush převezme kontrolu nad vaším Macem, aby aplikaci %@ pozastavil a přehrál všemi způsoby, jakými to jde."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush overtager din Mac for at sætte %@ på pause og afspille den på alle de måder, den kan."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush übernimmt deinen Mac, um %@ auf jede mögliche Weise zu pausieren und abzuspielen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush αναλαμβάνει τον έλεγχο του Mac σας για να θέσει σε παύση και να αναπαράγει την εφαρμογή %@ με κάθε δυνατό τρόπο."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush toma el control de tu Mac para pausar y reproducir %@ de todas las formas que pueda."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush toma el control de tu Mac para pausar y reproducir %@ de todas las formas que pueda."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ottaa Macisi hallintaansa keskeyttääkseen ja jatkaakseen apin %@ toistoa kaikilla mahdollisilla tavoilla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush prend la main sur votre Mac pour mettre en pause et relancer %@ de toutes les façons possibles."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush prend la main sur votre Mac pour mettre en pause et relancer %@ de toutes les façons possibles."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush आपके Mac को अपने नियंत्रण में ले लेता है, ताकि %@ को हर संभव तरीके से पॉज़ कर और चला सके।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush preuzima vaš Mac kako bi na sve moguće načine pauzirao i reproducirao aplikaciju %@."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush átveszi a Mac irányítását, hogy minden lehetséges módon szüneteltesse és lejátssza a(z) %@ appot."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mengambil alih Mac Anda untuk menjeda dan memutar %@ dengan setiap cara yang bisa."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush prende il controllo del Mac per mettere in pausa e riprodurre %@ in ogni modo possibile."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushがMacを操作し、あらゆる方法で%@の一時停止と再生を試します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 Mac을 제어하여 가능한 모든 방법으로 %@을(를) 일시 정지하고 재생합니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tar kontroll over Macen din for å sette %@ på pause og spille den av på alle måter den kan."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush neemt je Mac over om %@ op alle mogelijke manieren te pauzeren en af te spelen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush przejmuje kontrolę nad komputerem Mac, aby wstrzymywać i wznawiać aplikację %@ na wszystkie możliwe sposoby."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush assume o controle do seu Mac para pausar e reproduzir %@ de todas as formas possíveis."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush assume o controlo do seu Mac para pausar e reproduzir %@ de todas as formas possíveis."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush preia controlul Mac-ului dvs. pentru a pune pe pauză și a reda aplicația %@ în toate modurile posibile."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush берёт управление вашим Mac, чтобы всеми возможными способами ставить %@ на паузу и снова включать."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush prevezme kontrolu nad vaším Macom, aby apku %@ pozastavil a prehral všetkými spôsobmi, akými sa dá."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush prevzame vaš Mac, da na vse možne načine zaustavi in predvaja aplikacijo %@."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tar över din Mac för att pausa och spela upp %@ på alla sätt den kan."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %@ uygulamasını her yolla duraklatıp oynatmak için Mac’inizi devralır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush бере ваш Mac під контроль, щоб усіма можливими способами призупиняти й відтворювати програму %@."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tiếp quản máy Mac của bạn để tạm dừng và phát %@ bằng mọi cách có thể."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會接管你的 Mac，以各種方式暫停和播放 %@。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 会接管你的 Mac，用各种方式暂停和播放 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會接管你的 Mac，以各種方式暫停和播放 %@。"
+          }
+        }
+      }
+    },
     "AutoHush tries every way to pause and play it" : {
       "comment" : "Add an App window: the step of the check itself",
       "localizations" : {
@@ -43147,7 +43780,7 @@
       }
     },
     "Choose…" : {
-      "comment" : "The menu: on the Media player row, which unfolds the media players, while none is chosen",
+      "comment" : "The menu: under Media Player, while no media player is chosen; a click unfolds them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -43774,7 +44407,7 @@
       }
     },
     "Click an app to stop ignoring it" : {
-      "comment" : "The menu: hint atop the ignored apps, unfolded under the Ignored Apps row",
+      "comment" : "The menu: the tooltip of each ignored app, unfolded under Ignored Apps",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55895,215 +56528,6 @@
         }
       }
     },
-    "For about 3 minutes, AutoHush takes over your Mac to pause and play %@ every way it can." : {
-      "comment" : "The window shown before a check starts, at its top beside the app's icon; %@ is the app",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يتولى AutoHush التحكم في جهاز Mac لمدة 3 دقائق تقريبًا لإيقاف %@ مؤقتًا وتشغيله بكل طريقة ممكنة."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Durant uns 3 minuts, l’AutoHush pren el control del Mac per posar en pausa i reproduir %@ de totes les maneres que pugui."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Asi na 3 minuty AutoHush převezme kontrolu nad vaším Macem, aby aplikaci %@ pozastavil a přehrál všemi způsoby, jakými to jde."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I omkring 3 minutter overtager AutoHush din Mac for at sætte %@ på pause og afspille den på alle de måder, den kan."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Etwa 3 Minuten lang übernimmt AutoHush deinen Mac, um %@ auf jede mögliche Weise zu pausieren und abzuspielen."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Για περίπου 3 λεπτά, το AutoHush αναλαμβάνει τον έλεγχο του Mac σας για να θέσει σε παύση και να αναπαράγει την εφαρμογή %@ με κάθε δυνατό τρόπο."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Durante unos 3 minutos, AutoHush toma el control de tu Mac para pausar y reproducir %@ de todas las formas que pueda."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Durante unos 3 minutos, AutoHush toma el control de tu Mac para pausar y reproducir %@ de todas las formas que pueda."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush ottaa Macisi hallintaansa noin 3 minuutiksi keskeyttääkseen ja jatkaakseen apin %@ toistoa kaikilla mahdollisilla tavoilla."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pendant environ 3 minutes, AutoHush prend la main sur votre Mac pour mettre en pause et relancer %@ de toutes les façons possibles."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pendant environ 3 minutes, AutoHush prend la main sur votre Mac pour mettre en pause et relancer %@ de toutes les façons possibles."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "लगभग 3 मिनट के लिए AutoHush आपके Mac को अपने नियंत्रण में ले लेता है, ताकि %@ को हर संभव तरीके से पॉज़ कर और चला सके।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Na oko 3 minute AutoHush preuzima vaš Mac kako bi na sve moguće načine pauzirao i reproducirao aplikaciju %@."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az AutoHush körülbelül 3 percre átveszi a Mac irányítását, hogy minden lehetséges módon szüneteltesse és lejátssza a(z) %@ appot."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Selama sekitar 3 menit, AutoHush mengambil alih Mac Anda untuk menjeda dan memutar %@ dengan setiap cara yang bisa."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Per circa 3 minuti, AutoHush prende il controllo del Mac per mettere in pausa e riprodurre %@ in ogni modo possibile."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "約3分間、AutoHushがMacを操作し、あらゆる方法で%@の一時停止と再生を試します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "약 3분 동안 AutoHush가 Mac을 제어하여 가능한 모든 방법으로 %@을(를) 일시 정지하고 재생합니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I omtrent 3 minutter tar AutoHush kontroll over Macen din for å sette %@ på pause og spille den av på alle måter den kan."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ongeveer 3 minuten lang neemt AutoHush je Mac over om %@ op alle mogelijke manieren te pauzeren en af te spelen."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Przez około 3 minuty AutoHush przejmuje kontrolę nad komputerem Mac, aby wstrzymywać i wznawiać aplikację %@ na wszystkie możliwe sposoby."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Por cerca de 3 minutos, o AutoHush assume o controle do seu Mac para pausar e reproduzir %@ de todas as formas possíveis."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Durante cerca de 3 minutos, o AutoHush assume o controlo do seu Mac para pausar e reproduzir %@ de todas as formas possíveis."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Timp de aproximativ 3 minute, AutoHush preia controlul Mac-ului dvs. pentru a pune pe pauză și a reda aplicația %@ în toate modurile posibile."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Примерно на 3 минуты AutoHush берёт управление вашим Mac, чтобы всеми возможными способами ставить %@ на паузу и снова включать."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Asi na 3 minúty AutoHush prevezme kontrolu nad vaším Macom, aby apku %@ pozastavil a prehral všetkými spôsobmi, akými sa dá."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush za približno 3 minute prevzame vaš Mac, da na vse možne načine zaustavi in predvaja aplikacijo %@."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I ungefär 3 minuter tar AutoHush över din Mac för att pausa och spela upp %@ på alla sätt den kan."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush yaklaşık 3 dakika boyunca, %@ uygulamasını her yolla duraklatıp oynatmak için Mac’inizi devralır."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Приблизно на 3 хвилини AutoHush бере ваш Mac під контроль, щоб усіма можливими способами призупиняти й відтворювати програму %@."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trong khoảng 3 phút, AutoHush tiếp quản máy Mac của bạn để tạm dừng và phát %@ bằng mọi cách có thể."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在約 3 分鐘內，AutoHush 會接管你的 Mac，以各種方式暫停和播放 %@。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在约 3 分钟内，AutoHush 会接管你的 Mac，用各种方式暂停和播放 %@。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在約 3 分鐘內，AutoHush 會接管你的 Mac，以各種方式暫停和播放 %@。"
-          }
-        }
-      }
-    },
     "Full screen" : {
       "comment" : "The window states a check moves the app's window through",
       "localizations" : {
@@ -60076,7 +60500,7 @@
       }
     },
     "Ignored Apps" : {
-      "comment" : "Menu item",
+      "comment" : "The menu: heading over the apps that don’t pause your player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -68644,211 +69068,211 @@
         }
       }
     },
-    "Level the music" : {
-      "comment" : "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your music resumes after quieter apps",
+    "Level the volume" : {
+      "comment" : "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your music resumes after quieter apps\nSettings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "موازنة الموسيقى"
+            "value" : "موازنة مستوى الصوت"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anivellar la música"
+            "value" : "Anivellar el volum"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vyrovnávat hudbu"
+            "value" : "Vyrovnávat hlasitost"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Udjævn musikken"
+            "value" : "Udjævn lydstyrken"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Musik angleichen"
+            "value" : "Lautstärke angleichen"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Εξισορρόπηση μουσικής"
+            "value" : "Εξισορρόπηση έντασης"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nivelar la música"
+            "value" : "Nivelar el volumen"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nivelar la música"
+            "value" : "Nivelar el volumen"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tasoita musiikki"
+            "value" : "Tasoita äänenvoimakkuus"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Égaliser la musique"
+            "value" : "Égaliser le volume"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Égaliser la musique"
+            "value" : "Égaliser le volume"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "संगीत का स्तर मिलाएँ"
+            "value" : "वॉल्यूम का स्तर मिलाएँ"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Izjednači glazbu"
+            "value" : "Izjednači glasnoću"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A zene kiegyenlítése"
+            "value" : "A hangerő kiegyenlítése"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seimbangkan musik"
+            "value" : "Seimbangkan volume"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Livella la musica"
+            "value" : "Livella il volume"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音楽の音量をそろえる"
+            "value" : "音量をそろえる"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "음악 음량 맞추기"
+            "value" : "음량 맞추기"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jevn ut musikken"
+            "value" : "Jevn ut volumet"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muziek gelijktrekken"
+            "value" : "Volume gelijktrekken"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wyrównuj muzykę"
+            "value" : "Wyrównuj głośność"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nivelar a música"
+            "value" : "Nivelar o volume"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nivelar a música"
+            "value" : "Nivelar o volume"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Egalizați muzica"
+            "value" : "Egalizați volumul"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выравнивать музыку"
+            "value" : "Выравнивать громкость"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vyrovnávať hudbu"
+            "value" : "Vyrovnávať hlasitosť"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Izenači glasbo"
+            "value" : "Izenači glasnost"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jämna ut musiken"
+            "value" : "Jämna ut volymen"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Müziği dengele"
+            "value" : "Ses düzeyini dengele"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Вирівнювати музику"
+            "value" : "Вирівнювати гучність"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cân bằng nhạc"
+            "value" : "Cân bằng âm lượng"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音樂音量配合"
+            "value" : "音量配合"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音乐音量匹配"
+            "value" : "音量匹配"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音樂音量配合"
+            "value" : "音量配合"
           }
         }
       }
@@ -69481,7 +69905,7 @@
       }
     },
     "Matches quieter apps’ volume." : {
-      "comment" : "The menu, under Level the music: what it does, in a few words (it lowers the Mac’s volume as the music resumes after quieter apps)",
+      "comment" : "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as the music resumes after quieter apps)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -69899,7 +70323,7 @@
       }
     },
     "Media Player" : {
-      "comment" : "Settings → General and Diagnostics: heading over the media player",
+      "comment" : "Settings → General, Diagnostics and the menu: heading over the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70073,215 +70497,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Medya Oynatıcı"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Медіапрогравач"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trình phát đa phương tiện"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "媒體播放器"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "媒体播放器"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "媒體播放器"
-          }
-        }
-      }
-    },
-    "Media player" : {
-      "comment" : "The menu: the row under the card with the chosen media player, which unfolds the players",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مشغّل الوسائط"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproductor multimèdia"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Přehrávač médií"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medieafspiller"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medienplayer"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εφαρμογή πολυμέσων"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproductor multimedia"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reproductor multimedia"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediasoitin"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lecteur multimédia"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lecteur multimédia"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "मीडिया प्लेयर"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medijski reproduktor"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Médialejátszó"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pemutar media"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lettore multimediale"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メディアプレーヤー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "미디어 플레이어"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediespiller"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediaspeler"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Odtwarzacz multimediów"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Player de mídia"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leitor multimédia"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Player media"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Медиаплеер"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prehrávač médií"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Predvajalnik predstavnosti"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mediaspelare"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Medya oynatıcı"
           }
         },
         "uk" : {
@@ -83693,7 +83908,7 @@
       }
     },
     "Off in AntiDot mode, which doesn’t measure sound." : {
-      "comment" : "Settings → Advanced, under the dimmed “Level the music”",
+      "comment" : "Settings → Advanced, under the dimmed “Level the volume”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83902,7 +84117,7 @@
       }
     },
     "Off in AntiDot mode." : {
-      "comment" : "The menu, under the dimmed Level the music switch while AntiDot mode is on (it measures no sound)",
+      "comment" : "The menu, under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102084,6 +102299,215 @@
         }
       }
     },
+    "Safari web app" : {
+      "comment" : "The menu, under the chosen media player's name: a website added to the Dock from Safari",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تطبيق ويب من Safari"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web del Safari"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webová aplikace Safari"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-webapp"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-Web-App"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εφαρμογή web του Safari"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web de Safari"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web de Safari"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safarin verkkoappi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web Safari"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Web Safari"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari वेब ऐप"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari web-aplikacija"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-webapp"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web Safari"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web di Safari"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari Webアプリ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 웹 앱"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-nettapp"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-webapp"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja internetowa Safari"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web do Safari"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App web do Safari"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicație web Safari"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Веб-приложение Safari"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webová apka Safari"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spletna aplikacija Safari"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari-webbapp"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari web uygulaması"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вебпрограма Safari"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng web Safari"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 網頁 App"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 网页 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari 網頁 App"
+          }
+        }
+      }
+    },
     "Safari web apps" : {
       "comment" : "Settings → About, in the list of players AutoHush works with: websites added to the Dock from Safari",
       "localizations" : {
@@ -109196,6 +109620,215 @@
         }
       }
     },
+    "Supported app" : {
+      "comment" : "The menu, under the chosen media player's name: an app AutoHush supports itself (one of the “Supported Apps”)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تطبيق مدعوم"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatible"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podporovaná aplikace"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Understøttet app"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterstützte App"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Υποστηριζόμενη εφαρμογή"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatible"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatible"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuettu appi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatible"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatible"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "समर्थित ऐप"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podržana aplikacija"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Támogatott app"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App yang didukung"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App supportata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対応App"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지원되는 앱"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Støttet app"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ondersteunde app"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obsługiwana aplikacja"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatível"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App compatível"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicație acceptată"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поддерживаемое приложение"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podporovaná apka"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podprta aplikacija"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App som stöds"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desteklenen uygulama"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Підтримувана програма"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng được hỗ trợ"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支援的 App"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "受支持的 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支援的 App"
+          }
+        }
+      }
+    },
     "System Settings → Control Center" : {
       "comment" : "Where Now Playing is shown in the menu bar or hidden, as macOS names it (macOS 14 and 15), inside a sentence",
       "localizations" : {
@@ -113372,6 +114005,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "然後按一下「已暫停」。AutoHush 會看出哪個按鈕有變化。"
+          }
+        }
+      }
+    },
+    "They don’t pause your player." : {
+      "comment" : "The menu, under the names of the ignored apps",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توقف مشغّلك مؤقتًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No posen en pausa el reproductor."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepozastavují váš přehrávač."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De sætter ikke din afspiller på pause."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie pausieren deinen Player nicht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν θέτουν σε παύση την εφαρμογή αναπαραγωγής σας."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausan tu reproductor."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausan tu reproductor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne eivät keskeytä soitintasi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elles ne mettent pas votre lecteur en pause."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elles ne mettent pas votre lecteur en pause."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ये आपके प्लेयर को पॉज़ नहीं करते।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pauziraju vaš reproduktor."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nem szüneteltetik a lejátszóját."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App ini tidak menjeda pemutar Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non mettono in pausa il lettore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーを一時停止しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어를 일시 정지하지 않습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De setter ikke spilleren din på pause."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ze pauzeren je speler niet."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie wstrzymują Twojego odtwarzacza."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eles não pausam seu player."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não colocam o seu leitor em pausa."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu pun playerul dvs. pe pauză."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Они не ставят ваш плеер на паузу."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepozastavujú váš prehrávač."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne zaustavijo vašega predvajalnika."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De pausar inte din spelare."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oynatıcınızı duraklatmazlar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вони не призупиняють ваш програвач."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chúng không tạm dừng trình phát của bạn."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它們不會暫停你的播放器。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它们不会暂停你的播放器。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它們不會暫停你的播放器。"
           }
         }
       }
@@ -128854,211 +129696,211 @@
         }
       }
     },
-    "Your music doesn’t resume when a call came while it was paused." : {
+    "Your player doesn’t resume after a call that came while it was paused." : {
       "comment" : "Settings → Advanced, under “Stay paused after calls”; a call is an app using the microphone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا تُستأنف الموسيقى إذا وصلت مكالمة أثناء الإيقاف المؤقت."
+            "value" : "لا يُستأنف مشغّلك بعد مكالمة وصلت أثناء الإيقاف المؤقت."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La música no es reprèn si ha arribat una trucada mentre estava en pausa."
+            "value" : "El reproductor no es reprèn després d’una trucada arribada mentre estava en pausa."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hudba se neobnoví, pokud během pauzy přišel hovor."
+            "value" : "Váš přehrávač se neobnoví po hovoru, který přišel během pauzy."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Din musik genoptages ikke, hvis et opkald kom, mens den var sat på pause."
+            "value" : "Din afspiller genoptages ikke efter et opkald, der kom, mens den var sat på pause."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Musik wird nicht fortgesetzt, wenn während der Pause ein Anruf kam."
+            "value" : "Dein Player wird nach einem Anruf, der während der Pause kam, nicht fortgesetzt."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η μουσική δεν συνεχίζει αν ήρθε κλήση ενώ ήταν σε παύση."
+            "value" : "Η εφαρμογή αναπαραγωγής σας δεν συνεχίζει μετά από κλήση που ήρθε ενώ ήταν σε παύση."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu música no se reanuda si llegó una llamada mientras estaba en pausa."
+            "value" : "Tu reproductor no se reanuda tras una llamada que llegó mientras estaba en pausa."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu música no se reanuda si llegó una llamada mientras estaba en pausa."
+            "value" : "Tu reproductor no se reanuda tras una llamada que llegó mientras estaba en pausa."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Musiikki ei jatku, jos tauon aikana tuli puhelu."
+            "value" : "Soittimesi ei jatka puhelun jälkeen, joka tuli tauon aikana."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre musique ne reprend pas si un appel est arrivé pendant la pause."
+            "value" : "Votre lecteur ne reprend pas après un appel arrivé pendant la pause."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre musique ne reprend pas si un appel est arrivé pendant la pause."
+            "value" : "Votre lecteur ne reprend pas après un appel arrivé pendant la pause."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "पॉज़ के दौरान कॉल आने पर आपका संगीत फिर से शुरू नहीं होता।"
+            "value" : "पॉज़ के दौरान आए कॉल के बाद आपका प्लेयर फिर से शुरू नहीं होता।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glazba se ne nastavlja ako je tijekom pauze stigao poziv."
+            "value" : "Vaš se reproduktor ne nastavlja nakon poziva koji je stigao tijekom pauze."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A zene nem folytatódik, ha a szünet alatt hívás érkezett."
+            "value" : "A lejátszója nem folytatódik a szünet alatt érkezett hívás után."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Musik Anda tidak dilanjutkan jika ada panggilan masuk saat dijeda."
+            "value" : "Pemutar Anda tidak dilanjutkan setelah panggilan yang masuk saat dijeda."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La musica non riprende se è arrivata una chiamata mentre era in pausa."
+            "value" : "Il lettore non riprende dopo una chiamata arrivata mentre era in pausa."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一時停止中に通話があった場合、音楽は再開されません。"
+            "value" : "一時停止中にあった通話の後は、プレーヤーは再開されません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "일시 정지 중에 통화가 있었다면 음악이 재개되지 않습니다."
+            "value" : "일시 정지 중에 온 통화 이후에는 플레이어가 재개되지 않습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Musikken fortsetter ikke hvis en samtale kom mens den var satt på pause."
+            "value" : "Spilleren din fortsetter ikke etter en samtale som kom mens den var satt på pause."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Je muziek wordt niet hervat als er tijdens de pauze een gesprek binnenkwam."
+            "value" : "Je speler wordt niet hervat na een gesprek dat tijdens de pauze binnenkwam."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muzyka nie wznawia się, jeśli podczas pauzy przyszło połączenie."
+            "value" : "Twój odtwarzacz nie wznawia się po połączeniu, które przyszło podczas pauzy."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sua música não é retomada se uma chamada chegou enquanto estava pausada."
+            "value" : "Seu player não retoma após uma chamada que chegou enquanto estava pausado."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A sua música não é retomada se chegou uma chamada enquanto estava em pausa."
+            "value" : "O seu leitor não retoma após uma chamada que chegou enquanto estava em pausa."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muzica nu se reia dacă a venit un apel cât timp era în pauză."
+            "value" : "Playerul dvs. nu se reia după un apel venit cât timp era în pauză."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Музыка не возобновляется, если во время паузы пришёл звонок."
+            "value" : "Ваш плеер не возобновляется после звонка, пришедшего во время паузы."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hudba sa neobnoví, ak počas pauzy prišiel hovor."
+            "value" : "Váš prehrávač sa neobnoví po hovore, ktorý prišiel počas pauzy."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glasba se ne nadaljuje, če je med premorom prišel klic."
+            "value" : "Vaš predvajalnik se ne nadaljuje po klicu, ki je prišel med premorom."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Musiken återupptas inte om ett samtal kom medan den var pausad."
+            "value" : "Din spelare återupptas inte efter ett samtal som kom medan den var pausad."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Duraklatılmışken bir arama geldiyse müziğiniz sürdürülmez."
+            "value" : "Duraklatılmışken gelen bir aramadan sonra oynatıcınız sürdürülmez."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Музика не відновлюється, якщо під час паузи надійшов дзвінок."
+            "value" : "Ваш програвач не відновлюється після дзвінка, що надійшов під час паузи."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nhạc không tiếp tục nếu có cuộc gọi đến khi đang tạm dừng."
+            "value" : "Trình phát của bạn không tiếp tục sau cuộc gọi đến khi đang tạm dừng."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果暫停期間有來電，音樂不會恢復播放。"
+            "value" : "如果暫停期間有來電，你的播放器在通話後不會恢復播放。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果暂停期间有来电，音乐不会恢复播放。"
+            "value" : "如果暂停期间有来电，你的播放器在通话后不会恢复播放。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果暫停期間有來電，音樂不會恢復播放。"
+            "value" : "如果暫停期間有來電，你的播放器在通話後不會恢復播放。"
           }
         }
       }

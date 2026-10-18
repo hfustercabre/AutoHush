@@ -1,53 +1,62 @@
 import AppKit
 import SwiftUI
 
-/// The media player's row under the menu's card (S5, the user's pick,
-/// 2026-10-18), as Ignored Apps' row: a note symbol, "Media player", the
-/// chosen player (its icon and its name in grey) and a chevron; a click
-/// unfolds the players under it (`MenuPlayerListView`) and folds them again.
+/// The media player's part, first under the menu's card (V5, the user's
+/// pick, 2026-10-18), as the settings' parts: "Media Player" over a row with
+/// the chosen player's icon, its name and what kind of player it is, and a
+/// chevron; a click unfolds the players under it (`MenuPlayerListView`) and
+/// folds them again.
 struct MenuMediaPlayerView: View {
     let model: StatusMenuModel
 
     private var status: AppStatus { model.status }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Button { model.perform(.togglePlayerList) } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "music.note")
-                        .frame(width: 18)
-                        .accessibilityHidden(true)
-                    Text("Media player", comment: "The menu: the row under the card with the chosen media player, which unfolds the players")
-                    Spacer(minLength: 6)
-                    if status.chosenPlayer != nil { playerIcon }
-                    Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu: on the Media player row, which unfolds the media players, while none is chosen"))
-                        .foregroundStyle(.appSecondary)
-                        .lineLimit(1)
-                    Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.appSecondary)
-                        .accessibilityHidden(true)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            MenuPartTitle(Text("Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player"))
+            MenuFoldingRow(title: status.chosenPlayer?.name ?? Self.chooseTitle, subtitle: subtitle,
+                           isOpen: model.isChoosingPlayer, action: { model.perform(.togglePlayerList) }) {
+                playerIcon
             }
-            .buttonStyle(MenuRowButtonStyle())
-            .accessibilityValue(model.isChoosingPlayer ? AccessibilityText.expanded : AccessibilityText.collapsed)
             if model.isChoosingPlayer {
                 MenuPlayerListView(model: model)
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, 14)
                     .transition(.opacity)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 2)
         .frame(width: menuContentWidth)
     }
 
+    private static var chooseTitle: String {
+        String(localized: "Choose…", comment: "The menu: under Media Player, while no media player is chosen; a click unfolds them")
+    }
+
+    /// What kind of player it is, or why it can't play now.
+    private var subtitle: String? {
+        guard let player = status.chosenPlayer else { return nil }
+        if !player.isInstalled { return PlayerOption.notInstalledLabel }
+        if player.pausesByMuting { return PlayerOption.mutedInsteadLabel }
+        return switch player.kind {
+        case .app:
+            String(localized: "Supported app", comment: "The menu, under the chosen media player's name: an app AutoHush supports itself (one of the “Supported Apps”)")
+        case .safariWebApp:
+            String(localized: "Safari web app", comment: "The menu, under the chosen media player's name: a website added to the Dock from Safari")
+        case .checkedApp:
+            String(localized: "Added with Add an App", comment: "The menu, under the chosen media player's name: an app the user added through Add an App's check")
+        }
+    }
+
     /// The chosen player's icon, faded while it isn't installed.
-    private var playerIcon: some View {
-        Image(nsImage: status.chosenPlayer?.icon(size: 16) ?? NSImage())
-            .resizable()
-            .frame(width: 16, height: 16)
-            .opacity(status.chosenPlayer?.isInstalled == false ? 0.5 : 1)
-            .accessibilityHidden(true)
+    @ViewBuilder private var playerIcon: some View {
+        if let player = status.chosenPlayer {
+            Image(nsImage: player.icon(size: 22))
+                .resizable()
+                .frame(width: 22, height: 22)
+                .opacity(player.isInstalled ? 1 : 0.5)
+        } else {
+            Image(systemName: "music.note")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.appSecondary)
+        }
     }
 }

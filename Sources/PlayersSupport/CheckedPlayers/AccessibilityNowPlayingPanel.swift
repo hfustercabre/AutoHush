@@ -74,6 +74,12 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
             for window in element.elements(kAXWindowsAttribute) {
                 if let found = find(window, depth: 0) { return found }
             }
+            // Control Center on macOS 14 keeps its items in its extras menu
+            // bar, not in windows (measured on 14.4, 2026-10-18).
+            if let extras = element.element("AXExtrasMenuBar") {
+                AXUIElementSetMessagingTimeout(extras, ownTimeout)
+                if let found = extras.children.first(where: { $0.string(kAXIdentifierAttribute) == identifier }) { return found }
+            }
         }
         return nil
     }

@@ -12,7 +12,7 @@ struct AdvancedSettingsView: View {
                 SettingsSwitchRow(model: model, kind: .levelsMusic)
                 if model.isAntiDotMode {
                     NoteLabel(String(localized: "Off in AntiDot mode, which doesn’t measure sound.",
-                                     comment: "Settings → Advanced, under the dimmed “Level the music”"),
+                                     comment: "Settings → Advanced, under the dimmed “Level the volume”"),
                               kind: .info)
                 }
             }

@@ -84,7 +84,7 @@ enum DiagnosticsReport {
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
                                ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
-        let title = String(localized: "Media Player", comment: "Settings → General and Diagnostics: heading over the media player")
+        let title = String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,
@@ -233,7 +233,7 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"), value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         // Off in AntiDot mode, which measures no sound, whatever the switch.
-                        Row(label: String(localized: "Level the music", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your music resumes after quieter apps"),
+                        Row(label: String(localized: "Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your music resumes after quieter apps"),
                             value: facts.timings.levelsMusic && facts.detectionMethod == .audioLevels ? on : off),
                         Row(label: String(localized: "Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your music paused after a call"),
                             value: facts.timings.staysPausedAfterCalls ? on : off),

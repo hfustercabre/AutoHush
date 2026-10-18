@@ -22,22 +22,25 @@ This project follows [Semantic Versioning](https://semver.org/).
   card and the buttons stay put, and only what's between them scrolls when
   the menu is taller than the screen, as in macOS's own menus. The card
   also shows what AutoHush can do with your player, as Settings → General
-  does: its permission allowed, and whether it fades. The players unfold
-  under the Media player row, with lines between their groups and a
+  does: its permission allowed, and whether it fades. Media Player and
+  Ignored Apps are parts like the settings', a title over a row: your
+  player and what kind it is; the ignored apps' icons and names. The
+  players unfold under their row, with lines between their groups and a
   checkmark on yours; ↑ and ↓ move through them and Return chooses, and the
-  menu stays open as the card follows the new player. Ignored Apps unfolds
-  under its row. Escape or a click elsewhere closes it, and it follows
+  menu stays open as the card follows the new player. The ignored apps
+  unfold under theirs. Escape or a click elsewhere closes it, and it follows
   Reduce Transparency and Increase Contrast, as menus do.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
   off, and what happens when an update is found while automatic checks
   are off. A switch that can't be changed shows off, whatever it was set
-  to (Fade playback for a player AutoHush can't fade, Level the music in
+  to (Fade playback for a player AutoHush can't fade, Level the volume in
   AntiDot mode), and comes back as it was once it can. In the menu, a
   line under it says why ("TIDAL can’t be faded.").
 - **The menu shows when more is below.** Taller than the screen, its last
-  rows fade out over a small arrow until you scroll to the end. It opens
+  rows fade out over a small arrow until you scroll to the end (the arrow
+  alone on macOS 14 and 15). It opens
   with nothing focused, even with keyboard navigation on.
 - **Settings is at least 600 points tall**, so its sidebar shows About
   whole, and a long player name takes two lines on its tile instead of
@@ -120,7 +123,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   its lengths. Folded at first, each stays as you left it while AutoHush
   runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
   the menu does.
-- **Level the music** (Settings → Advanced, off by default). When the apps
+- **Level the volume** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the
   Mac's volume lowered to match (10 dB at most), until the next pause, when
   the volume goes back up as it fades out. Calls don't count, and a volume
@@ -225,7 +228,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Level the music no longer leaves the Mac's volume lowered** after
+- **Level the volume no longer leaves the Mac's volume lowered** after
   AutoHush quits unexpectedly, or after a resume the player never takes:
   the next launch, or the resume giving up, puts it back.
 - **Add an App's check leaves the Mac's sound as you set it.** Muted or

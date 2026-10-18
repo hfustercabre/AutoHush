@@ -464,6 +464,15 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.First"])
     }
 
+    @Test("Ignored Apps names one or two apps, then the first two and how many more")
+    func ignoredAppsNames() {
+        #expect(MenuIgnoredAppsView.names(of: []) == "")
+        #expect(MenuIgnoredAppsView.names(of: ["VLC"]) == "VLC")
+        #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages"]) == ListFormatter.localizedString(byJoining: ["VLC", "Messages"]))
+        #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages", "Chrome"]) == "VLC, Messages and 1 more")
+        #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages", "Chrome", "Mail"]) == "VLC, Messages and 2 more")
+    }
+
     @Test("going to another desktop closes the menu")
     func desktopChange() {
         let sut = makeController()

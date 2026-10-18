@@ -552,8 +552,8 @@ enum AddAppText {
     }
 
     static func warningDescription(_ app: String) -> String {
-        String(localized: "For about 3 minutes, AutoHush takes over your Mac to pause and play \(app) every way it can.",
-               comment: "The window shown before a check starts, at its top beside the app's icon; %@ is the app")
+        String(localized: "AutoHush takes over your Mac to pause and play \(app) every way it can.",
+               comment: "The window shown before a check starts, at its top beside the app's icon (how long it takes is in its foot: “About 3 minutes”); %@ is the app")
     }
 
     static func statesHeading(_ app: String) -> String {

@@ -107,7 +107,7 @@ struct MenuSettingsView: View {
                 Spacer(minLength: 8)
                 Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
                     .toggleStyle(PillToggleStyle())
-                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
+                    .modifier(ReasonHint(reason: reason, asTooltip: false))
             }
             .unavailable(kind.isUnavailable(settings))
             if let reason {
@@ -121,7 +121,7 @@ struct MenuSettingsView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .help(reason.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
+        .modifier(ReasonHint(reason: reason, asTooltip: true))
     }
 
     private func slider(_ timing: SettingsTiming) -> some View {
@@ -133,11 +133,7 @@ struct MenuSettingsView: View {
 
     /// A Settings page's name over its part.
     private func pageName(_ page: SettingsWindowController.Page) -> some View {
-        SectionLabel(Text(verbatim: page.title))
-            .accessibilityAddTraits(.isHeader)
-            .padding(.horizontal, 14)
-            .padding(.top, 8)
-            .padding(.bottom, 2)
+        MenuPartTitle(Text(verbatim: page.title))
             .transition(.opacity)
     }
 
@@ -178,5 +174,20 @@ struct MenuSettingsView: View {
 
     static var hideTitle: String {
         String(localized: "Hide More Settings", comment: "Menu: the chevron that folds the rest of Detection’s or Fades’ settings away again (its tooltip; VoiceOver says the part’s name before it)")
+    }
+}
+
+/// Why a switch is dimmed, as its VoiceOver hint or its row's tooltip; nothing
+/// at all while it isn't (an empty one would still be there for VoiceOver).
+private struct ReasonHint: ViewModifier {
+    let reason: String?
+    let asTooltip: Bool
+
+    func body(content: Content) -> some View {
+        if let reason {
+            if asTooltip { content.help(Text(verbatim: reason)) } else { content.accessibilityHint(Text(verbatim: reason)) }
+        } else {
+            content
+        }
     }
 }

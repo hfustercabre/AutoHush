@@ -44,6 +44,9 @@ final class MenuPanel: NSPanel {
         backgroundColor = .clear
         hasShadow = true
         isReleasedWhenClosed = false
+        // Not shown (its title bar is hidden), but VoiceOver names the window by it.
+        title = "AutoHush"
+        isExcludedFromWindowsMenu = true
         contentView = Self.background(around: content)
     }
 

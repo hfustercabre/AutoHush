@@ -34,7 +34,7 @@ extension AppDelegate {
     /// At launch, what AutoHush changed for a moment and didn't put back,
     /// should it have quit or crashed meanwhile: Now Playing shown for a
     /// press while the user hid it, the Mac's output muted for a check, its
-    /// volume lowered for the music (Level the music).
+    /// volume lowered for the music (Level the volume).
     func putBackWhatWasLeft() {
         NowPlayingSetting.restoreIfLeft()
         checkOutputMute.restoreIfLeft()

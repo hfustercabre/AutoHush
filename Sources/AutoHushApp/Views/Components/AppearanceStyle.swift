@@ -31,9 +31,6 @@ extension ShapeStyle where Self == Color {
     /// Text in the accent color the user picked, on its own tint (the
     /// "Recommended" `HeadingBadge`, a chosen card's included).
     static var appAccent: Color { .accentColor }
-    /// The menu's own background, near enough: what its last rows fade
-    /// into while more is below (`MenuPanelView`).
-    static var menuBackground: Color { Color(nsColor: .windowBackgroundColor) }
     /// Icons for what works: Diagnostics' checks.
     static var appSuccess: Color { .green }
     /// A filled chip's background, at rest: the search field, the menu's chevron.
