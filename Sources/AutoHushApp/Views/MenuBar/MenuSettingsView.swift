@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import AutoHushKit
 
@@ -41,7 +42,7 @@ struct MenuSettingsView: View {
                     .unavailable(!settings.isAntiDotMode)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
-                    .transition(.opacity)
+                    .transition(Self.unfolding)
                 }
             }
             if isOpen(.detection) {
@@ -51,6 +52,7 @@ struct MenuSettingsView: View {
                     slider(.resumeAfter)
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
+                .transition(Self.unfolding) // the part comes in whole, not its rows
             }
             line
             pageName(.fades, folding: .fades)
@@ -104,7 +106,7 @@ struct MenuSettingsView: View {
         TimingSliderRow(model: settings, timing: timing, compact: true)
             .padding(.horizontal, 10)
             .padding(.vertical, MenuSpacing.sliderVertical)
-            .transition(.opacity)
+            .transition(Self.unfolding)
     }
 
     /// A Settings page's name over its part; for a part with more settings
@@ -152,7 +154,17 @@ struct MenuSettingsView: View {
         MenuInnerTitle(title)
             .padding(.horizontal, 14)
             .padding(.top, MenuSpacing.innerTitleTop)
-            .transition(.opacity)
+            .transition(Self.unfolding)
+    }
+
+    /// How the rows a part unfolds come in: once the rows under them have
+    /// moved and the menu has grown, so none overlap meanwhile (the user,
+    /// 2026-10-18: "Make the new rows fade in after the others move"); they
+    /// fade out as the part folds. At once with Reduce Motion.
+    static var unfolding: AnyTransition {
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return .identity }
+        return .asymmetric(insertion: .opacity.animation(.easeOut(duration: 0.15).delay(MenuPanel.resizeDuration)),
+                           removal: .opacity)
     }
 
     static var showTitle: String {
