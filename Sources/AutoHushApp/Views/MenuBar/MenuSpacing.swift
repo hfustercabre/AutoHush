@@ -22,6 +22,8 @@ enum MenuSpacing {
     /// titles and what's under them.
     static let sectionVertical: CGFloat = 3
     static let snoozeSpacing: CGFloat = 3
+    /// Under Playing Now's and Recently Played's titles and between their
+    /// rows; under the side window's title too.
     static let playingSpacing: CGFloat = 4
     /// Above and under a duration's text, in its button.
     static let chipVertical: CGFloat = 3

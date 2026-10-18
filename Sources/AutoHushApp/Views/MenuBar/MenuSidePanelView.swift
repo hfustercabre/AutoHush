@@ -17,12 +17,15 @@ struct MenuSidePanelView: View {
         MenuScrollArea(isCapped: model.isSideCappedByScreen, revealed: model.sideKeyboard.revealed, onHeight: onHeight) {
             VStack(alignment: .leading, spacing: 0) {
                 switch model.openSide {
+                // Each title as far over its first row as Playing Now's is (the user, 2026-10-18).
                 case .players?:
                     MenuPartTitle(Text(verbatim: MenuMediaPlayerView.title))
+                        .padding(.bottom, MenuSpacing.playingSpacing)
                     MenuPlayerListView(model: model)
                         .padding(.horizontal, 14)
                 case .ignoredApps?:
                     MenuPartTitle(Text(verbatim: MenuIgnoredAppsView.title))
+                        .padding(.bottom, MenuSpacing.playingSpacing)
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(model.listedIgnoredApps, id: \.self) { source in
                             SourceSwitchRow(model: model, source: source, saysIgnoredShortly: true)
