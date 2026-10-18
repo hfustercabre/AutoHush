@@ -24754,6 +24754,215 @@
         }
       }
     },
+    "Apps you ignore don’t pause your player." : {
+      "comment" : "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التطبيقات المتجاهَلة لا توقف مشغّلك مؤقتًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps ignorades no posen en pausa el reproductor."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorované aplikace nepozastavují váš přehrávač."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorerede apps sætter ikke din afspiller på pause."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorierte Apps pausieren deinen Player nicht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Οι εφαρμογές σε παράβλεψη δεν θέτουν σε παύση την εφαρμογή αναπαραγωγής σας."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las apps ignoradas no pausan tu reproductor."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las apps ignoradas no pausan tu reproductor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohitetut apit eivät keskeytä soitintasi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps ignorées ne mettent pas votre lecteur en pause."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps ignorées ne mettent pas votre lecteur en pause."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अनदेखे ऐप्स आपके प्लेयर को पॉज़ नहीं करते।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zanemarene aplikacije ne pauziraju vaš reproduktor."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A mellőzött appok nem szüneteltetik a lejátszóját."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App yang diabaikan tidak menjeda pemutar Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le app ignorate non mettono in pausa il lettore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無視するAppはプレーヤーを一時停止しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무시된 앱은 플레이어를 일시 정지하지 않습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorerte apper setter ikke spilleren din på pause."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genegeerde apps pauzeren je speler niet."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorowane aplikacje nie wstrzymują Twojego odtwarzacza."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps ignorados não pausam seu player."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As apps ignoradas não colocam o seu leitor em pausa."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicațiile ignorate nu pun playerul dvs. pe pauză."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Игнорируемые приложения не ставят ваш плеер на паузу."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorované apky nepozastavujú váš prehrávač."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prezrte aplikacije ne zaustavijo vašega predvajalnika."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorerade appar pausar inte din spelare."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yok sayılan uygulamalar oynatıcınızı duraklatmaz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ігноровані програми не призупиняють ваш програвач."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng bị bỏ qua không tạm dừng trình phát của bạn."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App 不會暫停你的播放器。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App 不会暂停你的播放器。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略的 App 不會暫停你的播放器。"
+          }
+        }
+      }
+    },
     "Area" : {
       "comment" : "The logs window: title of the column with the part of AutoHush that logged each entry (Player, Detection, Updates…)",
       "localizations" : {

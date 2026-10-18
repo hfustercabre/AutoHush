@@ -18,9 +18,10 @@ struct MenuIgnoredAppsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             MenuPartTitle(Text(verbatim: Self.title))
-            // None yet: "None", and its side window offers Ignore Another App….
+            // None yet: "None" and what ignoring does (N1, the user's pick,
+            // 2026-10-18), and its side window offers Ignore Another App….
             MenuSideRow(title: apps.isEmpty ? Self.noneTitle : Self.names(of: apps.map(\.name)),
-                        subtitle: apps.isEmpty ? nil : String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
+                        subtitle: apps.isEmpty ? Self.noneSubtitle : String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
                         leadingWidth: MenuSpacing.row.picture + (apps.count > 1 ? 10 : 0), isOpen: model.showsIgnoredApps,
                         action: { model.perform(.openSide(.ignoredApps)) },
                         onHover: { model.perform(.hoverSideRow(.ignoredApps, $0)) },
@@ -29,6 +30,12 @@ struct MenuIgnoredAppsView: View {
             }
         }
         .frame(width: menuContentWidth)
+    }
+
+    /// Under "None", while no app is ignored: what ignoring one does.
+    static var noneSubtitle: String {
+        String(localized: "Apps you ignore don’t pause your player.",
+               comment: "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does")
     }
 
     /// Its row while no app is ignored.
@@ -68,6 +75,7 @@ struct MenuIgnoredAppsView: View {
             Image(systemName: "speaker.slash")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.appSecondary)
+                .frame(width: MenuSpacing.row.picture) // centered, as the other rows' symbols
         } else {
             ZStack(alignment: .leading) {
                 ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in

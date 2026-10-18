@@ -47,7 +47,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Ignore several apps at once.** Ignore Another App… picks several apps
   in one go, in Settings → Sound Sources and now in the menu too, under
   the ignored apps; one alert names any it can't ignore. Ignored Apps is
-  always in the menu, saying None until you ignore one.
+  always in the menu, saying None until you ignore one, and what ignoring
+  does.
 - **The menu is more compact.** Less space around its titles, rows and
   lines, and smaller switches: it shows as much in less height. Every
   row's icon and text line up down the menu. A part's title, Detection's

@@ -60,6 +60,7 @@ struct MenuMediaPlayerView: View {
             Image(systemName: "music.note")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.appSecondary)
+                .frame(width: MenuSpacing.row.picture) // centered, as the other rows' symbols
         }
     }
 }
