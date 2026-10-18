@@ -66,9 +66,12 @@ extension AppDelegate {
                 // AutoHush's player isn't resumed while the check plays and pauses its app.
                 self.holdsPlayerForCheck(true)
                 guard let model = self.addAppModel else { return }
+                // A check that can't mute only its app (no taps): the Mac's output, meanwhile.
+                if !Self.checkMutesApp(model) { self.checkOutputMute.mute() }
                 self.checkPanel.show(app, model: model)
             },
             checkEnded: { [weak self] in
+                self?.checkOutputMute.restore()
                 self?.checkPanel.hide()
                 self?.holdsPlayerForCheck(false)
             },
@@ -103,11 +106,18 @@ extension AppDelegate {
         return .success(app)
     }
 
+    /// Whether the check mutes its app itself, by tapping its sound: with
+    /// Audio Recording, outside AntiDot mode. Otherwise AutoHush mutes the
+    /// Mac's output meanwhile (`checkOutputMute`).
+    static func checkMutesApp(_ model: AddAppModel) -> Bool {
+        model.permissions.audio == .allowed && !model.antiDot
+    }
+
     /// The warning before the check (W6), for the chosen app.
     func showCheckWarning() {
         guard let model = addAppModel, let app = model.chosen else { return }
         checkWarningWindow?.close()
-        let muted = model.permissions.audio == .allowed && !model.antiDot
+        let muted = Self.checkMutesApp(model) || checkOutputMute.canMute
         let window = CheckWarningWindowController(app: app, muted: muted) { [weak model] in model?.startCheck() }
         checkWarningWindow = window
         window.show()

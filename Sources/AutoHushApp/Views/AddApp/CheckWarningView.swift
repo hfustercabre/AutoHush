@@ -8,8 +8,9 @@ import CheckedPlayers
 /// screen dims (but for the panel), how long it takes; Start the Check.
 struct CheckWarningView: View {
     let app: CheckableApp
-    /// The app is muted during the check (Audio Recording allowed, AntiDot
-    /// mode off); else the user hears it pause and play.
+    /// The app is muted during the check: by tapping its sound (Audio
+    /// Recording allowed, AntiDot mode off), else with the Mac's output; an
+    /// output with no mute control can't be, and the user hears it.
     var muted = true
     let start: () -> Void
     let cancel: () -> Void

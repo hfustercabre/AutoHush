@@ -72,6 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var checkWarningWindow: CheckWarningWindowController?
     /// The check's progress, at the bottom right of the screen while it runs.
     let checkPanel = CheckPanelController()
+    /// The Mac's output, muted while a check runs that can't mute only its app.
+    let checkOutputMute = OutputMute()
     /// A web app made but not found as installed yet, and the address it was
     /// made from, while the add window says so (`pickUpListedWebApp`).
     var webAppAwaitingListing: (bundleID: String, address: String)?

@@ -135,7 +135,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   covered, on another desktop, in full screen, minimized and hidden. A
   window says first what the check does: for about 3 minutes it moves the
   app's window, blocks the mouse and keyboard and dims the screen, except a
-  small panel with its progress and **Stop** (or Escape). Everything is put
+  small panel with its progress and **Stop** (or Escape). The app is muted
+  meanwhile: on its own with Audio Recording outside AntiDot mode, else with
+  the Mac's sound. Everything is put
   back as it was, and a player AutoHush paused stays paused until the check
   ends (**Paused while a check runs**). You then choose how AutoHush pauses and plays it among the ways
   that worked (the recommended one is chosen unless you pick another), and

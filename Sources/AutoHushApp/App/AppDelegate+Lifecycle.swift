@@ -8,6 +8,8 @@ extension AppDelegate {
         // Now Playing, shown for a press while the user hid it, put back
         // should AutoHush have quit meanwhile.
         NowPlayingSetting.restoreIfLeft()
+        // The Mac's output, muted for a check, the same.
+        checkOutputMute.restoreIfLeft()
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() },
@@ -84,6 +86,7 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         NowPlayingSetting.restoreIfLeft()
+        checkOutputMute.restore()
         // Its `log stream` would otherwise outlive AutoHush, until
         // mediaremoted next writes.
         CheckedPlayer.sharedReports.stop()
