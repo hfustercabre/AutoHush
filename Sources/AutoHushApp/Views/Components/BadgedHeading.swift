@@ -4,6 +4,7 @@ import SwiftUI
 /// it, wherever players are offered: "Other Apps" (Checked by you) and
 /// "Safari Web Apps" (Experimental).
 struct BadgedHeading: View {
+    @Environment(\.isInMenu) private var isInMenu
     let title: String
     /// None while there's nothing for it to qualify.
     let badge: String?
@@ -12,9 +13,8 @@ struct BadgedHeading: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
-                Text(verbatim: title)
-                    .font(.appHeadline) // as `SectionLabel`
-                    .foregroundStyle(.primary)
+                // In the menu, a title inside Media Player's part (the user, 2026-10-18).
+                if isInMenu { MenuInnerTitle(Text(verbatim: title)) } else { SectionLabel(Text(verbatim: title)) }
                 if let badge { HeadingBadge(text: badge) }
             }
             .accessibilityElement(children: .combine)

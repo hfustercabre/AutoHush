@@ -284,10 +284,19 @@ final class StatusMenuController: NSObject {
             // Its identity, which can cross into the main actor (the window can't).
             let window = (note.object as? NSWindow).map(ObjectIdentifier.init)
             MainActor.assumeIsolated {
-                guard let self, let window, window != self.panel.map(ObjectIdentifier.init) else { return }
+                guard let self, let window, window != self.panel.map(ObjectIdentifier.init),
+                      let key = NSApp.windows.first(where: { ObjectIdentifier($0) == window }),
+                      Self.closesMenu(becomingKey: key, statusItemWindow: self.statusItem.button?.window) else { return }
                 self.close()
             }
         }
+    }
+
+    /// Whether `window` becoming key is another window coming forward: a
+    /// visible one, not the menu bar item's own (VoiceOver's press on a row
+    /// makes that one key, 2026-10-18).
+    static func closesMenu(becomingKey window: NSWindow, statusItemWindow: NSWindow?) -> Bool {
+        window.isVisible && window !== statusItemWindow && window.level != .statusBar
     }
 
     /// ↑ ↓ move among the unfolded players and Return chooses, as in a

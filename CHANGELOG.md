@@ -25,11 +25,12 @@ This project follows [Semantic Versioning](https://semver.org/).
   does: its permission allowed, and whether it fades. Media Player and
   Ignored Apps are parts like the settings', a title over a row: your
   player and what kind it is; the ignored apps' icons and names. The
-  players unfold under their row, with lines between their groups and a
+  players unfold under their row, each group under a small title, and a
   checkmark on yours; ↑ and ↓ move through them and Return chooses, and the
   menu stays open as the card follows the new player. The ignored apps
   unfold under theirs. Escape or a click elsewhere closes it, and it follows
-  Reduce Transparency and Increase Contrast, as menus do.
+  Reduce Transparency and Increase Contrast, as menus do. Its section
+  titles are those of macOS's own menus: smaller, semibold and grey.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
@@ -366,10 +367,13 @@ This project follows [Semantic Versioning](https://semver.org/).
     Retry; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
-  - Diagnostics' headings and the Media player row say whether their part
+  - Diagnostics' headings and the Media Player row say whether their part
     is expanded or collapsed, and "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer
-    read on their own.
+    read on their own;
+  - a switch is one stop, its name and state, with what it does as its
+    hint (the menu, Playing Now, Settings), and the menu is "AutoHush";
+  - pressing a row of the menu with VoiceOver no longer closes it.
 
 ## [0.12.1] — 2026-10-11
 

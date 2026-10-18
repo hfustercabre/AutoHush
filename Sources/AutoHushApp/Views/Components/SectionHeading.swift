@@ -1,16 +1,29 @@
 import SwiftUI
 
-/// A section's title, as System Settings' (the user, 2026-10-17, H3): bold
-/// and primary at body size, outside the group it names: the menu's
-/// sections ("Turn off for", "Playing Now", More Settings' pages).
+/// A section's title, outside the group it names: in the windows, as System
+/// Settings' (the user, 2026-10-17, H3), bold and primary at body size; in
+/// the menu ("Turn off for", "Playing Now", "Detection"), as macOS's own
+/// menus' section headers.
 struct SectionLabel: View {
     let title: Text
+    @Environment(\.isInMenu) private var isInMenu
 
     init(_ title: Text) { self.title = title }
 
     var body: some View {
-        title.font(.appHeadline).foregroundStyle(.primary)
+        if isInMenu {
+            // As macOS's own menus' section headers ("Output", "Energy Mode"):
+            // a step under the rows, semibold, grey (the user, 2026-10-18).
+            title.font(.appMenuHeading).foregroundStyle(.appSecondary)
+        } else {
+            title.font(.appHeadline).foregroundStyle(.primary)
+        }
     }
+}
+
+extension EnvironmentValues {
+    /// Inside the menu's panel, whose headings are a menu's section headers.
+    @Entry var isInMenu = false
 }
 
 /// A word in a capsule after a heading that qualifies everything under it,

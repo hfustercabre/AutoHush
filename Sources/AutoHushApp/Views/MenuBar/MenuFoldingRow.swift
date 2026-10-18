@@ -51,3 +51,19 @@ struct MenuPartTitle: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+/// A title inside a menu part ("Modes", "Timing", "Supported Apps"): a
+/// description's size, grey; the part's groups have no lines between them
+/// (the user, 2026-10-18).
+struct MenuInnerTitle: View {
+    let title: Text
+
+    init(_ title: Text) { self.title = title }
+
+    var body: some View {
+        title
+            .font(.appCaption)
+            .foregroundStyle(.appSecondary)
+            .accessibilityAddTraits(.isHeader)
+    }
+}

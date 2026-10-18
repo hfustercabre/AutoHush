@@ -39,7 +39,6 @@ struct MenuSettingsView: View {
                 }
             }
             if isOpen(.detection) {
-                line
                 innerTitle(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
                 part {
                     slider(.pauseAfter)
@@ -104,10 +103,11 @@ struct MenuSettingsView: View {
                     .frame(width: 22)
                     .accessibilityHidden(true)
                 RowTitle(kind.title, subtitle: kind.shortExplanation)
+                    .accessibilityHidden(true) // the switch says it: one stop for VoiceOver
                 Spacer(minLength: 8)
                 Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
                     .toggleStyle(PillToggleStyle())
-                    .modifier(ReasonHint(reason: reason, asTooltip: false))
+                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? kind.shortExplanation)
             }
             .unavailable(kind.isUnavailable(settings))
             if let reason {
@@ -121,7 +121,7 @@ struct MenuSettingsView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .modifier(ReasonHint(reason: reason, asTooltip: true))
+        .modifier(ReasonTooltip(reason: reason))
     }
 
     private func slider(_ timing: SettingsTiming) -> some View {
@@ -139,10 +139,7 @@ struct MenuSettingsView: View {
 
     /// A title inside a page's part ("Modes", "Timing"): a description's size, grey.
     private func innerTitle(_ title: Text) -> some View {
-        title
-            .font(.appCaption)
-            .foregroundStyle(.appSecondary)
-            .accessibilityAddTraits(.isHeader)
+        MenuInnerTitle(title)
             .padding(.horizontal, 14)
             .padding(.top, 4)
             .transition(.opacity)
@@ -177,17 +174,11 @@ struct MenuSettingsView: View {
     }
 }
 
-/// Why a switch is dimmed, as its VoiceOver hint or its row's tooltip; nothing
-/// at all while it isn't (an empty one would still be there for VoiceOver).
-private struct ReasonHint: ViewModifier {
+/// Why a switch is dimmed, as its row's tooltip; none while it isn't.
+private struct ReasonTooltip: ViewModifier {
     let reason: String?
-    let asTooltip: Bool
 
     func body(content: Content) -> some View {
-        if let reason {
-            if asTooltip { content.help(Text(verbatim: reason)) } else { content.accessibilityHint(Text(verbatim: reason)) }
-        } else {
-            content
-        }
+        if let reason { content.help(Text(verbatim: reason)) } else { content }
     }
 }

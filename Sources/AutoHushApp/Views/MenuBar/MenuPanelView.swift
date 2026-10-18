@@ -89,6 +89,7 @@ struct MenuPanelView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bottomHeight = $0; report() }
         }
         .font(.appBody)
+        .environment(\.isInMenu, true)
         .frame(width: menuContentWidth)
         .frame(maxHeight: .infinity, alignment: .top)
     }
@@ -221,7 +222,7 @@ struct MenuIgnoredAppsView: View {
             MenuPartTitle(Text("Ignored Apps", comment: "The menu: heading over the apps that don’t pause your player"))
             MenuFoldingRow(title: Self.names(of: apps.map(\.name)),
                            subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
-                           leadingWidth: 32, isOpen: model.showsIgnoredApps,
+                           leadingWidth: apps.count > 1 ? 32 : 22, isOpen: model.showsIgnoredApps,
                            action: { model.perform(.toggleIgnoredApps) }) {
                 iconStack
             }
@@ -264,7 +265,8 @@ struct MenuIgnoredAppsView: View {
             .accessibilityHidden(true)
     }
 
-    /// Up to three of the apps' icons, overlapping.
+    /// Up to three of the apps' icons, overlapping; one alone where the
+    /// other rows have theirs.
     private var iconStack: some View {
         ZStack(alignment: .leading) {
             ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in

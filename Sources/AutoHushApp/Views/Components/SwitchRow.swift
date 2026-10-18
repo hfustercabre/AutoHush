@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// A title, an optional description under it, and a switch.
+/// A title, an optional description under it, and a switch. VoiceOver
+/// hears it as one: the switch, named by the title, the description its hint.
 struct SwitchRow: View {
     let title: Text
     var subtitle: Text?
@@ -15,9 +16,11 @@ struct SwitchRow: View {
     var body: some View {
         HStack(spacing: 10) {
             RowTitle(title, subtitle: subtitle)
+                .accessibilityHidden(true) // the switch says it
             Spacer(minLength: 8)
             Toggle(isOn: $isOn) { title }
                 .toggleStyle(PillToggleStyle())
+                .accessibilityHint(subtitle ?? Text(verbatim: ""))
         }
     }
 }

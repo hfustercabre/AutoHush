@@ -4,7 +4,8 @@ import SwiftUI
 /// (`MenuMediaPlayerView`; M1, the user's pick, 2026-10-17): the search (from
 /// `PlayerOption.searchThreshold` players on), then the supported apps, the
 /// apps added with Add an App (and Add an App…) and the Safari web apps (and
-/// Add a Web App…), a line between them. The chosen one is checked; ↑ and ↓
+/// Add a Web App…), each under a title inside the part, no lines between
+/// them (the user, 2026-10-18). The chosen one is checked; ↑ and ↓
 /// move among them and Return chooses, as in a menu. With Option held, an
 /// added app's row removes it, after asking (R5).
 struct MenuPlayerListView: View {
@@ -23,23 +24,19 @@ struct MenuPlayerListView: View {
                 Text(verbatim: note).captionStyle()
             }
             if !list.supportedApps.isEmpty {
-                CardDivider()
-                // A title as the other groups' (the user, 2026-10-18).
-                Text(verbatim: PlayerOption.supportedAppsHeading)
-                    .font(.appHeadline)
-                    .foregroundStyle(.primary)
-                    .accessibilityAddTraits(.isHeader)
+                MenuInnerTitle(Text(verbatim: PlayerOption.supportedAppsHeading))
+                    .padding(.top, 4)
                 rows(list.supportedApps)
             }
             if list.showsOtherApps {
-                CardDivider()
                 OtherAppsHeading(isEmpty: list.otherApps.isEmpty)
+                    .padding(.top, 4)
                 rows(list.otherApps)
                 addRow(PlayerOption.addAppTitle, .addApp)
             }
-            CardDivider()
             if !list.webApps.isEmpty {
                 WebAppsHeading()
+                    .padding(.top, 4)
                 rows(list.webApps)
             }
             addRow(PlayerOption.addWebAppTitle, .addWebApp)

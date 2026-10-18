@@ -216,7 +216,14 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.third"])
 
         // Another of AutoHush's windows coming forward (one the choice opened) closes it, as a menu.
-        let window = NSWindow(contentRect: .zero, styleMask: .titled, backing: .buffered, defer: true)
+        // The menu bar item's own window or a hidden one becoming key (as VoiceOver's
+        // press on a row makes it) doesn't.
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 40, height: 40), styleMask: .titled, backing: .buffered, defer: false)
+        defer { window.orderOut(nil) }
+        NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
+        #expect(sut.isMenuOpen) // hidden
+        #expect(!StatusMenuController.closesMenu(becomingKey: window, statusItemWindow: window))
+        window.orderFrontRegardless()
         NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
         #expect(!sut.isMenuOpen)
 
