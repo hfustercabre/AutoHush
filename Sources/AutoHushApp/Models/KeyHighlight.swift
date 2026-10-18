@@ -2,18 +2,20 @@ import CoreGraphics
 import Foundation
 import Observation
 
-/// The menu's highlight, as macOS's own menus have one whatever the
-/// keyboard navigation setting (the user, 2026-10-18: "Arrows, as menus"):
-/// ↑ and ↓ move it through the menu's controls in reading order, wrapping
-/// at the ends; Return or Space presses the one it's on; ← and → change a
-/// slider or a choice, and → opens a side window. The pointer moves it too,
-/// as in a menu: the control under it is the highlighted one. Each control
-/// registers itself (`MenuHighlight`) with where it is and what pressing it
-/// does. The menu and its side window have one each.
+/// The highlight the arrow keys and the pointer move, as macOS's own menus
+/// have one whatever the keyboard navigation setting (the user, 2026-10-18:
+/// "Arrows, as menus"; Settings too: "Lets add the same over and arrows
+/// navigation system to the Settings Window"): ↑ and ↓ move it through the
+/// controls in reading order, wrapping at the ends; Return or Space presses
+/// the one it's on; ← and → change a slider or a choice, and → opens a side
+/// window. The pointer moves it too, as in a menu: the control under it is
+/// the highlighted one. Each control registers itself (`Highlightable`)
+/// with where it is and what pressing it does. The menu, its side window,
+/// Settings' sidebar and Settings' page have one each.
 @MainActor
 @Observable
-final class MenuKeyboard {
-    /// One of the menu's controls, as it registered.
+final class KeyHighlight {
+    /// One of the controls, as it registered.
     struct Control {
         /// Where it is, in its window.
         var frame: CGRect = .zero
@@ -24,6 +26,8 @@ final class MenuKeyboard {
         var adjust: ((Int) -> Void)?
         /// Pressing it opens a side window, which → does too.
         var opensSide = false
+        /// It stands for what's shown now (Settings' sidebar: the page's row).
+        var isCurrent: (() -> Bool)?
     }
 
     /// The control the arrow keys or the pointer moved to.
@@ -32,6 +36,9 @@ final class MenuKeyboard {
     /// pointer's never needs it.
     private(set) var revealed: UUID?
     @ObservationIgnored private var controls: [UUID: Control] = [:]
+    /// Something is highlighted now, by the keys or the pointer: Settings
+    /// takes it from the other side's highlight, one at a time.
+    @ObservationIgnored var onHighlight: (() -> Void)?
 
     func register(_ id: UUID, _ control: Control) {
         var control = control
@@ -58,6 +65,7 @@ final class MenuKeyboard {
     func hover(_ id: UUID, _ inside: Bool) {
         if inside {
             highlighted = id
+            onHighlight?()
         } else if highlighted == id {
             highlighted = nil
         }
@@ -99,6 +107,16 @@ final class MenuKeyboard {
         }
         highlighted = next
         revealed = next
+        onHighlight?()
+    }
+
+    /// The highlight on the control that stands for what's shown now
+    /// (`Control.isCurrent`), if one does.
+    func highlightCurrent() {
+        guard let current = controls.first(where: { $0.value.isEnabled && $0.value.isCurrent?() == true })?.key else { return }
+        highlighted = current
+        revealed = current
+        onHighlight?()
     }
 
     /// Presses the highlighted control; `false` when there's none to press.

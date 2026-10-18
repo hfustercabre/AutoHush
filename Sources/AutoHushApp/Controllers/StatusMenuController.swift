@@ -445,7 +445,7 @@ final class StatusMenuController: NSObject {
 
     /// The keys, as in macOS's menus, whatever the keyboard navigation
     /// setting (the user, 2026-10-18: "Arrows, as menus"): ↑ ↓ move the
-    /// highlight through the menu's controls (`MenuKeyboard`), or the side
+    /// highlight through the menu's controls (`KeyHighlight`), or the side
     /// window's rows while it's open (the players' too: "Implement the same
     /// in the Media Player submenu"); Return or Space presses the one it's
     /// on; → opens a side window from its row, ← closes it; on a slider or a

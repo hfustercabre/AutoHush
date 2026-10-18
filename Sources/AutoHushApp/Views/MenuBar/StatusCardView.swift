@@ -31,7 +31,7 @@ struct StatusCardView: View {
                     if status.controlError != nil {
                         Button { model.perform(.showControlError) } label: { statusLine(withInfo: true) }
                             .buttonStyle(.plain)
-                            .modifier(MenuFocusTint(cornerRadius: 6, press: { model.perform(.showControlError) }))
+                            .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(.showControlError) }))
                             .help(Self.whyLabel)
                             .accessibilityLabel(Text(verbatim: status.statusLine))
                             .accessibilityHint(Text(verbatim: Self.whyLabel))
@@ -73,7 +73,7 @@ struct StatusCardView: View {
         }
         .contentShape(RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
         .onTapGesture { model.perform(.toggleAutoPause) }
-        .modifier(MenuHighlight(isFocused: autoPauseFocused, lightsItself: true, // the tint over the glass (`Card`)
+        .modifier(Highlightable(isFocused: autoPauseFocused, lightsItself: true, // the tint over the glass (`Card`)
                                 press: { model.perform(.toggleAutoPause) }))
         .padding(.horizontal, 8)
         .padding(.top, 4)

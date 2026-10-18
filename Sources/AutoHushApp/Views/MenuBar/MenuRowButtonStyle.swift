@@ -4,7 +4,7 @@ import SwiftUI
 /// pointer (or the arrow keys' highlight) it lights up in the accent color,
 /// its text turning white; disabled, it's dimmed and stays dark. `tinted`:
 /// it never lights up itself, the menu's tint shows behind it instead
-/// (`MenuFocusTint`; the players' side window, the user, 2026-10-18).
+/// (`HighlightableControl`; the players' side window, the user, 2026-10-18).
 struct MenuRowButtonStyle: ButtonStyle {
     var tinted = false
 
@@ -17,10 +17,10 @@ struct MenuRowButtonStyle: ButtonStyle {
         let tinted: Bool
         @State private var isHovered = false
         @Environment(\.isEnabled) private var isEnabled
-        @Environment(\.isMenuHighlighted) private var isMenuHighlighted
+        @Environment(\.showsKeyHighlight) private var showsKeyHighlight
 
         var body: some View {
-            let lit = isEnabled && !tinted && (isHovered || isMenuHighlighted)
+            let lit = isEnabled && !tinted && (isHovered || showsKeyHighlight)
             configuration.label
                 .foregroundStyle(lit ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .environment(\.menuRowIsLit, lit)
@@ -39,11 +39,14 @@ struct MenuRowButtonStyle: ButtonStyle {
 extension EnvironmentValues {
     /// Inside a lit `MenuRowButtonStyle` row: its secondary text turns white too.
     @Entry var menuRowIsLit = false
-    /// The menu's highlight (`MenuKeyboard`) or the keyboard's focus is on
-    /// this view, which shows it itself (`MenuHighlight.lightsItself`): a
+    /// The menu's highlight (`KeyHighlight`) or the keyboard's focus is on
+    /// this view, which shows it itself (`Highlightable.lightsItself`): a
     /// menu item's row lights up, the menu's card takes the tint over its
     /// glass.
-    @Entry var isMenuHighlighted = false
+    @Entry var showsKeyHighlight = false
+    /// Inside a row that takes the highlight for its one button
+    /// (`Highlightable.ownsControls`): the button shows only its focus.
+    @Entry var isInHighlightedRow = false
 }
 
 /// Secondary text in a menu row, white while the row is lit.

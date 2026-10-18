@@ -128,6 +128,12 @@ struct AppsSettingsView: View {
             .pickerStyle(.menu)
             .buttonStyle(.borderless)
             .fixedSize()
+            // ← and → choose the order, while the arrow keys' highlight is on it.
+            .modifier(Highlightable(cornerRadius: 6, outset: 3, adjust: { step in
+                let all = AppListOrder.Criterion.allCases
+                guard let index = all.firstIndex(of: order.criterion) else { return }
+                model.setAppListOrder(AppListOrder(criterion: all[min(max(index + step, 0), all.count - 1)]))
+            }))
             IconChipButton(
                 symbol: order.isReversed ? "arrow.up" : "arrow.down",
                 label: Text("Reverse order", comment: "Settings → Sound Sources: the arrow that reverses the apps' order"),
@@ -147,53 +153,8 @@ struct AppsSettingsView: View {
         }
     }
 
-    /// The app's icon and name, whether it pauses the music, and its switch.
-    /// A click selects the row anywhere but on the switch, which keeps its
-    /// own clicks; from the keyboard, Space selects the row in focus (Tab
-    /// reaches it with keyboard navigation on), so Remove is reachable too.
     private func appRow(_ row: SettingsModel.AppRow) -> some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 8) {
-                Image(nsImage: AppIcon.image(for: row.source, players: model.playerOptions, size: 24))
-                    .resizable()
-                    .frame(width: 24, height: 24)
-                    .accessibilityHidden(true)
-                RowTitle(
-                    Text(verbatim: row.source.name),
-                    subtitle: row.isIgnored ? Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
-                        : Text(verbatim: PlayerOption.interruptsLabel(
-                            mutes: model.playerOptions.first { $0.bundleID == model.chosenPlayerID }?.pausesByMuting == true))
-                )
-                Spacer(minLength: 8)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { model.toggleSelection(of: row.id) }
-            Toggle(isOn: Binding(
-                get: { !row.isIgnored },
-                set: { model.settings.setIgnored(row.source, !$0) }
-            )) {
-                Text(verbatim: row.source.name)
-            }
-            .toggleStyle(PillToggleStyle())
-        }
-        .background {
-            if row.id == model.selectedAppID {
-                RoundedRectangle(cornerRadius: 6).fill(.selectedRowFill).padding(.horizontal, -6).padding(.vertical, -4)
-            }
-        }
-        .contentShape(Rectangle())
-        .focusable(interactions: .activate) // as a button: Tab, not a click, gives it focus
-        .onKeyPress(.space) {
-            model.toggleSelection(of: row.id)
-            return .handled
-        }
-        .accessibilityAddTraits(row.id == model.selectedAppID ? .isSelected : [])
-        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")) { model.remove(row) }
-        .contextMenu {
-            Button { model.remove(row) } label: {
-                Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
-            }
-        }
+        SoundSourceRow(model: model, row: row)
     }
 
     private func chooseAppToIgnore() {
@@ -243,6 +204,76 @@ extension AppListOrder {
         case (.name, true):        String(localized: "Z to A", comment: "Settings → Sound Sources: the order, reverse alphabetical")
         case (.state, false):      String(localized: "Apps that pause playback first", comment: "Settings → Sound Sources: the order, switched-on apps first")
         case (.state, true):       String(localized: "Ignored apps first", comment: "Settings → Sound Sources: the order, switched-off apps first")
+        }
+    }
+}
+
+/// An app in Settings → Sound Sources: its icon and name, whether it pauses
+/// the music, and its switch. A click selects the row anywhere but on the
+/// switch, which keeps its own clicks; from the keyboard, Space selects the
+/// row in focus (Tab reaches it with keyboard navigation on), so Remove is
+/// reachable too. The arrow keys and the pointer highlight it, as Settings'
+/// other rows.
+private struct SoundSourceRow: View {
+    let model: SettingsModel
+    let row: SettingsModel.AppRow
+    @FocusState private var rowFocused: Bool
+    @FocusState private var switchFocused: Bool
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(nsImage: AppIcon.image(for: row.source, players: model.playerOptions, size: 24))
+                    .resizable()
+                    .frame(width: 24, height: 24)
+                    .accessibilityHidden(true)
+                RowTitle(
+                    Text(verbatim: row.source.name),
+                    subtitle: row.isIgnored ? Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
+                        : Text(verbatim: PlayerOption.interruptsLabel(
+                            mutes: model.playerOptions.first { $0.bundleID == model.chosenPlayerID }?.pausesByMuting == true))
+                )
+                Spacer(minLength: 8)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { model.toggleSelection(of: row.id) }
+            Toggle(isOn: Binding(
+                get: { !row.isIgnored },
+                set: { model.settings.setIgnored(row.source, !$0) }
+            )) {
+                Text(verbatim: row.source.name)
+            }
+            .toggleStyle(PillToggleStyle())
+            .focused($switchFocused)
+            .focusEffectDisabled(keyboard != nil)
+        }
+        .background {
+            if row.id == model.selectedAppID {
+                RoundedRectangle(cornerRadius: 6).fill(.selectedRowFill).padding(.horizontal, -6).padding(.vertical, -4)
+            }
+        }
+        .contentShape(Rectangle())
+        .focusable(interactions: .activate) // as a button: Tab, not a click, gives it focus
+        .focused($rowFocused)
+        .focusEffectDisabled(keyboard != nil) // the row's tint shows it
+        // The arrow keys and the pointer highlight it; Return or Space selects it.
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .modifier(Highlightable(isFocused: rowFocused || switchFocused, cornerRadius: 6,
+                                press: { model.toggleSelection(of: row.id) }))
+        .padding(.horizontal, -6)
+        .padding(.vertical, -4)
+        .onKeyPress(.space) {
+            model.toggleSelection(of: row.id)
+            return .handled
+        }
+        .accessibilityAddTraits(row.id == model.selectedAppID ? .isSelected : [])
+        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")) { model.remove(row) }
+        .contextMenu {
+            Button { model.remove(row) } label: {
+                Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
+            }
         }
     }
 }

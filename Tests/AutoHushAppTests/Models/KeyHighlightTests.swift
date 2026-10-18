@@ -4,11 +4,11 @@ import Testing
 
 /// The menu's highlight: reading order, the arrow keys wrapping, dimmed
 /// controls skipped, the pointer moving it, pressing and adjusting.
-@Suite("MenuKeyboard")
+@Suite("KeyHighlight")
 @MainActor
-struct MenuKeyboardTests {
+struct KeyHighlightTests {
     /// A control at `x`, `y` (44 × 22), counting its presses and adjustments.
-    private func control(_ keyboard: MenuKeyboard, _ x: CGFloat, _ y: CGFloat, enabled: Bool = true,
+    private func control(_ keyboard: KeyHighlight, _ x: CGFloat, _ y: CGFloat, enabled: Bool = true,
                          log: Log? = nil, name: String = "", adjusts: Bool = false) -> UUID {
         let id = UUID()
         keyboard.register(id, .init(frame: CGRect(x: x, y: y, width: 44, height: 22), isEnabled: enabled,
@@ -21,7 +21,7 @@ struct MenuKeyboardTests {
 
     @Test("reading order: row by row from the top, a row being what's within 6 pt of its top, each left to right")
     func order() {
-        let keyboard = MenuKeyboard()
+        let keyboard = KeyHighlight()
         let quit = control(keyboard, 260, 600)
         let settings = control(keyboard, 10, 602) // the same row as Quit
         let autoPause = control(keyboard, 280, 20)
@@ -32,7 +32,7 @@ struct MenuKeyboardTests {
 
     @Test("↓ and ↑ go through every enabled control, wrapping at the ends; from nothing, ↓ is the first and ↑ the last")
     func moving() {
-        let keyboard = MenuKeyboard()
+        let keyboard = KeyHighlight()
         let first = control(keyboard, 0, 0)
         _ = control(keyboard, 0, 50, enabled: false)
         let last = control(keyboard, 0, 100)
@@ -54,7 +54,7 @@ struct MenuKeyboardTests {
 
     @Test("the pointer moves the highlight onto a control and takes it away as it leaves, never scrolling")
     func pointer() {
-        let keyboard = MenuKeyboard()
+        let keyboard = KeyHighlight()
         let first = control(keyboard, 0, 0)
         let second = control(keyboard, 0, 50)
         keyboard.hover(second, true)
@@ -70,7 +70,7 @@ struct MenuKeyboardTests {
 
     @Test("Return or Space presses the highlighted control, ← and → adjust it if it takes them; with none, nothing")
     func pressing() {
-        let keyboard = MenuKeyboard()
+        let keyboard = KeyHighlight()
         let log = Log()
         let slider = control(keyboard, 0, 0, log: log, name: "slider", adjusts: true)
         let button = control(keyboard, 0, 50, log: log, name: "button")
@@ -87,7 +87,7 @@ struct MenuKeyboardTests {
 
     @Test("a control dimmed or gone loses the highlight; a frame that came before it registered is kept")
     func changes() {
-        let keyboard = MenuKeyboard()
+        let keyboard = KeyHighlight()
         let id = UUID()
         keyboard.update(id, frame: CGRect(x: 0, y: 30, width: 10, height: 10))
         keyboard.register(id, .init(press: {}, opensSide: true))

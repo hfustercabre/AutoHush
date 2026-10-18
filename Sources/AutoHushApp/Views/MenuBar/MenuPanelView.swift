@@ -200,7 +200,7 @@ struct MenuPanelView: View {
             }
         }
         .buttonStyle(MenuRowButtonStyle())
-        .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: { model.perform(command) }))
+        .modifier(HighlightableControl(cornerRadius: 6, lightsItself: true, press: { model.perform(command) }))
         .padding(.horizontal, 8)
     }
 
@@ -221,7 +221,7 @@ struct MenuPanelView: View {
                 }
             }
             .buttonStyle(MenuRowButtonStyle())
-            .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: { model.perform(.showUpdate) }))
+            .modifier(HighlightableControl(cornerRadius: 6, lightsItself: true, press: { model.perform(.showUpdate) }))
             .disabled(installing)
             .padding(.horizontal, 8)
         }

@@ -6,7 +6,7 @@ import SwiftUI
 /// apps added with Add an App (and Add an App…) and the Safari web apps (and
 /// Add a Web App…), each under its section title, a line between them. The
 /// chosen one is checked. As in the menu, the arrow keys and the pointer
-/// move the highlight (the side window's `MenuKeyboard`) through the rows,
+/// move the highlight (the side window's `KeyHighlight`) through the rows,
 /// the tint behind it, and Return or Space presses the row; typing goes to
 /// the search. With Option held, an added app's row removes it, after
 /// asking (R5).
@@ -76,7 +76,7 @@ struct MenuPlayerListView: View {
                     }
                 }
                 .buttonStyle(MenuRowButtonStyle(tinted: true))
-                .modifier(MenuFocusTint(cornerRadius: 6, press: {
+                .modifier(HighlightableControl(cornerRadius: 6, press: {
                     model.perform(model.isOptionHeld && row.isRemovable ? .removeAddedApp(row.id) : .choosePlayer(row.id))
                 }))
                 .disabled(!row.isEnabled && !removes)
@@ -99,7 +99,7 @@ struct MenuPlayerListView: View {
             }
         }
         .buttonStyle(MenuRowButtonStyle(tinted: true))
-        .modifier(MenuFocusTint(cornerRadius: 6, press: { model.perform(command) }))
+        .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(command) }))
         .padding(.horizontal, -6)
     }
 }

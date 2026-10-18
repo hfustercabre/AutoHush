@@ -13,7 +13,7 @@ struct TimingSliderRow: View {
     private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
 
     @FocusState private var sliderFocused: Bool
-    @Environment(\.isInMenu) private var isInMenu
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 0 : 4) {
@@ -43,15 +43,16 @@ struct TimingSliderRow: View {
             .labelsHidden()
             .controlSize(compact ? .small : .regular)
             .focused($sliderFocused)
-            .focusEffectDisabled(isInMenu)
+            .focusEffectDisabled(keyboard != nil) // the row's tint shows it
             .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
             if !compact { timing.help.captionStyle() }
         }
-        // In the menu, highlighted by the arrow keys (← and → move it) and the
-        // pointer, and tinted while its slider has the keyboard's focus (F5).
+        // In the menu and Settings, highlighted by the arrow keys (← and →
+        // move it) and the pointer, and tinted while its slider has the
+        // keyboard's focus (F5).
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
-        .modifier(MenuHighlight(isFocused: sliderFocused, adjust: step))
+        .modifier(Highlightable(isFocused: sliderFocused, adjust: step))
         .padding(.horizontal, -6)
         .padding(.vertical, -3)
     }

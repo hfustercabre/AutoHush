@@ -77,20 +77,22 @@ final class SettingsWindowController: NSWindowController {
     let model: SettingsModel
     private let navigation = SettingsNavigation()
     private let toolbarDelegate = SettingsToolbarDelegate()
+    /// The highlight the arrow keys and the pointer move, the sidebar's and the page's.
+    let keys = SettingsKeys()
     /// The window has a place: kept from a previous launch, or centered once.
     private var isPlaced: Bool
 
     init(model: SettingsModel) {
         self.model = model
         let split = SettingsSplitViewController()
-        let sidebar = NSHostingController(rootView: SettingsSidebar(model: model, navigation: navigation))
+        let sidebar = NSHostingController(rootView: SettingsSidebar(model: model, navigation: navigation).environment(keys.sidebar))
         sidebar.sizingOptions = []
         let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
         sidebarItem.canCollapse = false
         sidebarItem.minimumThickness = Self.sidebarWidth
         sidebarItem.maximumThickness = Self.sidebarWidth
         split.addSplitViewItem(sidebarItem)
-        let page = NSHostingController(rootView: SettingsPageView(model: model, navigation: navigation))
+        let page = NSHostingController(rootView: SettingsPageView(model: model, navigation: navigation).environment(keys.page))
         page.sizingOptions = []
         let pageItem = NSSplitViewItem(viewController: page)
         pageItem.titlebarSeparatorStyle = .none
@@ -128,6 +130,41 @@ final class SettingsWindowController: NSWindowController {
         // at each launch).
         windowFrameAutosaveName = Self.frameName
         navigation.onChange = { [weak window] page in window?.title = page.title }
+        // Before the focused control: the arrows move the highlight, as in
+        // the menu. Kept for the controller's life, which is AutoHush's.
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let keyCode = event.keyCode, flags = event.modifierFlags, windowNumber = event.windowNumber
+            let handled = MainActor.assumeIsolated {
+                self?.handleKey(keyCode, flags: flags, windowNumber: windowNumber) == true
+            }
+            return handled ? nil : event
+        }
+    }
+
+    /// The window's keys, as `SettingsKeys` takes them: plain arrows, Return,
+    /// Space and Tab, not while a field takes what's typed, nor in a sheet.
+    func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, windowNumber: Int) -> Bool {
+        guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil,
+              flags.isDisjoint(with: [.command, .option, .control, .shift]),
+              !(window.firstResponder is NSText), // a search field's editor
+              let key = Self.key(keyCode) else { return false }
+        // With keyboard navigation on, Tab may have given a control the focus.
+        let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
+        // One highlight at a time: the arrows take it from the focus.
+        if key == .up || key == .down { window.makeFirstResponder(nil) }
+        return keys.handle(key, controlHasFocus: controlHasFocus)
+    }
+
+    static func key(_ keyCode: UInt16) -> SettingsKeys.Key? {
+        switch keyCode {
+        case 126: .up
+        case 125: .down
+        case 123: .left
+        case 124: .right
+        case 36, 76, 49: .press // Return, Enter, Space
+        case 48: .tab
+        default: nil
+        }
     }
 
     @available(*, unavailable)
@@ -147,6 +184,7 @@ final class SettingsWindowController: NSWindowController {
         if reopening {
             model.foldedDiagnostics = []
             model.appSearch = nil
+            keys.clear()
         }
         if let target = page ?? (reopening ? .general : nil) { navigation.page = target }
         model.refreshLaunchAtLogin()

@@ -42,6 +42,9 @@ struct SettingsSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // The arrow keys and the pointer highlight it; ↑ and ↓ show its page at once.
+        .modifier(Highlightable(cornerRadius: 10, press: { navigation.page = page },
+                                isCurrent: { navigation.page == page }))
         .accessibilityAddTraits(isShown ? .isSelected : [])
     }
 }

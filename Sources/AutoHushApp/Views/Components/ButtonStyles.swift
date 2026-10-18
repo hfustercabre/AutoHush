@@ -23,13 +23,13 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
     @ViewBuilder func makeBody(configuration: Configuration) -> some View {
         if filled && isSelected {
             Button(configuration).buttonStyle(.borderedProminent)
-                .modifier(MenuFocusTint(cornerRadius: 6, press: configuration.trigger))
+                .modifier(HighlightableControl(cornerRadius: 6, press: configuration.trigger))
         } else if filled {
             Button(configuration).buttonStyle(.bordered)
-                .modifier(MenuFocusTint(cornerRadius: 6, press: configuration.trigger))
+                .modifier(HighlightableControl(cornerRadius: 6, press: configuration.trigger))
         } else {
             Button(configuration).buttonStyle(HoverHighlight(cornerRadius: cornerRadius))
-                .modifier(MenuFocusTint(cornerRadius: cornerRadius, press: configuration.trigger))
+                .modifier(HighlightableControl(cornerRadius: cornerRadius, press: configuration.trigger))
         }
     }
 
@@ -48,7 +48,7 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
         let cornerRadius: CGFloat
         @State private var isHovered = false
         @Environment(\.isEnabled) private var isEnabled
-        @Environment(\.isInMenu) private var isInMenu
+        @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
         var body: some View {
             label
@@ -62,8 +62,8 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
         private var fill: AnyShapeStyle {
             guard isEnabled else { return AnyShapeStyle(.clear) }
             if isPressed { return AnyShapeStyle(.tertiary) }
-            // In the menu, `MenuFocusTint` lights it in the accent color instead.
-            return isHovered && !isInMenu ? AnyShapeStyle(.chipHoverFill) : AnyShapeStyle(.clear)
+            // In the menu and Settings, `HighlightableControl` lights it in the accent color instead.
+            return isHovered && keyboard == nil ? AnyShapeStyle(.chipHoverFill) : AnyShapeStyle(.clear)
         }
     }
 }
@@ -73,16 +73,17 @@ extension PrimitiveButtonStyle where Self == ChipButtonStyle {
     static var chip: ChipButtonStyle { ChipButtonStyle(filled: true) }
 }
 
-/// In the menu, a control that the arrow keys and the pointer highlight
-/// (`MenuKeyboard`) and the keyboard's focus reaches, all three shown by a
-/// faint tint of the system's accent color behind it (F5, the user's pick,
-/// 2026-10-18; under the pointer too, the user: "the accent color should
-/// show not only on keyboard navigation, but also when the mouse is over
-/// the item"), instead of macOS's focus ring. For a control that is itself
-/// focusable (a button, a switch); a row that holds one uses
-/// `MenuHighlight` with its control's focus. Outside the menu, macOS's ring
-/// stays.
-struct MenuFocusTint: ViewModifier {
+/// In the menu and Settings (wherever a `KeyHighlight` is given), a control
+/// that the arrow keys and the pointer highlight and the keyboard's focus
+/// reaches, all three shown by a faint tint of the system's accent color
+/// behind it (F5, the user's pick, 2026-10-18; under the pointer too, the
+/// user: "the accent color should show not only on keyboard navigation, but
+/// also when the mouse is over the item"), instead of macOS's focus ring.
+/// For a control that is itself focusable (a button, a switch); a row that
+/// holds one uses `Highlightable` with its control's focus. In a row that
+/// takes the highlight for its control (`Highlightable.ownsControls`), only
+/// its focus shows. Elsewhere, macOS's ring stays.
+struct HighlightableControl: ViewModifier {
     var cornerRadius: CGFloat = 8
     /// How far in from the control's sides the tint is drawn.
     var inset: CGFloat = 0
@@ -91,35 +92,43 @@ struct MenuFocusTint: ViewModifier {
     /// Kept on: a row whose side window is open.
     var isLit = false
     /// A row that lights up by itself (`MenuRowButtonStyle`), as a menu
-    /// item, instead of the tint (`isMenuHighlighted`).
+    /// item, instead of the tint (`showsKeyHighlight`).
     var lightsItself = false
     /// What Return or Space does while it's highlighted.
     let press: (() -> Void)?
     var opensSide = false
     @FocusState private var isFocused: Bool
-    @Environment(\.isInMenu) private var isInMenu
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.isInHighlightedRow) private var isInHighlightedRow
 
     @ViewBuilder func body(content: Content) -> some View {
-        if isInMenu {
+        if keyboard == nil {
+            content
+        } else if isInHighlightedRow {
             content
                 .focused($isFocused)
                 .focusEffectDisabled()
-                .modifier(MenuHighlight(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset,
-                                        isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide))
+                .background { HighlightTint(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset).padding(-outset) }
         } else {
             content
+                .focused($isFocused)
+                .focusEffectDisabled()
+                .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset,
+                                        isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide))
         }
     }
 }
 
-/// In the menu, a row or a control `MenuKeyboard` highlights: it registers
-/// where it is and what pressing it (or ← and →) does, the pointer moves the
-/// highlight onto it, and the tint shows behind it while it's highlighted,
-/// has the keyboard's focus (`isFocused`, its control's) or `isLit`; a
-/// dimmed one is skipped. `lightsItself`: no tint, the view shows it itself
-/// (`isMenuHighlighted`: a menu item's row, the card). Outside the menu,
-/// nothing.
-struct MenuHighlight: ViewModifier {
+/// In the menu and Settings (wherever a `KeyHighlight` is given), a row or
+/// a control the highlight goes to: it registers where it is and what
+/// pressing it (or ← and →) does, the pointer moves the highlight onto it,
+/// and the tint shows behind it while it's highlighted, has the keyboard's
+/// focus (`isFocused`, its control's) or `isLit`; a dimmed one is skipped.
+/// `lightsItself`: no tint, the view shows it itself (`showsKeyHighlight`:
+/// a menu item's row, the card). `ownsControls`: a row whose one button
+/// takes no highlight of its own (Settings' rows, the user's pick: the
+/// whole row). Elsewhere, nothing.
+struct Highlightable: ViewModifier {
     var isFocused = false
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0
@@ -128,54 +137,71 @@ struct MenuHighlight: ViewModifier {
     var lightsItself = false
     /// Whether it can be changed now, beyond the environment's `isEnabled`.
     var isAvailable = true
+    var ownsControls = false
     var press: (() -> Void)?
     var adjust: ((Int) -> Void)?
     var opensSide = false
+    var isCurrent: (() -> Bool)?
     @State private var id = UUID()
     @State private var actions = Actions()
-    @Environment(\.isInMenu) private var isInMenu
     @Environment(\.isEnabled) private var isEnabled
-    @Environment(MenuKeyboard.self) private var keyboard: MenuKeyboard?
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
     /// closures stay those of the latest drawing.
     @MainActor private final class Actions {
         var press: (() -> Void)?
         var adjust: ((Int) -> Void)?
+        var isCurrent: (() -> Bool)?
     }
 
     @ViewBuilder func body(content: Content) -> some View {
-        if isInMenu {
+        if let keyboard {
             let enabled = isEnabled && isAvailable
-            let _ = { actions.press = press; actions.adjust = adjust }()
-            let lit = isFocused || isLit || (enabled && keyboard?.highlighted == id)
+            let _ = { actions.press = press; actions.adjust = adjust; actions.isCurrent = isCurrent }()
+            let lit = isFocused || isLit || (enabled && keyboard.highlighted == id)
             content
-                .environment(\.isMenuHighlighted, lightsItself && lit)
+                .environment(\.showsKeyHighlight, lightsItself && lit)
+                .environment(\.isInHighlightedRow, ownsControls)
                 .background {
-                    MenuFocusBackground(isFocused: !lightsItself && lit, cornerRadius: cornerRadius, inset: inset)
+                    HighlightTint(isFocused: !lightsItself && lit, cornerRadius: cornerRadius, inset: inset)
                         .padding(-outset)
                 }
                 .id(id)
-                .onHover { keyboard?.hover(id, $0) }
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard?.update(id, frame: $0) }
+                .onHover { keyboard.hover(id, $0) }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }
                 .onAppear {
                     let actions = actions
-                    keyboard?.register(id, .init(isEnabled: enabled,
-                                                 press: press == nil ? nil : { actions.press?() },
-                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
-                                                 opensSide: opensSide))
+                    keyboard.register(id, .init(isEnabled: enabled,
+                                                press: press == nil ? nil : { actions.press?() },
+                                                adjust: adjust == nil ? nil : { actions.adjust?($0) },
+                                                opensSide: opensSide,
+                                                isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true }))
                 }
-                .onChange(of: enabled) { keyboard?.update(id, isEnabled: enabled) }
-                .onDisappear { keyboard?.remove(id) }
+                .onChange(of: enabled) { keyboard.update(id, isEnabled: enabled) }
+                .onDisappear { keyboard.remove(id) }
         } else {
             content
         }
     }
 }
 
+extension View {
+    /// A row of Settings (or the menu) as `Highlightable`, its tint 6 pt out
+    /// to its sides and 3 pt above and below it, as the menu's rows.
+    func highlightableRow(isFocused: Bool = false, ownsControls: Bool = false,
+                          press: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil) -> some View {
+        padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .modifier(Highlightable(isFocused: isFocused, ownsControls: ownsControls, press: press, adjust: adjust))
+            .padding(.horizontal, -6)
+            .padding(.vertical, -3)
+    }
+}
+
 /// The tint itself (`focusTint`), behind a control or a row that is
 /// highlighted or has the keyboard's focus.
-struct MenuFocusBackground: View {
+struct HighlightTint: View {
     let isFocused: Bool
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0

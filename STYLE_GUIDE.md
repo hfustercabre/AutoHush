@@ -75,7 +75,7 @@ the default button, and **Cancel**, Escape).
 
 | Where | Rule |
 |---|---|
-| Settings window | Laid out as System Settings: a sidebar of pages (`SettingsSidebar`) beside the page shown, whose name is the window's title, in the toolbar. No back or forward buttons. The user resizes it: from as wide as its widest choice needs in the language (`leastPageWidth`: **715 pt** in English, 841 in German) to 640 pt more for the page, and **600 to 900 pt** tall (so the sidebar shows About above its foot: S1, the user, 2026-10-18), opening at **760 × 620** the first time; it keeps its place and size between launches. The sidebar stays **235 pt**; the page grows from **480 to 640 pt**, with **16 pt** margins. Cards are **8 pt** apart. |
+| Settings window | Laid out as System Settings: a sidebar of pages (`SettingsSidebar`) beside the page shown, whose name is the window's title, in the toolbar. No back or forward buttons. The arrow keys and the pointer move a highlight through it as in the menu (see [Keyboard](#keyboard)). The user resizes it: from as wide as its widest choice needs in the language (`leastPageWidth`: **715 pt** in English, 841 in German) to 640 pt more for the page, and **600 to 900 pt** tall (so the sidebar shows About above its foot: S1, the user, 2026-10-18), opening at **760 × 620** the first time; it keeps its place and size between launches. The sidebar stays **235 pt**; the page grows from **480 to 640 pt**, with **16 pt** margins. Cards are **8 pt** apart. |
 | Settings pages | General, Sound Sources · Detection, Fades, Advanced · Diagnostics, Updates, About, a gap between the groups. Each page but About is macOS's grouped form (`SettingsPageScroll`, `Form` with `.formStyle(.grouped)`): its `Card`s are the form's sections, their titles over them, and it scrolls by itself. |
 | Pages with a list | Sound Sources and Diagnostics: the form scrolls, and the buttons stay at the window's foot in a [`BottomBar`](#components). Sound Sources' sort and search are its section's header. |
 | Diagnostics | Each part (how AutoHush is doing, the apps, the player, the detection, the permissions, AutoHush, the Mac) folds away when its heading is clicked, leaving a one-line summary; the heading's chevron points forward while folded and down while open. "Updated as it happens." heads the page, in `captionStyle`, above the first part (beside the foot's buttons it left them too little room in several languages). After a click, **Copy Report** says "Copied" for 2 s, as Copy Logs does. **Show Logs…** sits left of Copy Report and opens the logs window. |
@@ -143,7 +143,7 @@ mode; only Settings' sidebar keeps one of its own.
 | `.appAccent` | accent color | The accent color as text on its own tint: the "Recommended" `HeadingBadge` |
 | `.appSuccess` | green | Symbols for what works (Diagnostics, the welcome window's permissions); never text |
 | `.chipFill` / `.chipHoverFill` | quaternary / tertiary system fill | Search fields, the menu's chevron; AutoHush's own rows under the pointer, outside the menu; the check panel's steps to come |
-| `.focusTint` | the system accent color (`controlAccentColor`) at 14 % | The menu's highlighted control (the arrow keys' or the pointer's) or the one with the keyboard's focus (F5, the user, 2026-10-18): a rounded tint behind the row, chip, chevron, button, slider or switch's row (`MenuFocusTint`, `MenuFocusBackground`), instead of macOS's focus ring, which a menu doesn't draw; kept on a row whose side window is open; not on a dimmed one, nor on rows that light up in the accent color themselves (`MenuRowButtonStyle`) |
+| `.focusTint` | the system accent color (`controlAccentColor`) at 14 % | The menu's and Settings' highlighted control (the arrow keys' or the pointer's) or the one with the keyboard's focus (F5, the user, 2026-10-18): a rounded tint behind the row, chip, chevron, button, slider or switch's row (`HighlightableControl`, `Highlightable`, `HighlightTint`), instead of macOS's focus ring; in Settings, a switch's, slider's or choice's row takes it whole, and so does a row of a title and one button (the user's pick); kept on a row whose side window is open; not on a dimmed one, nor on rows that light up in the accent color themselves (`MenuRowButtonStyle`) |
 | `.warningBadgeFill` | orange 15% | Behind a `HeadingBadge`, a step's warning |
 | `.selectedRowFill` | accent 16% | Behind a list row the user selected (Settings → Sound Sources); the accent `HeadingBadge`'s capsule |
 | `.selectedTileFill` | accent 20% | Behind the chosen player's tile (`PlayerTiles`), the selected row of Choose an App's list |
@@ -591,8 +591,17 @@ standard ones**:
   down to (the welcome window's players), if just one; items that share a
   name count as one (the Spotify app and the suggested Spotify web app: the
   app).
+- **The arrow keys in Settings** work as in the menu, whatever the keyboard
+  navigation setting (the user, 2026-10-18): ↑ and ↓ move the highlight
+  through the page's controls, Return or Space presses the one it's on, ←
+  and → change a slider or a choice; on any other control, ← goes to the
+  sidebar, on the page shown, where ↑ and ↓ show each page at once, and →
+  or Return goes back into the page (`SettingsKeys`). The pointer moves the
+  same highlight, one at a time on either side. A field being typed in
+  keeps its keys.
 - **Tab and Space** move and press as macOS's keyboard navigation does
-  (when it's on). Settings → Sound Sources' rows take the focus too, and Space
+  (when it's on), the focused control tinted as the highlight (F5).
+  Settings → Sound Sources' rows take the focus too, and Space
   selects the focused one, so **Remove** can be reached. In Add an App's
   list of apps, ↑ and ↓ in its search move the selection, and Return
   chooses it.
@@ -608,7 +617,7 @@ user, 2026-10-18): ↑ and ↓ move its highlight through every control, from
 Auto-Pause to Quit, wrapping at the ends, and Return or Space presses the
 one it's on; → opens a side window from its row and ← closes it; on a
 slider or a choice, ← and → change it; Escape closes the side window,
-then the menu (`StatusMenuController.handleKey`, `MenuKeyboard`). The
+then the menu (`StatusMenuController.handleKey`, `KeyHighlight`). The
 pointer moves the same highlight, as in a menu. In the player list, ↑ and
 ↓ move among the players, Return chooses, and typing searches. With
 keyboard navigation on, Tab and Space work too, the focus taking over from

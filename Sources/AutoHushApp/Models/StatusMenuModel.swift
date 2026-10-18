@@ -109,8 +109,8 @@ final class StatusMenuModel {
     var playerSearch = ""
     /// The highlight the arrow keys and the pointer move through the menu's
     /// controls, as in macOS's menus; the side window's, through its rows.
-    @ObservationIgnored let keyboard = MenuKeyboard()
-    @ObservationIgnored let sideKeyboard = MenuKeyboard()
+    @ObservationIgnored let keyboard = KeyHighlight()
+    @ObservationIgnored let sideKeyboard = KeyHighlight()
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
     @ObservationIgnored weak var settings: SettingsModel?
     /// Whether AntiDot mode is on: an app that can only be muted can't be

@@ -41,6 +41,12 @@ struct DetectionSettingsView: View {
                         onSelect: { model.setDetectionMethod($0) }
                     )
                 }
+                // ← and → choose, while the arrow keys' highlight is on it.
+                .highlightableRow(adjust: { step in
+                    let methods: [DetectionMethod] = [.playbackSignals, .openStreams]
+                    guard let index = methods.firstIndex(of: model.detectionMethod) else { return }
+                    model.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
+                })
                 .unavailable(!model.isAntiDotMode)
                 if model.isAntiDotMode {
                     Text(model.detectionMethod.summary).captionStyle()

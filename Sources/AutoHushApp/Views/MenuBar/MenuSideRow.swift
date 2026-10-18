@@ -39,7 +39,7 @@ struct MenuSideRow<Leading: View>: View {
         }
         .buttonStyle(.plain)
         // Tinted under the pointer, with the focus, and while its side window is open.
-        .modifier(MenuFocusTint(inset: 8, isLit: isOpen, press: action, opensSide: true))
+        .modifier(HighlightableControl(inset: 8, isLit: isOpen, press: action, opensSide: true))
         .onHover { onHover($0) }
         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { onTop($0) }
         .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)

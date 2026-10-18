@@ -28,6 +28,12 @@ struct UpdatesSettingsView: View {
                     .disabled(model.updateInstallNote != nil)
                     Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
                 }
+                // ← and → choose, while the arrow keys' highlight is on it.
+                .highlightableRow(adjust: { step in
+                    let modes: [AutomaticUpdates] = [.notify, .download, .install]
+                    guard model.updateInstallNote == nil, let index = modes.firstIndex(of: model.automaticUpdates) else { return }
+                    model.updates.setMode(modes[min(max(index + step, 0), modes.count - 1)])
+                })
                 .unavailable(!model.checksForUpdatesAutomatically)
                 if model.checksForUpdatesAutomatically {
                     // Every choice still works: the menu bar icon says what a notification would.
@@ -48,6 +54,7 @@ struct UpdatesSettingsView: View {
                     }
                         .buttonStyle(.chip)
                 }
+                .highlightableRow(ownsControls: true, press: { model.updates.checkFromUser() })
             }
         }
     }

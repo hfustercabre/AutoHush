@@ -40,10 +40,14 @@ extension NSWindow {
     /// Open on another desktop (the user moved, or another app took them
     /// there), it's taken off it, to come back on the one they're on: taken
     /// off alone, AutoHush becoming active took the user to that desktop
-    /// (macOS 27, 2026-10-17), so it follows them for a second.
+    /// (macOS 27, 2026-10-17), so it follows them for a second. Closed, it
+    /// follows them too: macOS shows a closed window again on the desktop
+    /// it was last on, and took the user there (2026-10-18).
     private func comeToActiveSpace() {
-        guard isVisible, !isOnActiveSpace else { return }
-        orderOut(nil)
+        if isVisible {
+            guard !isOnActiveSpace else { return }
+            orderOut(nil)
+        }
         guard collectionBehavior.insert(.moveToActiveSpace).inserted else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             MainActor.assumeIsolated { _ = self?.collectionBehavior.remove(.moveToActiveSpace) }

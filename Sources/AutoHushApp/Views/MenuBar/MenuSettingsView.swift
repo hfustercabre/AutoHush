@@ -33,7 +33,7 @@ struct MenuSettingsView: View {
                     )
                     .controlSize(.small) // C2: both words fit
                     // ← and → choose, while the arrow keys' highlight is on it.
-                    .modifier(MenuHighlight(adjust: { step in
+                    .modifier(Highlightable(adjust: { step in
                         let methods: [DetectionMethod] = [.playbackSignals, .openStreams]
                         guard let index = methods.firstIndex(of: settings.detectionMethod) else { return }
                         settings.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
@@ -138,7 +138,7 @@ struct MenuSettingsView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .modifier(MenuFocusTint(cornerRadius: 8, inset: 140, press: { model.perform(.toggleSettings(part)) }))
+        .modifier(HighlightableControl(cornerRadius: 8, inset: 140, press: { model.perform(.toggleSettings(part)) }))
         .help(Text(verbatim: title))
         // Two of them: VoiceOver hears whose.
         .accessibilityLabel(Text(verbatim: "\(page.title), \(title)"))
@@ -201,7 +201,7 @@ private struct MenuSwitchLine: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .modifier(MenuHighlight(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
+        .modifier(Highlightable(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
                                 press: { kind.set(!kind.isOn(settings), in: settings) }))
         .modifier(ReasonTooltip(reason: reason))
     }

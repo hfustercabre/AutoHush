@@ -39,7 +39,7 @@ struct SourceSwitchRow: View {
         // Highlighted by the arrow keys and the pointer; its switch takes the keyboard's focus (F5).
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
-        .modifier(MenuHighlight(isFocused: isFocused, press: {
+        .modifier(Highlightable(isFocused: isFocused, press: {
             model.perform(.setIgnored(source, !model.status.isIgnored(source.id)))
         }))
         .padding(.horizontal, -6)

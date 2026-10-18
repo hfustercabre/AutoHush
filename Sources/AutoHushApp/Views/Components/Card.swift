@@ -27,7 +27,7 @@ struct Card<Content: View, Footer: View>: View {
     @ViewBuilder let footer: Footer
     @Environment(\.cardsAreFormSections) private var isFormSection
     /// The menu's card is highlighted: the tint over its glass, under its content.
-    @Environment(\.isMenuHighlighted) private var isHighlighted
+    @Environment(\.showsKeyHighlight) private var isHighlighted
 
     init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil,
          clearGlass: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
@@ -109,7 +109,7 @@ extension Card {
     /// The menu's tint over the card's glass while it's highlighted.
     @ViewBuilder fileprivate var highlight: some View {
         if isHighlighted {
-            MenuFocusBackground(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius)
+            HighlightTint(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius)
         }
     }
 }

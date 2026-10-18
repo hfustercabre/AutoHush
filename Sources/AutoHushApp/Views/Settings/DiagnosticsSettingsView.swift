@@ -98,6 +98,9 @@ struct DiagnosticsSettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .modifier(HighlightableControl(cornerRadius: 6, press: {
+                if model.foldedDiagnostics.contains(id) { model.foldedDiagnostics.remove(id) } else { model.foldedDiagnostics.insert(id) }
+            }))
             .accessibilityAddTraits(.isHeader)
             .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed))) {
             if isOpen { content() }

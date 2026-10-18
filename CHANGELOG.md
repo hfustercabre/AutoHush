@@ -38,6 +38,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   keys or the pointer are on shows a tint of your accent color, the
   players' rows too, and with keyboard navigation on, Tab reaches each
   control too. A click anywhere on the card turns Auto-Pause on or off.
+- **Settings takes the arrow keys and the pointer as the menu does.** ↑
+  and ↓ move through the page, ← goes to the sidebar, where ↑ and ↓ show
+  each page, and → comes back; Return or Space presses, ← and → change a
+  slider or a choice. The row the keys or the pointer are on shows a tint
+  of your accent color, and so does the one Tab reaches.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
@@ -236,6 +241,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Settings opens on the desktop you're on.** Closed on one desktop and
+  opened again from another, it took you back to the first.
 - **A click on AutoHush's menu bar icon closes its open menu**, as macOS's
   own menu bar items do. It closed and opened again at once.
 
