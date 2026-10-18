@@ -595,7 +595,7 @@ final class StatusMenuController: NSObject {
                 await self?.updates.checkNow()
                 self?.model.isCheckingForUpdates = false
             }
-        case .snooze, .removeAddedApp, .addApp, .addWebApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
+        case .snooze, .removeAddedApp, .addApp, .addWebApp, .ignoreAnotherApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
              .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
              .reopenPlayer, .unmutePlayer, .quit:
             close()
@@ -612,6 +612,7 @@ final class StatusMenuController: NSObject {
         case .removeAddedApp(let id):    actions?.removeAddedApp(id)
         case .addApp:                    actions?.openAddApp()
         case .addWebApp:                 actions?.openAddWebApp()
+        case .ignoreAnotherApp:          IgnoreAppsPicker.run { settings.setIgnored($0, true) }
         case .resolveWarning(let need):  actions?.requestPermission(need)
         case .reopenAutoHush:            actions?.reopenAutoHush()
         case .useAntiDotMode:            settings.setDetectionMethod(.playbackSignals)

@@ -60082,7 +60082,7 @@
       }
     },
     "Ignore Another App…" : {
-      "comment" : "Settings → Sound Sources: button that opens a panel to pick an app that never pauses your player",
+      "comment" : "Settings → Sound Sources' button, and the menu's row under the ignored apps: opens a panel to pick apps that never pause your player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

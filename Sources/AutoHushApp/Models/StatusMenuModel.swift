@@ -23,6 +23,8 @@ enum StatusMenuCommand: Equatable, Sendable {
     case removeAddedApp(String)
     case addApp
     case addWebApp
+    /// Picks apps to ignore (the ignored apps' side window).
+    case ignoreAnotherApp
     /// Shows or folds away a settings part's other settings (Detection's
     /// ways and timings, the fades' lengths), under its switch.
     case toggleSettings(MenuSettingsPart)

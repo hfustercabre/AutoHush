@@ -29,6 +29,18 @@ struct MenuSidePanelView: View {
                         ForEach(model.listedIgnoredApps, id: \.self) { source in
                             SourceSwitchRow(model: model, source: source)
                         }
+                        // Several at once (the user, 2026-10-18); the menu closes for the panel.
+                        Button { model.perform(.ignoreAnotherApp) } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle")
+                                    .frame(width: 20)
+                                    .accessibilityHidden(true)
+                                Text(verbatim: IgnoreAppsPicker.title)
+                            }
+                        }
+                        .buttonStyle(MenuRowButtonStyle(tinted: true))
+                        .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(.ignoreAnotherApp) }))
+                        .padding(.horizontal, -6)
                     }
                     .padding(.horizontal, 14)
                 case nil:

@@ -38,6 +38,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   keys or the pointer are on shows a tint of your accent color, the
   players' rows too, and with keyboard navigation on, Tab reaches each
   control too. A click anywhere on the card turns Auto-Pause on or off.
+- **Ignore several apps at once.** Ignore Another App… picks several apps
+  in one go, in Settings → Sound Sources and now in the menu too, under
+  the ignored apps.
 - **The menu is more compact.** Less space around its titles, rows and
   lines, smaller switches, and the chevron that shows a part's other
   settings beside its title: it shows as much in less height.
