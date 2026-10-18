@@ -48,6 +48,7 @@ struct StatusCardView: View {
                         Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
                     }
                     .toggleStyle(PillToggleStyle())
+                    .controlSize(MenuSpacing.switchSize)
                     .focused($autoPauseFocused)
                     .focusEffectDisabled() // the whole card shows it
                     Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")

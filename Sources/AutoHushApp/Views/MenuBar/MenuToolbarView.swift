@@ -41,7 +41,7 @@ struct MenuToolbarView: View {
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
+            .padding(.vertical, MenuSpacing.toolbarVertical)
         }
         .buttonStyle(ChipButtonStyle())
         .accessibilityLabel(spoken.map { Text(verbatim: $0) } ?? title)

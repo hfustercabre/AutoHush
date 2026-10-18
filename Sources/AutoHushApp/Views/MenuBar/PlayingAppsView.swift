@@ -22,7 +22,7 @@ struct PlayingAppsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: MenuSpacing.playingSpacing) {
             SectionLabel(title)
                 .accessibilityAddTraits(.isHeader)
             ForEach(sources, id: \.self) { source in
@@ -30,7 +30,7 @@ struct PlayingAppsView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 6)
+        .padding(.vertical, MenuSpacing.sectionVertical)
         .frame(width: menuContentWidth)
     }
 }

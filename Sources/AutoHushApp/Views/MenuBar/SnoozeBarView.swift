@@ -7,7 +7,7 @@ struct SnoozeBarView: View {
     let model: StatusMenuModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: MenuSpacing.snoozeSpacing) {
             SectionLabel(Text("Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while"))
                 .accessibilityAddTraits(.isHeader)
             HStack(spacing: 6) {
@@ -17,7 +17,7 @@ struct SnoozeBarView: View {
                             .font(.appCallout)
                             .lineLimit(1)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 5)
+                            .padding(.vertical, MenuSpacing.chipVertical)
                     }
                     .buttonStyle(ChipButtonStyle(filled: true))
                     .accessibilityLabel(snooze.title)
@@ -25,7 +25,7 @@ struct SnoozeBarView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 6)
+        .padding(.vertical, MenuSpacing.sectionVertical)
         .frame(width: menuContentWidth)
     }
 }

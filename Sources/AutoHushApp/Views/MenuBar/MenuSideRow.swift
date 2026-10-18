@@ -34,7 +34,7 @@ struct MenuSideRow<Leading: View>: View {
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 5)
+            .padding(.vertical, MenuSpacing.rowVertical)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -57,8 +57,8 @@ struct MenuPartTitle: View {
         SectionLabel(title)
             .accessibilityAddTraits(.isHeader)
             .padding(.horizontal, 14)
-            .padding(.top, 8)
-            .padding(.bottom, 2)
+            .padding(.top, MenuSpacing.titleTop)
+            .padding(.bottom, MenuSpacing.titleBottom)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

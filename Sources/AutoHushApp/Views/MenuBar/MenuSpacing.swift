@@ -1,0 +1,32 @@
+import SwiftUI
+
+/// The menu's spacing, in one place: around its parts' titles, rows, lines
+/// and controls (STYLE_GUIDE's Menu). Compact, as the user picked (D5 with
+/// small switches, 2026-10-18: "The menubar menu feels like it takes too
+/// much space without showing that much information").
+enum MenuSpacing {
+    /// Above a part's title ("Media Player", "Detection"), and under it.
+    static let titleTop: CGFloat = 4
+    static let titleBottom: CGFloat = 0
+    /// Above a title inside a part ("Modes", "Timing").
+    static let innerTitleTop: CGFloat = 2
+    /// Above and under a row of a switch or a chevron, and its two lines.
+    static let rowVertical: CGFloat = 2
+    /// Above and under a part's rows.
+    static let partVertical: CGFloat = 0
+    /// Above and under a slider's row.
+    static let sliderVertical: CGFloat = 2
+    /// Above and under a line between parts.
+    static let lineVertical: CGFloat = 2
+    /// Above and under "Turn off for" and "Playing Now", and between their
+    /// titles and what's under them.
+    static let sectionVertical: CGFloat = 3
+    static let snoozeSpacing: CGFloat = 3
+    static let playingSpacing: CGFloat = 4
+    /// Above and under a duration's text, in its button.
+    static let chipVertical: CGFloat = 3
+    /// Above and under a bottom button's symbol and title.
+    static let toolbarVertical: CGFloat = 3
+    /// The menu's switches: macOS's small ones.
+    static let switchSize: ControlSize = .small
+}

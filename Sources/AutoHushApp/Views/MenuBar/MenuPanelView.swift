@@ -149,7 +149,7 @@ struct MenuPanelView: View {
     }
 
     private var line: some View {
-        Divider().padding(.horizontal, 14).padding(.vertical, 4)
+        Divider().padding(.horizontal, 14).padding(.vertical, MenuSpacing.lineVertical)
     }
 
     /// A part of the menu, telling where the pointer goes: onto another part

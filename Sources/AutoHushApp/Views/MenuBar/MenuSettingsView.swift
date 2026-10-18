@@ -18,7 +18,7 @@ struct MenuSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            pageName(.detection)
+            pageName(.detection, folding: .detection)
             if isOpen(.detection) {
                 innerTitle(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
             }
@@ -52,9 +52,8 @@ struct MenuSettingsView: View {
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
             }
-            chevron(.detection, page: .detection)
             line
-            pageName(.fades)
+            pageName(.fades, folding: .fades)
             part {
                 switchRow(.fades)
                 if isOpen(.fades) {
@@ -65,7 +64,6 @@ struct MenuSettingsView: View {
                     .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
                 }
             }
-            chevron(.fades, page: .fades)
             line
             pageName(.advanced)
             part {
@@ -83,14 +81,14 @@ struct MenuSettingsView: View {
     private func part<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) { content() }
             .padding(.horizontal, 8)
-            .padding(.vertical, 1)
+            .padding(.vertical, MenuSpacing.partVertical)
     }
 
     /// The line between the parts, as between the menu's own parts.
     private var line: some View {
         Divider()
             .padding(.horizontal, 14)
-            .padding(.vertical, 4)
+            .padding(.vertical, MenuSpacing.lineVertical)
             .transition(.opacity)
     }
 
@@ -105,13 +103,22 @@ struct MenuSettingsView: View {
     private func slider(_ timing: SettingsTiming) -> some View {
         TimingSliderRow(model: settings, timing: timing, compact: true)
             .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.vertical, MenuSpacing.sliderVertical)
             .transition(.opacity)
     }
 
-    /// A Settings page's name over its part.
-    private func pageName(_ page: SettingsWindowController.Page) -> some View {
+    /// A Settings page's name over its part; for a part with more settings
+    /// than its switches (`folding`), the chevron that unfolds them beside
+    /// it (D5, the user's pick, 2026-10-18).
+    private func pageName(_ page: SettingsWindowController.Page, folding part: MenuSettingsPart? = nil) -> some View {
         MenuPartTitle(Text(verbatim: page.title))
+            .overlay(alignment: .bottomTrailing) {
+                if let part {
+                    chevron(part, page: page)
+                        .padding(.trailing, 14)
+                        .padding(.bottom, MenuSpacing.titleBottom)
+                }
+            }
             .transition(.opacity)
     }
 
@@ -119,26 +126,24 @@ struct MenuSettingsView: View {
     private func innerTitle(_ title: Text) -> some View {
         MenuInnerTitle(title)
             .padding(.horizontal, 14)
-            .padding(.top, 4)
+            .padding(.top, MenuSpacing.innerTitleTop)
             .transition(.opacity)
     }
 
-    /// A small chevron on a pill (C3), centered under a part: down while
-    /// its other settings are folded, up while they show.
+    /// A small chevron on a pill (C3), beside a part's title: down while its
+    /// other settings are folded, up while they show.
     private func chevron(_ part: MenuSettingsPart, page: SettingsWindowController.Page) -> some View {
         let title = isOpen(part) ? Self.hideTitle : Self.showTitle
         return Button { model.perform(.toggleSettings(part)) } label: {
             Image(systemName: isOpen(part) ? "chevron.up" : "chevron.down")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.appSecondary)
-                .frame(width: 44, height: 16)
+                .frame(width: 36, height: 16)
                 .background(Capsule().fill(.chipFill))
-                .frame(maxWidth: .infinity)
-                .frame(height: 22)
-                .contentShape(Rectangle())
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .modifier(HighlightableControl(cornerRadius: 8, inset: 140, press: { model.perform(.toggleSettings(part)) }))
+        .modifier(HighlightableControl(cornerRadius: 8, outset: 2, press: { model.perform(.toggleSettings(part)) }))
         .help(Text(verbatim: title))
         // Two of them: VoiceOver hears whose.
         .accessibilityLabel(Text(verbatim: "\(page.title), \(title)"))
@@ -185,6 +190,7 @@ private struct MenuSwitchLine: View {
                 Spacer(minLength: 8)
                 Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
                     .toggleStyle(PillToggleStyle())
+                    .controlSize(MenuSpacing.switchSize)
                     .focused($isFocused)
                     .focusEffectDisabled()
                     .accessibilityHint(reason.map { Text(verbatim: $0) } ?? kind.shortExplanation)
@@ -200,7 +206,7 @@ private struct MenuSwitchLine: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.vertical, MenuSpacing.rowVertical)
         .modifier(Highlightable(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
                                 press: { kind.set(!kind.isOn(settings), in: settings) }))
         .modifier(ReasonTooltip(reason: reason))

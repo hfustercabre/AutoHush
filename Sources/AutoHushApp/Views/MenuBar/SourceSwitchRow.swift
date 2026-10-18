@@ -32,6 +32,7 @@ struct SourceSwitchRow: View {
                 Text(verbatim: source.name)
             }
             .toggleStyle(PillToggleStyle())
+            .controlSize(MenuSpacing.switchSize)
             .focused($isFocused)
             .focusEffectDisabled()
             .accessibilityHint(state)

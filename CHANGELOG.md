@@ -38,6 +38,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   keys or the pointer are on shows a tint of your accent color, the
   players' rows too, and with keyboard navigation on, Tab reaches each
   control too. A click anywhere on the card turns Auto-Pause on or off.
+- **The menu is more compact.** Less space around its titles, rows and
+  lines, smaller switches, and the chevron that shows a part's other
+  settings beside its title: it shows as much in less height.
 - **Settings takes the arrow keys and the pointer as the menu does.** ↑
   and ↓ move through the page, ← goes to the sidebar, where ↑ and ↓ show
   each page, and → comes back; Return or Space presses, ← and → change a
