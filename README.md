@@ -101,7 +101,7 @@ AutoHush lives in the menu bar; it shows in the Dock only while one of its windo
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/welcome-dark.png">
-    <img src=".github/images/welcome-light.png" alt="The welcome window, Choose Your Media Player: Spotify picked among the Supported Apps (Spotify, Apple Music, VLC, Apple Podcasts and TIDAL); below them Other Apps, marked Checked by you, with Add…; then the Safari Web Apps, marked Experimental: SoundCloud and YouTube Music added, Spotify, Amazon Music and Deezer to add, Apple Music untested, and Add…; then Continue" width="540">
+    <img src=".github/images/welcome-light.png" alt="The welcome window, Choose Your Media Player: Spotify picked among the Supported Apps (Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player); below them Other Apps, with Add…; then the Safari Web Apps, marked Experimental: SoundCloud and YouTube Music added, Spotify, Amazon Music and Deezer to add, Apple Music untested, and Add…; then Continue" width="540">
   </picture>
 </p>
 
@@ -131,7 +131,7 @@ Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/menu-dark.png">
-    <img src=".github/images/menu-light.png" alt="AutoHush's menu: Spotify paused while Safari plays, with the Auto-Pause switch and the media player; buttons to turn AutoHush off for 5 minutes to 24 hours; Safari and VLC playing now, VLC ignored; Ignored Apps; and the Settings, Updates, About and Quit buttons" width="391">
+    <img src=".github/images/menu-light.png" alt="AutoHush's menu: Spotify paused while Safari plays, with the Auto-Pause switch; the media player, Spotify; buttons to turn AutoHush off for 5 minutes to 24 hours; Safari and VLC playing now, VLC ignored; Ignored Apps, VLC; the Detection, Fades and Advanced switches; and the Settings, Updates, About and Quit buttons" width="391">
   </picture>
 </p>
 
@@ -204,7 +204,7 @@ AutoHush can also control an app it doesn't support itself, once it has checked 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/settings-dark.png">
-    <img src=".github/images/settings-light.png" alt="Settings, General page: the sidebar with General, Apps, Detection, Fades, Diagnostics, Updates and About, AutoHush's version and a link to support it; the page with your media player, the Auto-Pause switch, and every player as a tile: the Supported Apps, Other Apps with Add…, and the Safari Web Apps" width="760">
+    <img src=".github/images/settings-light.png" alt="Settings, General page: the sidebar with General, Sound Sources, Detection, Fades, Advanced, Diagnostics, Updates and About, AutoHush's version and a link to support it; the page with your media player and what works with it, the Auto-Pause switch, and every player as a tile: the Supported Apps, Other Apps with Add…, and the Safari Web Apps" width="760">
   </picture>
 </p>
 
