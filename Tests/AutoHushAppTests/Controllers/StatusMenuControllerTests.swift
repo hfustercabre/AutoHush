@@ -400,7 +400,7 @@ struct StatusMenuControllerTests {
         #expect(sut.model.players.supportedApps[0].accessibilityLabel == "First")
     }
 
-    @Test("from eight players on, a search comes first and narrows them down; fewer have none; ↑ ↓ move among them and Return chooses")
+    @Test("from eight players on, a search comes first and narrows them down; fewer have none; Return with nothing highlighted chooses the first one left")
     func playerSearch() async {
         let sut = makeController()
         defer { sut.remove() }
@@ -421,15 +421,7 @@ struct StatusMenuControllerTests {
         sut.perform(.searchPlayers("zz"))
         #expect(playerRows(sut) == ["search", "No players match “zz”."])
 
-        // The arrows stop at the ends, and skip a player that can't be chosen.
-        sut.perform(.searchPlayers(""))
-        sut.perform(.moveHighlight(-1))
-        #expect(sut.model.highlightedPlayerID == "com.example.Música") // the last choosable: not Deezer
-        sut.perform(.moveHighlight(1))
-        #expect(sut.model.highlightedPlayerID == "com.example.Música")
         sut.perform(.searchPlayers("music"))
-        sut.perform(.moveHighlight(-1))
-        #expect(sut.model.highlightedPlayerID == "com.example.Apple Music")
         sut.perform(.chooseHighlighted)
         await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "player com.example.Apple Music"])
@@ -449,7 +441,7 @@ struct StatusMenuControllerTests {
         #expect(playerRows(sut).first == "[Supported]") // seven: no search
     }
 
-    @Test("in the panel, ↑ ↓ move among the unfolded players and Return chooses, ← closes them; with the players folded, the other keys are the panel's")
+    @Test("among the players, ↑ ↓ move the side window's highlight through their rows and Return presses the one it's on, ← closes them; with the players folded, the other keys are the panel's")
     func playerKeys() async {
         let sut = makeController()
         defer { sut.remove() }
@@ -465,11 +457,18 @@ struct StatusMenuControllerTests {
         #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
         #expect(!sut.model.isChoosingPlayer)
         sut.perform(.togglePlayerList)
+        // Their rows, as the side window's views register them.
+        let first = UUID(), second = UUID()
+        sut.model.sideKeyboard.register(first, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 22),
+                                                     press: { sut.perform(.choosePlayer("com.example.First")) }))
+        sut.model.sideKeyboard.register(second, .init(frame: CGRect(x: 0, y: 30, width: 280, height: 22),
+                                                      press: { sut.perform(.choosePlayer("com.example.Second")) }))
         #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓
-        #expect(sut.model.highlightedPlayerID == "com.example.First")
+        #expect(sut.model.sideKeyboard.highlighted == first)
+        #expect(sut.model.keyboard.highlighted == nil) // the menu's stays where it was
         #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(sut.handleKey(MenuPanelTests.key(126))) // ↑
-        #expect(sut.model.highlightedPlayerID == "com.example.First")
+        #expect(sut.model.sideKeyboard.highlighted == first)
         #expect(!sut.handleKey(MenuPanelTests.key(0))) // A: not the list's
         #expect(sut.handleKey(MenuPanelTests.key(36))) // Return
         await wait(for: 2, in: log)

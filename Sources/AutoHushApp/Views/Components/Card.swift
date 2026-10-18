@@ -26,6 +26,8 @@ struct Card<Content: View, Footer: View>: View {
     @ViewBuilder let content: Content
     @ViewBuilder let footer: Footer
     @Environment(\.cardsAreFormSections) private var isFormSection
+    /// The menu's card is highlighted: the tint over its glass, under its content.
+    @Environment(\.isMenuHighlighted) private var isHighlighted
 
     init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil,
          clearGlass: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
@@ -78,17 +80,36 @@ struct Card<Content: View, Footer: View>: View {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background { highlight }
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
         } else if clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
+                .background { highlight }
+                .background(RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius).fill(.quaternary.opacity(0.6)))
         } else {
             GroupBox {
                 VStack(alignment: .leading, spacing: 10) { content }
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+    }
+}
+
+/// The menu's card (`Card`'s `clearGlass`).
+enum ClearGlassCard {
+    /// Its corners: Liquid Glass's from macOS 26, a faint fill's before.
+    static var cornerRadius: CGFloat {
+        if #available(macOS 26, *) { 18 } else { 12 }
+    }
+}
+
+extension Card {
+    /// The menu's tint over the card's glass while it's highlighted.
+    @ViewBuilder fileprivate var highlight: some View {
+        if isHighlighted {
+            MenuFocusBackground(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius)
         }
     }
 }

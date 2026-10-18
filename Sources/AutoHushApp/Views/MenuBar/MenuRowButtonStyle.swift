@@ -2,24 +2,25 @@ import SwiftUI
 
 /// A row of the menu that acts when clicked, as a menu item does: under the
 /// pointer (or the arrow keys' highlight) it lights up in the accent color,
-/// its text turning white; disabled, it's dimmed and stays dark.
+/// its text turning white; disabled, it's dimmed and stays dark. `tinted`:
+/// it never lights up itself, the menu's tint shows behind it instead
+/// (`MenuFocusTint`; the players' side window, the user, 2026-10-18).
 struct MenuRowButtonStyle: ButtonStyle {
-    /// The arrow keys moved to it.
-    var isHighlighted = false
+    var tinted = false
 
     func makeBody(configuration: Configuration) -> some View {
-        Row(configuration: configuration, isHighlighted: isHighlighted)
+        Row(configuration: configuration, tinted: tinted)
     }
 
     private struct Row: View {
         let configuration: Configuration
-        let isHighlighted: Bool
+        let tinted: Bool
         @State private var isHovered = false
         @Environment(\.isEnabled) private var isEnabled
-        @Environment(\.isMenuKeyHighlighted) private var isKeyHighlighted
+        @Environment(\.isMenuHighlighted) private var isMenuHighlighted
 
         var body: some View {
-            let lit = isEnabled && (isHovered || isHighlighted || isKeyHighlighted)
+            let lit = isEnabled && !tinted && (isHovered || isMenuHighlighted)
             configuration.label
                 .foregroundStyle(lit ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .environment(\.menuRowIsLit, lit)
@@ -38,9 +39,11 @@ struct MenuRowButtonStyle: ButtonStyle {
 extension EnvironmentValues {
     /// Inside a lit `MenuRowButtonStyle` row: its secondary text turns white too.
     @Entry var menuRowIsLit = false
-    /// The menu's highlight (`MenuKeyboard`) is on this row, which lights
-    /// up by itself (`MenuHighlight.lightsItself`).
-    @Entry var isMenuKeyHighlighted = false
+    /// The menu's highlight (`MenuKeyboard`) or the keyboard's focus is on
+    /// this view, which shows it itself (`MenuHighlight.lightsItself`): a
+    /// menu item's row lights up, the menu's card takes the tint over its
+    /// glass.
+    @Entry var isMenuHighlighted = false
 }
 
 /// Secondary text in a menu row, white while the row is lit.

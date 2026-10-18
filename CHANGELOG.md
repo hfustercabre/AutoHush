@@ -35,8 +35,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   As in macOS's menus, ↑ and ↓ move through every control, whatever
   your keyboard navigation setting, and Return or Space presses it; → and
   ← open and close a side window, or change a slider. The control the
-  keys or the pointer are on shows a tint of your accent color, and with
-  keyboard navigation on, Tab reaches each control too.
+  keys or the pointer are on shows a tint of your accent color, the
+  players' rows too, and with keyboard navigation on, Tab reaches each
+  control too. A click anywhere on the card turns Auto-Pause on or off.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's

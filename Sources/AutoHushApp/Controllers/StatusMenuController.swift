@@ -147,7 +147,6 @@ final class StatusMenuController: NSObject {
         model.listedRecentSources = status.recentSources()
         model.isChoosingPlayer = false
         model.playerSearch = ""
-        model.highlightedPlayerID = nil
         model.showsIgnoredApps = false
         model.listedIgnoredApps = status.ignoredApps
         // As macOS's menus open: nothing highlighted.
@@ -318,7 +317,7 @@ final class StatusMenuController: NSObject {
         model.isChoosingPlayer = part == .players
         model.showsIgnoredApps = part == .ignoredApps
         model.playerSearch = ""
-        model.highlightedPlayerID = nil
+        model.sideKeyboard.clear()
         // Listed as they are now, fixed while it's open.
         if part == .ignoredApps { model.listedIgnoredApps = status.ignoredApps }
         showSide()
@@ -335,7 +334,6 @@ final class StatusMenuController: NSObject {
         model.isChoosingPlayer = false
         model.showsIgnoredApps = false
         model.playerSearch = ""
-        model.highlightedPlayerID = nil
         model.sideKeyboard.clear()
         showSide()
     }
@@ -448,29 +446,21 @@ final class StatusMenuController: NSObject {
     /// The keys, as in macOS's menus, whatever the keyboard navigation
     /// setting (the user, 2026-10-18: "Arrows, as menus"): ↑ ↓ move the
     /// highlight through the menu's controls (`MenuKeyboard`), or the side
-    /// window's rows while it's open; Return or Space presses the one it's
+    /// window's rows while it's open (the players' too: "Implement the same
+    /// in the Media Player submenu"); Return or Space presses the one it's
     /// on; → opens a side window from its row, ← closes it; on a slider or a
-    /// choice, ← and → change it. Among the players, ↑ ↓ and Return choose
-    /// one, and typing goes to their search (the search takes the keys
-    /// itself while it has the keyboard). Tab leaves the highlight to the
-    /// keyboard's focus.
+    /// choice, ← and → change it. Among the players, typing goes to their
+    /// search, and Return with nothing highlighted chooses the first one it
+    /// left (the search takes the keys itself while it has the keyboard).
+    /// Tab leaves the highlight to the keyboard's focus.
     func handleKey(_ event: NSEvent) -> Bool {
-        if model.isChoosingPlayer {
-            if model.players.showsSearch, let typed = Self.typedText(event) {
-                // Typed into the players' search while the menu keeps the keyboard.
-                perform(.searchPlayers(typed.isEmpty ? String(model.playerSearch.dropLast()) : model.playerSearch + typed))
-                return true
-            }
-            switch event.keyCode {
-            case 126: perform(.moveHighlight(-1))
-            case 125: perform(.moveHighlight(1))
-            case 36, 76: perform(.chooseHighlighted)
-            case 123: closeSide()
-            default: return false
-            }
+        if model.isChoosingPlayer, model.players.showsSearch, let typed = Self.typedText(event) {
+            // Typed into the players' search while the menu keeps the keyboard.
+            perform(.searchPlayers(typed.isEmpty ? String(model.playerSearch.dropLast()) : model.playerSearch + typed))
             return true
         }
-        let keyboard = model.showsIgnoredApps ? model.sideKeyboard : model.keyboard
+        let inSide = model.openSide != nil
+        let keyboard = inSide ? model.sideKeyboard : model.keyboard
         switch event.keyCode {
         case 48: // Tab: the keyboard's focus takes over
             model.keyboard.clear()
@@ -481,13 +471,19 @@ final class StatusMenuController: NSObject {
             panel?.makeFirstResponder(nil)
             keyboard.move(event.keyCode == 125 ? 1 : -1)
             return true
-        case 36, 76, 49:
+        case 36, 76:
+            if model.isChoosingPlayer {
+                perform(.chooseHighlighted)
+                return true
+            }
+            return keyboard.press()
+        case 49:
             return keyboard.press()
         case 124:
-            if !model.showsIgnoredApps, keyboard.highlightedOpensSide { return keyboard.press() }
+            if !inSide, keyboard.highlightedOpensSide { return keyboard.press() }
             return keyboard.adjust(1)
         case 123:
-            if model.showsIgnoredApps {
+            if inSide {
                 closeSide()
                 return true
             }
@@ -534,7 +530,7 @@ final class StatusMenuController: NSObject {
             model.isChoosingPlayer.toggle()
             model.showsIgnoredApps = false
             model.playerSearch = ""
-            model.highlightedPlayerID = nil
+            model.sideKeyboard.clear()
             showSide()
         case .choosePlayer(let id):
             // In place (the user, 2026-10-18): the side window closes, and the
@@ -543,19 +539,16 @@ final class StatusMenuController: NSObject {
             // menu as it comes forward (`watchOtherWindows`).
             model.isChoosingPlayer = false
             model.playerSearch = ""
-            model.highlightedPlayerID = nil
+            model.sideKeyboard.clear()
             showSide()
             actions?.choosePlayer(id)
         case .searchPlayers(let search):
             guard model.isChoosingPlayer else { return } // a closing field handing its text back
             model.playerSearch = search
-            if let highlighted = model.highlightedPlayerID, !model.players.choosable.contains(where: { $0.id == highlighted }) {
-                model.highlightedPlayerID = nil
-            }
         case .moveHighlight(let step):
-            model.highlightedPlayerID = model.players.highlight(from: model.highlightedPlayerID, by: step)
+            model.sideKeyboard.move(step)
         case .chooseHighlighted:
-            guard let id = model.highlightedPlayerID ?? model.players.choosable.first?.id else { return }
+            guard !model.sideKeyboard.press(), let id = model.players.choosable.first?.id else { return }
             perform(.choosePlayer(id))
         case .toggleSettings(let part):
             animated {

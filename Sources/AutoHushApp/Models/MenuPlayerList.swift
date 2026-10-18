@@ -69,16 +69,9 @@ struct MenuPlayerList: Equatable {
         webApps = shown.filter { $0.kind == .safariWebApp }.map(row)
     }
 
-    /// The rows the arrow keys move among, top to bottom.
+    /// The players that can be chosen, top to bottom: Return with nothing
+    /// highlighted chooses the first.
     var choosable: [Row] {
         (supportedApps + otherApps + webApps).filter(\.isEnabled)
-    }
-
-    /// The player `step` rows from `current` (the first or last without one).
-    func highlight(from current: String?, by step: Int) -> String? {
-        let ids = choosable.map(\.id)
-        guard !ids.isEmpty else { return nil }
-        guard let current, let index = ids.firstIndex(of: current) else { return step > 0 ? ids.first : ids.last }
-        return ids[min(max(index + step, 0), ids.count - 1)]
     }
 }

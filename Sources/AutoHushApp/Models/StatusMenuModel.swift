@@ -12,9 +12,10 @@ enum StatusMenuCommand: Equatable, Sendable {
     case togglePlayerList
     /// Shows only the unfolded players whose names match.
     case searchPlayers(String)
-    /// Moves the keyboard's highlight among the unfolded players (-1, 1).
+    /// Moves the side window's highlight through its rows (-1, 1).
     case moveHighlight(Int)
-    /// Chooses the highlighted player (Return).
+    /// Presses the highlighted row in the players' side window, or chooses
+    /// the first player the search left (Return).
     case chooseHighlighted
     /// Chooses the player with this bundle ID (or a suggested web app's ID).
     case choosePlayer(String)
@@ -106,8 +107,6 @@ final class StatusMenuModel {
     var isChoosingPlayer = false
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
-    /// The player the arrow keys moved to, chosen with Return.
-    var highlightedPlayerID: String?
     /// The highlight the arrow keys and the pointer move through the menu's
     /// controls, as in macOS's menus; the side window's, through its rows.
     @ObservationIgnored let keyboard = MenuKeyboard()

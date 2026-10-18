@@ -91,7 +91,7 @@ struct MenuFocusTint: ViewModifier {
     /// Kept on: a row whose side window is open.
     var isLit = false
     /// A row that lights up by itself (`MenuRowButtonStyle`), as a menu
-    /// item, instead of the tint.
+    /// item, instead of the tint (`isMenuHighlighted`).
     var lightsItself = false
     /// What Return or Space does while it's highlighted.
     let press: (() -> Void)?
@@ -116,7 +116,9 @@ struct MenuFocusTint: ViewModifier {
 /// where it is and what pressing it (or ← and →) does, the pointer moves the
 /// highlight onto it, and the tint shows behind it while it's highlighted,
 /// has the keyboard's focus (`isFocused`, its control's) or `isLit`; a
-/// dimmed one is skipped. Outside the menu, nothing.
+/// dimmed one is skipped. `lightsItself`: no tint, the view shows it itself
+/// (`isMenuHighlighted`: a menu item's row, the card). Outside the menu,
+/// nothing.
 struct MenuHighlight: ViewModifier {
     var isFocused = false
     var cornerRadius: CGFloat = 8
@@ -146,12 +148,11 @@ struct MenuHighlight: ViewModifier {
         if isInMenu {
             let enabled = isEnabled && isAvailable
             let _ = { actions.press = press; actions.adjust = adjust }()
-            let isHighlighted = enabled && keyboard?.highlighted == id
+            let lit = isFocused || isLit || (enabled && keyboard?.highlighted == id)
             content
-                .environment(\.isMenuKeyHighlighted, lightsItself && isHighlighted)
+                .environment(\.isMenuHighlighted, lightsItself && lit)
                 .background {
-                    MenuFocusBackground(isFocused: isFocused || isLit || (!lightsItself && isHighlighted),
-                                        cornerRadius: cornerRadius, inset: inset)
+                    MenuFocusBackground(isFocused: !lightsItself && lit, cornerRadius: cornerRadius, inset: inset)
                         .padding(-outset)
                 }
                 .id(id)

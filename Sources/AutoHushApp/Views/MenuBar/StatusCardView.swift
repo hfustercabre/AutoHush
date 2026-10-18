@@ -5,11 +5,16 @@ import SwiftUI
 /// the music player, what's happening and the Auto-Pause switch, then what
 /// AutoHush can do with the player, as Settings → General shows it
 /// (`PlayerChecks`, K3, the user's pick, 2026-10-18) (the player's choice is
-/// under it, `MenuMediaPlayerView`).
+/// under it, `MenuMediaPlayerView`). The whole card is Auto-Pause's (the
+/// user, 2026-10-18: "add that little accent color to the whole box. Also,
+/// a click on the box should toggle Auto-Pause"): the menu's highlight and
+/// the switch's focus tint all of it, and a click anywhere on it but on its
+/// own buttons turns Auto-Pause on or off.
 struct StatusCardView: View {
     let model: StatusMenuModel
     /// For the player's checks; none in a menu without Settings' model.
     var settings: SettingsModel?
+    @FocusState private var autoPauseFocused: Bool
 
     private var status: AppStatus { model.status }
 
@@ -43,7 +48,8 @@ struct StatusCardView: View {
                         Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
                     }
                     .toggleStyle(PillToggleStyle())
-                    .modifier(MenuFocusTint(cornerRadius: 10, outset: 4, press: { model.perform(.toggleAutoPause) }))
+                    .focused($autoPauseFocused)
+                    .focusEffectDisabled() // the whole card shows it
                     Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
@@ -65,6 +71,10 @@ struct StatusCardView: View {
                 }
             }
         }
+        .contentShape(RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
+        .onTapGesture { model.perform(.toggleAutoPause) }
+        .modifier(MenuHighlight(isFocused: autoPauseFocused, lightsItself: true, // the tint over the glass (`Card`)
+                                press: { model.perform(.toggleAutoPause) }))
         .padding(.horizontal, 8)
         .padding(.top, 4)
         .padding(.bottom, 2)
