@@ -44,9 +44,13 @@ struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
         control.isEnabled = context.environment.isEnabled
     }
 
+    /// As wide as its row, never wider: just made, it measured wider for a
+    /// moment, and the menu's rows jumped aside as Detection unfolded (the
+    /// user, 2026-10-18). Its windows leave it the room it needs
+    /// (`fittingWidth`: `menuContentWidth`, Settings' least width).
     func sizeThatFits(_ proposal: ProposedViewSize, nsView control: NSSegmentedControl, context: Context) -> CGSize? {
         let fitting = control.fittingSize
-        return CGSize(width: max(fitting.width, proposal.width ?? fitting.width), height: fitting.height)
+        return CGSize(width: proposal.width ?? fitting.width, height: fitting.height)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(choice: self) }
