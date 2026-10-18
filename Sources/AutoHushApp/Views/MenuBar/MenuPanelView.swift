@@ -30,7 +30,9 @@ struct MenuPanelView: View {
     /// How far down the middle shows, while it's taller than the screen
     /// leaves (`nil` while all of it shows).
     @State private var reach: ScrollReach?
-    private var moreBelow: Bool { reach?.moreBelow ?? false }
+    /// More is below the bottom edge: only while the screen caps the menu,
+    /// not while it grows (`StatusMenuModel.isCappedByScreen`).
+    private var moreBelow: Bool { model.isCappedByScreen && reach?.moreBelow == true }
     /// How tall the rows' fade is at the bottom edge while more is below.
     static let fadeHeight: CGFloat = 32
     /// The rows fade only from macOS 26: before, the mask takes their
@@ -114,7 +116,7 @@ struct MenuPanelView: View {
     /// rows' own space (a mask on the scroll view doesn't reach AppKit's),
     /// so it moves with the scrolling to stay at the edge.
     @ViewBuilder private var fadeMask: some View {
-        if let reach, reach.moreBelow, Self.fadesRows {
+        if let reach, moreBelow, Self.fadesRows {
             VStack(spacing: 0) {
                 Rectangle().frame(height: max(0, reach.visibleBottom - Self.fadeHeight))
                 LinearGradient(colors: [.black, .black.opacity(0)], startPoint: .top, endPoint: .bottom)

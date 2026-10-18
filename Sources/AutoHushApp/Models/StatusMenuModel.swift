@@ -142,6 +142,11 @@ final class StatusMenuModel {
     var openSide: MenuSidePart? {
         isChoosingPlayer ? .players : showsIgnoredApps ? .ignoredApps : nil
     }
+    /// The menu is as tall as the screen lets it be, its content taller:
+    /// only then does it show that more is below. Never while it grows to
+    /// fit what unfolded, whose rows dimmed and flashed for a moment (the
+    /// user, 2026-10-18).
+    var isCappedByScreen = false
     /// The menu shows Detection's, Fades' and Advanced's settings.
     var hasSettings = false
     /// An update check asked from the menu runs: its Updates button says so.

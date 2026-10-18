@@ -247,6 +247,7 @@ final class StatusMenuController: NSObject {
               let screen = window.screen ?? NSScreen.main else { return }
         let item = window.convertToScreen(button.convert(button.bounds, to: nil))
         let frame = Self.panelFrame(under: item, in: screen.visibleFrame, width: menuContentWidth, contentHeight: contentHeight)
+        model.isCappedByScreen = frame.height < contentHeight.rounded() - 0.5
         panel.setFrame(frame, display: true)
         panel.invalidateShadow()
     }
@@ -282,8 +283,9 @@ final class StatusMenuController: NSObject {
     private func followContent() {
         followsContent = false
         guard isMenuOpen, let panel, panel.isVisible, let screen = panel.screen else { return }
-        panel.setContentHeight(Self.fittingHeight(contentHeight, top: panel.frame.maxY, in: screen.visibleFrame),
-                               animated: !Self.reducesMotion)
+        let height = Self.fittingHeight(contentHeight, top: panel.frame.maxY, in: screen.visibleFrame)
+        model.isCappedByScreen = height < contentHeight.rounded() - 0.5
+        panel.setContentHeight(height, animated: !Self.reducesMotion)
     }
 
     // MARK: - The side window
