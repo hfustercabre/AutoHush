@@ -26,6 +26,11 @@ struct MenuPanelTests {
         #expect(keys == [125])
     }
 
+    @Test("Tab goes through every control it shows: its key view loop follows its content")
+    func keyViewLoop() {
+        #expect(MenuPanel(content: NSView()).autorecalculatesKeyViewLoop)
+    }
+
     @Test("its height follows its content, its top edge where it was; less than half a point changes nothing")
     func height() {
         let panel = MenuPanel(content: NSView())

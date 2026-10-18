@@ -53,6 +53,7 @@ struct MenuPanelView: View {
             .padding(.top, 5)
             .fixedSize(horizontal: false, vertical: true)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topHeight = $0; report() }
+            ScrollViewReader { scroller in
             ScrollView {
                 VStack(spacing: 0) {
                     let middle = sections.filter { $0.section != .card && $0.section != .toolbar }
@@ -75,6 +76,12 @@ struct MenuPanelView: View {
                 if moreBelow { moreBelowChevron.transition(.opacity) }
             }
             .animation(.easeOut(duration: 0.15), value: moreBelow)
+            // The arrow keys' highlight scrolls into view (the card's and the
+            // buttons' aren't in it, so they don't scroll).
+            .onChange(of: model.keyboard.revealed) { _, revealed in
+                if let revealed { scroller.scrollTo(revealed) }
+            }
+            }
             // It fills what the panel leaves between the card and the
             // buttons, as the panel's height follows the content's: sized
             // to its content, the parts shorter than a shrinking panel were
@@ -90,6 +97,7 @@ struct MenuPanelView: View {
         }
         .font(.appBody)
         .environment(\.isInMenu, true)
+        .environment(model.keyboard)
         // Drawn active while its side window has the keyboard, as a menu
         // with a submenu open is.
         .environment(\.controlActiveState, .key)
@@ -144,7 +152,15 @@ struct MenuPanelView: View {
         Divider().padding(.horizontal, 14).padding(.vertical, 4)
     }
 
-    @ViewBuilder private func view(for section: MenuSection) -> some View {
+    /// A part of the menu, telling where the pointer goes: onto another part
+    /// than the open side window's, that one closes.
+    private func view(for section: MenuSection) -> some View {
+        part(section)
+            .contentShape(Rectangle())
+            .onHover { if $0 { model.perform(.pointerEntered(section)) } }
+    }
+
+    @ViewBuilder private func part(_ section: MenuSection) -> some View {
         switch section {
         case .card: StatusCardView(model: model, settings: settings)
         case .mediaPlayer: MenuMediaPlayerView(model: model)
@@ -184,6 +200,7 @@ struct MenuPanelView: View {
             }
         }
         .buttonStyle(MenuRowButtonStyle())
+        .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: { model.perform(command) }))
         .padding(.horizontal, 8)
     }
 
@@ -204,6 +221,7 @@ struct MenuPanelView: View {
                 }
             }
             .buttonStyle(MenuRowButtonStyle())
+            .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: { model.perform(.showUpdate) }))
             .disabled(installing)
             .padding(.horizontal, 8)
         }
@@ -229,7 +247,8 @@ struct MenuIgnoredAppsView: View {
             MenuSideRow(title: Self.names(of: apps.map(\.name)),
                         subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
                         leadingWidth: apps.count > 1 ? 32 : 22, isOpen: model.showsIgnoredApps,
-                        action: { model.perform(.toggleIgnoredApps) },
+                        action: { model.perform(.openSide(.ignoredApps)) },
+                        onHover: { model.perform(.hoverSideRow(.ignoredApps, $0)) },
                         onTop: { model.sideRowTops[.ignoredApps] = $0 }) {
                 iconStack
             }

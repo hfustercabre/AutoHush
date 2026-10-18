@@ -8,6 +8,7 @@ import AutoHushKit
 struct SourceSwitchRow: View {
     let model: StatusMenuModel
     let source: AudioSource
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         let pausesMusic = !model.status.isIgnored(source.id)
@@ -31,7 +32,17 @@ struct SourceSwitchRow: View {
                 Text(verbatim: source.name)
             }
             .toggleStyle(PillToggleStyle())
+            .focused($isFocused)
+            .focusEffectDisabled()
             .accessibilityHint(state)
         }
+        // Highlighted by the arrow keys and the pointer; its switch takes the keyboard's focus (F5).
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .modifier(MenuHighlight(isFocused: isFocused, press: {
+            model.perform(.setIgnored(source, !model.status.isIgnored(source.id)))
+        }))
+        .padding(.horizontal, -6)
+        .padding(.vertical, -3)
     }
 }

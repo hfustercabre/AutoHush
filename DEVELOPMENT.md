@@ -101,7 +101,8 @@ Sources/
                          show, with UpdateOffer), SettingsModel (what only the windows show, and their
                          actions), StatePresentation (the status's icons and text), AppHealthState,
                          StatusMenuModel (the menu's parts, MenuSection), MenuPlayerList (the menu's
-                         players), AddWebAppModel, PlayerOption (each player and whether it's
+                         players), MenuKeyboard (the menu's highlight, moved by the arrow keys and
+                         the pointer), AddWebAppModel, PlayerOption (each player and whether it's
                          installed), AppActions (what only AppDelegate does), UpdateCommands,
                          SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
                          the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,

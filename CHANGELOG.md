@@ -25,12 +25,18 @@ This project follows [Semantic Versioning](https://semver.org/).
   does: its permission allowed, and whether it fades. Media Player and
   Ignored Apps are parts like the settings', a title over a row: your
   player and what kind it is; the ignored apps' icons and names. Each row
-  opens a window beside the menu, as a submenu: the players, under their
+  opens a window beside the menu as the pointer rests on it, as a submenu,
+  until the pointer moves to another part: the players, under their
   groups' titles with a checkmark on yours (type to search, ↑ and ↓ move
   through them and Return chooses; the menu stays open as the card follows
   the new player), or the ignored apps, each with its switch. Escape or a click elsewhere closes it, and it follows
   Reduce Transparency and Increase Contrast, as menus do. Its section
   titles are those of macOS's own menus: smaller, semibold and grey.
+  As in macOS's menus, ↑ and ↓ move through every control, whatever
+  your keyboard navigation setting, and Return or Space presses it; → and
+  ← open and close a side window, or change a slider. The control the
+  keys or the pointer are on shows a tint of your accent color, and with
+  keyboard navigation on, Tab reaches each control too.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's

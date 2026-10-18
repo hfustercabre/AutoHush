@@ -73,6 +73,9 @@ struct MenuPlayerListView: View {
                     }
                 }
                 .buttonStyle(MenuRowButtonStyle(isHighlighted: model.highlightedPlayerID == row.id))
+                .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: {
+                    model.perform(removes ? .removeAddedApp(row.id) : .choosePlayer(row.id))
+                }))
                 .disabled(!row.isEnabled && !removes)
                 .help(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityLabel(Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.accessibilityLabel))
@@ -93,6 +96,7 @@ struct MenuPlayerListView: View {
             }
         }
         .buttonStyle(MenuRowButtonStyle())
+        .modifier(MenuFocusTint(cornerRadius: 6, lightsItself: true, press: { model.perform(command) }))
         .padding(.horizontal, -6)
     }
 }

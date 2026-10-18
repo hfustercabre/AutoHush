@@ -59,6 +59,15 @@ final class StatusMenuController: NSObject {
     /// When a click elsewhere last closed the menu: a click on the menu bar
     /// item itself closes it that way first, as its mouse goes down.
     private var lastClosedByClick: Date?
+    /// The row that opens a side window the pointer rests on, if any.
+    private var hoveredSideRow: MenuSidePart?
+    /// The menu's part the pointer last came onto.
+    private var pointerSection: MenuSection?
+    /// How long the pointer rests on a row before its side window opens,
+    /// and stays on another part before it closes (so the way to the side
+    /// window may cross the menu), as macOS's submenus wait.
+    static let sideOpenDelay: TimeInterval = 0.15
+    static let sideCloseDelay: TimeInterval = 0.3
     private(set) var isMenuOpen = false
 
     /// What the menu's controls change: the user's settings, Retry, the
@@ -141,6 +150,11 @@ final class StatusMenuController: NSObject {
         model.highlightedPlayerID = nil
         model.showsIgnoredApps = false
         model.listedIgnoredApps = status.ignoredApps
+        // As macOS's menus open: nothing highlighted.
+        model.keyboard.clear()
+        model.sideKeyboard.clear()
+        hoveredSideRow = nil
+        pointerSection = nil
         model.isAntiDotMode = settings.state.detection != .audioLevels
         model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
         model.announcesRetryOutcome = false
@@ -299,12 +313,30 @@ final class StatusMenuController: NSObject {
         if side.takesKey { side.makeKey() } else { panel.makeKey() }
     }
 
+    /// Opens `part`'s side window, closing the other.
+    private func open(_ part: MenuSidePart) {
+        model.isChoosingPlayer = part == .players
+        model.showsIgnoredApps = part == .ignoredApps
+        model.playerSearch = ""
+        model.highlightedPlayerID = nil
+        // Listed as they are now, fixed while it's open.
+        if part == .ignoredApps { model.listedIgnoredApps = status.ignoredApps }
+        showSide()
+    }
+
+    /// The pointer is over the side window.
+    private var pointerIsInSide: Bool {
+        guard let side = sidePanel, side.isVisible else { return false }
+        return side.frame.contains(NSEvent.mouseLocation)
+    }
+
     /// Closes the side window, the menu staying open.
     private func closeSide() {
         model.isChoosingPlayer = false
         model.showsIgnoredApps = false
         model.playerSearch = ""
         model.highlightedPlayerID = nil
+        model.sideKeyboard.clear()
         showSide()
     }
 
@@ -413,22 +445,56 @@ final class StatusMenuController: NSObject {
         window.isVisible && window !== statusItemWindow && window.level != .statusBar
     }
 
-    /// ↑ ↓ move among the unfolded players and Return chooses, as in a
-    /// menu (the search takes them itself while it has the keyboard).
+    /// The keys, as in macOS's menus, whatever the keyboard navigation
+    /// setting (the user, 2026-10-18: "Arrows, as menus"): ↑ ↓ move the
+    /// highlight through the menu's controls (`MenuKeyboard`), or the side
+    /// window's rows while it's open; Return or Space presses the one it's
+    /// on; → opens a side window from its row, ← closes it; on a slider or a
+    /// choice, ← and → change it. Among the players, ↑ ↓ and Return choose
+    /// one, and typing goes to their search (the search takes the keys
+    /// itself while it has the keyboard). Tab leaves the highlight to the
+    /// keyboard's focus.
     func handleKey(_ event: NSEvent) -> Bool {
-        guard model.isChoosingPlayer else { return false }
-        if model.players.showsSearch, let typed = Self.typedText(event) {
-            // Typed into the players' search while the menu keeps the keyboard.
-            perform(.searchPlayers(typed.isEmpty ? String(model.playerSearch.dropLast()) : model.playerSearch + typed))
+        if model.isChoosingPlayer {
+            if model.players.showsSearch, let typed = Self.typedText(event) {
+                // Typed into the players' search while the menu keeps the keyboard.
+                perform(.searchPlayers(typed.isEmpty ? String(model.playerSearch.dropLast()) : model.playerSearch + typed))
+                return true
+            }
+            switch event.keyCode {
+            case 126: perform(.moveHighlight(-1))
+            case 125: perform(.moveHighlight(1))
+            case 36, 76: perform(.chooseHighlighted)
+            case 123: closeSide()
+            default: return false
+            }
             return true
         }
+        let keyboard = model.showsIgnoredApps ? model.sideKeyboard : model.keyboard
         switch event.keyCode {
-        case 126: perform(.moveHighlight(-1))
-        case 125: perform(.moveHighlight(1))
-        case 36, 76: perform(.chooseHighlighted)
-        default: return false
+        case 48: // Tab: the keyboard's focus takes over
+            model.keyboard.clear()
+            model.sideKeyboard.clear()
+            return false
+        case 125, 126:
+            // One highlight at a time: the keyboard's focus, if Tab gave it, goes.
+            panel?.makeFirstResponder(nil)
+            keyboard.move(event.keyCode == 125 ? 1 : -1)
+            return true
+        case 36, 76, 49:
+            return keyboard.press()
+        case 124:
+            if !model.showsIgnoredApps, keyboard.highlightedOpensSide { return keyboard.press() }
+            return keyboard.adjust(1)
+        case 123:
+            if model.showsIgnoredApps {
+                closeSide()
+                return true
+            }
+            return keyboard.adjust(-1)
+        default:
+            return false
         }
-        return true
     }
 
     /// What a key press types into a search: its characters, "" for Delete
@@ -501,6 +567,29 @@ final class StatusMenuController: NSObject {
             // Listed as they are now, fixed while it's open.
             if model.showsIgnoredApps { model.listedIgnoredApps = status.ignoredApps }
             showSide()
+        case .openSide(let part):
+            guard model.openSide != part else { return }
+            open(part)
+        case .hoverSideRow(let part, let inside):
+            if inside {
+                hoveredSideRow = part
+                Task { [weak self] in
+                    try? await Task.sleep(for: .seconds(Self.sideOpenDelay))
+                    guard let self, self.isMenuOpen, self.hoveredSideRow == part, self.model.openSide != part else { return }
+                    self.open(part)
+                }
+            } else if hoveredSideRow == part {
+                hoveredSideRow = nil
+            }
+        case .pointerEntered(let section):
+            pointerSection = section
+            guard let open = model.openSide, section != open.section else { return }
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(Self.sideCloseDelay))
+                guard let self, self.isMenuOpen, self.model.openSide == open,
+                      self.pointerSection != open.section, !self.pointerIsInSide else { return }
+                self.closeSide()
+            }
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
@@ -544,7 +633,7 @@ final class StatusMenuController: NSObject {
         case .unmutePlayer:              actions?.unmutePlayer()
         case .quit:                      actions?.quit()
         case .toggleAutoPause, .setIgnored, .togglePlayerList, .choosePlayer, .searchPlayers, .moveHighlight, .chooseHighlighted,
-             .toggleSettings, .toggleIgnoredApps, .retry:
+             .toggleSettings, .toggleIgnoredApps, .openSide, .hoverSideRow, .pointerEntered, .retry:
             break // they act in perform(_:)
         }
     }

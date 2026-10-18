@@ -32,6 +32,12 @@ struct MenuSettingsView: View {
                         onSelect: { settings.setDetectionMethod($0) }
                     )
                     .controlSize(.small) // C2: both words fit
+                    // ← and → choose, while the arrow keys' highlight is on it.
+                    .modifier(MenuHighlight(adjust: { step in
+                        let methods: [DetectionMethod] = [.playbackSignals, .openStreams]
+                        guard let index = methods.firstIndex(of: settings.detectionMethod) else { return }
+                        settings.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
+                    }))
                     .unavailable(!settings.isAntiDotMode)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
@@ -93,35 +99,7 @@ struct MenuSettingsView: View {
     /// own under it, undimmed (R2, the user's pick, 2026-10-18), and in its
     /// tooltip and VoiceOver hint.
     private func switchRow(_ kind: SettingsSwitch) -> some View {
-        let isOn = kind.isOn(settings)
-        let reason = kind.unavailableReason(settings)
-        return VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 10) {
-                Image(systemName: kind.symbol)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
-                    .frame(width: 22)
-                    .accessibilityHidden(true)
-                RowTitle(kind.title, subtitle: kind.shortExplanation)
-                    .accessibilityHidden(true) // the switch says it: one stop for VoiceOver
-                Spacer(minLength: 8)
-                Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
-                    .toggleStyle(PillToggleStyle())
-                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? kind.shortExplanation)
-            }
-            .unavailable(kind.isUnavailable(settings))
-            if let reason {
-                Label(reason, systemImage: "info.circle")
-                    .font(.appCaption)
-                    .foregroundStyle(.appSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.leading, 32)
-                    .accessibilityHidden(true) // the switch's hint says it
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .modifier(ReasonTooltip(reason: reason))
+        MenuSwitchLine(kind: kind, settings: settings)
     }
 
     private func slider(_ timing: SettingsTiming) -> some View {
@@ -160,6 +138,7 @@ struct MenuSettingsView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .modifier(MenuFocusTint(cornerRadius: 8, inset: 140, press: { model.perform(.toggleSettings(part)) }))
         .help(Text(verbatim: title))
         // Two of them: VoiceOver hears whose.
         .accessibilityLabel(Text(verbatim: "\(page.title), \(title)"))
@@ -180,5 +159,50 @@ private struct ReasonTooltip: ViewModifier {
 
     func body(content: Content) -> some View {
         if let reason { content.help(Text(verbatim: reason)) } else { content }
+    }
+}
+
+/// One of the menu's settings switches, as `MenuSettingsView` lists them;
+/// the arrow keys and the pointer highlight it, and its switch takes the
+/// keyboard's focus (F5), unless it can't be changed.
+private struct MenuSwitchLine: View {
+    let kind: SettingsSwitch
+    let settings: SettingsModel
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        let isOn = kind.isOn(settings)
+        let reason = kind.unavailableReason(settings)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 10) {
+                Image(systemName: kind.symbol)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                RowTitle(kind.title, subtitle: kind.shortExplanation)
+                    .accessibilityHidden(true) // the switch says it: one stop for VoiceOver
+                Spacer(minLength: 8)
+                Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
+                    .toggleStyle(PillToggleStyle())
+                    .focused($isFocused)
+                    .focusEffectDisabled()
+                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? kind.shortExplanation)
+            }
+            .unavailable(kind.isUnavailable(settings))
+            if let reason {
+                Label(reason, systemImage: "info.circle")
+                    .font(.appCaption)
+                    .foregroundStyle(.appSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 32)
+                    .accessibilityHidden(true) // the switch's hint says it
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .modifier(MenuHighlight(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
+                                press: { kind.set(!kind.isOn(settings), in: settings) }))
+        .modifier(ReasonTooltip(reason: reason))
     }
 }

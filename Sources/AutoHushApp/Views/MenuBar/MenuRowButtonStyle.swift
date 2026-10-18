@@ -16,9 +16,10 @@ struct MenuRowButtonStyle: ButtonStyle {
         let isHighlighted: Bool
         @State private var isHovered = false
         @Environment(\.isEnabled) private var isEnabled
+        @Environment(\.isMenuKeyHighlighted) private var isKeyHighlighted
 
         var body: some View {
-            let lit = isEnabled && (isHovered || isHighlighted)
+            let lit = isEnabled && (isHovered || isHighlighted || isKeyHighlighted)
             configuration.label
                 .foregroundStyle(lit ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .environment(\.menuRowIsLit, lit)
@@ -37,6 +38,9 @@ struct MenuRowButtonStyle: ButtonStyle {
 extension EnvironmentValues {
     /// Inside a lit `MenuRowButtonStyle` row: its secondary text turns white too.
     @Entry var menuRowIsLit = false
+    /// The menu's highlight (`MenuKeyboard`) is on this row, which lights
+    /// up by itself (`MenuHighlight.lightsItself`).
+    @Entry var isMenuKeyHighlighted = false
 }
 
 /// Secondary text in a menu row, white while the row is lit.

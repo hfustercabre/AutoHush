@@ -13,6 +13,7 @@ struct MenuSidePanelView: View {
     static let width: CGFloat = 300
 
     var body: some View {
+        ScrollViewReader { scroller in
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 switch model.openSide {
@@ -41,8 +42,13 @@ struct MenuSidePanelView: View {
         }
         .scrollIndicators(.automatic)
         .scrollBounceBehavior(.basedOnSize)
+        .onChange(of: model.sideKeyboard.revealed) { _, revealed in
+            if let revealed { scroller.scrollTo(revealed) }
+        }
+        }
         .font(.appBody)
         .environment(\.isInMenu, true)
+        .environment(model.sideKeyboard)
         .environment(\.controlActiveState, .key)
         .frame(width: Self.width)
         .frame(maxHeight: .infinity, alignment: .top)

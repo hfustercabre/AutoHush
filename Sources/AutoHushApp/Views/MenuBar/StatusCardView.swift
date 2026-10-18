@@ -26,6 +26,7 @@ struct StatusCardView: View {
                     if status.controlError != nil {
                         Button { model.perform(.showControlError) } label: { statusLine(withInfo: true) }
                             .buttonStyle(.plain)
+                            .modifier(MenuFocusTint(cornerRadius: 6, press: { model.perform(.showControlError) }))
                             .help(Self.whyLabel)
                             .accessibilityLabel(Text(verbatim: status.statusLine))
                             .accessibilityHint(Text(verbatim: Self.whyLabel))
@@ -42,6 +43,7 @@ struct StatusCardView: View {
                         Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
                     }
                     .toggleStyle(PillToggleStyle())
+                    .modifier(MenuFocusTint(cornerRadius: 10, outset: 4, press: { model.perform(.toggleAutoPause) }))
                     Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)

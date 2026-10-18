@@ -27,6 +27,14 @@ enum StatusMenuCommand: Equatable, Sendable {
     case toggleSettings(MenuSettingsPart)
     /// Opens or closes the ignored apps' side window, beside their row.
     case toggleIgnoredApps
+    /// Opens a part's side window (its row clicked), closing the other.
+    case openSide(MenuSidePart)
+    /// The pointer came onto (`true`) or left a row that opens a side
+    /// window: resting on it a moment opens it, as a submenu.
+    case hoverSideRow(MenuSidePart, Bool)
+    /// The pointer came onto a part of the menu: another part than the open
+    /// side window's closes it, after a moment (the user, 2026-10-18).
+    case pointerEntered(MenuSection)
     /// Tries starting again after a failed start.
     case retry
     /// Reopens the player as it needs to be opened (`AppStatus.playerNeedsReopen`).
@@ -100,6 +108,10 @@ final class StatusMenuModel {
     var playerSearch = ""
     /// The player the arrow keys moved to, chosen with Return.
     var highlightedPlayerID: String?
+    /// The highlight the arrow keys and the pointer move through the menu's
+    /// controls, as in macOS's menus; the side window's, through its rows.
+    @ObservationIgnored let keyboard = MenuKeyboard()
+    @ObservationIgnored let sideKeyboard = MenuKeyboard()
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
     @ObservationIgnored weak var settings: SettingsModel?
     /// Whether AntiDot mode is on: an app that can only be muted can't be
@@ -173,4 +185,12 @@ final class StatusMenuModel {
 /// The menu's parts that open a side window beside it.
 enum MenuSidePart: Hashable {
     case players, ignoredApps
+
+    /// The menu's part its row is in.
+    var section: MenuSection {
+        switch self {
+        case .players: .mediaPlayer
+        case .ignoredApps: .ignoredApps
+        }
+    }
 }

@@ -4,7 +4,9 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("StatusMenuController")
+/// One test at a time: some post system-wide notifications (another
+/// desktop, another window becoming key) that close every open menu.
+@Suite("StatusMenuController", .serialized)
 @MainActor
 struct StatusMenuControllerTests {
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
@@ -447,7 +449,7 @@ struct StatusMenuControllerTests {
         #expect(playerRows(sut).first == "[Supported]") // seven: no search
     }
 
-    @Test("in the panel, ↑ ↓ move among the unfolded players and Return chooses; with the players folded, the keys are the panel's")
+    @Test("in the panel, ↑ ↓ move among the unfolded players and Return chooses, ← closes them; with the players folded, the other keys are the panel's")
     func playerKeys() async {
         let sut = makeController()
         defer { sut.remove() }
@@ -457,8 +459,11 @@ struct StatusMenuControllerTests {
         }
         sut.status = status
         reopen(sut)
-        #expect(!sut.handleKey(MenuPanelTests.key(125)))
+        #expect(!sut.handleKey(MenuPanelTests.key(0)))
 
+        sut.perform(.togglePlayerList)
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
+        #expect(!sut.model.isChoosingPlayer)
         sut.perform(.togglePlayerList)
         #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓
         #expect(sut.model.highlightedPlayerID == "com.example.First")
@@ -471,6 +476,50 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.First"])
     }
 
+    @Test("elsewhere the keys work as in macOS's menus, whatever the keyboard navigation setting: ↑ ↓ move the highlight, Return or Space presses, ← → adjust, → opens a side window and ← closes it, Tab leaves it to the focus")
+    func menuKeys() {
+        final class Log { var calls: [String] = [] }
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.ignoredApps = [vlc]
+        sut.status = status
+        reopen(sut)
+        let calls = Log()
+        let keyboard = sut.model.keyboard
+        let slider = UUID(), sideRow = UUID(), appRow = UUID()
+        keyboard.register(slider, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 20), adjust: { calls.calls.append("adjust \($0)") }))
+        keyboard.register(sideRow, .init(frame: CGRect(x: 0, y: 40, width: 300, height: 20),
+                                         press: { sut.perform(.openSide(.ignoredApps)) }, opensSide: true))
+
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓: the first
+        #expect(keyboard.highlighted == slider)
+        #expect(!sut.handleKey(MenuPanelTests.key(36))) // Return: nothing to press
+        #expect(sut.handleKey(MenuPanelTests.key(124))) // →
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
+        #expect(calls.calls == ["adjust 1", "adjust -1"])
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
+        #expect(sut.handleKey(MenuPanelTests.key(124))) // → opens its side window
+        #expect(sut.model.openSide == .ignoredApps)
+
+        sut.model.sideKeyboard.register(appRow, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 30), press: { calls.calls.append("app") }))
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // into the side window's rows
+        #expect(sut.model.sideKeyboard.highlighted == appRow)
+        #expect(keyboard.highlighted == sideRow)
+        #expect(sut.handleKey(MenuPanelTests.key(49))) // Space
+        #expect(calls.calls.last == "app")
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ← closes it
+        #expect(sut.model.openSide == nil)
+        #expect(sut.model.sideKeyboard.highlighted == nil)
+        #expect(keyboard.highlighted == sideRow)
+
+        #expect(!sut.handleKey(MenuPanelTests.key(48))) // Tab: the keyboard's focus takes over
+        #expect(keyboard.highlighted == nil)
+        keyboard.move(1)
+        reopen(sut) // a menu opens with nothing highlighted
+        #expect(keyboard.highlighted == nil)
+    }
+
     @Test("Ignored Apps names one or two apps, then the first two and how many more")
     func ignoredAppsNames() {
         #expect(MenuIgnoredAppsView.names(of: []) == "")
@@ -478,6 +527,37 @@ struct StatusMenuControllerTests {
         #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages"]) == ListFormatter.localizedString(byJoining: ["VLC", "Messages"]))
         #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages", "Chrome"]) == "VLC, Messages and 1 more")
         #expect(MenuIgnoredAppsView.names(of: ["VLC", "Messages", "Chrome", "Mail"]) == "VLC, Messages and 2 more")
+    }
+
+    @Test("resting the pointer on a row opens its side window; passing over it doesn't; another part closes it after a moment, its own part doesn't; a click opens it and never closes it")
+    func sideWindowsOnHover() async {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.ignoredApps = [vlc]
+        sut.status = status
+        reopen(sut)
+
+        sut.perform(.hoverSideRow(.players, true))
+        sut.perform(.hoverSideRow(.players, false)) // only passing over it
+        try? await Task.sleep(for: .seconds(StatusMenuController.sideOpenDelay + 0.1))
+        #expect(sut.model.openSide == nil)
+
+        sut.perform(.hoverSideRow(.players, true))
+        await TestWait.until { sut.model.openSide == .players }
+        sut.perform(.pointerEntered(.mediaPlayer)) // its own part: stays
+        sut.perform(.pointerEntered(.snooze))
+        sut.perform(.pointerEntered(.mediaPlayer)) // back before the moment is over
+        try? await Task.sleep(for: .seconds(StatusMenuController.sideCloseDelay + 0.1))
+        #expect(sut.model.openSide == .players)
+        sut.perform(.pointerEntered(.settings))
+        await TestWait.until { sut.model.openSide == nil }
+
+        sut.perform(.openSide(.ignoredApps))
+        sut.perform(.openSide(.ignoredApps)) // a click on its row again: still open
+        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [vlc])
+        sut.perform(.hoverSideRow(.players, true)) // the other row
+        await TestWait.until { sut.model.openSide == .players }
     }
 
     @Test("going to another desktop closes the menu")

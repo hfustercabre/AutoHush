@@ -12,6 +12,9 @@ struct TimingSliderRow: View {
     private var title: Text { timing.title }
     private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
 
+    @FocusState private var sliderFocused: Bool
+    @Environment(\.isInMenu) private var isInMenu
+
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 0 : 4) {
             HStack {
@@ -39,9 +42,26 @@ struct TimingSliderRow: View {
             }
             .labelsHidden()
             .controlSize(compact ? .small : .regular)
+            .focused($sliderFocused)
+            .focusEffectDisabled(isInMenu)
             .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
             if !compact { timing.help.captionStyle() }
         }
+        // In the menu, highlighted by the arrow keys (← and → move it) and the
+        // pointer, and tinted while its slider has the keyboard's focus (F5).
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .modifier(MenuHighlight(isFocused: sliderFocused, adjust: step))
+        .padding(.horizontal, -6)
+        .padding(.vertical, -3)
+    }
+
+    /// One step of the slider up (1) or down (-1), kept in its range.
+    private func step(_ direction: Int) {
+        var timings = model.timings
+        let value = timings[keyPath: keyPath] + Double(direction) * timing.step
+        timings[keyPath: keyPath] = min(max(value, timing.range.lowerBound), timing.range.upperBound)
+        model.setTimings(timings)
     }
 }
 

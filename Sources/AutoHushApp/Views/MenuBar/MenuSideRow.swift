@@ -4,7 +4,8 @@ import SwiftUI
 /// submenu's item does (W2, the user's pick, 2026-10-18), laid out as the
 /// settings' switch rows: a picture 22 pt wide (wider for a stack of icons),
 /// the title and a few words under it, and a chevron pointing to the side
-/// where a switch would be; lit while its side window is open. It reports
+/// where a switch would be; lit while its side window is open. Resting the
+/// pointer on it opens it too (`onHover`, the user, 2026-10-18). It reports
 /// where its top is, so the side window opens level with it.
 struct MenuSideRow<Leading: View>: View {
     let title: String
@@ -12,6 +13,8 @@ struct MenuSideRow<Leading: View>: View {
     var leadingWidth: CGFloat = 22
     let isOpen: Bool
     let action: () -> Void
+    /// The pointer came onto it (`true`) or left it.
+    let onHover: (Bool) -> Void
     /// Its top in the menu's content (from the content's top, scrolled).
     let onTop: (CGFloat) -> Void
     @ViewBuilder let leading: () -> Leading
@@ -32,16 +35,12 @@ struct MenuSideRow<Leading: View>: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 5)
-            .background {
-                if isOpen {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(.quaternary)
-                        .padding(.horizontal, 8)
-                }
-            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Tinted under the pointer, with the focus, and while its side window is open.
+        .modifier(MenuFocusTint(inset: 8, isLit: isOpen, press: action, opensSide: true))
+        .onHover { onHover($0) }
         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { onTop($0) }
         .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)
     }

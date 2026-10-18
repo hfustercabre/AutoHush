@@ -38,6 +38,9 @@ final class MenuPanel: NSPanel {
         level = .popUpMenu
         hidesOnDeactivate = false
         becomesKeyOnlyIfNeeded = false
+        // Reused as its rows change: a loop kept from its first opening
+        // left Tab stopping halfway, at AntiDot mode's switch (2026-10-18).
+        autorecalculatesKeyViewLoop = true
         animationBehavior = .none
         collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .transient, .ignoresCycle]
         isOpaque = false

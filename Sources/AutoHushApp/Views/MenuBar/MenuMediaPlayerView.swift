@@ -15,7 +15,8 @@ struct MenuMediaPlayerView: View {
         VStack(alignment: .leading, spacing: 0) {
             MenuPartTitle(Text(verbatim: Self.title))
             MenuSideRow(title: status.chosenPlayer?.name ?? Self.chooseTitle, subtitle: subtitle,
-                        isOpen: model.isChoosingPlayer, action: { model.perform(.togglePlayerList) },
+                        isOpen: model.isChoosingPlayer, action: { model.perform(.openSide(.players)) },
+                        onHover: { model.perform(.hoverSideRow(.players, $0)) },
                         onTop: { model.sideRowTops[.players] = $0 }) {
                 playerIcon
             }
