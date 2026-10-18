@@ -31,6 +31,7 @@ extension PlayerSession {
         let generation = startGeneration
         cancelRetry() // this start takes its place
         tearDownMonitoring()
+        waitsForPlayerToOpen = false
         guard let player else {
             setHealth(nil) // nothing to control yet
             return
@@ -68,6 +69,10 @@ extension PlayerSession {
             state = failed
             setHealth(AppHealthState(startupError: error, playerName: player.name))
             retryLater(after: error)
+            if case .playerNotRunning? = error as? MusicPlayerError {
+                waitsForPlayerToOpen = true
+                await listenUntilPlayerOpens()
+            }
             return
         }
         // A newer start (Retry, player relaunch) began while we awaited.
@@ -88,6 +93,29 @@ extension PlayerSession {
         started.controlError = nil
         state = started
         setHealth(.ready)
+    }
+
+    /// While the chosen player isn't running and Auto-Pause is on, its
+    /// monitoring runs all the same, so the menu lists the apps playing and
+    /// played (the user, 2026-10-18: "Keep listing them if the player isn't
+    /// running but the Auto-Pause is on"); it finds nothing to pause, and the
+    /// status line still says the player isn't running. The player opening
+    /// starts it as usual (`start`).
+    func listenUntilPlayerOpens() async {
+        guard !hasQuit, waitsForPlayerToOpen, settings.autoPause, monitoring == nil, let player else { return }
+        let token = UUID()
+        monitoringToken = token
+        let monitoring = makeMonitoring(for: player, token: token)
+        self.monitoring = monitoring
+        await monitoring.start(takingOverPause: false, asleep: isAsleep)
+    }
+
+    /// Auto-Pause turned off (or off for a while) while the player isn't
+    /// running: the apps aren't listed until it's on again.
+    func stopListeningUntilPlayerOpens() {
+        guard waitsForPlayerToOpen, monitoring != nil else { return }
+        tearDownMonitoring()
+        state.activeSources = []
     }
 
     /// Tries starting again after `error`, unless an event will: see `Retries`.

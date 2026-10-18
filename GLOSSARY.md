@@ -20,7 +20,9 @@ Settings show its state.
 
 **Start**: checking that AutoHush may control the chosen player, then
 starting its monitoring. A start that fails says why in the health, and is
-tried again by itself. _Avoid_: bootstrap.
+tried again by itself. One that finds the player not running still starts
+its monitoring while Auto-Pause is on, only to list the apps playing, until
+the player opens. _Avoid_: bootstrap.
 
 **Health** (`AppHealthState`): whether the chosen player's monitoring
 runs, and if not, why: starting, ready, not running or not installed,

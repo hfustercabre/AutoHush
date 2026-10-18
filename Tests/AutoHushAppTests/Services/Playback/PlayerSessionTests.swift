@@ -200,8 +200,66 @@ struct PlayerSessionTests {
         bench.startupWaits.step()
         await session.waitUntilIdle()
         #expect(await bench.second.verifyCallCount == 6)
-        #expect(bench.monitorings.made.count == 3)
+        #expect(bench.monitorings.made.count == 4) // the first lists the apps while it's closed
         #expect(bench.monitorings.made.last?.isStopped == false)
+    }
+
+    @MainActor
+    @Test("while the player isn't running and Auto-Pause is on, its monitoring runs to list the apps playing, the line still saying it isn't running; Auto-Pause off stops it until it's on again; the player opening starts it as usual")
+    func listsAppsWhilePlayerIsClosed() async {
+        let bench = Bench()
+        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        let session = bench.makeSession(bench.second)
+        session.launch()
+        await TestWait.until { session.state.health != .starting }
+        await session.waitUntilIdle()
+        #expect(session.state.health == .degraded("Second isn’t running"))
+        let listening = bench.monitorings.of(Players.second)
+        #expect(listening.count == 1 && listening[0].starts.map(\.takingOverPause) == [false])
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        listening[0].send(.activeSources([vlc]))
+        #expect(session.state.activeSources == [vlc]) // listed
+        #expect(session.state.health == .degraded("Second isn’t running")) // still says so
+
+        var off = session.settings
+        off.autoPause = false
+        session.settings = off // Auto-Pause off (or off for a while)
+        #expect(listening[0].isStopped)
+        #expect(session.state.activeSources.isEmpty)
+        var on = session.settings
+        on.autoPause = true
+        session.settings = on
+        await session.waitUntilIdle()
+        #expect(bench.monitorings.of(Players.second).count == 2)
+        #expect(bench.monitorings.of(Players.second)[1].isStopped == false)
+
+        await bench.second.setFailVerify(nil)
+        session.playerLaunched(Players.second) // it opens: started as usual
+        await TestWait.until { session.state.health == .ready }
+        #expect(bench.monitorings.of(Players.second)[1].isStopped)
+        #expect(bench.monitorings.of(Players.second).count == 3)
+        session.settings = off
+        #expect(bench.monitorings.of(Players.second)[2].isStopped == false) // running: Auto-Pause off keeps it
+    }
+
+    @MainActor
+    @Test("with Auto-Pause off as the player is found not running, nothing runs until it's turned on")
+    func notListeningWithAutoPauseOff() async {
+        let bench = Bench()
+        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        let session = bench.makeSession(bench.second)
+        var off = session.settings
+        off.autoPause = false
+        session.settings = off
+        session.launch()
+        await TestWait.until { session.state.health != .starting }
+        await session.waitUntilIdle()
+        #expect(bench.monitorings.made.isEmpty)
+        var on = off
+        on.autoPause = true
+        session.settings = on
+        await session.waitUntilIdle()
+        #expect(bench.monitorings.made.count == 1)
     }
 
     @Test("the waits between automatic starts double up to a ceiling")

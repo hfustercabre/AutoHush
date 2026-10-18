@@ -132,6 +132,10 @@ final class PlayerSession {
     var resumesHeld = false
     /// AutoHush is quitting: nothing starts any more (see `quit`).
     var hasQuit = false
+    /// The last start found the chosen player not running: until it opens,
+    /// its monitoring runs only to list the apps playing, while Auto-Pause
+    /// is on (`listenUntilPlayerOpens`).
+    var waitsForPlayerToOpen = false
 
     init(
         player: (any MusicPlayer)?,

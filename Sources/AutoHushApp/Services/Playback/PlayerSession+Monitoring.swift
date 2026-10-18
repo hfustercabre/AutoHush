@@ -53,6 +53,16 @@ extension PlayerSession {
         if settings.autoPause != old.autoPause {
             monitoring?.setAutoPauseEnabled(settings.autoPause)
             heldPauses.setAutoPauseEnabled(settings.autoPause)
+            // The player not running: the apps are listed only while it's on.
+            if settings.autoPause {
+                let id = UUID()
+                startTasks[id] = Task {
+                    await listenUntilPlayerOpens()
+                    startTasks[id] = nil
+                }
+            } else {
+                stopListeningUntilPlayerOpens()
+            }
         }
         if settings.ignored != old.ignored {
             monitoring?.setIgnoredSources(settings.ignored)

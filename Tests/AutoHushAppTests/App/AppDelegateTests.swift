@@ -685,7 +685,8 @@ struct AppDelegateTests {
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         #expect(sut.status.health == .starting)
         await waitFor { sut.status.health == .ready }
-        #expect(monitorings.made.count == 1)
+        #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
+        #expect(monitorings.made[0].isStopped && !monitorings.made[1].isStopped)
     }
 
     @MainActor
@@ -722,7 +723,7 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(nil)
         launch(FakeRunningApplication(bundleID: Players.first))
         await waitFor { sut.status.health == .ready }
-        #expect(monitorings.made.count == 1)
+        #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
 
         // BetterDisplay opened (an app on the disk: a running app's bundle names it).
         let folder = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
@@ -740,14 +741,14 @@ struct AppDelegateTests {
             center.post(name: notice, object: nil)
             await waitFor { sut.session.isAsleep == asleep }
         }
-        #expect(monitorings.made.first?.asleep == [true, false, true, false])
+        #expect(monitorings.made.last?.asleep == [true, false, true, false])
 
         sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
         #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty)
         launch(FakeRunningApplication(bundleID: Players.first))
         await Task.yield() // what a notice still observed would start
         await sut.session.waitUntilIdle()
-        #expect(monitorings.made.count == 1) // not started again
+        #expect(monitorings.made.count == 2) // not started again
     }
 
     // MARK: - A player opened without what it needs
@@ -1420,7 +1421,8 @@ struct AppDelegateTests {
         // Asked again, it stays as it is.
         sut.refreshPlayerOptions()
         #expect(sut.status.health == .degraded("First isn’t installed"))
-        #expect(monitorings.made.isEmpty)
+        // Only what listed the apps while it wasn't running, stopped now.
+        #expect(monitorings.made.count == 1 && monitorings.made.allSatisfy(\.isStopped))
     }
 
     @MainActor

@@ -168,7 +168,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
   played in the last 30 minutes (the last four), each with its switch, so
-  one that stopped before you could switch it off is still there.
+  one that stopped before you could switch it off is still there. Both
+  list the apps while your player isn't open too, with Auto-Pause on.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
   plays again only those it paused, through its AppleScript (macOS asks for
