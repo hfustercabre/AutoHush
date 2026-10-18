@@ -202,7 +202,7 @@ let package = Package(
         ),
         .testTarget(
             name: "AutoHushAppTests",
-            dependencies: ["AutoHushApp", "AutoHushKit", "CheckedPlayers", "AutoHushTestSupport"]
+            dependencies: ["AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "AutoHushTestSupport"]
         ),
         // CheckedPlayers to keep an added app, as Add an App does.
         .testTarget(

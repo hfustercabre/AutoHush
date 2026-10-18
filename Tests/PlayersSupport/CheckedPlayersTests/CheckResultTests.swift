@@ -42,6 +42,18 @@ struct CheckResultTests {
         #expect(recipes.recipe(for: setup.bundleID) == recipe)
     }
 
+    @Test("an app checked again gets a new player, even with the same setup: the one made before doesn't know the button the new check learned")
+    func checkedAgain() {
+        let store = MemoryStore()
+        let players = CheckedPlayers(store: store, locate: { _ in nil })
+        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup), recipes: Recipes())
+        let first = players.current()
+        #expect(players.current().first === first.first) // kept while nothing changes
+        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: Recipes())
+        #expect(players.current().map(\.bundleID) == [setup.bundleID])
+        #expect(players.current().first !== first.first)
+    }
+
     @Test("removing an added app forgets its setup and its page's button; it's no longer offered")
     func forgetting() {
         let store = MemoryStore()

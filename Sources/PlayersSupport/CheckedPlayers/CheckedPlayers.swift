@@ -56,10 +56,14 @@ package final class CheckedPlayers: Sendable {
     /// Keeps what a check found: its setup, with the way the user chose at
     /// Use, and its page's Play/Pause as a web app's is kept. Nothing when
     /// no way worked.
+    /// The app gets a new player, even when its setup didn't change: the
+    /// one made before read its page's button as it was made, and doesn't
+    /// know the one this check learned (2026-10-18).
     package func keep(_ result: CheckResult, recipes: any PlayPauseRecipeStore = DefaultsRecipeStore()) {
         guard let setup = result.setup else { return }
         if let button = result.pageButton { recipes.save(button, for: setup.bundleID) }
         store.save(setup)
+        players.withLock { $0[setup.bundleID] = nil }
     }
 
     /// Removes the app added with `bundleID` (the user's Remove…): its setup

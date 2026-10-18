@@ -583,7 +583,10 @@ final class AddAppModel {
         // Only the chosen way: the others as its backup are parked (the user, 2026-10-15).
         setup.ways = setup.ways.filter { $0.kind == way }
         services.keptChecks.forget()
-        services.use(CheckResult(ways: result.ways, setup: setup), reopenOutcome != .skipped)
+        // The page's learned Play/Pause goes with the page: without it, the
+        // app would wait to learn it and never pause (2026-10-18).
+        services.use(CheckResult(ways: result.ways, setup: setup, pageButton: way == .page ? result.pageButton : nil),
+                     reopenOutcome != .skipped)
         services.close()
     }
 

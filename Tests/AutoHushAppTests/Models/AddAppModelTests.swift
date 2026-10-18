@@ -4,6 +4,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 import CheckedPlayers
+import WebAppPlayers
 
 @MainActor
 @Suite("AddAppModel", .timeLimit(.minutes(1)))
@@ -222,6 +223,28 @@ struct AddAppModelTests {
         #expect(model.chosenWay == .panel)
         model.use()
         #expect(world.used.first?.setup?.ways == [.panel(rememberedRow: nil)] && world.used.first?.ways == found.ways)
+    }
+
+    @Test("Use keeps the page's learned Play/Pause button when the page is the way chosen, and not with another way")
+    func keepsThePageButton() async {
+        let button = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause",
+                                     places: [ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 51)])
+        let found = CheckResult(
+            ways: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.hidden]), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.page(PageAccess(interface: .electron, switchAttribute: PageAccess.electronSwitch)), .panel(rememberedRow: nil)]),
+            pageButton: button)
+        for (way, kept) in [(CheckResult.WayKind.page, button), (.panel, nil)] {
+            let world = World()
+            let model = await ready(world)
+            model.startCheck()
+            await TestWait.until { world.panel == ["shown"] }
+            world.run.finish(.finished(found))
+            await TestWait.until { model.result != nil }
+            model.choose(way)
+            model.use()
+            #expect(world.used.first?.pageButton == kept, "chosen: \(way)")
+        }
     }
 
     @Test("a stopped check can run again; a check that found no way says so")
