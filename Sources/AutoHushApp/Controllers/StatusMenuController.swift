@@ -60,6 +60,8 @@ final class StatusMenuController: NSObject {
     /// follows while open (Option, for an added app's Remove).
     private var monitors: [Any] = []
     private var spaceObserver: NSObjectProtocol?
+    /// Another window becoming key while the menu is open.
+    private var keyWindowObserver: NSObjectProtocol?
     /// The content's height, as last measured.
     private var contentHeight: CGFloat = 0
 
@@ -141,6 +143,7 @@ final class StatusMenuController: NSObject {
         actions?.menuWillOpen()
         prepareContent()
         isMenuOpen = true
+        watchOtherWindows()
         guard showsPanel else { return }
         let panel = self.panel ?? makePanel()
         self.panel = panel
@@ -163,6 +166,8 @@ final class StatusMenuController: NSObject {
         monitors = []
         if let spaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver) }
         spaceObserver = nil
+        if let keyWindowObserver { NotificationCenter.default.removeObserver(keyWindowObserver) }
+        keyWindowObserver = nil
     }
 
     /// Closes the menu if it's open: an alert, such as an update check's
@@ -237,6 +242,21 @@ final class StatusMenuController: NSObject {
         ) { [weak self] _ in MainActor.assumeIsolated { self?.close() } }
     }
 
+    /// Closes the menu as another window becomes key: one of AutoHush's, or
+    /// an alert, that a choice in the menu brought forward.
+    private func watchOtherWindows() {
+        keyWindowObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            // Its identity, which can cross into the main actor (the window can't).
+            let window = (note.object as? NSWindow).map(ObjectIdentifier.init)
+            MainActor.assumeIsolated {
+                guard let self, let window, window != self.panel.map(ObjectIdentifier.init) else { return }
+                self.close()
+            }
+        }
+    }
+
     /// ↑ ↓ move among the unfolded players and Return chooses, as in a
     /// menu (the search takes them itself while it has the keyboard).
     private func handleKey(_ event: NSEvent) -> Bool {
@@ -276,6 +296,17 @@ final class StatusMenuController: NSObject {
                 model.playerSearch = ""
                 model.highlightedPlayerID = nil
             }
+        case .choosePlayer(let id):
+            // In place (the user, 2026-10-18): the list folds, and the card,
+            // its checks and the settings follow the new player. A window the
+            // choice opens (Add a Web App, learning) or an alert closes the
+            // menu as it comes forward (`watchWhileOpen`).
+            animated {
+                model.isChoosingPlayer = false
+                model.playerSearch = ""
+                model.highlightedPlayerID = nil
+            }
+            actions?.choosePlayer(id)
         case .searchPlayers(let search):
             guard model.isChoosingPlayer else { return } // a closing field handing its text back
             model.playerSearch = search
@@ -305,7 +336,7 @@ final class StatusMenuController: NSObject {
                 await self?.updates.checkNow()
                 self?.model.isCheckingForUpdates = false
             }
-        case .snooze, .choosePlayer, .removeAddedApp, .addApp, .addWebApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
+        case .snooze, .removeAddedApp, .addApp, .addWebApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
              .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
              .reopenPlayer, .unmutePlayer, .quit:
             close()
@@ -319,7 +350,6 @@ final class StatusMenuController: NSObject {
     private func run(_ command: StatusMenuCommand) {
         switch command {
         case .snooze(let snooze):        settings.snooze(snooze)
-        case .choosePlayer(let id):      actions?.choosePlayer(id)
         case .removeAddedApp(let id):    actions?.removeAddedApp(id)
         case .addApp:                    actions?.openAddApp()
         case .addWebApp:                 actions?.openAddWebApp()
@@ -336,7 +366,7 @@ final class StatusMenuController: NSObject {
         case .reopenPlayer:              actions?.reopenPlayer()
         case .unmutePlayer:              actions?.unmutePlayer()
         case .quit:                      actions?.quit()
-        case .toggleAutoPause, .setIgnored, .togglePlayerList, .searchPlayers, .moveHighlight, .chooseHighlighted,
+        case .toggleAutoPause, .setIgnored, .togglePlayerList, .choosePlayer, .searchPlayers, .moveHighlight, .chooseHighlighted,
              .toggleSettings, .toggleIgnoredApps, .retry:
             break // they act in perform(_:)
         }

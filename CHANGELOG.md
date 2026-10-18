@@ -22,7 +22,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   card and the buttons stay put, and only what's between them scrolls when
   the menu is taller than the screen, as in macOS's own menus. The players
   unfold under the Media player row, with lines between their groups and a
-  checkmark on yours; ↑ and ↓ move through them and Return chooses. Ignored
+  checkmark on yours; ↑ and ↓ move through them and Return chooses, and
+  the menu stays open as the card follows the new player. Ignored
   Apps unfolds under its row. Escape or a click elsewhere closes it, and it
   follows Reduce Transparency and Increase Contrast, as menus do.
 - **Options that don't apply are greyed out, never hidden**, in Settings

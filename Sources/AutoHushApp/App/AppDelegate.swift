@@ -235,7 +235,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - What only AppDelegate does
 
 extension AppDelegate: AppActions {
-    func choosePlayer(_ bundleID: String) { chooseMusicPlayer(bundleID) }
+    func choosePlayer(_ bundleID: String) {
+        chooseMusicPlayer(bundleID)
+        // The menu stays open: its card's checks follow the new player's permission.
+        Task { [weak self] in await self?.refreshPermissions() }
+    }
     func openAddWebApp() { showAddWebApp() }
     func openAddApp() { showAddApp() }
     func removeAddedApp(_ bundleID: String) { removeAddedAppAfterAsking(bundleID) }

@@ -1528,11 +1528,12 @@ struct AppDelegateTests {
         #expect(!sut.isQuietMoment) // the menu is open
         menu.perform(.togglePlayerList)
         #expect(menu.model.players.supportedApps.contains { $0.id == Players.second })
-        menu.perform(.choosePlayer(Players.second)) // the menu closes, then it's chosen
+        menu.perform(.choosePlayer(Players.second)) // chosen in place: the menu stays open
         await TestWait.until { sut.player?.bundleID == Players.second }
         #expect(sut.player?.bundleID == Players.second)
         #expect(menu.status.chosenPlayerID == Players.second)
-        #expect(!menu.isMenuOpen)
+        #expect(menu.isMenuOpen && !menu.model.isChoosingPlayer)
+        menu.close()
 
         // Its start failed: Retry is the player session's.
         await TestWait.until { sut.status.canRetry }

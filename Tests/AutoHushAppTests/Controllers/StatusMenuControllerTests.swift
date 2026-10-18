@@ -187,7 +187,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - The music player
 
-    @Test("the player button unfolds the players inside the card, under “Supported Apps”; one that isn't installed comes last and can't be chosen; choosing one closes the menu first")
+    @Test("the Media player row unfolds the players under it, under “Supported Apps”; one that isn't installed comes last and can't be chosen; choosing one folds them and keeps the menu open")
     func playerList() async throws {
         let sut = makeController()
         defer { sut.remove() }
@@ -209,10 +209,16 @@ struct StatusMenuControllerTests {
         #expect(players.map(\.isEnabled) == [true, true, false])
         #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
 
+        // Chosen in place (the user, 2026-10-18): the menu stays open, the list folds.
         sut.perform(.choosePlayer("com.example.third"))
-        #expect(!sut.isMenuOpen)
+        #expect(sut.isMenuOpen && !sut.model.isChoosingPlayer)
         await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "player com.example.third"])
+
+        // Another of AutoHush's windows coming forward (one the choice opened) closes it, as a menu.
+        let window = NSWindow(contentRect: .zero, styleMask: .titled, backing: .buffered, defer: true)
+        NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
+        #expect(!sut.isMenuOpen)
 
         reopen(sut)
         #expect(!sut.model.isChoosingPlayer) // folded again each time it opens
