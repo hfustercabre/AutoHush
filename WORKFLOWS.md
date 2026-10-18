@@ -32,7 +32,7 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media Player (the players<br/>beside it, a submenu, opened<br/>by the pointer), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(beside it too), the settings' switches<br/>(each part's other settings folded<br/>at first), the buttons (the card<br/>and the buttons stay put)"]
+  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media Player (the players<br/>beside it, a submenu, opened<br/>by the pointer), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(always; beside it too, with Ignore<br/>Another App…, several at once),<br/>the settings' switches (a part's<br/>title unfolds its other settings),<br/>the buttons (the card and<br/>the buttons stay put)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
@@ -210,7 +210,7 @@ flowchart LR
   end
   subgraph AUTO["Auto-Pause"]
     direction TB
-    E4["Auto-Pause off: the card’s<br/>switch, Set Auto-Pause<br/>in Shortcuts"]
+    E4["Auto-Pause off: the card<br/>(its switch, or a click on it),<br/>Set Auto-Pause in Shortcuts"]
     E5["Turn off for 5 minutes<br/>to 24 hours: the menu,<br/>Shortcuts"]
     E6["A Focus with AutoHush’s<br/>filter starts or ends"]
   end
