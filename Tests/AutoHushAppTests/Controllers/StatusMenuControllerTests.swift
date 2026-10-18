@@ -607,7 +607,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - Rows
 
-    @Test("ignored apps fold out under their row; one clicked stops being ignored; the row follows the switches while the menu is open")
+    @Test("Ignored Apps' row opens its side window, each app with its switch; one switched back on keeps its row and the part while it's open; one side window at a time")
     func ignoredApps() {
         let sut = makeController()
         defer { sut.remove() }
@@ -620,17 +620,22 @@ struct StatusMenuControllerTests {
         status.ignoredApps = [vlc]
         sut.status = status
         #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
-        #expect(!sut.model.showsIgnoredApps) // folded
+        #expect(sut.model.openSide == nil)
         sut.perform(.toggleIgnoredApps)
+        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [vlc])
         settings.setIgnored(vlc, true)
-        sut.perform(.setIgnored(vlc, false)) // as its row sends it
+        sut.perform(.setIgnored(vlc, false)) // as its switch sends it
         #expect(settings.state.ignoredApps.isEmpty && sut.isMenuOpen)
 
         status.ignoredApps = []
         sut.status = status
+        #expect(parts(sut).contains("ignoredApps")) // its side window is open
+        #expect(sut.model.listedIgnoredApps == [vlc]) // and keeps its row
+        sut.perform(.togglePlayerList) // the players' instead
+        #expect(sut.model.openSide == .players)
         #expect(!parts(sut).contains("ignoredApps"))
         reopen(sut)
-        #expect(!sut.model.showsIgnoredApps) // folded again each time it opens
+        #expect(sut.model.openSide == nil) // closed each time the menu opens
     }
 
     @Test("once the user went to allow audio recording, its row reopens AutoHush, and AntiDot mode is offered instead")

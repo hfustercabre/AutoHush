@@ -90,6 +90,9 @@ struct MenuPanelView: View {
         }
         .font(.appBody)
         .environment(\.isInMenu, true)
+        // Drawn active while its side window has the keyboard, as a menu
+        // with a submenu open is.
+        .environment(\.controlActiveState, .key)
         .frame(width: menuContentWidth)
         .frame(maxHeight: .infinity, alignment: .top)
     }
@@ -209,40 +212,34 @@ struct MenuPanelView: View {
 
 /// "Ignored Apps": the apps switched off (V5, the user's pick, 2026-10-18),
 /// as the settings' parts: the title over a row with up to three of their
-/// icons, their names and what they are, and a chevron; unfolded, the apps
-/// under it, a click on one stops ignoring it. It follows the switches under
-/// Playing Now while the menu is open.
+/// icons, their names and what they are, and a chevron; a click opens them
+/// in a side window beside the menu, each with its switch (W2).
 struct MenuIgnoredAppsView: View {
     let model: StatusMenuModel
 
-    private var apps: [AudioSource] { model.status.ignoredApps }
+    /// Those ignored now; while its side window is open and every one was
+    /// switched back on, those it lists.
+    private var apps: [AudioSource] {
+        model.status.ignoredApps.isEmpty ? model.listedIgnoredApps : model.status.ignoredApps
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            MenuPartTitle(Text("Ignored Apps", comment: "The menu: heading over the apps that don’t pause your player"))
-            MenuFoldingRow(title: Self.names(of: apps.map(\.name)),
-                           subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
-                           leadingWidth: apps.count > 1 ? 32 : 22, isOpen: model.showsIgnoredApps,
-                           action: { model.perform(.toggleIgnoredApps) }) {
+            MenuPartTitle(Text(verbatim: Self.title))
+            MenuSideRow(title: Self.names(of: apps.map(\.name)),
+                        subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
+                        leadingWidth: apps.count > 1 ? 32 : 22, isOpen: model.showsIgnoredApps,
+                        action: { model.perform(.toggleIgnoredApps) },
+                        onTop: { model.sideRowTops[.ignoredApps] = $0 }) {
                 iconStack
-            }
-            if model.showsIgnoredApps {
-                ForEach(apps, id: \.self) { app in
-                    Button { model.perform(.setIgnored(app, false)) } label: {
-                        HStack(spacing: 8) {
-                            icon(app)
-                            Text(verbatim: app.name).lineLimit(1)
-                        }
-                        .padding(.leading, 24)
-                    }
-                    .buttonStyle(MenuRowButtonStyle())
-                    .help(Text("Click an app to stop ignoring it", comment: "The menu: the tooltip of each ignored app, unfolded under Ignored Apps"))
-                    .padding(.horizontal, 8)
-                    .transition(.opacity)
-                }
             }
         }
         .frame(width: menuContentWidth)
+    }
+
+    /// The part's title, over its row and atop its side window.
+    static var title: String {
+        String(localized: "Ignored Apps", comment: "The menu: heading over the apps that don’t pause your player")
     }
 
     /// The apps' names in a few words: one or two named; from three on, the

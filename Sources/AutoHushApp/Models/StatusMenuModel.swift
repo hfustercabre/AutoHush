@@ -8,7 +8,7 @@ enum StatusMenuCommand: Equatable, Sendable {
     case snooze(AutoPauseSnooze)
     /// Whether the app stops pausing the music (`true`) or pauses it again.
     case setIgnored(AudioSource, Bool)
-    /// Unfolds or folds the players under the Media player row.
+    /// Opens or closes the players' side window, beside Media Player's row.
     case togglePlayerList
     /// Shows only the unfolded players whose names match.
     case searchPlayers(String)
@@ -25,7 +25,7 @@ enum StatusMenuCommand: Equatable, Sendable {
     /// Shows or folds away a settings part's other settings (Detection's
     /// ways and timings, the fades' lengths), under its switch.
     case toggleSettings(MenuSettingsPart)
-    /// Shows or folds away the ignored apps, under Ignored Apps.
+    /// Opens or closes the ignored apps' side window, beside their row.
     case toggleIgnoredApps
     /// Tries starting again after a failed start.
     case retry
@@ -94,7 +94,7 @@ final class StatusMenuModel {
     var listedSources: [AudioSource] = []
     /// The apps listed under "Recently Played", fixed the same way.
     var listedRecentSources: [AudioSource] = []
-    /// Whether the players are unfolded under the Media player row.
+    /// Whether the players' side window is open, beside Media Player's row.
     var isChoosingPlayer = false
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
@@ -116,8 +116,19 @@ final class StatusMenuModel {
     /// The settings parts whose other settings show: folded at first, then
     /// each as the user left it, while AutoHush runs.
     var unfoldedSettings: Set<MenuSettingsPart> = []
-    /// Whether the ignored apps show under Ignored Apps.
+    /// Whether the ignored apps' side window is open, beside their row.
     var showsIgnoredApps = false
+    /// The apps listed in the ignored apps' side window, fixed while it's
+    /// open, so one switched back on keeps its row (and can be switched off again).
+    var listedIgnoredApps: [AudioSource] = []
+    /// Where the rows that open a side window have their tops, in the
+    /// menu's content: each side window opens level with its row.
+    @ObservationIgnored var sideRowTops: [MenuSidePart: CGFloat] = [:]
+
+    /// The side window that's open, if one is.
+    var openSide: MenuSidePart? {
+        isChoosingPlayer ? .players : showsIgnoredApps ? .ignoredApps : nil
+    }
     /// The menu shows Detection's, Fades' and Advanced's settings.
     var hasSettings = false
     /// An update check asked from the menu runs: its Updates button says so.
@@ -150,10 +161,16 @@ final class StatusMenuModel {
         sections.append(.snooze)
         if !listedSources.isEmpty { sections.append(.playingNow) }
         if !listedRecentSources.isEmpty { sections.append(.recentlyPlayed) }
-        if !status.ignoredApps.isEmpty { sections.append(.ignoredApps) }
+        // While its side window is open, even once every app is switched back on.
+        if !status.ignoredApps.isEmpty || showsIgnoredApps { sections.append(.ignoredApps) }
         if hasSettings { sections.append(.settings) }
         if status.updateOffer != nil { sections.append(.update) }
         sections.append(.toolbar)
         return sections
     }
+}
+
+/// The menu's parts that open a side window beside it.
+enum MenuSidePart: Hashable {
+    case players, ignoredApps
 }

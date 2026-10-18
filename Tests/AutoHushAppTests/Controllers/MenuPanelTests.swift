@@ -57,4 +57,20 @@ struct MenuPanelTests {
         #expect(StatusMenuController.fittingHeight(900, top: 873, in: visible) == 867)
         #expect(StatusMenuController.fittingHeight(500, top: 873, in: visible) == 500)
     }
+
+    @Test("a side window opens left of the menu, level with its row, unless there's no room there; it stays on the screen")
+    func sideWindowPlacement() {
+        let visible = NSRect(x: 0, y: 0, width: 1440, height: 875)
+        let menu = NSRect(x: 1000, y: 173, width: 345, height: 700)
+        #expect(StatusMenuController.sideFrame(rowTop: 760, menu: menu, in: visible, width: 300, contentHeight: 400)
+                == NSRect(x: 694, y: 368, width: 300, height: 400))
+        // No room on the left: on the right.
+        let leftMenu = NSRect(x: 200, y: 173, width: 345, height: 700)
+        #expect(StatusMenuController.sideFrame(rowTop: 760, menu: leftMenu, in: visible, width: 300, contentHeight: 400).minX == 551)
+        // Taller than the screen: the screen's height, from 6 pt under its top.
+        #expect(StatusMenuController.sideFrame(rowTop: 760, menu: menu, in: visible, width: 300, contentHeight: 2000)
+                == NSRect(x: 694, y: 6, width: 300, height: 863))
+        // A row low on the screen: moved up so it ends 6 pt above the bottom.
+        #expect(StatusMenuController.sideFrame(rowTop: 100, menu: menu, in: visible, width: 300, contentHeight: 400).minY == 6)
+    }
 }

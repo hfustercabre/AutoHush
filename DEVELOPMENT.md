@@ -143,8 +143,9 @@ Sources/
                          colors; ButtonStyles, Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar,
                          ChecklistStepRow, NoteLabel, SearchField, PlayerTiles, …), MenuBar/ (the menu's
                          panel: MenuPanelView; StatusCardView, the card; MenuMediaPlayerView and
-                         MenuPlayerListView, the Media Player part and the players under it;
-                         MenuFoldingRow, its row and Ignored Apps'; SnoozeBarView,
+                         MenuPlayerListView, the Media Player part and its players; MenuSideRow, its
+                         row and Ignored Apps'; MenuSidePanelView, the side window they open;
+                         SourceSwitchRow, an app's switch; SnoozeBarView,
                          Turn off for; PlayingAppsView, Playing Now and Recently Played; MenuSettingsView,
                          the settings; MenuToolbarView, the buttons; MenuRowButtonStyle, MenuContentWidth,
                          and MenuBarIcon, drawn in code), Settings/ (one per page, SettingsPageView,

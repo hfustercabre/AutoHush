@@ -14,13 +14,14 @@ import AutoHushKit
 /// │        [Retry] · [Reopen] · [Unmute]           │  it, a chip when one helps;
 /// │ Controls                     [Learn Controls…] │  a web app's controls
 /// ╰────────────────────────────────────────────────╯
-///  ♪ Media player               [icon] Spotify ⌄   unfolds the players under it:
-///    [Search] · Supported Apps · Other Apps ·       a line between their groups;
-///    Add an App… · Safari Web Apps · Add a Web App… ↑ ↓ and Return choose one
+///  Media Player
+///  [icon] Spotify · Supported app             ›   opens the players beside the menu
+///                                                 (a side window: search, Supported
+///                                                 Apps, Other Apps, Safari Web Apps)
 ///  ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///  Turn off for  [5 min] [15 min] [30 min] [1 hr] [24 hr]
 ///  ─────  Playing Now · Recently Played  (each app with its switch)
-///  ─────  Ignored Apps                 1 ⌄  (folds out: click one to stop ignoring it)
+///  ─────  Ignored Apps: [icons] VLC, Messages ›  (a side window: each with its switch)
 ///  ─────  Detection   AntiDot mode       (each page's switches always, under its
 ///                     ⌄                   name; an arrow unfolds the rest of a
 ///  ─────  Fades       Fade playback       part in its place: F3)
@@ -50,6 +51,14 @@ final class StatusMenuController: NSObject {
     let model: StatusMenuModel
     /// The menu's window, made the first time it opens.
     private(set) var panel: MenuPanel?
+    /// The side window beside it (the players, or the ignored apps), made
+    /// the first time one opens.
+    private(set) var sidePanel: MenuPanel?
+    /// The side window's content height, as last measured.
+    private var sideHeight: CGFloat = 0
+    /// When a click elsewhere last closed the menu: a click on the menu bar
+    /// item itself closes it that way first, as its mouse goes down.
+    private var lastClosedByClick: Date?
     private(set) var isMenuOpen = false
 
     /// What the menu's controls change: the user's settings, Retry, the
@@ -131,6 +140,7 @@ final class StatusMenuController: NSObject {
         model.playerSearch = ""
         model.highlightedPlayerID = nil
         model.showsIgnoredApps = false
+        model.listedIgnoredApps = status.ignoredApps
         model.isAntiDotMode = settings.state.detection != .audioLevels
         model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
         model.announcesRetryOutcome = false
@@ -138,8 +148,18 @@ final class StatusMenuController: NSObject {
 
     // MARK: - Opening and closing
 
+    /// A click on the menu bar item opens the menu, and closes it while
+    /// it's open, as macOS's own menu bar items do (the user, 2026-10-18).
+    /// The click that closed it from outside (`watchWhileOpen`) mustn't
+    /// open it again at once.
     @objc private func statusItemClicked() {
-        isMenuOpen ? close() : open()
+        if isMenuOpen {
+            close()
+        } else if let closed = lastClosedByClick, Date().timeIntervalSince(closed) < 0.4 {
+            lastClosedByClick = nil
+        } else {
+            open()
+        }
     }
 
     /// Opens the menu under its menu bar item, the app first bringing the
@@ -170,6 +190,7 @@ final class StatusMenuController: NSObject {
     func close() {
         guard isMenuOpen else { return }
         isMenuOpen = false
+        sidePanel?.orderOut(nil)
         panel?.orderOut(nil)
         statusItem.button?.highlight(false)
         monitors.forEach(NSEvent.removeMonitor)
@@ -195,7 +216,11 @@ final class StatusMenuController: NSObject {
         // content measures nothing.
         hosting.frame = NSRect(x: 0, y: 0, width: menuContentWidth, height: 600)
         let panel = MenuPanel(content: hosting)
-        panel.onCancel = { [weak self] in self?.close() }
+        // Escape closes the side window first, as a submenu, then the menu.
+        panel.onCancel = { [weak self] in
+            guard let self else { return }
+            if model.openSide != nil { closeSide() } else { close() }
+        }
         panel.onKey = { [weak self] in self?.handleKey($0) ?? false }
         hosting.layoutSubtreeIfNeeded()
         contentHeight = max(contentHeight, hosting.fittingSize.height)
@@ -248,12 +273,99 @@ final class StatusMenuController: NSObject {
                                animated: !Self.reducesMotion)
     }
 
+    // MARK: - The side window
+
+    /// Opens the side window the model asks for beside the menu, level with
+    /// its row, or closes it (W2, the user's pick, 2026-10-18). Escape closes
+    /// it first, then the menu.
+    private func showSide() {
+        guard isMenuOpen, let panel, panel.isVisible, model.openSide != nil else {
+            if sidePanel?.isVisible == true {
+                sidePanel?.orderOut(nil)
+                if isMenuOpen { panel?.makeKey() }
+            }
+            return
+        }
+        let side = sidePanel ?? makeSidePanel()
+        sidePanel = side
+        side.contentView?.layoutSubtreeIfNeeded()
+        placeSide(side, beside: panel)
+        side.orderFrontRegardless()
+        // The menu keeps the keyboard, so its switches stay drawn active
+        // (AppKit draws a window that isn't key as inactive): typing goes to
+        // the players' search, ↑ ↓ Return to their list (`handleKey`). Only
+        // VoiceOver moves into the side window, to read it.
+        side.takesKey = NSWorkspace.shared.isVoiceOverEnabled
+        if side.takesKey { side.makeKey() } else { panel.makeKey() }
+    }
+
+    /// Closes the side window, the menu staying open.
+    private func closeSide() {
+        model.isChoosingPlayer = false
+        model.showsIgnoredApps = false
+        model.playerSearch = ""
+        model.highlightedPlayerID = nil
+        showSide()
+    }
+
+    private func makeSidePanel() -> MenuPanel {
+        let view = MenuSidePanelView(model: model) { [weak self] in self?.sideHeightChanged($0) }
+        let hosting = NSHostingView(rootView: view)
+        hosting.sizingOptions = []
+        hosting.safeAreaRegions = []
+        hosting.frame = NSRect(x: 0, y: 0, width: MenuSidePanelView.width, height: 600)
+        let side = MenuPanel(content: hosting)
+        side.title = "AutoHush"
+        side.onCancel = { [weak self] in self?.closeSide() }
+        side.onKey = { [weak self] in self?.handleKey($0) ?? false }
+        return side
+    }
+
+    private func placeSide(_ side: MenuPanel, beside panel: MenuPanel) {
+        guard let part = model.openSide, let screen = panel.screen ?? NSScreen.main else { return }
+        let rowTop = panel.frame.maxY - (model.sideRowTops[part] ?? 0)
+        side.setFrame(Self.sideFrame(rowTop: rowTop, menu: panel.frame, in: screen.visibleFrame,
+                                     width: MenuSidePanelView.width, contentHeight: sideHeight),
+                      display: true)
+        side.invalidateShadow()
+    }
+
+    /// The side window's frame: beside the menu, on its left (the menu sits
+    /// near the screen's right edge) unless there's no room there, then on
+    /// its right; its top level with the row that opened it (`rowTop`, the
+    /// first row inside level with that row), as tall as its content but
+    /// on the screen, moved up if it would go past the screen's bottom.
+    static func sideFrame(rowTop: CGFloat, menu: NSRect, in visible: NSRect, width: CGFloat, contentHeight: CGFloat) -> NSRect {
+        let gap: CGFloat = 6
+        let x = menu.minX - gap - width >= visible.minX + 6 ? menu.minX - gap - width : menu.maxX + gap
+        let height = min(contentHeight, visible.height - 12)
+        let top = max(min(rowTop + 8, visible.maxY - 6), visible.minY + 6 + height)
+        return NSRect(x: x, y: top - height, width: width, height: height)
+    }
+
+    /// Its content's height changed (another side, a search): the window
+    /// follows at the end of this pass, as the menu does (resized during
+    /// SwiftUI's layout, its content kept a stale frame, 2026-10-18).
+    private func sideHeightChanged(_ height: CGFloat) {
+        sideHeight = height
+        RunLoop.main.perform { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.isMenuOpen, let panel = self.panel, let side = self.sidePanel, side.isVisible else { return }
+                self.placeSide(side, beside: panel)
+            }
+        }
+    }
+
     /// Closes the menu on a click outside it (in another app, or another of
     /// AutoHush's windows); follows Option.
     private func watchWhileOpen() {
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.close() }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.close()
+                self.lastClosedByClick = Date()
+            }
         }) { monitors.append(global) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
             let isFlags = event.type == .flagsChanged
@@ -263,7 +375,8 @@ final class StatusMenuController: NSObject {
                 guard let self else { return }
                 if isFlags {
                     self.model.isOptionHeld = optionHeld
-                } else if windowNumber != self.panel?.windowNumber, windowNumber != self.statusItem.button?.window?.windowNumber {
+                } else if windowNumber != self.panel?.windowNumber, windowNumber != self.sidePanel?.windowNumber,
+                          windowNumber != self.statusItem.button?.window?.windowNumber {
                     self.close()
                 }
             }
@@ -285,6 +398,7 @@ final class StatusMenuController: NSObject {
             let window = (note.object as? NSWindow).map(ObjectIdentifier.init)
             MainActor.assumeIsolated {
                 guard let self, let window, window != self.panel.map(ObjectIdentifier.init),
+                      window != self.sidePanel.map(ObjectIdentifier.init),
                       let key = NSApp.windows.first(where: { ObjectIdentifier($0) == window }),
                       Self.closesMenu(becomingKey: key, statusItemWindow: self.statusItem.button?.window) else { return }
                 self.close()
@@ -303,6 +417,11 @@ final class StatusMenuController: NSObject {
     /// menu (the search takes them itself while it has the keyboard).
     func handleKey(_ event: NSEvent) -> Bool {
         guard model.isChoosingPlayer else { return false }
+        if model.players.showsSearch, let typed = Self.typedText(event) {
+            // Typed into the players' search while the menu keeps the keyboard.
+            perform(.searchPlayers(typed.isEmpty ? String(model.playerSearch.dropLast()) : model.playerSearch + typed))
+            return true
+        }
         switch event.keyCode {
         case 126: perform(.moveHighlight(-1))
         case 125: perform(.moveHighlight(1))
@@ -310,6 +429,18 @@ final class StatusMenuController: NSObject {
         default: return false
         }
         return true
+    }
+
+    /// What a key press types into a search: its characters, "" for Delete
+    /// (one character back), `nil` for a key that doesn't type (arrows,
+    /// Return, Escape, a shortcut with Command or Control).
+    static func typedText(_ event: NSEvent) -> String? {
+        guard event.modifierFlags.isDisjoint(with: [.command, .control]) else { return nil }
+        if event.keyCode == 51 { return "" } // Delete
+        guard let characters = event.characters, !characters.isEmpty,
+              characters.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) && $0.value < 0xF700 })
+        else { return nil }
+        return characters
     }
 
     private static var reducesMotion: Bool {
@@ -334,21 +465,20 @@ final class StatusMenuController: NSObject {
         case .setIgnored(let source, let ignored):
             settings.setIgnored(source, ignored)
         case .togglePlayerList:
-            animated {
-                model.isChoosingPlayer.toggle()
-                model.playerSearch = ""
-                model.highlightedPlayerID = nil
-            }
+            model.isChoosingPlayer.toggle()
+            model.showsIgnoredApps = false
+            model.playerSearch = ""
+            model.highlightedPlayerID = nil
+            showSide()
         case .choosePlayer(let id):
-            // In place (the user, 2026-10-18): the list folds, and the card,
-            // its checks and the settings follow the new player. A window the
-            // choice opens (Add a Web App, learning) or an alert closes the
+            // In place (the user, 2026-10-18): the side window closes, and the
+            // card, its checks and the settings follow the new player. A window
+            // the choice opens (Add a Web App, learning) or an alert closes the
             // menu as it comes forward (`watchOtherWindows`).
-            animated {
-                model.isChoosingPlayer = false
-                model.playerSearch = ""
-                model.highlightedPlayerID = nil
-            }
+            model.isChoosingPlayer = false
+            model.playerSearch = ""
+            model.highlightedPlayerID = nil
+            showSide()
             actions?.choosePlayer(id)
         case .searchPlayers(let search):
             guard model.isChoosingPlayer else { return } // a closing field handing its text back
@@ -366,7 +496,11 @@ final class StatusMenuController: NSObject {
                 if model.unfoldedSettings.contains(part) { model.unfoldedSettings.remove(part) } else { model.unfoldedSettings.insert(part) }
             }
         case .toggleIgnoredApps:
-            animated { model.showsIgnoredApps.toggle() }
+            model.showsIgnoredApps.toggle()
+            model.isChoosingPlayer = false
+            // Listed as they are now, fixed while it's open.
+            if model.showsIgnoredApps { model.listedIgnoredApps = status.ignoredApps }
+            showSide()
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes

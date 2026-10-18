@@ -4,8 +4,8 @@ import SwiftUI
 /// The media player's part, first under the menu's card (V5, the user's
 /// pick, 2026-10-18), as the settings' parts: "Media Player" over a row with
 /// the chosen player's icon, its name and what kind of player it is, and a
-/// chevron; a click unfolds the players under it (`MenuPlayerListView`) and
-/// folds them again.
+/// chevron; a click opens the players in a side window beside the menu
+/// (`MenuSidePanelView`, W2) and closes it again.
 struct MenuMediaPlayerView: View {
     let model: StatusMenuModel
 
@@ -13,22 +13,23 @@ struct MenuMediaPlayerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            MenuPartTitle(Text("Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player"))
-            MenuFoldingRow(title: status.chosenPlayer?.name ?? Self.chooseTitle, subtitle: subtitle,
-                           isOpen: model.isChoosingPlayer, action: { model.perform(.togglePlayerList) }) {
+            MenuPartTitle(Text(verbatim: Self.title))
+            MenuSideRow(title: status.chosenPlayer?.name ?? Self.chooseTitle, subtitle: subtitle,
+                        isOpen: model.isChoosingPlayer, action: { model.perform(.togglePlayerList) },
+                        onTop: { model.sideRowTops[.players] = $0 }) {
                 playerIcon
-            }
-            if model.isChoosingPlayer {
-                MenuPlayerListView(model: model)
-                    .padding(.horizontal, 14)
-                    .transition(.opacity)
             }
         }
         .frame(width: menuContentWidth)
     }
 
+    /// The part's title, over its row and atop its side window.
+    static var title: String {
+        String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")
+    }
+
     private static var chooseTitle: String {
-        String(localized: "Choose…", comment: "The menu: under Media Player, while no media player is chosen; a click unfolds them")
+        String(localized: "Choose…", comment: "The menu: under Media Player, while no media player is chosen; a click opens them beside the menu")
     }
 
     /// What kind of player it is, or why it can't play now.

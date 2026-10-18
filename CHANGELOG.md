@@ -24,11 +24,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   also shows what AutoHush can do with your player, as Settings → General
   does: its permission allowed, and whether it fades. Media Player and
   Ignored Apps are parts like the settings', a title over a row: your
-  player and what kind it is; the ignored apps' icons and names. The
-  players unfold under their row, each group under a small title, and a
-  checkmark on yours; ↑ and ↓ move through them and Return chooses, and the
-  menu stays open as the card follows the new player. The ignored apps
-  unfold under theirs. Escape or a click elsewhere closes it, and it follows
+  player and what kind it is; the ignored apps' icons and names. Each row
+  opens a window beside the menu, as a submenu: the players, under their
+  groups' titles with a checkmark on yours (type to search, ↑ and ↓ move
+  through them and Return chooses; the menu stays open as the card follows
+  the new player), or the ignored apps, each with its switch. Escape or a click elsewhere closes it, and it follows
   Reduce Transparency and Increase Contrast, as menus do. Its section
   titles are those of macOS's own menus: smaller, semibold and grey.
 - **Options that don't apply are greyed out, never hidden**, in Settings
@@ -228,6 +228,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   streams them live (`log stream --level debug`), and keeps none.
 
 ### Fixed
+
+- **A click on AutoHush's menu bar icon closes its open menu**, as macOS's
+  own menu bar items do. It closed and opened again at once.
 
 - **Level the volume no longer leaves the Mac's volume lowered** after
   AutoHush quits unexpectedly, or after a resume the player never takes:

@@ -50,7 +50,12 @@ final class MenuPanel: NSPanel {
         contentView = Self.background(around: content)
     }
 
-    override var canBecomeKey: Bool { true }
+    /// Whether it may take the keyboard: the menu's side window doesn't
+    /// (the menu keeps it, so its switches stay drawn active), but for
+    /// VoiceOver, which reads it.
+    var takesKey = true
+
+    override var canBecomeKey: Bool { takesKey }
     override var canBecomeMain: Bool { false }
 
     override func cancelOperation(_ sender: Any?) { onCancel?() }

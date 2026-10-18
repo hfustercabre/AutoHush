@@ -1,11 +1,10 @@
 import SwiftUI
 
-/// The music players unfolded under the menu's "Media player" row
-/// (`MenuMediaPlayerView`; M1, the user's pick, 2026-10-17): the search (from
+/// The media players in their side window beside the menu (`MenuSidePanelView`,
+/// W2, the user's pick, 2026-10-18): the search (from
 /// `PlayerOption.searchThreshold` players on), then the supported apps, the
 /// apps added with Add an App (and Add an App…) and the Safari web apps (and
-/// Add a Web App…), each under a title inside the part, no lines between
-/// them (the user, 2026-10-18). The chosen one is checked; ↑ and ↓
+/// Add a Web App…), each under its section title, a line between them. The chosen one is checked; ↑ and ↓
 /// move among them and Return chooses, as in a menu. With Option held, an
 /// added app's row removes it, after asking (R5).
 struct MenuPlayerListView: View {
@@ -16,7 +15,7 @@ struct MenuPlayerListView: View {
         VStack(alignment: .leading, spacing: 6) {
             if list.showsSearch {
                 SearchField(text: Binding(get: { model.playerSearch }, set: { model.perform(.searchPlayers($0)) }),
-                            focusesOnAppear: true,
+                            focusesOnAppear: false, // the menu keeps the keyboard: typing reaches it all the same
                             onSubmit: { model.perform(.chooseHighlighted) },
                             onMove: { model.perform(.moveHighlight($0)) })
             }
@@ -24,19 +23,20 @@ struct MenuPlayerListView: View {
                 Text(verbatim: note).captionStyle()
             }
             if !list.supportedApps.isEmpty {
-                MenuInnerTitle(Text(verbatim: PlayerOption.supportedAppsHeading))
-                    .padding(.top, 4)
+                CardDivider()
+                SectionLabel(Text(verbatim: PlayerOption.supportedAppsHeading))
+                    .accessibilityAddTraits(.isHeader)
                 rows(list.supportedApps)
             }
             if list.showsOtherApps {
+                CardDivider()
                 OtherAppsHeading(isEmpty: list.otherApps.isEmpty)
-                    .padding(.top, 4)
                 rows(list.otherApps)
                 addRow(PlayerOption.addAppTitle, .addApp)
             }
+            CardDivider()
             if !list.webApps.isEmpty {
                 WebAppsHeading()
-                    .padding(.top, 4)
                 rows(list.webApps)
             }
             addRow(PlayerOption.addWebAppTitle, .addWebApp)
