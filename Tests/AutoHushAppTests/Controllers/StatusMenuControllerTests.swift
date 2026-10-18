@@ -88,13 +88,13 @@ struct StatusMenuControllerTests {
 
     // MARK: - Layout
 
-    @Test("the menu is the card, the duration buttons and the toolbar; playing and ignored apps and the settings add their parts")
+    @Test("the menu is the card, the duration buttons, Ignored Apps and the toolbar; playing apps and the settings add their parts")
     func layout() {
         let sut = makeController()
         defer { sut.remove() }
         sut.status = readyStatus()
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "ignoredApps", "toolbar"])
 
         var status = readyStatus()
         status.ignoredApps = [vlc]
@@ -109,7 +109,7 @@ struct StatusMenuControllerTests {
         defer { withSettings.remove() }
         withSettings.status = readyStatus()
         reopen(withSettings)
-        #expect(parts(withSettings) == ["card", "mediaPlayer", "snooze", "settings", "toolbar"])
+        #expect(parts(withSettings) == ["card", "mediaPlayer", "snooze", "ignoredApps", "settings", "toolbar"])
     }
 
     @Test("Recently Played follows Playing Now, and shows on its own once nothing plays; never the chosen player")
@@ -121,13 +121,13 @@ struct StatusMenuControllerTests {
         status.setActiveSources([chrome])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "recentlyPlayed", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "recentlyPlayed", "ignoredApps", "toolbar"])
         #expect(sut.model.listedRecentSources == [vlc])
 
         status.setActiveSources([])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "recentlyPlayed", "toolbar"])
+        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "recentlyPlayed", "ignoredApps", "toolbar"])
         #expect(sut.model.listedRecentSources == [chrome, vlc])
 
         // VLC chosen as the player meanwhile: its switch would only store it as ignored.
@@ -357,7 +357,7 @@ struct StatusMenuControllerTests {
             sut.status = status
             reopen(sut)
             #expect(sut.model.status.canLearnControlsAgain) // the card shows its Controls row
-            #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "toolbar"])
+            #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "ignoredApps", "toolbar"])
         }
 
         // Its button: the menu closes, and a new learning window opens.
@@ -686,7 +686,7 @@ struct StatusMenuControllerTests {
 
     // MARK: - Rows
 
-    @Test("Ignored Apps' row opens its side window, each app with its switch; one switched back on keeps its row and the part while it's open; one side window at a time")
+    @Test("Ignored Apps shows with none too; its row opens its side window, each app with its switch; one switched back on keeps its row while it's open; one side window at a time")
     func ignoredApps() {
         let sut = makeController()
         defer { sut.remove() }
@@ -694,7 +694,7 @@ struct StatusMenuControllerTests {
         status.setActiveSources([vlc, chrome])
         sut.status = status
         reopen(sut)
-        #expect(!parts(sut).contains("ignoredApps"))
+        #expect(parts(sut).contains("ignoredApps")) // none yet: the first is added from it
 
         status.ignoredApps = [vlc]
         sut.status = status
@@ -708,11 +708,10 @@ struct StatusMenuControllerTests {
 
         status.ignoredApps = []
         sut.status = status
-        #expect(parts(sut).contains("ignoredApps")) // its side window is open
-        #expect(sut.model.listedIgnoredApps == [vlc]) // and keeps its row
+        #expect(sut.model.listedIgnoredApps == [vlc]) // its side window keeps its row
         sut.perform(.togglePlayerList) // the players' instead
         #expect(sut.model.openSide == .players)
-        #expect(!parts(sut).contains("ignoredApps"))
+        #expect(parts(sut).contains("ignoredApps"))
         reopen(sut)
         #expect(sut.model.openSide == nil) // closed each time the menu opens
     }

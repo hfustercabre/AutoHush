@@ -28,7 +28,7 @@ enum DiagnosticsReport {
         let overview = overview(status: status)
         let sections = sections(status: status, facts: facts, ways: ways)
         let appsSummary = apps.isEmpty
-            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps")
+            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
             : apps.map(\.name).formatted(.list(type: .and, width: .narrow))
         return DiagnosticsSnapshot(
             overview: overview,
@@ -216,7 +216,7 @@ enum DiagnosticsReport {
             String(localized: "Off \(until)", comment: "Diagnostics: auto-pause; %@ says until when, e.g. “until 15:30”")
         }
         let ignored = status.ignoredApps.isEmpty
-            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps")
+            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
             : status.ignoredApps.map(\.name).formatted(.list(type: .and, width: .narrow))
         let updates = facts.checksForUpdates
             ? facts.automaticUpdates.title

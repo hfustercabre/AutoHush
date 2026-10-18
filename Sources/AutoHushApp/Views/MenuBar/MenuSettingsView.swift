@@ -5,8 +5,8 @@ import AutoHushKit
 /// user, 2026-10-17: no cards) under its page's title (2026-10-18):
 /// Detection's, Fades' and Advanced's switches, each with its symbol (in
 /// the accent color while it's on) and what it does in a few words. A part
-/// with more than its switches has a small chevron pill under it (F3, the
-/// user's pick, 2026-10-18) that unfolds the rest in its place: AntiDot
+/// with more than its switches has a title that unfolds the rest in its
+/// place, a chevron at its right (T1, the user's pick, 2026-10-18): AntiDot
 /// mode's ways under it ("Modes") and Detection's timings ("Timing"); the
 /// fades' lengths under Fade playback. Advanced has nothing more. As in
 /// Settings, what doesn't apply is greyed out, never hidden, saying why.
@@ -108,18 +108,43 @@ struct MenuSettingsView: View {
     }
 
     /// A Settings page's name over its part; for a part with more settings
-    /// than its switches (`folding`), the chevron that unfolds them beside
-    /// it (D5, the user's pick, 2026-10-18).
-    private func pageName(_ page: SettingsWindowController.Page, folding part: MenuSettingsPart? = nil) -> some View {
-        MenuPartTitle(Text(verbatim: page.title))
-            .overlay(alignment: .bottomTrailing) {
-                if let part {
-                    chevron(part, page: page)
-                        .padding(.trailing, 14)
-                        .padding(.bottom, MenuSpacing.titleBottom)
-                }
+    /// than its switches (`folding`), the whole line is the button that
+    /// unfolds them, a plain chevron at its right (T1, the user's pick,
+    /// 2026-10-18), tinted as the menu's controls under the pointer.
+    @ViewBuilder private func pageName(_ page: SettingsWindowController.Page, folding part: MenuSettingsPart? = nil) -> some View {
+        if let part {
+            foldingTitle(page, part: part)
+                .transition(.opacity)
+        } else {
+            MenuPartTitle(Text(verbatim: page.title))
+                .transition(.opacity)
+        }
+    }
+
+    /// The folding part's title: down while its other settings are folded,
+    /// up while they show.
+    private func foldingTitle(_ page: SettingsWindowController.Page, part: MenuSettingsPart) -> some View {
+        let toggle = { model.perform(.toggleSettings(part)) }
+        return Button(action: toggle) {
+            HStack(spacing: 5) {
+                SectionLabel(Text(verbatim: page.title))
+                Spacer(minLength: 0)
+                Image(systemName: isOpen(part) ? "chevron.up" : "chevron.down")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.appSecondary)
+                    .accessibilityHidden(true)
             }
-            .transition(.opacity)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .modifier(HighlightableControl(cornerRadius: 6, inset: 8, press: toggle))
+        .padding(.top, max(0, MenuSpacing.titleTop - 3))
+        .help(Text(verbatim: isOpen(part) ? Self.hideTitle : Self.showTitle))
+        .accessibilityLabel(Text(verbatim: page.title))
+        .accessibilityValue(isOpen(part) ? AccessibilityText.expanded : AccessibilityText.collapsed)
+        .accessibilityAddTraits(.isHeader)
     }
 
     /// A title inside a page's part ("Modes", "Timing"): a description's size, grey.
@@ -130,31 +155,12 @@ struct MenuSettingsView: View {
             .transition(.opacity)
     }
 
-    /// A small chevron on a pill (C3), beside a part's title: down while its
-    /// other settings are folded, up while they show.
-    private func chevron(_ part: MenuSettingsPart, page: SettingsWindowController.Page) -> some View {
-        let title = isOpen(part) ? Self.hideTitle : Self.showTitle
-        return Button { model.perform(.toggleSettings(part)) } label: {
-            Image(systemName: isOpen(part) ? "chevron.up" : "chevron.down")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.appSecondary)
-                .frame(width: 36, height: 16)
-                .background(Capsule().fill(.chipFill))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .modifier(HighlightableControl(cornerRadius: 8, outset: 2, press: { model.perform(.toggleSettings(part)) }))
-        .help(Text(verbatim: title))
-        // Two of them: VoiceOver hears whose.
-        .accessibilityLabel(Text(verbatim: "\(page.title), \(title)"))
-    }
-
     static var showTitle: String {
-        String(localized: "Show More Settings", comment: "Menu: the chevron under Detection’s or Fades’ switch that shows the rest of that part’s settings (its tooltip; VoiceOver says the part’s name before it)")
+        String(localized: "Show More Settings", comment: "Menu: the tooltip of Detection’s or Fades’ title, which shows the rest of that part’s settings")
     }
 
     static var hideTitle: String {
-        String(localized: "Hide More Settings", comment: "Menu: the chevron that folds the rest of Detection’s or Fades’ settings away again (its tooltip; VoiceOver says the part’s name before it)")
+        String(localized: "Hide More Settings", comment: "Menu: the tooltip of Detection’s or Fades’ title, which folds the rest of that part’s settings away again")
     }
 }
 

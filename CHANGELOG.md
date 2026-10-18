@@ -40,10 +40,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   control too. A click anywhere on the card turns Auto-Pause on or off.
 - **Ignore several apps at once.** Ignore Another App… picks several apps
   in one go, in Settings → Sound Sources and now in the menu too, under
-  the ignored apps.
+  the ignored apps. Ignored Apps is always in the menu, saying None until
+  you ignore one.
 - **The menu is more compact.** Less space around its titles, rows and
-  lines, smaller switches, and the chevron that shows a part's other
-  settings beside its title: it shows as much in less height.
+  lines, and smaller switches: it shows as much in less height. A part's
+  title, Detection's and Fades', shows or hides its other settings.
 - **Settings takes the arrow keys and the pointer as the menu does.** ↑
   and ↓ move through the page, ← goes to the sidebar, where ↑ and ↓ show
   each page, and → comes back; Return or Space presses, ← and → change a

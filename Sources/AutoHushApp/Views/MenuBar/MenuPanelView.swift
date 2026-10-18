@@ -244,8 +244,9 @@ struct MenuIgnoredAppsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             MenuPartTitle(Text(verbatim: Self.title))
-            MenuSideRow(title: Self.names(of: apps.map(\.name)),
-                        subtitle: String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
+            // None yet: "None", and its side window offers Ignore Another App….
+            MenuSideRow(title: apps.isEmpty ? Self.noneTitle : Self.names(of: apps.map(\.name)),
+                        subtitle: apps.isEmpty ? nil : String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
                         leadingWidth: apps.count > 1 ? 32 : 22, isOpen: model.showsIgnoredApps,
                         action: { model.perform(.openSide(.ignoredApps)) },
                         onHover: { model.perform(.hoverSideRow(.ignoredApps, $0)) },
@@ -254,6 +255,11 @@ struct MenuIgnoredAppsView: View {
             }
         }
         .frame(width: menuContentWidth)
+    }
+
+    /// Its row while no app is ignored.
+    static var noneTitle: String {
+        String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
     }
 
     /// The part's title, over its row and atop its side window.
@@ -283,10 +289,16 @@ struct MenuIgnoredAppsView: View {
 
     /// Up to three of the apps' icons, overlapping; one alone where the
     /// other rows have theirs.
-    private var iconStack: some View {
-        ZStack(alignment: .leading) {
-            ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in
-                icon(app).offset(x: CGFloat(index) * 7)
+    @ViewBuilder private var iconStack: some View {
+        if apps.isEmpty {
+            Image(systemName: "speaker.slash")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.appSecondary)
+        } else {
+            ZStack(alignment: .leading) {
+                ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in
+                    icon(app).offset(x: CGFloat(index) * 7)
+                }
             }
         }
     }

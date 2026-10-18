@@ -162,8 +162,8 @@ final class StatusMenuModel {
     }
 
     /// The menu's parts, in order: the card, the media player, a warning
-    /// and its fix, Turn off for, the apps playing and played, Ignored Apps
-    /// (while one is), the settings, the update found, and the buttons.
+    /// and its fix, Turn off for, the apps playing and played, Ignored Apps,
+    /// the settings, the update found, and the buttons.
     var sections: [MenuSection] {
         var sections: [MenuSection] = [.card, .mediaPlayer]
         if let warning = status.warning {
@@ -174,8 +174,8 @@ final class StatusMenuModel {
         sections.append(.snooze)
         if !listedSources.isEmpty { sections.append(.playingNow) }
         if !listedRecentSources.isEmpty { sections.append(.recentlyPlayed) }
-        // While its side window is open, even once every app is switched back on.
-        if !status.ignoredApps.isEmpty || showsIgnoredApps { sections.append(.ignoredApps) }
+        // Always, so the first app to ignore can be added from the menu (the user, 2026-10-18).
+        sections.append(.ignoredApps)
         if hasSettings { sections.append(.settings) }
         if status.updateOffer != nil { sections.append(.update) }
         sections.append(.toolbar)
