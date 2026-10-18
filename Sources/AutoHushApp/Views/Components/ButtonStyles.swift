@@ -205,11 +205,12 @@ struct HighlightTint: View {
     let isFocused: Bool
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0
+    var fill: Color = .focusTint
 
     var body: some View {
         if isFocused {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(.focusTint)
+                .fill(fill)
                 .padding(.horizontal, inset)
                 .allowsHitTesting(false)
         }

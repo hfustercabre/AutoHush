@@ -144,6 +144,7 @@ mode; only Settings' sidebar keeps one of its own.
 | `.appSuccess` | green | Symbols for what works (Diagnostics, the welcome window's permissions); never text |
 | `.chipFill` / `.chipHoverFill` | quaternary / tertiary system fill | Search fields; AutoHush's own rows under the pointer, outside the menu; the check panel's steps to come |
 | `.focusTint` | the system accent color (`controlAccentColor`) at 14 % | The menu's and Settings' highlighted control (the arrow keys' or the pointer's) or the one with the keyboard's focus (F5, the user, 2026-10-18): a rounded tint behind the row, chip, chevron, button, slider or switch's row (`HighlightableControl`, `Highlightable`, `HighlightTint`), instead of macOS's focus ring; in Settings, a switch's, slider's or choice's row takes it whole, and so does a row of a title and one button (the user's pick); kept on a row whose side window is open; not on a dimmed one, nor on rows that light up in the accent color themselves (`MenuRowButtonStyle`) |
+| `.cardFocusTint` | the system accent color at 24 % | The same over the menu card's glass, which blends a fainter tint away (the user, 2026-10-18) |
 | `.warningBadgeFill` | orange 15% | Behind a `HeadingBadge`, a step's warning |
 | `.selectedRowFill` | accent 16% | Behind a list row the user selected (Settings → Sound Sources); the accent `HeadingBadge`'s capsule |
 | `.selectedTileFill` | accent 20% | Behind the chosen player's tile (`PlayerTiles`), the selected row of Choose an App's list |
@@ -190,11 +191,11 @@ mode; only Settings' sidebar keeps one of its own.
 | `BottomBar` | Buttons fixed at the foot of a Settings page with a list (Sound Sources, Diagnostics) and of the other windows, with a line above them (`margin: 20` in the windows, their margin). |
 | `WindowHeader` | The top of the welcome, Add a Web App, learning, Add an App, Choose an App and warning windows, under the title in the title bar: the icon (AutoHush's, the player's, Safari's, the app to check's; 56 pt) and what the window is for in `appBody`, `.appSecondary`, the icon centered on the text. |
 | `SymbolTile` | A symbol in the accent color on a square tinted with it (`.symbolTileFill`, 32 pt, corner 8): Settings' sidebar pages, the welcome window's permissions. |
-| Folding in the menu | As a part unfolds (Detection's and Fades' other settings), the rows under it move down in `MenuPanelView.animation` (smooth, **0.25 s**, no bounce) while the panel's height follows on the same curve (`MenuPanel.setContentHeight`), its top edge fixed; only then do the new rows fade in (**0.15 s**, `MenuSettingsView.unfolding`), so none overlap (the user, 2026-10-18). Folding, they fade out as the rows move up; at once with Reduce Motion. They stay as the user left them while AutoHush runs. The players and the ignored apps open in a side window instead, closed each time the menu opens. |
+| Folding in the menu | As a part unfolds (Detection's and Fades' other settings), the rows under it move down in `MenuPanelView.animation` (smooth, **0.25 s**, no bounce) while the panel's height follows on the same curve (`MenuPanel.setContentHeight`), its top edge fixed; only then do the new rows fade in (**0.15 s**, `MenuSettingsView.unfolding`), so none overlap (the user, 2026-10-18). Folding, they fade out first (**0.15 s**, `foldingSettings`) and only then do the rows under them move up, the title's chevron turning at once; at once with Reduce Motion. They stay as the user left them while AutoHush runs. The players and the ignored apps open in a side window instead, closed each time the menu opens. |
 | `MenuSettingsView` | The menu's settings, under Ignored Apps, parted by lines: Detection's, Fades' and Advanced's switches always, each part under its page's name (`SectionLabel`), each switch with its symbol (`SettingsSwitch.symbol`, in the accent color while it's on), its name and what it does in a few words (`shortExplanation`). A part with more than its switches has a title that is its button (T1, the user's pick, 2026-10-18): the whole line, tinted under the pointer, the arrow keys' highlight or the focus (inset **8 pt**, corner 6), with a plain chevron (`caption` bold, `appSecondary`) at its right, pointing down while folded and up while open; its tooltip says Show (or Hide) More Settings, and VoiceOver hears a heading, expanded or collapsed. It unfolds the rest in its place (`MenuSettingsPart`): Detection's inner titles ("Modes", "Timing": `MenuInnerTitle`, `appCaption`, `appSecondary`, no line between them) over AntiDot mode with its ways and over the timings; the fades' lengths under Fade playback (`TimingSliderRow(compact:)`: callout title and value, a small slider, no help). Advanced has nothing more, so its title is only a title. What doesn't apply is greyed out, never hidden: a switch that can't be changed shows off and dimmed, with why on a line of its own under it, not dimmed (an `info.circle` label in `appCaption`, `appSecondary`: "TIDAL can’t be faded.", "Off in AntiDot mode.", for AntiDot mode Settings' own note; R2, the user, 2026-10-18), also its tooltip and VoiceOver hint. |
 | `MenuMediaPlayerView` | The media player's part, first under the card (V5, the user's pick, 2026-10-18), as the settings' parts: "Media Player" (`MenuPartTitle`) over a `MenuSideRow`, laid out as a switch row: the chosen player's 22 pt icon, its name and what kind of player it is ("Supported app", "Safari web app", "Added with Add an App", or "Not installed", "Muted instead of paused"; "Choose…" and `music.note` while none is), and a `body` semibold `chevron.right` where a switch would be. The pointer resting on it (**0.15 s**) or a click opens the players in a side window beside the menu (W2, 2026-10-18), and the row stays tinted (`.focusTint`, corner 8) while it's open. |
-| `MenuIgnoredAppsView` | Ignored Apps' part, the same way, always there (the user, 2026-10-18), so the first app to ignore can be added from it: while none is, its row says "None" by a `speaker.slash` in `appSecondary`, with no line under it. Otherwise the title over a `MenuSideRow` with up to three of the apps' 18 pt icons overlapping, their names (one or two; from three on, the first two "and 2 more") and "They don’t pause your player."; the pointer resting on it or a click opens them in a side window, each a `SourceSwitchRow` (as Playing Now's), listed as they were when it opened, so one switched back on keeps its row; then **Ignore Another App…** (`plus.circle`, the side window's highlight and tint), which closes the menu for the panel that picks apps to ignore, several at once (`IgnoreAppsPicker`, the user, 2026-10-18), as Settings → Sound Sources' button of the same name. |
-| Side window (`MenuSidePanelView`) | A submenu beside the menu (W2, the user's pick, 2026-10-18): a `MenuPanel` **300 pt** wide, **6 pt** left of the menu (on its right when there's no room), its first row level with the row that opened it, as tall as its content up to the screen (it scrolls past that), its part's title at its top. One at a time; it stays open while the pointer goes to it or stays in its row's part, and closes once the pointer has been over another part of the menu for **0.3 s** (the user, 2026-10-18), or on Escape (then Escape again for the menu), choosing a player or a click elsewhere. The menu keeps the keyboard, so its switches stay drawn active: typing goes to the players' search, ↑ ↓ and Return (Space too, for the ignored apps) to its rows, and ← closes it; only VoiceOver moves into it. |
+| `MenuIgnoredAppsView` | Ignored Apps' part, the same way, always there (the user, 2026-10-18), so the first app to ignore can be added from it: while none is, its row says "None" by a `speaker.slash` in `appSecondary`, with no line under it. Otherwise the title over a `MenuSideRow` with up to three of the apps' 18 pt icons overlapping, their names (one or two; from three on, the first two "and 2 more") and "They don’t pause your player."; the pointer resting on it or a click opens them in a side window, each a `SourceSwitchRow` (as Playing Now's, but saying only "Ignored" under an ignored app: the side window's title says the rest), listed as they were when it opened, so one switched back on keeps its row; then **Ignore Another App…** (`plus.circle`, the side window's highlight and tint), which closes the menu for the panel that picks apps to ignore, several at once (`IgnoreAppsPicker`, the user, 2026-10-18), as Settings → Sound Sources' button of the same name. |
+| Side window (`MenuSidePanelView`) | A submenu beside the menu (W2, the user's pick, 2026-10-18): a `MenuPanel` **300 pt** wide, **6 pt** left of the menu (on its right when there's no room), its first row level with the row that opened it, as tall as its content up to the screen (it scrolls past that), its part's title at its top. One at a time; it stays open while the pointer goes to it or stays in its row's part, also across other parts while it heads toward it (as macOS's submenus: nearer its edge, inside the triangle from where it was to that edge's corners), and closes once the pointer has been over another part of the menu for **0.3 s** otherwise (the user, 2026-10-18), or on Escape (then Escape again for the menu), choosing a player or a click elsewhere. The menu keeps the keyboard, so its switches stay drawn active: typing goes to the players' search, ↑ ↓ and Return (Space too, for the ignored apps) to its rows, and ← closes it; only VoiceOver moves into it. |
 | `MenuPlayerListView` | The players, in their side window: a search (`SearchField`, from eight players on), then "Supported Apps", "Other Apps" with **Add an App…**, and `WebAppsHeading` with **Add a Web App…**, each under its section title (`SectionLabel`, as the menu's other sections), parted by lines (the user, 2026-10-18). A row: the icon (18 pt), the name, an "Untested" `HeadingBadge` after it for an untested web app, its subtitle ("Not installed", "Click to add", why it's greyed out in AntiDot mode), and a checkmark on the chosen one. The rows don't light up as menu items: as the menu's controls, they take the tint (`.focusTint`) under the pointer or the arrow keys' highlight, which goes through every row, Add an App… and Add a Web App… too (the user, 2026-10-18); Return or Space presses it, and Return with nothing highlighted chooses the first player the search left; with ⌥ Option held, an added app's row reads "Remove X…". |
 | `SettingsSwitchRow`, `TimingSliderRow` | The switches and timings Settings → Detection, → Fades and → Advanced share with the menu (`SettingsSwitch`, `SettingsTiming`): one place for their words, ranges and when one is dimmed. |
 | `SettingsSidebar` | Settings' pages as rows: the page's `SymbolTile`, its name in `appSidebarRow`, the page shown on a grey `.sidebarSelectionFill`. At its foot, under a line: "AutoHush" (`appSidebarName`), the version, and the compact `SupportLine`. |
@@ -354,15 +355,20 @@ browsers, are told apart.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Sound Sources): a click on a row, anywhere but
-  its switch, selects it, behind a `.selectedRowFill` rounded rectangle; a
-  second click deselects it. From the keyboard, Tab reaches the rows (with
-  keyboard navigation on) and Space selects the focused one. **Remove** sits
-  in the bottom bar after the button that adds, disabled while nothing is
-  selected. Removing something whose loss changes what AutoHush does (an
-  app turned off would pause the player again) asks first, as
-  **Reset List…** does; one that changes nothing goes at once. The row's
-  right-click menu offers the same (**Remove from List**), and VoiceOver
-  gets it as an action.
+  its switch, selects only it, behind a `.selectedRowFill` rounded
+  rectangle; a second click on the only one selected deselects it. As in
+  macOS's lists (the user, 2026-10-18), ⌘-click adds a row or takes it
+  out, and ⇧-click selects the rows from the last one clicked. From the
+  keyboard, Tab reaches the rows (with keyboard navigation on) and Space
+  adds the focused one or takes it out, as Return or Space on the arrow
+  keys' highlight does. **Remove** sits in the bottom bar after the button
+  that adds, disabled while nothing shown is selected, and removes every
+  selected row the search shows. Removing something whose loss changes
+  what AutoHush does (an app turned off would pause the player again) asks
+  first, once for all of them, as **Reset List…** does; what changes
+  nothing goes at once. The row's right-click menu offers the same for
+  that row alone (**Remove from List**), and VoiceOver gets it as an
+  action.
 
 ## Writing
 
@@ -593,7 +599,7 @@ standard ones**:
   app).
 - **The arrow keys in Settings** work as in the menu, whatever the keyboard
   navigation setting (the user, 2026-10-18): ↑ and ↓ move the highlight
-  through the page's controls, Return or Space presses the one it's on, ←
+  through the page's controls row by row (← and → along a row of tiles), Return or Space presses the one it's on, ←
   and → change a slider or a choice; on any other control, ← goes to the
   sidebar, on the page shown, where ↑ and ↓ show each page at once, and →
   or Return goes back into the page (`SettingsKeys`). The pointer moves the
@@ -601,10 +607,10 @@ standard ones**:
   keeps its keys.
 - **Tab and Space** move and press as macOS's keyboard navigation does
   (when it's on), the focused control tinted as the highlight (F5).
-  Settings → Sound Sources' rows take the focus too, and Space
-  selects the focused one, so **Remove** can be reached. In Add an App's
-  list of apps, ↑ and ↓ in its search move the selection, and Return
-  chooses it.
+  Settings → Sound Sources' rows take the focus too, and Space adds
+  the focused one to the selection or takes it out, so **Remove** can
+  take several. In Add an App's list of apps, ↑ and ↓ in its search move
+  the selection, and Return chooses it.
 - **Escape** presses Cancel or Later (`.cancelAction`, or
   `keyEquivalent = "\u{1b}"` on an alert's Later or Cancel); while a check
   runs, it's the check's Stop.
@@ -613,9 +619,11 @@ standard ones**:
 
 The menu's panel takes the keyboard as a menu does, without making
 AutoHush the active app, whatever the keyboard navigation setting (the
-user, 2026-10-18): ↑ and ↓ move its highlight through every control, from
-Auto-Pause to Quit, wrapping at the ends, and Return or Space presses the
-one it's on; → opens a side window from its row and ← closes it; on a
+user, 2026-10-18): ↑ and ↓ move its highlight row by row, from Auto-Pause
+to Quit, wrapping at the ends (into a row of several, the one nearest
+above or under, else its first), and Return or Space presses the one it's
+on; ← and → move along a row of several (the durations, the buttons); →
+opens a side window from its row, its first row lit, and ← closes it; on a
 slider or a choice, ← and → change it; Escape closes the side window,
 then the menu (`StatusMenuController.handleKey`, `KeyHighlight`). The
 pointer moves the same highlight, as in a menu. In the player list, ↑ and

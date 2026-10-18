@@ -4,9 +4,10 @@ import Foundation
 /// same over and arrows navigation system to the Settings Window"), on two
 /// sides: the sidebar's pages and the page's controls, one highlighted at a
 /// time (`KeyHighlight` each). ↑ and ↓ move within the side the highlight is
-/// on; in the sidebar, each page shows at once, as in System Settings. → or
-/// Return goes from the sidebar into the page; ← goes back, unless the
-/// highlight is on a slider or a choice, which ← and → change. Return or
+/// on, row by row; in the sidebar, each page shows at once, as in System
+/// Settings. → or Return goes from the sidebar into the page; ← goes back,
+/// unless the highlight is on a slider or a choice, which ← and → change,
+/// or in a row of several (tiles), which they move along first. Return or
 /// Space presses the page's control. The pointer moves the highlight to its
 /// side too. Tab leaves it to the keyboard's focus.
 @MainActor
@@ -61,11 +62,11 @@ final class SettingsKeys {
                 return true
             }
             if key == .press { return page.press() }
-            // On a control ← and → don't change, they do nothing.
-            return page.adjust(1) || page.highlighted != nil
+            // Along a row of several (tiles); on a control ← and → don't change, they do nothing.
+            return page.adjust(1) || page.moveInRow(1) || page.highlighted != nil
         case .left:
             if side == .sidebar { return sidebar.highlighted != nil }
-            if page.adjust(-1) { return true }
+            if page.adjust(-1) || page.moveInRow(-1) { return true }
             if page.highlighted == nil, controlHasFocus { return false }
             sidebar.highlightCurrent() // back to the sidebar, on the page shown
             return true

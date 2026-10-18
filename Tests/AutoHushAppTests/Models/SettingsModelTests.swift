@@ -408,19 +408,116 @@ struct SettingsModelTests {
         #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
     }
 
+    // MARK: - Sound Sources
+
+    /// Five apps, listed in this order (Last Played, the most recent first).
+    private static let listed = ["Arc", "Books", "Chess", "Discord", "Edge"].map {
+        AudioSource(id: "com.example.\($0.lowercased())", name: $0)
+    }
+    private static let ids = listed.map(\.id)
+
+    /// The model listing `listed`, `ignored` turned off, and the user's settings it removes them from.
+    private func listing(ignored: [AudioSource] = []) -> (model: SettingsModel, settings: UserSettings) {
+        let settings = userSettings(seen: Self.listed, ignored: ignored)
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), settings: settings)
+        show(model, seen: Self.listed, ignored: ignored)
+        return (model, settings)
+    }
+
+    /// The selected apps' IDs, in the list's order.
+    private func selected(_ model: SettingsModel) -> [String] { model.selectedApps.map(\.id) }
+
+    @Test("a click selects only that app, a second click on it alone unselects it, and a click on one of several selects only that one")
+    func plainClick() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[1])
+        #expect(selected(model) == [ids[1]])
+        model.click(on: ids[3])
+        #expect(selected(model) == [ids[3]])
+        model.click(on: ids[3])
+        #expect(selected(model).isEmpty)
+
+        model.click(on: ids[0])
+        model.click(on: ids[2], command: true)
+        model.click(on: ids[2])
+        #expect(selected(model) == [ids[2]])
+    }
+
+    @Test("⌘-click adds an app to the selection or takes it out")
+    func commandClick() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[0])
+        model.click(on: ids[3], command: true)
+        model.click(on: ids[1], command: true)
+        #expect(selected(model) == [ids[0], ids[1], ids[3]]) // in the list's order
+        model.click(on: ids[0], command: true)
+        #expect(selected(model) == [ids[1], ids[3]])
+    }
+
+    @Test("⇧-click selects the apps from the last one clicked, either way; a second one changes the range, keeping what ⌘ added")
+    func shiftClick() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[1])
+        model.click(on: ids[3], shift: true)
+        #expect(selected(model) == [ids[1], ids[2], ids[3]])
+        model.click(on: ids[0], shift: true) // from the same app, the other way
+        #expect(selected(model) == [ids[0], ids[1]])
+
+        model.click(on: ids[4], command: true) // where the next range starts
+        model.click(on: ids[3], shift: true)
+        #expect(selected(model) == [ids[0], ids[1], ids[3], ids[4]])
+
+        model.click(on: ids[2]) // starts over
+        model.click(on: ids[4], command: true, shift: true) // ⇧ with ⌘ too
+        #expect(selected(model) == [ids[2], ids[3], ids[4]])
+    }
+
+    @Test("⇧-click before any click adds just that app, and the next ⇧-click selects from it")
+    func shiftClickFirst() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[2], shift: true)
+        #expect(selected(model) == [ids[2]])
+        model.click(on: ids[4], shift: true)
+        #expect(selected(model) == [ids[2], ids[3], ids[4]])
+
+        model.click(on: ids[4]) // only this one…
+        model.click(on: ids[4]) // …then none: nothing to select from
+        model.click(on: ids[1], shift: true)
+        #expect(selected(model) == [ids[1]])
+    }
+
+    @Test("Return or Space on a row adds it to the selection or takes it out, and a ⇧-click selects from it")
+    func keyboardToggle() {
+        let model = listing().model, ids = Self.ids
+        model.toggleSelection(of: ids[1])
+        model.toggleSelection(of: ids[3])
+        #expect(selected(model) == [ids[1], ids[3]])
+        model.toggleSelection(of: ids[1])
+        #expect(selected(model) == [ids[3]])
+        model.click(on: ids[4], shift: true)
+        #expect(selected(model) == [ids[1], ids[2], ids[3], ids[4]])
+    }
+
     @Test("Remove takes an app that pauses the music off the list at once, and its selection with it")
     func removeAppThatPauses() {
-        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-        let settings = userSettings(seen: [chrome])
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false), settings: settings)
-        show(model, seen: [chrome], ignored: [])
-        model.toggleSelection(of: chrome.id)
-        #expect(model.selectedApp?.id == chrome.id)
+        let (model, settings) = listing()
+        model.click(on: Self.ids[2])
+        model.removeSelected()
+        #expect(settings.state.seenApps.map(\.id) == [Self.ids[0], Self.ids[1], Self.ids[3], Self.ids[4]]) // forgotten
+        #expect(model.selectedApps.isEmpty)
+        #expect(model.appsAwaitingRemoval.isEmpty)
+    }
 
-        model.remove(model.selectedApp!)
-        #expect(settings.state.seenApps.isEmpty) // forgotten
-        #expect(model.selectedApp == nil)
-        #expect(model.appAwaitingRemoval == nil)
+    @Test("Remove takes several apps that pause the music off the list at once")
+    func removeSeveralThatPause() {
+        let (model, settings) = listing()
+        let ids = Self.ids
+        model.click(on: ids[1])
+        model.click(on: ids[3], command: true)
+        model.removeSelected()
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[2], ids[4]])
+        #expect(model.selectedApps.isEmpty)
+        #expect(model.appsAwaitingRemoval.isEmpty)
     }
 
     @Test("Remove asks first for an app that's turned off: confirming forgets it, cancelling keeps it")
@@ -433,39 +530,87 @@ struct SettingsModelTests {
 
         model.remove(row)
         #expect(settings.state.seenApps == [zoom]) // not yet: it's asked first
-        #expect(model.appAwaitingRemoval?.id == zoom.id)
-        #expect(model.removalName == "zoom.us")
+        #expect(model.appsAwaitingRemoval == [row])
+        #expect(model.removalNames == ["zoom.us"])
         model.cancelRemoval()
-        #expect(model.appAwaitingRemoval == nil)
+        #expect(model.appsAwaitingRemoval.isEmpty)
         #expect(settings.state.seenApps == [zoom])
 
-        model.remove(row)
+        model.click(on: row.id) // selected, the same
+        model.removeSelected()
+        #expect(model.appsAwaitingRemoval == [row])
         model.confirmRemoval()
         #expect(settings.state.seenApps.isEmpty && settings.state.ignoredApps.isEmpty)
-        #expect(model.appAwaitingRemoval == nil)
+        #expect(model.appsAwaitingRemoval.isEmpty)
+        #expect(model.selectedApps.isEmpty)
         model.confirmRemoval() // nothing waits any more
     }
 
-    @Test("a click selects an app and a second one unselects it; an app the search hides can't be removed")
-    func selection() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        show(model, seen: [safari, vlc], ignored: [])
-        model.toggleSelection(of: vlc.id)
-        model.toggleSelection(of: vlc.id)
-        #expect(model.selectedApp == nil)
+    @Test("Remove asks once for several apps when one is turned off: confirming forgets them all, cancelling keeps them")
+    func removeSeveralWithTurnedOff() {
+        let (model, settings) = listing(ignored: [Self.listed[2]])
+        let ids = Self.ids
+        model.click(on: ids[1])
+        model.click(on: ids[3], shift: true)
+        model.removeSelected()
+        #expect(settings.state.seenApps == Self.listed) // not yet: it's asked first
+        #expect(model.appsAwaitingRemoval.map(\.id) == [ids[1], ids[2], ids[3]])
+        #expect(model.removalNames == ["Books", "Chess", "Discord"])
+        model.cancelRemoval()
+        #expect(model.appsAwaitingRemoval.isEmpty)
+        #expect(model.removalNames.count == 3) // kept while the confirmation closes
+        #expect(selected(model) == [ids[1], ids[2], ids[3]]) // still selected
+        #expect(settings.state.seenApps == Self.listed)
 
-        model.toggleSelection(of: vlc.id)
-        model.appSearch = "saf"
-        #expect(model.selectedApp == nil) // hidden: Remove is unavailable
-        model.appSearch = nil
-        #expect(model.selectedApp?.id == vlc.id)
-        model.clearSelection()
-        #expect(model.selectedApp == nil)
+        model.removeSelected()
+        model.confirmRemoval()
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[4]])
+        #expect(settings.state.ignoredApps.isEmpty)
+        #expect(model.selectedApps.isEmpty)
     }
 
+    @Test("Remove from List takes only its own app, whatever is selected")
+    func removeFromList() {
+        let (model, settings) = listing()
+        let ids = Self.ids
+        model.click(on: ids[0])
+        model.click(on: ids[1], command: true)
+        model.remove(model.apps[3])
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[1], ids[2], ids[4]])
+        #expect(selected(model) == [ids[0], ids[1]])
+    }
 
+    @Test("Remove takes only the selected apps the search shows: the hidden ones stay selected, and a range skips them")
+    func selectionWhileSearching() {
+        let (model, settings) = listing()
+        let ids = Self.ids
+        model.appSearch = "o" // Books, Discord
+        model.click(on: ids[1])
+        model.click(on: ids[3], shift: true)
+        model.appSearch = nil
+        #expect(selected(model) == [ids[1], ids[3]]) // not Chess, hidden between them
+
+        model.click(on: ids[0])
+        model.click(on: ids[4], shift: true) // all five
+        model.appSearch = "s" // Books, Chess, Discord
+        #expect(selected(model) == [ids[1], ids[2], ids[3]])
+        model.removeSelected()
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[4]])
+        model.appSearch = nil
+        #expect(selected(model) == [ids[0], ids[4]])
+    }
+
+    @Test("an app the search hides isn't removed and comes back selected; closing Settings clears the selection")
+    func hiddenSelection() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[4])
+        model.appSearch = "boo"
+        #expect(model.selectedApps.isEmpty) // hidden: Remove is unavailable
+        model.appSearch = nil
+        #expect(selected(model) == [ids[4]])
+        model.clearSelection()
+        #expect(model.selectedApps.isEmpty)
+    }
 }
 
 /// One at a time: each window takes the name its place is kept under, which

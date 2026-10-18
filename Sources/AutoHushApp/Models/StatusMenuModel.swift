@@ -129,6 +129,10 @@ final class StatusMenuModel {
     /// The settings parts whose other settings show: folded at first, then
     /// each as the user left it, while AutoHush runs.
     var unfoldedSettings: Set<MenuSettingsPart> = []
+    /// Unfolded parts whose other settings are fading out, before they
+    /// fold and the rows under them move up (the user, 2026-10-18), as they
+    /// came in after the move.
+    var foldingSettings: Set<MenuSettingsPart> = []
     /// Whether the ignored apps' side window is open, beside their row.
     var showsIgnoredApps = false
     /// The apps listed in the ignored apps' side window, fixed while it's

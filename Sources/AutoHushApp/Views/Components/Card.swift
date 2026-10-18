@@ -109,7 +109,7 @@ extension Card {
     /// The menu's tint over the card's glass while it's highlighted.
     @ViewBuilder fileprivate var highlight: some View {
         if isHighlighted {
-            HighlightTint(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius)
+            HighlightTint(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius, fill: .cardFocusTint)
         }
     }
 }

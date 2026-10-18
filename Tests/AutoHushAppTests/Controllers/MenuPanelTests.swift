@@ -78,4 +78,16 @@ struct MenuPanelTests {
         // A row low on the screen: moved up so it ends 6 pt above the bottom.
         #expect(StatusMenuController.sideFrame(rowTop: 100, menu: menu, in: visible, width: 300, contentHeight: 400).minY == 6)
     }
+
+    @Test("a pointer crossing other parts on its way to the side window keeps it open; one moving away, or past its corners, doesn't")
+    func headingToTheSideWindow() {
+        let menu = NSRect(x: 700, y: 100, width: 345, height: 800)
+        let side = NSRect(x: 394, y: 500, width: 300, height: 300) // left of the menu
+        let row = CGPoint(x: 900, y: 750)
+        #expect(StatusMenuController.isHeading(from: row, to: CGPoint(x: 800, y: 700), toward: side, beside: menu))
+        #expect(!StatusMenuController.isHeading(from: row, to: CGPoint(x: 950, y: 700), toward: side, beside: menu)) // away
+        #expect(!StatusMenuController.isHeading(from: row, to: CGPoint(x: 800, y: 300), toward: side, beside: menu)) // below its corner
+        let right = NSRect(x: 1051, y: 500, width: 300, height: 300) // no room on the left
+        #expect(StatusMenuController.isHeading(from: CGPoint(x: 850, y: 750), to: CGPoint(x: 950, y: 720), toward: right, beside: menu))
+    }
 }

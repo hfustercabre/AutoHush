@@ -38,6 +38,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   keys or the pointer are on shows a tint of your accent color, the
   players' rows too, and with keyboard navigation on, Tab reaches each
   control too. A click anywhere on the card turns Auto-Pause on or off.
+- **Remove several apps at once.** In Settings → Sound Sources, ⌘-click
+  or ⇧-click selects several apps, as in macOS's lists, and Remove takes
+  them all off the list.
 - **Ignore several apps at once.** Ignore Another App… picks several apps
   in one go, in Settings → Sound Sources and now in the menu too, under
   the ignored apps. Ignored Apps is always in the menu, saying None until
@@ -45,6 +48,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The menu is more compact.** Less space around its titles, rows and
   lines, and smaller switches: it shows as much in less height. A part's
   title, Detection's and Fades', shows or hides its other settings.
+- **Smoother menu.** A part folds by fading its settings out before the
+  rows under it move up; a side window stays open while the pointer heads
+  toward it; → opens it on its first row; ← and → move along the
+  durations and the buttons; the card's tint shows better over its glass.
 - **Settings takes the arrow keys and the pointer as the menu does.** ↑
   and ↓ move through the page, ← goes to the sidebar, where ↑ and ↓ show
   each page, and → comes back; Return or Space presses, ← and → change a
@@ -153,7 +160,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   player isn't resumed when a call (an app using the microphone) came
   while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
-  played in the last 30 minutes, each with its switch, so one that stopped
+  played in the last 30 minutes (the last four), each with its switch, so one that stopped
   before you could switch it off is still there.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and

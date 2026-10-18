@@ -325,6 +325,19 @@ final class StatusMenuController: NSObject {
         showSide()
     }
 
+    /// The pointer went from `from` to `to` on its way to the side window
+    /// (`side`, beside `menu`): nearer its edge, inside the triangle from
+    /// where it was to that edge's corners, as macOS keeps a submenu open.
+    nonisolated static func isHeading(from: CGPoint, to: CGPoint, toward side: CGRect, beside menu: CGRect) -> Bool {
+        let edge = side.midX < menu.midX ? side.maxX : side.minX
+        guard abs(to.x - edge) < abs(from.x - edge) else { return false }
+        let a = from, b = CGPoint(x: edge, y: side.minY), c = CGPoint(x: edge, y: side.maxY)
+        func cross(_ p: CGPoint, _ q: CGPoint, _ r: CGPoint) -> CGFloat { (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x) }
+        let d1 = cross(a, b, to), d2 = cross(b, c, to), d3 = cross(c, a, to)
+        let negative = d1 < 0 || d2 < 0 || d3 < 0, positive = d1 > 0 || d2 > 0 || d3 > 0
+        return !(negative && positive)
+    }
+
     /// The pointer is over the side window.
     private var pointerIsInSide: Bool {
         guard let side = sidePanel, side.isVisible else { return false }
@@ -449,9 +462,11 @@ final class StatusMenuController: NSObject {
     /// setting (the user, 2026-10-18: "Arrows, as menus"): ↑ ↓ move the
     /// highlight through the menu's controls (`KeyHighlight`), or the side
     /// window's rows while it's open (the players' too: "Implement the same
-    /// in the Media Player submenu"); Return or Space presses the one it's
-    /// on; → opens a side window from its row, ← closes it; on a slider or a
-    /// choice, ← and → change it. Among the players, typing goes to their
+    /// in the Media Player submenu"), row by row; Return or Space presses
+    /// the one it's on; → opens a side window from its row, its first row
+    /// lit, ← closes it; on a slider or a choice, ← and → change it, and in
+    /// a row of several (the durations, the buttons) they move along it.
+    /// Among the players, typing goes to their
     /// search, and Return with nothing highlighted chooses the first one it
     /// left (the search takes the keys itself while it has the keyboard).
     /// Tab leaves the highlight to the keyboard's focus.
@@ -482,14 +497,20 @@ final class StatusMenuController: NSObject {
         case 49:
             return keyboard.press()
         case 124:
-            if !inSide, keyboard.highlightedOpensSide { return keyboard.press() }
-            return keyboard.adjust(1)
+            if !inSide, keyboard.highlightedOpensSide {
+                // Into the side window, on its first row, as into a submenu
+                // (once opened: opening clears its highlight).
+                let pressed = keyboard.press()
+                model.sideKeyboard.highlightFirstWhenReady()
+                return pressed
+            }
+            return keyboard.adjust(1) || keyboard.moveInRow(1)
         case 123:
             if inSide {
                 closeSide()
                 return true
             }
-            return keyboard.adjust(-1)
+            return keyboard.adjust(-1) || keyboard.moveInRow(-1)
         default:
             return false
         }
@@ -514,6 +535,28 @@ final class StatusMenuController: NSObject {
     /// Folds or unfolds a part of the menu, smoothly unless Reduce Motion is on.
     private func animated(_ change: () -> Void) {
         withAnimation(Self.reducesMotion ? nil : MenuPanelView.animation, change)
+    }
+
+    /// How long a part's other settings take to fade out before it folds.
+    static let foldFade: TimeInterval = 0.15
+
+    /// Folds `part`: its other settings fade out first, then go as the rows
+    /// under them move up, so none overlap (the user, 2026-10-18). At once
+    /// with Reduce Motion.
+    private func fold(_ part: MenuSettingsPart) {
+        guard !Self.reducesMotion else {
+            model.unfoldedSettings.remove(part)
+            return
+        }
+        withAnimation(.easeOut(duration: Self.foldFade)) { _ = model.foldingSettings.insert(part) }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.foldFade))
+            guard let self, self.model.foldingSettings.contains(part) else { return } // unfolded again meanwhile
+            self.animated {
+                self.model.foldingSettings.remove(part)
+                self.model.unfoldedSettings.remove(part)
+            }
+        }
     }
 
     // MARK: - Actions
@@ -553,8 +596,13 @@ final class StatusMenuController: NSObject {
             guard !model.sideKeyboard.press(), let id = model.players.choosable.first?.id else { return }
             perform(.choosePlayer(id))
         case .toggleSettings(let part):
-            animated {
-                if model.unfoldedSettings.contains(part) { model.unfoldedSettings.remove(part) } else { model.unfoldedSettings.insert(part) }
+            if model.foldingSettings.contains(part) {
+                // Clicked again while its settings fade out: they stay.
+                withAnimation(.easeOut(duration: Self.foldFade)) { _ = model.foldingSettings.remove(part) }
+            } else if model.unfoldedSettings.contains(part) {
+                fold(part)
+            } else {
+                animated { _ = model.unfoldedSettings.insert(part) }
             }
         case .toggleIgnoredApps:
             model.showsIgnoredApps.toggle()
@@ -579,8 +627,20 @@ final class StatusMenuController: NSObject {
         case .pointerEntered(let section):
             pointerSection = section
             guard let open = model.openSide, section != open.section else { return }
+            // As macOS's submenus: a pointer on its way to the side window
+            // across other parts doesn't close it (the user, 2026-10-18).
+            let start = NSEvent.mouseLocation
             Task { [weak self] in
-                try? await Task.sleep(for: .seconds(Self.sideCloseDelay))
+                var from = start
+                for _ in 0..<5 {
+                    try? await Task.sleep(for: .seconds(Self.sideCloseDelay))
+                    guard let self, self.isMenuOpen, self.model.openSide == open,
+                          self.pointerSection != open.section, !self.pointerIsInSide else { return }
+                    let now = NSEvent.mouseLocation
+                    guard let side = self.sidePanel?.frame, let menu = self.panel?.frame,
+                          Self.isHeading(from: from, to: now, toward: side, beside: menu) else { break }
+                    from = now
+                }
                 guard let self, self.isMenuOpen, self.model.openSide == open,
                       self.pointerSection != open.section, !self.pointerIsInSide else { return }
                 self.closeSide()

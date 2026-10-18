@@ -135,12 +135,17 @@ struct AppStatus: Equatable {
     }
 
     /// The apps that played in the last 30 minutes and play no more, the
-    /// most recent first; never the chosen player, which doesn't pause
+    /// most recent first, four at most (the user, 2026-10-18: a busy day
+    /// made the menu long); never the chosen player, which doesn't pause
     /// itself (as `seenApps`): its switch would only store it as ignored.
     func recentSources(at now: Date = Date()) -> [AudioSource] {
-        stoppedSources.filter { $0.source.id != chosenPlayerID && now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }
+        Array(stoppedSources.filter { $0.source.id != chosenPlayerID && now.timeIntervalSince($0.stoppedAt) < Self.recentlyPlayedFor }
             .map(\.source)
+            .prefix(Self.recentlyPlayedMax))
     }
+
+    /// How many apps Recently Played lists at most.
+    static let recentlyPlayedMax = 4
 
     func isIgnored(_ id: String) -> Bool {
         ignoredApps.contains { $0.id == id }

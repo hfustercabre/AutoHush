@@ -16,12 +16,17 @@ struct MenuSettingsView: View {
     let settings: SettingsModel
 
     private func isOpen(_ part: MenuSettingsPart) -> Bool { model.unfoldedSettings.contains(part) }
+    /// Shown as open: unfolded and not fading out to fold (its chevron turns at once).
+    private func showsOpen(_ part: MenuSettingsPart) -> Bool { isOpen(part) && !model.foldingSettings.contains(part) }
+    /// A part's other settings, faded out while it folds.
+    private func fading(_ part: MenuSettingsPart) -> Double { model.foldingSettings.contains(part) ? 0 : 1 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             pageName(.detection, folding: .detection)
             if isOpen(.detection) {
                 innerTitle(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
+                    .opacity(fading(.detection))
             }
             part {
                 switchRow(.antiDot)
@@ -42,16 +47,19 @@ struct MenuSettingsView: View {
                     .unavailable(!settings.isAntiDotMode)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
+                    .opacity(fading(.detection))
                     .transition(Self.unfolding)
                 }
             }
             if isOpen(.detection) {
                 innerTitle(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
+                    .opacity(fading(.detection))
                 part {
                     slider(.pauseAfter)
                     slider(.resumeAfter)
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
+                .opacity(fading(.detection))
                 .transition(Self.unfolding) // the part comes in whole, not its rows
             }
             line
@@ -64,6 +72,7 @@ struct MenuSettingsView: View {
                         slider(.fadeIn)
                     }
                     .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
+                    .opacity(fading(.fades))
                 }
             }
             line
@@ -131,7 +140,7 @@ struct MenuSettingsView: View {
             HStack(spacing: 5) {
                 SectionLabel(Text(verbatim: page.title))
                 Spacer(minLength: 0)
-                Image(systemName: isOpen(part) ? "chevron.up" : "chevron.down")
+                Image(systemName: showsOpen(part) ? "chevron.up" : "chevron.down")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.appSecondary)
                     .accessibilityHidden(true)
@@ -143,9 +152,9 @@ struct MenuSettingsView: View {
         .buttonStyle(.plain)
         .modifier(HighlightableControl(cornerRadius: 6, inset: 8, press: toggle))
         .padding(.top, max(0, MenuSpacing.titleTop - 3))
-        .help(Text(verbatim: isOpen(part) ? Self.hideTitle : Self.showTitle))
+        .help(Text(verbatim: showsOpen(part) ? Self.hideTitle : Self.showTitle))
         .accessibilityLabel(Text(verbatim: page.title))
-        .accessibilityValue(isOpen(part) ? AccessibilityText.expanded : AccessibilityText.collapsed)
+        .accessibilityValue(showsOpen(part) ? AccessibilityText.expanded : AccessibilityText.collapsed)
         .accessibilityAddTraits(.isHeader)
     }
 
@@ -160,7 +169,8 @@ struct MenuSettingsView: View {
     /// How the rows a part unfolds come in: once the rows under them have
     /// moved and the menu has grown, so none overlap meanwhile (the user,
     /// 2026-10-18: "Make the new rows fade in after the others move"); they
-    /// fade out as the part folds. At once with Reduce Motion.
+    /// fade out before the part folds (`foldingSettings`). At once with Reduce
+    /// Motion.
     static var unfolding: AnyTransition {
         guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return .identity }
         return .asymmetric(insertion: .opacity.animation(.easeOut(duration: 0.15).delay(MenuPanel.resizeDuration)),

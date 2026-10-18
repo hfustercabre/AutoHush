@@ -27,7 +27,7 @@ struct MenuSidePanelView: View {
                         .padding(.bottom, 4)
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(model.listedIgnoredApps, id: \.self) { source in
-                            SourceSwitchRow(model: model, source: source)
+                            SourceSwitchRow(model: model, source: source, saysIgnoredShortly: true)
                         }
                         // Several at once (the user, 2026-10-18); the menu closes for the panel.
                         Button { model.perform(.ignoreAnotherApp) } label: {

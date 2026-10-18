@@ -35,6 +35,9 @@ extension ShapeStyle where Self == Color {
     /// user's pick, 2026-10-18): the system's accent color, faint; it
     /// follows System Settings → Appearance.
     static var focusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.14) }
+    /// The same over the menu card's glass, which blends it away: a step
+    /// stronger, so it shows as the rows' do (the user, 2026-10-18).
+    static var cardFocusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.24) }
     /// Icons for what works: Diagnostics' checks.
     static var appSuccess: Color { .green }
     /// A filled chip's background, at rest: the search field, the menu's chevron.

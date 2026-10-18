@@ -572,8 +572,8 @@ struct StatusMenuControllerTests {
 
     // MARK: - The settings
 
-    @Test("the settings' switches always show; each part's chevron unfolds its other settings on its own, and they stay as left when the menu opens again")
-    func moreSettings() {
+    @Test("the settings' switches always show; each part's title unfolds its other settings on its own, and they stay as left when the menu opens again; folding, they fade out first, and a click meanwhile keeps them")
+    func moreSettings() async {
         let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
                                           launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
         let sut = makeController(settingsModel: settingsModel)
@@ -587,7 +587,13 @@ struct StatusMenuControllerTests {
         sut.perform(.toggleSettings(.fades))
         #expect(sut.model.unfoldedSettings == [.detection, .fades])
         sut.perform(.toggleSettings(.detection))
-        #expect(sut.model.unfoldedSettings == [.fades] && sut.isMenuOpen)
+        #expect(sut.model.foldingSettings == [.detection]) // fading out, still there
+        sut.perform(.toggleSettings(.detection)) // clicked again meanwhile: it stays
+        try? await Task.sleep(for: .seconds(StatusMenuController.foldFade + 0.1))
+        #expect(sut.model.unfoldedSettings == [.detection, .fades] && sut.model.foldingSettings.isEmpty)
+        sut.perform(.toggleSettings(.detection))
+        try? await Task.sleep(for: .seconds(StatusMenuController.foldFade + 0.1))
+        #expect(sut.model.unfoldedSettings == [.fades] && sut.model.foldingSettings.isEmpty && sut.isMenuOpen)
         #expect(log.calls.allSatisfy { $0 == "menuWillOpen" })
     }
 

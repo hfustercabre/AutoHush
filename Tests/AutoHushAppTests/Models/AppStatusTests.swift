@@ -135,6 +135,18 @@ struct AppStatusTests {
         #expect(status.recentSources(at: start + 60 + 30 * 60).isEmpty)
     }
 
+    @Test("Recently Played lists the four that stopped last")
+    func recentlyPlayedAtMost4() {
+        var status = ready()
+        let start = Date()
+        let apps = (1...6).map { AudioSource(id: "com.example.app\($0)", name: "App \($0)") }
+        for (index, app) in apps.enumerated() {
+            status.setActiveSources([app], now: start + Double(index))
+        }
+        status.setActiveSources([], now: start + 10)
+        #expect(status.recentSources(at: start + 11).map(\.name) == ["App 6", "App 5", "App 4", "App 3"])
+    }
+
     @Test("ignored apps are listed but never named as the cause of a pause")
     func ignoredAppsAreNotCauses() {
         var status = ready(.pausedByMonitor)

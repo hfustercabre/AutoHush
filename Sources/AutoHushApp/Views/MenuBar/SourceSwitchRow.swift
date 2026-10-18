@@ -8,12 +8,17 @@ import AutoHushKit
 struct SourceSwitchRow: View {
     let model: StatusMenuModel
     let source: AudioSource
+    /// Ignored, it says only that: the ignored apps' side window, whose
+    /// title says the rest (the user, 2026-10-18: the line wrapped there).
+    var saysIgnoredShortly = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
         let pausesMusic = !model.status.isIgnored(source.id)
         let state = pausesMusic
             ? Text(verbatim: PlayerOption.interruptsLabel(mutes: model.status.playerMutes))
+            : saysIgnoredShortly
+            ? Text("Ignored", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
             : Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
         return HStack(spacing: 8) {
             Image(nsImage: AppIcon.image(for: source, players: model.status.playerOptions, size: 20))

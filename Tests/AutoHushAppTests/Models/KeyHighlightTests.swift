@@ -52,6 +52,36 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == nil && keyboard.revealed == nil)
     }
 
+    @Test("↓ and ↑ go row by row: from a row of one to a row's first, from a row of several to the nearest; ← and → move along a row, stopping at its ends")
+    func rows() {
+        let keyboard = MenuKeyboardRows.make()
+        keyboard.k.move(1)
+        #expect(keyboard.k.highlighted == keyboard.title)
+        keyboard.k.move(1) // into the durations: the first
+        #expect(keyboard.k.highlighted == keyboard.chips[0])
+        #expect(keyboard.k.moveInRow(1) && keyboard.k.moveInRow(1))
+        #expect(keyboard.k.highlighted == keyboard.chips[2])
+        keyboard.k.move(1) // under them, the toolbar: the nearest
+        #expect(keyboard.k.highlighted == keyboard.toolbar[2])
+        #expect(keyboard.k.moveInRow(-1) && keyboard.k.moveInRow(-1))
+        #expect(!keyboard.k.moveInRow(-1)) // the row's start
+        keyboard.k.move(1) // wraps to the top
+        #expect(keyboard.k.highlighted == keyboard.title)
+        #expect(!keyboard.k.moveInRow(1)) // a row of one
+    }
+
+    @Test("a side window opened by → lights its first row once its rows have come")
+    func firstWhenReady() async {
+        let keyboard = KeyHighlight()
+        keyboard.highlightFirstWhenReady()
+        let second = UUID(), first = UUID()
+        keyboard.register(second, .init(frame: CGRect(x: 0, y: 40, width: 100, height: 20)))
+        keyboard.register(first, .init(frame: CGRect(x: 0, y: 0, width: 100, height: 20)))
+        await Task.yield()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(keyboard.highlighted == first)
+    }
+
     @Test("the pointer moves the highlight onto a control and takes it away as it leaves, never scrolling")
     func pointer() {
         let keyboard = KeyHighlight()
@@ -103,5 +133,26 @@ struct KeyHighlightTests {
         keyboard.remove(id)
         #expect(keyboard.highlighted == nil)
         #expect(keyboard.order == [above])
+    }
+}
+
+/// A menu-like layout: a title, five durations in a row, four buttons in a row.
+@MainActor
+private enum MenuKeyboardRows {
+    static func make() -> (k: KeyHighlight, title: UUID, chips: [UUID], toolbar: [UUID]) {
+        let k = KeyHighlight()
+        let title = UUID()
+        k.register(title, .init(frame: CGRect(x: 0, y: 0, width: 345, height: 20)))
+        let chips = (0..<5).map { i -> UUID in
+            let id = UUID()
+            k.register(id, .init(frame: CGRect(x: 14 + CGFloat(i) * 65, y: 40, width: 60, height: 30)))
+            return id
+        }
+        let toolbar = (0..<4).map { i -> UUID in
+            let id = UUID()
+            k.register(id, .init(frame: CGRect(x: 8 + CGFloat(i) * 82, y: 100, width: 80, height: 40)))
+            return id
+        }
+        return (k, title, chips, toolbar)
     }
 }

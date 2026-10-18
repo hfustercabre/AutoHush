@@ -146,14 +146,25 @@ final class SettingsModel {
         guard !query.isEmpty else { return apps }
         return apps.filter { $0.source.name.localizedStandardContains(query) }
     }
-    /// The app clicked in Settings → Sound Sources, which Remove takes off the list.
-    private(set) var selectedAppID: String?
-    /// The selected app, while the list shows it (the search may hide it).
-    var selectedApp: AppRow? { shownApps.first { $0.id == selectedAppID } }
-    /// A turned-off app the user asked to remove, while that's confirmed.
-    private(set) var appAwaitingRemoval: AppRow?
-    /// Its name, kept while the confirmation closes (its title shows it).
-    private(set) var removalName = ""
+    /// The apps selected in Settings → Sound Sources, which Remove takes off
+    /// the list: several at once, as in macOS's lists (the user, 2026-10-18).
+    private(set) var selectedAppIDs: Set<String> = []
+    /// The selected apps the list shows, in its order: the search may hide
+    /// some, which stay selected but aren't removed.
+    var selectedApps: [AppRow] { shownApps.filter { selectedAppIDs.contains($0.id) } }
+    /// Where a ⇧-click selects from: the last row clicked without ⇧, or
+    /// added or taken out from the keyboard.
+    @ObservationIgnored private var selectionAnchor: String?
+    /// What was selected besides it then. A ⇧-click adds its range to this,
+    /// so a second one changes the range, as in macOS's lists, and keeps
+    /// what was selected before.
+    @ObservationIgnored private var selectionBesidesRange: Set<String> = []
+    /// The apps the user asked to remove, while that's confirmed: one that's
+    /// turned off, or several with one turned off at least. Empty otherwise.
+    private(set) var appsAwaitingRemoval: [AppRow] = []
+    /// Their names, kept while the confirmation closes (its title shows the
+    /// name, or how many they are).
+    private(set) var removalNames: [String] = []
 
     // Diagnostics
     /// What AutoHush sees, kept up to date while the Diagnostics tab shows.
@@ -244,39 +255,96 @@ final class SettingsModel {
 
     // MARK: - Apps
 
-    /// A click on an app in Settings → Sound Sources: selects it, or unselects it.
+    /// A click on an app in Settings → Sound Sources, as in macOS's lists.
+    /// Alone, it selects only that app, or unselects it when it's the only
+    /// one the list shows selected. With ⌘, it adds the app or takes it out.
+    /// With ⇧ (⌘ too), it selects every app shown from the last one clicked
+    /// to this one, or adds this one when that one isn't shown.
+    func click(on id: String, command: Bool = false, shift: Bool = false) {
+        if shift {
+            if let anchor = selectionAnchor, let range = shownRange(from: anchor, to: id) {
+                selectedAppIDs = selectionBesidesRange.union(range)
+            } else {
+                selectionBesidesRange = selectedAppIDs
+                selectionAnchor = id
+                selectedAppIDs.insert(id)
+            }
+        } else if command {
+            toggleSelection(of: id)
+        } else if selectedApps.map(\.id) == [id] {
+            clearSelection()
+        } else {
+            selectedAppIDs = [id]
+            selectionAnchor = id
+            selectionBesidesRange = []
+        }
+    }
+
+    /// Adds the app to the selection, or takes it out: a ⌘-click, or Return
+    /// or Space on the row, so the keyboard can select several too.
     func toggleSelection(of id: String) {
-        selectedAppID = selectedAppID == id ? nil : id
+        if selectedAppIDs.remove(id) == nil { selectedAppIDs.insert(id) }
+        selectionAnchor = id
+        selectionBesidesRange = selectedAppIDs
     }
 
     /// Settings closed: a selection doesn't outlive it.
-    func clearSelection() { selectedAppID = nil }
+    func clearSelection() {
+        selectedAppIDs = []
+        selectionAnchor = nil
+        selectionBesidesRange = []
+    }
 
-    /// Remove (or Remove from List): takes the app off the list. One that's
-    /// turned off would pause the music again, so that's asked first
-    /// (`appAwaitingRemoval`).
+    /// The IDs of the apps shown from `anchor` to `id`, both included, in
+    /// the list's order; `nil` when either isn't shown.
+    private func shownRange(from anchor: String, to id: String) -> [String]? {
+        let ids = shownApps.map(\.id)
+        guard let start = ids.firstIndex(of: anchor), let end = ids.firstIndex(of: id) else { return nil }
+        return Array(ids[min(start, end)...max(start, end)])
+    }
+
+    /// Remove: takes the selected apps the list shows off it. Those that
+    /// pause the music go at once; one that's turned off would pause it
+    /// again, so that's asked first (`appsAwaitingRemoval`), once for all.
+    func removeSelected() {
+        let rows = selectedApps
+        if rows.contains(where: \.isIgnored) {
+            askToRemove(rows)
+        } else {
+            rows.forEach(takeOff)
+        }
+    }
+
+    /// Remove from List: takes this app off the list, whatever is selected;
+    /// asked first when it's turned off.
     func remove(_ row: AppRow) {
         if row.isIgnored {
-            removalName = row.source.name
-            appAwaitingRemoval = row
+            askToRemove([row])
         } else {
             takeOff(row)
         }
     }
 
-    /// The turned-off app is removed after all.
-    func confirmRemoval() {
-        guard let row = appAwaitingRemoval else { return }
-        appAwaitingRemoval = nil
-        takeOff(row)
+    private func askToRemove(_ rows: [AppRow]) {
+        removalNames = rows.map(\.source.name)
+        appsAwaitingRemoval = rows
     }
 
-    /// The confirmation closed without removing it.
-    func cancelRemoval() { appAwaitingRemoval = nil }
+    /// The apps asked about are removed after all.
+    func confirmRemoval() {
+        let rows = appsAwaitingRemoval
+        appsAwaitingRemoval = []
+        rows.forEach(takeOff)
+    }
+
+    /// The confirmation closed without removing them.
+    func cancelRemoval() { appsAwaitingRemoval = [] }
 
     private func takeOff(_ row: AppRow) {
         settings.forget(row.source)
-        if selectedAppID == row.id { selectedAppID = nil }
+        selectedAppIDs.remove(row.id)
+        selectionBesidesRange.remove(row.id)
+        if selectionAnchor == row.id { selectionAnchor = nil }
     }
 
     func setAppListOrder(_ order: AppListOrder) {

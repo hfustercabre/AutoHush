@@ -18,7 +18,7 @@ enum PlayerAlerts {
             : String(localized: "\(app) won’t be offered as a player anymore. The app stays on your Mac. Add an App… can add it back.",
                      comment: "Message of the alert before an app added with Add an App is removed from the media players; %@ is the app")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected app), in its confirmation for an app that's turned off, and in the alert before an app added with Add an App is removed"))
+        alert.addButton(withTitle: String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected apps), in its confirmation for removing apps turned off, and in the alert before an app added with Add an App is removed"))
         alert.addButton(withTitle: AddAppText.cancel).keyEquivalent = "\u{1b}" // Escape
         return alert
     }
