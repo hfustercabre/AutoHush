@@ -160,7 +160,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(after a crash: at the next<br/>launch, if still lowered)"]
+  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -493,7 +493,7 @@ flowchart TD
   BACK["Cancel: back<br/>to step 5"]
   RUN["The check runs in AutoHush’s<br/>helper; AutoHush’s own player<br/>stays as it is (Paused while<br/>a check runs)"]
   BLOCK["The screen dimmed; clicks,<br/>scrolling and keys blocked;<br/>a panel at the bottom right:<br/>progress and Stop"]
-  MUTE["The app muted meanwhile:<br/>on its own (Audio Recording,<br/>not in AntiDot mode), else<br/>the Mac’s output, put back after"]
+  MUTE["The app muted meanwhile:<br/>on its own (Audio Recording,<br/>not in AntiDot mode), else<br/>the Mac’s output (and any the<br/>sound moves to), put back after"]
   STATES["Its window in 7 states: in<br/>view, covered, on another<br/>desktop, covered there, full<br/>screen, minimized, hidden"]
   WAYS["In each state, each way<br/>pauses and plays it: its<br/>AppleScript, playback menu,<br/>page’s Play/Pause, Now<br/>Playing row"]
   ASK["It asks you to pause it<br/>yourself (to learn its page):<br/>mouse and keyboard yours"]
@@ -709,7 +709,7 @@ flowchart TD
   CHK["Add an App’s check couldn’t<br/>finish: Show Log… (the<br/>check’s own log), Check Again"]
   DEL["The chosen web app deleted:<br/>no player chosen; the window<br/>to choose another opens"]
   QUIT["Quitting, within a second:<br/>fades stopped, volume back,<br/>mutes lifted, switches off,<br/>Now Playing put back, the<br/>Mac’s output unmuted,<br/>pauses handed over"]
-  NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, its volume<br/>put back if still lowered, a<br/>pause handed over taken over"])
+  NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, its volume<br/>put back if lowered within<br/>the hour, a pause handed<br/>over taken over"])
 
   R -.-> AUD --> AUDF
   R -.-> PF

@@ -49,7 +49,9 @@ final class AddAppModel {
     var selectedID: String?
     private(set) var chosen: CheckableApp?
     private(set) var traits: CheckedAppTraits?
-    private(set) var permissions = CheckPermissions()
+    private(set) var permissions = CheckPermissions() {
+        didSet { readMacMuting() } // as the steps that say how the check mutes show
+    }
     /// It ran without the launch option it needs: the Reopen step shows.
     private(set) var needsReopen = false
     private(set) var reopenOutcome: ReopenOutcome?
@@ -200,7 +202,19 @@ final class AddAppModel {
 
     var checkMuting: CheckMuting {
         if permissions.audio == .allowed && !antiDot { return .app }
-        return services.macCanMute() ? .mac : .none
+        return macCanMute ? .mac : .none
+    }
+
+    /// Whether the Mac's output could be muted, as last read: as the
+    /// permissions are read, and as the warning before the check opens. The
+    /// steps' notes, the warning and the check's start all go by it, so
+    /// they agree, and Core Audio isn't asked at every drawing. The check's
+    /// start mutes the output in use then (`OutputMute.mute`).
+    private(set) var macCanMute = false
+
+    private func readMacMuting() {
+        let canMute = services.macCanMute()
+        if canMute != macCanMute { macCanMute = canMute }
     }
 
     /// Now Playing was hidden in the menu bar, so its panel wasn't tried:
@@ -476,6 +490,7 @@ final class AddAppModel {
     /// The check step's Continue…: the warning before the check.
     func continueToCheck() {
         guard stage == .ready else { return }
+        readMacMuting() // what the warning says, and the check does
         services.showWarning()
     }
 

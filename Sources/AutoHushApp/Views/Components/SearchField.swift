@@ -6,8 +6,14 @@ import SwiftUI
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:
-    /// `StatusMenuController` gives it the keyboard there).
+    /// `StatusMenuController` gives it the keyboard there, `focusRequest`).
     var focusesOnAppear = false
+    /// Takes the focus each time this changes (the menu's side window, once
+    /// it's key).
+    var focusRequest = 0
+    /// A click in it, before it takes the focus (the menu's side window
+    /// becomes key then).
+    var onClick: (() -> Void)?
     var onClose: (() -> Void)?
     /// Return in it (which a window's main button then doesn't get).
     var onSubmit: (() -> Void)?
@@ -25,6 +31,7 @@ struct SearchField: View {
             }
             .textFieldStyle(.plain)
             .focused($isFocused)
+            .simultaneousGesture(TapGesture().onEnded { onClick?() })
             .onSubmit { onSubmit?() }
             .onKeyPress(.upArrow) { move(-1) }
             .onKeyPress(.downArrow) { move(1) }
@@ -42,6 +49,7 @@ struct SearchField: View {
             // Once it's shown: a popover's field doesn't take it any sooner.
             if focusesOnAppear { DispatchQueue.main.async { isFocused = true } }
         }
+        .onChange(of: focusRequest) { isFocused = true }
     }
 
     private func move(_ step: Int) -> KeyPress.Result {

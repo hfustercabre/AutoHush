@@ -31,16 +31,17 @@ extension ShapeStyle where Self == Color {
     /// Text in the accent color the user picked, on its own tint (the
     /// "Recommended" `HeadingBadge`, a chosen card's included).
     static var appAccent: Color { .accentColor }
-    /// Behind the control the keyboard's focus is on, in the menu (F5, the
-    /// user's pick, 2026-10-18): the system's accent color, faint; it
-    /// follows System Settings → Appearance.
+    /// Behind the control the arrow keys or the pointer highlight, or the
+    /// keyboard's focus is on, in the menu and Settings (F5, the user's
+    /// pick, 2026-10-18): the system's accent color, faint; it follows
+    /// System Settings → Appearance.
     static var focusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.14) }
     /// The same over the menu card's glass, which blends it away: a step
     /// stronger, so it shows as the rows' do (the user, 2026-10-18).
     static var cardFocusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.24) }
     /// Icons for what works: Diagnostics' checks.
     static var appSuccess: Color { .green }
-    /// A filled chip's background, at rest: the search field, the menu's chevron.
+    /// A filled chip's background, at rest: the search field.
     static var chipFill: Color { Color(nsColor: .quaternarySystemFill) }
     /// A chip's background under the pointer: a step above `chipFill`.
     static var chipHoverFill: Color { Color(nsColor: .tertiarySystemFill) }

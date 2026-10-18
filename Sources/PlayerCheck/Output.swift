@@ -44,6 +44,12 @@ final class RunLog: @unchecked Sendable {
     private var file: FileHandle?
     /// When the check last wrote a line of its own (not the input block's).
     private var last = Date()
+    private var _discard: @Sendable (URL) -> Void = { try? FileManager.default.trashItem(at: $0, resultingItemURL: nil) }
+    /// How a log beyond `kept` goes: to the Trash. Tests note it instead.
+    var discard: @Sendable (URL) -> Void {
+        get { lock.withLock { _discard } }
+        set { lock.withLock { _discard = newValue } }
+    }
     private let time: DateFormatter = {
         let format = DateFormatter()
         format.locale = Locale(identifier: "en_US_POSIX")
@@ -79,7 +85,8 @@ final class RunLog: @unchecked Sendable {
               + "  (pid \(getpid()), macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion), "
               + (ProcessInfo.processInfo.environment["__CFBundleIdentifier"].map { "run by \($0)" } ?? "run from a shell") + ")")
         let logs = ((try? files.contentsOfDirectory(atPath: Self.folder.path)) ?? []).filter(Self.isRunLog).sorted()
-        for old in logs.dropLast(Self.kept) { try? files.trashItem(at: Self.folder.appendingPathComponent(old), resultingItemURL: nil) }
+        let discard = discard
+        for old in logs.dropLast(Self.kept) { discard(Self.folder.appendingPathComponent(old)) }
     }
 
     /// The time a run's log is named by, e.g. "2026-10-18 09.41.07.250".

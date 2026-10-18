@@ -77,6 +77,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Lowers the Mac's volume as the music resumes after quieter apps
     /// (Settings → Advanced): one for every monitoring.
     let volumeLeveler: SystemVolumeLeveler
+    /// Where Now Playing shown for a press is kept until it's hidden again,
+    /// and the setting itself (`NowPlayingSetting.restoreIfLeft`).
+    let nowPlayingDefaults: UserDefaults
+    let nowPlayingSetting: NowPlayingSetting.Setting
     /// A web app made but not found as installed yet, and the address it was
     /// made from, while the add window says so (`pickUpListedWebApp`).
     var webAppAwaitingListing: (bundleID: String, address: String)?
@@ -128,6 +132,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
         checkOutputMute: OutputMute = OutputMute(),
         volumeLeveler: SystemVolumeLeveler = SystemVolumeLeveler(),
+        nowPlayingDefaults: UserDefaults = .standard,
+        nowPlayingSetting: NowPlayingSetting.Setting = .controlCenter,
         // `nil`: `PlayerSession.pipelines`, with `volumeLeveler`.
         makeMonitoring: PlayerSession.MakeMonitoring? = nil,
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
@@ -165,6 +171,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.checkedPlayers = checkedPlayers
         self.checkOutputMute = checkOutputMute
         self.volumeLeveler = volumeLeveler
+        self.nowPlayingDefaults = nowPlayingDefaults
+        self.nowPlayingSetting = nowPlayingSetting
         self.locateApp = locateApp
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow

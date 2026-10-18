@@ -19,10 +19,15 @@ struct IgnoreAppsPickerTests {
         #expect(unidentified == [oldTool])
     }
 
-    @Test("an app chosen to ignore that can't be told apart says so, by its name")
-    func unidentifiedAppAlert() {
-        let alert = IgnoreAppsPicker.unidentifiedAppAlert(url: URL(fileURLWithPath: "/Applications/Old Tool.app"))
-        #expect(alert.title == "Couldn’t Ignore Old Tool")
-        #expect(alert.message.hasPrefix("Old Tool "))
+    @Test("apps chosen to ignore that can't be told apart are named in one alert: by name for one, how many and their names for several, none for none")
+    func unidentifiedAppsAlert() throws {
+        #expect(IgnoreAppsPicker.unidentifiedAppsAlert(urls: []) == nil)
+        let one = try #require(IgnoreAppsPicker.unidentifiedAppsAlert(urls: [URL(fileURLWithPath: "/Applications/Old Tool.app")]))
+        #expect(one.title == "Couldn’t Ignore Old Tool")
+        #expect(one.message.hasPrefix("Old Tool doesn’t "))
+        let urls = ["Old Tool", "Bare Script", "Odd Player"].map { URL(fileURLWithPath: "/Applications/\($0).app") }
+        let several = try #require(IgnoreAppsPicker.unidentifiedAppsAlert(urls: urls))
+        #expect(several.title == "Couldn’t Ignore 3 Apps")
+        #expect(several.message.hasPrefix(ListFormatter.localizedString(byJoining: ["Old Tool", "Bare Script", "Odd Player"]) + " don’t "))
     }
 }

@@ -4,12 +4,17 @@ import AutoHushKit
 /// What the windows show about the permissions AutoHush needs, and a click
 /// on a missing one's button (see `PermissionCenter`).
 extension AppDelegate {
-    /// Brings what the windows show about the permissions up to date.
+    /// Brings what the windows show about the permissions up to date. Two
+    /// may run at once (the menu opens, a player is chosen from it): one read
+    /// for a player that's no longer chosen when it's done is dropped, so a
+    /// slow read never leaves the previous player's permissions shown.
     func refreshPermissions() async {
+        let player = player
         let state = await permissionCenter.state(
             player: player, detectionMethod: preferences.detectionMethod, detection: status.detection,
             awaitsReopen: status.awaitsReopenForAudioRecording
         )
+        guard self.player?.bundleID == player?.bundleID else { return }
         if settingsModel.permissions != state { settingsModel.permissions = state }
     }
 

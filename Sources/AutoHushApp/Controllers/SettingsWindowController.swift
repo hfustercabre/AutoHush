@@ -118,9 +118,12 @@ final class SettingsWindowController: NSWindowController {
         window.contentMaxSize = Self.maximumSize
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(Self.frameName)
-        // A size kept from before a choice needed more room, or another language.
-        if let content = window.contentView?.frame.size, content.width < Self.minimumSize.width {
-            window.setContentSize(NSSize(width: Self.minimumSize.width, height: max(content.height, Self.minimumSize.height)))
+        // A size kept from before a choice needed more room, another language,
+        // or the sidebar's foot more height (600 from 2026-10-18).
+        if let content = window.contentView?.frame.size,
+           content.width < Self.minimumSize.width || content.height < Self.minimumSize.height {
+            window.setContentSize(NSSize(width: max(content.width, Self.minimumSize.width),
+                                         height: max(content.height, Self.minimumSize.height)))
         }
         window.title = navigation.page.title
         super.init(window: window)
@@ -141,30 +144,17 @@ final class SettingsWindowController: NSWindowController {
         }
     }
 
-    /// The window's keys, as `SettingsKeys` takes them: plain arrows, Return,
-    /// Space and Tab, not while a field takes what's typed, nor in a sheet.
+    /// The window's keys, as `SettingsKeys` takes them (`HighlightKey`, the
+    /// menu's mapping), not while a field takes what's typed, nor in a sheet.
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, windowNumber: Int) -> Bool {
         guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil,
-              flags.isDisjoint(with: [.command, .option, .control, .shift]),
               !(window.firstResponder is NSText), // a search field's editor
-              let key = Self.key(keyCode) else { return false }
+              let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
         // With keyboard navigation on, Tab may have given a control the focus.
         let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
         // One highlight at a time: the arrows take it from the focus.
         if key == .up || key == .down { window.makeFirstResponder(nil) }
         return keys.handle(key, controlHasFocus: controlHasFocus)
-    }
-
-    static func key(_ keyCode: UInt16) -> SettingsKeys.Key? {
-        switch keyCode {
-        case 126: .up
-        case 125: .down
-        case 123: .left
-        case 124: .right
-        case 36, 76, 49: .press // Return, Enter, Space
-        case 48: .tab
-        default: nil
-        }
     }
 
     @available(*, unavailable)

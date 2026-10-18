@@ -36,6 +36,15 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `resumeOffset` (Settings → Advanced, `levelsMusic`).
     let volumeLeveler: (any ResumeLeveling)?
     let resumeOffset: @Sendable () async -> Float?
+    /// The token of the volume this arbiter lowered for its music
+    /// (`ResumeLeveling.lower`), until it's put back: as the music pauses
+    /// again, or the arbiter shuts down. The leveler is the app's one, so
+    /// another player's lowering is never put back from here.
+    var levelLowered: UUID?
+    /// The resume under way, or waiting to try again, lowered the volume
+    /// (`levelLowered`): once it ends without the music playing, it's put
+    /// back (`putBackResumeLevel`).
+    var resumeLowered = false
     var publishedPausedByUs: Bool?
     /// Why the music couldn't be paused, then `nil` once that's over.
     private let onPauseFailure: @Sendable (MusicPlayerError?) -> Void
@@ -213,7 +222,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Applies new settings.
     package func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
-        if !configuration.levelsMusic { volumeLeveler?.restoreNow() }
+        if !configuration.levelsMusic {
+            volumeLeveler?.restoreNow() // whoever lowered it: the setting is off for all
+            levelLowered = nil
+            resumeLowered = false
+        }
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
     }
 
@@ -390,7 +403,10 @@ package actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
-        volumeLeveler?.restoreNow() // nor the Mac's volume lowered
+        // Nor the Mac's volume lowered, unless another monitoring lowered it.
+        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
+        levelLowered = nil
+        resumeLowered = false
     }
 
     // MARK: - Private

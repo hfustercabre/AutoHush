@@ -8,14 +8,14 @@ enum StatusMenuCommand: Equatable, Sendable {
     case snooze(AutoPauseSnooze)
     /// Whether the app stops pausing the music (`true`) or pauses it again.
     case setIgnored(AudioSource, Bool)
-    /// Opens or closes the players' side window, beside Media Player's row.
-    case togglePlayerList
-    /// Shows only the unfolded players whose names match.
+    /// Shows only the players whose names match.
     case searchPlayers(String)
+    /// The players' search takes the keyboard itself (a click in it).
+    case typeInSearch
     /// Moves the side window's highlight through its rows (-1, 1).
     case moveHighlight(Int)
     /// Presses the highlighted row in the players' side window, or chooses
-    /// the first player the search left (Return).
+    /// the first player the search left while something is typed (Return).
     case chooseHighlighted
     /// Chooses the player with this bundle ID (or a suggested web app's ID).
     case choosePlayer(String)
@@ -28,8 +28,6 @@ enum StatusMenuCommand: Equatable, Sendable {
     /// Shows or folds away a settings part's other settings (Detection's
     /// ways and timings, the fades' lengths), under its switch.
     case toggleSettings(MenuSettingsPart)
-    /// Opens or closes the ignored apps' side window, beside their row.
-    case toggleIgnoredApps
     /// Opens a part's side window (its row clicked), closing the other.
     case openSide(MenuSidePart)
     /// The pointer came onto (`true`) or left a row that opens a side
@@ -67,6 +65,11 @@ enum StatusMenuCommand: Equatable, Sendable {
 
 /// A part of the menu, in the order it shows (`StatusMenuModel.sections`).
 enum MenuSection: Equatable {
+    /// What tells it apart in the menu, as SwiftUI identifies it: a part
+    /// that comes while the menu is open leaves the others as they were
+    /// (the full check, 2026-10-18).
+    var id: String { String(describing: self) }
+
     case card
     /// What the chosen player lacks, with the way to fix it.
     case warning(Permission)
@@ -74,7 +77,8 @@ enum MenuSection: Equatable {
     case reopenAutoHush
     /// Under Audio Recording's warning: AntiDot mode instead.
     case useAntiDot
-    /// The media player's row, under the card: the players unfold there.
+    /// The media player's row, under the card: it opens the players in a
+    /// side window.
     case mediaPlayer
     case snooze
     case playingNow
@@ -107,8 +111,11 @@ final class StatusMenuModel {
     var listedRecentSources: [AudioSource] = []
     /// Whether the players' side window is open, beside Media Player's row.
     var isChoosingPlayer = false
-    /// What was typed in the search over the unfolded players.
+    /// What was typed in the search over the players.
     var playerSearch = ""
+    /// Counts the times the players' search takes the keyboard: its field
+    /// takes the focus each time (`StatusMenuController.searchTakesKeyboard`).
+    var searchFocus = 0
     /// The highlight the arrow keys and the pointer move through the menu's
     /// controls, as in macOS's menus; the side window's, through its rows.
     @ObservationIgnored let keyboard = KeyHighlight()
@@ -151,6 +158,8 @@ final class StatusMenuModel {
     /// fit what unfolded, whose rows dimmed and flashed for a moment (the
     /// user, 2026-10-18).
     var isCappedByScreen = false
+    /// The same for the side window.
+    var isSideCappedByScreen = false
     /// The menu shows Detection's, Fades' and Advanced's settings.
     var hasSettings = false
     /// An update check asked from the menu runs: its Updates button says so.
@@ -164,7 +173,7 @@ final class StatusMenuModel {
         self.status = status
     }
 
-    /// The unfolded players, as the search narrows them.
+    /// The players, as the search narrows them.
     var players: MenuPlayerList {
         MenuPlayerList(options: status.playerOptions, chosenID: status.chosenPlayerID,
                        antiDotMode: isAntiDotMode, search: playerSearch)

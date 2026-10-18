@@ -241,20 +241,24 @@ struct AddAppModelTests {
         #expect(model.stage == .choosing && !model.changeAppForgetsCheck)
     }
 
-    @Test("what the check mutes: the app with Audio Recording outside AntiDot mode, else the Mac's output, else nothing")
+    @Test("what the check mutes: the app with Audio Recording outside AntiDot mode, else the Mac's output, else nothing; whether the Mac can mute is read with the permissions and as the warning opens, not at every drawing")
     func checkMuting() async {
         let world = World()
         let model = await ready(world)
         #expect(model.checkMuting == .app)
         world.antiDot = true
-        world.macCanMute = true
-        #expect(model.checkMuting == .mac)
-        world.macCanMute = false
-        #expect(model.checkMuting == .none)
+        #expect(model.checkMuting == .mac) // as read with the permissions
+        let reads = world.macCanMuteReads
+        world.macCanMute = false // another output chosen meanwhile
+        #expect(model.checkMuting == .mac && model.checkMuting == .mac) // drawn again: as read
+        #expect(world.macCanMuteReads == reads)
+        model.continueToCheck() // the warning opens: read again, for it and the check
+        #expect(model.checkMuting == .none && world.macCanMuteReads == reads + 1)
     }
 
-    @Test("Use keeps the page's learned Play/Pause button when the page is the way chosen, and not with another way")
-    func keepsThePageButton() async {
+    @Test("Use keeps the page's learned Play/Pause button when the page is the way chosen, and not with another way",
+          arguments: [CheckResult.WayKind.page, .panel])
+    func keepsThePageButton(_ way: CheckResult.WayKind) async {
         let button = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause",
                                      places: [ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 51)])
         let found = CheckResult(
@@ -262,17 +266,15 @@ struct AddAppModelTests {
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.page(PageAccess(interface: .electron, switchAttribute: PageAccess.electronSwitch)), .panel(rememberedRow: nil)]),
             pageButton: button)
-        for (way, kept) in [(CheckResult.WayKind.page, button), (.panel, nil)] {
-            let world = World()
-            let model = await ready(world)
-            model.startCheck()
-            await TestWait.until { world.panel == ["shown"] }
-            world.run.finish(.finished(found))
-            await TestWait.until { model.result != nil }
-            model.choose(way)
-            model.use()
-            #expect(world.used.first?.pageButton == kept, "chosen: \(way)")
-        }
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(found))
+        await TestWait.until { model.result != nil }
+        model.choose(way)
+        model.use()
+        #expect(world.used.first?.pageButton == (way == .page ? button : nil))
     }
 
     @Test("a stopped check can run again; a check that found no way says so")

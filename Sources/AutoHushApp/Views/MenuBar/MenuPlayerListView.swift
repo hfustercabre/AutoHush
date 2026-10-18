@@ -8,7 +8,7 @@ import SwiftUI
 /// chosen one is checked. As in the menu, the arrow keys and the pointer
 /// move the highlight (the side window's `KeyHighlight`) through the rows,
 /// the tint behind it, and Return or Space presses the row; typing goes to
-/// the search. With Option held, an added app's row removes it, after
+/// the search, Return then choosing the first player it left. With Option held, an added app's row removes it, after
 /// asking (R5).
 struct MenuPlayerListView: View {
     let model: StatusMenuModel
@@ -17,8 +17,12 @@ struct MenuPlayerListView: View {
         let list = model.players
         VStack(alignment: .leading, spacing: 6) {
             if list.showsSearch {
+                // The menu keeps the keyboard, typing reaching the search all the
+                // same; a click in it, or a key only the field can compose, gives
+                // it the keyboard (`StatusMenuController.searchTakesKeyboard`).
                 SearchField(text: Binding(get: { model.playerSearch }, set: { model.perform(.searchPlayers($0)) }),
-                            focusesOnAppear: false, // the menu keeps the keyboard: typing reaches it all the same
+                            focusRequest: model.searchFocus,
+                            onClick: { model.perform(.typeInSearch) },
                             onSubmit: { model.perform(.chooseHighlighted) },
                             onMove: { model.perform(.moveHighlight($0)) })
             }

@@ -326,7 +326,7 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
-    @Test("the session's monitorings all share the app's one volume leveler, which each puts back as it stops")
+    @Test("the session's monitorings all share the app's one volume leveler: Level the volume turned off reaches it from each, and a stop puts back only what that monitoring lowered")
     func sharedLeveler() async {
         let leveler = CountingLeveler()
         let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
@@ -340,19 +340,26 @@ struct MonitoringPipelineTests {
         // A pause held for the player chosen before, and the new one's.
         let held = make(MockMusicPlayer(), setup, { _ in })
         let current = make(MockMusicPlayer(), setup, { _ in })
+        var off = Self.configuration()
+        off.levelsMusic = false
+        held.setConfiguration(off)
+        current.setConfiguration(off)
+        await TestWait.until { leveler.restores == 2 }
         await held.stopAndRestoreVolume()
         await current.stopAndRestoreVolume()
-        #expect(leveler.restores == 2)
+        #expect(leveler.restores == 2) // neither lowered it: nothing more to put back
     }
 }
 
-/// Counts the volume leveler's put-backs at once.
+/// Counts the volume leveler's put-backs at once, whatever was lowered or
+/// not (it lowers nothing).
 private final class CountingLeveler: ResumeLeveling, @unchecked Sendable {
     private let lock = NSLock()
     private var _restores = 0
     var restores: Int { lock.withLock { _restores } }
 
-    func lower(by decibels: Float) {}
-    func restore(over duration: TimeInterval) {}
+    func lower(by decibels: Float) -> UUID? { nil }
+    func restore(over duration: TimeInterval, lowered token: UUID) {}
+    func restoreNow(lowered token: UUID) { lock.withLock { _restores += 1 } }
     func restoreNow() { lock.withLock { _restores += 1 } }
 }

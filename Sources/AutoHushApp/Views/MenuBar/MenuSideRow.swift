@@ -10,7 +10,7 @@ import SwiftUI
 struct MenuSideRow<Leading: View>: View {
     let title: String
     let subtitle: String?
-    var leadingWidth: CGFloat = 22
+    var leadingWidth = MenuSpacing.row.picture
     let isOpen: Bool
     let action: () -> Void
     /// The pointer came onto it (`true`) or left it.
@@ -21,19 +21,28 @@ struct MenuSideRow<Leading: View>: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
+            HStack(spacing: MenuSpacing.row.gap) {
                 leading()
                     .frame(width: leadingWidth, alignment: .leading)
                     .accessibilityHidden(true)
-                RowTitle(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) })
-                    .lineLimit(1)
+                // On one line, or two when it doesn't fit (long names: Ignored
+                // Apps' count stays whole, the full check, 2026-10-18).
+                ViewThatFits(in: .horizontal) {
+                    RowTitle(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) })
+                        .lineLimit(1)
+                    RowTitle(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) })
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
+                // Toward the side window, mirrored right to left.
+                Image(systemName: "chevron.forward")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.appSecondary)
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, MenuSpacing.row.leading)
+            .padding(.trailing, 16)
             .padding(.vertical, MenuSpacing.rowVertical)
             .contentShape(Rectangle())
         }
@@ -43,38 +52,5 @@ struct MenuSideRow<Leading: View>: View {
         .onHover { onHover($0) }
         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { onTop($0) }
         .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)
-    }
-}
-
-/// A part's title in the menu ("Media Player", "Detection"), as the
-/// settings' page names over their parts.
-struct MenuPartTitle: View {
-    let title: Text
-
-    init(_ title: Text) { self.title = title }
-
-    var body: some View {
-        SectionLabel(title)
-            .accessibilityAddTraits(.isHeader)
-            .padding(.horizontal, 14)
-            .padding(.top, MenuSpacing.titleTop)
-            .padding(.bottom, MenuSpacing.titleBottom)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// A title inside a menu part ("Modes", "Timing", "Supported Apps"): a
-/// description's size, grey; the part's groups have no lines between them
-/// (the user, 2026-10-18).
-struct MenuInnerTitle: View {
-    let title: Text
-
-    init(_ title: Text) { self.title = title }
-
-    var body: some View {
-        title
-            .font(.appCaption)
-            .foregroundStyle(.appSecondary)
-            .accessibilityAddTraits(.isHeader)
     }
 }

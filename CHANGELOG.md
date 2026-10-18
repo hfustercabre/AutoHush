@@ -15,8 +15,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   are macOS's grouped forms, as System Settings', with each section's title
   over its box, and the players in Settings → General are grouped the same
   way, each group's note under its title. The other windows use macOS's
-  group boxes, and the menu's section titles match Settings'. Liquid Glass
-  stays for the menu's card.
+  group boxes. Liquid Glass stays for the menu's card.
 - **The menu is AutoHush's own panel,** so its parts fold and unfold
   smoothly, the panel's height following (at once with Reduce Motion). The
   card and the buttons stay put, and only what's between them scrolls when
@@ -27,36 +26,43 @@ This project follows [Semantic Versioning](https://semver.org/).
   player and what kind it is; the ignored apps' icons and names. Each row
   opens a window beside the menu as the pointer rests on it, as a submenu,
   until the pointer moves to another part: the players, under their
-  groups' titles with a checkmark on yours (type to search, ↑ and ↓ move
-  through them and Return chooses; the menu stays open as the card follows
-  the new player), or the ignored apps, each with its switch. Escape or a click elsewhere closes it, and it follows
-  Reduce Transparency and Increase Contrast, as menus do. Its section
-  titles are those of macOS's own menus: smaller, semibold and grey.
-  As in macOS's menus, ↑ and ↓ move through every control, whatever
-  your keyboard navigation setting, and Return or Space presses it; → and
-  ← open and close a side window, or change a slider. The control the
+  groups' titles with a checkmark on yours (type to search, accented
+  letters and input methods too; ↑ and ↓ move through them and Return
+  chooses the one highlighted, or, while you search, the first left; the
+  menu stays open as the card follows the new player), or the ignored apps,
+  each with its switch. Escape or a click elsewhere closes it, and it
+  follows Reduce Transparency and Increase Contrast, as menus do. Its
+  section titles are those of macOS's own menus: smaller, semibold and
+  grey. As in macOS's menus, ↑ and ↓ move through every control in order,
+  scrolling ones included, whatever your keyboard navigation setting, and
+  Return or Space presses it; → and ← open and close a side window, or
+  change a slider; a key with nothing to do doesn't beep. The control the
   keys or the pointer are on shows a tint of your accent color, the
   players' rows too, and with keyboard navigation on, Tab reaches each
   control too. A click anywhere on the card turns Auto-Pause on or off.
 - **Remove several apps at once.** In Settings → Sound Sources, ⌘-click
   or ⇧-click selects several apps, as in macOS's lists, and Remove takes
-  them all off the list.
+  them all off the list, as does Remove from List when you right-click one
+  of them. Apps turned off are asked about once, by name when it's one.
 - **Ignore several apps at once.** Ignore Another App… picks several apps
   in one go, in Settings → Sound Sources and now in the menu too, under
-  the ignored apps. Ignored Apps is always in the menu, saying None until
-  you ignore one.
+  the ignored apps; one alert names any it can't ignore. Ignored Apps is
+  always in the menu, saying None until you ignore one.
 - **The menu is more compact.** Less space around its titles, rows and
-  lines, and smaller switches: it shows as much in less height. A part's
-  title, Detection's and Fades', shows or hides its other settings.
+  lines, and smaller switches: it shows as much in less height. Every
+  row's icon and text line up down the menu. A part's title, Detection's
+  and Fades', shows or hides its other settings.
 - **Smoother menu.** A part folds by fading its settings out before the
   rows under it move up; a side window stays open while the pointer heads
-  toward it; → opens it on its first row; ← and → move along the
-  durations and the buttons; the card's tint shows better over its glass.
+  toward it; → opens it on its first row, or lights that row when the
+  pointer opened it; ← and → move along the durations and the buttons; the
+  card's tint shows better over its glass.
 - **Settings takes the arrow keys and the pointer as the menu does.** ↑
-  and ↓ move through the page, ← goes to the sidebar, where ↑ and ↓ show
-  each page, and → comes back; Return or Space presses, ← and → change a
-  slider or a choice. The row the keys or the pointer are on shows a tint
-  of your accent color, and so does the one Tab reaches.
+  and ↓ move through the page, ← and → along a row of tiles; elsewhere ←
+  goes to the sidebar, where ↑ and ↓ show each page, and → comes back;
+  Return or Space presses, ← and → change a slider or a choice. The row
+  the keys or the pointer are on shows a tint of your accent color, and so
+  does the one Tab reaches, which then takes Return, Space, ← and → itself.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
@@ -67,8 +73,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   line under it says why ("TIDAL can’t be faded.").
 - **The menu shows when more is below.** Taller than the screen, its last
   rows fade out over a small arrow until you scroll to the end (the arrow
-  alone on macOS 14 and 15). It opens
-  with nothing focused, even with keyboard navigation on.
+  alone on macOS 14 and 15), and so do the players in their window beside
+  it. It opens with nothing focused, even with keyboard navigation on.
 - **Settings is at least 600 points tall**, so its sidebar shows About
   whole, and a long player name takes two lines on its tile instead of
   being cut.
@@ -145,9 +151,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
   and Advanced's switches, each under its section's name, with a few words
-  on what it does and its symbol in the accent color while it's on. A small
-  arrow under Detection unfolds its ways and timings, and one under Fades
-  its lengths. Folded at first, each stays as you left it while AutoHush
+  on what it does and its symbol in the accent color while it's on. Click
+  Detection's title to unfold its ways and timings, and Fades' for its
+  lengths. Folded at first, each stays as you left it while AutoHush
   runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
   the menu does.
 - **Level the volume** (Settings → Advanced, off by default). When the apps
@@ -160,8 +166,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   player isn't resumed when a call (an app using the microphone) came
   while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
-  played in the last 30 minutes (the last four), each with its switch, so one that stopped
-  before you could switch it off is still there.
+  played in the last 30 minutes (the last four), each with its switch, so
+  one that stopped before you could switch it off is still there.
 - **QuickTime Player is a supported player.** Choose it among the
   Supported Apps: AutoHush pauses every movie or recording it plays, and
   plays again only those it paused, through its AppleScript (macOS asks for
@@ -259,14 +265,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   opened again from another, it took you back to the first.
 - **A click on AutoHush's menu bar icon closes its open menu**, as macOS's
   own menu bar items do. It closed and opened again at once.
-
-- **Level the volume no longer leaves the Mac's volume lowered** after
-  AutoHush quits unexpectedly, or after a resume the player never takes:
-  the next launch, or the resume giving up, puts it back.
+- **Level the volume no longer leaves the Mac's volume lowered** when the
+  music doesn't resume after all, or after AutoHush quits unexpectedly (the
+  next launch puts it back, within the hour). A volume you set while it
+  glides back up stays yours.
 - **Add an App's check leaves the Mac's sound as you set it.** Muted or
-  unmuted by you during the check, it stays so; an output unplugged during
-  it is unmuted at the next launch within the hour, once it's back.
-
+  unmuted by you during the check, it stays so; an output the sound moves
+  to meanwhile is muted too, and each is put back; an output unplugged
+  during it is unmuted at the next launch within the hour, once it's back.
 - **Add an App's check helper no longer deletes other apps' logs.** Run
   from Terminal with `--logs` on a folder of other logs, it kept the
   newest 50 `.log` files of any kind and deleted the rest. Now it trims
@@ -280,9 +286,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **An ignored app installed later shows its icon** without reopening
   AutoHush.
 - **The menu reads AntiDot mode as it changes.** Switched in the menu's own
-  settings, the players under Media player follow at once, and the fade
-  lengths are greyed out for a player AutoHush can't fade.
-
+  settings, Media Player's players follow at once, and the fade lengths
+  are greyed out for a player AutoHush can't fade.
 - **Settings and the logs window keep their size and place on macOS 14
   and 15.** They opened at their first size and place at every launch.
 - **After an update, a paused player no longer comes back too early in
@@ -398,8 +403,10 @@ This project follows [Semantic Versioning](https://semver.org/).
     Retry; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
-  - Diagnostics' headings and the Media Player row say whether their part
-    is expanded or collapsed, and "Copied" is said after Copy Report;
+  - Diagnostics' headings, the menu's Media Player and Ignored Apps rows,
+    and its Detection and Fades titles say whether their part is expanded
+    or collapsed, the side window a row opens is named after its part, and
+    "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer
     read on their own;
   - a switch is one stop, its name and state, with what it does as its

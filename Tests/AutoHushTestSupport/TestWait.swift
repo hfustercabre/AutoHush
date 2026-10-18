@@ -29,6 +29,10 @@ package enum TestWait {
     /// `limit` from now, for waits that poll from a queue or a lock.
     package static var deadline: Date { Date().addingTimeInterval(TimeInterval(limit.components.seconds)) }
 
+    /// `limit` from now, for a semaphore's wait: a test expects `.success`,
+    /// so a step that never comes fails it instead of hanging the run.
+    package static var dispatchDeadline: DispatchTime { .now() + .seconds(Int(limit.components.seconds)) }
+
     /// A wait's condition didn't hold in time (`limit`, or `deadline` for a
     /// wait that polls from a queue or a lock): the test fails at the
     /// caller's line.

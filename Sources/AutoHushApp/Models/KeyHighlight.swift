@@ -5,9 +5,10 @@ import Observation
 /// The highlight the arrow keys and the pointer move, as macOS's own menus
 /// have one whatever the keyboard navigation setting (the user, 2026-10-18:
 /// "Arrows, as menus"; Settings too: "Lets add the same over and arrows
-/// navigation system to the Settings Window"): ↑ and ↓ move it through the
-/// controls in reading order, wrapping at the ends; Return or Space presses
-/// the one it's on; ← and → change a slider or a choice, and → opens a side
+/// navigation system to the Settings Window"): ↑ and ↓ move it row by row
+/// in reading order, wrapping at the ends, and ← and → along a row of
+/// several (the durations, the buttons, tiles); Return or Space presses the
+/// one it's on; ← and → change a slider or a choice, and → opens a side
 /// window. The pointer moves it too, as in a menu: the control under it is
 /// the highlighted one. Each control registers itself (`Highlightable`)
 /// with where it is and what pressing it does. The menu, its side window,
@@ -19,6 +20,10 @@ final class KeyHighlight {
     struct Control {
         /// Where it is, in its window.
         var frame: CGRect = .zero
+        /// The part of its window it's in, top to bottom (`HighlightBand`):
+        /// the keys go part by part, so rows a scrolling middle hides never
+        /// mix with the buttons pinned under it.
+        var band = HighlightBand.middle
         /// A dimmed one is skipped.
         var isEnabled = true
         var press: (() -> Void)?
@@ -31,7 +36,13 @@ final class KeyHighlight {
     }
 
     /// The control the arrow keys or the pointer moved to.
-    private(set) var highlighted: UUID?
+    private(set) var highlighted: UUID? {
+        didSet {
+            guard highlighted != oldValue else { return }
+            if let oldValue { lights[oldValue]?.isOn = false }
+            if let highlighted { light(highlighted).isOn = true }
+        }
+    }
     /// The control the arrow keys moved to last, to scroll into view; the
     /// pointer's never needs it.
     private(set) var revealed: UUID?
@@ -40,17 +51,39 @@ final class KeyHighlight {
     /// takes it from the other side's highlight, one at a time.
     @ObservationIgnored var onHighlight: (() -> Void)?
     @ObservationIgnored private var wantsFirst = false
+    /// Frames that came before their control registered.
+    @ObservationIgnored private var earlyFrames: [UUID: CGRect] = [:]
+    /// Each control's own "highlighted", so a move redraws the two controls
+    /// it concerns, not every one (the full check, 2026-10-18).
+    @ObservationIgnored private var lights: [UUID: Light] = [:]
+
+    /// Whether one control is highlighted, observed by that control alone.
+    @MainActor @Observable final class Light {
+        fileprivate(set) var isOn = false
+    }
+
+    /// The control's own `Light`.
+    func light(_ id: UUID) -> Light {
+        if let light = lights[id] { return light }
+        let light = Light()
+        light.isOn = highlighted == id
+        lights[id] = light
+        return light
+    }
 
     func register(_ id: UUID, _ control: Control) {
         var control = control
         // Its frame may have come first.
-        if let frame = controls[id]?.frame, control.frame == .zero { control.frame = frame }
+        if let frame = earlyFrames.removeValue(forKey: id), control.frame == .zero { control.frame = frame }
         controls[id] = control
         firstWhenReady()
     }
 
+    /// Its new frame; one for a control not registered (yet) is kept until
+    /// it is, never making one up (a frame reported as it goes).
     func update(_ id: UUID, frame: CGRect) {
-        controls[id, default: Control()].frame = frame
+        if controls[id] != nil { controls[id]?.frame = frame } else { earlyFrames[id] = frame }
+        firstWhenReady()
     }
 
     func update(_ id: UUID, isEnabled: Bool) {
@@ -60,7 +93,9 @@ final class KeyHighlight {
 
     func remove(_ id: UUID) {
         controls[id] = nil
+        earlyFrames[id] = nil
         if highlighted == id { highlighted = nil }
+        lights[id] = nil
     }
 
     /// The pointer came onto a control (`true`) or left it.
@@ -78,26 +113,27 @@ final class KeyHighlight {
         highlighted = nil
         revealed = nil
         wantsFirst = false
+        earlyFrames = [:]
     }
 
-    /// The enabled controls in reading order: row by row from the top (a
-    /// control within 6 pt of a row's top is on it), each row left to right.
-    var order: [UUID] { rows.flatMap { $0 } }
-
-    /// The enabled controls by row, from the top, each left to right.
-    private var rows: [[UUID]] {
-        let enabled = controls.filter(\.value.isEnabled).sorted {
-            $0.value.frame.minY != $1.value.frame.minY ? $0.value.frame.minY < $1.value.frame.minY : $0.value.frame.minX < $1.value.frame.minX
+    /// The enabled controls in reading order, by row: part by part
+    /// (`Control.band`), in each row by row from the top (a control within
+    /// 6 pt of a row's top is on it), each row left to right.
+    var rows: [[UUID]] {
+        let enabled = controls.filter(\.value.isEnabled).sorted { a, b in
+            let (a, b) = (a.value, b.value)
+            if a.band != b.band { return a.band < b.band }
+            return a.frame.minY != b.frame.minY ? a.frame.minY < b.frame.minY : a.frame.minX < b.frame.minX
         }
-        var rows: [[(id: UUID, frame: CGRect)]] = []
+        var rows: [[(id: UUID, control: Control)]] = []
         for (id, control) in enabled {
-            if let top = rows.last?.first?.frame.minY, control.frame.minY - top <= 6 {
-                rows[rows.count - 1].append((id, control.frame))
+            if let first = rows.last?.first?.control, first.band == control.band, control.frame.minY - first.frame.minY <= 6 {
+                rows[rows.count - 1].append((id, control))
             } else {
-                rows.append([(id, control.frame)])
+                rows.append([(id, control)])
             }
         }
-        return rows.map { $0.sorted { $0.frame.minX < $1.frame.minX }.map(\.id) }
+        return rows.map { $0.sorted { $0.control.frame.minX < $1.control.frame.minX }.map(\.id) }
     }
 
     /// The highlight `step` rows on (1 down, -1 up), wrapping at the ends:
@@ -143,17 +179,15 @@ final class KeyHighlight {
         onHighlight?()
     }
 
-    /// Once the controls that came in the same update have registered and
-    /// been placed too (a few run loop turns at most).
-    private func firstWhenReady(tries: Int = 5) {
+    /// Once the controls that came in the same update have registered (the
+    /// next turn of the run loop) and been placed: a frame that comes later
+    /// tries again (`update(_:frame:)`), so it never lights one at random.
+    private func firstWhenReady() {
         guard wantsFirst, !controls.isEmpty else { return }
         RunLoop.main.perform { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, self.wantsFirst else { return }
-                if tries > 0, self.controls.values.contains(where: { $0.frame == .zero }) {
-                    self.firstWhenReady(tries: tries - 1)
-                    return
-                }
+                guard let self, self.wantsFirst, !self.controls.isEmpty,
+                      !self.controls.values.contains(where: { $0.frame == .zero }) else { return }
                 self.wantsFirst = false
                 if self.highlighted == nil { self.move(1) }
             }
@@ -187,4 +221,14 @@ final class KeyHighlight {
     private var highlightedControl: Control? {
         highlighted.flatMap { controls[$0] }.flatMap { $0.isEnabled ? $0 : nil }
     }
+}
+
+/// The part of a window a highlightable control is in, top to bottom: the
+/// keys go through one before the next. In the menu, the card is pinned
+/// over what scrolls and the buttons under it; in Settings → Sound Sources,
+/// the heading over the apps' list and the buttons under it.
+enum HighlightBand: Int, Comparable {
+    case top, middle, bottom
+
+    static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }
 }

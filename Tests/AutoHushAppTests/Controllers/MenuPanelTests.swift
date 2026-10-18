@@ -26,9 +26,17 @@ struct MenuPanelTests {
         #expect(keys == [125])
     }
 
-    @Test("Tab goes through every control it shows: its key view loop follows its content")
-    func keyViewLoop() {
+    @Test("its key view loop is worked out again as its content changes, so Tab reaches every control it shows")
+    func recalculatesKeyViewLoop() {
         #expect(MenuPanel(content: NSView()).autorecalculatesKeyViewLoop)
+    }
+
+    @Test("it takes the keyboard unless told not to (the side window, but for VoiceOver or its search)")
+    func takesKey() {
+        let panel = MenuPanel(content: NSView())
+        #expect(panel.canBecomeKey && !panel.canBecomeMain)
+        panel.takesKey = false
+        #expect(!panel.canBecomeKey)
     }
 
     @Test("its height follows its content, its top edge where it was; less than half a point changes nothing")
@@ -79,15 +87,24 @@ struct MenuPanelTests {
         #expect(StatusMenuController.sideFrame(rowTop: 100, menu: menu, in: visible, width: 300, contentHeight: 400).minY == 6)
     }
 
-    @Test("a pointer crossing other parts on its way to the side window keeps it open; one moving away, or past its corners, doesn't")
-    func headingToTheSideWindow() {
+    @Test("a pointer crossing other parts on its way to the side window keeps it open; one resting, moving away, or past its corners, doesn't", arguments: [
+        (CGPoint(x: 900, y: 750), CGPoint(x: 800, y: 700), true), // toward it
+        (CGPoint(x: 900, y: 750), CGPoint(x: 950, y: 700), false), // away
+        (CGPoint(x: 900, y: 750), CGPoint(x: 800, y: 300), false), // below its bottom corner
+        (CGPoint(x: 900, y: 750), CGPoint(x: 800, y: 870), false), // above its top corner
+        (CGPoint(x: 900, y: 750), CGPoint(x: 900, y: 750), false), // resting
+    ])
+    func headingToTheSideWindow(from: CGPoint, to: CGPoint, heading: Bool) {
         let menu = NSRect(x: 700, y: 100, width: 345, height: 800)
         let side = NSRect(x: 394, y: 500, width: 300, height: 300) // left of the menu
-        let row = CGPoint(x: 900, y: 750)
-        #expect(StatusMenuController.isHeading(from: row, to: CGPoint(x: 800, y: 700), toward: side, beside: menu))
-        #expect(!StatusMenuController.isHeading(from: row, to: CGPoint(x: 950, y: 700), toward: side, beside: menu)) // away
-        #expect(!StatusMenuController.isHeading(from: row, to: CGPoint(x: 800, y: 300), toward: side, beside: menu)) // below its corner
-        let right = NSRect(x: 1051, y: 500, width: 300, height: 300) // no room on the left
+        #expect(StatusMenuController.isHeading(from: from, to: to, toward: side, beside: menu) == heading)
+    }
+
+    @Test("the same for a side window on the menu's right, where there's no room on its left")
+    func headingRight() {
+        let menu = NSRect(x: 700, y: 100, width: 345, height: 800)
+        let right = NSRect(x: 1051, y: 500, width: 300, height: 300)
         #expect(StatusMenuController.isHeading(from: CGPoint(x: 850, y: 750), to: CGPoint(x: 950, y: 720), toward: right, beside: menu))
+        #expect(!StatusMenuController.isHeading(from: CGPoint(x: 850, y: 750), to: CGPoint(x: 800, y: 720), toward: right, beside: menu))
     }
 }

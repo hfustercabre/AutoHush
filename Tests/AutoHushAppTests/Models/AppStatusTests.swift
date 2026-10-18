@@ -145,6 +145,8 @@ struct AppStatusTests {
         }
         status.setActiveSources([], now: start + 10)
         #expect(status.recentSources(at: start + 11).map(\.name) == ["App 6", "App 5", "App 4", "App 3"])
+        status.chosenPlayerID = apps[5].id // the chosen player takes no place among the four
+        #expect(status.recentSources(at: start + 11).map(\.name) == ["App 5", "App 4", "App 3", "App 2"])
     }
 
     @Test("ignored apps are listed but never named as the cause of a pause")

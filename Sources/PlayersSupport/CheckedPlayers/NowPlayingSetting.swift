@@ -21,13 +21,18 @@ package enum NowPlayingSetting {
     /// Where the value to put back is kept meanwhile, as "value", with the
     /// process that wrote it as "pid": in the defaults it's given (AutoHush's
     /// own, also for the check run inside AutoHush).
-    static let leftKey = "nowPlayingShownForAPress"
+    package static let leftKey = "nowPlayingShownForAPress"
 
     /// The setting, read and written: Control Center's (`controlCenter`);
     /// tests stand in for it.
     package struct Setting: Sendable {
         let read: @Sendable () -> Int?
         let write: @Sendable (Int) -> Void
+
+        package init(read: @escaping @Sendable () -> Int?, write: @escaping @Sendable (Int) -> Void) {
+            self.read = read
+            self.write = write
+        }
 
         package static let controlCenter = Setting(read: { NowPlayingSetting.read() }, write: { NowPlayingSetting.write($0) })
     }

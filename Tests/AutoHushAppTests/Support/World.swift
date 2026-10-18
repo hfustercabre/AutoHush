@@ -56,6 +56,8 @@ final class World {
     var panel: [String] = []
     var antiDot = false
     var macCanMute = true
+    /// How many times the model asked whether the Mac can mute (Core Audio, live).
+    var macCanMuteReads = 0
     var taps: [Bool] = []
     var audioRequests = 0
     var menuBarSettingsOpened = 0
@@ -104,7 +106,10 @@ final class World {
             },
             request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
             antiDot: { self.antiDot },
-            macCanMute: { self.macCanMute },
+            macCanMute: {
+                self.macCanMuteReads += 1
+                return self.macCanMute
+            },
             turnOffAntiDot: { self.antiDot = false },
             openMenuBarSettings: { self.menuBarSettingsOpened += 1 },
             isPlaying: { _, _ in self.playing },

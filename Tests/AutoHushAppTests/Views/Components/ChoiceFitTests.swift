@@ -19,15 +19,14 @@ struct ChoiceFitTests {
         keys.map { language == "en" ? $0 : BottomBarFitTests.catalog[$0]?[language] ?? $0 }
     }
 
-    @Test("Settings' page fits each choice within 700 pt, and the menu AntiDot mode's ways within 440 pt")
-    func fits() {
+    @Test("Settings' page fits each choice within 700 pt, and the menu AntiDot mode's ways within 440 pt",
+          arguments: BottomBarFitTests.languages)
+    func fits(_ language: String) {
         #expect(!BottomBarFitTests.catalog.isEmpty, "the String Catalog wasn't found")
-        for language in BottomBarFitTests.languages {
-            let page = [Self.updates, Self.detection].map { ChoiceChips<Never>.fittingWidth(titles($0, in: language)) }.max()! + 60
-            #expect(page <= 700, "Settings in \(language): \(Int(page)) pt")
-            let menu = ChoiceChips<Never>.fittingWidth(titles(Self.detection, in: language), size: .small) + 36
-            #expect(menu <= 440, "the menu in \(language): \(Int(menu)) pt")
-        }
+        let page = [Self.updates, Self.detection].map { ChoiceChips<Never>.fittingWidth(titles($0, in: language)) }.max()! + 60
+        #expect(page <= 700, "Settings: \(Int(page)) pt")
+        let menu = ChoiceChips<Never>.fittingWidth(titles(Self.detection, in: language), size: .small) + 36
+        #expect(menu <= 440, "the menu: \(Int(menu)) pt")
     }
 
     @Test("in the app's language, Settings' least width and the menu's width leave the choices their room")

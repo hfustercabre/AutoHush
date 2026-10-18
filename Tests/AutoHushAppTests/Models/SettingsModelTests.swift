@@ -569,15 +569,33 @@ struct SettingsModelTests {
         #expect(model.selectedApps.isEmpty)
     }
 
-    @Test("Remove from List takes only its own app, whatever is selected")
+    @Test("Remove from List takes its own app when it isn't one of several selected, else the whole selection, as Finder")
     func removeFromList() {
         let (model, settings) = listing()
-        let ids = Self.ids
+        let ids = Self.ids, rows = model.apps
         model.click(on: ids[0])
         model.click(on: ids[1], command: true)
-        model.remove(model.apps[3])
+        model.removeFromList(rows[3]) // not selected: only it
         #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[1], ids[2], ids[4]])
         #expect(selected(model) == [ids[0], ids[1]])
+        model.removeFromList(rows[1]) // one of the selected: both
+        #expect(settings.state.seenApps.map(\.id) == [ids[2], ids[4]])
+        #expect(model.selectedApps.isEmpty)
+        model.click(on: ids[2])
+        model.removeFromList(rows[2]) // selected alone: itself
+        #expect(settings.state.seenApps.map(\.id) == [ids[4]])
+    }
+
+    @Test("the removal's confirmation names the app for one, says how many for several, and names the one turned off when only one is")
+    func removalConfirmation() {
+        let (model, _) = listing(ignored: [Self.listed[2]])
+        let rows = model.apps
+        #expect(AppsSettingsView.removalTitle(names: ["Chess"]) == "Remove Chess from the list?")
+        #expect(AppsSettingsView.removalTitle(names: ["Books", "Chess"]) == "Remove 2 apps from the list?")
+        #expect(AppsSettingsView.removalMessage([rows[2]]).hasPrefix("Chess is turned off now."))
+        #expect(AppsSettingsView.removalMessage([rows[1], rows[2], rows[3]]).hasPrefix("Chess is turned off now."))
+        let (both, _) = listing(ignored: [Self.listed[1], Self.listed[2]])
+        #expect(AppsSettingsView.removalMessage(Array(both.apps[1...2])).hasPrefix("Some of them are turned off now."))
     }
 
     @Test("Remove takes only the selected apps the search shows: the hidden ones stay selected, and a range skips them")
@@ -706,7 +724,7 @@ struct SettingsWindowControllerTests {
     }
 
     @Test("reopened, Sound Sources' search is closed and every part of Diagnostics open")
-    func reopensFresh() {
+    func reopensFresh() async {
         let model = makeModel()
         let sut = SettingsWindowController(model: model)
         defer { sut.close() }
@@ -717,10 +735,42 @@ struct SettingsWindowControllerTests {
         #expect(model.appSearch == "chr") // still open while the window is
         #expect(model.foldedDiagnostics == [.apps])
 
+        await TestWait.until { !sut.keys.sidebar.rows.isEmpty } // its rows, as they register
+        sut.keys.handle(.left) // the highlight on the sidebar
+        #expect(sut.keys.side == .sidebar)
+
         sut.close()
         sut.show()
         #expect(model.appSearch == nil)
         #expect(model.foldedDiagnostics.isEmpty)
+        #expect(sut.keys.side == .page && sut.keys.sidebar.highlighted == nil) // nothing highlighted
+    }
+
+    @Test("a size kept from before narrower or lower than its least is brought up to it as it opens")
+    func keptSizeTooSmall() throws {
+        let key = "NSWindow Frame \(SettingsWindowController.frameName)"
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+        UserDefaults.standard.set("100 100 600 500 0 0 1440 875 ", forKey: key)
+        let sut = SettingsWindowController(model: makeModel())
+        let content = try #require(sut.window?.contentView?.frame.size)
+        #expect(content.width >= SettingsWindowController.minimumSize.width)
+        #expect(content.height >= SettingsWindowController.minimumSize.height)
+    }
+
+    @Test("its keys go to the highlight only in its own window, without a sheet, and not with ⌘ ⌥ ⌃")
+    func keyRouting() async throws {
+        let sut = SettingsWindowController(model: makeModel())
+        defer { sut.close() }
+        sut.show(page: .detection)
+        let window = try #require(sut.window)
+        await TestWait.until { !sut.keys.page.rows.isEmpty } // its controls, as they register
+        #expect(!sut.handleKey(125, flags: [], windowNumber: window.windowNumber + 1)) // another window's
+        #expect(!sut.handleKey(125, flags: .command, windowNumber: window.windowNumber))
+        #expect(!sut.handleKey(0, flags: [], windowNumber: window.windowNumber)) // A: not a key of the highlight's
+        #expect(sut.handleKey(125, flags: [], windowNumber: window.windowNumber)) // ↓
+        #expect(sut.keys.page.highlighted != nil)
+        #expect(!sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: the window's
+        #expect(sut.keys.page.highlighted == nil)
     }
 }
 

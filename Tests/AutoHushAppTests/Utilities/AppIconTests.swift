@@ -131,17 +131,26 @@ struct AppIconTests {
         #expect(AppIcon.image(for: unknown, size: 20) === AppIcon.image(bundlePath: nil, size: 20))
     }
 
-    @Test("an app not found by its bundle ID is looked for again: installed since, it shows its own icon")
+    @Test("an app not found by its bundle ID is looked for again a minute later, not at every drawing: installed since, it shows its own icon")
     func installedLater() throws {
         let path = try #require(NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.path)
-        let id = "com.example.installed-later"
-        let findApp = AppIcon.findApp
-        defer { AppIcon.findApp = findApp }
-        var installed = false
-        AppIcon.findApp = { $0 == id && installed ? path : nil }
+        let id = "com.example.installed-later.\(UUID().uuidString)"
+        let (findApp, now) = (AppIcon.findApp, AppIcon.now)
+        defer { (AppIcon.findApp, AppIcon.now) = (findApp, now) }
+        var installed = false, looks = 0, time = Date(timeIntervalSince1970: 1_000_000)
+        AppIcon.findApp = {
+            looks += 1
+            return $0 == id && installed ? path : nil
+        }
+        AppIcon.now = { time }
         let source = AudioSource(id: id, name: "Installed Later")
         #expect(AppIcon.image(for: source, size: 20) === AppIcon.image(bundlePath: nil, size: 20))
         installed = true
+        time += AppIcon.missKept - 1
+        #expect(AppIcon.image(for: source, size: 20) === AppIcon.image(bundlePath: nil, size: 20)) // drawn again: not looked for
+        #expect(looks == 1)
+        time += 2
         #expect(AppIcon.image(for: source, size: 20) === AppIcon.image(bundlePath: path, size: 20))
+        #expect(looks == 2)
     }
 }

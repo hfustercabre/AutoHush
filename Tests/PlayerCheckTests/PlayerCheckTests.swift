@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Testing
 @testable import PlayerCheck
 import CheckedPlayers
@@ -90,6 +91,11 @@ struct PlayerCheckTests {
 
     @Test("the run's log: named by the app and what the run does, every line said, the home folder written ~, the oldest beyond 50 to the Trash, other logs left alone")
     func logFile() throws {
+        // Noted instead of moved to the Trash: the test's folder goes at the end, the Trash wouldn't.
+        let discarded = OSAllocatedUnfairLock(initialState: [String]())
+        let discard = runLog.discard
+        defer { runLog.discard = discard }
+        runLog.discard = { url in discarded.withLock { $0.append(url.lastPathComponent) } }
         let logs = URL(filePath: folder)
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for index in 0..<51 {
@@ -100,18 +106,30 @@ struct PlayerCheckTests {
         for name in others { #expect(FileManager.default.createFile(atPath: logs.appending(path: name).path, contents: nil)) }
         startRun()
         say("music in \(NSHomeDirectory())/Music")
+        #expect(discarded.withLock { $0 } == ["2000-01-01 00.00.00.000 Old check.log", "2000-01-01 00.00.01.000 Old check.log"])
         let all = try FileManager.default.contentsOfDirectory(atPath: folder)
         #expect(others.allSatisfy(all.contains))
         let names = all.filter(RunLog.isRunLog).sorted()
-        #expect(names.count == RunLog.kept && names.first == "2000-01-01 00.00.02.000 Old check.log")
+        #expect(names.count == RunLog.kept + 2) // the two noted, still there
         let newest = try #require(names.last)
         #expect(newest.hasSuffix(" Calculator read-only.log"))
         let text = try String(contentsOfFile: logs.appending(path: newest).path, encoding: .utf8)
         #expect(text.contains("Calculator ") && text.contains("music in ~/Music") && !text.contains(NSHomeDirectory()))
-        // Every run's name, and none without its time, its app or what it did.
-        #expect(["2026-10-18 09.41.07.250 Jukebox pause via panel.log", "2026-10-18 09.41.07.250 Some Player relaunch.log",
-                 "2026-10-18 09.41.07.250 Jukebox play.log"].allSatisfy(RunLog.isRunLog))
-        #expect(!["2026-10-18 09.41.07.250 check.log", "2026-10-18 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox check.txt",
-                  "2026-13-18 09.41.07.250 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox listening.log"].contains(where: RunLog.isRunLog))
+    }
+
+    @Test("a run's log is named by its time, the app and what the run did", arguments: [
+        "2026-10-18 09.41.07.250 Jukebox pause via panel.log", "2026-10-18 09.41.07.250 Some Player relaunch.log",
+        "2026-10-18 09.41.07.250 Jukebox play.log",
+    ])
+    func runLogName(_ name: String) {
+        #expect(RunLog.isRunLog(name))
+    }
+
+    @Test("a name without its time, its app or what the run did, or not a log, is no run's log", arguments: [
+        "2026-10-18 09.41.07.250 check.log", "2026-10-18 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox check.txt",
+        "2026-13-18 09.41.07.250 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox listening.log",
+    ])
+    func notARunLogName(_ name: String) {
+        #expect(!RunLog.isRunLog(name))
     }
 }

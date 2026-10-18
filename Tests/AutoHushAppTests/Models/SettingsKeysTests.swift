@@ -34,7 +34,7 @@ struct SettingsKeysTests {
         let (keys, _, controls) = makeKeys(log: log)
         #expect(keys.handle(.down))
         #expect(keys.page.highlighted == controls[0])
-        #expect(keys.handle(.press))
+        #expect(keys.handle(.returnKey))
         #expect(keys.handle(.right)) // a switch row takes no → : nothing happens, nothing beeps
         #expect(keys.handle(.down))
         #expect(keys.handle(.right))
@@ -62,7 +62,7 @@ struct SettingsKeysTests {
         #expect(keys.sidebar.highlighted == nil)
         keys.handle(.left)
         #expect(keys.sidebar.highlighted == rows[1])
-        #expect(keys.handle(.press)) // Return in the sidebar goes into the page too
+        #expect(keys.handle(.returnKey)) // Return in the sidebar goes into the page too
         #expect(keys.page.highlighted == controls[0])
     }
 
@@ -79,18 +79,53 @@ struct SettingsKeysTests {
         #expect(keys.sidebar.highlighted == nil)
     }
 
-    @Test("Tab leaves the keys to the keyboard's focus; a focused control keeps ← → Return and Space while nothing is highlighted")
+    @Test("Tab leaves the keys to the keyboard's focus; a control with the focus keeps Return, Space, ← and → even while the pointer highlights another, as in the menu")
     func focus() {
         let log = Log()
-        let (keys, _, _) = makeKeys(log: log)
+        let (keys, _, controls) = makeKeys(log: log)
         keys.handle(.down)
         #expect(!keys.handle(.tab))
         #expect(keys.page.highlighted == nil && keys.sidebar.highlighted == nil)
-        #expect(!keys.handle(.left, controlHasFocus: true))
-        #expect(!keys.handle(.right, controlHasFocus: true))
-        #expect(!keys.handle(.press, controlHasFocus: true))
+        keys.page.hover(controls[0], true) // the pointer rests on the switch row
+        for key: HighlightKey in [.left, .right, .returnKey, .space] {
+            #expect(!keys.handle(key, controlHasFocus: true), "\(key)")
+        }
         #expect(log.calls.isEmpty)
+        #expect(keys.handle(.space)) // no focus: the row the pointer is on
+        #expect(log.calls == ["switch"])
+    }
+
+    @Test("← with nothing highlighted and no focus goes to the sidebar, on the page shown; clear() brings the keys back to the page")
+    func leftFromNothing() {
+        let log = Log()
+        let (keys, rows, _) = makeKeys(log: log)
+        #expect(keys.handle(.left))
+        #expect(keys.side == .sidebar && keys.sidebar.highlighted == rows[0])
         keys.clear()
-        #expect(keys.side == .page)
+        #expect(keys.side == .page && keys.sidebar.highlighted == nil)
+    }
+
+    @Test("once the sidebar lets go of the highlight (the pointer left it, Tab), ↓ moves in the page, never showing the first page by itself")
+    func sidebarLetGo() {
+        let log = Log()
+        let (keys, rows, controls) = makeKeys(log: log)
+        keys.sidebar.hover(rows[1], true)
+        keys.sidebar.hover(rows[1], false) // the pointer went on, into the page
+        #expect(keys.handle(.down))
+        #expect(keys.page.highlighted == controls[0])
+        #expect(log.calls.isEmpty) // no page shown
+        keys.sidebar.hover(rows[0], true)
+        #expect(!keys.handle(.tab))
+        #expect(keys.handle(.down))
+        #expect(keys.side == .page && keys.page.highlighted == controls[0] && log.calls.isEmpty)
+    }
+
+    @Test("keys with nothing to act on do nothing, without a beep: Return with nothing highlighted, → on a row that takes none")
+    func silent() {
+        let log = Log()
+        let (keys, _, _) = makeKeys(log: log)
+        #expect(keys.handle(.returnKey))
+        #expect(keys.handle(.right))
+        #expect(log.calls.isEmpty)
     }
 }

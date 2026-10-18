@@ -20,10 +20,11 @@ struct SourceSwitchRow: View {
             : saysIgnoredShortly
             ? Text("Ignored", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
             : Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
-        return HStack(spacing: 8) {
+        return HStack(spacing: MenuSpacing.row.gap) {
             Image(nsImage: AppIcon.image(for: source, players: model.status.playerOptions, size: 20))
                 .resizable()
                 .frame(width: 20, height: 20)
+                .frame(width: MenuSpacing.row.picture)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: source.name).lineLimit(1)

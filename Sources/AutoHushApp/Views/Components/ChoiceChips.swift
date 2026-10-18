@@ -49,8 +49,13 @@ struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
     /// user, 2026-10-18). Its windows leave it the room it needs
     /// (`fittingWidth`: `menuContentWidth`, Settings' least width).
     func sizeThatFits(_ proposal: ProposedViewSize, nsView control: NSSegmentedControl, context: Context) -> CGSize? {
-        let fitting = control.fittingSize
-        return CGSize(width: proposal.width ?? fitting.width, height: fitting.height)
+        Self.size(proposal, fitting: control.fittingSize)
+    }
+
+    /// Its size for `proposal`: the proposed width, else its fitting one; its
+    /// fitting height.
+    static func size(_ proposal: ProposedViewSize, fitting: CGSize) -> CGSize {
+        CGSize(width: proposal.width ?? fitting.width, height: fitting.height)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(choice: self) }

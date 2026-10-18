@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 /// The menu's highlight: reading order, the arrow keys wrapping, dimmed
 /// controls skipped, the pointer moving it, pressing and adjusting.
@@ -19,15 +20,30 @@ struct KeyHighlightTests {
 
     private final class Log { var calls: [String] = [] }
 
-    @Test("reading order: row by row from the top, a row being what's within 6 pt of its top, each left to right")
-    func order() {
+    /// Its controls in reading order.
+    private func order(_ keyboard: KeyHighlight) -> [UUID] { keyboard.rows.flatMap { $0 } }
+
+    @Test("reading order: row by row from the top, a row being what's within 6 pt of its top (7 starts another), each left to right")
+    func readingOrder() {
         let keyboard = KeyHighlight()
         let quit = control(keyboard, 260, 600)
-        let settings = control(keyboard, 10, 602) // the same row as Quit
+        let settings = control(keyboard, 10, 606) // the same row as Quit: 6 pt under its top
+        let below = control(keyboard, 0, 607) // 7 pt under that row's top: a row of its own
         let autoPause = control(keyboard, 280, 20)
         let fifteen = control(keyboard, 70, 101)
         let five = control(keyboard, 10, 100)
-        #expect(keyboard.order == [autoPause, five, fifteen, settings, quit])
+        #expect(keyboard.rows == [[autoPause], [five, fifteen], [settings, quit], [below]])
+    }
+
+    @Test("the keys go part by part: rows a scrolling middle hides come before the buttons pinned under it, whatever their frames")
+    func parts() {
+        let keyboard = KeyHighlight()
+        let card = UUID(), hidden = UUID(), button = UUID()
+        keyboard.register(button, .init(frame: CGRect(x: 0, y: 600, width: 80, height: 40), band: .bottom))
+        // Scrolled out of view under the buttons, and in their row by its top.
+        keyboard.register(hidden, .init(frame: CGRect(x: 0, y: 603, width: 300, height: 30)))
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 10, width: 300, height: 80), band: .top))
+        #expect(keyboard.rows == [[card], [hidden], [button]])
     }
 
     @Test("↓ and ↑ go through every enabled control, wrapping at the ends; from nothing, ↓ is the first and ↑ the last")
@@ -53,32 +69,38 @@ struct KeyHighlightTests {
     }
 
     @Test("↓ and ↑ go row by row: from a row of one to a row's first, from a row of several to the nearest; ← and → move along a row, stopping at its ends")
-    func rows() {
-        let keyboard = MenuKeyboardRows.make()
+    func rows() throws {
+        let keyboard = MenuLikeRows.make()
         keyboard.k.move(1)
         #expect(keyboard.k.highlighted == keyboard.title)
         keyboard.k.move(1) // into the durations: the first
         #expect(keyboard.k.highlighted == keyboard.chips[0])
-        #expect(keyboard.k.moveInRow(1) && keyboard.k.moveInRow(1))
+        try #require(keyboard.k.moveInRow(1))
+        try #require(keyboard.k.moveInRow(1))
         #expect(keyboard.k.highlighted == keyboard.chips[2])
         keyboard.k.move(1) // under them, the toolbar: the nearest
         #expect(keyboard.k.highlighted == keyboard.toolbar[2])
-        #expect(keyboard.k.moveInRow(-1) && keyboard.k.moveInRow(-1))
+        try #require(keyboard.k.moveInRow(-1))
+        try #require(keyboard.k.moveInRow(-1))
         #expect(!keyboard.k.moveInRow(-1)) // the row's start
         keyboard.k.move(1) // wraps to the top
         #expect(keyboard.k.highlighted == keyboard.title)
         #expect(!keyboard.k.moveInRow(1)) // a row of one
     }
 
-    @Test("a side window opened by → lights its first row once its rows have come")
+    @Test("a side window opened by → lights its first row once its rows have come and been placed, waiting for frames that come after them")
     func firstWhenReady() async {
         let keyboard = KeyHighlight()
         keyboard.highlightFirstWhenReady()
         let second = UUID(), first = UUID()
-        keyboard.register(second, .init(frame: CGRect(x: 0, y: 40, width: 100, height: 20)))
-        keyboard.register(first, .init(frame: CGRect(x: 0, y: 0, width: 100, height: 20)))
+        // Registered before they're placed, as rows appearing in the same update.
+        keyboard.register(second, .init())
+        keyboard.register(first, .init())
         await Task.yield()
-        try? await Task.sleep(for: .milliseconds(50))
+        #expect(keyboard.highlighted == nil) // not placed yet: not lit at random
+        keyboard.update(second, frame: CGRect(x: 0, y: 40, width: 100, height: 20))
+        keyboard.update(first, frame: CGRect(x: 0, y: 0, width: 100, height: 20))
+        await TestWait.until { keyboard.highlighted != nil }
         #expect(keyboard.highlighted == first)
     }
 
@@ -122,23 +144,40 @@ struct KeyHighlightTests {
         keyboard.update(id, frame: CGRect(x: 0, y: 30, width: 10, height: 10))
         keyboard.register(id, .init(press: {}, opensSide: true))
         let above = control(keyboard, 0, 0)
-        #expect(keyboard.order == [above, id])
+        #expect(order(keyboard) == [above, id])
         keyboard.hover(id, true)
         #expect(keyboard.highlightedOpensSide)
         keyboard.update(id, isEnabled: false)
         #expect(keyboard.highlighted == nil)
-        #expect(keyboard.order == [above])
+        #expect(order(keyboard) == [above])
         keyboard.update(id, isEnabled: true)
         keyboard.hover(id, true)
         keyboard.remove(id)
         #expect(keyboard.highlighted == nil)
-        #expect(keyboard.order == [above])
+        #expect(order(keyboard) == [above])
+        keyboard.update(id, frame: CGRect(x: 0, y: 60, width: 10, height: 10)) // a frame after it went
+        #expect(order(keyboard) == [above]) // makes up no control
+    }
+
+    @Test("each control's own light follows the highlight, so a move redraws the two it concerns")
+    func lights() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0), second = control(keyboard, 0, 50)
+        let (one, two) = (keyboard.light(first), keyboard.light(second))
+        keyboard.move(1)
+        #expect(one.isOn && !two.isOn)
+        keyboard.move(1)
+        #expect(!one.isOn && two.isOn)
+        keyboard.clear()
+        #expect(!one.isOn && !two.isOn)
+        keyboard.hover(first, true)
+        #expect(keyboard.light(first) === one && one.isOn) // the same, kept while it's there
     }
 }
 
 /// A menu-like layout: a title, five durations in a row, four buttons in a row.
 @MainActor
-private enum MenuKeyboardRows {
+private enum MenuLikeRows {
     static func make() -> (k: KeyHighlight, title: UUID, chips: [UUID], toolbar: [UUID]) {
         let k = KeyHighlight()
         let title = UUID()

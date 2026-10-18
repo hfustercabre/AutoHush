@@ -315,8 +315,8 @@ final class SettingsModel {
         }
     }
 
-    /// Remove from List: takes this app off the list, whatever is selected;
-    /// asked first when it's turned off.
+    /// Takes this app off the list, whatever is selected; asked first when
+    /// it's turned off.
     func remove(_ row: AppRow) {
         if row.isIgnored {
             askToRemove([row])
@@ -328,6 +328,17 @@ final class SettingsModel {
     private func askToRemove(_ rows: [AppRow]) {
         removalNames = rows.map(\.source.name)
         appsAwaitingRemoval = rows
+    }
+
+    /// Remove from List, on an app's row: the whole selection when the app
+    /// is one of several selected, as in Finder (the full check, 2026-10-18);
+    /// else that app alone.
+    func removeFromList(_ row: AppRow) {
+        if selectedAppIDs.contains(row.id), selectedApps.count > 1 {
+            removeSelected()
+        } else {
+            remove(row)
+        }
     }
 
     /// The apps asked about are removed after all.

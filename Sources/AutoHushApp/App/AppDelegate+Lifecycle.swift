@@ -36,7 +36,7 @@ extension AppDelegate {
     /// press while the user hid it, the Mac's output muted for a check, its
     /// volume lowered for the music (Level the volume).
     func putBackWhatWasLeft() {
-        NowPlayingSetting.restoreIfLeft()
+        NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
         checkOutputMute.restoreIfLeft()
         volumeLeveler.restoreIfLeft()
     }
@@ -91,7 +91,7 @@ extension AppDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        NowPlayingSetting.restoreIfLeft()
+        NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
         checkOutputMute.restore()
         // Even when the player's stop outlasted the quit's wait.
         volumeLeveler.restoreNow()

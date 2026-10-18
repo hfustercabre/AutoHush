@@ -69,7 +69,8 @@ extension PlaybackArbiter {
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
         noteCalls()
-        volumeLeveler?.restore(over: configuration.fadeOutDuration) // as the music fades out
+        if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) } // as the music fades out
+        levelLowered = nil
         let paused: Bool
         do {
             paused = try await fader.fadeOutAndPause()

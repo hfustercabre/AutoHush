@@ -29,4 +29,19 @@ enum MenuSpacing {
     static let toolbarVertical: CGFloat = 3
     /// The menu's switches: macOS's small ones.
     static let switchSize: ControlSize = .small
+
+    /// Where a row's picture starts from the menu's edge, how wide its
+    /// column is, and the gap to the row's text (`text`, where the text
+    /// starts): the same for every row, so their pictures and text line up
+    /// down the menu (I2, the user's pick, 2026-10-18): Playing Now's and
+    /// Recently Played's apps, the warnings and the update found, Media
+    /// Player's and Ignored Apps' rows, the settings' switches.
+    struct RowLayout {
+        let leading: CGFloat
+        let picture: CGFloat
+        let gap: CGFloat
+        var text: CGFloat { leading + picture + gap }
+    }
+
+    static let row = RowLayout(leading: 16, picture: 22, gap: 10)
 }

@@ -13,7 +13,6 @@ import AutoHushKit
 struct AppsSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
-    /// The height of the list (with its note), and of the room it has.
 
     var body: some View {
         page
@@ -40,8 +39,8 @@ struct AppsSettingsView: View {
                         appRow(row)
                     }
                 } footer: {
-                    Text("Turn an app off to keep your player playing while it makes sound. Select an app to remove it from the list.",
-                         comment: "Settings → Sound Sources, under the list; “Select” as in clicking an app in the list")
+                    Text("Turn an app off to keep your player playing while it makes sound. Select apps to remove them from the list.",
+                         comment: "Settings → Sound Sources, under the list; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
                         .captionStyle()
                 }
                 .animation(.default, value: model.apps)
@@ -68,6 +67,8 @@ struct AppsSettingsView: View {
                     .fixedSize()
                     .disabled(model.apps.isEmpty)
             }
+            // The arrow keys reach them after the list, however it's scrolled.
+            .environment(\.highlightBand, .bottom)
         }
         .confirmationDialog(Text("Reset the list of apps?", comment: "Settings → Sound Sources: title of the confirmation for Reset List"),
                             isPresented: $confirmingReset) {
@@ -78,23 +79,32 @@ struct AppsSettingsView: View {
             Text("Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
                  comment: "Settings → Sound Sources: what Reset List does, in its confirmation")
         }
-        .confirmationDialog(Text(verbatim: removalTitle),
+        .confirmationDialog(Text(verbatim: Self.removalTitle(names: model.removalNames)),
                             isPresented: Binding(get: { !model.appsAwaitingRemoval.isEmpty }, set: { if !$0 { model.cancelRemoval() } }),
                             presenting: model.appsAwaitingRemoval.isEmpty ? nil : model.appsAwaitingRemoval) { _ in
             Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: Self.removeTitle) }
         } message: { rows in
-            Text(verbatim: rows.count == 1
-                 ? String(localized: "\(rows[0].source.name) is turned off now. Removed from the list, it pauses your player again when it plays.",
-                          comment: "Settings → Sound Sources: what removing an app that's turned off does, in its confirmation; %@ is the app")
-                 : String(localized: "Some of them are turned off now. Removed from the list, they pause your player again when they play.",
-                          comment: "Settings → Sound Sources: what removing several selected apps does when one of them at least is turned off, in its confirmation"))
+            Text(verbatim: Self.removalMessage(rows))
         }
     }
 
+    /// The removal's confirmation's message: the app turned off by its name
+    /// when only one of those asked about is (the full check, 2026-10-18),
+    /// else "some of them".
+    static func removalMessage(_ rows: [SettingsModel.AppRow]) -> String {
+        let off = rows.filter(\.isIgnored)
+        guard off.count > 1 else {
+            let name = (off.first ?? rows.first)?.source.name ?? ""
+            return String(localized: "\(name) is turned off now. Removed from the list, it pauses your player again when it plays.",
+                          comment: "Settings → Sound Sources: what removing an app that's turned off does, in its confirmation; %@ is the app")
+        }
+        return String(localized: "Some of them are turned off now. Removed from the list, they pause your player again when they play.",
+                      comment: "Settings → Sound Sources: what removing several selected apps does when one of them at least is turned off, in its confirmation")
+    }
+
     /// The confirmation's title: the app's name for one, how many for several.
-    private var removalTitle: String {
-        let names = model.removalNames
-        return names.count == 1
+    static func removalTitle(names: [String]) -> String {
+        names.count == 1
             ? String(localized: "Remove \(names[0]) from the list?",
                      comment: "Settings → Sound Sources: title of the confirmation for removing an app that's turned off; %@ is the app")
             : String(localized: "Remove \(names.count) apps from the list?",
@@ -262,10 +272,10 @@ private struct SoundSourceRow: View {
             return .handled
         }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")) { model.remove(row) }
+        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")) { model.removeFromList(row) }
         .contextMenu {
-            // This row only, whatever is selected.
-            Button { model.remove(row) } label: {
+            // The selection, when this row is one of several selected, as in Finder.
+            Button { model.removeFromList(row) } label: {
                 Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
             }
         }

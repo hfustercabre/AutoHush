@@ -196,15 +196,32 @@ final class FakeAddWebAppWindow: AddWebAppPresenting {
 }
 
 /// Makes a web app in memory: reports the steps, then `onMake` puts it in place.
+/// What the test sets and reads is behind a lock: a make runs on the
+/// global executor meanwhile.
 final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
-    var result: Result<MadeWebApp, WebAppMakingError>
-    var onMake: @Sendable () -> Void = {}
+    private let lock = NSLock()
+    private var _result: Result<MadeWebApp, WebAppMakingError>
+    private var _onMake: @Sendable () -> Void = {}
+    private var _waitsForCancel = false
+    private var _wasCancelled = false
+
+    var result: Result<MadeWebApp, WebAppMakingError> {
+        get { lock.withLock { _result } }
+        set { lock.withLock { _result = newValue } }
+    }
+    var onMake: @Sendable () -> Void {
+        get { lock.withLock { _onMake } }
+        set { lock.withLock { _onMake = newValue } }
+    }
     /// Once the address is checked, waits until it's cancelled.
-    var waitsForCancel = false
-    private(set) var wasCancelled = false
+    var waitsForCancel: Bool {
+        get { lock.withLock { _waitsForCancel } }
+        set { lock.withLock { _waitsForCancel = newValue } }
+    }
+    var wasCancelled: Bool { lock.withLock { _wasCancelled } }
 
     init(_ result: Result<MadeWebApp, WebAppMakingError>) {
-        self.result = result
+        _result = result
     }
 
     func makeWebApp(from address: String, onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
@@ -213,7 +230,7 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
         onStep(.checked)
         if waitsForCancel {
             while !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-            wasCancelled = true
+            lock.withLock { _wasCancelled = true }
             throw CancellationError()
         }
         onStep(.opened)

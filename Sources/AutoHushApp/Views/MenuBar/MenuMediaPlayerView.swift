@@ -4,8 +4,9 @@ import SwiftUI
 /// The media player's part, first under the menu's card (V5, the user's
 /// pick, 2026-10-18), as the settings' parts: "Media Player" over a row with
 /// the chosen player's icon, its name and what kind of player it is, and a
-/// chevron; a click opens the players in a side window beside the menu
-/// (`MenuSidePanelView`, W2) and closes it again.
+/// chevron; a click, or the pointer resting on it, opens the players in a
+/// side window beside the menu (`MenuSidePanelView`, W2); ←, Escape or the
+/// pointer staying on another part closes it.
 struct MenuMediaPlayerView: View {
     let model: StatusMenuModel
 

@@ -27,6 +27,7 @@ struct PlayingAppsView: View {
                 .accessibilityAddTraits(.isHeader)
             ForEach(sources, id: \.self) { source in
                 SourceSwitchRow(model: model, source: source)
+                    .padding(.leading, MenuSpacing.row.leading - 14)
             }
         }
         .padding(.horizontal, 14)

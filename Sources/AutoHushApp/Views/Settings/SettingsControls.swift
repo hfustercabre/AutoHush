@@ -16,7 +16,7 @@ enum SettingsSwitch: CaseIterable {
         case .levelsMusic:
             Text("Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .staysPausedAfterCalls:
-            Text("Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your music paused after a call")
+            Text("Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call")
         }
     }
 
@@ -46,7 +46,7 @@ enum SettingsSwitch: CaseIterable {
         case .fades:
             Text("Fades out and back in.", comment: "The menu, under Fade playback: what it does, in a few words")
         case .levelsMusic:
-            Text("Matches quieter apps’ volume.", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as the music resumes after quieter apps)")
+            Text("Matches quieter apps’ volume.", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
         case .staysPausedAfterCalls:
             Text("No resume after a call.", comment: "The menu, under Stay paused after calls: what it does, in a few words")
         }

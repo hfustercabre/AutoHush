@@ -251,32 +251,59 @@ struct PlaybackArbiterTests {
         #expect(await run(staysPaused: false, call: "us.zoom.xos") == 1)
     }
 
-    @Test("with Level the volume on, the Mac's volume is put back as the music fades out for an app, and lowered by the monitor's offset before it resumes; off, never lowered, and turning it off or stopping puts it back at once")
+    @Test("with Level the volume on, the Mac's volume is lowered by the monitor's offset before the music resumes, and put back as it fades out for an app; off, never lowered; turning it off puts back whatever is lowered, stopping only what it lowered")
     func levelsMusic() async {
-        func run(levels: Bool, offset: Float?) async -> (log: [String], plays: Int) {
+        func run(levels: Bool, offset: Float?, turnsOff: Bool = false) async -> (log: [String], plays: Int) {
             var configuration = AppConfiguration.testing
             configuration.levelsMusic = levels
             let player = MockMusicPlayer()
             let leveler = RecordingVolumeLeveler()
             let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                           fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { offset })
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-            await waitUntil { await player.playCallCount == 1 }
-            await arbiter.waitUntilIdle()
-            var off = configuration
-            off.levelsMusic = false
-            await arbiter.setConfiguration(off)
+            for plays in 1...2 {
+                await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+                await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+                await waitUntil { await player.playCallCount == plays }
+                await arbiter.waitUntilIdle()
+            }
+            if turnsOff {
+                var off = configuration
+                off.levelsMusic = false
+                await arbiter.setConfiguration(off)
+            }
             await arbiter.shutdown()
             return (leveler.log, await player.playCallCount)
         }
         let fadeOut = AppConfiguration.testing.fadeOutDuration
-        let on = await run(levels: true, offset: -6)
-        #expect(on.log == ["restore over \(fadeOut)", "lower -6.0", "restore now", "restore now"] && on.plays == 1)
+        let cycle = ["lower -6.0", "restore over \(fadeOut)", "lower -6.0"]
+        let stops = await run(levels: true, offset: -6)
+        #expect(stops.log == cycle + ["restore now"] && stops.plays == 2)
+        let turnedOff = await run(levels: true, offset: -6, turnsOff: true)
+        #expect(turnedOff.log == cycle + ["restore now (any)"] && turnedOff.plays == 2) // nothing left for the stop
         let quieter = await run(levels: true, offset: nil) // the apps weren't quieter
-        #expect(!quieter.log.contains { $0.hasPrefix("lower") } && quieter.plays == 1)
+        #expect(quieter.log.isEmpty && quieter.plays == 2)
         let off = await run(levels: false, offset: -6)
-        #expect(!off.log.contains { $0.hasPrefix("lower") } && off.plays == 1)
+        #expect(off.log.isEmpty && off.plays == 2)
+    }
+
+    @Test("the volume lowered by another monitoring (the app's one leveler) is never put back by this one's pause or stop")
+    func levelingOnlyItsOwn() async {
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let leveler = RecordingVolumeLeveler()
+        let other = leveler.lower(by: -4) // the player chosen now, as it resumed
+        let player = MockMusicPlayer()
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await waitUntil { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.shutdown()
+        #expect(other != nil)
+        #expect(leveler.log == ["lower -4.0", "lower -6.0"]) // lowered already: nothing of its own to put back
+        #expect(await player.playCallCount == 1)
     }
 
     @Test("retries the resume when the player does not answer, instead of giving up")
@@ -1689,9 +1716,69 @@ struct PlaybackArbiterTests {
         }
         await waitUntil { leveler.log.last == "restore now" }
         await arbiter.waitUntilIdle()
-        let fadeOut = AppConfiguration.testing.fadeOutDuration
-        #expect(leveler.log == ["restore over \(fadeOut)"] + Array(repeating: "lower -6.0", count: PlaybackArbiter.resumeRetries + 1) + ["restore now"])
+        #expect(leveler.log == Array(repeating: "lower -6.0", count: PlaybackArbiter.resumeRetries + 1) + ["restore now"])
         #expect(await player.playCallCount == PlaybackArbiter.resumeRetries + 1)
+    }
+
+    /// What happens to a resume that lowered the Mac's volume and failed,
+    /// before it's tried again.
+    enum BeforeRetry: String, CaseIterable, Sendable {
+        case playerStopped, playerPlays, noAnswer, appStarts, userTookOver, staysPausedAfterCall, resumesHeld, macSleeps
+    }
+
+    @Test("with Level the volume on, a resume that lowered the Mac's volume, failed, and doesn't bring the music back at its retry puts the volume back at once; one whose music plays after all keeps it lowered for it",
+          arguments: BeforeRetry.allCases)
+    func levelingPutBackWithoutMusic(_ before: BeforeRetry) async {
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let leveler = RecordingVolumeLeveler()
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
+        let call = "us.zoom.xos"
+        if before == .staysPausedAfterCall { await arbiter.handleCallChange(sourceID: call, inCall: true) }
+        let app = before == .staysPausedAfterCall ? call : "org.videolan.vlc"
+        await arbiter.sourceChanged(app, playing: true)
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        await arbiter.sourceChanged(app, playing: false)
+        await waitUntil { scheduler.scheduledDelays.count == 1 } // failed: tried again in a second
+        #expect(leveler.log == ["lower -6.0"])
+        await player.setFailPlay(nil)
+
+        switch before {
+        case .playerStopped:
+            await player.overrideState(.stopped) // it quit meanwhile
+            await scheduler.completeNext()
+        case .playerPlays:
+            await player.overrideState(.playing) // the play went through after all
+            await scheduler.completeNext()
+        case .noAnswer:
+            await player.setUnansweredStateQueries(.max)
+            await scheduler.completeNext()
+            await waitUntil { scheduler.scheduledDelays.count == 2 } // no answer: once more
+            await scheduler.completeNext()
+        case .appStarts:
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        case .userTookOver:
+            await player.overrideState(.stopped)
+            await arbiter.handlePlayerStateChange(.stopped)
+            await scheduler.completeNext()
+        case .staysPausedAfterCall:
+            var staysPaused = configuration
+            staysPaused.staysPausedAfterCalls = true // turned on meanwhile
+            await arbiter.setConfiguration(staysPaused)
+            await scheduler.completeNext()
+        case .resumesHeld:
+            await arbiter.holdResumes(true)
+        case .macSleeps:
+            await arbiter.setAsleep(true)
+        }
+        await arbiter.waitUntilIdle()
+
+        #expect(leveler.log == (before == .playerPlays ? ["lower -6.0"] : ["lower -6.0", "restore now"]))
+        #expect(await player.playCallCount == 1)
+        await arbiter.shutdown()
     }
 }
 
@@ -1704,15 +1791,46 @@ private extension PlaybackArbiter {
     }
 }
 
-/// Records what the arbiter asks of the volume leveler.
+/// Records what the arbiter asks of the volume leveler. As the real one,
+/// it lowers once until put back, and a put-back with another lowering's
+/// token does nothing (it isn't logged).
 private final class RecordingVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     private let lock = NSLock()
     private var _log: [String] = []
+    private var lowered: UUID?
     var log: [String] { lock.withLock { _log } }
 
-    func lower(by decibels: Float) { lock.withLock { _log.append("lower \(decibels)") } }
-    func restore(over duration: TimeInterval) { lock.withLock { _log.append("restore over \(duration)") } }
-    func restoreNow() { lock.withLock { _log.append("restore now") } }
+    func lower(by decibels: Float) -> UUID? {
+        lock.withLock {
+            _log.append("lower \(decibels)")
+            guard lowered == nil else { return nil }
+            lowered = UUID()
+            return lowered
+        }
+    }
+
+    func restore(over duration: TimeInterval, lowered token: UUID) {
+        putBack(token, as: "restore over \(duration)")
+    }
+
+    func restoreNow(lowered token: UUID) {
+        putBack(token, as: "restore now")
+    }
+
+    func restoreNow() {
+        lock.withLock {
+            _log.append("restore now (any)")
+            lowered = nil
+        }
+    }
+
+    private func putBack(_ token: UUID, as entry: String) {
+        lock.withLock {
+            guard token == lowered else { return }
+            _log.append(entry)
+            lowered = nil
+        }
+    }
 }
 
 private actor Counter {

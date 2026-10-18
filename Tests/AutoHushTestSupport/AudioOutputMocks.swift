@@ -15,6 +15,8 @@ package final class MockOutputMuting: OutputMuting, @unchecked Sendable {
     private var _mutes: [AudioObjectID: Bool] = [7: false]
     /// Who listens to each output's mute, by a number of their own.
     private var listeners: [AudioObjectID: [Int: @Sendable () -> Void]] = [:]
+    /// Who listens to sound moving to another output.
+    private var followers: [Int: @Sendable () -> Void] = [:]
     private var nextListener = 0
 
     package init() {}
@@ -39,6 +41,16 @@ package final class MockOutputMuting: OutputMuting, @unchecked Sendable {
     /// How many listen to the output's mute now.
     package func listenerCount(_ device: AudioObjectID) -> Int {
         lock.withLock { listeners[device]?.count ?? 0 }
+    }
+
+    /// How many listen to sound moving to another output now.
+    package var followerCount: Int { lock.withLock { followers.count } }
+
+    /// Sound moves to `device` (headphones plugged in, another output
+    /// chosen): those who listen hear of it.
+    package func soundMoves(to device: AudioObjectID?) {
+        current = device
+        for follower in lock.withLock({ Array(followers.values) }) { follower() }
     }
 
     /// The user presses the mute key: the output's mute changes, and its
@@ -69,6 +81,15 @@ package final class MockOutputMuting: OutputMuting, @unchecked Sendable {
             return nextListener
         }
         return Listening { [weak self] in self?.lock.withLock { _ = self?.listeners[device]?.removeValue(forKey: number) } }
+    }
+
+    package func observeDefaultOutput(_ onChange: @escaping @Sendable () -> Void) -> AnyObject? {
+        let number = lock.withLock {
+            nextListener += 1
+            followers[nextListener] = onChange
+            return nextListener
+        }
+        return Listening { [weak self] in self?.lock.withLock { _ = self?.followers.removeValue(forKey: number) } }
     }
 
     /// Listens until it's let go.

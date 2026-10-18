@@ -40,17 +40,24 @@ enum AppIcon {
     }
 
     /// Where macOS has the app with bundle ID `id`, looked up once found;
-    /// not found, looked up again the next time, so an app installed since
-    /// gets its icon.
+    /// not found, looked up again once `missKept` has passed (not at every
+    /// drawing of the lists that show it), so an app installed since gets
+    /// its icon.
     private static func installedPath(_ id: String) -> String? {
         if let known = installedPaths[id] { return known }
+        if let missed = misses[id], now().timeIntervalSince(missed) < missKept { return nil }
         let path = findApp(id)
-        if let path { installedPaths[id] = path }
+        if let path { installedPaths[id] = path } else { misses[id] = now() }
         return path
     }
     private static var installedPaths: [String: String] = [:]
+    /// When each app last wasn't found.
+    private static var misses: [String: Date] = [:]
+    static let missKept: TimeInterval = 60
     /// Where macOS has the app with a bundle ID; a test's stand-in.
     static var findApp: (String) -> String? = { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)?.path }
+    /// The time now; a test's stand-in.
+    static var now: () -> Date = Date.init
 
     /// Safari's own icon (its app in /Applications is a link into the
     /// system), looked up once rather than at every redraw.

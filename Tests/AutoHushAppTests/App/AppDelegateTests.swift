@@ -33,6 +33,8 @@ struct AppDelegateTests {
         /// The Mac's outputs, muted for a check, and its volume, lowered for the music.
         let outputs = MockOutputMuting()
         let volume = MockSystemVolume([0: -10])
+        /// The menu bar's Now Playing setting, shown for a press and hidden again.
+        let nowPlaying = NowPlayingInMemory()
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
@@ -48,10 +50,15 @@ struct AppDelegateTests {
         var running: Set<String> = []
         var audio: AudioCapturePermission? = .granted
         var asked: [String] = []
+        /// Holds the Automation queries while closed, as a busy player does.
+        let automationGate = AutomationGate()
         lazy var permissionCenter = PermissionCenter(system: .init(
             isTrusted: { [unowned self] in self.trusted },
             promptAccessibility: { [unowned self] in self.asked.append("prompt accessibility") },
-            automation: { [status = automationStatus] _, ask in ask ? noErr : status },
+            automation: { [status = automationStatus, gate = automationGate] _, ask in
+                await gate.pass()
+                return ask ? noErr : status
+            },
             runningPID: { [unowned self] in self.running.contains($0) ? 4242 : nil },
             audio: { [unowned self] in self.audio },
             requestAudio: { [unowned self] _ in self.asked.append("ask audio") },
@@ -110,6 +117,8 @@ struct AppDelegateTests {
             checkedPlayers: scratch.checkedPlayers,
             checkOutputMute: OutputMute(outputs: scratch.outputs, defaults: scratch.defaults),
             volumeLeveler: SystemVolumeLeveler(volume: scratch.volume, defaults: scratch.defaults, sleep: { _ in }),
+            nowPlayingDefaults: scratch.defaults,
+            nowPlayingSetting: scratch.nowPlaying.setting,
             makeMonitoring: scratch.monitorings.make,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
@@ -1028,6 +1037,25 @@ struct AppDelegateTests {
         #expect(scratch.volume.decibels == [0: -10])
     }
 
+    @MainActor
+    @Test("Now Playing, shown in the menu bar for a press while the user hid it, is hidden again as AutoHush quits, and at the next launch after a crash, through the setting AutoHush is given")
+    func nowPlayingPutBack() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        func shownForAPress() {
+            scratch.nowPlaying.value = 16 // shown while active, for the press
+            scratch.defaults.set(["value": 24, "pid": Int(getpid())], forKey: NowPlayingSetting.leftKey)
+        }
+        shownForAPress()
+        sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+        #expect(scratch.nowPlaying.value == 24 && scratch.defaults.object(forKey: NowPlayingSetting.leftKey) == nil)
+
+        shownForAPress()
+        let (next, _) = makeSUT(scratch) // AutoHush crashed: the next launch
+        next.putBackWhatWasLeft()
+        #expect(scratch.nowPlaying.value == 24 && scratch.defaults.object(forKey: NowPlayingSetting.leftKey) == nil)
+    }
+
     // MARK: - Music player
 
     @MainActor
@@ -1467,6 +1495,23 @@ struct AppDelegateTests {
     }
 
     @MainActor
+    @Test("a slow read of the permissions for the player chosen before, finishing after the new player's, doesn't replace the new one's")
+    func stalePermissionsDropped() async {
+        let scratch = Scratch()
+        scratch.running = [Players.first] // its Automation is asked, and is slow
+        let (sut, _) = makeSUT(scratch)
+        scratch.automationGate.close()
+        let slow = Task { await sut.refreshPermissions() }
+        await waitFor { scratch.automationGate.waiting == 1 }
+        sut.chooseMusicPlayer(Players.second)
+        await sut.refreshPermissions()
+        #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
+        scratch.automationGate.open()
+        await slow.value
+        #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
+    }
+
+    @MainActor
     @Test("a missing permission's button opens the player, asks macOS, or opens System Settings, as it stands; only Audio Recording allowed there offers to reopen AutoHush")
     func permissionRequests() async {
         let scratch = Scratch()
@@ -1619,9 +1664,12 @@ struct AppDelegateTests {
 
         // A player chosen from its list is AppDelegate's to choose.
         await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
+        // Its own notification centers: no other test's window becoming key closes it.
+        menu.notificationCenter = NotificationCenter()
+        menu.workspaceCenter = NotificationCenter()
         menu.open(showsPanel: false)
         #expect(!sut.isQuietMoment) // the menu is open
-        menu.perform(.togglePlayerList)
+        menu.perform(.openSide(.players))
         #expect(menu.model.players.supportedApps.contains { $0.id == Players.second })
         menu.perform(.choosePlayer(Players.second)) // chosen in place: the menu stays open
         await TestWait.until { sut.player?.bundleID == Players.second }
@@ -1848,6 +1896,49 @@ private final class AddedApps: @unchecked Sendable {
 
     /// The one made last for `bundleID`.
     func player(_ bundleID: String) -> AddedPlayer? { lock.withLock { made[bundleID]?.player } }
+}
+
+/// Holds the Automation queries that reach it while closed, until it opens.
+private final class AutomationGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var isClosed = false
+    private var held: [CheckedContinuation<Void, Never>] = []
+    var waiting: Int { lock.withLock { held.count } }
+
+    func close() { lock.withLock { isClosed = true } }
+
+    func open() {
+        let released = lock.withLock {
+            isClosed = false
+            defer { held = [] }
+            return held
+        }
+        released.forEach { $0.resume() }
+    }
+
+    func pass() async {
+        await withCheckedContinuation { continuation in
+            let passes = lock.withLock {
+                if isClosed { held.append(continuation) }
+                return !isClosed
+            }
+            if passes { continuation.resume() }
+        }
+    }
+}
+
+/// The menu bar's Now Playing setting, in memory.
+private final class NowPlayingInMemory: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value: Int? = 24 // hidden by the user
+    var value: Int? {
+        get { lock.withLock { _value } }
+        set { lock.withLock { _value = newValue } }
+    }
+
+    var setting: NowPlayingSetting.Setting {
+        NowPlayingSetting.Setting(read: { self.value }, write: { self.value = $0 })
+    }
 }
 
 /// Players found on the Mac, changed by a test.

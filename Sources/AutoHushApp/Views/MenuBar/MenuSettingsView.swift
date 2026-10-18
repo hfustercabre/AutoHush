@@ -20,6 +20,8 @@ struct MenuSettingsView: View {
     private func showsOpen(_ part: MenuSettingsPart) -> Bool { isOpen(part) && !model.foldingSettings.contains(part) }
     /// A part's other settings, faded out while it folds.
     private func fading(_ part: MenuSettingsPart) -> Double { model.foldingSettings.contains(part) ? 0 : 1 }
+    /// Fading out to fold: the keys and the pointer skip them meanwhile.
+    private func isFolding(_ part: MenuSettingsPart) -> Bool { model.foldingSettings.contains(part) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -45,6 +47,7 @@ struct MenuSettingsView: View {
                         settings.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
                     }))
                     .unavailable(!settings.isAntiDotMode)
+                    .disabled(isFolding(.detection))
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
                     .opacity(fading(.detection))
@@ -59,6 +62,7 @@ struct MenuSettingsView: View {
                     slider(.resumeAfter)
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
+                .disabled(isFolding(.detection))
                 .opacity(fading(.detection))
                 .transition(Self.unfolding) // the part comes in whole, not its rows
             }
@@ -72,6 +76,7 @@ struct MenuSettingsView: View {
                         slider(.fadeIn)
                     }
                     .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
+                    .disabled(isFolding(.fades))
                     .opacity(fading(.fades))
                 }
             }
@@ -151,7 +156,10 @@ struct MenuSettingsView: View {
         }
         .buttonStyle(.plain)
         .modifier(HighlightableControl(cornerRadius: 6, inset: 8, press: toggle))
-        .padding(.top, max(0, MenuSpacing.titleTop - 3))
+        // Its tint's 3 pt above and under the title, out of the layout: the
+        // rows under it as close as under the other titles.
+        .padding(.top, MenuSpacing.titleTop - 3)
+        .padding(.bottom, MenuSpacing.titleBottom - 3)
         .help(Text(verbatim: showsOpen(part) ? Self.hideTitle : Self.showTitle))
         .accessibilityLabel(Text(verbatim: page.title))
         .accessibilityValue(showsOpen(part) ? AccessibilityText.expanded : AccessibilityText.collapsed)
@@ -207,11 +215,11 @@ private struct MenuSwitchLine: View {
         let isOn = kind.isOn(settings)
         let reason = kind.unavailableReason(settings)
         return VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 10) {
+            HStack(spacing: MenuSpacing.row.gap) {
                 Image(systemName: kind.symbol)
                     .font(.body.weight(.semibold))
                     .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
-                    .frame(width: 22)
+                    .frame(width: MenuSpacing.row.picture)
                     .accessibilityHidden(true)
                 RowTitle(kind.title, subtitle: kind.shortExplanation)
                     .accessibilityHidden(true) // the switch says it: one stop for VoiceOver
@@ -229,11 +237,12 @@ private struct MenuSwitchLine: View {
                     .font(.appCaption)
                     .foregroundStyle(.appSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.leading, 32)
+                    .padding(.leading, MenuSpacing.row.picture + MenuSpacing.row.gap)
                     .accessibilityHidden(true) // the switch's hint says it
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.leading, MenuSpacing.row.leading - 8) // the part's own 8 pt inside
+        .padding(.trailing, 8)
         .padding(.vertical, MenuSpacing.rowVertical)
         .modifier(Highlightable(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
                                 press: { kind.set(!kind.isOn(settings), in: settings) }))

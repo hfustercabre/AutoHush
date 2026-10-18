@@ -2,6 +2,7 @@ import Foundation
 import os
 import Testing
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 @Suite("SharedSwitches")
 struct SharedSwitchesTests {
@@ -58,7 +59,7 @@ struct SharedSwitchesTests {
             #expect(looked.wait(timeout: .now() + 0.3) == .timedOut)
             light.turnOff()
         }
-        looked.wait()
+        #expect(looked.wait(timeout: TestWait.dispatchDeadline) == .success)
         #expect(light.isOn && light.timesTurnedOn == 2)
         // The new page's to turn off.
         switches.release(new) { _ in light.turnOff() }

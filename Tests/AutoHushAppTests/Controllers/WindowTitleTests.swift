@@ -273,4 +273,17 @@ struct WindowTitleTests {
         await TestWait.until { !window.isOpen }
         #expect(!window.isOpen)
     }
+
+    @Test("a closed window brought forward follows the user to the desktop they're on for a moment, then stays where it opened")
+    func closedWindowComesToTheActiveDesktop() async {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 100), styleMask: [.titled, .closable],
+                              backing: .buffered, defer: true)
+        window.isReleasedWhenClosed = false
+        defer { window.orderOut(nil) }
+        #expect(!window.isVisible && !window.collectionBehavior.contains(.moveToActiveSpace))
+        window.bringForward()
+        #expect(window.collectionBehavior.contains(.moveToActiveSpace))
+        await TestWait.until { !window.collectionBehavior.contains(.moveToActiveSpace) }
+        #expect(!window.collectionBehavior.contains(.moveToActiveSpace))
+    }
 }
