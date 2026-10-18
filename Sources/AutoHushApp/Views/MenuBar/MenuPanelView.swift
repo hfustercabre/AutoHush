@@ -91,7 +91,7 @@ struct MenuPanelView: View {
 
     @ViewBuilder private func view(for section: MenuSection) -> some View {
         switch section {
-        case .card: StatusCardView(model: model)
+        case .card: StatusCardView(model: model, settings: settings)
         case .mediaPlayer: MenuMediaPlayerView(model: model)
         case .warning(let permission):
             actionRow(permission.grantTitle, symbol: "exclamationmark.triangle.fill", .resolveWarning(permission))

@@ -2,10 +2,14 @@ import AppKit
 import SwiftUI
 
 /// The card at the top of the menu, which stays put while the rest scrolls:
-/// the music player, what's happening and the Auto-Pause switch (the
-/// player's choice is under it, `MenuMediaPlayerView`).
+/// the music player, what's happening and the Auto-Pause switch, then what
+/// AutoHush can do with the player, as Settings → General shows it
+/// (`PlayerChecks`, K3, the user's pick, 2026-10-18) (the player's choice is
+/// under it, `MenuMediaPlayerView`).
 struct StatusCardView: View {
     let model: StatusMenuModel
+    /// For the player's checks; none in a menu without Settings' model.
+    var settings: SettingsModel?
 
     private var status: AppStatus { model.status }
 
@@ -46,6 +50,11 @@ struct StatusCardView: View {
                         .fixedSize() // whole, in every language: the status line wraps instead
                         .accessibilityHidden(true)
                 }
+            }
+            // What AutoHush can do with it: its permission allowed, its fades.
+            if let settings, settings.chosenPlayer != nil {
+                CardDivider()
+                PlayerChecks(model: settings)
             }
             // A web app's controls: learned or not, and the way to learn
             // them in the learning window (the steps show only there).
