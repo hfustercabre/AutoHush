@@ -159,8 +159,11 @@ final class PlayerSession {
     /// Makes `MonitoringPipeline`s, whose processes are named by `hostedApp`
     /// when their program doesn't say (a Safari web app). Each reads macOS
     /// through readers of its own, from `readers`; tests stand in for them.
+    /// All share `volumeLeveler`, the app's one: a pause held as another
+    /// player is chosen never lowers the Mac's volume over the new one's.
     static func pipelines(
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource?,
+        volumeLeveler: (any ResumeLeveling)? = nil,
         readers: @escaping @MainActor () -> MonitoringPipeline.Readers = { MonitoringPipeline.Readers() }
     ) -> MakeMonitoring {
         { player, setup, onUpdate in
@@ -173,6 +176,7 @@ final class PlayerSession {
                 ignoredSourceIDs: setup.settings.ignored,
                 detectionMethod: setup.settings.detection,
                 learnedAssertions: setup.learnedAssertions,
+                volumeLeveler: volumeLeveler,
                 readers: readers(),
                 onStatusUpdate: onUpdate
             )

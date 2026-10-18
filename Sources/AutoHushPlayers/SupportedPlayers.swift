@@ -78,6 +78,14 @@ package enum SupportedPlayers {
         "fyi.lunar.Lunar",
     ]
 
+    /// What every Safari web app's bundle ID starts with: Add an App leaves
+    /// them to Add a Web App.
+    package static let safariWebAppPrefix = SafariWebApp.bundleIDPrefix
+
+    /// Safari's bundle ID: the Safari web apps' browser, whose icon marks
+    /// theirs.
+    package static let safariBundleID = SafariUI.bundleID
+
     /// The apps added through Player Check, each kept while its setup stays.
     package static let checkedPlayers = CheckedPlayers()
 

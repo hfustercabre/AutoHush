@@ -181,11 +181,12 @@ struct ScriptablePlayerTests {
         #expect(ScriptablePlayer.replyError(reply(errorNumber: 0)) == nil)
     }
 
-    @Test("errn in reply maps through the error table, with errs as message")
+    @Test("errn in reply maps through the error table; errs, which can name what played, is left out")
     func replyWithError() {
         #expect(ScriptablePlayer.replyError(reply(errorNumber: -1743)) == .automationPermissionDenied)
-        #expect(ScriptablePlayer.replyError(reply(errorNumber: -1708, errorString: "Not understood"))
-                == .playerCommandFailed(.appleEventError(-1708, message: "Not understood")))
+        let error = ScriptablePlayer.replyError(reply(errorNumber: -1728, errorString: "Can’t get document \"Holiday.mov\"."))
+        #expect(error == .playerCommandFailed(.appleEventError(-1728)))
+        #expect(error?.logDescription.contains("Holiday") == false)
     }
 
     // MARK: - Error mapping
@@ -201,13 +202,7 @@ struct ScriptablePlayerTests {
         let timeout = NSError(domain: NSOSStatusErrorDomain, code: -1712)
 
         #expect(ScriptablePlayer.mapError(timeout) == .playerNotResponding)
-        #expect(ScriptablePlayer.mapError(number: -1708, message: "The app got an error")
-                == .playerCommandFailed(.appleEventError(-1708, message: "The app got an error")))
-    }
-
-    @Test("empty message falls back to the bare OSStatus")
-    func emptyMessage() {
-        #expect(ScriptablePlayer.mapError(number: -50, message: "") == .playerCommandFailed(.appleEventError(-50, message: nil)))
+        #expect(ScriptablePlayer.mapError(number: -1708) == .playerCommandFailed(.appleEventError(-1708)))
     }
 
     @Test("MusicPlayerError passes through unchanged")

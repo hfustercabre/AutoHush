@@ -94,8 +94,7 @@ struct DiagnosticsSettingsView: View {
                         .rotationEffect(.degrees(isOpen ? 90 : 0))
                         .accessibilityHidden(true)
                 }
-                .padding(.horizontal, 4)
-                .padding(.vertical, 4)
+                .padding(.vertical, 4) // in line with the other sections' titles
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

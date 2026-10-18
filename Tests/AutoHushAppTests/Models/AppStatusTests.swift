@@ -257,7 +257,7 @@ struct AppStatusTests {
             #expect(status.canLearnControlsAgain)
         }
         status.setHealth(.needsPermission(.accessibility(player: "Jukebox")))
-        #expect(status.needsPermission && status.canLearnControlsAgain)
+        #expect(status.canLearnControlsAgain)
         status.chosenPlayerID = nil // deleted: nothing to learn
         #expect(!status.canLearnControlsAgain)
     }

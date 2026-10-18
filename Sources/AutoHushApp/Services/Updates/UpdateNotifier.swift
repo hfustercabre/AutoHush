@@ -109,7 +109,7 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
                     try await center.add(notice)
                     logger.info("Notified: \(notice.key, privacy: .public)")
                 } catch {
-                    logger.error("Couldn't notify: \(error)")
+                    logger.error("Couldn’t notify: \(error)")
                 }
             }
             showing = nil

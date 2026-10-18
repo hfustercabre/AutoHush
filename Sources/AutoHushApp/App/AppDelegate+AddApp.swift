@@ -16,7 +16,9 @@ extension AppDelegate {
         addAppWindow?.show()
     }
 
-    private func liveAddAppServices() -> AddAppServices {
+    /// What Add an App does through AutoHush and macOS (tests take its check's
+    /// start and end).
+    func liveAddAppServices() -> AddAppServices {
         let helper = PlayerCheckHelper.bundled
         if helper == nil { logger.error("Add an App: the check’s helper is missing from the app") }
         return AddAppServices(
@@ -43,6 +45,7 @@ extension AppDelegate {
             permissions: { app, scriptable in await Self.checkPermissions(app, scriptable: scriptable) },
             request: { permission, app, current in await Self.request(permission, app: app, current: current) },
             antiDot: { [weak self] in self?.preferences.detectionMethod != .audioLevels },
+            macCanMute: { [weak self] in self?.checkOutputMute.canMute ?? false },
             turnOffAntiDot: { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) },
             isPlaying: { [weak self] app, traits in
                 // A browser's web app plays through its browser.
@@ -67,7 +70,7 @@ extension AppDelegate {
                 self.holdsPlayerForCheck(true)
                 guard let model = self.addAppModel else { return }
                 // A check that can't mute only its app (no taps): the Mac's output, meanwhile.
-                if !Self.checkMutesApp(model) { self.checkOutputMute.mute() }
+                if model.checkMuting != .app { self.checkOutputMute.mute() }
                 self.checkPanel.show(app, model: model)
             },
             checkEnded: { [weak self] in
@@ -106,19 +109,11 @@ extension AppDelegate {
         return .success(app)
     }
 
-    /// Whether the check mutes its app itself, by tapping its sound: with
-    /// Audio Recording, outside AntiDot mode. Otherwise AutoHush mutes the
-    /// Mac's output meanwhile (`checkOutputMute`).
-    static func checkMutesApp(_ model: AddAppModel) -> Bool {
-        model.permissions.audio == .allowed && !model.antiDot
-    }
-
     /// The warning before the check (W6), for the chosen app.
     func showCheckWarning() {
         guard let model = addAppModel, let app = model.chosen else { return }
         checkWarningWindow?.close()
-        let muted = Self.checkMutesApp(model) || checkOutputMute.canMute
-        let window = CheckWarningWindowController(app: app, muted: muted) { [weak model] in model?.startCheck() }
+        let window = CheckWarningWindowController(app: app, muting: model.checkMuting) { [weak model] in model?.startCheck() }
         checkWarningWindow = window
         window.show()
     }

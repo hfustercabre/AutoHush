@@ -63,9 +63,9 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
     /// Its way is the menu bar's Now Playing panel, and Now Playing isn't
     /// shown in the menu bar (the user hid it in System Settings).
     case nowPlayingHidden
-    /// It answered an Apple event with an error: its number, and the
-    /// message it gave, if any (in the player's language).
-    case appleEventError(Int, message: String?)
+    /// It answered an Apple event with an error: its number. Never the
+    /// message it gave, which can name what it was playing (a document).
+    case appleEventError(Int)
 
     package var description: String {
         switch self {
@@ -78,8 +78,7 @@ package enum ControlFailure: Equatable, Sendable, CustomStringConvertible {
         case .muteUnavailable: "it can only be muted, and muting needs Audio Recording (not in AntiDot mode)"
         case .hearingUnavailable: "only its sound tells whether it’s playing, and hearing it needs Audio Recording (not in AntiDot mode)"
         case .nowPlayingHidden: "Now Playing isn’t shown in the menu bar, so its panel can’t be opened"
-        case .appleEventError(let number, let message?) where !message.isEmpty: "\(message) (OSStatus \(number))"
-        case .appleEventError(let number, _): "OSStatus \(number)"
+        case .appleEventError(let number): "OSStatus \(number)"
         }
     }
 }

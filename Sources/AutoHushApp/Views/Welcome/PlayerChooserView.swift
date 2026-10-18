@@ -60,7 +60,7 @@ struct PlayerChooserView: View {
                         .font(.appBody.weight(.semibold))
                         .padding(.horizontal, 6)
                 }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
                 .keyboardShortcut(.defaultAction) // the search, when it shows, keeps Return: `returnInSearch`
                 .disabled(!canContinue)
             }

@@ -8,7 +8,7 @@ enum StatusMenuCommand: Equatable, Sendable {
     case snooze(AutoPauseSnooze)
     /// Whether the app stops pausing the music (`true`) or pauses it again.
     case setIgnored(AudioSource, Bool)
-    /// Unfolds or folds the music players inside the card.
+    /// Unfolds or folds the players under the Media player row.
     case togglePlayerList
     /// Shows only the unfolded players whose names match.
     case searchPlayers(String)
@@ -94,15 +94,23 @@ final class StatusMenuModel {
     var listedSources: [AudioSource] = []
     /// The apps listed under "Recently Played", fixed the same way.
     var listedRecentSources: [AudioSource] = []
-    /// Whether the music players are unfolded inside the card.
+    /// Whether the players are unfolded under the Media player row.
     var isChoosingPlayer = false
     /// What was typed in the search over the unfolded players.
     var playerSearch = ""
     /// The player the arrow keys moved to, chosen with Return.
     var highlightedPlayerID: String?
+    /// Detection's, Fades' and Advanced's settings, as Settings changes them.
+    @ObservationIgnored weak var settings: SettingsModel?
     /// Whether AntiDot mode is on: an app that can only be muted can't be
-    /// chosen then.
-    var isAntiDotMode = false
+    /// chosen then. Read live from the settings, so the players follow a
+    /// switch in the menu's own settings at once; without them, as the menu
+    /// opened.
+    var isAntiDotMode: Bool {
+        get { settings?.isAntiDotMode ?? antiDotModeAtOpening }
+        set { antiDotModeAtOpening = newValue }
+    }
+    private var antiDotModeAtOpening = false
     /// Option is held: an added app's row removes it instead.
     var isOptionHeld = false
     /// The settings parts whose other settings show: folded at first, then

@@ -32,12 +32,12 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause<br/>(they stay put), Media player (the<br/>players unfold under it), Turn off<br/>for, Playing Now, Recently Played,<br/>Ignored Apps (folded), the settings'<br/>switches (each part's other settings<br/>folded at first)"]
+  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media player (the players unfold<br/>under it), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(folded), the settings' switches<br/>(each part's other settings folded<br/>at first), the buttons (the card<br/>and the buttons stay put)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: detection,<br/>timings, fades, Diagnostics"]
+  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Advanced (Level the music,<br/>Stay paused after calls),<br/>Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -160,7 +160,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the music on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it"]
+  LVL["Level the music on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(after a crash: at the next<br/>launch, if still lowered)"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -482,7 +482,7 @@ flowchart TD
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-Add an App checks an app AutoHush has no support of its own for. Its window numbers the steps; **Reopen** shows only for an app built with Electron (Deezer, Qobuz…) opened without the option its page needs while covered or on another desktop. **Change…** picks another app; a web app made by a Chromium browser shows that browser’s icon.
+Add an App checks an app AutoHush has no support of its own for. Its window numbers the steps; **Reopen** shows only for an app built with Electron (Deezer, Qobuz…) opened without the option its page needs while covered or on another desktop. **Change…** picks another app (once the check has run, after asking, since it forgets what was found); a web app made by a Chromium browser shows that browser’s icon.
 
 ## Add an App: the check and its result
 
@@ -620,7 +620,7 @@ flowchart TD
   CAN{"Can this copy<br/>install it?"}
   HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate)"]
   MODE{"Settings → Updates:<br/>when an update<br/>is found"}
-  NOT["A notification; the icon’s<br/>arrow, Updates turns blue,<br/>Install AutoHush in the menu"]
+  NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]
   DL["Downloaded (not in<br/>Low Data Mode), kept<br/>up to 7 days"]
   AI["Waits for a quiet moment:<br/>no pause held, no window<br/>or menu open"]
   OFFER["The offer, with what’s new:<br/>Download and Install (or Install<br/>and Relaunch), Open Release<br/>Page, Later"]
@@ -708,8 +708,8 @@ flowchart TD
   LOGS["Show Logs…: this launch<br/>or 24 hours, every entry or<br/>only problems; copy or save"]
   CHK["Add an App’s check couldn’t<br/>finish: Show Log… (the<br/>check’s own log), Check Again"]
   DEL["The chosen web app deleted:<br/>no player chosen; the window<br/>to choose another opens"]
-  QUIT["Quitting, within a second:<br/>fades stopped, volume back,<br/>mutes lifted, switches off,<br/>Now Playing put back,<br/>pauses handed over"]
-  NEXT(["The next launch: a press<br/>cut short put right, a pause<br/>handed over taken over"])
+  QUIT["Quitting, within a second:<br/>fades stopped, volume back,<br/>mutes lifted, switches off,<br/>Now Playing put back, the<br/>Mac’s output unmuted,<br/>pauses handed over"]
+  NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, its volume<br/>put back if still lowered, a<br/>pause handed over taken over"])
 
   R -.-> AUD --> AUDF
   R -.-> PF

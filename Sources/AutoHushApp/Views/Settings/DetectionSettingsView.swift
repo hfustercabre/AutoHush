@@ -1,7 +1,7 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Detection, in cards like the menu's: AntiDot mode (with the
+/// Settings → Detection, a grouped form: AntiDot mode (with the
 /// way of detecting while it's on, or the Audio Recording it needs while
 /// it's off), then the timings: when another app counts as playing or
 /// stopped, and the silence threshold while AntiDot mode is off. Restore
@@ -33,8 +33,9 @@ struct DetectionSettingsView: View {
                 // only while it's on.
                 CardDivider()
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps") // a row's title
+                    Text(verbatim: Self.detectByTitle) // a row's title
                     ChoiceChips(
+                        label: Self.detectByTitle,
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: model.detectionMethod,
                         onSelect: { model.setDetectionMethod($0) }
@@ -68,6 +69,11 @@ struct DetectionSettingsView: View {
                 .buttonStyle(.chip)
                 .fixedSize()
         }
+    }
+
+    /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).
+    static var detectByTitle: String {
+        String(localized: "Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps")
     }
 
     /// Under the AntiDot mode switch while it's off and dimmed.

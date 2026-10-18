@@ -287,11 +287,11 @@ package final class AudioMonitor: @unchecked Sendable {
     package func setMusicPaused(_ paused: Bool) {
         queue.async {
             if !paused, let apps = self.resumeLevel.appsLevel {
-                self.logger.info("[level] the apps' loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
+                self.logger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
             }
             self.resumeLevel.setMusicPaused(paused, at: self.clock())
             if paused, let reference = self.resumeLevel.reference {
-                self.logger.info("[level] the music's loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
+                self.logger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
             }
         }
     }

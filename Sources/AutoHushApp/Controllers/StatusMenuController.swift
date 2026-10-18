@@ -8,31 +8,35 @@ import AutoHushKit
 ///
 /// ```text
 /// ╭────────────────────────────────────────────────╮
-/// │ [icon] Spotify                             (●) │  the card: the player, what's
-/// │        Paused — Safari is playing   Auto-Pause │  happening, the Auto-Pause switch;
-/// │        [Retry] · [Reopen] · [Unmute]           │  a chip when one helps
-/// │ ────────────────────────────────────────────── │
-/// │ Media player                  [icon] Spotify ⌄ │  unfolds the players here (M1):
-/// │ [Search] · Supported Apps · Other Apps ·       │  a line between their groups;
-/// │ Add an App… · Safari Web Apps · Add a Web App… │  ↑ ↓ and Return choose one
-/// │ Controls                     [Learn Controls…] │  (a web app's controls)
+/// │ [icon] Spotify                             (●) │  the card (pinned): the player,
+/// │        Paused — Safari is playing   Auto-Pause │  what's happening, the Auto-Pause
+/// │        ✓ Automation allowed  ✓ Fades           │  switch, what AutoHush can do with
+/// │        [Retry] · [Reopen] · [Unmute]           │  it, a chip when one helps;
+/// │ Controls                     [Learn Controls…] │  a web app's controls
 /// ╰────────────────────────────────────────────────╯
+///  ♪ Media player               [icon] Spotify ⌄   unfolds the players under it:
+///    [Search] · Supported Apps · Other Apps ·       a line between their groups;
+///    Add an App… · Safari Web Apps · Add a Web App… ↑ ↓ and Return choose one
 ///  ⚠ Allow Audio Recording Access…        (only when something needs fixing)
 ///  Turn off for  [5 min] [15 min] [30 min] [1 hr] [24 hr]
 ///  ─────  Playing Now · Recently Played  (each app with its switch)
 ///  ─────  Ignored Apps                 1 ⌄  (folds out: click one to stop ignoring it)
-///  ─────  [AntiDot mode] [Fade playback] [Level the music · Stay paused after calls]
-///                       ⌄                (unfolds Detection's, Fades' and Advanced's
-///                                         names and timings, each part in a card: Q)
+///  ─────  Detection   AntiDot mode       (each page's switches always, under its
+///                     ⌄                   name; an arrow unfolds the rest of a
+///  ─────  Fades       Fade playback       part in its place: F3)
+///                     ⌄
+///  ─────  Advanced    Level the music · Stay paused after calls
 ///  ─────  Install AutoHush 0.3.8…        (once one is found)
-///  [Settings]  [Updates]  [About]  [Quit]   (⌥-click Settings: Diagnostics)
+///  [Settings]  [Updates]  [About]  [Quit]   (pinned; ⌥-click Settings: Diagnostics)
 /// ```
 ///
 /// The menu follows `status` while it's open, but the apps listed under
 /// Playing Now and Recently Played are fixed then, so no row moves under the
-/// pointer. It closes on a click outside it, on Escape, when the desktop
-/// changes, and before anything opens a window. It has no keyboard
-/// shortcuts: AutoHush has none of its own.
+/// pointer. Only what's between the card and the buttons scrolls, the last
+/// rows fading while more is below. It closes on a click outside it, on
+/// Escape, when the desktop changes, as another window becomes key, and
+/// before anything opens a window. It has no keyboard shortcuts: AutoHush
+/// has none of its own.
 @MainActor
 final class StatusMenuController: NSObject {
     /// The engine reports its state often (on every track change, for one),
@@ -64,6 +68,8 @@ final class StatusMenuController: NSObject {
     private var keyWindowObserver: NSObjectProtocol?
     /// The content's height, as last measured.
     private var contentHeight: CGFloat = 0
+    /// The panel follows the content's height at the end of this pass.
+    private var followsContent = false
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
@@ -77,6 +83,7 @@ final class StatusMenuController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         model.hasSettings = settingsModel != nil
+        model.settings = settingsModel
         model.perform = { [weak self] in self?.perform($0) }
         if let button = statusItem.button {
             button.target = self
@@ -152,6 +159,9 @@ final class StatusMenuController: NSObject {
         placePanel(panel)
         panel.orderFrontRegardless()
         panel.makeKey()
+        // As macOS's menus open: nothing focused, even with keyboard
+        // navigation on, so Space doesn't toggle Auto-Pause straight away.
+        panel.makeFirstResponder(nil)
         statusItem.button?.highlight(true)
         watchWhileOpen()
     }
@@ -198,26 +208,48 @@ final class StatusMenuController: NSObject {
         guard let button = statusItem.button, let window = button.window,
               let screen = window.screen ?? NSScreen.main else { return }
         let item = window.convertToScreen(button.convert(button.bounds, to: nil))
-        let visible = screen.visibleFrame
-        let width = menuContentWidth
-        let x = min(max(item.minX, visible.minX + 6), visible.maxX - width - 6)
-        let top = min(item.minY - 4, visible.maxY)
-        let height = min(contentHeight, top - visible.minY - 6)
-        panel.setFrame(NSRect(x: x, y: top - height, width: width, height: height), display: true)
+        let frame = Self.panelFrame(under: item, in: screen.visibleFrame, width: menuContentWidth, contentHeight: contentHeight)
+        panel.setFrame(frame, display: true)
         panel.invalidateShadow()
     }
 
+    /// The panel's frame under the menu bar item at `item`: its left edge at
+    /// the item's, kept 6 pt inside the screen's `visible` part, 4 pt under
+    /// it, as tall as its content but never past the screen's bottom.
+    static func panelFrame(under item: NSRect, in visible: NSRect, width: CGFloat, contentHeight: CGFloat) -> NSRect {
+        let x = min(max(item.minX, visible.minX + 6), visible.maxX - width - 6)
+        let top = min(item.minY - 4, visible.maxY)
+        let height = fittingHeight(contentHeight, top: top, in: visible)
+        return NSRect(x: x, y: top - height, width: width, height: height)
+    }
+
+    /// A height of `height` for a panel whose top edge is at `top`, but
+    /// never past 6 pt above the screen's bottom (the rest scrolls).
+    static func fittingHeight(_ height: CGFloat, top: CGFloat, in visible: NSRect) -> CGFloat {
+        min(height, top - visible.minY - 6)
+    }
+
     /// The content's height changed (a part folded or unfolded, the status
-    /// line wrapped): the panel follows, animated while it shows.
+    /// line wrapped): the panel follows, animated while it shows, once its
+    /// parts have all reported (a fold moves two of them in one pass).
     private func contentHeightChanged(_ height: CGFloat) {
         contentHeight = height
+        guard isMenuOpen, panel?.isVisible == true, !followsContent else { return }
+        followsContent = true
+        RunLoop.main.perform { [weak self] in
+            MainActor.assumeIsolated { self?.followContent() }
+        }
+    }
+
+    private func followContent() {
+        followsContent = false
         guard isMenuOpen, let panel, panel.isVisible, let screen = panel.screen else { return }
-        let room = panel.frame.maxY - screen.visibleFrame.minY - 6
-        panel.setContentHeight(min(height, room), animated: !Self.reducesMotion)
+        panel.setContentHeight(Self.fittingHeight(contentHeight, top: panel.frame.maxY, in: screen.visibleFrame),
+                               animated: !Self.reducesMotion)
     }
 
     /// Closes the menu on a click outside it (in another app, or another of
-    /// AutoHush's windows), or on another desktop; follows Option.
+    /// AutoHush's windows); follows Option.
     private func watchWhileOpen() {
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
@@ -237,14 +269,15 @@ final class StatusMenuController: NSObject {
             }
             return event
         }) { monitors.append(local) }
+    }
+
+    /// Closes the menu as another window becomes key (one of AutoHush's, or
+    /// an alert, that a choice in the menu brought forward), or on another
+    /// desktop.
+    private func watchOtherWindows() {
         spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in MainActor.assumeIsolated { self?.close() } }
-    }
-
-    /// Closes the menu as another window becomes key: one of AutoHush's, or
-    /// an alert, that a choice in the menu brought forward.
-    private func watchOtherWindows() {
         keyWindowObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
         ) { [weak self] note in
@@ -259,7 +292,7 @@ final class StatusMenuController: NSObject {
 
     /// ↑ ↓ move among the unfolded players and Return chooses, as in a
     /// menu (the search takes them itself while it has the keyboard).
-    private func handleKey(_ event: NSEvent) -> Bool {
+    func handleKey(_ event: NSEvent) -> Bool {
         guard model.isChoosingPlayer else { return false }
         switch event.keyCode {
         case 126: perform(.moveHighlight(-1))
@@ -283,7 +316,8 @@ final class StatusMenuController: NSObject {
 
     /// What the menu's controls ask for. Switches, folding and the players'
     /// search act at once and keep the menu open; what opens a window or
-    /// chooses something closes it first, as a menu's rows do.
+    /// opens a window closes it first, as a menu's rows do; choosing a player
+    /// keeps it open (the user, 2026-10-18).
     func perform(_ command: StatusMenuCommand) {
         switch command {
         case .toggleAutoPause:
@@ -300,7 +334,7 @@ final class StatusMenuController: NSObject {
             // In place (the user, 2026-10-18): the list folds, and the card,
             // its checks and the settings follow the new player. A window the
             // choice opens (Add a Web App, learning) or an alert closes the
-            // menu as it comes forward (`watchWhileOpen`).
+            // menu as it comes forward (`watchOtherWindows`).
             animated {
                 model.isChoosingPlayer = false
                 model.playerSearch = ""

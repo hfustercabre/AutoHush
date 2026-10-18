@@ -1,7 +1,6 @@
 import AppKit
 import AutoHushKit
 import CheckedPlayers
-import WebAppPlayers
 
 // AppDelegate: the apps added with Add an App, removed by the user.
 extension AppDelegate {

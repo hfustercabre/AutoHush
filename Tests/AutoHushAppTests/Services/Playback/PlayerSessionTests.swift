@@ -214,7 +214,7 @@ struct PlayerSessionTests {
         #expect(PlayerSession.isTransientStartupError(MusicPlayerError.playerNotResponding))
         #expect(PlayerSession.isTransientStartupError(MusicPlayerError.playerNotRunning))
         #expect(!PlayerSession.isTransientStartupError(MusicPlayerError.automationPermissionDenied))
-        #expect(!PlayerSession.isTransientStartupError(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil))))
+        #expect(!PlayerSession.isTransientStartupError(MusicPlayerError.playerCommandFailed(.appleEventError(-50))))
         #expect(!PlayerSession.isTransientStartupError(StubError.failed))
     }
 

@@ -74,14 +74,14 @@ note "version $(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersi
 step "Compiling the app icon"
 if xcrun --find actool >/dev/null 2>&1; then
     ICON_INFO="$(mktemp)"
+    trap 'rm -f "${ICON_INFO:?}"' EXIT # also when actool fails
     if ! ICON_LOG="$(xcrun actool "$APP_ICON" --compile "$APP_BUNDLE/Contents/Resources" \
-            --platform macosx --minimum-deployment-target "$(plist_value "$INFO_PLIST" LSMinimumSystemVersion)" \
+            --platform macosx --minimum-deployment-target "$MIN_MACOS" \
             --app-icon "$APP_NAME" --output-partial-info-plist "$ICON_INFO" \
             --output-format human-readable-text 2>&1)"; then
         echo "$ICON_LOG" >&2
         fail "actool could not compile $APP_ICON"
     fi
-    rm -f "$ICON_INFO"
 else
     note "warning: actool not found (it comes with Xcode); the app keeps the generic icon"
 fi

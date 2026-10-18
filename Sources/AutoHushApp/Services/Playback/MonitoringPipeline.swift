@@ -49,16 +49,15 @@ final class MonitoringPipeline {
     struct Readers {
         var processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider()
         var levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter()
-        /// Lowers the Mac's volume as the music resumes after quieter apps
-        /// (Settings → Advanced).
-        var volumeLeveler: (any ResumeLeveling)? = SystemVolumeLeveler()
         var audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission()
         var powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
     }
 
     /// `hostedApp` names a process's app when its program doesn't (see
     /// `ProcessAudioSourceIdentifier`). `resumesHeld`: it starts with
-    /// resumes held (see `holdResumes`).
+    /// resumes held (see `holdResumes`). `volumeLeveler` lowers the Mac's
+    /// volume as the music resumes after quieter apps (Settings → Advanced):
+    /// the app's one, which every monitoring shares.
     init(
         player: any MusicPlayer,
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil },
@@ -68,6 +67,7 @@ final class MonitoringPipeline {
         ignoredSourceIDs: Set<String>,
         detectionMethod: DetectionMethod,
         learnedAssertions: [String: AnnouncedAssertions],
+        volumeLeveler: (any ResumeLeveling)? = nil,
         readers: Readers = Readers(),
         onStatusUpdate: @escaping @MainActor (StatusUpdate) -> Void
     ) {
@@ -85,7 +85,7 @@ final class MonitoringPipeline {
             onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
             onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) },
             onPausedByUsChange: { monitorLink.monitor?.setMusicPaused($0) },
-            volumeLeveler: readers.volumeLeveler,
+            volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
             onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
         )

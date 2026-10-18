@@ -1,5 +1,6 @@
 import Foundation
 @testable import AutoHushApp
+import AutoHushTestSupport
 import CheckedPlayers
 
 /// A check that ends when the test says.
@@ -54,6 +55,7 @@ final class World {
     var warningsClosed = 0
     var panel: [String] = []
     var antiDot = false
+    var macCanMute = true
     var taps: [Bool] = []
     var audioRequests = 0
     var menuBarSettingsOpened = 0
@@ -66,11 +68,11 @@ final class World {
     /// The running check's report, for lines after its first.
     var report: (@MainActor @Sendable (String) -> Void)?
     /// Kept checks, in a suite of their own, removed with the world.
-    private let keptSuite = "AddAppModelTests-\(UUID().uuidString)"
-    lazy var kept = KeptCheckStore(defaults: UserDefaults(suiteName: keptSuite)!)
+    private let keptSuite = TestDefaults("AddAppModelTests")
+    lazy var kept = KeptCheckStore(defaults: keptSuite.defaults)
 
     deinit {
-        UserDefaults().removePersistentDomain(forName: keptSuite)
+        keptSuite.remove()
     }
 
     var services: AddAppServices {
@@ -102,6 +104,7 @@ final class World {
             },
             request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
             antiDot: { self.antiDot },
+            macCanMute: { self.macCanMute },
             turnOffAntiDot: { self.antiDot = false },
             openMenuBarSettings: { self.menuBarSettingsOpened += 1 },
             isPlaying: { _, _ in self.playing },

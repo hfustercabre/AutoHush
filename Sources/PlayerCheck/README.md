@@ -318,7 +318,8 @@ kept too, where AutoHush's next start finds it, until it's put back.
 
 In `~/Library/Logs/PlayerCheck/`, or `--logs`' folder (AutoHush's checks
 use `~/Library/Logs/AutoHush/Checks`): every check, press and relaunch,
-whole, with each line's time (the last 50). The log, like the report,
+whole, with each line's time (its own last 50: older ones go to the
+Trash, and other files in the folder are left alone). The log, like the report,
 writes the home folder as `~`, so it never holds the Mac account's name,
 and leaves out what was playing (`PrivateText`): a page's button is named
 by its Play or Pause word only, a panel row by its place and what told it

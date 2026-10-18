@@ -20,8 +20,8 @@ struct AppDelegateTests {
     @MainActor
     private final class Scratch {
         var preferences = Preferences(store: InMemoryPreferenceStore())
-        private let suiteName = "AppDelegateTests-\(UUID().uuidString)"
-        lazy var defaults = UserDefaults(suiteName: suiteName)!
+        private let suite = TestDefaults("AppDelegateTests")
+        lazy var defaults = suite.defaults
         let addedSetups = SetupsInMemory()
         lazy var checkedPlayers = CheckedPlayers(store: addedSetups, locate: { _ in nil })
         let launchAtLogin = MockLaunchAtLoginController(isEnabled: false)
@@ -30,6 +30,9 @@ struct AppDelegateTests {
         let first = MockMusicPlayer(bundleID: Players.first, name: "First")
         let second = MockMusicPlayer(bundleID: Players.second, name: "Second", canFade: false)
         let monitorings = FakeMonitorings()
+        /// The Mac's outputs, muted for a check, and its volume, lowered for the music.
+        let outputs = MockOutputMuting()
+        let volume = MockSystemVolume([0: -10])
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
@@ -74,7 +77,7 @@ struct AppDelegateTests {
 
         deinit {
             try? FileManager.default.removeItem(at: downloads)
-            UserDefaults().removePersistentDomain(forName: suiteName)
+            suite.remove()
         }
     }
 
@@ -105,6 +108,8 @@ struct AppDelegateTests {
             updateDownloadsFolder: scratch.downloads,
             players: scratch.players,
             checkedPlayers: scratch.checkedPlayers,
+            checkOutputMute: OutputMute(outputs: scratch.outputs, defaults: scratch.defaults),
+            volumeLeveler: SystemVolumeLeveler(volume: scratch.volume, defaults: scratch.defaults, sleep: { _ in }),
             makeMonitoring: scratch.monitorings.make,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
@@ -297,12 +302,10 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(webApp.bundleID)
         await waitFor { sut.status.health == .needsPermission(.accessibility(player: "YT Music")) }
         #expect(scratch.learningWindow.isOpen) // with the permission as its first step
-        #expect(sut.status.needsPermission)
         #expect(sut.status.canLearnControlsAgain) // the card's Controls row stays
 
         webApp.setFailVerify(nil) // allowed: the retry starts monitoring
         await waitFor { sut.status.health == .ready }
-        #expect(!sut.status.needsPermission)
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(scratch.learningWindow.shownCount == 1)
     }
@@ -882,7 +885,7 @@ struct AppDelegateTests {
     }
 
     @MainActor
-    @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window; its list of apps and the warning before the check open in windows of their own, a new warning replacing the last, which mutes the app only with Audio Recording allowed outside AntiDot mode; its Start starts the check")
+    @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window; its list of apps and the warning before the check open in windows of their own, a new warning replacing the last, which mutes the app only with Audio Recording allowed outside AntiDot mode, else the Mac's sound, if its output can be muted; its Start starts the check")
     func addAppWindows() async throws {
         let (sut, _) = makeSUT()
         let world = World()
@@ -912,13 +915,19 @@ struct AppDelegateTests {
         model.continueToCheck()
         let warning = try #require(sut.checkWarningWindow)
         let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
-        #expect(warning.isOpen && warningView.rootView.muted)
+        #expect(warning.isOpen && warningView.rootView.muting == .app)
         world.antiDot = true
+        model.continueToCheck()
+        let macMuted = try #require(sut.checkWarningWindow)
+        let macMutedView = try #require(macMuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
+        await waitFor { !warning.isOpen }
+        #expect(macMuted !== warning && macMuted.isOpen && macMutedView.rootView.muting == .mac)
+        world.macCanMute = false
         model.continueToCheck()
         let unmuted = try #require(sut.checkWarningWindow)
         let unmutedView = try #require(unmuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
-        await waitFor { !warning.isOpen }
-        #expect(unmuted !== warning && unmuted.isOpen && !unmutedView.rootView.muted)
+        await waitFor { !macMuted.isOpen }
+        #expect(unmuted.isOpen && unmutedView.rootView.muting == .none)
 
         unmutedView.rootView.start()
         await waitFor { world.runs == 1 }
@@ -931,6 +940,92 @@ struct AppDelegateTests {
         sut.showAddApp()
         #expect(sut.addAppWindow === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
         window.close()
+    }
+
+    @MainActor
+    @Test("a check that can't mute only its app (AntiDot mode, or no Audio Recording) mutes the Mac's output while it runs, never one that taps the app's own sound; the output is put back as the check ends, as it stops, as AutoHush quits, and at the next launch after a crash during one")
+    func checkMutesTheMac() async {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        let world = World()
+        world.playing = true
+        // AutoHush's own start and end of a check, around the stand-in check.
+        let live = sut.liveAddAppServices()
+        var services = world.services
+        services.macCanMute = live.macCanMute
+        services.checkStarted = live.checkStarted
+        services.checkEnded = live.checkEnded
+        let model = AddAppModel(services: services)
+        sut.addAppModel = model
+        model.reset()
+        await model.loadApps()
+        model.choose(world.apps[0])
+        await waitFor { model.stage == .ready }
+        func check() async {
+            world.run = FakeCheckRun()
+            let runs = world.runs
+            model.startCheck()
+            await waitFor { world.runs == runs + 1 }
+        }
+        func checkAgain() async {
+            model.checkAgain()
+            await waitFor { model.stage == .ready }
+        }
+        let muted = { scratch.outputs.mutes[7] == true }
+
+        #expect(model.checkMuting == .app) // its own sound tapped: the Mac's is left alone
+        await check()
+        #expect(!muted())
+        world.run.finish(.failed(1))
+        await waitFor { model.stage == .failed }
+
+        world.antiDot = true
+        #expect(model.checkMuting == .mac)
+        await checkAgain()
+        await check()
+        #expect(muted())
+        world.run.finish(.failed(1)) // it ends
+        await waitFor { model.stage == .failed }
+        #expect(!muted())
+
+        await checkAgain()
+        await check()
+        #expect(muted())
+        model.stopCheck()
+        await waitFor { model.stage == .stopped }
+        #expect(!muted())
+
+        await checkAgain()
+        await check()
+        sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+        #expect(!muted())
+        world.run.finish(.stopped)
+        await waitFor { model.stage == .stopped }
+
+        await checkAgain()
+        await check()
+        #expect(muted())
+        let (next, _) = makeSUT(scratch) // AutoHush crashed: the next launch
+        next.putBackWhatWasLeft()
+        #expect(!muted())
+        world.run.finish(.stopped)
+        await waitFor { model.stage == .stopped }
+    }
+
+    @MainActor
+    @Test("the Mac's volume lowered for the music (Level the music) is put back as AutoHush quits, and at the next launch after a crash")
+    func loweredVolumePutBack() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        sut.volumeLeveler.lower(by: -6)
+        #expect(scratch.volume.decibels == [0: -16])
+        sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+        #expect(scratch.volume.decibels == [0: -10])
+
+        sut.volumeLeveler.lower(by: -6)
+        let (next, _) = makeSUT(scratch) // AutoHush crashed: the next launch
+        next.putBackWhatWasLeft()
+        #expect(scratch.volume.decibels == [0: -10])
     }
 
     // MARK: - Music player

@@ -187,6 +187,22 @@ final class AddAppModel {
     /// How many times AntiDot mode was turned off from here.
     private var antiDotChanges = 0
 
+    /// What the check mutes while it plays and pauses the app.
+    enum CheckMuting {
+        /// The app itself, by tapping its sound: Audio Recording allowed,
+        /// AntiDot mode off.
+        case app
+        /// The Mac's output, since the app alone can't be (the user, 2026-10-18).
+        case mac
+        /// Nothing: the output has no mute control, so the app is heard.
+        case none
+    }
+
+    var checkMuting: CheckMuting {
+        if permissions.audio == .allowed && !antiDot { return .app }
+        return services.macCanMute() ? .mac : .none
+    }
+
     /// Now Playing was hidden in the menu bar, so its panel wasn't tried:
     /// the last step offers to open where it's shown, then Check Again.
     var nowPlayingHidden: Bool { result?.ways.contains { $0.mark == .menuBarHidden } == true }
@@ -284,6 +300,9 @@ final class AddAppModel {
         case .failure(let problem): otherAppProblem = problem
         }
     }
+
+    /// Change… forgets a check that has run (about 3 minutes), so it asks first.
+    var changeAppForgetsCheck: Bool { result != nil }
 
     /// The first step's Change…: from the first step again, its list open.
     /// A kept result is forgotten.

@@ -197,7 +197,8 @@ struct PlayerTiles: View {
                     .frame(width: Self.iconSize, height: Self.iconSize)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(verbatim: option.name).font(.appCallout).lineLimit(1).minimumScaleFactor(0.85)
+                    // A long name takes two lines where the tile is narrow (T1, the user, 2026-10-18).
+                    Text(verbatim: option.name).font(.appCallout).lineLimit(2).minimumScaleFactor(0.85)
                         .accessibilityLabel(Text(verbatim: option.spokenName(among: options)))
                     note(option)
                 }

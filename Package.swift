@@ -187,14 +187,14 @@ let package = Package(
             dependencies: ["QuickTimeSupport", "ScriptablePlayers", "AutoHushKit"],
             path: "Tests/PlayersSupport/QuickTimeSupportTests"
         ),
-        // AutoHushPlayers only for the supported players' names, which no
-        // file of Sources/PlayerCheck may hold.
         // The helper itself, run as a read-only check of an app on the Mac.
         .testTarget(
             name: "PlayerCheckTests",
             dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "WebAppPlayers", "AutoHushKit"],
             path: "Tests/PlayerCheckTests"
         ),
+        // AutoHushPlayers only for the supported players' names, which no
+        // file of Sources/PlayerCheck may hold.
         .testTarget(
             name: "PlayerCheckKitTests",
             dependencies: ["PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushPlayers"],

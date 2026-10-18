@@ -2,7 +2,6 @@ import AppKit
 import Foundation
 import Testing
 @testable import ScriptablePlayers
-import AutoHushKit
 
 @Suite("ScriptSetup")
 struct ScriptSetupTests {

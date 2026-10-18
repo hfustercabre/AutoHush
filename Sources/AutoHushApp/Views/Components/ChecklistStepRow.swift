@@ -37,7 +37,7 @@ struct StepActionButton: View {
             Text(verbatim: button.title).font(secondary ? .appBody : .appBody.weight(.semibold)).padding(.horizontal, 6)
                 .fixedSize() // one line: two that don't fit go one under the other
         }
-        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary, padded: true))
+        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
         .keyboardShortcut(secondary ? nil : .defaultAction)
         .padding(.top, 2)
     }

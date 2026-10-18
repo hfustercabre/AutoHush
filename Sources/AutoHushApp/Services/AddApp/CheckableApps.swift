@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushPlayers
 
 /// The apps Add an App… offers: those in the Applications folders that can
 /// be in Now Playing (so they can play: playercheck tells by what they're
@@ -54,7 +55,7 @@ enum CheckableApps {
                 if item.pathExtension == "app" {
                     guard let app = CheckableApp.at(item), found[app.bundleID] == nil, !excluding.contains(app.bundleID),
                           app.bundleID != Bundle.main.bundleIdentifier, !app.bundleID.hasPrefix("com.autohush."),
-                          !app.bundleID.hasPrefix("com.apple.Safari.WebApp.") else { continue }
+                          !app.bundleID.hasPrefix(SupportedPlayers.safariWebAppPrefix) else { continue }
                     found[app.bundleID] = app
                 } else if depth > 0, (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
                     look(in: item, depth: depth - 1)

@@ -87,7 +87,7 @@ final class LearningSession {
     /// player was chosen meanwhile.
     func learnAgain() async -> Bool {
         guard let learner else { return false }
-        logger.notice("Learning \(learner.name, privacy: .public)'s controls again, as asked")
+        logger.notice("Learning \(learner.name, privacy: .public)’s controls again, as asked")
         countdown?.cancel()
         countdown = nil
         setPause(deadline: nil, note: nil, mode: .automatic)

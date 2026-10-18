@@ -12,6 +12,10 @@ package protocol SystemVolumeControlling: Sendable {
     /// a fixed-volume DAC).
     func volume(of device: AudioObjectID) -> SystemVolume?
     func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID)
+    /// The output's lasting ID, and the output with it now: its object ID
+    /// changes from one launch to the next.
+    func uid(of device: AudioObjectID) -> String?
+    func device(withUID uid: String) -> AudioObjectID?
 }
 
 package struct SystemVolume: Equatable, Sendable {
@@ -37,40 +41,34 @@ package struct CoreAudioSystemVolume: SystemVolumeControlling {
 
     package func volume(of device: AudioObjectID) -> SystemVolume? {
         // The main control, else the first two channels' (some devices have only those).
-        for elements in [[kAudioObjectPropertyElementMain], [1, 2]] as [[AudioObjectPropertyElement]] {
-            var decibels: [AudioObjectPropertyElement: Float] = [:]
-            for element in elements where Self.isSettable(device, element) {
-                if let value: Float32 = Self.read(kAudioDevicePropertyVolumeDecibels, of: device, element) { decibels[element] = value }
-            }
-            guard !decibels.isEmpty, let element = decibels.keys.first else { continue }
-            let range: AudioValueRange? = Self.read(kAudioDevicePropertyVolumeRangeDecibels, of: device, element)
-            return SystemVolume(decibels: decibels, lowest: Float(range?.mMinimum ?? -96))
+        var decibels: [AudioObjectPropertyElement: Float] = [:]
+        for element in CoreAudioProperty.settableOutputElements(kAudioDevicePropertyVolumeDecibels, of: device) {
+            if let value: Float32 = Self.read(kAudioDevicePropertyVolumeDecibels, of: device, element) { decibels[element] = value }
         }
-        return nil
+        guard let element = decibels.keys.first else { return nil }
+        let range: AudioValueRange? = Self.read(kAudioDevicePropertyVolumeRangeDecibels, of: device, element)
+        return SystemVolume(decibels: decibels, lowest: Float(range?.mMinimum ?? -96))
     }
 
     package func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID) {
         for (element, value) in decibels {
-            var address = Self.address(kAudioDevicePropertyVolumeDecibels, element)
+            var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyVolumeDecibels, element)
             var data = Float32(value)
             AudioObjectSetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<Float32>.size), &data)
         }
     }
 
-    private static func address(_ selector: AudioObjectPropertySelector, _ element: AudioObjectPropertyElement) -> AudioObjectPropertyAddress {
-        AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioDevicePropertyScopeOutput, mElement: element)
+    package func uid(of device: AudioObjectID) -> String? {
+        CoreAudioProperty.string(kAudioDevicePropertyDeviceUID, of: device)
     }
 
-    private static func isSettable(_ device: AudioObjectID, _ element: AudioObjectPropertyElement) -> Bool {
-        var address = address(kAudioDevicePropertyVolumeDecibels, element)
-        guard AudioObjectHasProperty(device, &address) else { return false }
-        var settable: DarwinBoolean = false
-        return AudioObjectIsPropertySettable(device, &address, &settable) == noErr && settable.boolValue
+    package func device(withUID uid: String) -> AudioObjectID? {
+        CoreAudioProperty.device(withUID: uid)
     }
 
     private static func read<T: BitwiseCopyable>(_ selector: AudioObjectPropertySelector, of device: AudioObjectID,
                                                  _ element: AudioObjectPropertyElement) -> T? {
-        var address = address(selector, element)
+        var address = CoreAudioProperty.outputAddress(selector, element)
         var size = UInt32(MemoryLayout<T>.size)
         let value = UnsafeMutablePointer<T>.allocate(capacity: 1)
         defer { value.deallocate() }

@@ -54,7 +54,7 @@ extension PlayerSession {
             }
             let problem = "\(player.name): \(LogMessage.englishDescription(of: error))"
             if problem == loggedStartupProblem {
-                logger.debug("Still can't control \(problem, privacy: .public)")
+                logger.debug("Still can’t control \(problem, privacy: .public)")
             } else {
                 logger.error("Can’t control \(problem, privacy: .public)")
                 loggedStartupProblem = problem

@@ -84,7 +84,7 @@ extension WebAppControl {
             return .paused
         } while clock() < deadline
         pressKey()
-        logger.notice("\(self.name, privacy: .public)'s page didn't change for the Play/Pause key: the user pauses it")
+        logger.notice("\(self.name, privacy: .public)’s page didn’t change for the Play/Pause key: the user pauses it")
         return .didntTake
     }
 
@@ -132,7 +132,7 @@ extension WebAppControl {
         lastRead = nil
         self.learner = nil
         store.save(merged, for: bundleID)
-        logger.notice("Learned \(self.name, privacy: .public)'s Play/Pause button")
+        logger.notice("Learned \(self.name, privacy: .public)’s Play/Pause button")
         status.send(.learned)
         return true
     }
@@ -161,7 +161,7 @@ extension WebAppControl {
         guard var learner, learner.hasPlayed else { return false }
         learner.forgetPlaying()
         self.learner = learner
-        logger.notice("\(self.name, privacy: .public)'s learning goes back to It's Playing")
+        logger.notice("\(self.name, privacy: .public)’s learning goes back to It’s Playing")
         status.send(.learning(hasPlayed: false))
         return true
     }

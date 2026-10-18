@@ -440,6 +440,41 @@ struct StatusMenuControllerTests {
         #expect(playerRows(sut).first == "[Supported]") // seven: no search
     }
 
+    @Test("in the panel, ↑ ↓ move among the unfolded players and Return chooses; with the players folded, the keys are the panel's")
+    func playerKeys() async {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.playerOptions = ["First", "Second"].map {
+            PlayerOption(bundleID: "com.example.\($0)", name: $0, appURL: URL(fileURLWithPath: "/Applications/\($0).app"))
+        }
+        sut.status = status
+        reopen(sut)
+        #expect(!sut.handleKey(MenuPanelTests.key(125)))
+
+        sut.perform(.togglePlayerList)
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓
+        #expect(sut.model.highlightedPlayerID == "com.example.First")
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
+        #expect(sut.handleKey(MenuPanelTests.key(126))) // ↑
+        #expect(sut.model.highlightedPlayerID == "com.example.First")
+        #expect(!sut.handleKey(MenuPanelTests.key(0))) // A: not the list's
+        #expect(sut.handleKey(MenuPanelTests.key(36))) // Return
+        await wait(for: 2, in: log)
+        #expect(log.calls == ["menuWillOpen", "player com.example.First"])
+    }
+
+    @Test("going to another desktop closes the menu")
+    func desktopChange() {
+        let sut = makeController()
+        defer { sut.remove() }
+        sut.status = readyStatus()
+        reopen(sut)
+        #expect(sut.isMenuOpen)
+        NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: NSWorkspace.shared)
+        #expect(!sut.isMenuOpen)
+    }
+
     // MARK: - The settings
 
     @Test("the settings' switches always show; each part's chevron unfolds its other settings on its own, and they stay as left when the menu opens again")

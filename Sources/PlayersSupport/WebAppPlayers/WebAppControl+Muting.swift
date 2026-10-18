@@ -9,7 +9,7 @@ extension WebAppControl {
         guard mayMute(), muter.mute(appPID: pid) else { return false }
         muted = (pid, reason)
         if reason == .playsAnyway {
-            logger.notice("\(self.name, privacy: .public) plays while its button says it's paused: muted instead")
+            logger.notice("\(self.name, privacy: .public) plays while its button says it’s paused: muted instead")
         } else {
             logger.notice("\(self.name, privacy: .public) refused to pause: muted instead")
         }

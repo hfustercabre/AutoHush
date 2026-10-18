@@ -13,6 +13,10 @@ package protocol OutputMuting: Sendable {
     /// changes from one launch to the next.
     func uid(of device: AudioObjectID) -> String?
     func device(withUID uid: String) -> AudioObjectID?
+    /// Calls `onChange` (on a queue of its own) each time the output's mute
+    /// changes, until the listener it returns is let go; `nil` when it can't
+    /// be listened to.
+    func observeMute(of device: AudioObjectID, _ onChange: @escaping @Sendable () -> Void) -> AnyObject?
 }
 
 /// `OutputMuting` through Core Audio's device mute
@@ -27,7 +31,7 @@ package struct CoreAudioOutputMute: OutputMuting {
 
     package func isMuted(_ device: AudioObjectID) -> Bool? {
         guard let element = Self.elements(device).first else { return nil }
-        var address = Self.address(element)
+        var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyMute, element)
         var value: UInt32 = 0
         var size = UInt32(MemoryLayout<UInt32>.size)
         guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr else { return nil }
@@ -36,7 +40,7 @@ package struct CoreAudioOutputMute: OutputMuting {
 
     package func setMuted(_ muted: Bool, _ device: AudioObjectID) {
         for element in Self.elements(device) {
-            var address = Self.address(element)
+            var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyMute, element)
             var value: UInt32 = muted ? 1 : 0
             AudioObjectSetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<UInt32>.size), &value)
         }
@@ -47,32 +51,41 @@ package struct CoreAudioOutputMute: OutputMuting {
     }
 
     package func device(withUID uid: String) -> AudioObjectID? {
-        var address = CoreAudioProperty.address(kAudioHardwarePropertyTranslateUIDToDevice)
-        var qualifier: CFString = uid as CFString
-        var device = AudioObjectID(kAudioObjectUnknown)
-        var size = UInt32(MemoryLayout<AudioObjectID>.size)
-        let status = withUnsafeMutablePointer(to: &qualifier) { pointer in
-            AudioObjectGetPropertyData(CoreAudioProperty.systemObject, &address, UInt32(MemoryLayout<CFString>.size), pointer, &size, &device)
-        }
-        return status == noErr && device != AudioObjectID(kAudioObjectUnknown) ? device : nil
+        CoreAudioProperty.device(withUID: uid)
+    }
+
+    package func observeMute(of device: AudioObjectID, _ onChange: @escaping @Sendable () -> Void) -> AnyObject? {
+        MuteListener(device: device, elements: Self.elements(device), onChange: onChange)
     }
 
     /// The mute controls it can set: the main one, else both of the first
-    /// two channels'.
+    /// two channels' (one alone would leave the other heard).
     private static func elements(_ device: AudioObjectID) -> [AudioObjectPropertyElement] {
-        if isSettable(device, kAudioObjectPropertyElementMain) { return [kAudioObjectPropertyElementMain] }
-        let channels: [AudioObjectPropertyElement] = [1, 2]
-        return channels.allSatisfy { isSettable(device, $0) } ? channels : []
+        let elements = CoreAudioProperty.settableOutputElements(kAudioDevicePropertyMute, of: device)
+        return elements == [kAudioObjectPropertyElementMain] || elements.count == 2 ? elements : []
+    }
+}
+
+/// Listens to an output's mute controls until it's let go.
+private final class MuteListener {
+    private let device: AudioObjectID
+    private let queue = DispatchQueue(label: "AutoHush.OutputMute")
+    private let listener: AudioObjectPropertyListenerBlock
+    private var addresses: [AudioObjectPropertyAddress] = []
+
+    init?(device: AudioObjectID, elements: [AudioObjectPropertyElement], onChange: @escaping @Sendable () -> Void) {
+        self.device = device
+        listener = { _, _ in onChange() }
+        for element in elements {
+            var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyMute, element)
+            if AudioObjectAddPropertyListenerBlock(device, &address, queue, listener) == noErr { addresses.append(address) }
+        }
+        if addresses.isEmpty { return nil }
     }
 
-    private static func address(_ element: AudioObjectPropertyElement) -> AudioObjectPropertyAddress {
-        AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyMute, mScope: kAudioDevicePropertyScopeOutput, mElement: element)
-    }
-
-    private static func isSettable(_ device: AudioObjectID, _ element: AudioObjectPropertyElement) -> Bool {
-        var address = address(element)
-        guard AudioObjectHasProperty(device, &address) else { return false }
-        var settable: DarwinBoolean = false
-        return AudioObjectIsPropertySettable(device, &address, &settable) == noErr && settable.boolValue
+    deinit {
+        for var address in addresses {
+            AudioObjectRemovePropertyListenerBlock(device, &address, queue, listener)
+        }
     }
 }

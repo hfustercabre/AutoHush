@@ -1,11 +1,8 @@
 import SwiftUI
 
 /// macOS's own switch (the user, 2026-10-17), the same in the menu and in
-/// Settings. `width` and `height` are kept for callers; macOS sizes it.
+/// Settings, at macOS's own size.
 struct PillToggleStyle: ToggleStyle {
-    var width: CGFloat = 36
-    var height: CGFloat = 21
-
     func makeBody(configuration: Configuration) -> some View {
         Toggle(isOn: configuration.$isOn) { configuration.label }
             .toggleStyle(.switch)
@@ -20,9 +17,8 @@ struct PillToggleStyle: ToggleStyle {
 struct ChipButtonStyle: PrimitiveButtonStyle {
     var filled = false
     var isSelected = false
+    /// The highlight's corners, unfilled (a push button draws its own).
     var cornerRadius: CGFloat = 8
-    /// Kept for callers: a push button makes its own room.
-    var padded = false
 
     @ViewBuilder func makeBody(configuration: Configuration) -> some View {
         if filled && isSelected {
@@ -69,5 +65,5 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
 
 extension PrimitiveButtonStyle where Self == ChipButtonStyle {
     /// A push button, the look of Settings' buttons.
-    static var chip: ChipButtonStyle { ChipButtonStyle(filled: true, padded: true) }
+    static var chip: ChipButtonStyle { ChipButtonStyle(filled: true) }
 }

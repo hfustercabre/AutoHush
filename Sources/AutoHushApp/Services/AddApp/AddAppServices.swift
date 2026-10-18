@@ -30,6 +30,9 @@ struct AddAppServices {
     /// AntiDot mode is on: no audio taps (nothing listens to the app, and
     /// it can't be muted).
     var antiDot: @MainActor () -> Bool
+    /// Whether the Mac's output can be muted now: the check mutes it when it
+    /// can't mute only the app (`AddAppModel.checkMuting`).
+    var macCanMute: @MainActor () -> Bool = { false }
     /// Turns AntiDot mode off (the last step, when nothing can be used in it).
     var turnOffAntiDot: @MainActor () -> Void
     /// Opens System Settings where Now Playing is shown in the menu bar.

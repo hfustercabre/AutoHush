@@ -5,11 +5,7 @@ import CheckedPlayers
 // AppDelegate: launching, quitting, sleep and wake.
 extension AppDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Now Playing, shown for a press while the user hid it, put back
-        // should AutoHush have quit meanwhile.
-        NowPlayingSetting.restoreIfLeft()
-        // The Mac's output, muted for a check, the same.
-        checkOutputMute.restoreIfLeft()
+        putBackWhatWasLeft()
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() },
@@ -33,6 +29,16 @@ extension AppDelegate {
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
+    }
+
+    /// At launch, what AutoHush changed for a moment and didn't put back,
+    /// should it have quit or crashed meanwhile: Now Playing shown for a
+    /// press while the user hid it, the Mac's output muted for a check, its
+    /// volume lowered for the music (Level the music).
+    func putBackWhatWasLeft() {
+        NowPlayingSetting.restoreIfLeft()
+        checkOutputMute.restoreIfLeft()
+        volumeLeveler.restoreIfLeft()
     }
 
     /// Follows the Focus filter macOS reports now, which catches a Focus's
@@ -87,6 +93,8 @@ extension AppDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         NowPlayingSetting.restoreIfLeft()
         checkOutputMute.restore()
+        // Even when the player's stop outlasted the quit's wait.
+        volumeLeveler.restoreNow()
         // Its `log stream` would otherwise outlive AutoHush, until
         // mediaremoted next writes.
         CheckedPlayer.sharedReports.stop()

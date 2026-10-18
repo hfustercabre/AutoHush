@@ -14,12 +14,15 @@ struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
         let value: Value
     }
 
+    /// What it chooses, for VoiceOver (the row's title shows it only to the eye).
+    let label: String
     let options: [Option]
     let selection: Value
     let onSelect: (Value) -> Void
 
     func makeNSView(context: Context) -> NSSegmentedControl {
         let control = Self.control(options.map(\.title), size: context.environment.controlSize)
+        control.setAccessibilityLabel(label)
         control.segmentDistribution = .fillProportionally
         control.target = context.coordinator
         control.action = #selector(Coordinator.chosen(_:))
@@ -28,6 +31,7 @@ struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
 
     func updateNSView(_ control: NSSegmentedControl, context: Context) {
         context.coordinator.choice = self
+        if control.accessibilityLabel() != label { control.setAccessibilityLabel(label) }
         let size = NSControl.ControlSize(context.environment.controlSize)
         if control.controlSize != size {
             control.controlSize = size

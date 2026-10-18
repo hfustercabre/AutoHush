@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 
-/// Settings → General, in cards like the menu's: the media player, with the
+/// Settings → General, a grouped form: the media player, with the
 /// Auto-Pause switch; every player as tiles, to choose another; then launch
 /// at login.
 struct GeneralSettingsView: View {
@@ -54,7 +54,7 @@ struct GeneralSettingsView: View {
     /// the menu's card has them) and what works; what it lacks and the way
     /// to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
-        Card(Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player")) {
+        Card(Text("Media Player", comment: "Settings → General and Diagnostics: heading over the media player")) {
             HStack(alignment: .center, spacing: 12) {
                 playerIcon
                 VStack(alignment: .leading, spacing: 2) {

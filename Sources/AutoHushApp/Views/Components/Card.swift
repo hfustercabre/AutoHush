@@ -20,22 +20,19 @@ struct Card<Content: View, Footer: View>: View {
     /// A header of its own instead of a title: Diagnostics' folding parts,
     /// Sound Sources' sort and search.
     var heading: AnyView?
-    var padding: CGFloat = 12
-    /// The menu's card: clear Liquid Glass from macOS 26, which casts no
-    /// shadow (the regular glass's would be cut off in a straight line under
-    /// it, in its row).
+    /// The menu's card: clear Liquid Glass from macOS 26 over the panel's
+    /// own glass, with no shadow; a faint fill before.
     var clearGlass = false
     @ViewBuilder let content: Content
     @ViewBuilder let footer: Footer
     @Environment(\.cardsAreFormSections) private var isFormSection
 
-    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil, padding: CGFloat = 12,
+    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil,
          clearGlass: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
         self.title = title
         self.badge = badge
         self.note = note
         self.heading = heading
-        self.padding = padding
         self.clearGlass = clearGlass
         self.content = content()
         self.footer = footer()
@@ -79,12 +76,12 @@ struct Card<Content: View, Footer: View>: View {
     @ViewBuilder private var box: some View {
         if #available(macOS 26, *), clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
-                .padding(padding + 2)
+                .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         } else if clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
-                .padding(padding)
+                .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 12).fill(.quaternary.opacity(0.6)))
         } else {
@@ -97,9 +94,9 @@ struct Card<Content: View, Footer: View>: View {
 }
 
 extension Card where Footer == EmptyView {
-    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil, padding: CGFloat = 12,
+    init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil,
          clearGlass: Bool = false, @ViewBuilder content: () -> Content) {
-        self.init(title, badge: badge, note: note, heading: heading, padding: padding, clearGlass: clearGlass,
+        self.init(title, badge: badge, note: note, heading: heading, clearGlass: clearGlass,
                   content: content, footer: { EmptyView() })
     }
 }

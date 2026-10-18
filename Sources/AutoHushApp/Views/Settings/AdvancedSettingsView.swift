@@ -1,7 +1,6 @@
 import SwiftUI
-import AutoHushKit
 
-/// Settings → Advanced, in cards like the menu's: leveling the music (off
+/// Settings → Advanced, a grouped form: leveling the music (off
 /// in AntiDot mode, which measures no sound), and staying paused after a
 /// call. Restore Defaults turns both off.
 struct AdvancedSettingsView: View {

@@ -190,7 +190,7 @@ final class WebAppControl: @unchecked Sendable {
                 missingSince = nil
                 if learner != nil {
                     learner = nil
-                    logger.notice("\(self.name, privacy: .public)'s Play/Pause button is back")
+                    logger.notice("\(self.name, privacy: .public)’s Play/Pause button is back")
                     status.send(relearning ? .relearning : .learned)
                 }
                 // A Chromium or Flutter page out of sight keeps an old word: its sound tells instead.
@@ -231,17 +231,17 @@ final class WebAppControl: @unchecked Sendable {
         guard learner == nil, let recipe, let button else { throw MusicPlayerError.stillLearning }
         // Sites disable it while they can't be paused, such as during an ad.
         guard page.button(button)?.isEnabled == true else {
-            logger.notice("\(self.name, privacy: .public)'s Play/Pause is disabled: not pressed")
+            logger.notice("\(self.name, privacy: .public)’s Play/Pause is disabled: not pressed")
             if state == .playing, mute(pid: pid, reason: .buttonDisabled) { return }
             throw MusicPlayerError.playerCommandFailed(.buttonDisabled)
         }
         guard page.press(button) else {
-            logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
+            logger.error("Pressing \(self.name, privacy: .public)’s Play/Pause failed")
             if state == .playing, mute(pid: pid, reason: .pressFailed) { return }
             throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
         if follows(button, recipe: recipe, from: state, pid: pid) { return }
-        logger.error("\(self.name, privacy: .public)'s Play/Pause didn't change after a press")
+        logger.error("\(self.name, privacy: .public)’s Play/Pause didn’t change after a press")
         if state == .playing, mute(pid: pid, reason: .pressIgnored) { return }
         throw MusicPlayerError.playerCommandFailed(.pressIgnored)
     }
@@ -257,7 +257,7 @@ final class WebAppControl: @unchecked Sendable {
         guard mayMute(), learner == nil, [.paused, .stopped].contains(state(pid: pid)),
               page.isPlayingSound(pid: pid) else { return false }
         guard levelProbe.isAudible(appPID: pid) else {
-            logger.debug("\(self.name, privacy: .public)'s sound is open but silent: not muted")
+            logger.debug("\(self.name, privacy: .public)’s sound is open but silent: not muted")
             return false
         }
         return mute(pid: pid, reason: .playsAnyway)
@@ -280,12 +280,12 @@ final class WebAppControl: @unchecked Sendable {
         lastRead = nil
         guard recipe != nil else {
             learner = PlayPauseLearner()
-            logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button from the start, as asked")
+            logger.notice("Learning \(self.name, privacy: .public)’s Play/Pause button from the start, as asked")
             status.send(.learning(hasPlayed: false))
             return
         }
         relearning = true
-        logger.notice("Learning \(self.name, privacy: .public)'s Play/Pause button again, as asked: kept until it plays")
+        logger.notice("Learning \(self.name, privacy: .public)’s Play/Pause button again, as asked: kept until it plays")
         if learner != nil { // the button had gone missing: that learning starts over
             learner = PlayPauseLearner()
             status.send(.learning(hasPlayed: false))
@@ -314,7 +314,7 @@ final class WebAppControl: @unchecked Sendable {
         missingSince = nil
         lastRead = nil
         store.forget(for: bundleID)
-        logger.notice("\(self.name, privacy: .public)'s learned Play/Pause button is forgotten: learning it again")
+        logger.notice("\(self.name, privacy: .public)’s learned Play/Pause button is forgotten: learning it again")
     }
 
     // MARK: - Learning, as the user says

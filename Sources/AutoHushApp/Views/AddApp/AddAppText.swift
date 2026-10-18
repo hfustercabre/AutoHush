@@ -59,6 +59,20 @@ enum AddAppText {
         String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app")
     }
 
+    /// The question Change… asks once the check has run (the user, 2026-10-18: "Ask first").
+    static var changeAppTitle: String {
+        String(localized: "Choose another app?", comment: "Add an App window: title of the question Change… asks once the check has run")
+    }
+
+    static func changeAppDiscards(_ app: String) -> String {
+        String(localized: "What the check found for \(app) is forgotten.",
+               comment: "Add an App window: what Change… does once the check has run, in its question; %@ is the checked app")
+    }
+
+    static var changeAppConfirm: String {
+        String(localized: "Choose Another App", comment: "Add an App window: the button that confirms Change… once the check has run, forgetting what it found")
+    }
+
     static var chooserTitle: String {
         String(localized: "Choose an App", comment: "Title of the window that lists the apps Add an App can check")
     }
@@ -154,18 +168,26 @@ enum AddAppText {
     /// What the check does without the permissions in `missing` (Audio
     /// Recording, Automation), and that it can go on without them, in one
     /// text (sentences joined in code read wrong in Chinese and Japanese).
-    static func withoutWarning(_ missing: [CheckPermission], app: String) -> String {
-        switch (missing.contains(.audioRecording), missing.contains(.automation)) {
-        case (true, true):
+    /// Without Audio Recording the Mac's sound is muted instead of the app's
+    /// (`macMuted`), unless its output has no mute control.
+    static func withoutWarning(_ missing: [CheckPermission], app: String, macMuted: Bool = false) -> String {
+        switch (missing.contains(.audioRecording), missing.contains(.automation), macMuted) {
+        case (true, true, true):
+            String(localized: "Without Audio Recording, the Mac’s sound is muted during the check, and whether \(app) plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow them now, or go on without them.",
+                   comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed (the whole Mac's sound is muted during the check instead of the app's); every %@ is the app")
+        case (true, false, true):
+            String(localized: "Without Audio Recording, the Mac’s sound is muted during the check, and whether \(app) plays is told by other signs. Allow it now, or go on without it.",
+                   comment: "Add an App window, warning above Continue while Audio Recording isn't allowed (the whole Mac's sound is muted during the check instead of the app's); %@ is the app")
+        case (true, true, false):
             String(localized: "Without Audio Recording, \(app) isn’t muted during the check: you’ll hear it pause and play, and whether it plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow them now, or go on without them.",
                    comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed; every %@ is the app")
-        case (true, false):
+        case (true, false, false):
             String(localized: "Without Audio Recording, \(app) isn’t muted during the check: you’ll hear it pause and play, and whether it plays is told by other signs. Allow it now, or go on without it.",
                    comment: "Add an App window, warning above Continue while Audio Recording isn't allowed; %@ is the app")
-        case (false, true):
+        case (false, true, _):
             String(localized: "Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow it now, or go on without it.",
                    comment: "Add an App window, warning above Continue while Automation for the app isn't allowed; %@ is the app")
-        case (false, false):
+        case (false, false, _):
             ""
         }
     }
@@ -355,8 +377,15 @@ enum AddAppText {
                       comment: "Add an App window, under the step “AutoHush tries every way to pause and play it”; %@ is the app")
     }
 
-    /// The check step's note when the app isn't muted (no Audio Recording,
-    /// or AntiDot mode).
+    /// The check step's note when the Mac's sound is muted instead of the
+    /// app's (no Audio Recording, or AntiDot mode).
+    static func checkNoteMacMuted(_ app: String) -> String {
+        String(localized: "About 3 minutes, with the Mac’s sound muted and \(app)’s window moving. You’re told more before it starts.",
+               comment: "Add an App window, under the step “AutoHush tries every way to pause and play it” when the whole Mac's sound is muted during the check (the app itself can't be); %@ is the app")
+    }
+
+    /// The check step's note when nothing is muted (no Audio Recording, or
+    /// AntiDot mode, and an output with no mute control).
     static func checkNoteHeard(_ app: String) -> String {
         String(localized: "About 3 minutes, with its window moving; \(app) isn’t muted, so you’ll hear it pause and play. You’re told more before it starts.",
                comment: "Add an App window, under the step “AutoHush tries every way to pause and play it” when the app won't be muted during the check; %@ is the app")
@@ -554,7 +583,11 @@ enum AddAppText {
     }
 
     static func heardMeanwhile(_ app: String) -> String {
-        String(localized: "\(app) heard meanwhile", comment: "The window shown before a check starts: the app isn't muted during the check (no Audio Recording, or AntiDot mode); %@ is the app")
+        String(localized: "\(app) heard meanwhile", comment: "The window shown before a check starts: nothing is muted during the check (no Audio Recording, or AntiDot mode, and the Mac's output has no mute control); %@ is the app")
+    }
+
+    static var macMutedMeanwhile: String {
+        String(localized: "Your Mac muted meanwhile", comment: "The window shown before a check starts: the whole Mac's sound is muted during the check (the app itself can't be: no Audio Recording, or AntiDot mode)")
     }
 
     static func mutedMeanwhile(_ app: String) -> String {

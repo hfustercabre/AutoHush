@@ -9,7 +9,7 @@ import AutoHushKit
 /// user's pick, 2026-10-18) that unfolds the rest in its place: AntiDot
 /// mode's ways under it ("Modes") and Detection's timings ("Timing"); the
 /// fades' lengths under Fade playback. Advanced has nothing more. As in
-/// Settings, what doesn't apply is greyed out, never hidden.
+/// Settings, what doesn't apply is greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
     let settings: SettingsModel
@@ -26,6 +26,7 @@ struct MenuSettingsView: View {
                 switchRow(.antiDot)
                 if isOpen(.detection) {
                     ChoiceChips(
+                        label: DetectionSettingsView.detectByTitle,
                         options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
                         selection: settings.detectionMethod,
                         onSelect: { settings.setDetectionMethod($0) }
@@ -56,7 +57,7 @@ struct MenuSettingsView: View {
                         slider(.fadeOut)
                         slider(.fadeIn)
                     }
-                    .unavailable(!settings.timings.fadesEnabled && settings.playerCanFade)
+                    .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
                 }
             }
             chevron(.fades, page: .fades)
@@ -88,23 +89,39 @@ struct MenuSettingsView: View {
             .transition(.opacity)
     }
 
-    /// One of the switches: its symbol, its name and what it does, and the switch.
+    /// One of the switches: its symbol, its name and what it does, and the
+    /// switch; dimmed while it can't be changed, with why on a line of its
+    /// own under it, undimmed (R2, the user's pick, 2026-10-18), and in its
+    /// tooltip and VoiceOver hint.
     private func switchRow(_ kind: SettingsSwitch) -> some View {
         let isOn = kind.isOn(settings)
-        return HStack(spacing: 10) {
-            Image(systemName: kind.symbol)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
-                .frame(width: 22)
-                .accessibilityHidden(true)
-            RowTitle(kind.title, subtitle: kind.shortExplanation)
-            Spacer(minLength: 8)
-            Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
-                .toggleStyle(PillToggleStyle())
+        let reason = kind.unavailableReason(settings)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 10) {
+                Image(systemName: kind.symbol)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                RowTitle(kind.title, subtitle: kind.shortExplanation)
+                Spacer(minLength: 8)
+                Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
+                    .toggleStyle(PillToggleStyle())
+                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
+            }
+            .unavailable(kind.isUnavailable(settings))
+            if let reason {
+                Label(reason, systemImage: "info.circle")
+                    .font(.appCaption)
+                    .foregroundStyle(.appSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 32)
+                    .accessibilityHidden(true) // the switch's hint says it
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .unavailable(kind.isUnavailable(settings))
+        .help(reason.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
     }
 
     private func slider(_ timing: SettingsTiming) -> some View {

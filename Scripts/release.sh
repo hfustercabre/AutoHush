@@ -4,15 +4,17 @@
 # Usage: bash Scripts/release.sh <version>        e.g. bash Scripts/release.sh 0.3.0
 #
 # Steps:
-#   1. runs the test suite, before anything changes
-#   2. builds the app with the new version (build number + 1), signed with
+#   1. builds the app with the new version (build number + 1), signed with
 #      the maintainer's Apple Development certificate under the developer
 #      team's requirement (hardened runtime), and packages
 #      dist/AutoHush-<version>.dmg
-#   3. only then sets the version in Resources/Info.plist and turns
+#   2. only then sets the version in Resources/Info.plist and turns
 #      CHANGELOG.md's [Unreleased] section into [<version>] — <date>, so a
 #      failed build leaves both as they were
-#   4. writes the release notes into dist/release-notes-<version>.md
+#   3. writes the release notes into dist/release-notes-<version>.md
+#
+# It runs no tests: the release checklist runs all of them, the slow ones
+# too, in a VM before this.
 #
 # Once the GitHub release is published, Scripts/update-tap.sh points the
 # Homebrew tap at it.
@@ -56,12 +58,7 @@ if [[ "$IDENTITY_TEAM" != "$RELEASE_TEAM" ]]; then
     fail "releases must be signed with the maintainer's Apple Development certificate (its developer team), but $found; installed copies would refuse the update. If the certificate expired, renew it in Xcode (Settings → Accounts → Manage Certificates)."
 fi
 
-# 1. Tests -------------------------------------------------------------------
-step "Running tests"
-# Every test, the slow ones too, even where quick runs are the default.
-env -u AUTOHUSH_QUICK_TESTS swift test >/dev/null || fail "tests failed; release aborted (nothing was changed)"
-
-# 2. App and disk image -------------------------------------------------------
+# 1. App and disk image -------------------------------------------------------
 # The bundle gets the new version and build number (build-app.sh sets them in
 # its own Info.plist); Resources/Info.plist and the CHANGELOG change only
 # once it's built.
@@ -72,13 +69,13 @@ SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" bash "$PROJECT_DIR/Scr
 TEAM="$(codesign -dv "$APP_BUNDLE" 2>&1 | sed -n 's/^TeamIdentifier=//p')"
 [[ "$TEAM" == "$RELEASE_TEAM" ]] || fail "the app is signed by team ${TEAM:-none}, not $RELEASE_TEAM: installed copies would refuse the update"
 
-# 3. Version and changelog ---------------------------------------------------
+# 2. Version and changelog ---------------------------------------------------
 step "Setting version $VERSION ($BUILD_NUMBER)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$INFO_PLIST"
 sed -i '' "s/^## \[Unreleased\]$/## [$VERSION] — $(date +%Y-%m-%d)/" "$CHANGELOG"
 
-# 4. Release notes -----------------------------------------------------------
+# 3. Release notes -----------------------------------------------------------
 SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
 step "Writing the release notes"
 awk -v heading="## [$VERSION]" '

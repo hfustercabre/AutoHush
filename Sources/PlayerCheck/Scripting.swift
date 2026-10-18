@@ -136,12 +136,11 @@ func propertySpecifier(_ code: String, of container: NSAppleEventDescriptor? = n
     }
 }
 
-/// An Apple event error as AutoHush words it (`ScriptablePlayer.mapError`,
-/// with the app's own message when it gave one), with macOS's number:
-/// "error -1743 (Automation permission … not granted)".
+/// An Apple event error as AutoHush words it (`ScriptablePlayer.mapError`),
+/// with macOS's number: "error -1743 (Automation permission … not granted)".
+/// Never the app's own message, which can name what it was playing.
 func eventError(_ error: NSError) -> String {
-    let mapped = ScriptablePlayer.mapError(number: error.code, message: error.userInfo[NSLocalizedFailureReasonErrorKey] as? String)
-    if case .playerCommandFailed(.appleEventError(_, let message?)) = mapped { return "error \(error.code) (\(message))" }
+    let mapped = ScriptablePlayer.mapError(number: error.code)
     if case .playerCommandFailed = mapped { return "error \(error.code)" }
     return "error \(error.code) (\(mapped.localizedDescription))"
 }
@@ -150,9 +149,9 @@ func eventError(_ error: NSError) -> String {
 /// AutoHush's `AppleEventChannel` sends one: to the running process, so an
 /// event can never launch the app, waiting `AppleEventChannel.replyTimeout`
 /// (5 s) for the reply, once Automation is allowed (`automationRefusal`).
-/// The reply's direct object, or the error number, with the app's message
-/// as `ScriptablePlayer.replyError` reads it (-1743: macOS refused it;
-/// -600: it isn't running).
+/// The reply's direct object, or the error number, as
+/// `ScriptablePlayer.replyError` reads it (-1743: macOS refused it; -600:
+/// it isn't running).
 @MainActor func sendAppleEvent(_ makeEvent: (pid_t) -> NSAppleEventDescriptor) -> Result<NSAppleEventDescriptor?, NSError> {
     guard let pid = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first(where: { !$0.isTerminated })?
         .processIdentifier else { return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(procNotFound))) }
@@ -160,9 +159,7 @@ func eventError(_ error: NSError) -> String {
     do {
         let reply = try makeEvent(pid).sendEvent(options: [.waitForReply, .canInteract], timeout: AppleEventChannel.replyTimeout)
         if let number = reply.paramDescriptor(forKeyword: EventCode.errorNumber)?.int32Value, number != 0 {
-            let message = reply.paramDescriptor(forKeyword: EventCode.errorString)?.stringValue
-            return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(number),
-                                    userInfo: message.map { [NSLocalizedFailureReasonErrorKey: $0] } ?? [:]))
+            return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(number)))
         }
         return .success(reply.paramDescriptor(forKeyword: EventCode.directObject))
     } catch {

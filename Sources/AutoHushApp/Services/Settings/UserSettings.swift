@@ -156,7 +156,7 @@ final class UserSettings: AutoPauseControlling {
         guard !preferences.appsIgnoredByDefault.contains(source.id) else { return }
         preferences.appsIgnoredByDefault.insert(source.id)
         guard !preferences.ignoredApps.contains(where: { $0.id == source.id }) else { return }
-        logger.info("Ignored apps: \(source.name, privacy: .public) plays only the volume sound, so it's ignored by default")
+        logger.info("Ignored apps: \(source.name, privacy: .public) plays only the volume sound, so it’s ignored by default")
         setIgnored(source, true)
     }
 

@@ -325,4 +325,34 @@ struct MonitoringPipelineTests {
         #expect(!player.tapsAreAllowed) // AntiDot mode promises no taps, whichever way it detects
         setup.pipeline.stop()
     }
+
+    @Test("the session's monitorings all share the app's one volume leveler, which each puts back as it stops")
+    func sharedLeveler() async {
+        let leveler = CountingLeveler()
+        let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
+            MonitoringPipeline.Readers(processes: MockAudioProcessSnapshotProvider(), levelMeter: MockLevelMeter(),
+                                       audioCapturePermission: MockAudioCapturePermission(.granted),
+                                       powerAssertions: MockPowerAssertions())
+        })
+        let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
+        let setup = PlayerSession.MonitoringSetup(configuration: Self.configuration(), settings: settings,
+                                                  learnedAssertions: [:], resumesHeld: false)
+        // A pause held for the player chosen before, and the new one's.
+        let held = make(MockMusicPlayer(), setup, { _ in })
+        let current = make(MockMusicPlayer(), setup, { _ in })
+        await held.stopAndRestoreVolume()
+        await current.stopAndRestoreVolume()
+        #expect(leveler.restores == 2)
+    }
+}
+
+/// Counts the volume leveler's put-backs at once.
+private final class CountingLeveler: ResumeLeveling, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _restores = 0
+    var restores: Int { lock.withLock { _restores } }
+
+    func lower(by decibels: Float) {}
+    func restore(over duration: TimeInterval) {}
+    func restoreNow() { lock.withLock { _restores += 1 } }
 }

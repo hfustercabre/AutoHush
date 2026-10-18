@@ -87,12 +87,22 @@ struct NowPlayingReportsTests {
         // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does.
         let script = #"printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ]; do sleep 0.01; done; printf '%s\n' "$2"; until [ -e "$3/end" ]; do sleep 0.01; done"#
         let reads = OSAllocatedUnfairLock(initialState: [Date]())
+        let followed = OSAllocatedUnfairLock<NowPlayingReports?>(initialState: nil)
         let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path],
                                         isAdministrator: true) { since in
-            Thread.sleep(forTimeInterval: 0.1) // the live line comes first
+            // The first time, the past is read once the live line is in.
+            let deadline = TestWait.deadline
+            while reads.withLock({ $0.isEmpty }), followed.withLock({ $0 })?.clientsRead[pid] == nil {
+                guard Date() < deadline else {
+                    TestWait.timedOut(at: #_sourceLocation)
+                    break
+                }
+                Thread.sleep(forTimeInterval: 0.01)
+            }
             reads.withLock { $0.append(since) }
             return past
         }
+        followed.withLock { $0 = reports }
         defer { reports.stop() }
         let webApp = "com.example.webapp"
         let since = Date(timeIntervalSinceNow: -30)

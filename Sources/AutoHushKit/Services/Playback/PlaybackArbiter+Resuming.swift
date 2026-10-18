@@ -91,6 +91,9 @@ extension PlaybackArbiter {
                activeSources.isEmpty || !autoPauseEnabled {
                 pausedByUs = true
                 scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
+            } else {
+                // Given up: the Mac's volume isn't left lowered for music that doesn't play.
+                volumeLeveler?.restoreNow()
             }
         }
         publishPlaybackState()

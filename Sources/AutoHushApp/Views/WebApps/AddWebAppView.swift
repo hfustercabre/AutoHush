@@ -82,7 +82,7 @@ struct AddWebAppView: View {
                     Button { model.continueTapped() } label: {
                         Text("Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                     }
-                    .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                    .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
                     .keyboardShortcut(.defaultAction)
                     .disabled(!model.canContinue || needsAccessibility)
                 }

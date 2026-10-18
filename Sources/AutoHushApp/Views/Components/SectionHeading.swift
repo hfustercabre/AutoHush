@@ -15,7 +15,7 @@ struct SectionLabel: View {
 
 /// A word in a capsule after a heading that qualifies everything under it,
 /// e.g. "Experimental" after "Safari Web Apps"; in the accent color for a
-/// good word ("Recommended", Add an App's ways), darker in light mode.
+/// good word ("Recommended", Add an App's ways), in macOS's own colors.
 struct HeadingBadge: View {
     /// Already localized.
     let text: String
@@ -44,9 +44,12 @@ struct SectionHeading: View {
         self.isFirst = isFirst
     }
 
+    @Environment(\.cardsAreFormSections) private var isFormHeader
+
     var body: some View {
         SectionLabel(title)
-            .padding(.leading, 4)
+            // In a form's header it lines up with the other sections' titles.
+            .padding(.leading, isFormHeader ? 0 : 4)
             .padding(.top, isFirst ? 0 : 6)
             .accessibilityAddTraits(.isHeader)
     }

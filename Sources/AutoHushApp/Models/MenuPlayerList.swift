@@ -1,7 +1,7 @@
 import Foundation
 import AutoHushKit
 
-/// The music players the menu offers when its card unfolds them: the
+/// The players the menu offers, unfolded under its Media player row: the
 /// supported apps, the apps added with Add an App (then Add an App…), and
 /// the Safari web apps (then Add a Web App…), each with what its row says.
 /// From `PlayerOption.searchThreshold` players on, a search comes first and

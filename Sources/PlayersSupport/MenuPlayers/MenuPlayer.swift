@@ -98,7 +98,7 @@ package actor MenuPlayer: MusicPlayer {
         let menu = menu
         guard await queue.run({ menu.isTrusted(prompt: prompt) }) else { throw MusicPlayerError.accessibilityPermissionDenied }
         guard await queue.run({ menu.toggle(pid: pid) }) != nil else {
-            logger.error("\(self.name, privacy: .public)'s \(self.profile.menuName, privacy: .public) menu wasn't found")
+            logger.error("\(self.name, privacy: .public)’s \(self.profile.menuName, privacy: .public) menu wasn’t found")
             throw MusicPlayerError.playerCommandFailed(.menuItemNotFound)
         }
     }
@@ -150,7 +150,7 @@ package actor MenuPlayer: MusicPlayer {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let menu = menu
         guard await queue.run({ menu.pressToggle(pid: pid) }) else {
-            logger.error("Pressing \(self.name, privacy: .public)'s Play/Pause failed")
+            logger.error("Pressing \(self.name, privacy: .public)’s Play/Pause failed")
             throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
     }

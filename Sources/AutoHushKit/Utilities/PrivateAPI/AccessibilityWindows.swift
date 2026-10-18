@@ -93,7 +93,7 @@ package enum AccessibilityWindows {
 
     /// When the process started, in microseconds since 1970, as the kernel
     /// keeps it; `nil` when it can't be read (it quit).
-    static func startTime(of pid: pid_t) -> UInt64? {
+    package static func startTime(of pid: pid_t) -> UInt64? {
         var info = proc_bsdinfo()
         let size = Int32(MemoryLayout<proc_bsdinfo>.size)
         guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }

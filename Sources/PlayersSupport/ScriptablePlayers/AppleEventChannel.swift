@@ -53,7 +53,7 @@ package final class AppleEventChannel: AppleEventSending {
     package func requestPermission(pid: pid_t) async throws {
         let status = await queue.run { AutomationPermission.check(pid: pid, ask: true) }
         if status != noErr {
-            throw ScriptablePlayer.mapError(number: Int(status), message: nil)
+            throw ScriptablePlayer.mapError(number: Int(status))
         }
     }
 

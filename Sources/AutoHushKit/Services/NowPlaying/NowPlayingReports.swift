@@ -155,6 +155,10 @@ package final class NowPlayingReports: @unchecked Sendable {
         return lock.withLock { ready }
     }
 
+    /// What the stream has read so far, ready or not: tests wait with it
+    /// for a live line before the past is read.
+    var clientsRead: [pid_t: Client] { lock.withLock { clients } }
+
     /// Ends the `log stream`, if it runs, and forgets what it read.
     package func stop() {
         let (process, timer) = lock.withLock { () -> (Process?, DispatchSourceTimer?) in

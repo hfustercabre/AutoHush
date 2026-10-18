@@ -15,7 +15,7 @@ enum PlayPauseKey {
     @MainActor
     static func press() {
         // Without it macOS drops the key silently: the log says why.
-        if !CGPreflightPostEventAccess() { logger.error("macOS doesn't let AutoHush post the Play/Pause key") }
+        if !CGPreflightPostEventAccess() { logger.error("macOS doesn’t let AutoHush post the Play/Pause key") }
         post(down: true)
         post(down: false)
     }

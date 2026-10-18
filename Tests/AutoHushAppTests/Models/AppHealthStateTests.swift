@@ -28,7 +28,7 @@ struct AppHealthStateTests {
 
     @Test("a failed player command is retried; the line says AutoHush can't control it, the menu tells why")
     func commandFailed() {
-        #expect(health(MusicPlayerError.playerCommandFailed(.appleEventError(-50, message: nil)))
+        #expect(health(MusicPlayerError.playerCommandFailed(.appleEventError(-50)))
             == .retrying("Can’t control Jukebox right now"))
     }
 
@@ -37,7 +37,7 @@ struct AppHealthStateTests {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
         #expect(menu.text == "AutoHush can’t find Play/Pause in TIDAL’s menus.")
         #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
-        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708, message: "Not understood")), player: "Spotify").text
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708)), player: "Spotify").text
                 == "Spotify answered with an error (-1708).")
         #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn’t responding.")
         #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "VLC").text == "AutoHush may no longer control VLC.")

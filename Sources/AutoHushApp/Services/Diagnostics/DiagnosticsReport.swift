@@ -84,7 +84,7 @@ enum DiagnosticsReport {
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
                                ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
-        let title = String(localized: "Media Player", comment: "Settings → Diagnostics: heading")
+        let title = String(localized: "Media Player", comment: "Settings → General and Diagnostics: heading over the media player")
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,

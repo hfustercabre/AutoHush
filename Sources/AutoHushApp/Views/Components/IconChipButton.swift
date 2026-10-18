@@ -15,7 +15,7 @@ struct IconChipButton: View {
                 .font(.appCaption.weight(.semibold))
                 .frame(width: 22, height: 20)
         }
-        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(filled: true))
         .help(help ?? label)
         .accessibilityLabel(label)
     }

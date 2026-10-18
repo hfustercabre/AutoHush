@@ -12,7 +12,8 @@ credit you in the advisory if you wish once a fix is out.
 ## Supported versions
 
 Only the latest release gets fixes. AutoHush updates itself, so a fix
-reaches everyone with the next version.
+reaches everyone with the next version (copies up to 0.12.1 install 1.0.0
+once by hand).
 
 ## What's in scope
 

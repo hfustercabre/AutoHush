@@ -33,7 +33,6 @@ struct PlayerOptionTests {
                        option("D", installed: true)]
         #expect(options.offered.map(\.name) == ["B", "D", "A", "C"])
         #expect(options.filter(\.isInstalled).offered.map(\.name) == ["B", "D"])
-        #expect(options.offered.webAppsStart == nil)
     }
 
     @Test("Safari web apps come after every app, under their heading")
@@ -42,9 +41,6 @@ struct PlayerOptionTests {
         webApp.kind = .safariWebApp
         let options = [webApp, option("A", installed: false), option("B", installed: true)]
         #expect(options.offered.map(\.name) == ["B", "A", "YT Music"])
-        #expect(options.offered.webAppsStart == 2)
-        #expect(options.offered.matching("yt").webAppsStart == 0)
-        #expect(options.offered.matching("b").webAppsStart == nil)
         #expect(!PlayerOption.webAppsHeading.isEmpty)
         #expect(PlayerOption.experimentalBadge == "Experimental")
         #expect(PlayerOption.webAppsWarning.hasPrefix("Web apps are experimental."))
@@ -58,7 +54,6 @@ struct PlayerOptionTests {
         checked.kind = .checkedApp
         let options = [webApp, checked, option("A", installed: false), option("B", installed: true)]
         #expect(options.offered.map(\.name) == ["B", "A", "Deezer", "YT Music"])
-        #expect(options.offered.webAppsStart == 3)
         #expect(PlayerOption.checkedByYouBadge == "Checked by you")
         #expect(PlayerOption.addAppTitle == "Add an App…")
     }
@@ -152,7 +147,6 @@ struct PlayerOptionTests {
         )
         let options = PlayerOption.list(catalog) { $0.hasPrefix("com.") ? URL(fileURLWithPath: "/Applications/\($0).app") : nil }
         #expect(options.offered.map(\.name) == ["First", "YT Music", "Deezer"])
-        #expect(options.offered.webAppsStart == 1)
         let deezer = options[2]
         #expect(deezer.bundleID == PlayerOption.suggestionID("deezer.com"))
         #expect(deezer.webAddress == "deezer.com")

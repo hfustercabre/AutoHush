@@ -333,11 +333,6 @@ extension [PlayerOption] {
         }
     }
 
-    /// Where the Safari web apps start, for their heading; `nil` without any.
-    var webAppsStart: Int? {
-        firstIndex { $0.kind == .safariWebApp }
-    }
-
     /// Long enough to need a search: `PlayerOption.searchThreshold` or more,
     /// not counting the suggested web apps.
     var isSearchable: Bool { count(where: { $0.webAddress == nil }) >= PlayerOption.searchThreshold }

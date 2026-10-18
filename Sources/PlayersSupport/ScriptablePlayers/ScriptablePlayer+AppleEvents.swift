@@ -28,7 +28,6 @@ extension ScriptablePlayer {
 
         package static let directObject = fourCharCode("----")
         package static let errorNumber = fourCharCode("errn")
-        package static let errorString = fourCharCode("errs")
         package static let desiredClass = fourCharCode("want")
         package static let keyForm = fourCharCode("form")
         package static let keyData = fourCharCode("seld")
@@ -128,24 +127,26 @@ extension ScriptablePlayer {
         }
     }
 
-    /// An error the app reported inside an otherwise delivered reply.
+    /// An error the app reported inside an otherwise delivered reply: its
+    /// number only. Its message (`errs`) isn't read: it can name what the app
+    /// was playing ("Can't get document …"), and errors go to the log and
+    /// Diagnostics' report.
     package static func replyError(_ reply: NSAppleEventDescriptor) -> MusicPlayerError? {
         guard let number = reply.paramDescriptor(forKeyword: Code.errorNumber) else { return nil }
         let code = Int(number.int32Value)
         guard code != 0 else { return nil }
-        let message = reply.paramDescriptor(forKeyword: Code.errorString)?.stringValue
-        return mapError(number: code, message: message)
+        return mapError(number: code)
     }
 
     /// Maps an error thrown by `sendEvent` (an `NSOSStatusErrorDomain` error).
     package static func mapError(_ error: any Error) -> MusicPlayerError {
         if let error = error as? MusicPlayerError { return error }
         let nsError = error as NSError
-        return mapError(number: nsError.code, message: nil)
+        return mapError(number: nsError.code)
     }
 
     /// Maps an Apple event error number to a typed `MusicPlayerError`.
-    package static func mapError(number: Int, message: String?) -> MusicPlayerError {
+    package static func mapError(number: Int) -> MusicPlayerError {
         switch number {
         case -1743: // errAEEventNotPermitted
             return .automationPermissionDenied
@@ -154,7 +155,7 @@ extension ScriptablePlayer {
         case -1712: // errAETimeout: the app is busy or still starting up
             return .playerNotResponding
         default:
-            return .playerCommandFailed(.appleEventError(number, message: message.flatMap { $0.isEmpty ? nil : $0 }))
+            return .playerCommandFailed(.appleEventError(number))
         }
     }
 }

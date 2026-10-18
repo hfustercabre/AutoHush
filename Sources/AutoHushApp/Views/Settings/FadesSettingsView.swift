@@ -1,7 +1,7 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Fades, in a card like the menu's: a switch, and the fades'
+/// Settings → Fades, a grouped form: a switch, and the fades'
 /// lengths while it's on; dimmed for a player AutoHush can't fade. Restore
 /// Defaults sets the fades back.
 struct FadesSettingsView: View {

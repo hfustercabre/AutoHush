@@ -129,12 +129,23 @@ struct AddAppView: View {
 
     // MARK: - Each step's lines and buttons
 
+    /// Change…: once the check has run, it asks first, in a sheet on this window.
+    private func changeApp() {
+        guard model.changeAppForgetsCheck else { return model.changeApp() }
+        let alert = PlayerAlerts.changeApp(appName ?? "")
+        if let window = NSApp.keyWindow {
+            alert.beginSheetModal(for: window) { [model] in if $0 == .alertFirstButtonReturn { model.changeApp() } }
+        } else if alert.runModal() == .alertFirstButtonReturn {
+            model.changeApp()
+        }
+    }
+
     @ViewBuilder private func chooseStep(_ mark: AddAppModel.Mark) -> some View {
         switch mark {
         case .done:
             StepNote(AddAppText.chosen(appName ?? "", traits: model.traits, browser: model.chosen?.browserName))
             if model.canChangeApp {
-                Button { model.changeApp() } label: { Text(verbatim: AddAppText.changeApp) }
+                Button { changeApp() } label: { Text(verbatim: AddAppText.changeApp) }
                     .buttonStyle(.chip)
                     .padding(.top, 2)
                     .focused($focused, equals: .choose)
@@ -166,7 +177,7 @@ struct AddAppView: View {
                 if !model.permissions.neededAllowed {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
                 } else if !missing.isEmpty {
-                    NoteLabel(AddAppText.withoutWarning(missing, app: app)).padding(.top, 4)
+                    NoteLabel(AddAppText.withoutWarning(missing, app: app, macMuted: model.checkMuting == .mac)).padding(.top, 4)
                     AddAppStepButton(AddAppText.continueButton) { model.continueWithoutAll() }
                         .focused($focused, equals: .allow)
                 }
@@ -216,10 +227,6 @@ struct AddAppView: View {
         }
     }
 
-    /// The app is muted during the check: Audio Recording is allowed and
-    /// AntiDot mode is off.
-    private var mutedInCheck: Bool { model.permissions.audio == .allowed && !model.antiDot }
-
     @ViewBuilder private func checkStep(_ mark: AddAppModel.Mark) -> some View {
         switch (mark, model.stage) {
         case (.done, _):
@@ -244,10 +251,10 @@ struct AddAppView: View {
                 }
             }
         default:
-            if let app = appName, !mutedInCheck {
-                StepNote(AddAppText.checkNoteHeard(app))
-            } else {
-                StepNote(AddAppText.checkNote(appName))
+            switch (appName, model.checkMuting) {
+            case (let app?, .mac): StepNote(AddAppText.checkNoteMacMuted(app))
+            case (let app?, .none): StepNote(AddAppText.checkNoteHeard(app))
+            default: StepNote(AddAppText.checkNote(appName))
             }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if mark == .current {
@@ -360,7 +367,7 @@ private struct AddAppStepButton: View {
             Text(verbatim: title).font(secondary ? .appBody : .appBody.weight(.semibold)).padding(.horizontal, 6)
                 .fixedSize()
         }
-        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary, padded: true))
+        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
         .keyboardShortcut(cancels ? .cancelAction : secondary ? nil : .defaultAction)
         .padding(.top, 2)
     }

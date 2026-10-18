@@ -73,7 +73,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The check's progress, at the bottom right of the screen while it runs.
     let checkPanel = CheckPanelController()
     /// The Mac's output, muted while a check runs that can't mute only its app.
-    let checkOutputMute = OutputMute()
+    let checkOutputMute: OutputMute
+    /// Lowers the Mac's volume as the music resumes after quieter apps
+    /// (Settings → Advanced): one for every monitoring.
+    let volumeLeveler: SystemVolumeLeveler
     /// A web app made but not found as installed yet, and the address it was
     /// made from, while the add window says so (`pickUpListedWebApp`).
     var webAppAwaitingListing: (bundleID: String, address: String)?
@@ -123,7 +126,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
         checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
-        makeMonitoring: @escaping PlayerSession.MakeMonitoring = PlayerSession.pipelines(hostedApp: SupportedPlayers.hostedApp(pid:)),
+        checkOutputMute: OutputMute = OutputMute(),
+        volumeLeveler: SystemVolumeLeveler = SystemVolumeLeveler(),
+        // `nil`: `PlayerSession.pipelines`, with `volumeLeveler`.
+        makeMonitoring: PlayerSession.MakeMonitoring? = nil,
         locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
         makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
             PlayerChooserWindowController(model: $0)
@@ -140,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 _ = try await NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
             } catch {
                 AutoHushLogger(category: "AppDelegate").error(
-                    "Couldn't open \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    "Couldn't open \(url.lastPathComponent, privacy: .public): \(error)")
             }
         },
         learnedWindowDelay: Duration = .seconds(1.5),
@@ -157,6 +163,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.defaults = defaults
         self.players = players
         self.checkedPlayers = checkedPlayers
+        self.checkOutputMute = checkOutputMute
+        self.volumeLeveler = volumeLeveler
         self.locateApp = locateApp
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
@@ -176,7 +184,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             players: players,
             preferences: preferences,
             settings: userSettings.state.monitoring,
-            makeMonitoring: makeMonitoring,
+            makeMonitoring: makeMonitoring
+                ?? PlayerSession.pipelines(hostedApp: SupportedPlayers.hostedApp(pid:), volumeLeveler: volumeLeveler),
             locateApp: locateApp,
             retries: retries
         )

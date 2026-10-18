@@ -40,7 +40,7 @@ package struct PlayPauseWords: Equatable, Sendable {
         if failed.withLock({ $0.contains(key) }) { return nil }
         guard let words = read(appURL), !words.play.isEmpty, !words.pause.isEmpty else {
             if failed.withLock({ $0.insert(key).inserted }) {
-                logger.error("Couldn't read the words for Play and Pause of \(appURL.lastPathComponent, privacy: .public) \(version, privacy: .public)")
+                logger.error("Couldn’t read the words for Play and Pause of \(appURL.lastPathComponent, privacy: .public) \(version, privacy: .public)")
             }
             return nil
         }

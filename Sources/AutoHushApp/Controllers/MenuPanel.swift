@@ -44,7 +44,6 @@ final class MenuPanel: NSPanel {
         backgroundColor = .clear
         hasShadow = true
         isReleasedWhenClosed = false
-        setAccessibilityRole(.menu)
         contentView = Self.background(around: content)
     }
 

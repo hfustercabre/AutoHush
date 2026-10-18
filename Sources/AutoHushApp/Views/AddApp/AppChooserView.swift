@@ -35,7 +35,7 @@ struct AppChooserView: View {
                 Button(action: chooseSelected) {
                     Text(verbatim: AddAppText.choose).font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                 }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
                 .keyboardShortcut(.defaultAction)
                 .disabled(selected == nil)
             }

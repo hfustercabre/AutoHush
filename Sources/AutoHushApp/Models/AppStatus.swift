@@ -62,11 +62,6 @@ struct AppStatus: Equatable {
     /// afresh, once learned (they may have been learned wrong) or before
     /// (the learning window was closed halfway).
     var canLearnControlsAgain: Bool { chosenPlayer != nil && learning != nil }
-    /// A permission the chosen player needs is missing: the menu asks for it.
-    var needsPermission: Bool {
-        if case .needsPermission = health { return true }
-        return false
-    }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
@@ -139,7 +134,7 @@ struct AppStatus: Equatable {
         activeSources = sources.sortedByName()
     }
 
-    /// The apps that played in the last 5 minutes and play no more, the
+    /// The apps that played in the last 30 minutes and play no more, the
     /// most recent first; never the chosen player, which doesn't pause
     /// itself (as `seenApps`): its switch would only store it as ignored.
     func recentSources(at now: Date = Date()) -> [AudioSource] {
@@ -215,8 +210,14 @@ struct AppStatus: Equatable {
     var iconAccessibilityLabel: String {
         let label = isReady && autoPause != .on ? StatePresentation.iconLabel(statusLine) : presentation.label
         guard iconShowsUpdate else { return label }
-        return String(localized: "\(label), update available",
-                      comment: "VoiceOver label of the menu bar icon while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running”")
+        return Self.withUpdate(label)
+    }
+
+    /// `label` with "update available" after it, for VoiceOver: the menu bar
+    /// icon's and the menu's Updates button while an update waits.
+    static func withUpdate(_ label: String) -> String {
+        String(localized: "\(label), update available",
+               comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running” or “Updates”")
     }
 
     /// The menu bar icon is dimmed while auto-pause is off.

@@ -59,7 +59,8 @@ final class SettingsWindowController: NSWindowController {
     /// in the app's language (the user, 2026-10-17: "make the minimum width
     /// respect the content"); tall enough for the whole sidebar, foot
     /// included.
-    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 560) }
+    /// At least 600 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18).
+    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
     /// The page's least width: 480, or the widest choice (`ChoiceChips`)

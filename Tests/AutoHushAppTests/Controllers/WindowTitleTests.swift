@@ -65,7 +65,7 @@ struct WindowTitleTests {
             PlayerChooserWindowController(model: model, tallestPage: 600).window,
             AddAppWindowController(model: addApp).window,
             AppChooserWindowController(model: addApp).window,
-            CheckWarningWindowController(app: world.apps[0], muted: false) {}.window,
+            CheckWarningWindowController(app: world.apps[0], muting: .none) {}.window,
             AddWebAppWindowController(model: AddWebAppModel(), settings: model).window,
             LearningWindowController(model: model).window,
         ]
@@ -84,7 +84,7 @@ struct WindowTitleTests {
         let addApp = AddAppModel(services: world.services)
         let started = CallLog()
         var warningWindow: NSWindow?
-        let warning = CheckWarningWindowController(app: world.apps[0], muted: false) {
+        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none) {
             started.calls.append(warningWindow?.isVisible == false ? "started, closed" : "started, open")
         }
         warningWindow = warning.window

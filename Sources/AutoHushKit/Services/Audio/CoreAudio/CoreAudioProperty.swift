@@ -1,6 +1,7 @@
 import CoreAudio
 
-/// Reads global-scope properties of CoreAudio objects.
+/// Reads global-scope properties of CoreAudio objects, and finds a device's
+/// output controls.
 package enum CoreAudioProperty {
     package static let systemObject = AudioObjectID(kAudioObjectSystemObject)
 
@@ -31,6 +32,43 @@ package enum CoreAudioProperty {
         var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
         guard AudioObjectGetPropertyData(objectID, &address, 0, nil, &size, &unmanaged) == noErr else { return nil }
         return unmanaged?.takeRetainedValue() as String?
+    }
+
+    /// The output-scope address of a device's control (its mute, its
+    /// volume), on one of its elements.
+    package static func outputAddress(_ selector: AudioObjectPropertySelector,
+                                      _ element: AudioObjectPropertyElement) -> AudioObjectPropertyAddress {
+        AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioDevicePropertyScopeOutput, mElement: element)
+    }
+
+    /// The elements of a device's output control it can set: the main one,
+    /// else those of its first two channels that can be (some devices have
+    /// only those); none when it has no such control.
+    package static func settableOutputElements(_ selector: AudioObjectPropertySelector,
+                                               of device: AudioObjectID) -> [AudioObjectPropertyElement] {
+        if isSettable(selector, of: device, kAudioObjectPropertyElementMain) { return [kAudioObjectPropertyElementMain] }
+        return ([1, 2] as [AudioObjectPropertyElement]).filter { isSettable(selector, of: device, $0) }
+    }
+
+    private static func isSettable(_ selector: AudioObjectPropertySelector, of device: AudioObjectID,
+                                   _ element: AudioObjectPropertyElement) -> Bool {
+        var address = outputAddress(selector, element)
+        guard AudioObjectHasProperty(device, &address) else { return false }
+        var settable: DarwinBoolean = false
+        return AudioObjectIsPropertySettable(device, &address, &settable) == noErr && settable.boolValue
+    }
+
+    /// The device with this lasting ID (`kAudioDevicePropertyDeviceUID`)
+    /// now: its object ID changes from one launch to the next.
+    package static func device(withUID uid: String) -> AudioObjectID? {
+        var address = address(kAudioHardwarePropertyTranslateUIDToDevice)
+        var qualifier: CFString = uid as CFString
+        var device = AudioObjectID(kAudioObjectUnknown)
+        var size = UInt32(MemoryLayout<AudioObjectID>.size)
+        let status = withUnsafeMutablePointer(to: &qualifier) { pointer in
+            AudioObjectGetPropertyData(systemObject, &address, UInt32(MemoryLayout<CFString>.size), pointer, &size, &device)
+        }
+        return status == noErr && device != AudioObjectID(kAudioObjectUnknown) ? device : nil
     }
 
     package static func objectIDs(_ selector: AudioObjectPropertySelector, of objectID: AudioObjectID) -> [AudioObjectID] {

@@ -1925,6 +1925,215 @@
         }
       }
     },
+    "%@ can’t be faded." : {
+      "comment" : "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن تطبيق التلاشي على %@."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no admet esvaïments."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U aplikace %@ nelze použít prolínání."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kan ikke tones ud og ind."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kann nicht ein- und ausgeblendet werden."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η εφαρμογή %@ δεν υποστηρίζει σταδιακή αλλαγή έντασης."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no admite fundidos."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no admite fundidos."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appia %@ ei voi häivyttää."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne prend pas en charge les fondus."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ne prend pas en charge les fondus."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ को फ़ेड नहीं किया जा सकता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikaciju %@ nije moguće postupno utišavati."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ app nem halkítható fokozatosan."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tidak dapat dipudarkan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non è possibile applicare dissolvenze a %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はフェードできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 페이드할 수 없습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kan ikke tones ut og inn."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bij %@ is faden niet mogelijk."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja %@ nie obsługuje wyciszania."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível aplicar fade em %@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível aplicar fade a %@."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicația %@ nu poate fi estompată."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для %@ затухание недоступно."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apku %@ nemožno prelínať."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za aplikacijo %@ pojemanje ni mogoče."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kan inte tonas in och ut."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uygulamasının sesi yavaşça değiştirilemez."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для програми %@ згасання недоступне."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không thể giảm dần âm lượng của %@."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 無法淡入淡出。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 无法淡入淡出。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 無法淡入淡出。"
+          }
+        }
+      }
+    },
     "%@ can’t be scripted" : {
       "comment" : "Add an App window, under “AppleScript”; %@ is the app",
       "localizations" : {
@@ -4643,7 +4852,7 @@
       }
     },
     "%@ heard meanwhile" : {
-      "comment" : "The window shown before a check starts: the app isn't muted during the check (no Audio Recording, or AntiDot mode); %@ is the app",
+      "comment" : "The window shown before a check starts: nothing is muted during the check (no Audio Recording, or AntiDot mode, and the Mac's output has no mute control); %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -10531,7 +10740,7 @@
       }
     },
     "%@, update available" : {
-      "comment" : "VoiceOver label of the menu bar icon while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running”",
+      "comment" : "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running” or “Updates”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -14294,6 +14503,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "約 3 分鐘，其間視窗會移動；%@ 不會靜音，因此你會聽到它暫停和播放。開始前會告訴你更多資訊。"
+          }
+        }
+      }
+    },
+    "About 3 minutes, with the Mac’s sound muted and %@’s window moving. You’re told more before it starts." : {
+      "comment" : "Add an App window, under the step “AutoHush tries every way to pause and play it” when the whole Mac's sound is muted during the check (the app itself can't be); %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نحو 3 دقائق، مع كتم صوت جهاز Mac وتحريك نافذة %@. ستعرف المزيد قبل أن يبدأ."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uns 3 minuts, amb el so del Mac en silenci i la finestra de %@ en moviment. Abans de començar, se t’explica més."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asi 3 minuty, během nichž je zvuk Macu ztlumený a okno aplikace %@ se přesouvá. Před začátkem se dozvíte víc."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omkring 3 minutter, hvor lyden på din Mac er slået fra, og vinduet i %@ flyttes. Du får mere at vide, før den begynder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwa 3 Minuten, in denen der Ton des Mac stummgeschaltet ist und das Fenster von %@ bewegt wird. Vor dem Start erfährst du mehr."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Περίπου 3 λεπτά, με τον ήχο του Mac σε σίγαση και το παράθυρο της εφαρμογής %@ να μετακινείται. Θα μάθετε περισσότερα πριν ξεκινήσει."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unos 3 minutos, con el sonido del Mac en silencio y la ventana de %@ en movimiento. Antes de empezar, se te explica más."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unos 3 minutos, con el sonido del Mac en silencio y la ventana de %@ en movimiento. Antes de empezar, se te explica más."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noin 3 minuuttia, jolloin Macin ääni on mykistetty ja apin %@ ikkuna liikkuu. Saat lisätietoja ennen alkua."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Environ 3 minutes, pendant lesquelles le son du Mac est coupé et la fenêtre de %@ bouge. Vous en saurez plus avant le début."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Environ 3 minutes, pendant lesquelles le son du Mac est coupé et la fenêtre de %@ bouge. Vous en saurez plus avant le début."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लगभग 3 मिनट, जिसमें Mac की आवाज़ म्यूट रहेगी और %@ की विंडो खिसकाई जाएगी। शुरू होने से पहले आपको और बताया जाएगा।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oko 3 minute, uz utišan zvuk Maca i pomicanje prozora aplikacije %@. Više ćete saznati prije početka."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körülbelül 3 perc, miközben a Mac hangja némítva van, a(z) %@ app ablaka pedig mozog. Indulás előtt többet is megtud."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekitar 3 menit, dengan suara Mac dibisukan dan jendela %@ dipindahkan. Anda akan diberi tahu lebih lanjut sebelum dimulai."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Circa 3 minuti, con l’audio del Mac disattivato e la finestra di %@ in movimento. Prima dell’inizio ricevi altri dettagli."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "約3分。その間、Macは消音され、%@のウインドウが移動します。開始前に詳しく説明します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "약 3분이 걸리며, 그동안 Mac이 음소거되고 %@ 윈도우가 움직입니다. 시작하기 전에 자세히 알려 드립니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omtrent 3 minutter, mens lyden på Macen er dempet og vinduet til %@ flyttes. Du får vite mer før den starter."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ongeveer 3 minuten, waarin het geluid van de Mac gedempt is en het venster van %@ wordt verplaatst. Voordat het begint, krijg je meer uitleg."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Około 3 minut; w tym czasie dźwięk Maca jest wyciszony, a okno aplikacji %@ się przesuwa. Więcej dowiesz się przed rozpoczęciem."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de 3 minutos, com o som do Mac cortado e a janela de %@ em movimento. Você recebe mais detalhes antes de começar."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerca de 3 minutos, com o som do Mac cortado e a janela de %@ em movimento. Antes de começar, recebe mais informações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aproximativ 3 minute, cu sunetul Mac-ului oprit și fereastra aplicației %@ în mișcare. Veți afla mai multe înainte de început."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Около 3 минут: звук Mac выключен, а окно %@ перемещается. Подробности — перед началом."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asi 3 minúty, počas ktorých je zvuk Macu stlmený a okno apky %@ sa presúva. Pred začiatkom sa dozviete viac."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Približno 3 minute, z utišanim zvokom Maca in premikanjem okna aplikacije %@. Pred začetkom izveste več."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungefär 3 minuter, med ljudet på din Mac avstängt och fönstret i %@ i rörelse. Du får veta mer innan den börjar."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşık 3 dakika; bu sırada Mac’in sesi kapatılır ve %@ penceresi taşınır. Başlamadan önce size daha fazla bilgi verilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Близько 3 хвилин, протягом яких звук Mac вимкнено, а вікно програми %@ рухається. Перед початком ви дізнаєтеся більше."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khoảng 3 phút, máy Mac bị tắt tiếng và cửa sổ của %@ được di chuyển. Bạn sẽ được cho biết thêm trước khi bắt đầu."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "約 3 分鐘，其間 Mac 會靜音，%@ 的視窗會移動。開始前會告訴你更多資訊。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "约 3 分钟，其间 Mac 会静音，%@ 的窗口会移动。开始前会告诉你更多信息。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "約 3 分鐘，其間 Mac 會靜音，%@ 的視窗會移動。開始前會告訴你更多資訊。"
           }
         }
       }
@@ -40429,6 +40847,215 @@
         }
       }
     },
+    "Choose Another App" : {
+      "comment" : "Add an App window: the button that confirms Change… once the check has run, forgetting what it found",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار تطبيق آخر"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tria una altra app"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrat jinou aplikaci"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg en anden app"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere App auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή άλλης εφαρμογής"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir otra app"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir otra app"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse toinen appi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une autre app"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une autre app"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दूसरा ऐप चुनें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi drugu aplikaciju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másik app kiválasztása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih App Lain"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli un’altra app"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のAppを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱 선택"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velg en annen app"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een andere app"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz inną aplikację"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher outro App"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher outra app"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați altă aplicație"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать другое приложение"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať inú apku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izberi drugo aplikacijo"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj en annan app"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka Uygulama Seç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрати іншу програму"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn ứng dụng khác"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇另一個 App"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择另一个 App"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇另一個 App"
+          }
+        }
+      }
+    },
     "Choose Your Media Player" : {
       "comment" : "Welcome window: its title, in its title bar",
       "localizations" : {
@@ -41474,6 +42101,215 @@
         }
       }
     },
+    "Choose another app?" : {
+      "comment" : "Add an App window: title of the question Change… asks once the check has run",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هل تريد اختيار تطبيق آخر؟"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vols triar una altra app?"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrat jinou aplikaci?"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vil du vælge en anden app?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere App auswählen?"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή άλλης εφαρμογής;"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Elegir otra app?"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Elegir otra app?"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitaanko toinen appi?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une autre app ?"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir une autre app?"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोई दूसरा ऐप चुनें?"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Želite li odabrati drugu aplikaciju?"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Másik appot választ?"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih app lain?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegliere un’altra app?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のAppを選択しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱을 선택하시겠습니까?"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velge en annen app?"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere app kiezen?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybrać inną aplikację?"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher outro App?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher outra app?"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați altă aplicație?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать другое приложение?"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať inú apku?"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Želite izbrati drugo aplikacijo?"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vill du välja en annan app?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka bir uygulama seçilsin mi?"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрати іншу програму?"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn ứng dụng khác?"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要選擇另一個 App 嗎？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要选择另一个 App 吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要選擇另一個 App 嗎？"
+          }
+        }
+      }
+    },
     "Choose how AutoHush pauses and plays %@:" : {
       "comment" : "Add an App window, under the step “See what worked, and use it”, over the ways that worked, one to choose; %@ is the app",
       "localizations" : {
@@ -42311,7 +43147,7 @@
       }
     },
     "Choose…" : {
-      "comment" : "The menu's card, on the button that unfolds the media players, while none is chosen",
+      "comment" : "The menu: on the Media player row, which unfolds the media players, while none is chosen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -42938,7 +43774,7 @@
       }
     },
     "Click an app to stop ignoring it" : {
-      "comment" : "Hint atop the Ignored Apps submenu",
+      "comment" : "The menu: hint atop the ignored apps, unfolded under the Ignored Apps row",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -69063,7 +69899,7 @@
       }
     },
     "Media Player" : {
-      "comment" : "Settings → Diagnostics: heading",
+      "comment" : "Settings → General and Diagnostics: heading over the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -69272,7 +70108,7 @@
       }
     },
     "Media player" : {
-      "comment" : "The menu's card and Settings → General: label of the chosen media player",
+      "comment" : "The menu: the row under the card with the chosen media player, which unfolds the players",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83061,6 +83897,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 AntiDot 模式下關閉，該模式不測量聲音。"
+          }
+        }
+      }
+    },
+    "Off in AntiDot mode." : {
+      "comment" : "The menu, under the dimmed Level the music switch while AntiDot mode is on (it measures no sound)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف في وضع AntiDot."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivat al mode AntiDot."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnuto v režimu AntiDot."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fra i AntiDot-tilstand."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im AntiDot-Modus aus."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ανενεργό στη λειτουργία AntiDot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado en el modo AntiDot."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado en el modo AntiDot."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pois AntiDot-tilassa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé en mode AntiDot."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé en mode AntiDot."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot मोड में बंद।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isključeno u načinu rada AntiDot."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot módban ki van kapcsolva."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mati dalam mode AntiDot."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato in modalità AntiDot."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDotモードではオフです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 모드에서는 꺼집니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av i AntiDot-modus."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uit in AntiDot-modus."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłączone w trybie AntiDot."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado no modo AntiDot."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado no modo AntiDot."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivat în modul AntiDot."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выключено в режиме AntiDot."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnuté v režime AntiDot."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izklopljeno v načinu AntiDot."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av i AntiDot-läge."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot modunda kapalı."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимкнено в режимі AntiDot."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt ở Chế độ AntiDot."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下關閉。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下关闭。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下關閉。"
           }
         }
       }
@@ -122154,6 +123199,215 @@
         }
       }
     },
+    "What the check found for %@ is forgotten." : {
+      "comment" : "Add an App window: what Change… does once the check has run, in its question; %@ is the checked app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُنسى ما وجده الفحص لـ %@."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S’oblida el que la comprovació ha trobat per a %@."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To, co kontrola zjistila o aplikaci %@, se zapomene."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det, kontrollen fandt for %@, glemmes."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was die Prüfung für %@ gefunden hat, wird verworfen."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Όσα βρήκε ο έλεγχος για την εφαρμογή %@ ξεχνιούνται."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se olvida lo que la comprobación encontró para %@."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se olvida lo que la verificación encontró para %@."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarkistuksen löydökset apista %@ unohdetaan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que la vérification a trouvé pour %@ est oublié."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que la vérification a trouvé pour %@ est oublié."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जाँच ने %@ के लिए जो पाया, वह भुला दिया जाएगा।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ono što je provjera pronašla za aplikaciju %@ bit će zaboravljeno."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az ellenőrzés eredménye a(z) %@ appról elvész."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasil pemeriksaan untuk %@ akan dilupakan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto trovato dalla verifica per %@ viene dimenticato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@についてのチェック結果は破棄されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검사에서 %@에 대해 찾은 내용은 삭제됩니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det kontrollen fant for %@, glemmes."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wat de controle voor %@ vond, wordt vergeten."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyniki sprawdzania aplikacji %@ zostaną zapomniane."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que a verificação encontrou para %@ é descartado."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que a verificação encontrou para %@ é descartado."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce a găsit verificarea pentru aplicația %@ se pierde."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Результаты проверки %@ будут забыты."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To, čo kontrola zistila o apke %@, sa zabudne."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kar je preverjanje ugotovilo za aplikacijo %@, bo pozabljeno."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det kontrollen hittade för %@ glöms bort."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denetimin %@ için bulduğu sonuçlar unutulur."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Результати перевірки програми %@ буде забуто."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kết quả kiểm tra của %@ sẽ bị xóa."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查為 %@ 找到的結果會被捨棄。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检查为 %@ 找到的结果会被舍弃。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查為 %@ 找到的結果會被捨棄。"
+          }
+        }
+      }
+    },
     "What’s New" : {
       "comment" : "Settings → About: opens the release notes on GitHub",
       "localizations" : {
@@ -124037,6 +125291,430 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有錄音權限時，檢查期間 %1$@ 不會靜音：你會聽到它暫停和播放，是否在播放則由其他跡象判斷。沒有「自動化」權限時，不會嘗試它的 AppleScript，而這是暫停和播放 %2$@ 最可靠的方式。現在允許這兩項，或不允許並繼續。"
+          }
+        }
+      }
+    },
+    "Without Audio Recording, the Mac’s sound is muted during the check, and whether %@ plays is told by other signs. Allow it now, or go on without it." : {
+      "comment" : "Add an App window, warning above Continue while Audio Recording isn't allowed (the whole Mac's sound is muted during the check instead of the app's); %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدون تسجيل الصوت، يُكتم صوت جهاز Mac أثناء الفحص، ويُستدلّ على تشغيل %@ من علامات أخرى. اسمح به الآن، أو تابع بدونه."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense Gravació d’àudio, el so del Mac se silencia durant la comprovació, i si %@ sona o no es dedueix d’altres senyals. Permet-la ara o continua sense ella."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nahrávání zvuku se během kontroly ztlumí zvuk Macu a zda aplikace %@ hraje, se pozná podle jiných znaků. Povolte toto oprávnění teď, nebo pokračujte bez něj."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uden Lydoptagelse slås lyden på din Mac fra under kontrollen, og om %@ afspiller, afgøres af andre tegn. Tillad det nu, eller fortsæt uden."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne „Audioaufnahme“ wird der Ton des Mac während der Prüfung stummgeschaltet, und ob %@ abspielt, zeigen andere Anzeichen. Erlaube ihn jetzt oder fahre ohne ihn fort."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς την Εγγραφή ήχου, ο ήχος του Mac τίθεται σε σίγαση κατά τον έλεγχο, και το αν παίζει η εφαρμογή %@ θα το δείξουν άλλα σημάδια. Επιτρέψτε την τώρα ή συνεχίστε χωρίς αυτήν."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin Grabación de audio, el sonido del Mac se silencia durante la comprobación, y si %@ suena o no se sabrá por otras señales. Permítela ahora o continúa sin ella."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin Grabación de audio, el sonido del Mac se silencia durante la verificación, y si %@ suena o no se sabrá por otras señales. Permítela ahora o continúa sin ella."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilman äänen tallennusta Macin ääni mykistetään tarkistuksen ajaksi, ja apin %@ toisto päätellään muista merkeistä. Salli se nyt tai jatka ilman sitä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Enregistrement audio », le son du Mac est coupé pendant la vérification, et la lecture de %@ sera détectée par d’autres signes. Autorisez-le maintenant ou continuez sans."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Enregistrement audio », le son du Mac est coupé pendant la vérification, et la lecture de %@ sera détectée par d’autres signes. Autorisez-le maintenant ou continuez sans."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑडियो रिकॉर्डिंग के बिना जाँच के दौरान Mac की आवाज़ म्यूट रहती है, और %@ चल रहा है या नहीं, यह दूसरे संकेतों से पता चलता है। अभी अनुमति दें, या इसके बिना आगे बढ़ें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez Snimanja zvuka zvuk Maca utišan je tijekom provjere, a svira li aplikacija %@, otkrivaju drugi znakovi. Dozvolite je sada ili nastavite bez nje."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hangfelvétel nélkül a Mac hangja némítva van az ellenőrzés alatt, azt pedig, hogy a(z) %@ app szól-e, más jelek mutatják. Engedélyezze most, vagy folytassa nélküle."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa Rekaman audio, suara Mac dibisukan selama pemeriksaan, dan apakah %@ memutar diketahui dari tanda lain. Izinkan sekarang, atau lanjutkan tanpanya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza Registrazione audio, l’audio del Mac viene disattivato durante la verifica, e altri segnali indicheranno se %@ è in riproduzione. Consentila ora o continua senza."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーディオ録音がないと、チェック中はMacが消音され、%@が再生しているかどうかはほかの手がかりで判断されます。今すぐ許可するか、許可せずに続けてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오 녹음이 없으면 검사 중에 Mac이 음소거되며, %@의 재생 여부는 다른 신호로 판단합니다. 지금 허용하거나 허용하지 않고 계속하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uten lydopptak dempes lyden på Macen under kontrollen, og om %@ spiller av, avgjøres ut fra andre tegn. Gi tillatelsen nå, eller fortsett uten den."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zonder Audio-opname wordt het geluid van de Mac tijdens de controle gedempt, en of %@ afspeelt, blijkt uit andere signalen. Sta het nu toe of ga zonder door."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nagrywania dźwięku dźwięk Maca jest wyciszany podczas sprawdzania, a to, czy aplikacja %@ odtwarza, zostanie ustalone na podstawie innych sygnałów. Przyznaj to uprawnienie teraz albo kontynuuj bez niego."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem Gravação de áudio, o som do Mac é cortado durante a verificação, e outros sinais indicam se %@ está tocando. Permita agora ou continue sem ela."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem Gravação de áudio, o som do Mac é cortado durante a verificação, e outros sinais indicam se %@ está a tocar. Permita-a agora ou continue sem ela."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără Înregistrare audio, sunetul Mac-ului este oprit în timpul verificării, iar dacă aplicația %@ redă se deduce din alte semne. Permiteți-o acum sau continuați fără ea."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без «Записи звука» звук Mac во время проверки выключается, а то, играет ли %@, покажут другие признаки. Разрешите его сейчас или продолжите без него."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nahrávania zvuku sa počas kontroly stlmí zvuk Macu a či apka %@ hrá, sa zistí podľa iných znakov. Udeľte toto povolenie teraz alebo pokračujte bez neho."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brez snemanja zvoka je zvok Maca med preverjanjem utišan, ali aplikacija %@ predvaja, pa povedo drugi znaki. Dovolite ga zdaj ali nadaljujte brez njega."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utan Ljudinspelning stängs ljudet på din Mac av under kontrollen, och om %@ spelar avgörs av andra tecken. Tillåt det nu eller fortsätt utan det."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses kaydı olmadan denetim sırasında Mac’in sesi kapatılır; %@ uygulamasının çalıp çalmadığı başka işaretlerden anlaşılır. Şimdi izin verin ya da bu izin olmadan devam edin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без записування звуку AutoHush вимикає звук Mac під час перевірки, а те, чи грає програма %@, визначатиметься за іншими ознаками. Надайте цей дозвіл зараз або продовжте без нього."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi không có Ghi âm thanh, máy Mac bị tắt tiếng trong lúc kiểm tra, và việc %@ có phát hay không được nhận biết qua các dấu hiệu khác. Hãy cho phép ngay, hoặc tiếp tục mà không có quyền này."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有錄音權限時，檢查期間 Mac 會靜音，%@ 是否在播放則由其他跡象判斷。現在允許，或不允許並繼續。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有录音权限时，检查期间 Mac 会静音，%@ 是否在播放则由其他迹象判断。现在允许，或不允许并继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有錄音權限時，檢查期間 Mac 會靜音，%@ 是否在播放則由其他跡象判斷。現在允許，或不允許並繼續。"
+          }
+        }
+      }
+    },
+    "Without Audio Recording, the Mac’s sound is muted during the check, and whether %@ plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play %@, isn’t tried. Allow them now, or go on without them." : {
+      "comment" : "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed (the whole Mac's sound is muted during the check instead of the app's); every %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدون تسجيل الصوت، يُكتم صوت جهاز Mac أثناء الفحص، ويُستدلّ على تشغيل %1$@ من علامات أخرى. بدون التحكم التلقائي، لا تُجرَّب أوامر AppleScript الخاصة به، وهي أضمن طريقة لإيقاف %2$@ مؤقتًا وتشغيله. اسمح بهما الآن، أو تابع بدونهما."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense Gravació d’àudio, el so del Mac se silencia durant la comprovació, i si %1$@ sona o no es dedueix d’altres senyals. Sense Automatització, no es prova el seu AppleScript, la manera més segura de posar en pausa i reproduir %2$@. Permet-les ara o continua sense elles."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nahrávání zvuku se během kontroly ztlumí zvuk Macu a zda aplikace %1$@ hraje, se pozná podle jiných znaků. Bez Automatizace se nevyzkouší AppleScript, nejspolehlivější způsob, jak pozastavit a přehrát aplikaci %2$@. Povolte tato oprávnění teď, nebo pokračujte bez nich."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uden Lydoptagelse slås lyden på din Mac fra under kontrollen, og om %1$@ afspiller, afgøres af andre tegn. Uden Automatisering prøves AppleScript ikke – den sikreste måde at sætte %2$@ på pause og afspille den på. Tillad dem nu, eller fortsæt uden."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne „Audioaufnahme“ wird der Ton des Mac während der Prüfung stummgeschaltet, und ob %1$@ abspielt, zeigen andere Anzeichen. Ohne „Automation“ wird AppleScript, der sicherste Weg, %2$@ zu pausieren und abzuspielen, nicht ausprobiert. Erlaube sie jetzt oder fahre ohne sie fort."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς την Εγγραφή ήχου, ο ήχος του Mac τίθεται σε σίγαση κατά τον έλεγχο, και το αν παίζει η εφαρμογή %1$@ θα το δείξουν άλλα σημάδια. Χωρίς την Αυτοματοποίηση, δεν δοκιμάζεται το AppleScript της, ο πιο σίγουρος τρόπος παύσης και αναπαραγωγής της εφαρμογής %2$@. Επιτρέψτε τις τώρα ή συνεχίστε χωρίς αυτές."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Without Audio Recording, the Mac’s sound is muted during the check, and whether %1$@ plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play %2$@, isn’t tried. Allow them now, or go on without them."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin Grabación de audio, el sonido del Mac se silencia durante la comprobación, y si %1$@ suena o no se sabrá por otras señales. Sin Automatización, no se prueba su AppleScript, la forma más segura de pausar y reproducir %2$@. Permítelas ahora o continúa sin ellas."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin Grabación de audio, el sonido del Mac se silencia durante la verificación, y si %1$@ suena o no se sabrá por otras señales. Sin Automatización, no se prueba su AppleScript, la forma más segura de pausar y reproducir %2$@. Permítelas ahora o continúa sin ellas."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilman äänen tallennusta Macin ääni mykistetään tarkistuksen ajaksi, ja apin %1$@ toisto päätellään muista merkeistä. Ilman Automaatiota sen AppleScriptiä, varminta tapaa keskeyttää ja jatkaa apin %2$@ toistoa, ei kokeilla. Salli ne nyt tai jatka ilman niitä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Enregistrement audio », le son du Mac est coupé pendant la vérification, et la lecture de %1$@ sera détectée par d’autres signes. Sans l’accès « Automatisation », son AppleScript, le moyen le plus sûr de mettre en pause et relancer %2$@, n’est pas essayé. Autorisez-les maintenant ou continuez sans."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Enregistrement audio », le son du Mac est coupé pendant la vérification, et la lecture de %1$@ sera détectée par d’autres signes. Sans l’accès « Automatisation », son AppleScript, le moyen le plus sûr de mettre en pause et relancer %2$@, n’est pas essayé. Autorisez-les maintenant ou continuez sans."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑडियो रिकॉर्डिंग के बिना जाँच के दौरान Mac की आवाज़ म्यूट रहती है, और %1$@ चल रहा है या नहीं, यह दूसरे संकेतों से पता चलता है। ऑटोमेशन के बिना उसका AppleScript, जो %2$@ को पॉज़ करने और चलाने का सबसे पक्का तरीका है, आज़माया नहीं जाता। अभी अनुमति दें, या इनके बिना आगे बढ़ें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez Snimanja zvuka zvuk Maca utišan je tijekom provjere, a svira li aplikacija %1$@, otkrivaju drugi znakovi. Bez Automatizacije ne isprobava se njezin AppleScript, najpouzdaniji način pauziranja i reprodukcije aplikacije %2$@. Dozvolite ih sada ili nastavite bez njih."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hangfelvétel nélkül a Mac hangja némítva van az ellenőrzés alatt, azt pedig, hogy a(z) %1$@ app szól-e, más jelek mutatják. Automatizálás nélkül kimarad az AppleScriptje, a(z) %2$@ app szüneteltetésének és lejátszásának legbiztosabb módja. Engedélyezze őket most, vagy folytassa nélkülük."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa Rekaman audio, suara Mac dibisukan selama pemeriksaan, dan apakah %1$@ memutar diketahui dari tanda lain. Tanpa Automasi, AppleScript-nya, cara paling pasti untuk menjeda dan memutar %2$@, tidak dicoba. Izinkan sekarang, atau lanjutkan tanpa keduanya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza Registrazione audio, l’audio del Mac viene disattivato durante la verifica, e altri segnali indicheranno se %1$@ è in riproduzione. Senza Automazione, non viene provato il suo AppleScript, il modo più sicuro per mettere in pausa e riprodurre %2$@. Consentile ora o continua senza."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーディオ録音がないと、チェック中はMacが消音され、%1$@が再生しているかどうかはほかの手がかりで判断されます。オートメーションがないと、%2$@を一時停止・再生する最も確実な方法であるAppleScriptは試されません。今すぐ両方を許可するか、許可せずに続けてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오디오 녹음이 없으면 검사 중에 Mac이 음소거되며, %1$@의 재생 여부는 다른 신호로 판단합니다. 자동화가 없으면 %2$@을(를) 일시 정지하고 재생하는 가장 확실한 방법인 AppleScript를 시도하지 않습니다. 지금 둘 다 허용하거나 허용하지 않고 계속하십시오."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uten lydopptak dempes lyden på Macen under kontrollen, og om %1$@ spiller av, avgjøres ut fra andre tegn. Uten Automatisering prøves ikke AppleScript, den sikreste måten å sette %2$@ på pause og spille den av på. Gi tillatelsene nå, eller fortsett uten dem."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zonder Audio-opname wordt het geluid van de Mac tijdens de controle gedempt, en of %1$@ afspeelt, blijkt uit andere signalen. Zonder Automatisering wordt AppleScript, de zekerste manier om %2$@ te pauzeren en af te spelen, niet geprobeerd. Sta ze nu toe of ga zonder door."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nagrywania dźwięku dźwięk Maca jest wyciszany podczas sprawdzania, a to, czy aplikacja %1$@ odtwarza, zostanie ustalone na podstawie innych sygnałów. Bez Automatyzacji AppleScript, najpewniejszy sposób wstrzymywania i wznawiania aplikacji %2$@, nie zostanie wypróbowany. Przyznaj te uprawnienia teraz albo kontynuuj bez nich."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem Gravação de áudio, o som do Mac é cortado durante a verificação, e outros sinais indicam se %1$@ está tocando. Sem Automação, o AppleScript, a forma mais segura de pausar e reproduzir %2$@, não é testado. Permita agora ou continue sem elas."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem Gravação de áudio, o som do Mac é cortado durante a verificação, e outros sinais indicam se %1$@ está a tocar. Sem Automação, o AppleScript, a forma mais segura de pausar e reproduzir %2$@, não é experimentado. Permita-as agora ou continue sem elas."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără Înregistrare audio, sunetul Mac-ului este oprit în timpul verificării, iar dacă aplicația %1$@ redă se deduce din alte semne. Fără Automatizare, nu se încearcă AppleScript-ul ei, cel mai sigur mod de a pune pe pauză și a reda aplicația %2$@. Permiteți-le acum sau continuați fără ele."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без «Записи звука» звук Mac во время проверки выключается, а то, играет ли %1$@, покажут другие признаки. Без «Автоматизации» не пробуется его AppleScript — самый надёжный способ ставить %2$@ на паузу и снова включать. Разрешите их сейчас или продолжите без них."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez nahrávania zvuku sa počas kontroly stlmí zvuk Macu a či apka %1$@ hrá, sa zistí podľa iných znakov. Bez Automatizácie sa nevyskúša AppleScript, najspoľahlivejší spôsob, ako pozastaviť a prehrať apku %2$@. Udeľte tieto povolenia teraz alebo pokračujte bez nich."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brez snemanja zvoka je zvok Maca med preverjanjem utišan, ali aplikacija %1$@ predvaja, pa povedo drugi znaki. Brez avtomatizacije se njen AppleScript, najzanesljivejši način za zaustavitev in predvajanje aplikacije %2$@, ne preizkusi. Dovolite jih zdaj ali nadaljujte brez njih."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utan Ljudinspelning stängs ljudet på din Mac av under kontrollen, och om %1$@ spelar avgörs av andra tecken. Utan Automatisering provas inte AppleScript, det säkraste sättet att pausa och spela upp %2$@. Tillåt dem nu eller fortsätt utan dem."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses kaydı olmadan denetim sırasında Mac’in sesi kapatılır; %1$@ uygulamasının çalıp çalmadığı başka işaretlerden anlaşılır. Otomasyon olmadan, %2$@ uygulamasını duraklatıp oynatmanın en kesin yolu olan AppleScript denenmez. Şimdi izin verin ya da bu izinler olmadan devam edin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без записування звуку AutoHush вимикає звук Mac під час перевірки, а те, чи грає програма %1$@, визначатиметься за іншими ознаками. Без «Автоматизації» не буде випробувано AppleScript, найнадійніший спосіб призупиняти й відтворювати програму %2$@. Надайте ці дозволи зараз або продовжте без них."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi không có Ghi âm thanh, máy Mac bị tắt tiếng trong lúc kiểm tra, và việc %1$@ có phát hay không được nhận biết qua các dấu hiệu khác. Khi không có Tự động hóa, AppleScript của ứng dụng, cách chắc chắn nhất để tạm dừng và phát %2$@, sẽ không được thử. Hãy cho phép ngay, hoặc tiếp tục mà không có các quyền này."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有錄音權限時，檢查期間 Mac 會靜音，%1$@ 是否在播放則由其他跡象判斷。沒有「自動化」權限時，不會嘗試它的 AppleScript，而這是暫停和播放 %2$@ 最可靠的方式。現在允許這兩項，或不允許並繼續。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有录音权限时，检查期间 Mac 会静音，%1$@ 是否在播放则由其他迹象判断。没有“自动化”权限时，不会尝试它的 AppleScript，而这是暂停和播放 %2$@ 最可靠的方式。现在允许这两项，或不允许并继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有錄音權限時，檢查期間 Mac 會靜音，%1$@ 是否在播放則由其他跡象判斷。沒有「自動化」權限時，不會嘗試它的 AppleScript，而這是暫停和播放 %2$@ 最可靠的方式。現在允許這兩項，或不允許並繼續。"
           }
         }
       }
@@ -126754,6 +128432,215 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你目前使用的是版本 %@。請使用 Homebrew 更新："
+          }
+        }
+      }
+    },
+    "Your Mac muted meanwhile" : {
+      "comment" : "The window shown before a check starts: the whole Mac's sound is muted during the check (the app itself can't be: no Audio Recording, or AntiDot mode)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُكتم صوت جهاز Mac في أثناء ذلك"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El Mac en silenci"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac se ztlumí"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Din Mac er lydløs imens"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Mac stumm"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ο Mac σε σίγαση"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu Mac en silencio"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu Mac en silencio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac mykistetään"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son du Mac coupé"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son du Mac coupé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस दौरान आपका Mac म्यूट रहेगा"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac utišan"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Mac némítva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac Anda dibisukan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac senza audio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その間、Macは消音"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그동안 Mac 음소거"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Macen er dempet"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je Mac gedempt"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac bez dźwięku"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu Mac sem som"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Mac sem som"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac-ul fără sunet"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac без звука"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac bez zvuku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac brez zvoka"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Din Mac ljudlös"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac’iniz sessize alınır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac без звуку"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máy Mac bị tắt tiếng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其間 Mac 會靜音"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其间 Mac 会静音"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其間 Mac 會靜音"
           }
         }
       }

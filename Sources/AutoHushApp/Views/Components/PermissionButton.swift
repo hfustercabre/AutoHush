@@ -80,7 +80,7 @@ struct PermissionButton: View {
         if let title {
             let button = Button { model.actions?.requestPermission(permission) } label: { Text(verbatim: title) }
             if prominent {
-                button.buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                button.buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
             } else {
                 button.buttonStyle(.chip)
             }

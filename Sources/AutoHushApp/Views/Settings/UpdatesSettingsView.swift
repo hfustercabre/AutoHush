@@ -16,8 +16,10 @@ struct UpdatesSettingsView: View {
                 // What checks lead to only matters while they run: greyed out otherwise.
                 CardDivider()
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("When an update is found", comment: "Settings → Updates: lead-in to what happens when an update is found") // a row's title
+                    let title = String(localized: "When an update is found", comment: "Settings → Updates: lead-in to what happens when an update is found")
+                    Text(verbatim: title) // a row's title
                     ChoiceChips(
+                        label: title,
                         options: [AutomaticUpdates.notify, .download, .install].map { .init(title: $0.title, value: $0) },
                         // A copy that can't install itself can only notify.
                         selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,

@@ -14,9 +14,7 @@ struct StatusCardView: View {
     private var status: AppStatus { model.status }
 
     var body: some View {
-        // Clear glass: its menu row ends 2 pt under the card, which would
-        // cut the regular glass's shadow off in a straight line.
-        Card(padding: 10, clearGlass: true) {
+        Card(clearGlass: true) {
             HStack(spacing: 10) {
                 playerIcon(size: 36)
                 VStack(alignment: .leading, spacing: 1) {
@@ -106,7 +104,7 @@ struct StatusCardView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
         }
-        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(filled: true))
         .padding(.top, 4)
     }
 
@@ -124,7 +122,7 @@ struct StatusCardView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
         }
-        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(filled: true))
         .padding(.top, 4)
         .help(AddAppText.reopenReason(status.playerName))
         .accessibilityHint(Text(verbatim: AddAppText.reopenReason(status.playerName)))
@@ -142,7 +140,7 @@ struct StatusCardView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
         }
-        .buttonStyle(ChipButtonStyle(filled: true, cornerRadius: 6))
+        .buttonStyle(ChipButtonStyle(filled: true))
         .padding(.top, 4)
     }
 

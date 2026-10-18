@@ -304,14 +304,17 @@ struct PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await waitUntil { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()
         }
-        await waitUntil { await player.stateQueryCount == PlaybackArbiter.resumeRetries + 2 } // the pause's, the resume's, the retries
+        let queries = pauseQueries + PlaybackArbiter.resumeRetries + 1 // then the resume's, and the retries'
+        await waitUntil { await player.stateQueryCount >= queries }
         await arbiter.waitUntilIdle()
+        #expect(await player.stateQueryCount == queries)
         #expect(await player.playCallCount == 0)
         #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries)
     }
@@ -470,7 +473,8 @@ struct PlaybackArbiterTests {
         #expect(await player.commandLog == ["mute"])
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
         await arbiter.setAsleep(false)
-        await settle()
+        await waitUntil { await player.commandLog.count >= 2 }
+        await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "forgetPause"])
     }
 
@@ -710,9 +714,10 @@ struct PlaybackArbiterTests {
         let answer = Gate()
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setBeforeStateAnswer { await answer.wait() }
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
-        await waitUntil { await player.stateQueryCount == 2 } // the pause's, then the resume's
+        await waitUntil { await player.stateQueryCount > pauseQueries } // the resume is asking the player
         await arbiter.handleSourceChange(sourceID: "com.colliderli.iina", isPlaying: true)
         await answer.open()
         await arbiter.waitForPause()
@@ -1286,9 +1291,10 @@ struct PlaybackArbiterTests {
         let answer = Gate()
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setBeforeStateAnswer { await answer.wait() }
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
-        await waitUntil { await player.stateQueryCount == 2 } // the resume is asking the player
+        await waitUntil { await player.stateQueryCount > pauseQueries } // the resume is asking the player
         await arbiter.shutdown()
         await answer.open()
         await settle()
@@ -1662,6 +1668,30 @@ struct PlaybackArbiterTests {
         await arbiter.waitUntilIdle()
 
         #expect(await player.commandLog.isEmpty)
+    }
+
+    @Test("with Level the music on, a resume that never takes puts the Mac's volume back as it gives up, not while it retries")
+    func levelingGivesUpWithResume() async {
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let leveler = RecordingVolumeLeveler()
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await waitUntil { scheduler.scheduledDelays.count == attempt }
+            #expect(!leveler.log.contains("restore now")) // tried again: still lowered
+            await scheduler.completeNext()
+        }
+        await waitUntil { leveler.log.last == "restore now" }
+        await arbiter.waitUntilIdle()
+        let fadeOut = AppConfiguration.testing.fadeOutDuration
+        #expect(leveler.log == ["restore over \(fadeOut)"] + Array(repeating: "lower -6.0", count: PlaybackArbiter.resumeRetries + 1) + ["restore now"])
+        #expect(await player.playCallCount == PlaybackArbiter.resumeRetries + 1)
     }
 }
 

@@ -33,7 +33,7 @@ extension UpdateController {
         guard let currentVersion else {
             let unknown = String(localized: "AutoHush’s version is unknown.",
                                  comment: "Update status in Settings, and the alert after a check asked for from the menu or Settings")
-            logger.error("Can't check for updates: AutoHush's version is unknown")
+            logger.error("Can’t check for updates: AutoHush’s version is unknown")
             onStatus(unknown)
             if resultWanted { await presentFailure(unknown) }
             return

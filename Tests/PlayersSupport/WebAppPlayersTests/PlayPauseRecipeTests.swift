@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import AutoHushKit
+import AutoHushTestSupport
 @testable import WebAppPlayers
 
 @Suite("PlayPauseRecipe")
@@ -54,9 +55,9 @@ struct PlayPauseRecipeTests {
         #expect(PlayPauseRecipe(propertyList: stored.propertyList) == stored)
         #expect(PlayPauseRecipe(propertyList: ["play": "Play"]) == nil)
 
-        let suite = "AutoHush.PlayPauseRecipeTests.\(UUID().uuidString)"
-        defer { UserDefaults().removePersistentDomain(forName: suite) }
-        let store = DefaultsRecipeStore(suiteName: suite)
+        let suite = TestDefaults("AutoHush.PlayPauseRecipeTests")
+        defer { suite.remove() }
+        let store = DefaultsRecipeStore(suiteName: suite.suiteName)
         let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [Places.main])
         store.save(stored, for: "com.example.a")
         store.save(spanish, for: "com.example.b")
@@ -66,6 +67,6 @@ struct PlayPauseRecipeTests {
         store.forget(for: "com.example.a") // forgotten already: nothing changes
         #expect(store.recipe(for: "com.example.a") == nil)
         #expect(store.recipe(for: "com.example.b") == spanish)
-        #expect(UserDefaults(suiteName: suite)?.dictionary(forKey: Preferences.webAppButtonsKey)?.keys.sorted() == ["com.example.b"])
+        #expect(suite.defaults.dictionary(forKey: Preferences.webAppButtonsKey)?.keys.sorted() == ["com.example.b"])
     }
 }

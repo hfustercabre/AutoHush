@@ -37,6 +37,9 @@ struct PlayerCheckTests {
         #expect(modifierSymbols(0) == "⌘" && modifierSymbols(1) == "⇧⌘" && modifierSymbols(2 | 8) == "⌥" && modifierSymbols(4 | 1 | 8) == "⌃⇧")
         #expect(fourCharacters(0x7050_6C53) == "pPlS")
         #expect(eventError(NSError(domain: NSOSStatusErrorDomain, code: -1743)).hasPrefix("error -1743"))
+        // Never the app's message, which can name what it was playing.
+        #expect(eventError(NSError(domain: NSOSStatusErrorDomain, code: -1728,
+                                   userInfo: [NSLocalizedFailureReasonErrorKey: "Can’t get document “Holiday.mov”."])) == "error -1728")
         #expect(switchName(manualAccessibility) == "Electron's switch")
         #expect(switchName(enhancedUserInterface, of: .chromiumWebApp(browserID: "com.google.Chrome", browser: "Google Chrome"))
             == "Google Chrome's VoiceOver switch")
@@ -85,20 +88,30 @@ struct PlayerCheckTests {
         #expect(wordSays("Pause") == .playing && wordSays("Play") == .paused && wordSays("Shuffle") == nil)
     }
 
-    @Test("the run's log: named by the app and what the run does, every line said, the home folder written ~, the oldest beyond 50 removed")
+    @Test("the run's log: named by the app and what the run does, every line said, the home folder written ~, the oldest beyond 50 to the Trash, other logs left alone")
     func logFile() throws {
         let logs = URL(filePath: folder)
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for index in 0..<51 {
             #expect(FileManager.default.createFile(atPath: logs.appending(path: "2000-01-01 00.00.\(String(format: "%02d", index)).000 Old check.log").path, contents: nil))
         }
+        // Another app's logs, older by their names: never trimmed.
+        let others = ["1999-12-31 23.59.59.000 Other.log", "1999 other.log", "app.log"]
+        for name in others { #expect(FileManager.default.createFile(atPath: logs.appending(path: name).path, contents: nil)) }
         startRun()
         say("music in \(NSHomeDirectory())/Music")
-        let names = try FileManager.default.contentsOfDirectory(atPath: folder).filter { $0.hasSuffix(".log") }.sorted()
+        let all = try FileManager.default.contentsOfDirectory(atPath: folder)
+        #expect(others.allSatisfy(all.contains))
+        let names = all.filter(RunLog.isRunLog).sorted()
         #expect(names.count == RunLog.kept && names.first == "2000-01-01 00.00.02.000 Old check.log")
         let newest = try #require(names.last)
         #expect(newest.hasSuffix(" Calculator read-only.log"))
         let text = try String(contentsOfFile: logs.appending(path: newest).path, encoding: .utf8)
         #expect(text.contains("Calculator ") && text.contains("music in ~/Music") && !text.contains(NSHomeDirectory()))
+        // Every run's name, and none without its time, its app or what it did.
+        #expect(["2026-10-18 09.41.07.250 Jukebox pause via panel.log", "2026-10-18 09.41.07.250 Some Player relaunch.log",
+                 "2026-10-18 09.41.07.250 Jukebox play.log"].allSatisfy(RunLog.isRunLog))
+        #expect(!["2026-10-18 09.41.07.250 check.log", "2026-10-18 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox check.txt",
+                  "2026-13-18 09.41.07.250 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox listening.log"].contains(where: RunLog.isRunLog))
     }
 }

@@ -10,7 +10,7 @@ nonisolated(unsafe) var argumentsForTests: [String]?
 let arguments = argumentsForTests ?? Array(CommandLine.arguments.dropFirst())
 
 /// What --play and --pause do.
-enum Action: String { case play, pause }
+enum Action: String, CaseIterable { case play, pause }
 
 /// The ways to control an app, as --via names them, in the order a check tries them.
 enum Way: String, CaseIterable { case script, menu, page, panel }

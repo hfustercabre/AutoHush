@@ -62,6 +62,28 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
+    /// Why it can't be changed, in a few words, under it in the menu (R2,
+    /// the user's pick, 2026-10-18; Settings has a note of its own); `nil`
+    /// while it can.
+    @MainActor func unavailableReason(_ model: SettingsModel) -> String? {
+        guard isUnavailable(model) else { return nil }
+        switch self {
+        case .antiDot:
+            // Settings' own note under the switch.
+            guard let player = model.antiDotUnavailablePlayer else { return nil }
+            return DetectionSettingsView.unavailableNote(player.name, mutes: player.pausesByMuting)
+        case .fades:
+            guard let player = model.chosenPlayerName else { return nil }
+            return String(localized: "\(player) can’t be faded.",
+                          comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
+        case .levelsMusic:
+            return String(localized: "Off in AntiDot mode.",
+                          comment: "The menu, under the dimmed Level the music switch while AntiDot mode is on (it measures no sound)")
+        case .staysPausedAfterCalls:
+            return nil
+        }
+    }
+
     /// Off and dimmed: AntiDot mode with a player only its sound tells
     /// about, the fades with a player AutoHush can't fade, leveling in
     /// AntiDot mode (which measures no sound).
@@ -74,8 +96,11 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
+    /// What it shows: off while it can't be changed, whatever is saved (the
+    /// saved value comes back once it can).
     @MainActor func isOn(_ model: SettingsModel) -> Bool {
-        switch self {
+        guard !isUnavailable(model) else { return false }
+        return switch self {
         case .antiDot: model.isAntiDotMode
         case .fades: model.timings.fadesEnabled
         case .levelsMusic: model.timings.levelsMusic
@@ -104,7 +129,7 @@ struct SettingsSwitchRow: View {
     var body: some View {
         SwitchRow(kind.title, subtitle: showsSubtitle ? kind.subtitle : nil,
                   isOn: Binding(get: { kind.isOn(model) }, set: { kind.set($0, in: model) }))
-            .disabled(kind.isUnavailable(model))
+            .unavailable(kind.isUnavailable(model)) // dimmed as in the menu, not only its switch
     }
 }
 

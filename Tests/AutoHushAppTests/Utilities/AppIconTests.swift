@@ -130,4 +130,18 @@ struct AppIconTests {
         let unknown = AudioSource(id: "com.example.not-installed", name: "Not Installed")
         #expect(AppIcon.image(for: unknown, size: 20) === AppIcon.image(bundlePath: nil, size: 20))
     }
+
+    @Test("an app not found by its bundle ID is looked for again: installed since, it shows its own icon")
+    func installedLater() throws {
+        let path = try #require(NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.path)
+        let id = "com.example.installed-later"
+        let findApp = AppIcon.findApp
+        defer { AppIcon.findApp = findApp }
+        var installed = false
+        AppIcon.findApp = { $0 == id && installed ? path : nil }
+        let source = AudioSource(id: id, name: "Installed Later")
+        #expect(AppIcon.image(for: source, size: 20) === AppIcon.image(bundlePath: nil, size: 20))
+        installed = true
+        #expect(AppIcon.image(for: source, size: 20) === AppIcon.image(bundlePath: path, size: 20))
+    }
 }

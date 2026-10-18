@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushPlayers
 import CheckedPlayers
 import SwiftUI
 import AutoHushKit
@@ -38,19 +39,23 @@ enum AppIcon {
         return image
     }
 
-    /// Where macOS has the app with bundle ID `id`, looked up once.
+    /// Where macOS has the app with bundle ID `id`, looked up once found;
+    /// not found, looked up again the next time, so an app installed since
+    /// gets its icon.
     private static func installedPath(_ id: String) -> String? {
         if let known = installedPaths[id] { return known }
-        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path
-        installedPaths[id] = path
+        let path = findApp(id)
+        if let path { installedPaths[id] = path }
         return path
     }
-    private static var installedPaths: [String: String?] = [:]
+    private static var installedPaths: [String: String] = [:]
+    /// Where macOS has the app with a bundle ID; a test's stand-in.
+    static var findApp: (String) -> String? = { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)?.path }
 
     /// Safari's own icon (its app in /Applications is a link into the
     /// system), looked up once rather than at every redraw.
     static let safari: NSImage = {
-        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari")?.resolvingSymlinksInPath().path
+        let path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: SupportedPlayers.safariBundleID)?.resolvingSymlinksInPath().path
         return NSWorkspace.shared.icon(forFile: path ?? "/Applications/Safari.app")
     }()
 

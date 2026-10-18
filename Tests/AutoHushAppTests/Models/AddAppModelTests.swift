@@ -1,7 +1,6 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
@@ -223,6 +222,35 @@ struct AddAppModelTests {
         #expect(model.chosenWay == .panel)
         model.use()
         #expect(world.used.first?.setup?.ways == [.panel(rememberedRow: nil)] && world.used.first?.ways == found.ways)
+    }
+
+    @Test("Change… asks first once the check has run, since it forgets what was found; not before")
+    func changeAsksAfterTheCheck() async {
+        let world = World()
+        let model = await ready(world)
+        #expect(model.canChangeApp && !model.changeAppForgetsCheck)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(ways: [CheckResult.WayResult(kind: .panel, mark: .works)],
+                                               setup: PlayerSetup(bundleID: "com.example.player", name: "Player",
+                                                                  appURL: URL(filePath: "/Applications/Player.app"),
+                                                                  ways: [.panel(rememberedRow: nil)]))))
+        await TestWait.until { model.result != nil }
+        #expect(model.canChangeApp && model.changeAppForgetsCheck)
+        model.changeApp()
+        #expect(model.stage == .choosing && !model.changeAppForgetsCheck)
+    }
+
+    @Test("what the check mutes: the app with Audio Recording outside AntiDot mode, else the Mac's output, else nothing")
+    func checkMuting() async {
+        let world = World()
+        let model = await ready(world)
+        #expect(model.checkMuting == .app)
+        world.antiDot = true
+        world.macCanMute = true
+        #expect(model.checkMuting == .mac)
+        world.macCanMute = false
+        #expect(model.checkMuting == .none)
     }
 
     @Test("Use keeps the page's learned Play/Pause button when the page is the way chosen, and not with another way")

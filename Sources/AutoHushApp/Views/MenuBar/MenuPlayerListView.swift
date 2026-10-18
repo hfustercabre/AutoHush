@@ -1,5 +1,4 @@
 import SwiftUI
-import AutoHushKit
 
 /// The music players unfolded under the menu's "Media player" row
 /// (`MenuMediaPlayerView`; M1, the user's pick, 2026-10-17): the search (from

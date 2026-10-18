@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// "Playing Now": each app playing sound, with a switch for whether it
 /// pauses the music; or "Recently Played", the same for the apps that
-/// played in the last 5 minutes.
+/// played in the last 30 minutes.
 struct PlayingAppsView: View {
     enum List { case playingNow, recentlyPlayed }
 
@@ -56,7 +56,7 @@ struct PlayingAppsView: View {
             Toggle(isOn: Binding(get: { pausesMusic }, set: { model.perform(.setIgnored(source, !$0)) })) {
                 Text(verbatim: source.name)
             }
-            .toggleStyle(PillToggleStyle(width: 30, height: 18))
+            .toggleStyle(PillToggleStyle())
         }
     }
 }

@@ -20,17 +20,28 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The menu is AutoHush's own panel,** so its parts fold and unfold
   smoothly, the panel's height following (at once with Reduce Motion). The
   card and the buttons stay put, and only what's between them scrolls when
-  the menu is taller than the screen, as in macOS's own menus. The players
-  unfold under the Media player row, with lines between their groups and a
-  checkmark on yours; ↑ and ↓ move through them and Return chooses, and
-  the menu stays open as the card follows the new player. Ignored
-  Apps unfolds under its row. Escape or a click elsewhere closes it, and it
-  follows Reduce Transparency and Increase Contrast, as menus do.
+  the menu is taller than the screen, as in macOS's own menus. The card
+  also shows what AutoHush can do with your player, as Settings → General
+  does: its permission allowed, and whether it fades. The players unfold
+  under the Media player row, with lines between their groups and a
+  checkmark on yours; ↑ and ↓ move through them and Return chooses, and the
+  menu stays open as the card follows the new player. Ignored Apps unfolds
+  under its row. Escape or a click elsewhere closes it, and it follows
+  Reduce Transparency and Increase Contrast, as menus do.
 - **Options that don't apply are greyed out, never hidden**, in Settings
   and in the menu: the fade lengths while fades are off, the silence
   threshold in AntiDot mode, AntiDot mode's ways of detecting while it's
   off, and what happens when an update is found while automatic checks
-  are off.
+  are off. A switch that can't be changed shows off, whatever it was set
+  to (Fade playback for a player AutoHush can't fade, Level the music in
+  AntiDot mode), and comes back as it was once it can. In the menu, a
+  line under it says why ("TIDAL can’t be faded.").
+- **The menu shows when more is below.** Taller than the screen, its last
+  rows fade out over a small arrow until you scroll to the end. It opens
+  with nothing focused, even with keyboard navigation on.
+- **Settings is at least 600 points tall**, so its sidebar shows About
+  whole, and a long player name takes two lines on its tile instead of
+  being cut.
 - **Without Audio Recording, a chat tone no longer pauses your player.**
   With AntiDot mode off and Audio Recording not allowed, AutoHush judges
   apps as AntiDot mode does, and now waits as long as it does too: 3
@@ -104,10 +115,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
   and Advanced's switches, each under its section's name, with a few words
-  on what it does and its symbol in blue while it's on. A small arrow under
-  Detection unfolds its ways and timings, and one under Fades its lengths.
-  Folded at first, each stays as you left it while AutoHush runs. Settings → Detection has a "Modes" heading over
-  AntiDot mode, as the menu does.
+  on what it does and its symbol in the accent color while it's on. A small
+  arrow under Detection unfolds its ways and timings, and one under Fades
+  its lengths. Folded at first, each stays as you left it while AutoHush
+  runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
+  the menu does.
 - **Level the music** (Settings → Advanced, off by default). When the apps
   your player was paused for were quieter than it, it resumes with the
   Mac's volume lowered to match (10 dB at most), until the next pause, when
@@ -133,22 +145,24 @@ This project follows [Semantic Versioning](https://semver.org/).
   AppleScript, its playback menu, its page's Play/Pause button (for apps
   built with Electron, Chromium or Flutter too, such as Deezer's app) and
   its row in the menu bar's Now Playing panel, with its window in view,
-  covered, on another desktop, in full screen, minimized and hidden. A
-  window says first what the check does: for about 3 minutes it moves the
-  app's window, blocks the mouse and keyboard and dims the screen, except a
-  small panel with its progress and **Stop** (or Escape). The app is muted
-  meanwhile: on its own with Audio Recording outside AntiDot mode, else with
-  the Mac's sound. Everything is put
-  back as it was, and a player AutoHush paused stays paused until the check
-  ends (**Paused while a check runs**). You then choose how AutoHush pauses and plays it among the ways
-  that worked (the recommended one is chosen unless you pick another), and
-  the app is listed under Other Apps, marked **Checked by you**. The Now
-  Playing panel works with Now Playing hidden in the menu bar too:
-  AutoHush shows it for the moment of a press, then puts your setting back
-  (unless you changed it meanwhile), even after a quit mid-press; if it
-  can't, the check and the menu say where to show it, with a button that
-  opens it, and **Check Again** checks once you have. An app whose row there never shows whether it
-  plays (Qobuz) is paused and played through it all the same, judged by
+  covered, on another desktop, covered there, in full screen, minimized and
+  hidden. A window says first what the check does: for about 3 minutes it
+  moves the app's window, blocks the mouse and keyboard and dims the
+  screen, except a small panel with its progress and **Stop** (or Escape).
+  The app is muted meanwhile: on its own with Audio Recording outside
+  AntiDot mode, else with the Mac's sound, as the window and the check's
+  step say. Everything is put back as it was, and a player AutoHush paused
+  stays paused until the check ends (**Paused while a check runs**). Once
+  it has run, **Change…** asks before forgetting what it found. You then
+  choose how AutoHush pauses and plays it among the ways that worked (the
+  recommended one is chosen unless you pick another), and the app is listed
+  under Other Apps, marked **Checked by you**. The Now Playing panel works
+  with Now Playing hidden in the menu bar too: AutoHush shows it for the
+  moment of a press, then puts your setting back (unless you changed it
+  meanwhile), even after a quit mid-press; if it can't, the check and the
+  menu say where to show it, with a button that opens it, and **Check
+  Again** checks once you have. An app whose row there never shows whether
+  it plays (Qobuz) is paused and played through it all the same, judged by
   half a second of its sound just before each press (so not in AntiDot
   mode). The **×** on its tile in Settings → General or the welcome window
   (also with the keyboard's focus there), a right-click on the tile, or its
@@ -183,14 +197,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   in System Settings → Focus, choose the Focus, then **Add Filter…** under
   Focus Filters and **AutoHush**. When the Focus ends, Auto-Pause goes back
   to how it was, unless you changed it meanwhile.
-- **More of the Mac's keyboard shortcuts.** ⌘M minimizes the welcome, Add
-  a Web App and learning windows, as it does Settings. Return presses the
-  blue button of the step to do now (It's Playing, It's Paused, Add to
-  Dock, Try Again). Edit → Find… (⌘F) opens Settings → Apps' search while
-  it lists apps, and puts the cursor in the welcome window's player search
-  when it has one and in Add an App's list of apps; elsewhere it's dimmed.
-  In Settings → Apps, Tab reaches the apps' rows (with keyboard navigation
-  on) and Space selects one, so Remove works from the keyboard too.
+- **More of the Mac's keyboard shortcuts.** ⌘M minimizes the welcome, Add a
+  Web App and learning windows, as it does Settings. Return presses the
+  main button of the step to do now (It's Playing, It's Paused, Add to
+  Dock, Try Again). Edit → Find… (⌘F) opens Settings → Sound Sources'
+  search while it lists apps, and puts the cursor in the welcome window's
+  player search when it has one and in Add an App's list of apps; elsewhere
+  it's dimmed. In Settings → Sound Sources, Tab reaches the apps' rows
+  (with keyboard navigation on) and Space selects one, so Remove works from
+  the keyboard too.
 - **The menu bar icon shows when an update waits.** A small disc with a
   down arrow sits in the icon's corner, in the room around it, from when
   AutoHush finds an update until it's installed. VoiceOver adds "update
@@ -209,6 +224,29 @@ This project follows [Semantic Versioning](https://semver.org/).
   streams them live (`log stream --level debug`), and keeps none.
 
 ### Fixed
+
+- **Level the music no longer leaves the Mac's volume lowered** after
+  AutoHush quits unexpectedly, or after a resume the player never takes:
+  the next launch, or the resume giving up, puts it back.
+- **Add an App's check leaves the Mac's sound as you set it.** Muted or
+  unmuted by you during the check, it stays so; an output unplugged during
+  it is unmuted at the next launch within the hour, once it's back.
+
+- **Add an App's check helper no longer deletes other apps' logs.** Run
+  from Terminal with `--logs` on a folder of other logs, it kept the
+  newest 50 `.log` files of any kind and deleted the rest. Now it trims
+  only its own, to the Trash.
+- **A player's error message no longer reaches the log or Copy Report.**
+  Some apps' messages name the document that was playing; only the
+  error's number is kept now.
+- **An Electron app checked again keeps its page.** Using it right after a
+  new check could leave its accessibility switch off, so its presses
+  failed until it was reopened.
+- **An ignored app installed later shows its icon** without reopening
+  AutoHush.
+- **The menu reads AntiDot mode as it changes.** Switched in the menu's own
+  settings, the players under Media player follow at once, and the fade
+  lengths are greyed out for a player AutoHush can't fade.
 
 - **Settings and the logs window keep their size and place on macOS 14
   and 15.** They opened at their first size and place at every launch.
@@ -325,8 +363,8 @@ This project follows [Semantic Versioning](https://semver.org/).
     Retry; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
-  - Diagnostics' headings and the card's player button say whether their
-    part is expanded or collapsed, and "Copied" is said after Copy Report;
+  - Diagnostics' headings and the Media player row say whether their part
+    is expanded or collapsed, and "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer
     read on their own.
 

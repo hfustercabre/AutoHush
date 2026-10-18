@@ -90,7 +90,7 @@ extension AppDelegate {
                 guard model.attempt == attempt, !Task.isCancelled else { return }
                 guard self.player?.bundleID == made.bundleID else {
                     guard self.player?.bundleID == before else { return } // the user chose another one
-                    self.logger.error("\(made.name, privacy: .public) was made but can't be chosen: it isn't found as installed")
+                    self.logger.error("\(made.name, privacy: .public) was made but can’t be chosen: it isn’t found as installed")
                     model.fail(.notFound(name: made.name))
                     // Picked up by itself once it's listed (`pickUpListedWebApp`).
                     self.webAppAwaitingListing = (made.bundleID, address)
@@ -111,7 +111,7 @@ extension AppDelegate {
             } catch {
                 guard model.attempt == attempt else { return }
                 let failure = error as? WebAppMakingError ?? .browserFailed(error.localizedDescription)
-                self?.logger.error("Couldn't add a web app: \(failure.kind, privacy: .public) (\(String(describing: failure), privacy: .private))")
+                self?.logger.error("Couldn’t add a web app: \(failure.kind, privacy: .public) (\(String(describing: failure), privacy: .private))")
                 model.fail(failure)
             }
         }

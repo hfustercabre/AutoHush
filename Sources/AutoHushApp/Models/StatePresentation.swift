@@ -223,7 +223,7 @@ extension ControlFailure {
         case .nowPlayingHidden:
             String(localized: "AutoHush pauses \(player) with Now Playing in the menu bar, which is hidden: show it in \(Self.nowPlayingSettings).",
                    comment: "Why the media player (added with Add an App, paused through the menu bar's Now Playing panel) couldn't be controlled; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”")
-        case .appleEventError(let number, _):
+        case .appleEventError(let number):
             String(localized: "\(player) answered with an error (\(String(number))).",
                    comment: "Why the media player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")
         }

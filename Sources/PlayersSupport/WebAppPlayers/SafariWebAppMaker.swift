@@ -129,7 +129,7 @@ package final class SafariWebAppMaker: WebAppMaking {
                 await sleep(Self.pollInterval)
                 try Task.checkCancellation()
             }
-            logger.notice("Safari's Add to Dock closed without a new web app: waiting for Add to Dock again")
+            logger.notice("Safari’s Add to Dock closed without a new web app: waiting for Add to Dock again")
             onStep(.notAdded)
         }
     }
@@ -203,7 +203,7 @@ package protocol SafariDriving: Sendable {
 /// `AddToDockFormNameTextField`, `AddToDockFormURLTextField`,
 /// `AddToDockFormAddButton`, `AddToDockFormCancelButton`.
 package struct SafariUI: SafariDriving {
-    static let bundleID = "com.apple.Safari"
+    package static let bundleID = "com.apple.Safari"
     /// The page gets at least this long, so the menu reflects the new tab.
     static let settleTime: TimeInterval = 1.5
     static let pageTimeout: TimeInterval = 30
@@ -272,7 +272,7 @@ package struct SafariUI: SafariDriving {
 
     package func addToDock(_ url: URL) async -> AddToDockResult {
         guard NSRunningApplication.running(Self.bundleID) != nil else {
-            logger.error("Add to Dock: Safari isn't running")
+            logger.error("Add to Dock: Safari isn’t running")
             return .unavailable
         }
         // The user's click on Add to Dock put AutoHush in front: Safari shows
@@ -284,11 +284,11 @@ package struct SafariUI: SafariDriving {
             return AXUIElementPerformAction(item, kAXPressAction as CFString)
         }
         guard let pressed else {
-            logger.error("Add to Dock: Safari's menu item wasn't found")
+            logger.error("Add to Dock: Safari’s menu item wasn’t found")
             return .unavailable
         }
         guard pressed == .success else {
-            logger.error("Add to Dock: pressing Safari's menu item failed (\(pressed.rawValue, privacy: .public))")
+            logger.error("Add to Dock: pressing Safari’s menu item failed (\(pressed.rawValue, privacy: .public))")
             return .unavailable
         }
         // The dialog, once it shows, with its address set back to the one
@@ -309,7 +309,7 @@ package struct SafariUI: SafariDriving {
             if !shows { try? await Task.sleep(for: .milliseconds(200)) }
         }
         guard shows else {
-            logger.error("Add to Dock: Safari's dialog didn't come within \(Int(Self.dialogTimeout), privacy: .public) s")
+            logger.error("Add to Dock: Safari’s dialog didn’t come within \(Int(Self.dialogTimeout), privacy: .public) s")
             return .unavailable
         }
         // The user names the web app and clicks Add (or Cancel) there.
@@ -343,8 +343,8 @@ package struct SafariUI: SafariDriving {
             return true
         }
         switch closed {
-        case nil: logger.notice("The tab Add a Web App opened isn't in front any more: left open")
-        case false?: logger.error("Safari's Close Tab wasn't found: the tab Add a Web App opened was left open")
+        case nil: logger.notice("The tab Add a Web App opened isn’t in front any more: left open")
+        case false?: logger.error("Safari’s Close Tab wasn’t found: the tab Add a Web App opened was left open")
         case true?: break
         }
     }

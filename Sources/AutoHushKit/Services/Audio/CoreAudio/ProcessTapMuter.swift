@@ -62,7 +62,7 @@ package final class ProcessTapMuter: AudioMuting {
         do {
             tap = try ProcessTap(processObjectIDs: processes, muted: true, ioQueue: ioQueue)
         } catch {
-            logger.error("[mute] couldn't mute pid \(appPID, privacy: .public): \(error)")
+            logger.error("[mute] couldn’t mute pid \(appPID, privacy: .public): \(error)")
             return false
         }
         let kept = taps.withLock { taps in
@@ -111,7 +111,7 @@ package final class ProcessTapMuter: AudioMuting {
                 tap = try ProcessTap(processObjectIDs: Array(now), muted: true, ioQueue: ioQueue)
             } catch {
                 failures.withLock { $0 = true }
-                logger.error("[mute] couldn't mute pid \(pid, privacy: .public)'s new audio processes: \(error)")
+                logger.error("[mute] couldn’t mute pid \(pid, privacy: .public)’s new audio processes: \(error)")
                 continue
             }
             // Only while it's still that mute: unmuted (or muted afresh) meanwhile, the new tap goes.

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import AutoHushTestSupport
 @testable import CheckedPlayers
 
 @Suite("DefaultsPlayerSetupStore")
@@ -10,9 +11,9 @@ struct PlayerSetupStoreTests {
 
     /// A store in a suite of its own, removed after.
     private func withStore(_ body: (DefaultsPlayerSetupStore, UserDefaults) throws -> Void) rethrows {
-        let suite = "AutoHush.PlayerSetupStoreTests.\(UUID().uuidString)"
-        defer { UserDefaults().removePersistentDomain(forName: suite) }
-        try body(DefaultsPlayerSetupStore(suiteName: suite), UserDefaults(suiteName: suite)!)
+        let suite = TestDefaults("AutoHush.PlayerSetupStoreTests")
+        defer { suite.remove() }
+        try body(DefaultsPlayerSetupStore(suiteName: suite.suiteName), suite.defaults)
     }
 
     @Test("setups are kept by bundle ID, read by name; forgotten, gone")

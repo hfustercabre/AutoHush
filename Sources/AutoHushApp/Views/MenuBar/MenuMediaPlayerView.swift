@@ -17,10 +17,10 @@ struct MenuMediaPlayerView: View {
                     Image(systemName: "music.note")
                         .frame(width: 18)
                         .accessibilityHidden(true)
-                    Text("Media player", comment: "The menu's card and Settings → General: label of the chosen media player")
+                    Text("Media player", comment: "The menu: the row under the card with the chosen media player, which unfolds the players")
                     Spacer(minLength: 6)
                     if status.chosenPlayer != nil { playerIcon }
-                    Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu's card, on the button that unfolds the media players, while none is chosen"))
+                    Text(verbatim: status.chosenPlayer?.name ?? String(localized: "Choose…", comment: "The menu: on the Media player row, which unfolds the media players, while none is chosen"))
                         .foregroundStyle(.appSecondary)
                         .lineLimit(1)
                     Image(systemName: model.isChoosingPlayer ? "chevron.up" : "chevron.down")

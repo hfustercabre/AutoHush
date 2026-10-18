@@ -2,16 +2,17 @@ import AppKit
 import ApplicationServices
 import AutoHushKit
 
-/// The real panel: its menu bar item found in the menu bar's own windows
-/// (macOS 26 on; else by hit-testing along it), its rows read from Control
-/// Center's windows (macOS 14's laid out as `flatRows` reads them). Player Check opens, reads and closes it with the same
-/// calls.
+/// The real panel: its menu bar item found in the windows of the app that
+/// draws the menu bar's items (MenuBarAgent or Control Center, both tried on
+/// every macOS), else by hit-testing along the menu bar; its rows read from
+/// Control Center's windows (macOS 14's laid out as `flatRows` reads them).
+/// Player Check opens, reads and closes it with the same calls.
 package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// A row as the open panel shows it, with its Play/Pause.
     package typealias ShownRow = (row: PanelRow, button: AXUIElement)
 
-    /// How long a hit-tested point waits for an answer: macOS waits 6 s for
-    /// an app that doesn't answer otherwise.
+    /// How long a hit-tested point waits for an answer: macOS waits 6 s
+    /// otherwise.
     static let timeout: Float = 0.25
     /// How long MenuBarAgent and Control Center, which draw the menu bar's
     /// items and the panel, get to answer each read.
@@ -45,14 +46,18 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     }
 
     static let identifier = "com.apple.menuextra.now-playing"
+    /// The apps that may draw the menu bar's items, tried in this order on
+    /// every macOS: MenuBarAgent (macOS 27's, measured 2026-10-15), then
+    /// Control Center.
+    static let itemApps = ["com.apple.MenuBarAgent", "com.apple.controlcenter"]
 
-    /// The item in its own window: MenuBarAgent (macOS 27, measured
-    /// 2026-10-15; Control Center's before) keeps each menu bar item in a
-    /// window, named by its identifier there (its list of the menu bar's
-    /// items doesn't name them), wherever it is and whatever covers it: a
-    /// wide app's menus by the notch, another app's window over it.
+    /// The item in its own window: the app that draws the menu bar's items
+    /// keeps each in a window (MenuBarAgent does), named by its identifier
+    /// there (its list of the menu bar's items doesn't name them), wherever
+    /// it is and whatever covers it: a wide app's menus by the notch,
+    /// another app's window over it.
     package static func listedItem() -> AXUIElement? {
-        for id in ["com.apple.MenuBarAgent", "com.apple.controlcenter"] {
+        for id in itemApps {
             guard let app = NSRunningApplication.running(id) else { continue }
             let element = AXUIElementCreateApplication(app.processIdentifier)
             AXUIElementSetMessagingTimeout(element, ownTimeout)
@@ -75,22 +80,28 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
 
     /// The item hit-tested along the primary display's menu bar (hit-test
     /// coordinates start at its top left; the main display, read off the
-    /// main thread through CoreGraphics, which AppKit's screens aren't): the
-    /// topmost thing there, so not while something covers it. A point over
-    /// the front app's menus asks that app, so each waits `timeout` at most:
-    /// set on the system-wide element, that's this process's own timeout for
-    /// every element without one, so it's put back to macOS's default after.
+    /// main thread through CoreGraphics, which AppKit's screens aren't), in
+    /// the apps that may draw it (`itemApps`) only, never in the front app
+    /// (its menus) or another app (its item), which may not answer. Each
+    /// point waits `timeout` at most, set on each app's element: set on the
+    /// system-wide element, it would be every element's in this process
+    /// while the sweep runs.
     package static func hitTestedItem() -> AXUIElement? {
-        let system = AXUIElementCreateSystemWide()
-        AXUIElementSetMessagingTimeout(system, timeout)
-        defer { AXUIElementSetMessagingTimeout(system, 0) }
+        let apps = itemApps.compactMap { NSRunningApplication.running($0) }.map { app in
+            let element = AXUIElementCreateApplication(app.processIdentifier)
+            AXUIElementSetMessagingTimeout(element, timeout)
+            return element
+        }
+        guard !apps.isEmpty else { return nil }
         let width = Float(CGDisplayBounds(CGMainDisplayID()).width)
         var x = width - 20
         while x > width / 3 {
-            var hit: AXUIElement?
-            if AXUIElementCopyElementAtPosition(system, x, 12, &hit) == .success, let hit {
-                AXUIElementSetMessagingTimeout(hit, timeout)
-                if hit.string(kAXIdentifierAttribute) == identifier { return hit }
+            for app in apps {
+                var hit: AXUIElement?
+                if AXUIElementCopyElementAtPosition(app, x, 12, &hit) == .success, let hit {
+                    AXUIElementSetMessagingTimeout(hit, timeout)
+                    if hit.string(kAXIdentifierAttribute) == identifier { return hit }
+                }
             }
             x -= 6
         }

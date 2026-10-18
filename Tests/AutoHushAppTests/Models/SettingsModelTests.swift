@@ -86,6 +86,21 @@ struct SettingsModelTests {
         #expect(DetectionSettingsView.unavailableNote("Muted") == "Unavailable with Muted: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.")
     }
 
+    @Test("a switch that can't be changed shows off, whatever is saved, and shows the saved value again once it can")
+    func unavailableSwitchShowsOff() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.setTimings(TimingSettings(fadesEnabled: true, levelsMusic: true))
+        #expect(SettingsSwitch.fades.isOn(model) && SettingsSwitch.levelsMusic.isOn(model))
+        model.playerCanFade = false
+        model.setAntiDotMode(true)
+        #expect(SettingsSwitch.fades.isUnavailable(model) && !SettingsSwitch.fades.isOn(model))
+        #expect(SettingsSwitch.levelsMusic.isUnavailable(model) && !SettingsSwitch.levelsMusic.isOn(model))
+        #expect(model.timings.fadesEnabled && model.timings.levelsMusic) // kept
+        model.playerCanFade = true
+        model.setAntiDotMode(false)
+        #expect(SettingsSwitch.fades.isOn(model) && SettingsSwitch.levelsMusic.isOn(model))
+    }
+
     @Test("reflects the login item's state")
     func reflectsLaunchAtLogin() {
         #expect(makeModel(MockLaunchAtLoginController(isEnabled: true)).launchAtLoginEnabled)
@@ -497,7 +512,7 @@ struct SettingsWindowControllerTests {
         #expect(window.styleMask.contains(.resizable))
         // At least 715 × 560, wider when a choice needs it in the app's language.
         #expect(window.contentMinSize == SettingsWindowController.minimumSize)
-        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 560)
+        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 600)
         #expect(window.contentMaxSize == SettingsWindowController.maximumSize)
         #expect(window.contentMaxSize.width >= 875 && window.contentMaxSize.height == 900)
         let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)

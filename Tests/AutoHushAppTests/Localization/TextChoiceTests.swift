@@ -73,7 +73,10 @@ struct TextChoiceTests {
                     Row("both", AddAppText.withoutWarning([.audioRecording, .automation], app: app),
                         AddAppText.withoutWarning([.automation, .audioRecording, .accessibility], app: app), namesApp: true),
                     Row("Audio Recording", AddAppText.withoutWarning([.audioRecording], app: app), namesApp: true),
-                    Row("Automation", AddAppText.withoutWarning([.automation], app: app), namesApp: true),
+                    Row("Automation", AddAppText.withoutWarning([.automation], app: app),
+                        AddAppText.withoutWarning([.automation], app: app, macMuted: true), namesApp: true),
+                    Row("both, the Mac muted", AddAppText.withoutWarning([.audioRecording, .automation], app: app, macMuted: true), namesApp: true),
+                    Row("Audio Recording, the Mac muted", AddAppText.withoutWarning([.audioRecording], app: app, macMuted: true), namesApp: true),
                 ]
             case .allowedSummary:
                 return [
@@ -94,7 +97,9 @@ struct TextChoiceTests {
             case .playTitle:
                 return [Row("no app yet", AddAppText.playTitle(nil)), Row("the app", AddAppText.playTitle(app), namesApp: true)]
             case .checkNote:
-                return [Row("no app yet", AddAppText.checkNote(nil)), Row("the app", AddAppText.checkNote(app), namesApp: true)]
+                return [Row("no app yet", AddAppText.checkNote(nil)), Row("the app", AddAppText.checkNote(app), namesApp: true),
+                        Row("the Mac muted", AddAppText.checkNoteMacMuted(app), namesApp: true),
+                        Row("nothing muted", AddAppText.checkNoteHeard(app), namesApp: true)]
             case .wayTitle:
                 return CheckResult.WayKind.allCases.map { Row("\($0)", AddAppText.wayTitle($0)) }
             case .wayNote:
@@ -197,7 +202,7 @@ struct TextChoiceTests {
             case .controlFailure:
                 let failures: [ControlFailure] = [.menuItemNotFound, .stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed,
                                                   .pressIgnored, .muteUnavailable, .hearingUnavailable, .nowPlayingHidden,
-                                                  .appleEventError(-1708, message: nil)]
+                                                  .appleEventError(-1708)]
                 return failures.map { Row("\($0)", $0.text(player: app), namesApp: true) }
             case .controlError:
                 func text(_ error: MusicPlayerError) -> String { ControlError(error, player: app).text }

@@ -174,7 +174,7 @@ struct AppsSettingsView: View {
             )) {
                 Text(verbatim: row.source.name)
             }
-            .toggleStyle(PillToggleStyle(width: 30, height: 18))
+            .toggleStyle(PillToggleStyle())
         }
         .background {
             if row.id == model.selectedAppID {

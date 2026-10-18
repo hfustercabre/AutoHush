@@ -1,15 +1,16 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 import CheckedPlayers
 
 @Suite("KeptCheck")
 struct KeptCheckTests {
     @Test("a finished check is kept a day at most (then forgotten once found), with how its Reopen step went, and forgotten; one an earlier build kept still opens")
     func keeping() throws {
-        let suite = "KeptCheckTests-\(UUID().uuidString)"
-        defer { UserDefaults().removePersistentDomain(forName: suite) }
-        let store = KeptCheckStore(defaults: UserDefaults(suiteName: suite)!)
+        let suite = TestDefaults("KeptCheckTests")
+        defer { suite.remove() }
+        let store = KeptCheckStore(defaults: suite.defaults)
         let app = CheckableApp(bundleID: "com.example.player", name: "Player", url: URL(filePath: "/Applications/Player.app"), browserName: "Brave Browser")
         let kept = KeptCheck(app: app, result: CheckResult(ways: [], setup: nil), at: Date(timeIntervalSince1970: 1000),
                              needsReopen: true, reopenOutcome: .skipped)
@@ -32,9 +33,9 @@ struct KeptCheckTests {
 
     @Test("the players reopened always, by bundle ID")
     func reopenChoices() {
-        let suite = "KeptCheckTests-\(UUID().uuidString)"
-        defer { UserDefaults().removePersistentDomain(forName: suite) }
-        let defaults = UserDefaults(suiteName: suite)!
+        let suite = TestDefaults("KeptCheckTests")
+        defer { suite.remove() }
+        let defaults = suite.defaults
         #expect(!ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))
         ReopenChoices.setReopensAlways("com.deezer.deezer-desktop", defaults: defaults)
         #expect(ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))

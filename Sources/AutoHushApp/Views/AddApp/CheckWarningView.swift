@@ -8,10 +8,10 @@ import CheckedPlayers
 /// screen dims (but for the panel), how long it takes; Start the Check.
 struct CheckWarningView: View {
     let app: CheckableApp
-    /// The app is muted during the check: by tapping its sound (Audio
-    /// Recording allowed, AntiDot mode off), else with the Mac's output; an
-    /// output with no mute control can't be, and the user hears it.
-    var muted = true
+    /// What's muted during the check: the app (its sound tapped), else the
+    /// Mac's output; an output with no mute control can't be, and the user
+    /// hears the app.
+    var muting = AddAppModel.CheckMuting.app
     let start: () -> Void
     let cancel: () -> Void
 
@@ -48,10 +48,10 @@ struct CheckWarningView: View {
                 }
                 HStack(spacing: 14) {
                     Label(AddAppText.aboutThreeMinutes, systemImage: "clock")
-                    if muted {
-                        Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
-                    } else {
-                        Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
+                    switch muting {
+                    case .app: Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
+                    case .mac: Label(AddAppText.macMutedMeanwhile, systemImage: "speaker.slash")
+                    case .none: Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
                     }
                     Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
                 }
@@ -68,7 +68,7 @@ struct CheckWarningView: View {
                 Button(action: start) {
                     Text(verbatim: AddAppText.startCheck).font(.appBody.weight(.semibold)).padding(.horizontal, 6)
                 }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true, padded: true))
+                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
                 .keyboardShortcut(.defaultAction)
             }
         }

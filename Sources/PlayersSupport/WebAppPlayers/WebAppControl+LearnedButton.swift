@@ -86,7 +86,7 @@ extension WebAppControl {
         let since = missingSince ?? now
         missingSince = since
         guard now.timeIntervalSince(since) >= Self.missingBeforeLearning else { return }
-        logger.notice("\(self.name, privacy: .public)'s Play/Pause button can't be found: learning it again")
+        logger.notice("\(self.name, privacy: .public)’s Play/Pause button can’t be found: learning it again")
         learner = PlayPauseLearner()
         status.send(.learning(hasPlayed: false))
     }

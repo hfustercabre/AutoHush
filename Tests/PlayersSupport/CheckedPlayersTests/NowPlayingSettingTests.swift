@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import AutoHushTestSupport
 @testable import CheckedPlayers
 
 @Suite("NowPlayingSetting")
@@ -18,9 +19,9 @@ struct NowPlayingSettingTests {
 
     /// Defaults in a suite of their own, removed after.
     private func withDefaults(_ body: (UserDefaults) -> Void) {
-        let suite = "AutoHush.NowPlayingSettingTests.\(UUID().uuidString)"
-        defer { UserDefaults().removePersistentDomain(forName: suite) }
-        body(UserDefaults(suiteName: suite)!)
+        let suite = TestDefaults("AutoHush.NowPlayingSettingTests")
+        defer { suite.remove() }
+        body(suite.defaults)
     }
 
     @Test("shown for a press, then put back, unless the user changed it meanwhile; not shown within a second, no press; the record goes either way")
