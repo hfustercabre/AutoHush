@@ -165,13 +165,17 @@ package struct ToolRun: Sendable {
             output.withLock { $0 = data }
             ended.leave()
         }
-        ended.notify(queue: .global()) {
+        // Its end and its timeout are told from a queue of its own, never
+        // the global one, whose few threads (one per core) callers may all
+        // be holding while they wait for it: a deadlock on a 3-core Mac.
+        let telling = DispatchQueue(label: "AutoHush.ToolRun.end")
+        ended.notify(queue: telling) {
             guard running.tellsEnd() else { return }
             onEnd(Result(status: process.terminationStatus, bySignal: process.terminationReason == .uncaughtSignal,
                          output: output.withLock { $0 }))
         }
         if let timeout {
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
+            telling.asyncAfter(deadline: .now() + timeout) {
                 guard running.tellsEnd() else { return }
                 running.stop()
                 onEnd(Result(status: -1, timedOut: true))
