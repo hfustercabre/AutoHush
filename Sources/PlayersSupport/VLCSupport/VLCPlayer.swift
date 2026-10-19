@@ -11,7 +11,7 @@ import ScriptablePlayers
 ///   no item, so it's stopped, otherwise paused;
 /// - `audio volume` goes from 0 to 512 (256 is 100%);
 /// - it announces nothing, so its state is read about once a second.
-package actor VLCPlayer: MusicPlayer {
+package actor VLCPlayer: PolledMusicPlayer {
     package static let appBundleID = "org.videolan.vlc"
 
     package enum Code {
@@ -114,13 +114,6 @@ package actor VLCPlayer: MusicPlayer {
     package static func vlcVolume(from volume: Int) -> Int {
         Int((Double(volume) * Double(maximumVolume) / 100).rounded())
     }
-
-    @MainActor
-    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange)
-    }
-
-    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     /// Sends Play/Pause if VLC is in `state`; does nothing if it's already in
     /// the other one. Stopped (no item), it has nothing to play.

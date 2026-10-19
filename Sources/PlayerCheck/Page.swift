@@ -37,15 +37,12 @@ func webAreas(in window: AXUIElement) -> [AXUIElement] { AccessibilityWebPage.we
 @MainActor func pageButtons(pid: pid_t) -> [FoundButton]? {
     let (windows, onThisDesktop) = appWindows(of: pid)
     guard !windows.isEmpty else { return nil }
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 1)
-    let hidden = app.value(kAXHiddenAttribute) as? Bool == true
+    let hidden = AXUIElement.application(pid, timeout: 1).value(kAXHiddenAttribute) as? Bool == true
     return windows.flatMap { window -> [FoundButton] in
-        AXUIElementSetMessagingTimeout(window, 1)
         guard let windowFrame = window.frame else { return [] }
         let onScreen = isOnScreen(window, onThisDesktop: onThisDesktop, appHidden: hidden)
+        // Each element waiting AutoHush's 0.5 s (`AccessibilityWebPage.timeout`).
         return AccessibilityWebPage.pageElements(in: window, access: pageAccess).map { element in
-            AXUIElementSetMessagingTimeout(element, 0.5)
             let frame = element.frame
             return FoundButton(element: element, label: label(of: element),
                                fromBottom: frame.map { Double(windowFrame.maxY - $0.midY) },
@@ -56,45 +53,31 @@ func webAreas(in window: AXUIElement) -> [AXUIElement] { AccessibilityWebPage.we
     }
 }
 
-/// The player's bar around the button: its nearest parent (three levels up
-/// within the page, each read six deep, 500 elements at most) holding a
-/// slider or a progress bar, as a player's bar has. Having one is what
-/// AutoHush's learning weighs (`ButtonStanding.isWithPlayerControls`).
-func playerBar(of element: AXUIElement) -> AXUIElement? {
-    var reads = 500
-    func holdsSlider(_ element: AXUIElement, depth: Int) -> Bool {
-        guard reads > 0 else { return false }
-        reads -= 1
-        let role = element.text(kAXRoleAttribute)
-        if role == kAXSliderRole || role == kAXProgressIndicatorRole { return true }
-        return depth < 6 && element.children.contains { holdsSlider($0, depth: depth + 1) }
-    }
-    var node = element
-    for _ in 0..<3 {
-        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
-        node = parent as! AXUIElement
-        if node.text(kAXRoleAttribute) == "AXWebArea" { return nil }
-        if holdsSlider(node, depth: 0) { return node }
-    }
-    return nil
-}
+/// The player's bar around the button, found as AutoHush's learning finds
+/// it (`AccessibilityWebPage.playerBar(around:)`): its nearest parent (three
+/// levels up within the page, each read six deep, 500 elements at most)
+/// holding a slider or a progress bar, as a player's bar has. Having one is
+/// what AutoHush's learning weighs (`ButtonStanding.isWithPlayerControls`).
+func playerBar(of element: AXUIElement) -> AXUIElement? { AccessibilityWebPage.playerBar(around: element) }
 
 /// Whether nothing on its page sits over the button's middle: macOS's hit
 /// test there (within the app) finds the button or something inside it.
 /// Song tiles scrolled under a player bar (an Electron app's, a web app's) are in
 /// the window, lower than the bar's own button, but covered. One hit test:
-/// `playerButton` asks Chromium's approximate misses again.
+/// `playerButton` asks Chromium's approximate misses again. The hit test
+/// waits 1 s, as the app's other reads; what it finds and its parents, 0.5 s,
+/// as the page's elements (`AccessibilityWebPage.timeout`).
 func isUncovered(_ button: FoundButton, pid: pid_t) -> Bool {
     // Off screen (another desktop, hidden, minimized): whatever is there would answer.
     guard button.onScreen else { return true }
     guard let frame = button.element.frame else { return false }
     var hit: AXUIElement?
-    guard AXUIElementCopyElementAtPosition(AXUIElementCreateApplication(pid), Float(frame.midX), Float(frame.midY), &hit) == .success,
-          var node = hit else { return true } // can't tell: keep it
+    guard AXUIElementCopyElementAtPosition(AXUIElement.application(pid, timeout: 1), Float(frame.midX), Float(frame.midY), &hit) == .success,
+          var node = hit?.waiting(AccessibilityWebPage.timeout) else { return true } // can't tell: keep it
     for _ in 0..<8 {
         if CFEqual(node, button.element) { return true }
-        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return false }
-        node = parent as! AXUIElement
+        guard let parent = node.element(kAXParentAttribute, timeout: AccessibilityWebPage.timeout) else { return false }
+        node = parent
     }
     return false
 }

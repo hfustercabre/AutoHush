@@ -4,9 +4,9 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-/// One test at a time: each has its own notification centers (another
-/// desktop, another window becoming key), but they share the menu bar.
-@Suite("StatusMenuController", .serialized)
+/// Each test has its own menu bar item and notification centers (another
+/// desktop, another window becoming key): they run at once.
+@Suite("StatusMenuController", .timeLimit(.minutes(1)))
 @MainActor
 struct StatusMenuControllerTests {
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
@@ -116,8 +116,7 @@ struct StatusMenuControllerTests {
         #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.listedSources == [chrome, vlc])
 
-        let withSettings = makeController(settingsModel: SettingsModel(settings: settings, updates: updates, actions: actions,
-                                                                        launchAtLoginController: MockLaunchAtLoginController(isEnabled: false)))
+        let withSettings = makeController(settingsModel: SettingsModel.forTests(actions: actions, updates: updates, settings: settings))
         defer { withSettings.remove() }
         withSettings.status = readyStatus()
         reopen(withSettings)
@@ -592,6 +591,14 @@ struct StatusMenuControllerTests {
         #expect(MenuIgnoredAppsView.names(of: names) == expected)
     }
 
+    @Test("Ignored Apps says what ignoring does in the singular for one app, in the plural for more, and what it would do for none")
+    func ignoredAppsSubtitle() {
+        #expect(MenuIgnoredAppsView.subtitle(count: 0) == "Apps you ignore don’t pause your player.")
+        #expect(MenuIgnoredAppsView.subtitle(count: 1) == "It doesn’t pause your player.")
+        #expect(MenuIgnoredAppsView.subtitle(count: 2) == "They don’t pause your player.")
+        #expect(MenuIgnoredAppsView.subtitle(count: 5) == "They don’t pause your player.")
+    }
+
     @Test("resting the pointer on a row opens its side window; passing over it doesn't; another part closes it after a moment, its own part doesn't; a click opens it and never closes it")
     func sideWindowsOnHover() async {
         let sut = makeController()
@@ -664,12 +671,85 @@ struct StatusMenuControllerTests {
         #expect(!sut.isMenuOpen)
     }
 
+    // MARK: - Opening and the keyboard
+
+    @Test("the click that closed the menu from outside, over its menu bar item, doesn't open it again as it reaches the item; one 0.4 s later does, as does one after a click elsewhere")
+    func clickOnItemAfterClosing() {
+        let sut = makeController()
+        defer { sut.remove() }
+        let clock = ManualClock(start: Date())
+        sut.now = { clock.now }
+        let item = CGRect(x: 1200, y: 870, width: 30, height: 24)
+        sut.itemFrame = { item }
+        let overItem = CGPoint(x: item.midX, y: item.midY)
+
+        sut.open(showsPanel: false)
+        sut.pointerLocation = { overItem }
+        sut.closeForClickElsewhere() // the click goes down over the item: it closes the menu first
+        #expect(!sut.isMenuOpen)
+        clock.advance(by: 0.2)
+        sut.statusItemClicked() // the same click, reaching the item
+        #expect(!sut.isMenuOpen)
+
+        sut.open(showsPanel: false)
+        sut.closeForClickElsewhere()
+        clock.advance(by: 0.5)
+        sut.statusItemClicked() // another click
+        #expect(sut.isMenuOpen)
+        sut.close()
+
+        sut.open(showsPanel: false)
+        sut.pointerLocation = { CGPoint(x: item.minX - 200, y: item.midY) }
+        sut.closeForClickElsewhere() // elsewhere
+        clock.advance(by: 0.1)
+        sut.statusItemClicked()
+        #expect(sut.isMenuOpen)
+    }
+
+    @Test("a key only the players' search can compose gives it the keyboard: the side window becomes key, its search takes the focus, and the key reaches it, once")
+    func searchTakesKeyboard() async throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.playerOptions = (1...PlayerOption.searchThreshold).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/Player \($0).app"))
+        }
+        status.chosenPlayerID = status.playerOptions[0].bundleID
+        sut.status = status
+        // The key is sent again once the search has the focus, which SwiftUI gives it in its next update.
+        // Another suite's window can take the key from this process's windows meanwhile, and SwiftUI drops
+        // a focus asked for then: the side window is made key and the focus asked for again, as a next key would.
+        sut.pause = { _ in
+            await TestWait.until {
+                await MainActor.run {
+                    if let side = sut.sidePanel, !side.isKeyWindow {
+                        side.makeKey()
+                        sut.model.searchFocus += 1
+                    }
+                    return sut.sidePanel?.firstResponder is NSTextView
+                }
+            }
+        }
+        sut.open() // on screen
+        sut.perform(.openSide(.players))
+        let side = try #require(sut.sidePanel)
+        #expect(side.isVisible && sut.model.players.showsSearch)
+        let focus = sut.model.searchFocus
+        let key = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                                                windowNumber: side.windowNumber, context: nil, characters: "a",
+                                                charactersIgnoringModifiers: "a", isARepeat: false, keyCode: 0))
+        sut.searchTakesKeyboard(replaying: key)
+        #expect(side.isKeyWindow)
+        #expect(sut.model.searchFocus == focus + 1)
+        await TestWait.until { sut.model.playerSearch == "a" }
+        #expect(sut.model.playerSearch == "a") // typed once
+    }
+
     // MARK: - The settings
 
     @Test("the settings' switches always show; each part's title unfolds its other settings on its own, and they stay as left when the menu opens again; folding, they fade out first, and a click meanwhile keeps them")
     func moreSettings() async {
-        let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
-                                          launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)
         let sut = makeController(settingsModel: settingsModel)
         defer { sut.remove() }
         sut.status = readyStatus()
@@ -703,8 +783,7 @@ struct StatusMenuControllerTests {
 
     @Test("the menu reads AntiDot mode live from the settings, so the players follow its switch in the menu at once")
     func antiDotModeLive() {
-        let settingsModel = SettingsModel(settings: settings, updates: updates, actions: actions,
-                                          launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)
         let sut = makeController(settingsModel: settingsModel)
         defer { sut.remove() }
         sut.status = readyStatus()
@@ -859,7 +938,7 @@ struct StatusMenuControllerTests {
 
     @Test("once the user went to allow audio recording, its row reopens AutoHush, and AntiDot mode is offered instead")
     func reopenRow() async {
-        let sut = makeController()
+        let sut = makeController(settingsModel: SettingsModel.forTests(actions: actions, updates: updates, settings: settings))
         defer { sut.remove() }
         var status = readyStatus()
         status.detection = .unavailable
@@ -872,6 +951,37 @@ struct StatusMenuControllerTests {
         sut.perform(.useAntiDotMode)
         await TestWait.until { settings.state.detection == .playbackSignals }
         #expect(log.calls == ["menuWillOpen", "reopen"])
+    }
+
+    @Test("the menu's Use AntiDot Mode Instead goes through Settings' guard: never for a player only its sound tells about")
+    func useAntiDotGuarded() async {
+        let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)
+        var muted = PlayerOption(bundleID: "com.example.muted", name: "Muted", appURL: URL(fileURLWithPath: "/Applications/Muted.app"),
+                                 kind: .checkedApp)
+        muted.pausesByMuting = true
+        muted.needsAudioLevels = true
+        settingsModel.state.status.playerOptions = [muted]
+        settingsModel.state.status.chosenPlayerID = muted.bundleID
+        let sut = makeController(settingsModel: settingsModel)
+        defer { sut.remove() }
+        sut.status = readyStatus()
+        reopen(sut)
+
+        sut.perform(.useAntiDotMode)
+        sut.perform(.reopenAutoHush) // acts after it, once the menu has closed
+        await wait(for: 2, in: log)
+        #expect(log.calls == ["menuWillOpen", "reopen"])
+        #expect(settings.state.detection == .audioLevels)
+    }
+
+    @Test("what opens a window or an alert closes the menu first; switches, folding and the side windows act at once")
+    func closesMenuFirst() {
+        for command: StatusMenuCommand in [.addApp, .addWebApp, .ignoreAnotherApp, .useAntiDotMode, .openSettings, .updates, .quit] {
+            #expect(command.closesMenuFirst, "\(command)")
+        }
+        for command: StatusMenuCommand in [.toggleAutoPause, .choosePlayer("x"), .toggleSettings(.detection), .openSide(.players), .retry] {
+            #expect(!command.closesMenuFirst, "\(command)")
+        }
     }
 
     @Test("a warning appears under the card as one row that asks for what's missing")

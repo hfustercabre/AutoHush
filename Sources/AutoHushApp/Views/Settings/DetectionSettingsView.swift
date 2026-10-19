@@ -11,23 +11,18 @@ struct DetectionSettingsView: View {
 
     var body: some View {
         SettingsPageScroll {
-            Card(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode")) {
+            Card(Self.modesTitle) {
                 SettingsSwitchRow(model: model, kind: .antiDot)
                 // A player only its sound tells (muted only, or a Now Playing row
                 // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16);
                 // the switch is off and dimmed (`SettingsSwitch.isUnavailable`).
                 if !model.isAntiDotMode, let player = model.antiDotUnavailablePlayer {
-                    Text(verbatim: Self.unavailableNote(player.name, mutes: player.pausesByMuting))
-                        .captionStyle().fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: Self.unavailableNote(player.name, mutes: player.pausesByMuting)).captionStyle()
                 }
                 // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
                 if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {
                     NoteLabel(audioNote)
-                    // Side by side when they fit, else one under the other.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 6) { audioButtons }
-                        VStack(alignment: .leading, spacing: 6) { audioButtons }
-                    }
+                    FlowingButtons(spacing: 6) { audioButtons }
                 }
                 // AntiDot mode's ways: greyed out while it's off, what each does
                 // only while it's on.
@@ -36,16 +31,16 @@ struct DetectionSettingsView: View {
                     Text(verbatim: Self.detectByTitle) // a row's title
                     ChoiceChips(
                         label: Self.detectByTitle,
-                        options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
+                        options: DetectionMethod.antiDotWays.map { .init(title: $0.title, value: $0) },
                         selection: model.detectionMethod,
                         onSelect: { model.setDetectionMethod($0) }
                     )
                 }
                 // ← and → choose, while the arrow keys' highlight is on it.
                 .highlightableRow(adjust: { step in
-                    let methods: [DetectionMethod] = [.playbackSignals, .openStreams]
-                    guard let index = methods.firstIndex(of: model.detectionMethod) else { return }
-                    model.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
+                    if let method = DetectionMethod.antiDotWays.stepping(from: model.detectionMethod, by: step) {
+                        model.setDetectionMethod(method)
+                    }
                 })
                 .unavailable(!model.isAntiDotMode)
                 if model.isAntiDotMode {
@@ -53,7 +48,7 @@ struct DetectionSettingsView: View {
                 }
             }
 
-            Card(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")) {
+            Card(Self.timingTitle) {
                 TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
                 TimingSliderRow(model: model, timing: .resumeAfter)
@@ -75,6 +70,16 @@ struct DetectionSettingsView: View {
                 .buttonStyle(.chip)
                 .fixedSize()
         }
+    }
+
+    /// Over AntiDot mode, here and in the menu's Detection.
+    static var modesTitle: Text {
+        Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode")
+    }
+
+    /// Over the timings, here and in the menu's Detection.
+    static var timingTitle: Text {
+        Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")
     }
 
     /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).
@@ -101,6 +106,9 @@ struct DetectionSettingsView: View {
 
 /// The detection choices as Settings and Diagnostics describe them.
 extension DetectionMethod {
+    /// AntiDot mode's ways, in the order Settings and the menu offer them.
+    static let antiDotWays: [DetectionMethod] = [.playbackSignals, .openStreams]
+
     var title: String {
         switch self {
         case .audioLevels:

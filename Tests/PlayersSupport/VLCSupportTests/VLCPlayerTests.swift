@@ -3,13 +3,14 @@ import Foundation
 import Testing
 import os
 import AutoHushKit
+import PlayersTestSupport
 import ScriptablePlayers
 @testable import VLCSupport
 
 /// VLC as its Apple events show it, without VLC: what it answers, and what
 /// it was sent.
-private final class FakeVLC: AppleEventSending {
-    struct State {
+private final class FakeVLC: FakeAppleEventApp {
+    struct State: AppleEventAppState {
         var pid: pid_t? = 4242
         var playing: Bool? = true
         /// -1 without an item.
@@ -30,23 +31,11 @@ private final class FakeVLC: AppleEventSending {
         state = OSAllocatedUnfairLock(initialState: initial)
     }
 
-    var sent: [String] { state.withLock { $0.sent } }
-
-    func processIdentifier() -> pid_t? { state.withLock { $0.pid } }
-
-    func runningProcessIdentifier() throws -> pid_t {
-        guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        return pid
-    }
-
-    func requestPermission(pid: pid_t) async throws { state.withLock { $0.sent.append("ask") } }
-
     func send(_ makeEvent: @escaping @Sendable (pid_t) -> NSAppleEventDescriptor, to pid: pid_t) async throws -> PlayerReply {
-        // What the event asks, read before the lock: descriptors aren't Sendable.
         let event = makeEvent(pid)
         let kind = (event.eventClass, event.eventID)
-        let property = event.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue
-        let value = event.paramDescriptor(forKeyword: fourCharCode("data")).map { Int($0.int32Value) }
+        let read = SentEvent(event)
+        let (property, value) = (read.property, read.value)
         let reply = try state.withLock { state -> PlayerReply? in
             if state.fails { throw MusicPlayerError.playerNotResponding }
             switch (kind.0, kind.1, property) {
@@ -79,10 +68,59 @@ private final class FakeVLC: AppleEventSending {
     }
 }
 
-@Suite("VLC's control")
-struct VLCControlTests {
+@Suite("VLCPlayer")
+struct VLCPlayerTests {
+    // Never sent: building descriptors does not contact the target process.
+    private let pid: pid_t = 4242
+
+    @Test("VLC is scripted with Apple events, fades with a cube law, and is watched by reading its state")
+    @MainActor
+    func identity() {
+        let vlc = VLCPlayer()
+        #expect(vlc.name == "VLC")
+        #expect(vlc.bundleID == "org.videolan.vlc")
+        #expect(vlc.controlPermission == .automation(player: "VLC"))
+        #expect(vlc.volumeCurve == .cubic)
+        #expect(vlc.canFade)
+        #expect(vlc.makeStateObserver { _ in } is PolledStateObserver)
+        #expect(vlc.stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
+    }
+
+    @Test("its state: playing, paused with an item, stopped without one (current time -1)", arguments: [
+        (true, Int?(12), PlayerState.playing), (true, nil, .playing), (false, 0, .paused), (false, 95, .paused),
+        (false, -1, .stopped), (false, nil, .unknown),
+    ])
+    func state(playing: Bool, currentTime: Int?, state: PlayerState) {
+        #expect(VLCPlayer.state(playing: playing, currentTime: currentTime) == state)
+    }
+
+    @Test("VLC's 0–512 volume is AutoHush's 0–100, and back", arguments: [
+        (0, 0), (256, 50), (512, 100), (128, 25), (300, 59), (600, 100),
+    ])
+    func volumeScale(vlc: Int, volume: Int) {
+        #expect(VLCPlayer.volume(fromVLC: vlc) == volume)
+        if vlc <= 512, vlc % 128 == 0 { #expect(VLCPlayer.vlcVolume(from: volume) == vlc) }
+    }
+
+    @Test("its properties are read and set with core events, and Play/Pause is VLC1 of its suite")
+    func events() throws {
+        let playing = ScriptablePlayer.makeGetPropertyEvent(VLCPlayer.Code.playingProperty, processIdentifier: pid)
+        #expect(playing.eventClass == fourCharCode("core") && playing.eventID == fourCharCode("getd"))
+        #expect(playing.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("AAPL"))
+
+        let volume = ScriptablePlayer.makeSetPropertyEvent(VLCPlayer.Code.audioVolumeProperty, to: 300, processIdentifier: pid)
+        #expect(volume.eventClass == fourCharCode("core") && volume.eventID == fourCharCode("setd"))
+        #expect(volume.paramDescriptor(forKeyword: fourCharCode("----"))?.forKeyword(fourCharCode("seld"))?.typeCodeValue == fourCharCode("AAAV"))
+        #expect(volume.paramDescriptor(forKeyword: fourCharCode("data"))?.int32Value == 300)
+
+        let toggle = ScriptablePlayer.makeCommandEvent(suite: VLCPlayer.Code.suite, VLCPlayer.Code.playPause, processIdentifier: pid)
+        #expect(toggle.eventClass == fourCharCode("VLC#") && toggle.eventID == fourCharCode("VLC1"))
+    }
+
+    // MARK: - Through its Apple events
+
     @Test("its consent is asked, then `playing` read, to check access; its state comes from `playing`, then `current time` only while it doesn't play")
-    func state() async throws {
+    func stateFromEvents() async throws {
         let playing = FakeVLC()
         try await VLCPlayer(channel: playing).verifyControlAccess()
         #expect(playing.sent == ["ask", "get AAPL"])

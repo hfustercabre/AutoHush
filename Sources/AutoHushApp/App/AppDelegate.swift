@@ -1,6 +1,7 @@
 import AppKit
 import AutoHushKit
 import AutoHushPlayers
+import CheckPanel
 import CheckedPlayers
 
 @MainActor
@@ -40,15 +41,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var logsWindowController: LogsWindowController?
     /// Follows what the open windows show that macOS doesn't announce.
     private(set) var windowWatch: WindowWatch!
-    /// The music players to choose from.
+    /// The media players to choose from.
     let players: MusicPlayerCatalog
     /// The apps added with Add an App, which `players` offers: what each
     /// one's check found, kept until it's removed.
     let checkedPlayers: CheckedPlayers
     let locateApp: PlayerOption.Locate
-    /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
+    /// The media player AutoHush pauses and resumes; `nil` until one is chosen.
     var player: (any MusicPlayer)? { session.player }
-    /// Asks for the music player while none is chosen; made when first needed.
+    /// Asks for the media player while none is chosen; made when first needed.
     var playerChooser: (any PlayerChooserPresenting)?
     let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
     /// Learning the chosen player's controls with the user, when it's one
@@ -117,8 +118,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let installCheckDelay: Duration
     var installCheck: Task<Void, Never>?
     /// A quit under way, until the player has its volume back and a pause
-    /// AutoHush held is handed over (`shouldTerminate`).
+    /// AutoHush held is handed over (`shouldTerminate`). Tests await it.
     var quitting: Task<Void, Never>?
+    /// When AutoHush last reopened each player, by bundle ID, and whether it
+    /// then gave up reopening it by itself (`reopensByItself`).
+    var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
+    /// The clock `lastReopens` is stamped and read by; tests move it on.
+    let clock: @MainActor () -> Date
+    /// Whether one of AutoHush's windows or alerts is open (`isQuietMoment`),
+    /// from the app's windows, which every test shares: tests answer for it.
+    let hasOpenWindow: @MainActor () -> Bool
 
     init(
         preferences: Preferences = Preferences(),
@@ -163,7 +172,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
         installCheckDelay: Duration = .seconds(1),
         permissionCenter: PermissionCenter = PermissionCenter(),
-        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        clock: @escaping @MainActor () -> Date = Date.init,
+        hasOpenWindow: @escaping @MainActor () -> Bool = { NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey } }
     ) {
         self.preferences = preferences
         self.defaults = defaults
@@ -201,6 +212,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
         self.permissionCenter = permissionCenter
+        self.clock = clock
+        self.hasOpenWindow = hasOpenWindow
         super.init()
         session.didChange = { [weak self] _ in self?.showSession() }
         userSettings.didChange = { [weak self] in self?.showUserSettings($0) }
@@ -245,7 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         addWebAppModel.countrySites = players.countrySites
         addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
         addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
-        addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(.accessibility(player: "Safari")) }
+        addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(AddWebAppModel.safariAccess) }
     }
 }
 

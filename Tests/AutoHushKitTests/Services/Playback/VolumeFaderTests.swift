@@ -17,23 +17,6 @@ private actor StepGate {
     }
 }
 
-/// Holds back whoever waits until it's opened.
-private actor Latch {
-    private var isOpen = false
-    private var waiting: [CheckedContinuation<Void, Never>] = []
-
-    func wait() async {
-        guard !isOpen else { return }
-        await withCheckedContinuation { waiting.append($0) }
-    }
-
-    func open() {
-        isOpen = true
-        waiting.forEach { $0.resume() }
-        waiting = []
-    }
-}
-
 /// A fade started from inside a test's hook, for the test to await.
 private actor FadeBox {
     private var task: Task<Bool, any Error>?
@@ -41,7 +24,7 @@ private actor FadeBox {
     func value() async throws -> Bool { try await task?.value ?? true }
 }
 
-@Suite("VolumeFader")
+@Suite("VolumeFader", .timeLimit(.minutes(1)))
 struct VolumeFaderTests {
     private func makeFader(
         _ player: MockMusicPlayer, fadeOut: TimeInterval = 2, fadeIn: TimeInterval = 3, gate: StepGate = StepGate()
@@ -198,8 +181,8 @@ struct VolumeFaderTests {
         await player.setVolumeLevel(80)
         let gate = StepGate()
         let fader = makeFader(player, gate: gate)
-        let newerComesBack = Latch()
-        let proceed = Latch()
+        let newerComesBack = Gate()
+        let proceed = Gate()
         let second = FadeBox()
         // The first fade-out is called off. While its comeback reads the
         // volume, another app starts (that comeback is stopped), a second

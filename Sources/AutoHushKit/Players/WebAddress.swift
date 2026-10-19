@@ -1,4 +1,6 @@
 import Foundation
+import Network
+import os
 
 /// What the user typed as a website's address, made into one, and the site
 /// asked whether it answers: for making a web app (`WebAppMaking`) and for
@@ -76,14 +78,27 @@ package enum WebAddress {
     /// Asks the site once whether it answers, without cookies or a cache
     /// (an ephemeral session). Any answer counts but "not found"; a site
     /// that refuses a HEAD request is asked with GET.
-    package static func checkAnswers(_ url: URL, session: URLSession = WebAddress.session) async throws {
+    ///
+    /// App Transport Security keeps URLSession from loading plain http, and
+    /// AutoHush has no exception (one would weaken every load), while Safari
+    /// opens such a site all the same (2026-10-19). So an http site answers
+    /// when a connection to its host and port opens (`connects`), and an
+    /// https site that sends AutoHush to http has answered with that.
+    package static func checkAnswers(_ url: URL, session: URLSession = WebAddress.session,
+                                     connects: @Sendable (URL) async -> Bool = { await WebAddress.connects(to: $0) }) async throws {
         let host = url.host() ?? url.absoluteString
+        if url.scheme?.lowercased() == "http" {
+            guard await connects(url) else { throw WebAppMakingError.noAnswer(host: host) }
+            return
+        }
         for method in ["HEAD", "GET"] {
             var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
             request.httpMethod = method
             let response: URLResponse
             do {
-                (_, response) = try await session.data(for: request)
+                (_, response) = try await session.data(for: request, delegate: StopsAtPlainHTTP())
+            } catch let error as URLError where error.code == .appTransportSecurityRequiresSecureConnection {
+                return // sent to http, which App Transport Security wouldn't follow: it answered
             } catch {
                 throw WebAppMakingError.noAnswer(host: host)
             }
@@ -96,4 +111,48 @@ package enum WebAddress {
 
     /// No cookies, no cache, nothing kept on the Mac.
     package static let session = URLSession(configuration: .ephemeral)
+
+    /// Whether a connection to `url`'s host and port (80 unless given)
+    /// opens within `timeout`. Network.framework's connections aren't
+    /// subject to App Transport Security.
+    package static func connects(to url: URL, timeout: TimeInterval = 10) async -> Bool {
+        guard let host = url.host(), !host.isEmpty,
+              let port = NWEndpoint.Port(rawValue: UInt16(clamping: url.port ?? 80)), port.rawValue != 0 else { return false }
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: port, using: .tcp)
+        let queue = DispatchQueue(label: "AutoHush.WebAddress.connection")
+        let answered = OSAllocatedUnfairLock(initialState: false)
+        return await withCheckedContinuation { continuation in
+            // Told once: open, refused or unreachable, or out of time.
+            let tell: @Sendable (Bool) -> Void = { opened in
+                guard answered.withLock({ told in defer { told = true }; return !told }) else { return }
+                connection.cancel()
+                continuation.resume(returning: opened)
+            }
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready: tell(true)
+                // Waiting: refused, or no route to it now.
+                case .waiting, .failed, .cancelled: tell(false)
+                default: break
+                }
+            }
+            connection.start(queue: queue)
+            queue.asyncAfter(deadline: .now() + timeout) { tell(false) }
+        }
+    }
+
+    /// Doesn't follow a redirect to plain http, which App Transport
+    /// Security would refuse: the redirect itself is the site's answer.
+    package final class StopsAtPlainHTTP: NSObject, URLSessionTaskDelegate {
+        package func urlSession(_ session: URLSession, task: URLSessionTask,
+                                willPerformHTTPRedirection response: HTTPURLResponse,
+                                newRequest request: URLRequest) async -> URLRequest? {
+            Self.follows(request)
+        }
+
+        /// `request`, unless it goes to plain http.
+        package static func follows(_ request: URLRequest) -> URLRequest? {
+            request.url?.scheme?.lowercased() == "http" ? nil : request
+        }
+    }
 }

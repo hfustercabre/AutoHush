@@ -11,12 +11,8 @@ import WebAppPlayers
 /// as AutoHush asks it (`ProcessResponsibility`); itself when unknown.
 func responsible(_ pid: pid_t) -> pid_t { ProcessResponsibility.responsiblePID(for: pid) ?? pid }
 
-/// A process's executable, as `proc_pidpath` tells it.
-func executablePath(of pid: pid_t) -> String? {
-    var path = [CChar](repeating: 0, count: Int(MAXPATHLEN))
-    guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return nil }
-    return String(decoding: path.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
-}
+/// A process's executable, as AutoHush reads it (`proc_pidpath`).
+func executablePath(of pid: pid_t) -> String? { ProcessAudioSourceIdentifier.executablePath(of: pid) }
 
 /// An app's name, else its executable's.
 func processName(_ pid: pid_t) -> String {
@@ -217,34 +213,47 @@ final class TestMute: @unchecked Sendable {
     private let pid: pid_t
     private let queue = DispatchQueue(label: "playercheck.mute")
     private var timer: DispatchSourceTimer?
-    private let muter = ProcessTapMuter(recheckInterval: 0.1)
+    private let muter: any AudioMuting
+    /// Whether the app has an audio process now; tests stand in for it and the muter.
+    private let hasSound: @Sendable (pid_t) -> Bool
     private var muted = false
     /// When processes that couldn't be muted are tried again.
     private var retryAt = Date.distantPast
     /// Whether a mute failed at some point: the app may have been heard.
     private var failed = false
 
-    init(pid: pid_t) { self.pid = pid }
+    init(pid: pid_t, muter: any AudioMuting = ProcessTapMuter(recheckInterval: 0.1),
+         hasSound: @escaping @Sendable (pid_t) -> Bool = { !OwnedAudioProcesses.objects(ownedBy: $0).isEmpty }) {
+        self.pid = pid
+        self.muter = muter
+        self.hasSound = hasSound
+    }
 
     /// Mutes it once before it returns (so it's silent when the test says
     /// so), then keeps it so; whether it's muted now (true too when it has
     /// no audio process yet).
     func start() -> Bool {
-        let now = queue.sync { () -> Bool in
+        queue.sync {
             refresh()
-            return muted || OwnedAudioProcesses.objects(ownedBy: pid).isEmpty
+            // Muted at once: the muter keeps it so, and nothing is left to retry.
+            if !muted {
+                let timer = DispatchSource.makeTimerSource(queue: queue)
+                timer.schedule(deadline: .now() + 0.1, repeating: 0.1)
+                timer.setEventHandler { [weak self] in self?.refresh() }
+                self.timer = timer
+                timer.resume()
+            }
+            return muted || !hasSound(pid)
         }
-        let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.schedule(deadline: .now() + 0.1, repeating: 0.1)
-        timer.setEventHandler { [weak self] in self?.refresh() }
-        queue.sync { self.timer = timer }
-        timer.resume()
-        return now
     }
+
+    /// Whether it still looks every 0.1 s for processes to mute: until its
+    /// first mute works.
+    var isRetrying: Bool { queue.sync { timer != nil } }
 
     /// Until it's muted: the muter keeps it so from then on.
     private func refresh() {
-        guard !muted, Date() >= retryAt, !OwnedAudioProcesses.objects(ownedBy: pid).isEmpty else { return }
+        guard !muted, Date() >= retryAt, hasSound(pid) else { return }
         guard muter.mute(appPID: pid) else {
             failed = true
             retryAt = Date().addingTimeInterval(0.5)
@@ -262,7 +271,7 @@ final class TestMute: @unchecked Sendable {
             timer = nil
             muter.unmute(appPID: pid)
             muted = false
-            return failed || muter.missedSome
+            return failed || (muter as? ProcessTapMuter)?.missedSome == true
         }
     }
 }

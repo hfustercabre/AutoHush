@@ -83,8 +83,10 @@ does anything else: macOS asks for any not decided yet. Without all of them
 it stops there with "Not checked: … needs …" and exit status 3, with no
 window moved and nothing pressed. With `--partial`, which AutoHush passes
 (its Add an App window has said what's missing), only Accessibility is
-needed: without Audio Recording the app isn't muted and whether it plays is
-told by other signs, and without Automation its AppleScript isn't tried.
+needed: without Audio Recording the app isn't muted by this tool (run by Add
+an App, AutoHush mutes the Mac's output meanwhile instead) and whether it
+plays is told by other signs, and without Automation its AppleScript isn't
+tried.
 With `--no-taps`, which AutoHush passes in AntiDot mode, no sound is tapped
 at all, as without Audio Recording. An app that doesn't answer whether it
 may be controlled (one still starting) is asked again for up to 20 s, and
@@ -92,7 +94,9 @@ the check stops the same way, saying so, if it never answers.
 `--read-only`, `--play` and `--pause` ask nothing up front.
 
 **The app is muted through a test** (with Audio Recording, and without
-`--no-taps`), behind a muted process tap, as AutoHush mutes a web app's ad:
+`--no-taps`; else, run by Add an App, AutoHush mutes the Mac's output
+instead, `OutputMute`), behind a muted process tap, as AutoHush mutes a web
+app's ad:
 nothing reaches the speakers, while every other tap, its level's included,
 still hears it, and the app doesn't know. A process it starts later is
 muted within 0.1 s, a set that can't be tapped yet is tried again every
@@ -142,8 +146,8 @@ Each step is a section of the report, in this order:
 
 1. **AppleScript:** its pause and play commands in its own suite, else
    commands named so, else one that toggles (playpause, or a play that
-   toggles); to its documents when they act on one. Sent as Apple
-   events as AutoHush sends them. Its volume is checked once, while paused:
+   toggles); to its documents when they act on one. Chosen and sent as
+   Apple events as AutoHush chooses and sends them (`ScriptSetup`). Its volume is checked once, while paused:
    set one step away, read back, put back.
 2. **Its playback menu's first item.**
 3. **Its page's Pause, then Play.** The player bar's button: named Play or
@@ -159,7 +163,9 @@ Each step is a section of the report, in this order:
    bar or its AppleScript current track), else the row it changed with
    before, else, pausing, the only one playing while the app holds Now
    Playing, as AutoHush chooses it (`PanelRows.row`); a row chosen by
-   memory is confirmed by the app itself. The
+   memory is confirmed by the app itself. Where its song showed besides its
+   windows' titles (its player bar, its current track) goes in its result
+   with the panel (`PanelClues`), so AutoHush reads the same there. The
    panel's icon is found in the menu bar's own windows, whatever covers it.
    With Now Playing hidden in the menu bar, the tool shows it for the
    moment of a press, then puts the setting back (unless the user changed
@@ -176,7 +182,9 @@ only to the Now Playing app, which AutoHush can't choose.
 ## Whether it plays
 
 A pause or a play is judged by the surest sign the app showed before it: its
-AppleScript state, what it reports to Now Playing (from macOS's log,
+AppleScript state (read where AutoHush reads it: its `player state` only
+with the three standard values, else its `playing` flag, else its
+documents'), what it reports to Now Playing (from macOS's log,
 administrators only), its page's word (only while current: a WebKit page's
 anywhere, a Chromium or Flutter page's only on screen), its level, its
 keep-awake assertion, its menu's state; else its menu's word changing or its
@@ -326,7 +334,21 @@ by its Play or Pause word only, a panel row by its place and what told it
 was the app's, and window titles and the track an app's AppleScript
 reports aren't shown.
 `--now-playing-list`, `--now-playing-reasons`, `--launch-option` and
-`--window-state` aren't logged: they're asked often.
+`--window-state` aren't logged: they're asked often. AutoHush's Show Log
+opens only a log named as the tool names them (`RunLogName`).
+
+## Its interface
+
+Whoever runs it (AutoHush's Add an App…, the Player Check app) uses the
+same types the tool does, in `PlayerCheckKit` (its `Kit/` folder): the
+flags (`CommandLineOptions`, with the arguments of a check, a press and each
+question), the exit statuses (`CheckExitStatus`: 0, 1, 3 for a missing
+permission, 128 + the signal for a stop), and each one-line answer
+(`NowPlayingListLine`, `NowPlayingReasonsLine`, `LaunchOptionAnswer`,
+`WindowStateAnswer`), written and read by the same code. The report's lines
+they follow (the requests, the window states and trials, the input block,
+the permissions, the ways' checklist) are `CheckReportLine`s, and what a
+check found is `CheckResult` (`--result`), both in `CheckedPlayers`.
 
 ## The apps in Now Playing (`--now-playing-list`)
 

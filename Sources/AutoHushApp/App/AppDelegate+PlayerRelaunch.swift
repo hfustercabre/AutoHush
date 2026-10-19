@@ -40,13 +40,6 @@ extension AppDelegate {
     /// the app again without it): it isn't reopened by itself again.
     private static let reopenAgainAfter: TimeInterval = 60
 
-    /// When AutoHush last reopened each player, by bundle ID, and whether it
-    /// then gave up reopening it by itself (`reopensByItself`). Tests start
-    /// it afresh.
-    static var lastReopens: [String: (at: Date, gaveUp: Bool)] = [:]
-    /// The clock `lastReopens` is stamped and read by. Tests move it on.
-    static var now: () -> Date = Date.init
-
     /// Whether the chosen player runs without what it needs to be controlled
     /// wherever its window is (`MusicPlayer.needsReopen`): the card says so.
     /// `asking` (it was just chosen): an alert first offers to reopen it.
@@ -96,10 +89,10 @@ extension AppDelegate {
     /// `reopenAgainAfter` ago, which would quit and reopen it over and over.
     /// Giving up is logged once, and the card says it needs reopening.
     private func reopensByItself(_ player: any MusicPlayer) -> Bool {
-        guard let last = Self.lastReopens[player.bundleID],
-              Self.now().timeIntervalSince(last.at) < Self.reopenAgainAfter else { return true }
+        guard let last = lastReopens[player.bundleID],
+              clock().timeIntervalSince(last.at) < Self.reopenAgainAfter else { return true }
         if !last.gaveUp {
-            Self.lastReopens[player.bundleID]?.gaveUp = true
+            lastReopens[player.bundleID]?.gaveUp = true
             logger.notice("\(player.name, privacy: .public) runs without the option it needs again right after being reopened: it isn’t reopened by itself again this time")
         }
         return false
@@ -107,7 +100,7 @@ extension AppDelegate {
 
     private func reopen(_ player: any MusicPlayer) async {
         // From the start: it opens again before the reopen is over.
-        Self.lastReopens[player.bundleID] = (Self.now(), false)
+        lastReopens[player.bundleID] = (clock(), false)
         let reopened = await player.reopen()
         logger.notice("\(player.name, privacy: .public) \(reopened ? "reopened with what it needs" : "couldn’t be reopened", privacy: .public)")
         let needs = await player.needsReopen()

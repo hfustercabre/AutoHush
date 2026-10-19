@@ -16,7 +16,7 @@ struct PlayerChecks: View {
                 if !model.playerCanFade {
                     check(String(localized: "No fades", comment: "Settings → General, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)"), done: false)
                 } else if model.timings.fadesEnabled {
-                    check(String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player"), done: true)
+                    check(SettingsWindowController.Page.fades.title, done: true)
                 } else {
                     check(String(localized: "Fades off", comment: "Settings → General, under the media player: fades are turned off on the Fades page"), done: false)
                 }

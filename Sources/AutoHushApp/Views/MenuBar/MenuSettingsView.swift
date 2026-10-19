@@ -27,7 +27,7 @@ struct MenuSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             pageName(.detection, folding: .detection)
             if isOpen(.detection) {
-                innerTitle(Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode"))
+                innerTitle(DetectionSettingsView.modesTitle)
                     .opacity(fading(.detection))
             }
             part {
@@ -35,16 +35,16 @@ struct MenuSettingsView: View {
                 if isOpen(.detection) {
                     ChoiceChips(
                         label: DetectionSettingsView.detectByTitle,
-                        options: [DetectionMethod.playbackSignals, .openStreams].map { .init(title: $0.title, value: $0) },
+                        options: DetectionMethod.antiDotWays.map { .init(title: $0.title, value: $0) },
                         selection: settings.detectionMethod,
                         onSelect: { settings.setDetectionMethod($0) }
                     )
                     .controlSize(.small) // C2: both words fit
                     // ← and → choose, while the arrow keys' highlight is on it.
                     .modifier(Highlightable(adjust: { step in
-                        let methods: [DetectionMethod] = [.playbackSignals, .openStreams]
-                        guard let index = methods.firstIndex(of: settings.detectionMethod) else { return }
-                        settings.setDetectionMethod(methods[min(max(index + step, 0), methods.count - 1)])
+                        if let method = DetectionMethod.antiDotWays.stepping(from: settings.detectionMethod, by: step) {
+                            settings.setDetectionMethod(method)
+                        }
                     }))
                     .unavailable(!settings.isAntiDotMode)
                     .disabled(isFolding(.detection))
@@ -55,7 +55,7 @@ struct MenuSettingsView: View {
                 }
             }
             if isOpen(.detection) {
-                innerTitle(Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes"))
+                innerTitle(DetectionSettingsView.timingTitle)
                     .opacity(fading(.detection))
                 part {
                     slider(.pauseAfter)
@@ -102,10 +102,7 @@ struct MenuSettingsView: View {
 
     /// The line between the parts, as between the menu's own parts.
     private var line: some View {
-        Divider()
-            .padding(.horizontal, 14)
-            .padding(.vertical, MenuSpacing.lineVertical)
-            .transition(.opacity)
+        MenuLine().transition(.opacity)
     }
 
     /// One of the switches: its symbol, its name and what it does, and the
@@ -113,7 +110,20 @@ struct MenuSettingsView: View {
     /// own under it, undimmed (R2, the user's pick, 2026-10-18), and in its
     /// tooltip and VoiceOver hint.
     private func switchRow(_ kind: SettingsSwitch) -> some View {
-        MenuSwitchLine(kind: kind, settings: settings)
+        let reason = kind.unavailableReason(settings)
+        return MenuSwitchRow(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) }),
+                             label: kind.title, hint: reason.map { Text(verbatim: $0) } ?? kind.shortExplanation,
+                             isUnavailable: kind.isUnavailable(settings), reason: reason,
+                             // Its tint over the part's own 8 pt inside, and its rows' room above and below.
+                             outset: CGSize(width: 8, height: MenuSpacing.rowVertical)) {
+            MenuRowSymbol(kind.symbol, isOn: kind.isOn(settings))
+        } title: {
+            RowTitle(kind.title, subtitle: kind.shortExplanation)
+        }
+        .padding(.leading, MenuSpacing.row.leading - 8) // the part's own 8 pt inside
+        .padding(.trailing, 8)
+        .padding(.vertical, MenuSpacing.rowVertical)
+        .modifier(ReasonTooltip(reason: reason))
     }
 
     private func slider(_ timing: SettingsTiming) -> some View {
@@ -200,52 +210,5 @@ private struct ReasonTooltip: ViewModifier {
 
     func body(content: Content) -> some View {
         if let reason { content.help(Text(verbatim: reason)) } else { content }
-    }
-}
-
-/// One of the menu's settings switches, as `MenuSettingsView` lists them;
-/// the arrow keys and the pointer highlight it, and its switch takes the
-/// keyboard's focus (F5), unless it can't be changed.
-private struct MenuSwitchLine: View {
-    let kind: SettingsSwitch
-    let settings: SettingsModel
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        let isOn = kind.isOn(settings)
-        let reason = kind.unavailableReason(settings)
-        return VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: MenuSpacing.row.gap) {
-                Image(systemName: kind.symbol)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.appSecondary))
-                    .frame(width: MenuSpacing.row.picture)
-                    .accessibilityHidden(true)
-                RowTitle(kind.title, subtitle: kind.shortExplanation)
-                    .accessibilityHidden(true) // the switch says it: one stop for VoiceOver
-                Spacer(minLength: 8)
-                Toggle(isOn: Binding(get: { kind.isOn(settings) }, set: { kind.set($0, in: settings) })) { kind.title }
-                    .toggleStyle(PillToggleStyle())
-                    .controlSize(MenuSpacing.switchSize)
-                    .focused($isFocused)
-                    .focusEffectDisabled()
-                    .accessibilityHint(reason.map { Text(verbatim: $0) } ?? kind.shortExplanation)
-            }
-            .unavailable(kind.isUnavailable(settings))
-            if let reason {
-                Label(reason, systemImage: "info.circle")
-                    .font(.appCaption)
-                    .foregroundStyle(.appSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.leading, MenuSpacing.row.picture + MenuSpacing.row.gap)
-                    .accessibilityHidden(true) // the switch's hint says it
-            }
-        }
-        .padding(.leading, MenuSpacing.row.leading - 8) // the part's own 8 pt inside
-        .padding(.trailing, 8)
-        .padding(.vertical, MenuSpacing.rowVertical)
-        .modifier(Highlightable(isFocused: isFocused, isAvailable: !kind.isUnavailable(settings),
-                                press: { kind.set(!kind.isOn(settings), in: settings) }))
-        .modifier(ReasonTooltip(reason: reason))
     }
 }

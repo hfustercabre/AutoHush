@@ -66,10 +66,10 @@ package struct AppConfiguration: Sendable {
     package var activeSampleInterval: TimeInterval = 0.25
 
     /// Monitor tick (and full process-list resync period) otherwise, also
-    /// while the music player alone plays.
+    /// while the media player alone plays.
     package var idleSampleInterval: TimeInterval = 1.0
 
-    /// The chosen music player's app: its audio is the music being protected.
+    /// The chosen media player's app: its audio is the music being protected.
     /// Set by the app; `nil` while no player is chosen.
     package var musicPlayerBundleID: String?
 
@@ -105,9 +105,9 @@ package struct AppConfiguration: Sendable {
         staysPausedAfterCalls = timings.staysPausedAfterCalls
     }
 
-    /// True for the chosen music player's own app, or one of its helpers
+    /// True for the chosen media player's own app, or one of its helpers
     /// (e.g. `com.tidal.desktop.helper`, which plays TIDAL's sound). Other
-    /// music players count like any other app.
+    /// media players count like any other app.
     package func isMusicPlayer(_ bundleID: String) -> Bool {
         guard let musicPlayerBundleID else { return false }
         return bundleID == musicPlayerBundleID || bundleID.hasPrefix(musicPlayerBundleID + ".")

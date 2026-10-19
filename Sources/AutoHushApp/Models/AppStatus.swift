@@ -48,7 +48,7 @@ struct AppStatus: Equatable {
     var chosenPlayer: PlayerOption? {
         playerOptions.first { $0.bundleID == chosenPlayerID }
     }
-    /// The music player AutoHush controls, e.g. "Spotify"; empty while none
+    /// The media player AutoHush controls, e.g. "Spotify"; empty while none
     /// is chosen.
     var playerName: String { chosenPlayer?.name ?? "" }
     /// How far AutoHush has come learning to control the chosen player;
@@ -106,14 +106,14 @@ struct AppStatus: Equatable {
     /// wherever its window is (`MusicPlayer.needsReopen`): the card says so,
     /// with a button that reopens it.
     var playerNeedsReopen = false
-    /// The chosen player is muted instead of paused (`MusicPlayer.pausesByMuting`):
+    /// The chosen player is muted instead of paused (`PlayerOption.pausesByMuting`):
     /// the card says "Muted", with Unmute.
-    var playerMutes = false
+    var playerMutes: Bool { chosenPlayer?.pausesByMuting ?? false }
     /// Add an App's check runs: AutoHush keeps the player it paused paused
     /// until the check ends (`AppDelegate.holdsPlayerForCheck`).
     var playerHeldForCheck = false
-    /// Only the player's sound tells how it is (`MusicPlayer.needsAudioLevels`).
-    var playerNeedsLevels = false
+    /// Only the player's sound tells how it is (`PlayerOption.needsAudioLevels`).
+    var playerNeedsLevels: Bool { chosenPlayer?.needsAudioLevels ?? false }
 
     /// Leaving `.ready` clears the active sources: nothing is monitored then.
     /// They join the stopped ones, as when they stop (another player chosen,

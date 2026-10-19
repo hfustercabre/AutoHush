@@ -3,14 +3,15 @@ import SwiftUI
 import UniformTypeIdentifiers
 import AutoHushKit
 
-/// Settings → Sound Sources: which apps pause the music, in a card like the menu's
-/// "Playing Now", each with its switch, in the order the user chose; a
-/// magnifier opens a search by name in place of the heading. A click selects
+/// Settings → Sound Sources: which apps pause the music, as a section of
+/// macOS's grouped form, each with its switch as in the menu's "Playing
+/// Now", in the order the user chose; a magnifier opens a search by name in
+/// place of the heading. A click selects
 /// an app, ⌘-click and ⇧-click several, as in macOS's lists, and Remove
 /// takes them off the list (asking first when one is turned off, which then
 /// pauses the music again). The page fills the window: the list scrolls
 /// between the heading and the buttons.
-struct AppsSettingsView: View {
+struct SoundSourcesSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
 
@@ -36,7 +37,7 @@ struct AppsSettingsView: View {
                     }
                     ForEach(Array(model.shownApps.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { CardDivider() }
-                        appRow(row)
+                        SoundSourceRow(model: model, row: row)
                     }
                 } footer: {
                     Text("Turn an app off to keep your player playing while it makes sound. Select apps to remove them from the list.",
@@ -55,7 +56,7 @@ struct AppsSettingsView: View {
                 }
                     .buttonStyle(.chip)
                     .fixedSize()
-                Button { model.removeSelected() } label: { Text(verbatim: Self.removeTitle) }
+                Button { model.removeSelected() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
                     .buttonStyle(.chip)
                     .fixedSize()
                     .disabled(model.selectedApps.isEmpty)
@@ -82,7 +83,7 @@ struct AppsSettingsView: View {
         .confirmationDialog(Text(verbatim: Self.removalTitle(names: model.removalNames)),
                             isPresented: Binding(get: { !model.appsAwaitingRemoval.isEmpty }, set: { if !$0 { model.cancelRemoval() } }),
                             presenting: model.appsAwaitingRemoval.isEmpty ? nil : model.appsAwaitingRemoval) { _ in
-            Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: Self.removeTitle) }
+            Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
         } message: { rows in
             Text(verbatim: Self.removalMessage(rows))
         }
@@ -111,10 +112,6 @@ struct AppsSettingsView: View {
                      comment: "Settings → Sound Sources: title of the confirmation for removing several selected apps, one of them at least turned off; %lld is how many (2 or more)")
     }
 
-    private static var removeTitle: String {
-        String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected apps), in its confirmation for removing apps turned off, and in the alert before an app added with Add an App is removed")
-    }
-
     /// The heading, or the search while it's open, then "Sort by" with the
     /// order's pop-up, an arrow that reverses it, and the magnifier.
     private var header: some View {
@@ -134,7 +131,7 @@ struct AppsSettingsView: View {
                 SectionHeading(Text("Pauses Playback", comment: "Settings → Sound Sources: heading of the list of apps that pause your player while they play"), isFirst: true)
                 Spacer()
             }
-            Text("Sort by", comment: "Settings → Sound Sources, before the pop-up that orders the apps")
+            Self.sortByTitle
                 .font(.appCaption)
                 .foregroundStyle(.appSecondary)
                 .fixedSize() // on one line, in every language
@@ -145,7 +142,7 @@ struct AppsSettingsView: View {
             )) {
                 ForEach(AppListOrder.Criterion.allCases, id: \.self) { Text($0.title).tag($0) }
             } label: {
-                Text("Sort by", comment: "Settings → Sound Sources, before the pop-up that orders the apps")
+                Self.sortByTitle
             }
             .labelsHidden()
             .pickerStyle(.menu)
@@ -153,9 +150,9 @@ struct AppsSettingsView: View {
             .fixedSize()
             // ← and → choose the order, while the arrow keys' highlight is on it.
             .modifier(Highlightable(cornerRadius: 6, outset: 3, adjust: { step in
-                let all = AppListOrder.Criterion.allCases
-                guard let index = all.firstIndex(of: order.criterion) else { return }
-                model.setAppListOrder(AppListOrder(criterion: all[min(max(index + step, 0), all.count - 1)]))
+                if let criterion = AppListOrder.Criterion.allCases.stepping(from: model.appListOrder.criterion, by: step) {
+                    model.setAppListOrder(AppListOrder(criterion: criterion))
+                }
             }))
             IconChipButton(
                 symbol: order.isReversed ? "arrow.up" : "arrow.down",
@@ -176,8 +173,9 @@ struct AppsSettingsView: View {
         }
     }
 
-    private func appRow(_ row: SettingsModel.AppRow) -> some View {
-        SoundSourceRow(model: model, row: row)
+    /// Before the order's pop-up, and its name for VoiceOver.
+    private static var sortByTitle: Text {
+        Text("Sort by", comment: "Settings → Sound Sources, before the pop-up that orders the apps")
     }
 }
 
@@ -229,9 +227,8 @@ private struct SoundSourceRow: View {
                     .accessibilityHidden(true)
                 RowTitle(
                     Text(verbatim: row.source.name),
-                    subtitle: row.isIgnored ? Text("Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
-                        : Text(verbatim: PlayerOption.interruptsLabel(
-                            mutes: model.playerOptions.first { $0.bundleID == model.chosenPlayerID }?.pausesByMuting == true))
+                    subtitle: Text(verbatim: row.isIgnored ? SourceSwitchRow.ignoredLabel
+                                   : PlayerOption.interruptsLabel(mutes: model.chosenPlayer?.pausesByMuting == true))
                 )
                 Spacer(minLength: 8)
             }
@@ -259,27 +256,26 @@ private struct SoundSourceRow: View {
         .focusable(interactions: .activate) // as a button: Tab, not a click, gives it focus
         .focused($rowFocused)
         .focusEffectDisabled(keyboard != nil) // the row's tint shows it
-        // The arrow keys and the pointer highlight it; Return or Space adds it
-        // to the selection or takes it out.
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
-        .modifier(Highlightable(isFocused: rowFocused || switchFocused, cornerRadius: 6,
-                                press: { model.toggleSelection(of: row.id) }))
-        .padding(.horizontal, -6)
-        .padding(.vertical, -4)
+        // The arrow keys and the pointer highlight it, its tint as far out as
+        // the selection's; Return or Space adds it to the selection or takes
+        // it out.
+        .highlightableRow(isFocused: rowFocused || switchFocused, cornerRadius: 6, vertical: 4,
+                          press: { model.toggleSelection(of: row.id) })
         .onKeyPress(.space) {
             model.toggleSelection(of: row.id)
             return .handled
         }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityAction(named: Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")) { model.removeFromList(row) }
+        .accessibilityAction(named: Self.removeFromListTitle) { model.removeFromList(row) }
         .contextMenu {
             // The selection, when this row is one of several selected, as in Finder.
-            Button { model.removeFromList(row) } label: {
-                Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
-            }
+            Button { model.removeFromList(row) } label: { Self.removeFromListTitle }
         }
     }
 
     private var isSelected: Bool { model.selectedAppIDs.contains(row.id) }
+
+    private static var removeFromListTitle: Text {
+        Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
+    }
 }

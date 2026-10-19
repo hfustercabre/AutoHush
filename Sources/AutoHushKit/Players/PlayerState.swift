@@ -1,6 +1,6 @@
 import Foundation
 
-/// A music player's state. Raw values are used in log messages.
+/// A media player's state. Raw values are used in log messages.
 package enum PlayerState: String, Sendable {
     case playing
     case paused

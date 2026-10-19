@@ -107,6 +107,32 @@ extension MusicPlayer {
     package var controlPermission: Permission { .automation(player: name) }
 }
 
+/// A player whose volume can't be read or set (one controlled through its
+/// menu, its page or the Now Playing panel): it pauses and plays without
+/// fading. Opting in gives it those answers.
+package protocol FadelessMusicPlayer: MusicPlayer {}
+
+extension FadelessMusicPlayer {
+    package var canFade: Bool { false }
+    package func volume() async -> Int? { nil }
+    package func setVolume(_ volume: Int) async throws {}
+}
+
+/// A player that announces nothing, so its state is read about once a
+/// second (`PolledStateObserver`). Opting in gives it that observer, and
+/// says how late it may report a change (`stateReportDelay`); one with an
+/// observer of its own keeps it.
+package protocol PolledMusicPlayer: MusicPlayer {}
+
+extension PolledMusicPlayer {
+    @MainActor
+    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+        PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange)
+    }
+
+    package var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
+}
+
 /// What kind of app a player is.
 package enum MusicPlayerKind: Sendable {
     /// An app of its own, such as Spotify.

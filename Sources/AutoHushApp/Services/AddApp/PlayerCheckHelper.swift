@@ -1,4 +1,6 @@
 import Foundation
+import AutoHushKit
+import PlayerCheckKit
 
 /// AutoHush's own playercheck (in Contents/Helpers), which Add an App…
 /// runs: a check of an app in a process of its own, so a check that ends,
@@ -35,7 +37,7 @@ struct PlayerCheckHelper: Sendable {
     static let cachesFolder = FileManager.default.homeDirectoryForCurrentUser
         .appending(path: "Library/Caches/\(Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush")/PlayerCheck")
     /// The folders every run is given.
-    var folderArguments: [String] { ["--logs", logs.path, "--caches", caches.path] }
+    var folderArguments: [String] { CommandLineOptions.folders(logs: logs.path, caches: caches.path) }
 
     /// How far back the Now Playing list is read: enough for the apps used
     /// lately, without reading back to the Mac's start.
@@ -45,44 +47,27 @@ struct PlayerCheckHelper: Sendable {
     static let questionTimeout: TimeInterval = 30
 
     /// Runs it with `arguments` until it ends, or for `timeout` at most:
-    /// what it printed, and how it ended (-1 when it couldn't start or
-    /// took too long).
+    /// what it printed, and how it ended (-1 when it couldn't start, took
+    /// too long or crashed). It's waited for without holding one of Swift's
+    /// shared threads (two may run at once, for up to `timeout`).
     func run(_ arguments: [String], timeout: TimeInterval = PlayerCheckHelper.questionTimeout) async -> (status: Int32, output: String) {
-        let url = url
-        let arguments = arguments + folderArguments
-        return await Task.detached {
-            let process = Process()
-            process.executableURL = url
-            process.arguments = arguments
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = FileHandle.nullDevice
-            do { try process.run() } catch { return (-1, "") }
-            let late = DispatchWorkItem { if process.isRunning { process.terminate() } }
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: late)
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
-            late.cancel()
-            let timedOut = process.terminationReason == .uncaughtSignal
-            return (timedOut ? -1 : process.terminationStatus, String(decoding: data, as: UTF8.self))
-        }.value
+        let result = await ToolRun(url, arguments + folderArguments, timeout: timeout).run()
+        return (result.bySignal ? -1 : result.status, result.text)
     }
 
     /// The apps macOS keeps in Now Playing (from its log, which only an
     /// administrator can read), by bundle ID: whether each plays.
     func nowPlaying() async -> [String: Bool] {
-        let (status, output) = await run(["--now-playing-list", String(Self.nowPlayingHours)])
-        return status == 0 ? Self.nowPlaying(fromList: output) : [:]
+        let (status, output) = await run(CommandLineOptions.nowPlayingList(hours: Self.nowPlayingHours))
+        return status == CheckExitStatus.done ? Self.nowPlaying(fromList: output) : [:]
     }
 
-    /// `--now-playing-list`'s lines: "<bundle ID>\t<pid>\t<state>\t<1 if
-    /// active>\t<name>", then "#active\t<pid>".
+    /// `--now-playing-list`'s lines (`NowPlayingListLine`).
     static func nowPlaying(fromList output: String) -> [String: Bool] {
         var apps: [String: Bool] = [:]
-        for line in output.split(separator: "\n") where !line.hasPrefix("#") {
-            let fields = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
-            guard fields.count >= 3, !fields[0].isEmpty, fields[2] != "Removed" else { continue }
-            apps[fields[0]] = fields[2] == "Playing"
+        for case let app? in output.split(separator: "\n").map({ NowPlayingListLine(line: $0) })
+        where !app.bundleID.isEmpty && app.state != NowPlayingListLine.removed {
+            apps[app.bundleID] = app.state == NowPlayingListLine.playing
         }
         return apps
     }
@@ -91,38 +76,33 @@ struct PlayerCheckHelper: Sendable {
     /// by their paths.
     func canPlay(_ urls: [URL]) async -> Set<String> {
         guard !urls.isEmpty else { return [] }
-        let (status, output) = await run(["--now-playing-reasons"] + urls.map(\.path))
-        return status == 0 ? Self.canPlay(fromReasons: output) : []
+        let (status, output) = await run(CommandLineOptions.nowPlayingReasons(urls.map(\.path)))
+        return status == CheckExitStatus.done ? Self.canPlay(fromReasons: output) : []
     }
 
-    /// `--now-playing-reasons`' lines: "<path>\t<reason>\t<framework>\t<switches>",
-    /// each empty when none.
+    /// `--now-playing-reasons`' lines (`NowPlayingReasonsLine`): those with a reason.
     static func canPlay(fromReasons output: String) -> Set<String> {
-        Set(output.split(separator: "\n").compactMap { line in
-            let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
-            return fields.count >= 2 && !fields[1].isEmpty ? String(fields[0]) : nil
-        })
+        Set(output.split(separator: "\n").compactMap { NowPlayingReasonsLine(line: $0) }.filter { $0.reason != nil }.map(\.path))
     }
 
     /// Whether the app at `url`, running, was opened with the launch option
     /// it needs; `nil` when it needs none or isn't running.
     func runsWithLaunchOption(_ url: URL) async -> Bool? {
-        let (status, output) = await run(["--launch-option", url.path])
-        return status == 0 ? Self.runsWithLaunchOption(fromAnswer: output) : nil
+        let (status, output) = await run(CommandLineOptions.AppQuery.launchOption.arguments(url.path))
+        return status == CheckExitStatus.done ? Self.runsWithLaunchOption(fromAnswer: output) : nil
     }
 
-    /// `--launch-option`'s answer: "<option>\t<yes|no|…>".
+    /// `--launch-option`'s answer (`LaunchOptionAnswer`).
     static func runsWithLaunchOption(fromAnswer output: String) -> Bool? {
-        let fields = output.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: "\t")
-        guard fields.count == 2, !fields[0].isEmpty else { return nil }
-        return fields[1] == "yes" ? true : fields[1] == "no" ? false : nil
+        guard let answer = LaunchOptionAnswer(line: output), answer.option != nil else { return nil }
+        return answer.running == .yes ? true : answer.running == .no ? false : nil
     }
 
     /// Quits the app at `url` (never by force) and opens it again, in the
     /// background, with the launch option it needs; or opens it so when it
     /// isn't running. Whether it did.
     func reopenWithLaunchOption(_ url: URL) async -> Bool {
-        await run(["--relaunch", url.path], timeout: 60).status == 0
+        await run(CommandLineOptions.AppQuery.relaunch.arguments(url.path), timeout: 60).status == CheckExitStatus.done
     }
 
     /// Starts a check of the app at `appURL`, blocking the mouse and
@@ -141,15 +121,18 @@ struct PlayerCheckHelper: Sendable {
     /// A check's arguments. --partial: the window said what's missing, and
     /// the check goes on without what isn't needed.
     func checkArguments(_ appURL: URL, result: URL, taps: Bool) -> [String] {
-        [appURL.path, "--block-input", "--partial", "--result", result.path] + folderArguments + (taps ? [] : ["--no-taps"])
+        CommandLineOptions.check(appURL.path, partial: true, result: result.path, folders: folderArguments, taps: taps)
     }
 
     /// The newest check's log, to show after a check couldn't finish.
     static var newestLog: URL? { newestLog(in: logsFolder) }
 
-    /// The newest log in `folder`.
+    /// The newest run's log in `folder`, as the helper names them
+    /// (`RunLogName`): nothing else there (Finder's .DS_Store, once the
+    /// folder was opened) is ever opened.
     static func newestLog(in folder: URL) -> URL? {
-        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        let files = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [])
+            .filter { RunLogName.isRunLog($0.lastPathComponent) }
         return files.max { lhs, rhs in
             let date = { (url: URL) in (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast }
             return date(lhs) < date(rhs)

@@ -207,16 +207,7 @@ struct PlayerTiles: View {
             .padding(.horizontal, Self.inset)
             .frame(maxWidth: .infinity)
             .frame(height: Self.tileHeight)
-            .background {
-                if isSelected { RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.selectedTileFill) }
-            }
-            // Chosen: outlined in the accent color too, so the whole name fits.
-            .overlay {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 2)
-                }
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .chosenOutline(isSelected)
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10)) // lights up under the pointer; dims while disabled
         .disabled(!option.isClickable)

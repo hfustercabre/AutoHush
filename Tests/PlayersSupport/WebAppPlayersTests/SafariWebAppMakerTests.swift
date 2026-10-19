@@ -1,10 +1,11 @@
 import Foundation
+import Network
 import Testing
 import AutoHushKit
 @testable import WebAppPlayers
 import AutoHushTestSupport
 
-@Suite("Adding a web app", .serialized)
+@Suite("Adding a web app")
 struct SafariWebAppMakerTests {
     @Test("what's typed becomes a web address, https added; anything else isn't one",
           arguments: [
@@ -25,8 +26,13 @@ struct SafariWebAppMakerTests {
 
     // MARK: - Asking the site
 
-    private static func session(_ answers: [String: Int]) -> URLSession {
-        StubProtocol.answers.withLock { $0 = answers }
+    /// `host`'s site at an address of the asking test's own, so tests that
+    /// run at once keep their answers apart (`session`).
+    private static func site(_ host: String) -> URL { URL(string: "https://\(host)/?test=\(UUID().uuidString)")! }
+
+    /// A session where `url` answers each HTTP method with `answers`.
+    private static func session(_ answers: [String: Int], for url: URL) -> URLSession {
+        StubProtocol.answers.withLock { $0[url] = answers }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [StubProtocol.self]
         return URLSession(configuration: configuration)
@@ -34,16 +40,67 @@ struct SafariWebAppMakerTests {
 
     @Test("any answer but “not found” means the site is there; a refused HEAD is asked again with GET")
     func answers() async throws {
-        let url = URL(string: "https://music.example.com")!
-        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 200]))
-        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 403]))
-        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 405, "GET": 200]))
+        let url = Self.site("music.example.com")
+        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 200], for: url))
+        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 403], for: url))
+        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 405, "GET": 200], for: url))
         await #expect(throws: WebAppMakingError.pageNotFound(host: "music.example.com")) {
-            try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 404]))
+            try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 404], for: url))
         }
         await #expect(throws: WebAppMakingError.noAnswer(host: "music.example.com")) {
-            try await WebAddress.checkAnswers(url, session: Self.session([:])) // no answer at all
+            try await WebAddress.checkAnswers(url, session: Self.session([:], for: url)) // no answer at all
         }
+    }
+
+    @Test("an http site, which App Transport Security keeps AutoHush from asking, answers when a connection to it opens (2026-10-19)")
+    func plainHTTP() async throws {
+        let url = URL(string: "http://radio.example.org:8000/live")!
+        let tried = Locked<[URL]>([])
+        let session = Self.session([:], for: url) // never asked
+        try await WebAddress.checkAnswers(url, session: session, connects: { tried.append($0); return true })
+        #expect(tried.value == [url])
+        await #expect(throws: WebAppMakingError.noAnswer(host: "radio.example.org")) {
+            try await WebAddress.checkAnswers(url, session: session, connects: { _ in false })
+        }
+        // https is asked as ever, without a connection check.
+        let https = Self.site("music.example.com")
+        try await WebAddress.checkAnswers(https, session: Self.session(["HEAD": 200], for: https),
+                                          connects: { tried.append($0); return false })
+        #expect(tried.value == [url])
+    }
+
+    @Test("an https site that sends AutoHush to http has answered: the redirect isn't followed, and App Transport Security's refusal counts as an answer")
+    func redirectToHTTP() async throws {
+        let toHTTP = URLRequest(url: URL(string: "http://radio.example.org/")!)
+        let toHTTPS = URLRequest(url: URL(string: "https://www.example.com/")!)
+        #expect(WebAddress.StopsAtPlainHTTP.follows(toHTTP) == nil)
+        #expect(WebAddress.StopsAtPlainHTTP.follows(toHTTPS) == toHTTPS)
+        let url = Self.site("radio.example.org")
+        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": 301], for: url))
+        try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": URLError.appTransportSecurityRequiresSecureConnection.rawValue],
+                                                                     for: url))
+        await #expect(throws: WebAppMakingError.noAnswer(host: "radio.example.org")) {
+            try await WebAddress.checkAnswers(url, session: Self.session(["HEAD": URLError.cannotConnectToHost.rawValue], for: url))
+        }
+    }
+
+    @Test("a connection to an http site's host and port: open while something listens there, refused once nothing does")
+    func connection() async throws {
+        let listener = try NWListener(using: .tcp, on: .any)
+        let queue = DispatchQueue(label: "SafariWebAppMakerTests.listener")
+        let port = Locked<UInt16?>(nil)
+        listener.newConnectionHandler = { $0.cancel() }
+        listener.stateUpdateHandler = { [port] state in
+            if case .ready = state { port.withLock { $0 = listener.port?.rawValue } }
+        }
+        listener.start(queue: queue)
+        for _ in 0..<500 where port.value == nil { try await Task.sleep(for: .milliseconds(10)) }
+        let listening = try #require(port.value)
+        let site = URL(string: "http://localhost:\(listening)/")!
+        #expect(await WebAddress.connects(to: site, timeout: 5))
+        listener.cancel()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(await WebAddress.connects(to: site, timeout: 5) == false)
     }
 
     // MARK: - Making it
@@ -189,13 +246,11 @@ struct SafariWebAppMakerTests {
 
     @Test("a bundle is sealed once it's signed, as Safari does last")
     func sealed() throws {
-        let app = FileManager.default.temporaryDirectory.appending(path: "Sealed-\(UUID().uuidString)/Web.app")
-        defer { try? FileManager.default.removeItem(at: app.deletingLastPathComponent()) }
-        let contents = app.appending(path: "Contents")
-        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
-        let info: NSDictionary = ["CFBundleIdentifier": SafariWebApp.bundleIDPrefix + "TEST", "CFBundleName": "Web",
-                                  "LSTemplateApplication": true]
-        try info.write(to: contents.appending(path: "Info.plist"))
+        let folder = FileManager.default.temporaryDirectory.appending(path: "Sealed-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let app = try TestAppBundle.make(in: folder, name: "Web", info: [
+            "CFBundleIdentifier": SafariWebApp.bundleIDPrefix + "TEST", "CFBundleName": "Web", "LSTemplateApplication": true,
+        ])
         #expect(!SafariWebApp.isSealed(at: app))
 
         let codesign = Process()
@@ -371,26 +426,22 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
 }
 
-/// A value shared with closures.
-final class Locked<Value: Sendable>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _value: Value
-    init(_ value: Value) { _value = value }
-    var value: Value { lock.withLock { _value } }
-    func append<Element>(_ element: Element) where Value == [Element] { lock.withLock { _value.append(element) } }
-    func withLock<Result>(_ body: (inout Value) -> Result) -> Result { lock.withLock { body(&_value) } }
-}
-
-/// Answers each HTTP method with a status; a method without one gets no answer.
+/// Answers each HTTP method with a status, by address; a method without one
+/// gets no answer.
 final class StubProtocol: URLProtocol {
-    static let answers = OSAllocatedUnfairLockBox<[String: Int]>([:])
+    static let answers = Locked<[URL: [String: Int]]>([:])
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         let method = request.httpMethod ?? "GET"
-        guard let status = Self.answers.withLock({ $0[method] }), let url = request.url else {
+        guard let url = request.url, let status = Self.answers.value[url]?[method] else {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
+            return
+        }
+        // Below 0: that URLError instead of an answer.
+        if status < 0 {
+            client?.urlProtocol(self, didFailWithError: URLError(URLError.Code(rawValue: status)))
             return
         }
         client?.urlProtocol(self, didReceive: HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!,
@@ -399,12 +450,4 @@ final class StubProtocol: URLProtocol {
         client?.urlProtocolDidFinishLoading(self)
     }
     override func stopLoading() {}
-}
-
-/// A lock around a value, for a class property.
-final class OSAllocatedUnfairLockBox<Value>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var value: Value
-    init(_ value: Value) { self.value = value }
-    func withLock<T>(_ body: (inout Value) -> T) -> T { lock.withLock { body(&value) } }
 }

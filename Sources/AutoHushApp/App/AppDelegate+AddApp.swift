@@ -42,8 +42,8 @@ extension AppDelegate {
             },
             runsWithLaunchOption: { app in await helper?.runsWithLaunchOption(app.url) },
             reopen: { app in await helper?.reopenWithLaunchOption(app.url) ?? false },
-            permissions: { app, scriptable in await Self.checkPermissions(app, scriptable: scriptable) },
-            request: { permission, app, current in await Self.request(permission, app: app, current: current) },
+            permissions: { [weak self] app, scriptable in await self?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions() },
+            request: { [weak self] permission, app, current in await self?.requestCheckPermission(permission, app: app, current: current) },
             antiDot: { [weak self] in self?.preferences.detectionMethod != .audioLevels },
             macCanMute: { [weak self] in self?.checkOutputMute.canMute ?? false },
             turnOffAntiDot: { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) },
@@ -140,50 +140,26 @@ extension AppDelegate {
         return NSRunningApplication.running(app.bundleID) != nil
     }
 
-    /// What the check of `app` needs, as it stands now.
-    private static func checkPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
-        var permissions = CheckPermissions(accessibility: AccessibilityPermission.isTrusted())
-        permissions.audio = switch TCCAudioCapturePermission().status() {
-        case .granted?, nil: .allowed // nil: macOS can't tell; the check finds out
-        case .notDetermined?: .notAsked
-        case .denied?: .denied
-        }
-        if scriptable {
-            if let pid = NSRunningApplication.running(app.bundleID)?.processIdentifier {
-                let status = await PermissionCenter.queue.run { AutomationPermission.check(pid: pid, ask: false) }
-                permissions.automation = PermissionCenter.access(automationStatus: status)
-            } else {
-                permissions.automation = .playerNotRunning
-            }
-        }
-        return permissions
+    /// What the check of `app` needs, as it stands now, read by the rules
+    /// the chosen player's permissions are (`PermissionCenter`): Automation
+    /// when it's scripted. Audio Recording is read in AntiDot mode too,
+    /// where the check doesn't use it: the window goes by the mode, which
+    /// its last step can turn off.
+    func checkPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
+        let state = await permissionCenter.state(
+            app: app.bundleID, control: scriptable ? CheckPermission.automation.permission(app: app.name) : nil,
+            detectionMethod: .audioLevels, detection: status.detection, awaitsReopen: status.awaitsReopenForAudioRecording
+        )
+        return CheckPermissions(state)
     }
 
-    /// A permission's Allow…: macOS's prompt when it hasn't asked yet, else
-    /// System Settings; for Automation with the app closed, the app.
-    private static func request(_ permission: CheckPermission, app: CheckableApp, current: CheckPermissions) async {
-        switch permission {
-        case .accessibility:
-            _ = AccessibilityPermission.isTrusted(prompt: true)
-            SystemSettingsPane.accessibility.open()
-        case .audioRecording:
-            if current.audio == .notAsked {
-                TCCAudioCapturePermission().request { _ in }
-            } else {
-                SystemSettingsPane.audioCapture.open()
-            }
-        case .automation:
-            switch current.automation {
-            case .notAsked?:
-                if let pid = NSRunningApplication.running(app.bundleID)?.processIdentifier {
-                    _ = await PermissionCenter.queue.run { AutomationPermission.check(pid: pid, ask: true) }
-                }
-            case .playerNotRunning?:
-                _ = await openInBackground(app)
-            default:
-                SystemSettingsPane.automation.open()
-            }
-        }
+    /// A permission's Allow…, as anywhere else (`PermissionCenter.request`):
+    /// macOS's prompt when it hasn't asked yet, else System Settings; for
+    /// Automation with the app closed, the app, in the background.
+    func requestCheckPermission(_ permission: CheckPermission, app: CheckableApp, current: CheckPermissions) async {
+        guard let request = PermissionCenter.request(for: permission.permission(app: app.name), access: current.access(permission))
+        else { return }
+        await carryOut(request, app: app.bundleID) { _ = await Self.openInBackground(app) }
     }
 }
 

@@ -18,7 +18,7 @@ package enum NowPlayingReason {
     /// in the Now Playing panel). Add an App… and the Player Check app list the
     /// apps by it (`--now-playing-reasons`).
     package static func of(appAt url: URL, bundleID: String?) -> String? {
-        if bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true { return "WebKit, as a Safari web app" }
+        if bundleID?.hasPrefix(SafariWebApp.bundleIDPrefix) == true { return "WebKit, as a Safari web app" }
         if case .chromiumWebApp(let browserID) = PageAccess.interface(ofAppAt: url) {
             return "Chromium, as a \(BundleNames.name(of: browserID)) web app"
         }

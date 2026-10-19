@@ -43,26 +43,6 @@ func stepAnnouncementInfo(_ text: String) -> [NSAccessibility.NotificationUserIn
     [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue]
 }
 
-/// A checklist step's button: blue, as the window's next thing to do, under
-/// the step's lines; Return presses it, as a window's main button. Outside
-/// the step's VoiceOver element, so it's reached as a button of its own.
-struct StepActionButton: View {
-    let button: StepButton
-    /// Grey, as the other way on beside the blue one.
-    var secondary = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(verbatim: button.title).font(secondary ? .appBody : .appBody.weight(.semibold)).padding(.horizontal, 6)
-                .fixedSize() // one line: two that don't fit go one under the other
-        }
-        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
-        .keyboardShortcut(secondary ? nil : .defaultAction)
-        .padding(.top, 2)
-    }
-}
-
 /// How long is left to do a step, as a sentence on an orange-tinted line
 /// with a timer, so it stands out among the step's grey lines.
 struct CountdownBanner: View {
@@ -109,15 +89,28 @@ struct StepSymbol: View {
 }
 
 /// A checklist step as a row: its icon, words, lines and warning (one
-/// VoiceOver element), then its button while it's the one to do.
-struct ChecklistStepRow<Icon: View>: View {
+/// VoiceOver element), then its buttons while it's the one to do, and
+/// `accessory` under them (the permission learning needs first: its
+/// `PermissionButton`), each reached as a button of its own.
+struct ChecklistStepRow<Icon: View, Accessory: View>: View {
     let step: ChecklistStep
     /// Done (or waiting on a permission): its words in the secondary color.
     var dimmed: Bool
     /// The one to do now, in a window that marks it.
     var bold = false
     var action: (StepButton) -> Void
-    @ViewBuilder let icon: Icon
+    let icon: Icon
+    let accessory: Accessory
+
+    init(step: ChecklistStep, dimmed: Bool, bold: Bool = false, action: @escaping (StepButton) -> Void,
+         @ViewBuilder icon: () -> Icon, @ViewBuilder accessory: () -> Accessory) {
+        self.step = step
+        self.dimmed = dimmed
+        self.bold = bold
+        self.action = action
+        self.icon = icon()
+        self.accessory = accessory()
+    }
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -128,24 +121,28 @@ struct ChecklistStepRow<Icon: View>: View {
                         .foregroundStyle(dimmed ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
                         .fontWeight(bold ? .semibold : .regular)
                         .fixedSize(horizontal: false, vertical: true)
-                    ForEach(step.notes, id: \.self) { Text(verbatim: $0).captionStyle().fixedSize(horizontal: false, vertical: true) }
+                    ForEach(step.notes, id: \.self) { Text(verbatim: $0).captionStyle() }
                     if let warning = step.warning { NoteLabel(warning).padding(.top, 2) }
                     if let countdown = step.countdown { CountdownBanner(text: countdown).padding(.top, 2) }
                 }
                 .checklistStepAccessibility(step)
                 if step.button != nil || step.secondaryButton != nil {
-                    // Side by side when they fit on one line each, else one under the other.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 8) { buttons }
-                        VStack(alignment: .leading, spacing: 6) { buttons }
-                    }
+                    FlowingButtons { buttons }
                 }
+                accessory
             }
         }
     }
 
     @ViewBuilder private var buttons: some View {
-        if let button = step.button { StepActionButton(button: button) { action(button) } }
-        if let other = step.secondaryButton { StepActionButton(button: other, secondary: true) { action(other) } }
+        if let button = step.button { StepActionButton(button.title) { action(button) } }
+        if let other = step.secondaryButton { StepActionButton(other.title, secondary: true) { action(other) } }
+    }
+}
+
+extension ChecklistStepRow where Accessory == EmptyView {
+    init(step: ChecklistStep, dimmed: Bool, bold: Bool = false, action: @escaping (StepButton) -> Void,
+         @ViewBuilder icon: () -> Icon) {
+        self.init(step: step, dimmed: dimmed, bold: bold, action: action, icon: icon) { EmptyView() }
     }
 }

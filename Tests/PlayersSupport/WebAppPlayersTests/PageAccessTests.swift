@@ -1,19 +1,15 @@
 import Foundation
 import Testing
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 @Suite("PageAccess")
 struct PageAccessTests {
-    /// An app bundle with `frameworks` and an Info.plist of `info`.
+    /// An app bundle with `frameworks` and an Info.plist of `info`, in a
+    /// folder of its own (removed after).
     private func app(frameworks: [String] = [], info: [String: String] = [:]) throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Page-\(UUID().uuidString).app")
-        for name in frameworks {
-            try FileManager.default.createDirectory(at: url.appendingPathComponent("Contents/Frameworks/\(name).framework"),
-                                                    withIntermediateDirectories: true)
-        }
-        try FileManager.default.createDirectory(at: url.appendingPathComponent("Contents"), withIntermediateDirectories: true)
-        #expect((info as NSDictionary).write(to: url.appendingPathComponent("Contents/Info.plist"), atomically: true))
-        return url
+        let folder = FileManager.default.temporaryDirectory.appending(path: "Page-\(UUID().uuidString)")
+        return try TestAppBundle.make(in: folder, name: "Page", info: info, frameworks: frameworks)
     }
 
     @Test("an app's interface, by the frameworks in its bundle; a Chromium web app by its launcher")
@@ -21,7 +17,7 @@ struct PageAccessTests {
         let electron = try app(frameworks: ["Electron Framework"]), cef = try app(frameworks: ["Chromium Embedded Framework"])
         let flutter = try app(frameworks: ["FlutterMacOS"]), plain = try app()
         let webApp = try app(info: ["CrAppModeShortcutURL": "https://music.youtube.com/", "CrBundleIdentifier": "com.google.Chrome"])
-        defer { [electron, cef, flutter, plain, webApp].forEach { try? FileManager.default.removeItem(at: $0) } }
+        defer { [electron, cef, flutter, plain, webApp].forEach { try? FileManager.default.removeItem(at: $0.deletingLastPathComponent()) } }
         #expect(PageAccess.interface(ofAppAt: electron) == .electron)
         #expect(PageAccess.interface(ofAppAt: cef) == .cef)
         #expect(PageAccess.interface(ofAppAt: flutter) == .flutter)
@@ -32,7 +28,7 @@ struct PageAccessTests {
     @Test("Chromium inside Qt shows its page as it is, but its words are current only in sight")
     func qtWebEngine() throws {
         let qt = try app(frameworks: ["QtWebEngineCore"])
-        defer { try? FileManager.default.removeItem(at: qt) }
+        defer { try? FileManager.default.removeItem(at: qt.deletingLastPathComponent()) }
         #expect(PageAccess.interface(ofAppAt: qt) == .qtWebEngine)
         #expect(PageAccess.switches(for: .qtWebEngine).isEmpty)
         #expect(!PageAccess(interface: .qtWebEngine, switchAttribute: nil).wordsCurrentOutOfSight)

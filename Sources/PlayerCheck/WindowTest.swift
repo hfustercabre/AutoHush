@@ -105,8 +105,7 @@ import AppKit
     /// every other state.
     private func normalize() -> String? {
         cover.remove()
-        let appElement = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(appElement, 1)
+        let appElement = AXUIElement.application(pid, timeout: 1)
         if appElement.value(kAXHiddenAttribute) as? Bool == true {
             WindowStates.set(appElement, kAXHiddenAttribute, false)
             guard WindowStates.wait(3, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else { return "it couldn't be shown again" }
@@ -158,9 +157,8 @@ import AppKit
         comeHome()
         guard let again = WindowStates.main(of: pid)?.info, WindowStates.isCovered(again) else { return nil }
         guard let home else { return "it's covered" }
-        let homeApp = AXUIElementCreateApplication(home.processIdentifier)
-        AXUIElementSetMessagingTimeout(homeApp, 1)
-        guard let window = homeApp.element(kAXFocusedWindowAttribute) ?? homeApp.element(kAXMainWindowAttribute),
+        let homeApp = AXUIElement.application(home.processIdentifier, timeout: 1)
+        guard let window = homeApp.element(kAXFocusedWindowAttribute, timeout: 1) ?? homeApp.element(kAXMainWindowAttribute, timeout: 1),
               let frame = window.frame else { return "it's covered" }
         if homeWindow == nil { homeWindow = (window, frame) }
         // Aside towards the side with room, leaving 160 pt of the app's window
@@ -268,8 +266,7 @@ import AppKit
     }
 
     private func hide() -> String? {
-        let appElement = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(appElement, 1)
+        let appElement = AXUIElement.application(pid, timeout: 1)
         WindowStates.set(appElement, kAXHiddenAttribute, true)
         if !WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) { app.hide() }
         return WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) ? nil : "it couldn't be hidden"

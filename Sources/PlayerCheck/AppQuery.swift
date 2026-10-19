@@ -1,6 +1,8 @@
 import AppKit
 import AutoHushKit
 import CheckedPlayers
+import os
+import PlayerCheckKit
 import WebAppPlayers
 
 /// The launch option an Electron app needs for its page to take presses
@@ -21,11 +23,6 @@ enum LaunchOption {
     /// A process's launch arguments, its own path first (`ProcessArguments`).
     static func arguments(of pid: pid_t) -> [String] { ProcessArguments.of(pid) }
 
-    /// What `openApplication` answered, from the queue it answers on.
-    private final class Opened: @unchecked Sendable {
-        var app: NSRunningApplication?
-        var error: Error?
-    }
 
     /// Quits the app as a person would (never by force: it's given 15 s), then
     /// opens it again with `option`, in the background: an app that comes
@@ -46,15 +43,18 @@ enum LaunchOption {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.arguments = [option]
         configuration.activates = false
-        let opened = Opened()
+        // What `openApplication` answers, from the queue it answers on; read
+        // under the lock also when the wait gives up as it answers.
+        let opened = OSAllocatedUnfairLock<(app: NSRunningApplication?, error: (any Error)?)>(initialState: (nil, nil))
         let done = DispatchSemaphore(value: 0)
         NSWorkspace.shared.openApplication(at: url, configuration: configuration) { @Sendable app, error in // on another thread
-            opened.app = app
-            opened.error = error
+            opened.withLock { $0 = (app, error) }
             done.signal()
         }
-        guard done.wait(timeout: .now() + 30) == .success, let new = opened.app else {
-            tell("Couldn't open \(name) again: \(opened.error?.localizedDescription ?? "macOS didn't answer").")
+        let answered = done.wait(timeout: .now() + 30) == .success
+        let (new, error) = opened.withLock { $0 }
+        guard answered, let new else {
+            tell("Couldn't open \(name) again: \(error?.localizedDescription ?? "macOS didn't answer").")
             return false
         }
         // It may come forward a few seconds after its window shows (one did
@@ -76,40 +76,43 @@ enum LaunchOption {
 
 /// --launch-option, --relaunch and --window-state <app>, for AutoHush's Add
 /// an App… (the first two) and the Player Check app: whether the app needs a
-/// launch option and runs with it ("<option, or nothing>\t<yes|no|not
-/// running>"), quitting it and opening it again with that option (logged in
-/// --logs' folder, when given), and the state its window is in now (one of
-/// `WindowState`'s titles, "no window" or "not running"), for its Play and
-/// Pause by the way that worked in that state.
-enum AppQuery: String { case launchOption = "--launch-option", relaunch = "--relaunch", windowState = "--window-state" }
+/// launch option and runs with it (`LaunchOptionAnswer`), quitting it and
+/// opening it again with that option (logged in --logs' folder, when given),
+/// and the state its window is in now (`WindowStateAnswer`), for its Play
+/// and Pause by the way that worked in that state.
+typealias AppQuery = CommandLineOptions.AppQuery
 
 @MainActor func answer(_ query: AppQuery) -> Never {
     guard CommandLine.arguments.count > 2, let url = findApp(CommandLine.arguments[2]), let id = Bundle(url: url)?.bundleIdentifier else {
-        print("no app found")
-        exit(1)
+        print(AppQuery.noApp)
+        exit(CheckExitStatus.failed)
     }
-    let app = NSRunningApplication.runningApplications(withBundleIdentifier: id).first
+    let app = NSRunningApplication.running(id)
     switch query {
     case .launchOption:
         let needed = LaunchOption.needed(by: url)
-        print([needed ?? "", needed == nil ? "" : app.map { LaunchOption.arguments(of: $0.processIdentifier).contains(needed!) ? "yes" : "no" }
-                                                ?? "not running"].joined(separator: "\t"))
-        exit(0)
+        let running: LaunchOptionAnswer.Running? = needed.map { needed in
+            guard let app else { return .notRunning }
+            return LaunchOption.arguments(of: app.processIdentifier).contains(needed) ? .yes : .no
+        }
+        print(LaunchOptionAnswer(option: needed, running: running).line)
+        exit(CheckExitStatus.done)
     case .relaunch:
         // It quits and opens the app, so it's logged as checks and presses
         // are (in --logs' folder); the two questions aren't (they're asked often).
-        runLog.start(app: FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: ""), doing: "relaunch")
+        runLog.start(app: FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: ""), doing: RunLogName.relaunch)
         let tell = { (line: String) in
             log(line)
             print(line)
         }
         guard let needed = LaunchOption.needed(by: url) else {
             tell("It needs no launch option.")
-            exit(1)
+            exit(CheckExitStatus.failed)
         }
-        exit(LaunchOption.relaunch(app, url: url, with: needed, tell: tell) ? 0 : 1)
+        exit(LaunchOption.relaunch(app, url: url, with: needed, tell: tell) ? CheckExitStatus.done : CheckExitStatus.failed)
     case .windowState:
-        print(app.map { WindowStates.state(of: $0)?.title ?? "no window" } ?? "not running")
-        exit(0)
+        let answer: WindowStateAnswer = app.map { WindowStates.state(of: $0).map { .state($0) } ?? .noWindow } ?? .notRunning
+        print(answer.line)
+        exit(CheckExitStatus.done)
     }
 }

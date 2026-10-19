@@ -1,8 +1,8 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Updates, in a card like the menu's: the daily check, what it
-/// leads to (with a note while notifications are off), and Check Now.
+/// Settings → Updates, a grouped form: the daily check, what it leads to
+/// (with a note while notifications are off), and Check Now.
 struct UpdatesSettingsView: View {
     let model: SettingsModel
 
@@ -20,7 +20,7 @@ struct UpdatesSettingsView: View {
                     Text(verbatim: title) // a row's title
                     ChoiceChips(
                         label: title,
-                        options: [AutomaticUpdates.notify, .download, .install].map { .init(title: $0.title, value: $0) },
+                        options: AutomaticUpdates.allCases.map { .init(title: $0.title, value: $0) },
                         // A copy that can't install itself can only notify.
                         selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
                         onSelect: { model.updates.setMode($0) }
@@ -30,9 +30,9 @@ struct UpdatesSettingsView: View {
                 }
                 // ← and → choose, while the arrow keys' highlight is on it.
                 .highlightableRow(adjust: { step in
-                    let modes: [AutomaticUpdates] = [.notify, .download, .install]
-                    guard model.updateInstallNote == nil, let index = modes.firstIndex(of: model.automaticUpdates) else { return }
-                    model.updates.setMode(modes[min(max(index + step, 0), modes.count - 1)])
+                    guard model.updateInstallNote == nil,
+                          let mode = AutomaticUpdates.allCases.stepping(from: model.automaticUpdates, by: step) else { return }
+                    model.updates.setMode(mode)
                 })
                 .unavailable(!model.checksForUpdatesAutomatically)
                 if model.checksForUpdatesAutomatically {

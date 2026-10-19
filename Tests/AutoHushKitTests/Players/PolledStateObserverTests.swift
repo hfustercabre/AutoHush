@@ -4,46 +4,27 @@ import Testing
 import AutoHushTestSupport
 
 /// A player state the test changes, counting how often it was read.
-private final class FakeState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _state: PlayerState
-    private var _reads = 0
+private final class FakeState: Sendable {
+    private let box: Locked<(state: PlayerState, reads: Int)>
 
-    init(_ state: PlayerState) { _state = state }
+    init(_ state: PlayerState) { box = Locked((state, 0)) }
 
     var state: PlayerState {
-        get { lock.withLock { _state } }
-        set { lock.withLock { _state = newValue } }
+        get { box.value.state }
+        set { box.withLock { $0.state = newValue } }
     }
-    var reads: Int { lock.withLock { _reads } }
+    var reads: Int { box.value.reads }
 
     func read() -> PlayerState {
-        lock.withLock {
-            _reads += 1
-            return _state
+        box.withLock {
+            $0.reads += 1
+            return $0.state
         }
     }
 }
 
-/// Holds whoever waits on it until it's opened.
-private actor Gate {
-    private var isOpen = false
-    private var waiting: [CheckedContinuation<Void, Never>] = []
-
-    func wait() async {
-        guard !isOpen else { return }
-        await withCheckedContinuation { waiting.append($0) }
-    }
-
-    func open() {
-        isOpen = true
-        waiting.forEach { $0.resume() }
-        waiting = []
-    }
-}
-
 @MainActor
-@Suite("PolledStateObserver")
+@Suite("PolledStateObserver", .timeLimit(.minutes(1)))
 struct PolledStateObserverTests {
     @Test("reports each change once, says nothing for unknown states, and nothing after stop; changes are declared up to 1.5 s late")
     func changes() async throws {

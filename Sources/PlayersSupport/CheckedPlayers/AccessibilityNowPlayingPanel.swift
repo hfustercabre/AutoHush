@@ -59,26 +59,24 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     package static func listedItem() -> AXUIElement? {
         for id in itemApps {
             guard let app = NSRunningApplication.running(id) else { continue }
-            let element = AXUIElementCreateApplication(app.processIdentifier)
-            AXUIElementSetMessagingTimeout(element, ownTimeout)
+            // Each element waits macOS's default otherwise, not its app's.
+            let element = AXUIElement.application(app.processIdentifier, timeout: ownTimeout)
             func find(_ element: AXUIElement, depth: Int) -> AXUIElement? {
-                // Each element waits macOS's default otherwise, not its app's.
-                AXUIElementSetMessagingTimeout(element, ownTimeout)
                 if element.string(kAXIdentifierAttribute) == identifier { return element }
                 guard depth < 4 else { return nil }
-                for child in element.children {
+                for child in element.children(timeout: ownTimeout) {
                     if let found = find(child, depth: depth + 1) { return found }
                 }
                 return nil
             }
-            for window in element.elements(kAXWindowsAttribute) {
+            for window in element.elements(kAXWindowsAttribute, timeout: ownTimeout) {
                 if let found = find(window, depth: 0) { return found }
             }
             // Control Center on macOS 14 keeps its items in its extras menu
             // bar, not in windows (measured on 14.4, 2026-10-18).
-            if let extras = element.element("AXExtrasMenuBar") {
-                AXUIElementSetMessagingTimeout(extras, ownTimeout)
-                if let found = extras.children.first(where: { $0.string(kAXIdentifierAttribute) == identifier }) { return found }
+            if let extras = element.element("AXExtrasMenuBar", timeout: ownTimeout),
+               let found = extras.children(timeout: ownTimeout).first(where: { $0.string(kAXIdentifierAttribute) == identifier }) {
+                return found
             }
         }
         return nil
@@ -93,20 +91,16 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// system-wide element, it would be every element's in this process
     /// while the sweep runs.
     package static func hitTestedItem() -> AXUIElement? {
-        let apps = itemApps.compactMap { NSRunningApplication.running($0) }.map { app in
-            let element = AXUIElementCreateApplication(app.processIdentifier)
-            AXUIElementSetMessagingTimeout(element, timeout)
-            return element
-        }
+        let apps = itemApps.compactMap { NSRunningApplication.running($0) }.map { AXUIElement.application($0.processIdentifier, timeout: timeout) }
         guard !apps.isEmpty else { return nil }
         let width = Float(CGDisplayBounds(CGMainDisplayID()).width)
         var x = width - 20
         while x > width / 3 {
             for app in apps {
                 var hit: AXUIElement?
-                if AXUIElementCopyElementAtPosition(app, x, 12, &hit) == .success, let hit {
-                    AXUIElementSetMessagingTimeout(hit, timeout)
-                    if hit.string(kAXIdentifierAttribute) == identifier { return hit }
+                if AXUIElementCopyElementAtPosition(app, x, 12, &hit) == .success, let hit,
+                   hit.waiting(timeout).string(kAXIdentifierAttribute) == identifier {
+                    return hit
                 }
             }
             x -= 6
@@ -134,8 +128,7 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
         var found: [ShownRow] = []
         func walk(_ element: AXUIElement, _ depth: Int) {
             guard depth < 20 else { return }
-            AXUIElementSetMessagingTimeout(element, ownTimeout)
-            let children = element.children
+            let children = element.children(timeout: ownTimeout)
             if let button = children.first(where: { ["play.fill", "pause.fill"].contains($0.string(kAXIdentifierAttribute)) }) {
                 let text = children.compactMap { $0.string(kAXValueAttribute) }.filter { !$0.isEmpty }.joined(separator: " ")
                 found.append((PanelRow(text: text, playing: button.string(kAXIdentifierAttribute) == "pause.fill"), button))
@@ -148,9 +141,8 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
             }
             children.forEach { walk($0, depth + 1) }
         }
-        let app = AXUIElementCreateApplication(center.processIdentifier)
-        AXUIElementSetMessagingTimeout(app, ownTimeout)
-        app.elements(kAXWindowsAttribute).forEach { walk($0, 0) }
+        AXUIElement.application(center.processIdentifier, timeout: ownTimeout)
+            .elements(kAXWindowsAttribute, timeout: ownTimeout).forEach { walk($0, 0) }
         return found
     }
 

@@ -2,21 +2,16 @@ import AppKit
 import CheckedPlayers
 import AutoHushKit
 import MenuPlayers
+import WebAppPlayers
 
 // MARK: - Accessibility, as AutoHush reads it
 
-// AutoHushKit's `value(_:)`, `children` and `actionNames` read attributes, as AutoHush's players do.
+// AutoHushKit's `value(_:)`, `string(_:)`, `children`, `frame` and
+// `actionNames` read attributes, as AutoHush's players do;
+// `AXUIElement.application(_:timeout:)` gives an app's element its timeout.
 extension AXUIElement {
-    var title: String { value(kAXTitleAttribute) as? String ?? "" }
-    func text(_ attribute: String) -> String { value(attribute) as? String ?? "" }
-    var frame: CGRect? {
-        guard let position = value(kAXPositionAttribute), let size = value(kAXSizeAttribute),
-              CFGetTypeID(position) == AXValueGetTypeID(), CFGetTypeID(size) == AXValueGetTypeID() else { return nil }
-        var origin = CGPoint.zero, extent = CGSize.zero
-        AXValueGetValue(position as! AXValue, .cgPoint, &origin)
-        AXValueGetValue(size as! AXValue, .cgSize, &extent)
-        return CGRect(origin: origin, size: extent)
-    }
+    var title: String { text(kAXTitleAttribute) }
+    func text(_ attribute: String) -> String { string(attribute) ?? "" }
 }
 
 /// The windows last found on other desktops: the search takes about 70 ms
@@ -25,20 +20,20 @@ extension AXUIElement {
 @MainActor var otherDesktopWindows: (pid: pid_t, windows: [AXUIElement], found: Date)?
 
 /// The app's windows on this desktop, else on any other, as AutoHush finds
-/// them (`AccessibilityWindows`: about 70 ms, 1 s at most); `onThisDesktop`
-/// false: not on screen, so nothing there can be hit-tested.
+/// them (`AccessibilityWebPage.windows`, through `AccessibilityWindows`:
+/// about 70 ms, 1 s at most), each read waiting 1 s; `onThisDesktop` false:
+/// not on screen, so nothing there can be hit-tested.
 @MainActor func appWindows(of pid: pid_t) -> (windows: [AXUIElement], onThisDesktop: Bool) {
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 1)
-    let shown = app.elements(kAXWindowsAttribute)
-    guard shown.isEmpty, AccessibilityWindows.isAvailable else { return (shown, true) }
-    if let kept = otherDesktopWindows, kept.pid == pid, Date().timeIntervalSince(kept.found) < 10,
-       !kept.windows.isEmpty, kept.windows.allSatisfy({ $0.text(kAXRoleAttribute) == kAXWindowRole }) {
-        return (kept.windows, false)
+    AccessibilityWebPage.windows(of: pid, timeout: 1) { pid in
+        guard AccessibilityWindows.isAvailable else { return nil }
+        if let kept = otherDesktopWindows, kept.pid == pid, Date().timeIntervalSince(kept.found) < 10,
+           !kept.windows.isEmpty, kept.windows.allSatisfy({ $0.text(kAXRoleAttribute) == kAXWindowRole }) {
+            return kept.windows
+        }
+        let found = AccessibilityWindows.windows(ofProcess: pid) ?? []
+        otherDesktopWindows = (pid, found, Date())
+        return found
     }
-    let found = AccessibilityWindows.windows(ofProcess: pid) ?? []
-    otherDesktopWindows = (pid, found, Date())
-    return (found, false)
 }
 
 /// Whether what a window shows can be hit-tested: it's on this desktop, not
@@ -70,19 +65,16 @@ func playbackMenu(pid: pid_t) -> FoundMenu? {
     return FoundMenu(title: barItem.title, toggle: toggle, arrows: arrows(in: barItem) ?? "⌘← ⌘→")
 }
 
-/// The app's menu bar, read as AutoHush waits for a menu (`AccessibilityPlaybackMenu.timeout`).
-func menuBar(of pid: pid_t) -> AXUIElement? {
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, AccessibilityPlaybackMenu.timeout)
-    return app.element(kAXMenuBarAttribute)
-}
+/// The app's menu bar, read as AutoHush waits for a menu (`AccessibilityPlaybackMenu.menuBar`).
+func menuBar(of pid: pid_t) -> AXUIElement? { AccessibilityPlaybackMenu.menuBar(of: pid) }
 
 /// A menu's Previous and Next shortcuts as they read ("⌘← ⌘→", "⇧← ⇧→"):
 /// each arrow's with ⌘ alone when it has one, else its first; "with no
 /// modifiers given" when one doesn't say; `nil` without both arrows.
 func arrows(in barItem: AXUIElement) -> String? {
     var modifiers: [Int: [Int?]] = [:]
-    for item in barItem.children.first?.children ?? [] {
+    let timeout = AccessibilityPlaybackMenu.timeout
+    for item in barItem.children(timeout: timeout).first?.children(timeout: timeout) ?? [] {
         guard let key = item.value(kAXMenuItemCmdVirtualKeyAttribute) as? Int, AccessibilityPlaybackMenu.arrows.contains(key) else { continue }
         modifiers[key, default: []].append(item.value(kAXMenuItemCmdModifiersAttribute) as? Int)
     }
@@ -97,7 +89,7 @@ func arrows(in barItem: AXUIElement) -> String? {
 /// the report, never tried: AutoHush couldn't press it.
 func unfoundMenu(pid: pid_t) -> (title: String, arrows: String)? {
     guard let menuBar = menuBar(of: pid) else { return nil }
-    for barItem in menuBar.children {
+    for barItem in menuBar.children(timeout: AccessibilityPlaybackMenu.timeout) {
         if let arrows = arrows(in: barItem), arrows.contains("no modifiers") { return (barItem.title, arrows) }
     }
     return nil

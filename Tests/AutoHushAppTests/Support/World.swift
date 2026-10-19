@@ -64,6 +64,8 @@ final class World {
     var hasLog = false
     var logsShown = 0
     var autoHushReopened = 0
+    /// Holds the model's polls until the test ends them.
+    var heldSleep: ManualSleep?
     var exists = true
     var run = FakeCheckRun()
     var runs = 0
@@ -104,7 +106,12 @@ final class World {
                 if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
                 return permissions
             },
-            request: { permission, _, _ in if permission == .audioRecording { self.audioRequests += 1 } },
+            request: { permission, _, _ in
+                guard permission == .audioRecording else { return }
+                self.audioRequests += 1
+                // Turned down: System Settings opens, and AutoHush waits to reopen.
+                if self.permissions.audio == .denied { self.permissions.audio = .needsReopen }
+            },
             antiDot: { self.antiDot },
             macCanMute: {
                 self.macCanMuteReads += 1
@@ -136,8 +143,11 @@ final class World {
             close: { self.closed += 1 },
             now: { self.now },
             // The model's polls a moment apart, not spinning on the main
-            // actor, which every main-actor test shares.
-            sleep: { _ in try? await Task.sleep(for: .milliseconds(5)) }
+            // actor, which every main-actor test shares; or held, when a
+            // test ends them itself.
+            sleep: { duration in
+                if let held = self.heldSleep { await held.sleep(duration) } else { try? await Task.sleep(for: .milliseconds(5)) }
+            }
         )
     }
 }

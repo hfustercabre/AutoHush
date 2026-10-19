@@ -5,13 +5,7 @@ import Testing
 @Suite("AutoHushShortcuts")
 struct AutoHushShortcutsTests {
     /// The phrases' catalog, which Siri, Spotlight and Shortcuts read.
-    private static let appShortcuts = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent() // Shortcuts
-        .deletingLastPathComponent() // Services
-        .deletingLastPathComponent() // AutoHushAppTests
-        .deletingLastPathComponent() // Tests
-        .deletingLastPathComponent() // the package
-        .appending(path: "Resources/Localization/AppShortcuts.xcstrings")
+    private static let appShortcuts = PackagePaths.catalogs.appending(path: "AppShortcuts.xcstrings")
 
     @Test("the app offers two ready-made shortcuts: turn Auto-Pause off, turn it on")
     func twoShortcuts() {

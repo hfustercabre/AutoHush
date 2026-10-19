@@ -28,7 +28,7 @@ import os
 /// deliver pure silence, which would make every source look stopped. The
 /// permission is read from TCC (re-checked every few seconds, and requested at
 /// start when undecided). When TCC cannot be queried, level detection is
-/// trusted once a tap delivers a non-zero sample (the music player's own output
+/// trusted once a tap delivers a non-zero sample (the media player's own output
 /// is then tapped too, so its playing proves the permission works).
 ///
 /// Capturing audio makes macOS show its recording indicator, so taps exist only
@@ -40,7 +40,7 @@ import os
 /// (VLC keeps it open about a minute after a pause, measured). Only "Open audio
 /// streams only" ignores what apps tell macOS.
 ///
-/// The music player's output also tells whether it plays on THIS Mac. Through
+/// The media player's output also tells whether it plays on THIS Mac. Through
 /// Spotify Connect, for example, Spotify reports "playing" while the music
 /// comes out of another device; then its process has no running output
 /// (measured). The monitor reports this to the arbiter, which only pauses the
@@ -104,7 +104,7 @@ package final class AudioMonitor: @unchecked Sendable {
     var timer: DispatchSourceTimer?
     var timerInterval: TimeInterval?
     var candidates: [AudioProcessInfo] = []
-    /// The candidates that play the music player's audio: its own processes
+    /// The candidates that play the media player's audio: its own processes
     /// and the ones it owns.
     var playerProcesses: Set<AudioObjectID> = []
     /// Owning app of each candidate process.
@@ -222,7 +222,7 @@ package final class AudioMonitor: @unchecked Sendable {
         queue.async { self.stopOnQueue() }
     }
 
-    /// Tells the monitor whether the music player is playing, so it can conclude
+    /// Tells the monitor whether the media player is playing, so it can conclude
     /// that level detection is unavailable when the player's tap stays silent.
     package func setPlayerPlaying(_ isPlaying: Bool) {
         queue.async {

@@ -179,6 +179,8 @@ package struct PlayerReply: Sendable, Equatable {
     /// `audio volume`, 0–1: QuickTime Player's).
     package var directObjectReal: Double?
 
+    /// A reply made of these parts: for tests, whose stand-in apps answer
+    /// with one.
     package init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil, directObjectBoolean: Bool? = nil,
                  listTexts: [String] = [], listBooleans: [Bool] = []) {
         self.directObjectCode = directObjectCode

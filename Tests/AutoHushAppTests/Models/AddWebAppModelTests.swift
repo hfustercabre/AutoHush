@@ -50,12 +50,12 @@ struct AddWebAppModelTests {
         model.apply(.notAdded)
         model.apply(.readyToAdd(site: "music.youtube.com"))
         #expect(model.closedWithoutAdding)
-        let ready = AddWebAppView.steps(for: model.phase, closedWithoutAdding: model.closedWithoutAdding, learning: nil)
-        #expect(ready.last { $0.button == .addToDock }?.warning != nil)
+        let ready = AddWebAppView.stepGroups(for: model.phase, closedWithoutAdding: model.closedWithoutAdding, learning: nil)
+        #expect(ready.adding.last { $0.button == .addToDock }?.warning != nil)
         model.apply(.adding)
         #expect(!model.closedWithoutAdding)
-        let adding = AddWebAppView.steps(for: model.phase, learning: nil)
-        #expect(adding.first { $0.state == .current }?.notes.count == 1) // rename it there, then Add
+        let adding = AddWebAppView.stepGroups(for: model.phase, learning: nil)
+        #expect(adding.adding.first { $0.state == .current }?.notes.count == 1) // rename it there, then Add
         model.apply(.notAdded)
         model.reset()
         #expect(!model.closedWithoutAdding && !model.siteAsked)
@@ -71,14 +71,9 @@ struct AddWebAppModelTests {
         let second = Task { await model.waitForAdd(attempt: 2) }
         #expect(await first.value == false) // a newer wait ends the older one
         model.cancelWait(attempt: 1)        // the first add's cancel, late
-        var finished = false
-        let watcher = Task { _ = await second.value; finished = true }
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(!finished) // still waiting for Add to Dock
         model.apply(.readyToAdd(site: "play.qobuz.com"))
         model.addTapped()
-        #expect(await second.value)
-        _ = await watcher.value
+        #expect(await second.value) // it was still waiting for Add to Dock: ended by the cancel, it would be false
     }
 
     @Test("an add that's no longer the latest doesn't wait at all")

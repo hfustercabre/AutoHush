@@ -64,6 +64,8 @@ final class AddWebAppModel {
     /// told apart.
     @ObservationIgnored var attempt = 0
     @ObservationIgnored var openAccessibilitySettings: @MainActor () -> Void = {}
+    /// What adding a web app needs: Accessibility, to drive Safari.
+    static let safariAccess = Permission.accessibility(player: "Safari")
 
     /// The address is being checked, opened or added in Safari.
     var isAdding: Bool {

@@ -30,18 +30,13 @@ struct MenuSidePanelView: View {
                         ForEach(model.listedIgnoredApps, id: \.self) { source in
                             SourceSwitchRow(model: model, source: source, saysIgnoredShortly: true)
                         }
-                        // Several at once (the user, 2026-10-18); the menu closes for the panel.
-                        Button { model.perform(.ignoreAnotherApp) } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle")
-                                    .frame(width: 20)
-                                    .accessibilityHidden(true)
-                                Text(verbatim: IgnoreAppsPicker.title)
-                            }
+                        // Several at once (the user, 2026-10-18); the menu closes for the
+                        // panel. Its text in line with the apps' names (U4, 2026-10-19).
+                        MenuActionRow(place: .sideWindow, action: { model.perform(.ignoreAnotherApp) }) {
+                            Image(systemName: "plus.circle").accessibilityHidden(true)
+                        } content: {
+                            Text(verbatim: IgnoreAppsPicker.title)
                         }
-                        .buttonStyle(MenuRowButtonStyle(tinted: true))
-                        .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(.ignoreAnotherApp) }))
-                        .padding(.horizontal, -6)
                     }
                     .padding(.horizontal, 14)
                 case nil:
@@ -54,7 +49,7 @@ struct MenuSidePanelView: View {
         .font(.appBody)
         .environment(\.isInMenu, true)
         .environment(model.sideKeyboard)
-        .environment(\.controlActiveState, .key)
+        .environment(\.controlActiveState, .key) // as the menu's (`MenuPanelView`)
         .frame(width: Self.width)
         .frame(maxHeight: .infinity, alignment: .top)
     }

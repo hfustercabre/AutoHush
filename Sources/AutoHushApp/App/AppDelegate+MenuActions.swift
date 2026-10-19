@@ -73,7 +73,7 @@ extension AppDelegate {
     /// App's list of apps. The item is dimmed elsewhere.
     func find() {
         guard let target = findTarget else { return }
-        if target == .appsSearch, settingsModel.appSearch == nil {
+        if target == .soundSourcesSearch, settingsModel.appSearch == nil {
             settingsModel.appSearch = "" // it opens, taking the keyboard as it appears
         } else if let window = NSApp.keyWindow, let field = window.contentView?.firstEditableTextField {
             window.makeFirstResponder(field)
@@ -96,7 +96,7 @@ extension AppDelegate {
 /// The search Edit → Find… (⌘F) goes to in the window in front.
 enum FindTarget: Equatable {
     /// Settings → Sound Sources' search, which Find opens.
-    case appsSearch
+    case soundSourcesSearch
     /// The welcome window's search over its players.
     case welcomeSearch
     /// The logs window's search.
@@ -106,14 +106,14 @@ enum FindTarget: Equatable {
 
     enum Window { case settings, welcome, logs, appChooser, other }
 
-    /// Settings on Apps while it lists apps (its magnifier is dimmed
+    /// Settings on Sound Sources while it lists apps (its magnifier is dimmed
     /// otherwise), the welcome window on its players while they're many
     /// enough for a search, the logs window, or Add an App's list of apps;
     /// `nil` anywhere else.
     init?(window: Window, settingsPage: SettingsWindowController.Page?, hasApps: Bool,
           welcomeShowsPlayers: Bool, playersSearchable: Bool) {
         switch window {
-        case .settings where settingsPage == .apps && hasApps: self = .appsSearch
+        case .settings where settingsPage == .soundSources && hasApps: self = .soundSourcesSearch
         case .welcome where welcomeShowsPlayers && playersSearchable: self = .welcomeSearch
         case .logs: self = .logsSearch
         case .appChooser: self = .appChooserSearch

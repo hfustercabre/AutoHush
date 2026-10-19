@@ -38,17 +38,18 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
-    /// What it does in a few words, under it in the menu (Settings has `subtitle`).
+    /// What it does in a few words, under it in the menu (Settings has
+    /// `subtitle`): a fragment, without a period (U12, the user, 2026-10-19).
     var shortExplanation: Text {
         switch self {
         case .antiDot:
-            Text("No purple dot, less precise.", comment: "The menu, under AntiDot mode: what it does, in a few words")
+            Text("No purple dot, less precise", comment: "The menu, under AntiDot mode: what it does, in a few words")
         case .fades:
-            Text("Fades out and back in.", comment: "The menu, under Fade playback: what it does, in a few words")
+            Text("Fades out and back in", comment: "The menu, under Fade playback: what it does, in a few words")
         case .levelsMusic:
-            Text("Matches quieter apps’ volume.", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
+            Text("Matches quieter apps’ volume", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
         case .staysPausedAfterCalls:
-            Text("No resume after a call.", comment: "The menu, under Stay paused after calls: what it does, in a few words")
+            Text("No resume after a call", comment: "The menu, under Stay paused after calls: what it does, in a few words")
         }
     }
 
@@ -63,8 +64,9 @@ enum SettingsSwitch: CaseIterable {
     }
 
     /// Why it can't be changed, in a few words, under it in the menu (R2,
-    /// the user's pick, 2026-10-18; Settings has a note of its own); `nil`
-    /// while it can.
+    /// the user's pick, 2026-10-18; Settings has a note of its own), without
+    /// a period but for AntiDot mode's, Settings' own sentence; `nil` while
+    /// it can.
     @MainActor func unavailableReason(_ model: SettingsModel) -> String? {
         guard isUnavailable(model) else { return nil }
         switch self {
@@ -74,10 +76,10 @@ enum SettingsSwitch: CaseIterable {
             return DetectionSettingsView.unavailableNote(player.name, mutes: player.pausesByMuting)
         case .fades:
             guard let player = model.chosenPlayerName else { return nil }
-            return String(localized: "\(player) can’t be faded.",
+            return String(localized: "\(player) can’t be faded",
                           comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
         case .levelsMusic:
-            return String(localized: "Off in AntiDot mode.",
+            return String(localized: "Off in AntiDot mode",
                           comment: "The menu, under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound)")
         case .staysPausedAfterCalls:
             return nil

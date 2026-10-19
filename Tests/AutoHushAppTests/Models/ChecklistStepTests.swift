@@ -42,6 +42,11 @@ struct ChecklistStepTests {
         #expect(locked.currentAnnouncement == nil)
         #expect(LearningPermissionStep.announcement(.accessibility(player: "YT Music"), name: "YT Music")
             == "Allow Accessibility access to control YT Music\nAutoHush needs it to see YT Music’s buttons. The steps below unlock once it’s allowed.")
+        // The permission's step is the one to do now, its button its own.
+        let permission = LearningPermissionStep.step(.accessibility(player: "YT Music"), name: "YT Music")
+        #expect(permission.state == .current && permission.button == nil)
+        #expect(([permission.title] + permission.notes).joined(separator: "\n")
+            == LearningPermissionStep.announcement(.accessibility(player: "YT Music"), name: "YT Music"))
     }
 
     @Test("a click that couldn't be taken says why under the step it's about, and VoiceOver hears it with the step")
@@ -102,59 +107,65 @@ struct ChecklistStepTests {
         #expect(!LearningPauseMode.failed.pausesByHand)
     }
 
+    /// The Add window's steps, both groups in order, as the window lists them.
+    private func both(_ groups: (adding: [ChecklistStep], learning: [ChecklistStep])) -> [ChecklistStep] {
+        groups.adding + groups.learning
+    }
+
     @Test("adding a web app: each phase has its step to do, and VoiceOver hears it")
     func adding() {
-        #expect(AddWebAppView.steps(for: .checking, learning: nil).map(\.state) == [.current, .todo, .todo, .todo])
-        #expect(AddWebAppView.steps(for: .checking, learning: nil).currentAnnouncement == "Check the address")
+        #expect(both(AddWebAppView.stepGroups(for: .checking, learning: nil)).map(\.state) == [.current, .todo, .todo, .todo])
+        #expect(both(AddWebAppView.stepGroups(for: .checking, learning: nil)).currentAnnouncement == "Check the address")
 
-        let opening = AddWebAppView.steps(for: .opening, learning: nil)
+        let opening = both(AddWebAppView.stepGroups(for: .opening, learning: nil))
         #expect(opening.map(\.state) == [.done, .current, .todo, .todo])
         #expect(opening[1].notes.count == 1) // the extension tip
         #expect(opening.currentAnnouncement == "Open it in Safari")
 
-        #expect(AddWebAppView.steps(for: .adding, learning: nil).currentAnnouncement == "Add it to the Dock")
+        #expect(both(AddWebAppView.stepGroups(for: .adding, learning: nil)).currentAnnouncement == "Add it to the Dock")
     }
 
     @Test("adding a web app: a site that asks first gets a step of its own, then Add to Dock waits for the click")
     func siteAsksThenAdd() {
-        let asks = AddWebAppView.steps(for: .siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"), siteAsked: true,
-                                       learning: nil)
+        let asks = both(AddWebAppView.stepGroups(for: .siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"),
+                                                 siteAsked: true, learning: nil))
         #expect(asks.map(\.title) == ["Check the address", "Open it in Safari", "Answer the site in Safari", "Add it to the Dock",
                                       "Learn its controls"])
         #expect(asks.map(\.state) == [.done, .done, .current, .todo, .todo])
         #expect(asks.currentAnnouncement == "Answer the site in Safari")
 
-        let ready = AddWebAppView.steps(for: .readyToAdd(site: "music.youtube.com"), siteAsked: true, learning: nil)
+        let ready = both(AddWebAppView.stepGroups(for: .readyToAdd(site: "music.youtube.com"), siteAsked: true, learning: nil))
         #expect(ready.map(\.state) == [.done, .done, .done, .current, .todo])
         #expect(ready[3].button == .addToDock)
 
-        let readyWithoutAsking = AddWebAppView.steps(for: .readyToAdd(site: "play.qobuz.com"), learning: nil)
+        let readyWithoutAsking = both(AddWebAppView.stepGroups(for: .readyToAdd(site: "play.qobuz.com"), learning: nil))
         #expect(!readyWithoutAsking.map(\.title).contains("Answer the site in Safari"))
-        #expect(AddWebAppView.steps(for: .adding, learning: nil).currentAnnouncement == "Add it to the Dock")
+        #expect(both(AddWebAppView.stepGroups(for: .adding, learning: nil)).currentAnnouncement == "Add it to the Dock")
     }
 
     @Test("adding a web app: once made, the learning window's two steps follow, then all is done")
     func addedAndLearning() {
         let made = AddWebAppModel.Phase.learning(name: "YT Music", alreadyThere: false)
-        let toPlay = AddWebAppView.steps(for: made, siteAsked: true, learning: .learning(hasPlayed: false))
+        let toPlay = both(AddWebAppView.stepGroups(for: made, siteAsked: true, learning: .learning(hasPlayed: false)))
         #expect(toPlay.map(\.title) == ["Check the address", "Open it in Safari", "Answer the site in Safari",
                                         "Add it to the Dock as “YT Music”", "Play something in YT Music", "Let AutoHush pause it"])
         #expect(toPlay.map(\.state) == [.done, .done, .done, .done, .current, .todo])
         #expect(toPlay[4].button == .itsPlaying)
 
-        let toPause = AddWebAppView.steps(for: made, learning: .learning(hasPlayed: true), remaining: 30, pauseMode: .byHand)
+        let toPause = both(AddWebAppView.stepGroups(for: made, learning: .learning(hasPlayed: true), remaining: 30, pauseMode: .byHand))
         #expect(toPause.currentAnnouncement == "Pause it yourself")
         #expect(toPause.last?.countdown == "You have 0:30 to pause it and click It’s Paused.")
 
-        let learned = AddWebAppView.steps(for: made, learning: .learned)
+        let learned = both(AddWebAppView.stepGroups(for: made, learning: .learned))
         #expect(learned.allSatisfy { $0.state == .done })
         #expect(learned.currentAnnouncement == nil)
 
-        let locked = AddWebAppView.steps(for: made, learning: .learning(hasPlayed: false), locked: true)
+        let locked = both(AddWebAppView.stepGroups(for: made, learning: .learning(hasPlayed: false), locked: true))
         #expect(locked.suffix(2).map(\.state) == [.todo, .todo]) // until Accessibility is allowed
         #expect(locked.allSatisfy { $0.button == nil })
 
-        let already = AddWebAppView.steps(for: .learning(name: "YT Music", alreadyThere: true), learning: .learning(hasPlayed: false))
+        let already = both(AddWebAppView.stepGroups(for: .learning(name: "YT Music", alreadyThere: true),
+                                                    learning: .learning(hasPlayed: false)))
         #expect(already.map(\.title)[1] == "Already in your Dock as “YT Music”")
         #expect(already.map(\.state) == [.done, .done, .current, .todo])
     }
@@ -170,6 +181,12 @@ struct ChecklistStepTests {
         let adding = AddWebAppView.stepGroups(for: .adding, learning: nil)
         #expect(adding.learning.isEmpty) // nothing to learn before it's made
         #expect(adding.adding.last?.title == "Learn its controls")
+
+        // Made, but not the chosen player yet: the learning is still the
+        // previous player's, so learning it is still the step to do.
+        let notChosenYet = AddWebAppView.stepGroups(for: made, madeIsChosen: false, learning: .learned)
+        #expect(notChosenYet.learning.map(\.title) == ["Learn its controls"])
+        #expect(notChosenYet.learning.map(\.state) == [.current])
     }
 
     @Test("a step's announcement goes out at high priority, so the focus change that comes with the step doesn't cut it off")

@@ -2,22 +2,30 @@ import Foundation
 import Testing
 @testable import CheckedPlayers
 import AutoHushKit
+import AutoHushTestSupport
+import PlayersTestSupport
 
 /// The panel in memory: its rows, the one pressed.
 final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     private let lock = NSLock()
     private var shown: [PanelRow]
     private var pressedRows: [String] = []
+    private var opened = 0
     var opens = true
     var inMenuBar = true
 
     init(_ rows: [PanelRow]) { shown = rows }
 
     var pressed: [String] { lock.withLock { pressedRows } }
+    /// How many times it was opened.
+    var openings: Int { lock.withLock { opened } }
 
     func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
         guard opens else { return nil }
-        let rows = lock.withLock { shown }
+        let rows = lock.withLock {
+            opened += 1
+            return shown
+        }
         guard let row = pick(rows) else { return false }
         lock.withLock { pressedRows.append(row.text) }
         return true
@@ -32,7 +40,7 @@ struct PanelWayTests {
                                     ways: [.menu(menuName: "Play"), .panel(rememberedRow: nil)])
     private let rows = [PanelRow(text: "Song, Artist – Album", playing: true), PanelRow(text: "Other Song, Someone – Else", playing: true)]
 
-    private func way(_ panel: FakePanel, store: MemoryStore, running: Bool = true, titles: [String] = ["Song – Artist"],
+    private func way(_ panel: FakePanel, store: MemorySetupStore, running: Bool = true, titles: [String] = ["Song – Artist"],
                      remembered: String? = nil) -> PanelWay {
         PanelWay(setup: setup, remembered: remembered, store: store, panel: panel, processIdentifier: { running ? 4242 : nil },
                  shown: { _ in PanelWay.Shown(titles: titles, otherApps: ["Finder"], holdsNowPlaying: false) })
@@ -40,7 +48,7 @@ struct PanelWayTests {
 
     @Test("it presses the row showing what the app plays, and keeps that row in the setup kept now")
     func pressesItsRow() async throws {
-        let store = MemoryStore()
+        let store = MemorySetupStore()
         var kept = setup
         kept.stateNotification = "checked again since"
         store.save(kept)
@@ -60,7 +68,7 @@ struct PanelWayTests {
 
     @Test("a setup no longer kept isn't added back, nor one without the panel any more")
     func notAddedBack() async throws {
-        let store = MemoryStore()
+        let store = MemorySetupStore()
         try await way(FakePanel(rows), store: store).pause()
         #expect(store.setups().isEmpty)
         store.save(PlayerSetup(bundleID: setup.bundleID, name: "Jukebox", appURL: setup.appURL, ways: [.menu(menuName: "Play")]))
@@ -70,7 +78,7 @@ struct PanelWayTests {
 
     @Test("with no row of its own, nothing is pressed; not running, nothing is asked; Now Playing hidden in the menu bar says so")
     func noRow() async {
-        let store = MemoryStore()
+        let store = MemorySetupStore()
         let panel = FakePanel(rows)
         await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) {
             try await way(panel, store: store, titles: ["Nothing like it"]).pause()
@@ -98,7 +106,7 @@ struct PanelWayTests {
         func way(_ panel: FakePanel, heard: Bool?, ignores: Bool = false) -> PanelWay {
             let hearing = LateHearing()
             hearing.set { _ in heard.map { !ignores && panel.pressed.count % 2 == 1 ? !$0 : $0 } }
-            return PanelWay(setup: stale, remembered: nil, store: MemoryStore(), panel: panel, processIdentifier: { 4242 },
+            return PanelWay(setup: stale, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
                             shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing,
                             sleep: { _ in })
         }
@@ -126,7 +134,56 @@ struct PanelWayTests {
     @Test("else the row it changed with before")
     func remembered() async throws {
         let panel = FakePanel([PanelRow(text: "Other Song, Someone – Else", playing: false)])
-        try await way(panel, store: MemoryStore(), titles: [], remembered: "Other Song, Someone – Else").play()
+        try await way(panel, store: MemorySetupStore(), titles: [], remembered: "Other Song, Someone – Else").play()
         #expect(panel.pressed == ["Other Song, Someone – Else"])
+    }
+
+    @Test("its row told by what it plays by AppleScript, where its check found it says")
+    func toldByScript() async throws {
+        let panel = FakePanel(rows)
+        let way = PanelWay(setup: setup, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: ["Jukebox"], track: "Song", otherApps: ["Finder"], holdsNowPlaying: false) })
+        try await way.pause()
+        #expect(panel.pressed == ["Song, Artist – Album"] && panel.openings == 1)
+    }
+
+    @Test("its page's player bar, where its check found its song there: read only when nothing else told its row, then the panel opened again")
+    func toldByPlayerBar() async throws {
+        let reads = Locked(0) // how many times the player bar was read
+        func way(_ panel: FakePanel, titles: [String], bar: [String]) -> PanelWay {
+            PanelWay(setup: setup, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
+                     shown: { _ in PanelWay.Shown(titles: titles, otherApps: ["Finder"], holdsNowPlaying: false) },
+                     playerBar: { _ in
+                         reads.increment()
+                         return bar
+                     })
+        }
+        let byBar = FakePanel(rows)
+        try await way(byBar, titles: ["Jukebox"], bar: ["Song", "Artist", "Pause"]).pause()
+        #expect(byBar.pressed == ["Song, Artist – Album"] && byBar.openings == 2 && reads.value == 1)
+        let byTitle = FakePanel(rows)
+        try await way(byTitle, titles: ["Song – Artist"], bar: ["Other Song"]).pause()
+        #expect(byTitle.pressed == ["Song, Artist – Album"] && byTitle.openings == 1 && reads.value == 1) // not read
+        // Nothing tells it, nor does the bar: not opened again.
+        let none = FakePanel(rows)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) {
+            try await way(none, titles: ["Jukebox"], bar: []).pause()
+        }
+        #expect(none.pressed.isEmpty && none.openings == 1 && reads.value == 2)
+    }
+
+    @Test("the only row playing while it holds Now Playing is pressed once its player bar, read first, didn't tell another")
+    func onlyPlayingAfterPlayerBar() async throws {
+        let panel = FakePanel([PanelRow(text: "Something, Else – Entirely", playing: true)])
+        let way = PanelWay(setup: setup, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: ["Jukebox"], otherApps: ["Finder"], holdsNowPlaying: true) },
+                           playerBar: { _ in [] })
+        try await way.pause()
+        #expect(panel.pressed == ["Something, Else – Entirely"] && panel.openings == 2)
+        // Without the bar to read, at once, as before.
+        let once = FakePanel([PanelRow(text: "Something, Else – Entirely", playing: true)])
+        try await PanelWay(setup: setup, remembered: nil, store: MemorySetupStore(), panel: once, processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: ["Jukebox"], otherApps: ["Finder"], holdsNowPlaying: true) }).pause()
+        #expect(once.pressed == ["Something, Else – Entirely"] && once.openings == 1)
     }
 }

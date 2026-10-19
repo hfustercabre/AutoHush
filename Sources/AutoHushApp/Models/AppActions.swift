@@ -41,7 +41,7 @@ protocol AppActions: AnyObject {
     func reopenAutoHush()
     /// Settings, on `page` (the one shown last when `nil`).
     func openSettings(page: SettingsWindowController.Page?)
-    /// Why the music player couldn't be controlled, in an alert.
+    /// Why the media player couldn't be controlled, in an alert.
     func showControlError()
     /// The window with AutoHush's logs (Settings → Diagnostics' Show Logs…).
     func showLogs()

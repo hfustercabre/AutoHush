@@ -23,6 +23,10 @@ struct AddAppView: View {
     /// keep it.
     @FocusState private var focused: AddAppModel.Step?
 
+    /// Add an App's windows' width (this one, Choose an App, the warning),
+    /// which their bottom bars' buttons fit in every language.
+    static let width: CGFloat = 460
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
@@ -42,7 +46,7 @@ struct AddAppView: View {
                 }
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 // While a check runs, Escape is its Stop (in the check's step).
                 Button { close() } label: { Text(verbatim: AddAppText.cancel) }
                     .buttonStyle(.chip)
@@ -50,7 +54,7 @@ struct AddAppView: View {
                 Spacer()
             }
         }
-        .frame(width: 460)
+        .frame(width: Self.width)
         .font(.appBody)
         .announcesCurrentStep(announcement)
         .onChange(of: isWaitingToPlay) { _, waiting in floats(waiting) }
@@ -155,7 +159,7 @@ struct AddAppView: View {
         default:
             StepNote(AddAppText.chooseNote)
             if model.openFailed, let app = appName { NoteLabel(AddAppText.couldNotOpen(app)).padding(.top, 2) }
-            AddAppStepButton(AddAppText.chooseApp) { model.openChooser() }
+            StepActionButton(AddAppText.chooseApp) { model.openChooser() }
                 .focused($focused, equals: .choose)
         }
     }
@@ -178,7 +182,7 @@ struct AddAppView: View {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
                 } else if !missing.isEmpty {
                     NoteLabel(AddAppText.withoutWarning(missing, app: app, macMuted: model.checkMuting == .mac)).padding(.top, 4)
-                    AddAppStepButton(AddAppText.continueButton) { model.continueWithoutAll() }
+                    StepActionButton(AddAppText.continueButton) { model.continueWithoutAll() }
                         .focused($focused, equals: .allow)
                 }
             }
@@ -194,10 +198,10 @@ struct AddAppView: View {
         case .current:
             NoteLabel(AddAppText.reopenAlertMessage(appName ?? "")).padding(.top, 2)
             if model.reopenFailed { NoteLabel(AddAppText.didNotQuit(appName ?? "")).padding(.top, 2) }
-            StepButtons {
-                AddAppStepButton(AddAppText.reopenTitle(appName ?? "")) { model.reopen() }
+            FlowingButtons {
+                StepActionButton(AddAppText.reopenTitle(appName ?? "")) { model.reopen() }
                     .focused($focused, equals: .reopen)
-                AddAppStepButton(AddAppText.skip, secondary: true) { model.skipReopen() }
+                StepActionButton(AddAppText.skip, secondary: true) { model.skipReopen() }
             }
         default:
             StepNote(AddAppText.reopenPending)
@@ -216,11 +220,11 @@ struct AddAppView: View {
             .padding(.top, 2)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
-            AddAppStepButton(AddAppText.open(appName ?? "")) { model.openAppAgain() }
+            StepActionButton(AddAppText.open(appName ?? "")) { model.openAppAgain() }
                 .focused($focused, equals: .play)
         case (.failed, _):
             StepNote(AddAppText.didNotPlay(appName ?? ""))
-            AddAppStepButton(AddAppText.tryAgain) { model.waitForPlaying() }
+            StepActionButton(AddAppText.tryAgain) { model.waitForPlaying() }
                 .focused($focused, equals: .play)
         default:
             StepNote(AddAppText.playWaits)
@@ -234,19 +238,19 @@ struct AddAppView: View {
         case (.busy, _):
             StepNote(model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
-            AddAppStepButton(AddAppText.stop, secondary: true, cancels: true) { model.stopCheck() }
+            StepActionButton(AddAppText.stop, secondary: true, cancels: true) { model.stopCheck() }
                 .focused($focused, equals: .check)
         case (.failed, .stopped):
             StepNote(AddAppText.stoppedNote)
-            AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+            StepActionButton(AddAppText.checkAgain) { model.checkAgain() }
                 .focused($focused, equals: .check)
         case (.failed, _):
             StepNote(AddAppText.checkFailed(model.failureReason, app: appName ?? ""))
-            StepButtons {
-                AddAppStepButton(AddAppText.checkAgain) { model.checkAgain() }
+            FlowingButtons {
+                StepActionButton(AddAppText.checkAgain) { model.checkAgain() }
                     .focused($focused, equals: .check)
                 if model.failureReason == .other {
-                    AddAppStepButton(AddAppText.showLog, secondary: true) { model.showLog() }
+                    StepActionButton(AddAppText.showLog, secondary: true) { model.showLog() }
                         .disabled(!model.canShowLog)
                 }
             }
@@ -258,7 +262,7 @@ struct AddAppView: View {
             }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if mark == .current {
-                AddAppStepButton(AddAppText.continueToCheck) { model.continueToCheck() }
+                StepActionButton(AddAppText.continueToCheck) { model.continueToCheck() }
                     .focused($focused, equals: .check)
             }
         }
@@ -305,10 +309,10 @@ struct AddAppView: View {
                             .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(PermissionText.audioTitle)))
                     }
                 }
-                StepButtons {
+                FlowingButtons {
                     // The focus goes to Check Again while Mute It Instead can't be pressed.
-                    let mute = AddAppStepButton(AddAppText.muteItInstead) { model.useMuting() }.disabled(!model.canMute)
-                    let again = AddAppStepButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                    let mute = StepActionButton(AddAppText.muteItInstead) { model.useMuting() }.disabled(!model.canMute)
+                    let again = StepActionButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
                     if model.canMute {
                         mute.focused($focused, equals: .use)
                         again
@@ -320,11 +324,11 @@ struct AddAppView: View {
             } else {
                 // Now Playing hidden in the menu bar: once it's shown, its
                 // panel can be tried (the user, 2026-10-16).
-                StepButtons {
-                    AddAppStepButton(AddAppText.use(app)) { model.use() }
+                FlowingButtons {
+                    StepActionButton(AddAppText.use(app)) { model.use() }
                         .focused($focused, equals: .use)
                     if model.offersCheckAgain {
-                        AddAppStepButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                        StepActionButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
                     }
                 }
             }
@@ -341,46 +345,7 @@ private struct StepNote: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(verbatim: text).captionStyle().fixedSize(horizontal: false, vertical: true)
-    }
-}
-
-/// A step's button, as a checklist's (`StepActionButton`): blue, Return
-/// pressing it, as a window's main button; grey for the other way on
-/// beside it.
-private struct AddAppStepButton: View {
-    let title: String
-    var secondary = false
-    /// Escape presses it (the check's Stop).
-    var cancels = false
-    let action: () -> Void
-
-    init(_ title: String, secondary: Bool = false, cancels: Bool = false, action: @escaping () -> Void) {
-        self.title = title
-        self.secondary = secondary
-        self.cancels = cancels
-        self.action = action
-    }
-
-    var body: some View {
-        Button(action: action) {
-            Text(verbatim: title).font(secondary ? .appBody : .appBody.weight(.semibold)).padding(.horizontal, 6)
-                .fixedSize()
-        }
-        .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
-        .keyboardShortcut(cancels ? .cancelAction : secondary ? nil : .defaultAction)
-        .padding(.top, 2)
-    }
-}
-
-/// Side by side when they fit, else one under the other.
-private struct StepButtons<Content: View>: View {
-    @ViewBuilder let content: Content
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { content }
-            VStack(alignment: .leading, spacing: 6) { content }
-        }
+        Text(verbatim: text).captionStyle()
     }
 }
 
@@ -414,33 +379,16 @@ private struct CheckPermissionRows: View {
 
     /// `allowed` nil: not used now (no button, nothing to allow).
     private func row(symbol: String, title: String, note: String, allowed: Bool?, permission: CheckPermission) -> some View {
-        HStack(spacing: 10) {
-            SymbolTile(symbol: symbol)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(verbatim: title)
-                    // Accessibility is needed (said while it's missing); the
-                    // check goes on without the others.
-                    if permission == .accessibility {
-                        if allowed == false { HeadingBadge(text: AddAppText.neededBadge) }
-                    } else if allowed != nil {
-                        Text(verbatim: AddAppText.optionalLabel).font(.appCaption).foregroundStyle(.appSecondary)
-                    }
-                }
-                Text(verbatim: note).captionStyle().fixedSize(horizontal: false, vertical: true)
+        PermissionRow(symbol: symbol, title: title, note: note, isAllowed: allowed == true) {
+            // Accessibility is needed (said while it's missing); the check
+            // goes on without the others.
+            if permission == .accessibility {
+                if allowed == false { HeadingBadge(text: AddAppText.neededBadge) }
+            } else if allowed != nil {
+                Text(verbatim: AddAppText.optionalLabel).font(.appCaption).foregroundStyle(.appSecondary)
             }
-            .accessibilityElement(children: .combine)
-            Spacer(minLength: 8)
-            if allowed == true {
-                Label {
-                    Text(verbatim: AddAppText.allowedLabel)
-                } icon: {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
-                }
-                .font(.appCallout)
-                .foregroundStyle(.appSecondary)
-                .fixedSize()
-            } else if allowed == false {
+        } trailing: {
+            if allowed == false {
                 if permission == .audioRecording, model.audioAwaitsReopen {
                     Button { model.reopenAutoHush() } label: { Text(verbatim: PermissionText.reopen) }
                         .buttonStyle(.chip)
@@ -454,7 +402,6 @@ private struct CheckPermissionRows: View {
                 }
             }
         }
-        .accessibilityElement(children: .contain)
     }
 }
 
@@ -494,9 +441,9 @@ private struct WayRow: View {
                     Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
                 }
-                Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle().fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle()
                 if soundOnly {
-                    Text(verbatim: AddAppText.panelSoundOnly).captionStyle().fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: AddAppText.panelSoundOnly).captionStyle()
                 }
             }
         }
@@ -541,14 +488,7 @@ private struct WayChoices: View {
             WayRow(way: way, app: app, recommended: recommended, soundOnly: soundOnly(way))
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background {
-                    if isChosen { RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.selectedTileFill) }
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(isChosen ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.separator), lineWidth: isChosen ? 2 : 1)
-                }
-                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .chosenOutline(isChosen, outlinedOtherwise: true)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? .isSelected : [])

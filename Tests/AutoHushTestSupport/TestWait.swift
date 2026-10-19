@@ -4,9 +4,11 @@ import Testing
 /// Waiting in tests for work that hops between actors, queues and the main
 /// run loop. The limit is long: it only costs time when a test fails, and a
 /// busy machine (the whole suite running in parallel) can take seconds for
-/// what usually takes milliseconds.
+/// what usually takes milliseconds. The main actor is the busiest: the
+/// whole quick suite keeps it at work for about ten seconds, and a wait for
+/// main-actor work queues behind the rest (2026-10-19: 10 s was too short).
 package enum TestWait {
-    package static let limit: Duration = .seconds(10)
+    package static let limit: Duration = .seconds(30)
 
     /// Polls `condition` on the caller's actor until it holds. Once `limit`
     /// has passed, the test fails at the caller's line, so a wait checks its

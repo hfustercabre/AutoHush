@@ -1,7 +1,7 @@
 import AppKit
 import AutoHushKit
 
-// AppDelegate: choosing and following the music player.
+// AppDelegate: choosing and following the media player.
 extension AppDelegate {
     /// Makes `bundleID` the player AutoHush controls and starts over with it.
     /// A player that isn't installed, or is chosen already, is ignored, as
@@ -90,12 +90,10 @@ extension AppDelegate {
         }
     }
 
-    /// Shows the chosen player in the menu and the windows.
+    /// Shows the chosen player in the menu and the windows: its traits
+    /// (muted instead of paused, fades) come with its option.
     func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
-        status.playerMutes = player?.pausesByMuting ?? false
-        status.playerNeedsLevels = player?.needsAudioLevels ?? false
-        settingsModel.playerCanFade = player?.canFade ?? true
     }
 
     /// Checks again which players are installed, for the menu, Settings and
@@ -130,7 +128,7 @@ extension AppDelegate {
     /// app is in when it's one inside them. A folder that can't be watched
     /// yet (no ~/Applications) is tried again at the next check.
     private func watchFolders(holding appURL: URL?) {
-        var paths = Set(PlayerOption.applicationFolders.map(\.path))
+        var paths = Set(ApplicationFolders.all.map(\.path))
         if let appURL { paths.insert(appURL.deletingLastPathComponent().path) }
         for path in folderWatches.keys where !paths.contains(path) {
             folderWatches[path] = nil
@@ -181,7 +179,7 @@ extension AppDelegate {
         }
     }
 
-    /// The welcome window, which asks for the music player.
+    /// The welcome window, which asks for the media player.
     func showPlayerChooser() {
         if playerChooser == nil {
             playerChooser = makePlayerChooser(settingsModel)

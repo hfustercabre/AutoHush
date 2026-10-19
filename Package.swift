@@ -5,6 +5,10 @@ import PackageDescription
 //
 //   AutoHush (executable, entry point only)
 //     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
+//          ├─ CheckPanel        the check's panel and shade, while a check runs
+//          │                   (Add an App… and the Player Check app)
+//          ├─ PlayerCheckKit    playercheck's command line, exit statuses and
+//          │                   answers, to run it (below)
 //          ├─ AutoHushPlayers   the supported media players
 //          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport…
 //          │    │                   one <App>Support target per player, all in
@@ -16,12 +20,17 @@ import PackageDescription
 //          │    │                   own Play/Pause button, learned once
 //          │    └─ CheckedPlayers   controls an app added with Add an App…, the
 //          │                        way the user chose (on the three above)
-//          ├─ CheckedPlayers    Add an App…'s check results and its report's lines
+//          ├─ CheckedPlayers    Add an App…'s check results, its report's lines
+//          │                   and the progress they show
 //          └─ AutoHushKit       the engine: audio detection, playback decisions,
 //                               fades, the MusicPlayer interface, permissions,
 //                               private APIs, configuration and storage
 //
 //   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
+//   PlayerCheckApp (Player Check, in Tools/) → PlayerCheckKit, CheckedPlayers,
+//                               CheckPanel, AutoHushKit: playercheck in a window,
+//                               run as AutoHush runs it (ToolRun), through the
+//                               same interface
 //   listen-to-fades (developer tool, in Tools/): records a loopback device
 //                               and measures AutoHush's fades in it
 //   playercheck (AutoHush.app's helper, in Sources/PlayerCheck) → PlayerCheckKit,
@@ -31,7 +40,8 @@ import PackageDescription
 //                               AutoHush's own code (Add an App… runs it); it
 //                               names no player
 //     └─ PlayerCheckKit    its parts that need no app to check (in its Kit/
-//                          folder), so tests can reach them
+//                          folder), so tests can reach them, and its
+//                          interface, which whoever runs it uses too
 //
 // Code inside a module is sorted by kind of code first (Models, Services,
 // Views…), then by area. Types shared between modules use `package` access:
@@ -47,11 +57,13 @@ let package = Package(
         .executable(name: "measure-volume-curve", targets: ["MeasureVolumeCurve"]),
         .executable(name: "listen-to-fades", targets: ["ListenToFades"]),
         .executable(name: "playercheck", targets: ["PlayerCheck"]),
+        .executable(name: "PlayerCheckApp", targets: ["PlayerCheckApp"]),
     ],
     targets: [
         .executableTarget(name: "AutoHush", dependencies: ["AutoHushApp"]),
-        // CheckedPlayers for Add an App…: what a check found, and keeping it.
-        .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers", "CheckedPlayers"]),
+        // CheckedPlayers for Add an App…: what a check found, and keeping it;
+        // PlayerCheckKit and CheckPanel to run the check and show its panel.
+        .target(name: "AutoHushApp", dependencies: ["AutoHushKit", "AutoHushPlayers", "CheckedPlayers", "PlayerCheckKit", "CheckPanel"]),
         .target(
             name: "AutoHushPlayers",
             dependencies: [
@@ -105,6 +117,16 @@ let package = Package(
             exclude: ["README.md"]
         ),
 
+        // Player Check: playercheck in a window, for any app, with the check's
+        // panel as Add an App… shows it. A public tool, built into an app by
+        // its build.sh: never part of AutoHush.app.
+        .executableTarget(
+            name: "PlayerCheckApp",
+            dependencies: ["PlayerCheckKit", "CheckedPlayers", "CheckPanel", "AutoHushKit"],
+            path: "Tools/PlayerCheckApp",
+            exclude: ["README.md", "Info.plist", "build.sh"]
+        ),
+
         // Records a loopback audio device and measures AutoHush's fades in it,
         // as you hear them. A developer tool: never part of AutoHush.app.
         .executableTarget(
@@ -125,21 +147,32 @@ let package = Package(
             path: "Sources/PlayerCheck",
             exclude: ["README.md", "Kit"]
         ),
-        // The check's parts that need no app to check: reading its command
-        // line and an app's binaries, what its log leaves out, what it keeps,
-        // judging a press, handling a stop, and what it found as its result.
+        // The check's parts that need no app to check: its command line, exit
+        // statuses and answers (what AutoHush and the Player Check app run it
+        // with), reading an app's binaries, what its log leaves out and how
+        // it's named, what it keeps, judging a press, handling a stop, and
+        // what it found as its result.
         .target(
             name: "PlayerCheckKit",
             dependencies: ["AutoHushKit", "WebAppPlayers", "CheckedPlayers", "ScriptablePlayers"],
             path: "Sources/PlayerCheck/Kit"
         ),
+        // The check's panel and its shade, shown by whoever runs a check
+        // (AutoHush's Add an App…, the Player Check app).
+        .target(name: "CheckPanel", dependencies: ["PlayerCheckKit"]),
 
-        // Fakes shared by the test targets.
+        // Fakes shared by the test targets: the engine's, and the players'
+        // (their stores, Now Playing's setting, a scripted app's events).
         .target(name: "AutoHushTestSupport", dependencies: ["AutoHushKit"], path: "Tests/AutoHushTestSupport"),
+        .target(
+            name: "PlayersTestSupport",
+            dependencies: ["AutoHushTestSupport", "AutoHushKit", "ScriptablePlayers", "WebAppPlayers", "CheckedPlayers"],
+            path: "Tests/PlayersTestSupport"
+        ),
         .testTarget(name: "AutoHushKitTests", dependencies: ["AutoHushKit", "AutoHushTestSupport"]),
         .testTarget(
             name: "ScriptablePlayersTests",
-            dependencies: ["ScriptablePlayers", "AutoHushKit", "AutoHushTestSupport"],
+            dependencies: ["ScriptablePlayers", "AutoHushKit", "AutoHushTestSupport", "PlayersTestSupport"],
             path: "Tests/PlayersSupport/ScriptablePlayersTests"
         ),
         .testTarget(
@@ -159,7 +192,7 @@ let package = Package(
         ),
         .testTarget(
             name: "WebAppPlayersTests",
-            dependencies: ["WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
+            dependencies: ["WebAppPlayers", "AutoHushKit", "AutoHushTestSupport", "PlayersTestSupport"],
             path: "Tests/PlayersSupport/WebAppPlayersTests"
         ),
         .testTarget(
@@ -174,12 +207,12 @@ let package = Package(
         ),
         .testTarget(
             name: "CheckedPlayersTests",
-            dependencies: ["CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
+            dependencies: ["CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport", "PlayersTestSupport"],
             path: "Tests/PlayersSupport/CheckedPlayersTests"
         ),
         .testTarget(
             name: "VLCSupportTests",
-            dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit"],
+            dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit", "PlayersTestSupport"],
             path: "Tests/PlayersSupport/VLCSupportTests"
         ),
         .testTarget(
@@ -190,19 +223,25 @@ let package = Package(
         // The helper itself, run as a read-only check of an app on the Mac.
         .testTarget(
             name: "PlayerCheckTests",
-            dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "WebAppPlayers", "AutoHushKit"],
+            dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayerCheckTests"
         ),
         // AutoHushPlayers only for the supported players' names, which no
         // file of Sources/PlayerCheck may hold.
         .testTarget(
             name: "PlayerCheckKitTests",
-            dependencies: ["PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushPlayers"],
+            dependencies: [
+                "PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushPlayers", "AutoHushTestSupport",
+            ],
             path: "Tests/PlayerCheckKitTests"
         ),
+        .testTarget(name: "CheckPanelTests", dependencies: ["CheckPanel", "PlayerCheckKit"]),
         .testTarget(
             name: "AutoHushAppTests",
-            dependencies: ["AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "AutoHushTestSupport"]
+            dependencies: [
+                "AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "PlayerCheckKit", "CheckPanel",
+                "AutoHushTestSupport", "PlayersTestSupport",
+            ]
         ),
         // CheckedPlayers to keep an added app, as Add an App does.
         .testTarget(

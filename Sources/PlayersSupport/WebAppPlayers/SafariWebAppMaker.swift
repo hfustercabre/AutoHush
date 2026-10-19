@@ -361,24 +361,25 @@ package struct SafariUI: SafariDriving {
 
     // MARK: - Accessibility
 
+    // Every element read here waits `timeout` (macOS's 6 s otherwise): each
+    // one is given it as it's found.
+
     private static func safariElement() -> AXUIElement? {
         guard let safari = NSRunningApplication.running(bundleID) else { return nil }
-        let app = AXUIElementCreateApplication(safari.processIdentifier)
-        AXUIElementSetMessagingTimeout(app, timeout)
-        return app
+        return AXUIElement.application(safari.processIdentifier, timeout: timeout)
     }
 
     /// The front window's page has loaded (Safari's browser view says so in
     /// its identifier, e.g. "BrowserView?IsPageLoaded=true&…").
     private static func pageLoaded(in app: AXUIElement) -> Bool {
-        guard let window = app.element(kAXFocusedWindowAttribute) else { return false }
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return false }
         return first(in: window, depth: 6) { $0.string("AXIdentifier")?.contains("IsPageLoaded=true") == true } != nil
     }
 
     /// The page in the front window's tab: the same element for as long as
     /// that tab shows that page.
     private static func frontPage(in app: AXUIElement) -> AXUIElement? {
-        guard let window = app.element(kAXFocusedWindowAttribute) else { return nil }
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
         return first(in: window, depth: 8) { $0.string(kAXRoleAttribute) == "AXWebArea" }
     }
 
@@ -388,9 +389,9 @@ package struct SafariUI: SafariDriving {
     }
 
     private static func menuItem(_ identifier: String, in app: AXUIElement) -> AXUIElement? {
-        guard let bar = app.element(kAXMenuBarAttribute) else { return nil }
-        for menu in bar.children.flatMap(\.children) {
-            if let item = menu.children.first(where: { $0.string("AXIdentifier") == identifier }) {
+        guard let bar = app.element(kAXMenuBarAttribute, timeout: timeout) else { return nil }
+        for menu in bar.children(timeout: timeout).flatMap({ $0.children(timeout: timeout) }) {
+            if let item = menu.children(timeout: timeout).first(where: { $0.string("AXIdentifier") == identifier }) {
                 return item
             }
         }
@@ -403,17 +404,17 @@ package struct SafariUI: SafariDriving {
     private static func find(_ identifier: String, in app: AXUIElement) -> AXUIElement? {
         let matches: (AXUIElement) -> Bool = { $0.string("AXIdentifier") == identifier }
         var roots: [AXUIElement] = []
-        if let window = app.element(kAXFocusedWindowAttribute) { roots.append(window) }
-        if let focused = app.element(kAXFocusedUIElementAttribute) {
+        if let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) { roots.append(window) }
+        if let focused = app.element(kAXFocusedUIElementAttribute, timeout: timeout) {
             var node = focused
             for _ in 0..<parentDepth {
-                guard let parent = node.element(kAXParentAttribute) else { break }
+                guard let parent = node.element(kAXParentAttribute, timeout: timeout) else { break }
                 if parent.string(kAXRoleAttribute) == "AXSheet" { roots.append(parent) }
                 node = parent
             }
         }
-        for root in roots + app.elements(kAXWindowsAttribute) {
-            for sheet in [root] + root.children where sheet.string(kAXRoleAttribute) == "AXSheet" {
+        for root in roots + app.elements(kAXWindowsAttribute, timeout: timeout) {
+            for sheet in [root] + root.children(timeout: timeout) where sheet.string(kAXRoleAttribute) == "AXSheet" {
                 if let found = first(in: sheet, depth: 4, where: matches) { return found }
             }
         }
@@ -423,7 +424,7 @@ package struct SafariUI: SafariDriving {
     private static func first(in element: AXUIElement, depth: Int, where matches: (AXUIElement) -> Bool) -> AXUIElement? {
         if matches(element) { return element }
         guard depth > 0 else { return nil }
-        for child in element.children {
+        for child in element.children(timeout: timeout) {
             if let found = first(in: child, depth: depth - 1, where: matches) { return found }
         }
         return nil

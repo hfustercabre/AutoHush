@@ -36,7 +36,7 @@ struct AddWebAppView: View {
                         PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
                     }
                 }
-                SectionHeading(Text("Address", comment: "Add a Web App window: the heading over the field for the website's address"))
+                SectionHeading(Self.addressTitle)
                     .padding(.top, 8)
                 if let sites = model.addressSites {
                     Card {
@@ -65,13 +65,13 @@ struct AddWebAppView: View {
                 }
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Spacer()
                 Button { close() } label: {
                     if case .learning = model.phase {
                         // The web app is added: its controls can be learned
                         // later, from the menu's or Settings' Controls row.
-                        Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
+                        Text(verbatim: LearningWindowView.laterTitle)
                     } else {
                         Text(verbatim: AddAppText.cancel)
                     }
@@ -79,12 +79,8 @@ struct AddWebAppView: View {
                 .buttonStyle(.chip)
                 .keyboardShortcut(.cancelAction)
                 if model.phase == .entering {
-                    Button { model.continueTapped() } label: {
-                        Text("Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed").font(.appBody.weight(.semibold)).padding(.horizontal, 6)
-                    }
-                    .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(!model.canContinue || needsAccessibility)
+                    MainButton(AddAppText.continueButton) { model.continueTapped() }
+                        .disabled(!model.canContinue || needsAccessibility)
                 }
             }
         }
@@ -108,7 +104,7 @@ struct AddWebAppView: View {
         model.phase == .entering && !settings.permissions.accessibility
     }
 
-    private static let safariAccess = Permission.accessibility(player: "Safari")
+    private static let safariAccess = AddWebAppModel.safariAccess
 
     /// Why adding waits, over the address; VoiceOver announces it too.
     private static var accessibilityNeeded: String {
@@ -125,7 +121,7 @@ struct AddWebAppView: View {
                 Text(verbatim: model.exampleAddress ?? "")
             }
             .textFieldStyle(.plain)
-            .accessibilityLabel(Text("Address", comment: "Add a Web App window: the heading over the field for the website's address"))
+            .accessibilityLabel(Self.addressTitle)
             .disabled(model.phase != .entering)
             .onSubmit { if !needsAccessibility { model.continueTapped() } } // Return, as Continue
         }
@@ -155,6 +151,11 @@ struct AddWebAppView: View {
             .fixedSize()
             .disabled(model.phase != .entering)
         }
+    }
+
+    /// Over the address's card, and its field's name for VoiceOver.
+    private static var addressTitle: Text {
+        Text("Address", comment: "Add a Web App window: the heading over the field for the website's address")
     }
 
     private static var countryLabel: Text {
@@ -209,24 +210,15 @@ struct AddWebAppView: View {
     }
 
     /// Each step of adding `phase`'s web app and learning it, with where it
-    /// stands: “Answer the site in Safari” only once the site asked
-    /// something first (`siteAsked`); `learning` is the chosen player's
-    /// learning, once it's made, with the countdown and note of its steps.
-    static func steps(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, closedWithoutAdding: Bool = false,
-                      learning: LearningStatus?,
-                      remaining: TimeInterval? = nil, note: LearningNote? = nil,
-                      pauseMode: LearningPauseMode = .automatic, locked: Bool = false) -> [ChecklistStep] {
-        let groups = stepGroups(for: phase, siteAsked: siteAsked, closedWithoutAdding: closedWithoutAdding, learning: learning,
-                                remaining: remaining, note: note, pauseMode: pauseMode, locked: locked)
-        return groups.adding + groups.learning
-    }
-
-    /// `steps(for:…)` in two: adding the web app, then learning it, once
-    /// it's made (none before): a missing permission locks the learning
-    /// ones, however many there are (pausing it by hand adds one). Until the
-    /// web app made is the chosen player (`madeIsChosen`: macOS may list it
-    /// a moment later), "Learn its controls" stays the step to do, since
-    /// `learning` is still the previous player's.
+    /// stands, in two groups: adding the web app, then learning it, once
+    /// it's made (none before). “Answer the site in Safari” comes only once
+    /// the site asked something first (`siteAsked`); `learning` is the
+    /// chosen player's learning, once it's made, with the countdown and note
+    /// of its steps. A missing permission locks the learning ones, however
+    /// many there are (pausing it by hand adds one). Until the web app made
+    /// is the chosen player (`madeIsChosen`: macOS may list it a moment
+    /// later), "Learn its controls" stays the step to do, since `learning` is
+    /// still the previous player's.
     static func stepGroups(for phase: AddWebAppModel.Phase, siteAsked: Bool = false, closedWithoutAdding: Bool = false,
                            madeIsChosen: Bool = true, learning: LearningStatus?,
                            remaining: TimeInterval? = nil, note: LearningNote? = nil,

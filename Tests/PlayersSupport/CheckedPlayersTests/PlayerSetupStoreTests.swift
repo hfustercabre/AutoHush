@@ -2,6 +2,7 @@ import Foundation
 import Testing
 import AutoHushTestSupport
 @testable import CheckedPlayers
+import WebAppPlayers
 
 @Suite("DefaultsPlayerSetupStore")
 struct PlayerSetupStoreTests {
@@ -49,5 +50,21 @@ struct PlayerSetupStoreTests {
             defaults.set(stored, forKey: DefaultsPlayerSetupStore.key)
             #expect(store.setups().map(\.bundleID) == ["com.example.a"])
         }
+    }
+
+    @Test("a panel's clues are kept with its setup; one kept before them reads as having none")
+    func panelClues() throws {
+        var kept = setup("com.example.a", "Alpha")
+        kept.ways = [.panel(rememberedRow: "Song, Artist – Album")]
+        kept.panelClues = PanelClues(page: PanelClues.Page(access: PageAccess(interface: .electron, switchAttribute: PageAccess.electronSwitch),
+                                                           labels: ["Pause"]), script: .property("vlcN"))
+        withStore { store, _ in
+            store.save(kept)
+            #expect(store.setups() == [kept])
+        }
+        var older = try JSONSerialization.jsonObject(with: JSONEncoder().encode(kept)) as? [String: Any] ?? [:]
+        older["panelClues"] = nil
+        let read = try JSONDecoder().decode(PlayerSetup.self, from: JSONSerialization.data(withJSONObject: older))
+        #expect(read.panelClues == nil && read.ways == kept.ways)
     }
 }

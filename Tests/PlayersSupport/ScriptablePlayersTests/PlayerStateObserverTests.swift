@@ -75,12 +75,3 @@ struct PlayerStateObserverTests {
         )
     }
 }
-
-private final class FakeRunningApplication: NSRunningApplication, @unchecked Sendable {
-    private let fakeBundleID: String
-    init(bundleID: String) {
-        fakeBundleID = bundleID
-        super.init()
-    }
-    override var bundleIdentifier: String? { fakeBundleID }
-}

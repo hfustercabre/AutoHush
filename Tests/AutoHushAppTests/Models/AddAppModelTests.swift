@@ -515,16 +515,19 @@ struct AddAppModelTests {
         #expect(!world.antiDot && model.choosableWays == [.panel] && model.mark(of: .use) != .failed)
     }
 
-    @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen, which the window offers")
+    @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen, which the window offers as soon as it's asked for")
     func audioAfterReopen() async {
         let world = World()
         world.permissions = CheckPermissions(accessibility: true, audio: .denied)
+        world.heldSleep = ManualSleep() // the permissions read again only after the request
         let model = await model(world)
+        defer { model.windowClosed() } // its watch ends
         model.continueWithApp()
         await TestWait.until { model.stage == .allowing && model.permissions.audio == .denied }
         #expect(!model.audioAwaitsReopen)
         model.request(.audioRecording)
-        #expect(model.audioAwaitsReopen)
+        await TestWait.until { model.audioAwaitsReopen }
+        #expect(model.permissions.audio == .needsReopen)
         model.reopenAutoHush()
         #expect(world.autoHushReopened == 1)
     }

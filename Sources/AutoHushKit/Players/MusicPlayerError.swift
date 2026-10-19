@@ -1,6 +1,6 @@
 import Foundation
 
-/// Why the music player could not be controlled.
+/// Why the media player could not be controlled.
 package enum MusicPlayerError: LocalizedError, LoggableError, Equatable, Sendable {
     case automationPermissionDenied
     /// For a player controlled through its own menu.

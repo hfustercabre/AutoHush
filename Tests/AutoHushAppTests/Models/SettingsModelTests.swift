@@ -86,17 +86,39 @@ struct SettingsModelTests {
         #expect(DetectionSettingsView.unavailableNote("Muted") == "Unavailable with Muted: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.")
     }
 
+    @Test("the chosen player's traits come from its option, followed: checked again to be muted (the same app), AntiDot mode's switch is off at once; its fades too")
+    func chosenPlayerTraitsFollowed() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        #expect(model.antiDotUnavailableFor == nil && model.playerCanFade && !model.state.status.playerMutes)
+
+        let antiDot = Locked(0) // how many times what it follows changed (`withObservationTracking`)
+        withObservationTracking { _ = model.antiDotUnavailableFor } onChange: { antiDot.increment() }
+        model.state.status.playerOptions[0].needsAudioLevels = true
+        #expect(antiDot.value == 1)
+        model.state.status.playerOptions[0].pausesByMuting = true
+        #expect(model.antiDotUnavailableFor == "Radio")
+        #expect(model.state.status.playerMutes && model.state.status.playerNeedsLevels)
+
+        let fades = Locked(0)
+        withObservationTracking { _ = model.playerCanFade } onChange: { fades.increment() }
+        model.state.status.playerOptions[0].canFade = false
+        #expect(fades.value == 1)
+        #expect(!model.playerCanFade)
+    }
+
     @Test("a switch that can't be changed shows off, whatever is saved, and shows the saved value again once it can")
     func unavailableSwitchShowsOff() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.setTimings(TimingSettings(fadesEnabled: true, levelsMusic: true))
         #expect(SettingsSwitch.fades.isOn(model) && SettingsSwitch.levelsMusic.isOn(model))
-        model.playerCanFade = false
+        model.state.status.choosePlayer(named: "Jukebox")
+        model.state.status.playerOptions[0].canFade = false
         model.setAntiDotMode(true)
         #expect(SettingsSwitch.fades.isUnavailable(model) && !SettingsSwitch.fades.isOn(model))
         #expect(SettingsSwitch.levelsMusic.isUnavailable(model) && !SettingsSwitch.levelsMusic.isOn(model))
         #expect(model.timings.fadesEnabled && model.timings.levelsMusic) // kept
-        model.playerCanFade = true
+        model.state.status.playerOptions[0].canFade = true
         model.setAntiDotMode(false)
         #expect(SettingsSwitch.fades.isOn(model) && SettingsSwitch.levelsMusic.isOn(model))
     }
@@ -270,19 +292,19 @@ struct SettingsModelTests {
         model.state.status.playback = .musicPlaying
         #expect(!model.offersReopenPlayer && !model.offersUnmute)
 
-        let reopen = Changes()
-        withObservationTracking { _ = model.offersReopenPlayer } onChange: { reopen.count += 1 }
+        let reopen = Locked(0)
+        withObservationTracking { _ = model.offersReopenPlayer } onChange: { reopen.increment() }
         model.state.status.playerNeedsReopen = true
-        #expect(reopen.count == 1)
+        #expect(reopen.value == 1)
         #expect(model.offersReopenPlayer)
         model.state.status.playerNeedsReopen = false
 
-        let unmute = Changes()
-        withObservationTracking { _ = model.offersUnmute } onChange: { unmute.count += 1 }
-        model.state.status.playerMutes = true
+        let unmute = Locked(0)
+        withObservationTracking { _ = model.offersUnmute } onChange: { unmute.increment() }
+        model.state.status.playerOptions[0].pausesByMuting = true
         model.state.status.setActiveSources([AudioSource(id: "com.apple.Safari", name: "Safari")])
         model.state.status.playback = .pausedByMonitor
-        #expect(unmute.count == 1)
+        #expect(unmute.value == 1)
         #expect(model.offersUnmute && !model.offersReopenPlayer)
         model.state.status.playback = .musicPlaying
         #expect(!model.offersUnmute)
@@ -296,25 +318,25 @@ struct SettingsModelTests {
         show(model, seen: [vlc], ignored: [])
         model.state.status.setHealth(.ready)
 
-        let apps = Changes()
-        withObservationTracking { _ = model.apps } onChange: { apps.count += 1 }
+        let apps = Locked(0)
+        withObservationTracking { _ = model.apps } onChange: { apps.increment() }
         model.state.status.playback = .pausedByMonitor
         model.state.status.setActiveSources([chrome])
-        #expect(apps.count == 0)
+        #expect(apps.value == 0)
 
-        let line = Changes()
-        withObservationTracking { _ = model.statusLine } onChange: { line.count += 1 }
+        let line = Locked(0)
+        withObservationTracking { _ = model.statusLine } onChange: { line.increment() }
         show(model, seen: [vlc, chrome], ignored: [vlc])
-        #expect(line.count == 0)
-        #expect(apps.count == 1)
+        #expect(line.value == 0)
+        #expect(apps.value == 1)
         #expect(model.apps.map(\.id) == [vlc.id, chrome.id])
         model.state.status.playback = .musicPlaying
-        #expect(line.count == 1)
+        #expect(line.value == 1)
 
-        let order = Changes()
-        withObservationTracking { _ = model.apps } onChange: { order.count += 1 }
+        let order = Locked(0)
+        withObservationTracking { _ = model.apps } onChange: { order.increment() }
         model.setAppListOrder(AppListOrder(criterion: .name))
-        #expect(order.count == 1)
+        #expect(order.value == 1)
         #expect(model.apps.map(\.id) == [chrome.id, vlc.id])
     }
 
@@ -590,12 +612,20 @@ struct SettingsModelTests {
     func removalConfirmation() {
         let (model, _) = listing(ignored: [Self.listed[2]])
         let rows = model.apps
-        #expect(AppsSettingsView.removalTitle(names: ["Chess"]) == "Remove Chess from the list?")
-        #expect(AppsSettingsView.removalTitle(names: ["Books", "Chess"]) == "Remove 2 apps from the list?")
-        #expect(AppsSettingsView.removalMessage([rows[2]]).hasPrefix("Chess is turned off now."))
-        #expect(AppsSettingsView.removalMessage([rows[1], rows[2], rows[3]]).hasPrefix("Chess is turned off now."))
+        #expect(SoundSourcesSettingsView.removalTitle(names: ["Chess"]) == "Remove Chess from the list?")
+        #expect(SoundSourcesSettingsView.removalTitle(names: ["Books", "Chess"]) == "Remove 2 apps from the list?")
+        #expect(SoundSourcesSettingsView.removalMessage([rows[2]]).hasPrefix("Chess is turned off now."))
+        #expect(SoundSourcesSettingsView.removalMessage([rows[1], rows[2], rows[3]]).hasPrefix("Chess is turned off now."))
         let (both, _) = listing(ignored: [Self.listed[1], Self.listed[2]])
-        #expect(AppsSettingsView.removalMessage(Array(both.apps[1...2])).hasPrefix("Some of them are turned off now."))
+        #expect(SoundSourcesSettingsView.removalMessage(Array(both.apps[1...2])).hasPrefix("Some of them are turned off now."))
+    }
+
+    @Test("the menu says why a switch can't be changed as a fragment, without a period; nothing while it can")
+    func unavailableReasons() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        #expect(SettingsSwitch.allCases.allSatisfy { $0.unavailableReason(model) == nil })
+        model.setAntiDotMode(true)
+        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == "Off in AntiDot mode")
     }
 
     @Test("Remove takes only the selected apps the search shows: the hidden ones stay selected, and a range skips them")
@@ -629,152 +659,4 @@ struct SettingsModelTests {
         model.clearSelection()
         #expect(model.selectedApps.isEmpty)
     }
-}
-
-/// One at a time: each window takes the name its place is kept under, which
-/// a second window can't have while the first exists.
-@Suite("SettingsWindowController", .serialized)
-@MainActor
-struct SettingsWindowControllerTests {
-    private let actions = FakeAppActions()
-    private let updates = FakeUpdateCommands()
-
-    private func makeModel() -> SettingsModel {
-        SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
-                      launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
-    }
-
-    @Test("has a sidebar of pages in three groups beside the page, and opens on the one asked for, named in the title; centered the first time")
-    func pages() throws {
-        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(SettingsWindowController.frameName)") // never opened before
-        let sut = SettingsWindowController(model: makeModel())
-        let split = try #require(sut.window?.contentViewController as? NSSplitViewController)
-        #expect(split.splitViewItems.count == 2)
-        #expect(split.splitViewItems.first?.behavior == .sidebar)
-        #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Sound Sources"], ["Detection", "Fades", "Advanced"], ["Diagnostics", "Updates", "About"]])
-        #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
-        #expect(sut.shownPage == nil) // not on screen
-
-        sut.show(page: .diagnostics)
-        defer { sut.close() }
-        let window = try #require(sut.window)
-        let area = try #require(window.screen?.visibleFrame)
-        #expect(abs(window.frame.midX - area.midX) <= 1)
-        #expect(sut.shownPage == .diagnostics)
-        #expect(sut.window?.title == "Diagnostics")
-        sut.show(page: .about) // the menu's About button
-        #expect(sut.shownPage == .about)
-        #expect(sut.window?.title == "About")
-    }
-
-    @Test("the window resizes between its limits; the sidebar keeps its width")
-    func limits() throws {
-        let sut = SettingsWindowController(model: makeModel())
-        let window = try #require(sut.window)
-        #expect(window.styleMask.contains(.resizable))
-        // At least 715 × 560, wider when a choice needs it in the app's language.
-        #expect(window.contentMinSize == SettingsWindowController.minimumSize)
-        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 600)
-        #expect(window.contentMaxSize == SettingsWindowController.maximumSize)
-        #expect(window.contentMaxSize.width >= 875 && window.contentMaxSize.height == 900)
-        let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)
-        #expect(sidebar.minimumThickness == SettingsWindowController.sidebarWidth)
-        #expect(sidebar.maximumThickness == SettingsWindowController.sidebarWidth)
-        #expect(!sidebar.canCollapse)
-        // Kept between launches: the controller gives its window its name
-        // (on macOS 14 and 15 it would clear one set before).
-        #expect(sut.windowFrameAutosaveName == SettingsWindowController.frameName)
-        #expect(window.frameAutosaveName == SettingsWindowController.frameName)
-        #expect(window.collectionBehavior.contains(.fullScreenNone)) // never full screen
-    }
-
-    @Test("closed and opened again, Settings is back on General; while open, it keeps its page")
-    func reopensOnGeneral() {
-        let sut = SettingsWindowController(model: makeModel())
-        defer { sut.close() }
-        sut.show()
-        #expect(sut.shownPage == .general)
-        sut.show(page: .detection)
-        sut.show() // Settings in the menu while the window is open
-        #expect(sut.shownPage == .detection)
-
-        sut.close()
-        sut.show()
-        #expect(sut.shownPage == .general)
-    }
-
-    @Test("minimized, Settings is still open: it keeps its page, and shows again as it was")
-    func minimizedIsOpen() async throws {
-        let model = makeModel()
-        let sut = SettingsWindowController(model: model)
-        defer { sut.close() }
-        sut.show(page: .detection)
-        model.foldedDiagnostics = [.apps]
-        let window = try #require(sut.window)
-        window.miniaturize(nil)
-        await TestWait.until { window.isMiniaturized }
-        #expect(!window.isVisible && window.isOpen) // macOS counts it as not visible
-        #expect(sut.shownPage == .detection)
-
-        sut.show() // Settings in the menu
-        await TestWait.until { !window.isMiniaturized }
-        #expect(!window.isMiniaturized && sut.shownPage == .detection)
-        #expect(model.foldedDiagnostics == [.apps]) // not reopened
-    }
-
-    @Test("reopened, Sound Sources' search is closed and every part of Diagnostics open")
-    func reopensFresh() async {
-        let model = makeModel()
-        let sut = SettingsWindowController(model: model)
-        defer { sut.close() }
-        sut.show(page: .apps)
-        model.appSearch = "chr"
-        model.foldedDiagnostics = [.apps]
-        sut.show(page: .diagnostics)
-        #expect(model.appSearch == "chr") // still open while the window is
-        #expect(model.foldedDiagnostics == [.apps])
-
-        await TestWait.until { !sut.keys.sidebar.rows.isEmpty } // its rows, as they register
-        sut.keys.handle(.left) // the highlight on the sidebar
-        #expect(sut.keys.side == .sidebar)
-
-        sut.close()
-        sut.show()
-        #expect(model.appSearch == nil)
-        #expect(model.foldedDiagnostics.isEmpty)
-        #expect(sut.keys.side == .page && sut.keys.sidebar.highlighted == nil) // nothing highlighted
-    }
-
-    @Test("a size kept from before narrower or lower than its least is brought up to it as it opens")
-    func keptSizeTooSmall() throws {
-        let key = "NSWindow Frame \(SettingsWindowController.frameName)"
-        defer { UserDefaults.standard.removeObject(forKey: key) }
-        UserDefaults.standard.set("100 100 600 500 0 0 1440 875 ", forKey: key)
-        let sut = SettingsWindowController(model: makeModel())
-        let content = try #require(sut.window?.contentView?.frame.size)
-        #expect(content.width >= SettingsWindowController.minimumSize.width)
-        #expect(content.height >= SettingsWindowController.minimumSize.height)
-    }
-
-    @Test("its keys go to the highlight only in its own window, without a sheet, and not with ⌘ ⌥ ⌃")
-    func keyRouting() async throws {
-        let sut = SettingsWindowController(model: makeModel())
-        defer { sut.close() }
-        sut.show(page: .detection)
-        let window = try #require(sut.window)
-        await TestWait.until { !sut.keys.page.rows.isEmpty } // its controls, as they register
-        #expect(!sut.handleKey(125, flags: [], windowNumber: window.windowNumber + 1)) // another window's
-        #expect(!sut.handleKey(125, flags: .command, windowNumber: window.windowNumber))
-        #expect(!sut.handleKey(0, flags: [], windowNumber: window.windowNumber)) // A: not a key of the highlight's
-        #expect(sut.handleKey(125, flags: [], windowNumber: window.windowNumber)) // ↓
-        #expect(sut.keys.page.highlighted != nil)
-        #expect(!sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: the window's
-        #expect(sut.keys.page.highlighted == nil)
-    }
-}
-
-/// How many times what a test followed changed (`withObservationTracking`).
-private final class Changes: @unchecked Sendable {
-    var count = 0
 }

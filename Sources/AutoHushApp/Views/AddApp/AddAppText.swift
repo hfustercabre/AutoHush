@@ -215,10 +215,6 @@ enum AddAppText {
         String(localized: "Allow…", comment: "Welcome window and Add an App window: button that asks for a permission (macOS's prompt, or System Settings)")
     }
 
-    static var allowedLabel: String {
-        String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")
-    }
-
     /// The Allow step once done: what's allowed, and what the check goes
     /// without.
     static func allowedSummary(_ permissions: CheckPermissions, antiDot: Bool) -> String {
@@ -354,9 +350,8 @@ enum AddAppText {
         String(localized: "\(app) didn’t play within 2 minutes.", comment: "Add an App window, under the step “Play something in %@” once the wait ended; %@ is the app")
     }
 
-    static var tryAgain: String {
-        String(localized: "Try Again", comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: it tries again; and under Add an App's “Play something in %@” once the app didn't play in time")
-    }
+    /// As the learning step's (`StepButton.tryAgain`).
+    static var tryAgain: String { StepButton.tryAgain.title }
 
     static var playingNote: String {
         String(localized: "It plays", comment: "Add an App window, under the step “Play something in %@” once done")

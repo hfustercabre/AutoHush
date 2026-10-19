@@ -2,6 +2,8 @@ import Foundation
 import Testing
 @testable import WebAppPlayers
 import AutoHushKit
+import AutoHushTestSupport
+import PlayersTestSupport
 
 @Suite("SafariWebAppFinder")
 struct SafariWebAppFinderTests {
@@ -26,11 +28,10 @@ struct SafariWebAppFinderTests {
     }
 
     private static func makeApp(in folder: URL, file: String, id: String, name: String) throws {
-        let contents = folder.appending(path: "\(file).app/Contents")
-        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
-        let info: NSDictionary = ["CFBundleIdentifier": id, "CFBundleName": name, "LSTemplateApplication": true,
-                                  "Manifest": ["start_url": "https://\(file.lowercased().replacingOccurrences(of: " ", with: "")).example.com/"]]
-        try info.write(to: contents.appending(path: "Info.plist"))
+        try TestAppBundle.make(in: folder, name: file, info: [
+            "CFBundleIdentifier": id, "CFBundleName": name, "LSTemplateApplication": true,
+            "Manifest": ["start_url": "https://\(file.lowercased().replacingOccurrences(of: " ", with: "")).example.com/"],
+        ])
     }
 
     @Test("the finder lists the web apps by name, and notices changes; a process running one is that web app")

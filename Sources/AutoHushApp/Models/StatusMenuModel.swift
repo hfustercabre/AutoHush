@@ -57,10 +57,28 @@ enum StatusMenuCommand: Equatable, Sendable {
     /// Checks for updates, or shows the update found.
     case updates
     case showAbout
-    /// Shows why the music player couldn't be controlled (the info button
+    /// Shows why the media player couldn't be controlled (the info button
     /// after the card's line).
     case showControlError
     case quit
+}
+
+extension StatusMenuCommand {
+    /// What opens a window or an alert closes the menu first, as a menu's
+    /// rows do, and acts once it has closed (`StatusMenuController.run`);
+    /// the rest act at once, the menu staying open. Updates keeps it open
+    /// while it checks (`StatusMenuController.perform`).
+    var closesMenuFirst: Bool {
+        switch self {
+        case .snooze, .removeAddedApp, .addApp, .addWebApp, .ignoreAnotherApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
+             .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
+             .reopenPlayer, .unmutePlayer, .quit:
+            true
+        case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
+             .toggleSettings, .openSide, .hoverSideRow, .pointerEntered, .retry:
+            false
+        }
+    }
 }
 
 /// A part of the menu, in the order it shows (`StatusMenuModel.sections`).

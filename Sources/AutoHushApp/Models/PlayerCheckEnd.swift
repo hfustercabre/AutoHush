@@ -1,5 +1,6 @@
 import Foundation
 import CheckedPlayers
+import PlayerCheckKit
 
 /// How a check ended.
 enum PlayerCheckEnd: Equatable {
@@ -23,14 +24,14 @@ enum PlayerCheckEnd: Equatable {
     /// It ended otherwise, with this exit status.
     case failed(Int32)
 
-    /// How the helper's exit `status` ends a check: `stopped` when AutoHush
-    /// asked it to stop; the result file's contents for a check that went
-    /// through.
+    /// How the helper's exit `status` (`CheckExitStatus`) ends a check:
+    /// `stopped` when AutoHush asked it to stop; the result file's contents
+    /// for a check that went through.
     static func of(status: Int32, stopped: Bool, result: Data?) -> PlayerCheckEnd {
         switch status {
-        case 0: .finished(result.flatMap { try? JSONDecoder().decode(CheckResult.self, from: $0) })
-        case 3: .permissionMissing
-        default: stopped || status == 143 || status == 130 ? .stopped : .failed(status)
+        case CheckExitStatus.done: .finished(result.flatMap { try? JSONDecoder().decode(CheckResult.self, from: $0) })
+        case CheckExitStatus.permissionMissing: .permissionMissing
+        default: stopped || CheckExitStatus.isStop(status) ? .stopped : .failed(status)
         }
     }
 }

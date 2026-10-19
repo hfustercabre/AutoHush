@@ -15,14 +15,14 @@ import PlayerCheckKit
     quiet = false
     guard let running else {
         say("\(appName) isn't running: open it first.")
-        finish(1)
+        finish(CheckExitStatus.failed)
     }
     let pid = running.processIdentifier
     let pausing = action == .pause
     /// It's that way already: nothing pressed.
     func already() -> Never {
         say("It's \(pausing ? "paused" : "playing") already.")
-        finish(0)
+        finish(CheckExitStatus.done)
     }
     /// Waits up to 6 s for `done`, looking every 0.05 s.
     func within(_ done: () -> Bool) -> Bool {
@@ -51,15 +51,15 @@ import PlayerCheckKit
             let sentAt = Date()
             let byNotification = { announced.lastState(since: sentAt).map { pausing ? $0 != .playing : $0 == .playing } == true }
             guard sendScript(command) else {
-                tried.append(scriptProblem ?? "AppleScript \(command) failed")
+                tried.append(scriptProblem ?? "AppleScript \(command.name) failed")
                 continue
             }
             if within({ byNotification() || isThere() }) {
-                say("\(pausing ? "Paused" : "Played") it by AppleScript (\(command))"
+                say("\(pausing ? "Paused" : "Played") it by AppleScript (\(command.name))"
                     + (byNotification() ? ", as its notification announced." : "."))
-                finish(0)
+                finish(CheckExitStatus.done)
             }
-            tried.append("AppleScript \(command) sent, but it didn't change in 6 s")
+            tried.append("AppleScript \(command.name) sent, but it didn't change in 6 s")
         case .page:
             guard page?.toggle != nil else {
                 tried.append((pageOutOfView ? "its page didn't show with "
@@ -85,7 +85,7 @@ import PlayerCheckKit
                 say("\(pausing ? "Paused" : "Played") it with its page's \(shown(button.label)) button"
                     + (pageSwitch.map { ", \(switchName($0)) on" } ?? "")
                     + (broughtForward ? " (brought forward a moment: Chromium and Flutter apps may build it only while their window can be seen)." : "."))
-                finish(0)
+                finish(CheckExitStatus.done)
             }
             tried.append("pressed its page's \(shown(button.label)), but it didn't change in 6 s"
                 + (pausing ? " (AutoHush would mute it instead)" : "")
@@ -110,7 +110,7 @@ import PlayerCheckKit
             }
             if within({ done(look(pid, level: sign.byLevel)) }) {
                 say("\(pausing ? "Paused" : "Played") it with its “\(menu.title)” menu's \(shown(word)).")
-                finish(0)
+                finish(CheckExitStatus.done)
             }
             tried.append("pressed its menu's \(shown(word)), but nothing changed in 6 s")
         case .panel:
@@ -121,7 +121,7 @@ import PlayerCheckKit
             case .changed:
                 rememberPanelRow()
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (\(panelRowSaid ?? "its row")).")
-                finish(0)
+                finish(CheckExitStatus.done)
             case .notPressed:
                 tried.append(panelProblem ?? "couldn't press its row in the Now Playing panel")
                 continue
@@ -131,7 +131,7 @@ import PlayerCheckKit
             if within({ isPlaying(pid) != pausing }) {
                 rememberPanelRow()
                 say("\(pausing ? "Paused" : "Played") it with its row in the Now Playing panel (\(panelRowSaid ?? "its row")).")
-                finish(0)
+                finish(CheckExitStatus.done)
             }
             // That row changed and this app didn't: another app's after all, put back as it was.
             let pressedRow = panelRowSaid ?? "a row"
@@ -141,5 +141,5 @@ import PlayerCheckKit
         }
     }
     say("Couldn't \(action.rawValue) it: " + tried.joined(separator: "; ") + ".")
-    finish(1)
+    finish(CheckExitStatus.failed)
 }

@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("UpdateController")
+@Suite("UpdateController", .timeLimit(.minutes(1)))
 @MainActor
 struct UpdateControllerTests {
     /// Records what the controller reports and the alerts it shows (at once,
@@ -17,8 +17,9 @@ struct UpdateControllerTests {
         let installer: MockUpdateInstaller
         let notifier = MockUpdateNotifier()
         /// Whether AutoHush could restart unnoticed right now.
-        let quiet: Flag
-        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateControllerTests-\(UUID().uuidString)")
+        let quiet: Locked<Bool>
+        private let scratchFolder = TemporaryFolder("UpdateControllerTests", create: false)
+        var folder: URL { scratchFolder.url }
         var now = Date(timeIntervalSinceReferenceDate: 800_000_000)
         var offers: [UpdateOffer?] = []
         var statuses: [String] = []
@@ -37,7 +38,7 @@ struct UpdateControllerTests {
         init(
             checker: UpdateChecker,
             installer: MockUpdateInstaller = MockUpdateInstaller(),
-            quiet: Flag = Flag(true),
+            quiet: Locked<Bool> = Locked(true),
             currentVersion: AppVersion? = AppVersion("0.2.0"),
             mode: AutomaticUpdates = .install
         ) {
@@ -71,10 +72,6 @@ struct UpdateControllerTests {
             }
         }
 
-        deinit {
-            try? FileManager.default.removeItem(at: folder)
-        }
-
         /// The update the menu offers now.
         var offer: UpdateOffer? { offers.last ?? nil }
 
@@ -88,25 +85,6 @@ struct UpdateControllerTests {
 
         /// Makes the next automatic run check again.
         func makeCheckDue() { preferences.lastUpdateCheck = nil }
-    }
-
-    /// Counts the fetches, holding each until the test lets them go.
-    private actor HeldFetches {
-        private(set) var count = 0
-        private var isHeld = true
-        private var held: [CheckedContinuation<Void, Never>] = []
-
-        func fetch() async {
-            count += 1
-            if isHeld { await withCheckedContinuation { held.append($0) } }
-        }
-
-        /// Lets the fetches under way go, and every later one at once.
-        func letGo() {
-            isHeld = false
-            held.forEach { $0.resume() }
-            held = []
-        }
     }
 
     private let v030 = AppVersion("0.3.0")!
@@ -141,18 +119,22 @@ struct UpdateControllerTests {
 
     @Test("a check asked for while one is under way doesn't start another, and shows the result (Check for Updates… during an automatic check); one asked for just as a check ends starts afresh, and shows its own")
     func overlappingChecks() async {
-        let fetches = HeldFetches()
-        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: { await fetches.fetch() }))
+        // The fetches, counted, each held until the gate opens.
+        let fetches = Locked(0), held = Gate()
+        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: {
+            fetches.increment()
+            await held.wait()
+        }))
 
         let automatic = Task { await h.controller.check(userInitiated: false) }
-        await TestWait.until { await fetches.count == 1 }
+        await TestWait.until { fetches.value == 1 }
         let menu = Task { await h.controller.checkNow() }
         await TestWait.until { h.controller.resultWanted } // the menu's check joined it
-        await fetches.letGo()
+        await held.open()
         await automatic.value
         await menu.value
 
-        #expect(await fetches.count == 1)
+        #expect(fetches.value == 1)
         #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
         #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date"])
         #expect(h.menuClosings == 1)
@@ -165,7 +147,7 @@ struct UpdateControllerTests {
         }
         await h.controller.check(userInitiated: false)
         await TestWait.until { h.alerts.count == 2 }
-        #expect(await fetches.count == 3)
+        #expect(fetches.value == 3)
         #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date", "AutoHush Is Up to Date"])
         #expect(h.menuClosings == 2)
     }
@@ -183,7 +165,7 @@ struct UpdateControllerTests {
 
     @Test("an up-to-date check clears an earlier offer and withdraws its notification")
     func upToDate() async {
-        let latest = LatestTag("v0.3.0")
+        let latest = Locked("v0.3.0")
         let h = Harness(checker: .latestRelease { latest.value }, mode: .notify)
         await h.controller.runAutomaticTasks()
         #expect(h.offer != nil)
@@ -235,7 +217,7 @@ struct UpdateControllerTests {
 
     @Test("a newer release is announced again")
     func announcesNewerRelease() async {
-        let latest = LatestTag("v0.3.0")
+        let latest = Locked("v0.3.0")
         let h = Harness(checker: .latestRelease { latest.value }, mode: .notify)
         await h.controller.runAutomaticTasks()
         latest.value = "v0.3.1"
@@ -303,7 +285,7 @@ struct UpdateControllerTests {
 
     @Test("a newer release replaces the kept download")
     func newerReleaseReplacesDownload() async {
-        let latest = LatestTag("v0.3.0")
+        let latest = Locked("v0.3.0")
         let h = Harness(checker: .latestRelease { latest.value }, mode: .download)
         await h.controller.runAutomaticTasks()
         latest.value = "v0.3.1"
@@ -318,7 +300,7 @@ struct UpdateControllerTests {
 
     @Test("a withdrawn release's download is deleted, with its notification")
     func withdrawnRelease() async {
-        let latest = LatestTag("v0.3.0")
+        let latest = Locked("v0.3.0")
         let h = Harness(checker: .latestRelease { latest.value }, mode: .download)
         await h.controller.runAutomaticTasks()
         latest.value = "v0.2.0"
@@ -451,7 +433,7 @@ struct UpdateControllerTests {
 
     @Test("while AutoHush is busy the update waits, and installs at the next quiet run")
     func waitsForQuietMoment() async {
-        let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Flag(false))
+        let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Locked(false))
         await h.controller.runAutomaticTasks()
         #expect(h.installer.calls.isEmpty)
         #expect(h.offer?.state == .available)
@@ -464,7 +446,7 @@ struct UpdateControllerTests {
 
     @Test("an update that finds AutoHush busy once downloaded is discarded and stays offered")
     func busyAfterDownload() async {
-        let quiet = Flag(true)
+        let quiet = Locked(true)
         let h = Harness(checker: .latestRelease("v0.3.0"),
                         installer: MockUpdateInstaller(onPrepare: { quiet.value = false }),
                         quiet: quiet)
@@ -528,7 +510,7 @@ struct UpdateControllerTests {
 
     @Test("an install the user asks for doesn't wait for a quiet moment")
     func userInstall() async throws {
-        let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Flag(false))
+        let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Locked(false))
         await h.controller.check(userInitiated: false)
         let release = try #require(h.controller.availableUpdate)
         await h.controller.install(release, userInitiated: true)
@@ -599,7 +581,7 @@ struct UpdateControllerTests {
 
     @Test("a check asked for offers the update with its notes: Later (Escape) leaves it in the menu, which shows it again; Open Release Page opens its page; Download and Install (Return) installs it at once")
     func offerChoices() async throws {
-        let h = Harness(checker: .latestRelease("v0.3.0", notes: "Fixes."), quiet: Flag(false))
+        let h = Harness(checker: .latestRelease("v0.3.0", notes: "Fixes."), quiet: Locked(false))
         h.answer = .alertSecondButtonReturn
         await h.controller.check(userInitiated: true)
         let alert = try #require(h.alerts.first)
@@ -699,16 +681,4 @@ struct UpdateControllerTests {
         h.controller.checksAutomatically = false
         #expect(!h.controller.isCheckDue(now: now))
     }
-}
-
-/// A switch the tests flip while the controller runs.
-private final class Flag: @unchecked Sendable {
-    var value: Bool
-    init(_ value: Bool) { self.value = value }
-}
-
-/// The tag the fake GitHub answers with; changeable between checks.
-private final class LatestTag: @unchecked Sendable {
-    var value: String
-    init(_ value: String) { self.value = value }
 }

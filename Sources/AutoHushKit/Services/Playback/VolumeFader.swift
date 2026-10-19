@@ -1,6 +1,6 @@
 import Foundation
 
-/// Fades a music player's own volume around pausing and playing, so the music
+/// Fades a media player's own volume around pausing and playing, so the music
 /// eases out and back in instead of stopping and starting abruptly.
 ///
 /// Fades are logarithmic: the level changes by the same number of decibels

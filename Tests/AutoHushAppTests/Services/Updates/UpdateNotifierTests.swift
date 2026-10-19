@@ -4,7 +4,7 @@ import UserNotifications
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("SystemUpdateNotifier")
+@Suite("SystemUpdateNotifier", .timeLimit(.minutes(1)))
 @MainActor
 struct UpdateNotifierTests {
     /// Stands in for the Notification Center: AutoHush isn't allowed or
@@ -23,7 +23,7 @@ struct UpdateNotifierTests {
         /// Showing a notice fails while this holds; each try is counted.
         var addFails = false
         private(set) var adds = 0
-        let sleep = SteppedSleep()
+        let sleep = ManualSleep()
 
         var center: SystemUpdateNotifier.Center {
             SystemUpdateNotifier.Center(
@@ -98,5 +98,16 @@ struct UpdateNotifierTests {
         notifier.announce(.downloaded(AppVersion("0.3.1")!))
         await TestWait.until { !fake.shown.isEmpty }
         #expect(fake.shown == ["downloaded 0.3.1"] && fake.adds == 2)
+    }
+
+    @Test("a click on a notification hands back its notice's kind and version, as it was shown; another action, or what isn't a notice's, nothing",
+          arguments: [UpdateNotice.available(AppVersion("0.3.0")!, running: AppVersion("0.2.0")!), .downloaded(AppVersion("0.3.0")!),
+                      .installed(AppVersion("0.3.1")!), .installFailed(AppVersion("0.3.1")!)])
+    func clickDecoded(_ notice: UpdateNotice) {
+        let clicked = UpdateNotice.clicked(action: UNNotificationDefaultActionIdentifier, userInfo: notice.userInfo)
+        #expect(clicked?.kind == notice.kind && clicked?.version == notice.version)
+        #expect(UpdateNotice.clicked(action: UNNotificationDismissActionIdentifier, userInfo: notice.userInfo) == nil)
+        #expect(UpdateNotice.clicked(action: UNNotificationDefaultActionIdentifier, userInfo: ["kind": "other", "version": "0.3.0"]) == nil)
+        #expect(UpdateNotice.clicked(action: UNNotificationDefaultActionIdentifier, userInfo: ["kind": notice.kind.rawValue]) == nil)
     }
 }

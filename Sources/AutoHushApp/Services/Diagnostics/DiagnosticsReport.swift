@@ -4,7 +4,7 @@ import CheckedPlayers
 
 /// What Settings → Diagnostics shows: how AutoHush is doing, every app with
 /// its sound on and how AutoHush judges it, then a section each for the
-/// music player, the detection, the permissions, AutoHush and the Mac; and
+/// media player, the detection, the permissions, AutoHush and the Mac; and
 /// all of it as text, for Copy Report.
 enum DiagnosticsReport {
     /// `bundlePath` finds an app's bundle, for its icon; `ways`, the ways an
@@ -28,7 +28,7 @@ enum DiagnosticsReport {
         let overview = overview(status: status)
         let sections = sections(status: status, facts: facts, ways: ways)
         let appsSummary = apps.isEmpty
-            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
+            ? MenuIgnoredAppsView.noneTitle
             : apps.map(\.name).formatted(.list(type: .and, width: .narrow))
         return DiagnosticsSnapshot(
             overview: overview,
@@ -84,7 +84,7 @@ enum DiagnosticsReport {
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
                                ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
-        let title = String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")
+        let title = MenuMediaPlayerView.title
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,
@@ -98,7 +98,7 @@ enum DiagnosticsReport {
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
             Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
             // Yes, Off (turned off in Settings → Fades), or No (the player can't fade).
-            Row(label: String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player"),
+            Row(label: SettingsWindowController.Page.fades.title,
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
         // An app added with Add an App: its ways, the first tried first.
@@ -158,13 +158,13 @@ enum DiagnosticsReport {
             rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
         }
-        return .init(kind: .detection, title: String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped"), summary: method, rows: rows)
+        return .init(kind: .detection, title: SettingsWindowController.Page.detection.title, summary: method, rows: rows)
     }
 
     private static func permissions(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         var rows: [Row] = []
         let antiDot = facts.detectionMethod != .audioLevels
-        let audio = String(localized: "Audio Recording", comment: "Welcome window and Diagnostics: the System Audio Recording permission (macOS’s name for it)")
+        let audio = PermissionText.audioTitle
         switch facts.audioRecording {
         case .granted?:
             rows.append(Row(label: audio, value: allowed, mark: .ok))
@@ -216,7 +216,7 @@ enum DiagnosticsReport {
             String(localized: "Off \(until)", comment: "Diagnostics: auto-pause; %@ says until when, e.g. “until 15:30”")
         }
         let ignored = status.ignoredApps.isEmpty
-            ? String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
+            ? MenuIgnoredAppsView.noneTitle
             : status.ignoredApps.map(\.name).formatted(.list(type: .and, width: .narrow))
         let updates = facts.checksForUpdates
             ? facts.automaticUpdates.title
@@ -230,7 +230,7 @@ enum DiagnosticsReport {
                      summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version"),
                      rows: [
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
-                        Row(label: String(localized: "Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"), value: autoPause),
+                        Row(label: AutoPauseText.title, value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         // Off in AntiDot mode, which measures no sound, whatever the switch.
                         Row(label: String(localized: "Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
@@ -238,7 +238,7 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call"),
                             value: facts.timings.staysPausedAfterCalls ? on : off),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
-                        Row(label: String(localized: "Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates"), value: updates),
+                        Row(label: SettingsWindowController.Page.updates.title, value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])
     }
@@ -282,7 +282,7 @@ enum DiagnosticsReport {
     private static var off: String { String(localized: "Off", comment: "A setting that is off: in Diagnostics, and the choice that turns Auto-Pause off in Shortcuts (it reads “Turn Auto-Pause Off”) and in the Focus filter") }
     private static var yes: String { String(localized: "Yes", comment: "Diagnostics: yes") }
     private static var no: String { String(localized: "No", comment: "Diagnostics: no") }
-    private static var allowed: String { String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted") }
+    private static var allowed: String { PermissionText.allowed }
     private static var notAllowed: String { String(localized: "Not allowed", comment: "Diagnostics: a permission that isn't granted") }
     private static var unknown: String { String(localized: "Unknown", comment: "Diagnostics: something AutoHush can't tell") }
 
@@ -291,7 +291,7 @@ enum DiagnosticsReport {
         text.prefix(1).localizedUppercase + text.dropFirst()
     }
 
-    /// The music player's state, as Diagnostics shows it; `mutes`: muted
+    /// The media player's state, as Diagnostics shows it; `mutes`: muted
     /// instead of paused.
     private static func describe(_ playback: PlaybackState, mutes: Bool) -> String {
         switch playback {

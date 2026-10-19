@@ -1,5 +1,7 @@
 import AppKit
+import AutoHushKit
 import CheckedPlayers
+import os
 import PlayerCheckKit
 
 // MARK: - What the tool changed
@@ -9,37 +11,50 @@ import PlayerCheckKit
 /// back on), and the app that was in front when it brought the checked one
 /// forward. (The `log stream` it follows Now Playing with ends with
 /// `nowPlayingReports.stop()`; a Now Playing shown for a press is kept in
-/// `nowPlayingRecord`.)
-final class Changes: @unchecked Sendable {
-    private let lock = NSLock()
-    private var switches: [String] = []
-    private var keptOn: Set<String> = []
-    private var front: URL?
-    private var setOnTimes: [String: Date] = [:]
-    private var pid: pid_t = 0
+/// `nowPlayingRecord`.) Each change is made whole under its lock, so a stop
+/// never reads a list halfway through one.
+final class Changes: Sendable {
+    private struct State {
+        var switches: [String] = []
+        var keptOn: Set<String> = []
+        var front: URL?
+        var setOnTimes: [String: Date] = [:]
+        var pid: pid_t = 0
+    }
+    private let state = OSAllocatedUnfairLock(initialState: State())
 
     /// The checked app's process (0: not running).
     var appPID: pid_t {
-        get { lock.withLock { pid } }
-        set { lock.withLock { pid = newValue } }
+        get { state.withLock { $0.pid } }
+        set { state.withLock { $0.pid = newValue } }
     }
     /// The switches this tool turned on: turned back off when it ends.
-    var switchesOn: [String] {
-        get { lock.withLock { switches } }
-        set { lock.withLock { switches = newValue } }
+    var switchesOn: [String] { state.withLock { $0.switches } }
+    /// Notes a switch this tool turned on (once).
+    func noteOn(_ attribute: String) {
+        state.withLock { if !$0.switches.contains(attribute) { $0.switches.append(attribute) } }
+    }
+    /// Notes that a switch this tool turned on is off again, or back as it was.
+    func noteOff(_ attribute: String) { state.withLock { $0.switches.removeAll { $0 == attribute } } }
+    /// The switches this tool turned on, no longer noted: to put them back.
+    func takeSwitchesOn() -> [String] {
+        state.withLock { state in
+            defer { state.switches = [] }
+            return state.switches
+        }
     }
     /// A switch that was (or may have been) on before this tool turned it
     /// on: a stop sets it back on, not off.
-    func foundOn(_ attribute: String) { lock.withLock { _ = keptOn.insert(attribute) } }
-    func wasFoundOn(_ attribute: String) -> Bool { lock.withLock { keptOn.contains(attribute) } }
+    func foundOn(_ attribute: String) { state.withLock { _ = $0.keptOn.insert(attribute) } }
+    func wasFoundOn(_ attribute: String) -> Bool { state.withLock { $0.keptOn.contains(attribute) } }
     /// The app to bring back to the front, while another was brought forward.
     var frontToRestore: URL? {
-        get { lock.withLock { front } }
-        set { lock.withLock { front = newValue } }
+        get { state.withLock { $0.front } }
+        set { state.withLock { $0.front = newValue } }
     }
     /// When this tool last turned `attribute` on (`waitForFullerMode`).
-    func switchSetOn(_ attribute: String) { lock.withLock { setOnTimes[attribute] = Date() } }
-    func switchSetOnAt(_ attribute: String) -> Date? { lock.withLock { setOnTimes[attribute] } }
+    func switchSetOn(_ attribute: String) { state.withLock { $0.setOnTimes[attribute] = Date() } }
+    func switchSetOnAt(_ attribute: String) -> Date? { state.withLock { $0.setOnTimes[attribute] } }
 }
 let changes = Changes()
 
@@ -49,8 +64,7 @@ let changes = Changes()
 /// switch, and read it back as set), or read one back as off while it's on
 /// (Electron's): either sign counts.
 func setSwitch(_ attribute: String, _ on: Bool, pid: pid_t) -> Bool {
-    let app = AXUIElementCreateApplication(switchTarget(pid))
-    AXUIElementSetMessagingTimeout(app, 1)
+    let app = AXUIElement.application(switchTarget(pid), timeout: 1)
     if on { changes.switchSetOn(attribute) }
     if AXUIElementSetAttributeValue(app, attribute as CFString, on ? kCFBooleanTrue : kCFBooleanFalse) == .success { return true }
     return app.value(attribute) as? Bool == on
@@ -62,19 +76,13 @@ func setSwitch(_ attribute: String, _ on: Bool, pid: pid_t) -> Bool {
 func switchesBackOff() -> [String] {
     let pid = changes.appPID
     guard pid > 0 else { return [] }
-    let stuck = changes.switchesOn.filter { !setSwitch($0, changes.wasFoundOn($0), pid: pid) }
-    changes.switchesOn = []
-    return stuck
+    return changes.takeSwitchesOn().filter { !setSwitch($0, changes.wasFoundOn($0), pid: pid) }
 }
 
 /// Brings an app forward through Launch Services, as `open` does (an app
-/// in the background may not activate another itself).
+/// in the background may not activate another itself), waiting for it.
 func bringForward(_ url: URL) {
-    let open = Process()
-    open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-    open.arguments = [url.path]
-    try? open.run()
-    open.waitUntilExit()
+    _ = ToolRun(URL(fileURLWithPath: "/usr/bin/open"), [url.path]).runBlocking()
 }
 
 // MARK: - Stopping
@@ -104,7 +112,7 @@ func stopNow(_ code: Int32) -> Never {
     say("  " + (line ?? "stopped: \(appName) was played again first"))
     if stopState.isWindowAway { windowTest?.restore() }
     if inputBlock.end() { say(CheckReportLine.free) }
-    stopNow(143)
+    stopNow(CheckExitStatus.stop)
 }
 
 /// Kept for as long as the tool runs.
@@ -122,7 +130,7 @@ func stopNow(_ code: Int32) -> Never {
         let source = DispatchSource.makeSignalSource(signal: stop, queue: .global())
         source.setEventHandler { @Sendable in
             if stopState.request() { return } // the check stops itself
-            stopNow(128 + stop)
+            stopNow(CheckExitStatus.stopped(by: stop))
         }
         source.resume()
         stopWatches.append(source)
@@ -131,16 +139,16 @@ func stopNow(_ code: Int32) -> Never {
     // Whoever ran it is gone already (this process went to launchd): a test
     // would run on unwatched, with the mouse and keyboard blocked.
     guard parent > 1 else {
-        if testing { stopNow(143) }
+        if testing { stopNow(CheckExitStatus.stop) }
         return
     }
     let source = DispatchSource.makeProcessSource(identifier: parent, eventMask: .exit, queue: .global())
     source.setEventHandler { @Sendable in
         if stopState.request() { return }
-        stopNow(143)
+        stopNow(CheckExitStatus.stop)
     }
     source.resume()
     stopWatches.append(source)
     // Gone already, before the watch began: this process went to launchd.
-    if getppid() != parent, !stopState.request() { stopNow(143) }
+    if getppid() != parent, !stopState.request() { stopNow(CheckExitStatus.stop) }
 }

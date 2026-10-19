@@ -28,14 +28,15 @@ struct AudioMonitorTests {
         AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid_t(1000 + objectID))
     }
 
-    private struct Harness {
+    /// Stops its monitor once the test is over, however it ends.
+    private final class Harness {
         let recorder = ArbiterEventRecorder()
         let provider = MockAudioProcessSnapshotProvider()
         let meter = MockLevelMeter()
         let clock = ManualClock()
-        let activeSources = ValueRecorder<[AudioSource]>()
-        let modes = ValueRecorder<DetectionMode>()
-        let learned = ValueRecorder<String>()
+        let activeSources = Locked<[[AudioSource]]>([])
+        let modes = Locked<[DetectionMode]>([])
+        let learned = Locked<[String]>([])
         let monitor: AudioMonitor
 
         init(
@@ -59,14 +60,16 @@ struct AudioMonitorTests {
                 ignoredSourceIDs: ignored,
                 powerAssertions: assertions,
                 learnedAssertions: learnedAssertions,
-                onAssertionsLearned: { [learned] id, _ in learned.record(id) },
+                onAssertionsLearned: { [learned] id, _ in learned.append(id) },
                 audioLevelsNeeded: levelsNeeded,
                 audioLevelsReleaseDelay: releaseDelay,
                 clock: { [clock] in clock.now },
-                onActiveSourcesChange: { [activeSources] in activeSources.record($0) },
-                onDetectionModeChange: { [modes] in modes.record($0) }
+                onActiveSourcesChange: { [activeSources] in activeSources.append($0) },
+                onDetectionModeChange: { [modes] in modes.append($0) }
             )
         }
+
+        deinit { monitor.stop() }
 
         /// Starts the monitor and waits until its start-up evaluation has run.
         /// Observing begins before that evaluation, so without the flush a test
@@ -86,34 +89,28 @@ struct AudioMonitorTests {
         }
     }
 
-    // MARK: - Hysteresis (stream fallback)
+    // MARK: - Starting and stopping (stream fallback)
 
-    @Test("a source with an open stream starts only after the start confirmation")
-    func startRequiresConfirmation() async {
-        let h = Harness(meter: false)
-        h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
-        h.step(after: 0.5)
-        #expect(await h.recorder.events.isEmpty)
-
-        h.step(after: 0.5)
-        await h.recorder.waitForEvents(count: 1)
-        #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
-        #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
-        h.monitor.stop()
-    }
-
-    @Test("a start says when the app was first heard, before it counted; a stop says nothing")
+    @Test("the tracker's timings, through the monitor: a source starts once it played for the start confirmation, saying when it was first heard; a gap within the stop grace (a new stream for the next track) keeps it; silent for the stop grace, it stops, saying nothing of when")
     func startSaysWhenFirstHeard() async {
         let h = Harness(meter: false)
         h.start()
         h.step(after: 2, [Self.process(1, "org.videolan.vlc")]) // first heard
         let heard = h.clock.now
         h.step(after: 0.5)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.isEmpty)
         h.step(after: 0.5) // counts as playing
         await h.recorder.waitForEvents(count: 1)
+        #expect(h.activeSources.value.last?.map(\.id) == ["org.videolan.vlc"])
+
         h.step(after: 0.25, [])
-        h.step(after: 2)
+        h.step(after: 1.5, [Self.process(2, "org.videolan.vlc")]) // the next track's stream
+        h.step(after: 0.25, [])
+        h.step(after: 1.5)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.count == 1)
+        h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 2)
         // Heard again: a new start, from then.
         h.step(after: 1, [Self.process(1, "org.videolan.vlc")])
@@ -123,57 +120,6 @@ struct AudioMonitorTests {
 
         #expect(await h.recorder.events.map(\.isPlaying) == [true, false, true])
         #expect(await h.recorder.heardSince == [heard, nil, heardAgain])
-        h.monitor.stop()
-    }
-
-    @Test("a notification-length blip never reaches the arbiter")
-    func shortBlipIsIgnored() async {
-        let h = Harness(meter: false)
-        h.start()
-        h.step([Self.process(1, "com.tinyspeck.slackmacgap")])
-        h.step(after: 0.6, [])
-        h.step(after: 1.0)
-        h.step(after: 3.0)
-        await h.monitor.eventsDelivered()
-        #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
-    }
-
-    @Test("a playing source stops only after the stop grace period")
-    func stopRequiresGrace() async {
-        let h = Harness(meter: false)
-        h.start()
-        h.step([Self.process(1, "com.apple.QuickTimePlayerX")])
-        h.step(after: 1.0)
-        await h.recorder.waitForEvents(count: 1)
-
-        h.step(after: 0.25, [])
-        h.step(after: 1.5)
-        #expect(await h.recorder.events.count == 1)
-
-        h.step(after: 0.5)
-        await h.recorder.waitForEvents(count: 2)
-        #expect(await h.recorder.events == [
-            .init(bundleID: "com.apple.QuickTimePlayerX", isPlaying: true),
-            .init(bundleID: "com.apple.QuickTimePlayerX", isPlaying: false),
-        ])
-        h.monitor.stop()
-    }
-
-    @Test("a short gap between tracks does not stop the source")
-    func gapBetweenTracksKeepsSourceActive() async {
-        let h = Harness(meter: false)
-        h.start()
-        h.step([Self.process(1, "com.apple.Safari")])
-        h.step(after: 1.0)
-        await h.recorder.waitForEvents(count: 1)
-
-        h.step(after: 0.25, [])                              // stream closes between videos
-        h.step(after: 1.5, [Self.process(2, "com.apple.Safari")]) // next video starts
-        h.step(after: 5.0)
-        await h.monitor.eventsDelivered()
-        #expect(await h.recorder.events == [.init(bundleID: "com.apple.Safari", isPlaying: true)])
-        h.monitor.stop()
     }
 
     // MARK: - Audio level detection
@@ -183,8 +129,7 @@ struct AudioMonitorTests {
         let h = Harness()
         h.start()
         h.step([Self.process(1, "org.mozilla.firefox")], peaks: [1: 0.2])
-        #expect(h.modes.values == [.audioLevel])
-        h.monitor.stop()
+        #expect(h.modes.value == [.audioLevel])
     }
 
     @Test("with level detection a silent but open stream stops after the grace period")
@@ -200,7 +145,6 @@ struct AudioMonitorTests {
         h.step(after: 2.0)
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events.last == .init(bundleID: "com.google.Chrome.helper", isPlaying: false))
-        h.monitor.stop()
     }
 
     @Test("quiet sound below the threshold does not count as audible")
@@ -213,7 +157,6 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("until verified, all-zero taps fall back to open streams")
@@ -224,8 +167,7 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
-        #expect(h.modes.values.isEmpty)
-        h.monitor.stop()
+        #expect(h.modes.value.isEmpty)
     }
 
     @Test("when the permission cannot be read, the player is tapped only until levels are verified")
@@ -236,9 +178,8 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [1, 2])
 
         h.step(after: 0.25, peaks: [1: 0.4, 2: 0])
-        #expect(h.modes.values == [.audioLevel])
+        #expect(h.modes.value == [.audioLevel])
         #expect(h.meter.lastMetered == [2])
-        h.monitor.stop()
     }
 
     @Test("with Level the volume on, the player is measured while another app is; its loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume; an app using its microphone is reported in a call")
@@ -268,7 +209,6 @@ struct AudioMonitorTests {
         #expect(await h.recorder.log.filter { $0.contains("call") } == ["call us.zoom.xos", "no call us.zoom.xos"])
         h.monitor.setMusicPaused(false)
         #expect(await h.monitor.resumeOffsetDB() == nil) // resumed: forgotten
-        h.monitor.stop()
     }
 
     @Test("with the permission granted, the player itself is never tapped")
@@ -277,7 +217,6 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.Safari")])
         #expect(h.meter.lastMetered == [2])
-        h.monitor.stop()
     }
 
     @Test("a source silent for 10 s loses its tap and doesn't count as playing; its output opening again taps it again, and with nothing measured its open stream counts")
@@ -308,7 +247,6 @@ struct AudioMonitorTests {
         h.step(after: 1)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.radio", isPlaying: true)])
-        h.monitor.stop()
     }
 
     @Test("a source silent for 10 s is released, and tapped again once it tells macOS it plays; one that says so all along stays measured (a call's quiet stretch), so its talk is heard")
@@ -330,7 +268,6 @@ struct AudioMonitorTests {
         assertions.held = [1002: MockPowerAssertions.playing, 1003: MockPowerAssertions.playing]
         h.step(after: 0.25)
         #expect(h.meter.lastMetered == [2, 3])
-        h.monitor.stop()
     }
 
     @Test("a source heard within 10 s keeps its tap; its silence counts only while it's measured")
@@ -353,7 +290,6 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [2])
         h.step(after: 3)
         #expect(h.meter.lastMetered == [2])
-        h.monitor.stop()
     }
 
     // MARK: - Capturing only when needed (recording indicator)
@@ -382,7 +318,6 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [1]) // released only after a short delay
         await h.meter.waitUntilMetered([])
         #expect(h.meter.lastMetered.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("a brief gap in the need for levels keeps the taps")
@@ -397,7 +332,6 @@ struct AudioMonitorTests {
         try? await Task.sleep(for: .milliseconds(150))
         h.provider.flush()
         #expect(h.meter.lastMetered == [1])
-        h.monitor.stop()
     }
 
     // MARK: - AntiDot mode: playback signals instead of capturing
@@ -419,8 +353,7 @@ struct AudioMonitorTests {
         ])
         #expect(h.meter.lastMetered.isEmpty)
         #expect(permission.requestCount == 0)
-        #expect(h.modes.values == [.playbackSignals])
-        h.monitor.stop()
+        #expect(h.modes.value == [.playbackSignals])
     }
 
     @Test("an unknown app counts as playing while it tells macOS so, and as paused once it stops")
@@ -433,7 +366,7 @@ struct AudioMonitorTests {
         assertions.held = [1001: MockPowerAssertions.playing]
         h.step([Self.process(1, "com.example.player")]) // pid 1001
         await h.recorder.waitForEvents(count: 1)
-        #expect(h.learned.values == ["com.example.player"])
+        #expect(h.learned.value == ["com.example.player"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .playing, evidence: .announcing)])
 
         // Paused: the stream stays open but the assertion is gone.
@@ -450,8 +383,7 @@ struct AudioMonitorTests {
         assertions.held = [1001: MockPowerAssertions.playing]
         h.step(after: 0.25)
         await h.recorder.waitForEvents(count: 3)
-        #expect(h.learned.values == ["com.example.player"]) // learned once
-        h.monitor.stop()
+        #expect(h.learned.value == ["com.example.player"]) // learned once
     }
 
     @Test("apps that never tell macOS keep the open-stream rule")
@@ -463,8 +395,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "com.example.game")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.game", isPlaying: true)])
-        #expect(h.learned.values.isEmpty)
-        h.monitor.stop()
+        #expect(h.learned.value.isEmpty)
     }
 
     @Test("apps remembered from earlier launches count as paused without an assertion")
@@ -477,7 +408,6 @@ struct AudioMonitorTests {
         h.step(after: 1)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("a helper's assertion counts for its app")
@@ -493,8 +423,7 @@ struct AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "com.google.Chrome.helper")])
         await h.recorder.waitForEvents(count: 1)
-        #expect(h.learned.values == ["com.google.Chrome"])
-        h.monitor.stop()
+        #expect(h.learned.value == ["com.google.Chrome"])
     }
 
     @Test("“Open audio streams only” ignores what apps tell macOS")
@@ -508,7 +437,6 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
         // Remembered as announcing, no assertion now: still playing by its open stream.
         #expect(await h.recorder.events == [.init(bundleID: "com.example.player", isPlaying: true)])
-        h.monitor.stop()
     }
 
     @Test("while levels aren't measured, an app known to tell macOS counts as paused once it stops, though its stream stays open (VLC)")
@@ -521,7 +449,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "org.videolan.vlc")]) // pid 1001
         await h.recorder.waitForEvents(count: 1)
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(h.learned.values == ["org.videolan.vlc"])
+        #expect(h.learned.value == ["org.videolan.vlc"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .announcing)])
 
         // Paused: its stream stays open, without the assertion.
@@ -530,7 +458,6 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events.last == .init(bundleID: "org.videolan.vlc", isPlaying: false))
         #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .silent, evidence: .notAnnouncing)])
-        h.monitor.stop()
     }
 
     @Test("measured levels win over what apps tell macOS")
@@ -545,7 +472,6 @@ struct AudioMonitorTests {
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.example.player", state: .silent, evidence: .level(0))])
-        h.monitor.stop()
     }
 
     @Test("an app using one assertion for video stays playing when its window shows again, and its audio still counts (Safari)")
@@ -595,7 +521,6 @@ struct AudioMonitorTests {
             .init(bundleID: "com.example.browser", isPlaying: false),
             .init(bundleID: "com.example.browser", isPlaying: true),
         ])
-        h.monitor.stop()
     }
 
     @Test("in AntiDot mode, sound without video must last 3 s, so a notification sound never pauses the music")
@@ -630,7 +555,6 @@ struct AudioMonitorTests {
         h.step(after: 5)
         #expect(!h.monitor.activeAudioReport().contains { $0.id == "com.example.chat" && $0.state == .playing })
         #expect(await h.recorder.startConfirmations == [3]) // what a pause taken over waits for
-        h.monitor.stop()
     }
 
     @Test("measured levels use the usual start; with nothing measured (Audio Recording denied, being asked, or unreadable before a first sample), AntiDot mode's longer ones",
@@ -652,7 +576,6 @@ struct AudioMonitorTests {
             await h.recorder.waitForEvents(count: 2)
             #expect(await h.recorder.events.map(\.bundleID) == ["com.example.audio", "com.example.chat"])
             #expect(await h.recorder.startConfirmations == [0.5])
-            h.monitor.stop()
             return
         }
         await h.monitor.eventsDelivered()
@@ -665,7 +588,6 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events.map(\.bundleID) == ["com.example.audio", "com.example.chat"])
         #expect(await h.recorder.startConfirmations == [3])
-        h.monitor.stop()
     }
 
     @Test("with open streams only, which can't tell video, every app's sound must last 2 s, so an app's chat tone never pauses the music")
@@ -691,7 +613,6 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.video", isPlaying: true)])
         #expect(await h.recorder.startConfirmations == [2])
-        h.monitor.stop()
     }
 
     @Test("with measuring turned off, the permission is never requested and nothing is captured")
@@ -704,39 +625,27 @@ struct AudioMonitorTests {
         h.step(after: 6)
         #expect(permission.requestCount == 0)
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(h.modes.values == [.disabled])
+        #expect(h.modes.value == [.disabled])
 
         h.monitor.setDetectionMethod(.audioLevels)
         h.provider.flush()
         #expect(permission.requestCount == 1)
-        #expect(h.modes.values == [.disabled, .pending])
-        h.monitor.stop()
+        #expect(h.modes.value == [.disabled, .pending])
     }
 
-    @Test("the player playing with a silent tap marks level detection unavailable")
+    @Test("the player playing with a silent tap marks level detection unavailable after the verification window; real samples revise that")
     func silentPlayerTapMeansUnavailable() async {
         let h = Harness()
         h.monitor.setPlayerPlaying(true)
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID)], peaks: [1: 0])
         h.step(after: 14.0)
-        #expect(h.modes.values.isEmpty)
+        #expect(h.modes.value.isEmpty)
 
         h.step(after: 1.0)
-        #expect(h.modes.values == [.unavailable])
-        h.monitor.stop()
-    }
-
-    @Test("an unavailable verdict is revised once real samples arrive")
-    func unavailableRecoversOnSignal() async {
-        let h = Harness()
-        h.monitor.setPlayerPlaying(true)
-        h.start()
-        h.step([Self.process(1, TestPlayer.bundleID)], peaks: [1: 0])
-        h.step(after: 15.0)
+        #expect(h.modes.value == [.unavailable])
         h.step(after: 0.25, peaks: [1: 0.2])
-        #expect(h.modes.values == [.unavailable, .audioLevel])
-        h.monitor.stop()
+        #expect(h.modes.value == [.unavailable, .audioLevel])
     }
 
     // MARK: - System Audio Recording permission (TCC)
@@ -745,8 +654,7 @@ struct AudioMonitorTests {
     func grantedPermissionEnablesLevels() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
-        #expect(h.modes.values == [.audioLevel])
-        h.monitor.stop()
+        #expect(h.modes.value == [.audioLevel])
     }
 
     @Test("with permission granted, a paused player's open stream never counts as playing")
@@ -760,7 +668,6 @@ struct AudioMonitorTests {
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         #expect(h.meter.lastMetered == [1])
-        h.monitor.stop()
     }
 
     @Test("denied permission falls back to streams without creating taps")
@@ -771,10 +678,9 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.recorder.waitForEvents(count: 1)
 
-        #expect(h.modes.values == [.unavailable])
+        #expect(h.modes.value == [.unavailable])
         #expect(h.meter.lastMetered.isEmpty)
         #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
-        h.monitor.stop()
     }
 
     @Test("an undecided permission is requested once and taps start when granted")
@@ -786,13 +692,12 @@ struct AudioMonitorTests {
         h.step(after: 6.0) // re-check must not request again
         #expect(permission.requestCount == 1)
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(h.modes.values.isEmpty)
+        #expect(h.modes.value.isEmpty)
 
         permission.complete(granted: true)
         h.provider.flush()
-        #expect(h.modes.values == [.audioLevel])
+        #expect(h.modes.value == [.audioLevel])
         #expect(h.meter.lastMetered == [1])
-        h.monitor.stop()
     }
 
     @Test("revoking the permission is noticed on the next re-check; once it can't be read, samples decide again")
@@ -805,17 +710,16 @@ struct AudioMonitorTests {
 
         permission.current = .denied
         h.step(after: 2.0)
-        #expect(h.modes.values == [.audioLevel])
+        #expect(h.modes.value == [.audioLevel])
         h.step(after: 3.0)
-        #expect(h.modes.values == [.audioLevel, .unavailable])
+        #expect(h.modes.value == [.audioLevel, .unavailable])
         #expect(h.meter.lastMetered.isEmpty)
 
         // TCC unreadable at the next re-check: tapped again, its sound proves the levels.
         permission.current = nil
         h.step(after: 5.0)
         #expect(h.meter.lastMetered == [1])
-        #expect(h.modes.values == [.audioLevel, .unavailable, .audioLevel])
-        h.monitor.stop()
+        #expect(h.modes.value == [.audioLevel, .unavailable, .audioLevel])
     }
 
     @Test("a known permission is not overridden by sample-based inference")
@@ -826,8 +730,7 @@ struct AudioMonitorTests {
         // The player's tap silent for long: inference would say "unavailable".
         h.step([Self.process(1, TestPlayer.bundleID)], peaks: [1: 0])
         h.step(after: 20.0)
-        #expect(h.modes.values == [.audioLevel])
-        h.monitor.stop()
+        #expect(h.modes.value == [.audioLevel])
     }
 
     @Test("a new silence threshold applies immediately")
@@ -843,7 +746,6 @@ struct AudioMonitorTests {
         h.step(after: 0.25)
         await h.recorder.waitForEvents(count: 2)
         #expect(await h.recorder.events.last == .init(bundleID: "org.videolan.vlc", isPlaying: false))
-        h.monitor.stop()
     }
 
     // MARK: - The player playing on this Mac vs. another device
@@ -855,7 +757,6 @@ struct AudioMonitorTests {
         h.step([])
         await h.recorder.waitForPlayerLocal(count: 1)
         #expect(await h.recorder.playerLocal == [false])
-        h.monitor.stop()
     }
 
     @Test("the player's output counts as local when levels are unavailable")
@@ -866,7 +767,6 @@ struct AudioMonitorTests {
         await h.recorder.waitForPlayerLocal(count: 2)
         // The start-up evaluation runs before any process exists.
         #expect(await h.recorder.playerLocal == [false, true])
-        h.monitor.stop()
     }
 
     @Test("the player counts as playing here exactly while its output runs")
@@ -879,23 +779,21 @@ struct AudioMonitorTests {
         await h.recorder.waitForPlayerLocal(count: 3)
         #expect(await h.recorder.playerLocal == [false, true, false])
         #expect(h.meter.lastMetered.isEmpty)
-        h.monitor.stop()
     }
 
-    @Test("a process the player owns (a web app's WebKit process) is its output, never a source")
-    func playerOwnedProcessIsLocal() async {
-        let identifier = StubSourceIdentifier([
-            "com.apple.WebKit.GPU": AudioSource(id: TestPlayer.bundleID, name: "Jukebox"),
-        ])
+    @Test("a process the player owns is its output, never a source: a web app's WebKit process, or a command-line program it runs",
+          arguments: ["com.apple.WebKit.GPU", ""])
+    func playerOwnedProcessIsLocal(bundleID: String) async {
+        let jukebox = AudioSource(id: TestPlayer.bundleID, name: "Jukebox")
+        let identifier = StubSourceIdentifier(["com.apple.WebKit.GPU": jukebox], ownersOfPrograms: [1001: jukebox])
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
         h.start()
-        h.step([Self.process(1, "com.apple.WebKit.GPU")])
+        h.step([Self.process(1, bundleID)]) // pid 1001
         await h.recorder.waitForPlayerLocal(count: 2)
         #expect(await h.recorder.playerLocal == [false, true])
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("the player's local status reaches the arbiter before source events of the same tick")
@@ -905,7 +803,6 @@ struct AudioMonitorTests {
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "org.videolan.vlc")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.log == ["playerLocal false", "playerLocal true", "+org.videolan.vlc"])
-        h.monitor.stop()
     }
 
     // MARK: - Owning apps and ignored apps
@@ -920,14 +817,13 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "com.google.Chrome.helper"), Self.process(2, "com.google.Chrome.helper")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.google.Chrome", isPlaying: true)])
-        #expect(h.activeSources.values.last == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
+        #expect(h.activeSources.value.last == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.google.Chrome", name: "Google Chrome", state: .playing)])
 
         // One helper stops: the app keeps playing.
         h.step(after: 0.25, [Self.process(2, "com.google.Chrome.helper")])
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.count == 1)
-        h.monitor.stop()
     }
 
     @Test("a process owned by an excluded app (the player's helper) is never a source")
@@ -941,8 +837,7 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last?.isEmpty ?? true)
-        h.monitor.stop()
+        #expect(h.activeSources.value.last?.isEmpty ?? true)
     }
 
     @Test("a command-line player (afplay run in Terminal) counts as the app that owns it")
@@ -954,8 +849,7 @@ struct AudioMonitorTests {
         h.step([Self.process(1, "")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.apple.Terminal", isPlaying: true)])
-        #expect(h.activeSources.values.last == [terminal])
-        h.monitor.stop()
+        #expect(h.activeSources.value.last == [terminal])
     }
 
     @Test("a process without a bundle ID that no app owns (a system daemon) never counts")
@@ -966,23 +860,8 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last?.isEmpty ?? true)
+        #expect(h.activeSources.value.last?.isEmpty ?? true)
         #expect(h.monitor.activeAudioReport().isEmpty)
-        h.monitor.stop()
-    }
-
-    @Test("a command-line program the player owns is its output, never a source")
-    func playerOwnedProgramIsLocal() async {
-        let identifier = StubSourceIdentifier([:], ownersOfPrograms: [1001: AudioSource(id: TestPlayer.bundleID, name: "Jukebox")])
-        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
-        h.start()
-        h.step([Self.process(1, "")])
-        await h.recorder.waitForPlayerLocal(count: 2)
-        #expect(await h.recorder.playerLocal == [false, true])
-        h.step(after: 1.0)
-        await h.monitor.eventsDelivered()
-        #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("an ignored app is published as playing but never reaches the arbiter")
@@ -993,9 +872,8 @@ struct AudioMonitorTests {
         h.step(after: 0.25)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last?.map(\.id) == ["org.videolan.vlc"])
+        #expect(h.activeSources.value.last?.map(\.id) == ["org.videolan.vlc"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, isIgnored: true)])
-        h.monitor.stop()
     }
 
     @Test("ignoring a playing app stops it for the arbiter; un-ignoring starts it again")
@@ -1016,7 +894,6 @@ struct AudioMonitorTests {
         ])
         // It played all along: not heard just now, so its start says nothing of when.
         #expect(Array(await h.recorder.heardSince.suffix(2)) == [nil, nil])
-        h.monitor.stop()
     }
 
     @Test("an ignored app that stops playing sends nothing to the arbiter")
@@ -1027,8 +904,7 @@ struct AudioMonitorTests {
         h.step(after: 0.25, [])
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.values.last?.map(\.id) == [])
-        h.monitor.stop()
+        #expect(h.activeSources.value.last?.map(\.id) == [])
     }
 
     // MARK: - Filtering
@@ -1041,7 +917,6 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("the monitor's own process is ignored")
@@ -1052,7 +927,6 @@ struct AudioMonitorTests {
         h.step(after: 1.0)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        h.monitor.stop()
     }
 
     @Test("a bundle stays active while any of its processes is audible")
@@ -1068,7 +942,6 @@ struct AudioMonitorTests {
             .init(bundleID: "com.apple.Safari", isPlaying: true),
             .init(bundleID: "com.apple.Safari", isPlaying: false),
         ])
-        h.monitor.stop()
     }
 
     // MARK: - Tick rate
@@ -1088,16 +961,42 @@ struct AudioMonitorTests {
         #expect(configuration.activeSampleInterval < configuration.idleSampleInterval)
     }
 
+    @Test("after a HAL change the process list is re-read at the active rate for a second, then only at the idle rate, so an idle monitor wakes seldom")
+    func refreshWindowAfterChange() {
+        var configuration = Self.config()
+        configuration.activeSampleInterval = 1000 // distinct rates, neither ticking during the test
+        let h = Harness(configuration: configuration)
+        h.start()
+        let interval = { h.monitor.queue.sync { h.monitor.timerInterval } }
+        let lastRead = { h.monitor.queue.sync { h.monitor.lastRefresh } }
+        let tick = { h.monitor.queue.sync { h.monitor.tick() } }
+
+        h.step() // a HAL change: re-read, then the active rate
+        #expect(interval() == 1000)
+        h.clock.advance(by: 0.5)
+        tick()
+        let reread = h.clock.now
+        #expect(lastRead() == reread) // within the second: read again
+        #expect(interval() == 1000)
+        h.clock.advance(by: 0.6)
+        tick()
+        #expect(lastRead() == reread) // after it: not
+        #expect(interval() == configuration.idleSampleInterval)
+    }
+
     // MARK: - Publication and lifecycle
 
-    @Test("active sources are published sorted")
+    @Test("active sources are published sorted by name, not by ID")
     func activeSourcesPublishedSorted() async {
-        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
+        let identifier = StubSourceIdentifier([
+            "org.mozilla.firefox": AudioSource(id: "org.mozilla.firefox", name: "Firefox"),
+            "com.apple.Safari": AudioSource(id: "com.apple.Safari", name: "Safari"),
+        ])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
         h.start()
-        h.step([Self.process(1, "org.mozilla.firefox"), Self.process(2, "com.apple.Safari")])
+        h.step([Self.process(1, "com.apple.Safari"), Self.process(2, "org.mozilla.firefox")])
         await h.recorder.waitForEvents(count: 2)
-        #expect(h.activeSources.values.last?.map(\.id) == ["com.apple.Safari", "org.mozilla.firefox"])
-        h.monitor.stop()
+        #expect(h.activeSources.value.last?.map(\.name) == ["Firefox", "Safari"])
     }
 
     @Test("the active audio report describes each source's state and level")
@@ -1109,7 +1008,6 @@ struct AudioMonitorTests {
             .init(id: "com.apple.Safari", state: .starting, evidence: .level(0.1)),
             .init(id: "org.videolan.vlc", state: .silent, evidence: .level(0)),
         ])
-        h.monitor.stop()
     }
 
     @Test("events are delivered in order")
@@ -1124,21 +1022,22 @@ struct AudioMonitorTests {
         let events = await h.recorder.events
         #expect(events.count == 40)
         #expect(events.enumerated().allSatisfy { $0.element.isPlaying == $0.offset.isMultiple(of: 2) })
-        h.monitor.stop()
     }
 
-    @Test("stop clears sources, stops metering and is idempotent")
-    func stopIsIdempotent() async {
+    @Test("stop clears sources, stops metering and cancels its timer (a stopped monitor never wakes its queue again), and is idempotent")
+    func stopIsIdempotent() throws {
         let h = Harness(configuration: Self.config(startConfirmation: 0))
         h.start()
         h.step([Self.process(1, "org.videolan.vlc")])
+        let timer = try #require(h.monitor.queue.sync { h.monitor.timer })
         h.monitor.stop()
         h.monitor.stop()
         h.provider.flush()
 
-        #expect(h.activeSources.values.last?.map(\.id) == [])
+        #expect(h.activeSources.value.last?.map(\.id) == [])
         #expect(h.meter.stopAllCount == 1)
         #expect(h.provider.isObserving == false)
+        #expect(timer.isCancelled)
     }
 
     @Test("the timer drives evaluation without HAL callbacks")
@@ -1233,15 +1132,4 @@ private struct StubSourceIdentifier: AudioSourceIdentifying {
     }
 
     func sourceID(forPID pid: pid_t) -> String? { owners[pid] }
-}
-
-private final class ValueRecorder<Value: Sendable>: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _values: [Value] = []
-
-    var values: [Value] { lock.withLock { _values } }
-
-    func record(_ value: Value) {
-        lock.withLock { _values.append(value) }
-    }
 }

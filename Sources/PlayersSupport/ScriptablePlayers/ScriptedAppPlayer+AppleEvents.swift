@@ -3,18 +3,20 @@ import Foundation
 
 // ScriptedAppPlayer: its Apple events, from the codes its dictionary gave
 // as text ("spfyPaus", "docu"), as AutoHush's ScriptablePlayer builds its own.
+// Player Check sends its events with these too, so a check's AppleScript is
+// AutoHush's.
 extension ScriptedAppPlayer {
     typealias Code = ScriptablePlayer.Code
 
     /// A code read from a dictionary at run time as a number ("spfy" →
     /// 0x73706679): `fourCharCode` takes only literals.
-    static func code(_ text: String) -> OSType {
+    package static func code(_ text: String) -> OSType {
         text.utf8.prefix(4).reduce(0) { ($0 << 8) | OSType($1) }
     }
 
     /// The command `code` (suite, then command: "spfyPaus"), told which
     /// document to act on when `target` names one.
-    static func makeCommandEvent(_ code: String, to target: NSAppleEventDescriptor? = nil,
+    package static func makeCommandEvent(_ code: String, to target: NSAppleEventDescriptor? = nil,
                                  processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         let event = ScriptablePlayer.makeCommandEvent(suite: Self.code(String(code.prefix(4))), Self.code(String(code.suffix(4))),
                                                       processIdentifier: pid)
@@ -23,7 +25,7 @@ extension ScriptedAppPlayer {
     }
 
     /// `get` of what `specifier` names (a document's property).
-    static func makeGetDataEvent(_ specifier: NSAppleEventDescriptor, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+    package static func makeGetDataEvent(_ specifier: NSAppleEventDescriptor, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         let event = ScriptablePlayer.makeCommandEvent(suite: Code.coreSuite, Code.getData, processIdentifier: pid)
         event.setParam(specifier, forKeyword: Code.directObject)
         return event
@@ -39,17 +41,20 @@ extension ScriptedAppPlayer {
     }
 
     /// The object specifier for the app's documents of class `documentClass`:
-    /// the one named `name`, or every one (`name` nil).
-    static func documentSpecifier(_ documentClass: String, named name: String? = nil) -> NSAppleEventDescriptor {
+    /// the one named `name`, else the one at `index` (1: the front one, as
+    /// AppleScript's "document 1"), else every one (both nil).
+    package static func documentSpecifier(_ documentClass: String, named name: String? = nil, index: Int? = nil) -> NSAppleEventDescriptor {
         let record = NSAppleEventDescriptor.record()
         let specifier = record.coerce(toDescriptorType: Code.objectSpecifier) ?? record
         specifier.setDescriptor(NSAppleEventDescriptor(typeCode: code(documentClass)), forKeyword: Code.desiredClass)
         specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: Code.container)
-        switch name {
-        case .some(let name):
+        if let name {
             specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("name")), forKeyword: Code.keyForm)
             specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: Code.keyData)
-        case .none:
+        } else if let index {
+            specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("indx")), forKeyword: Code.keyForm)
+            specifier.setDescriptor(NSAppleEventDescriptor(int32: Int32(index)), forKeyword: Code.keyData)
+        } else {
             specifier.setDescriptor(NSAppleEventDescriptor(enumCode: code("indx")), forKeyword: Code.keyForm)
             var all = code("all ")
             specifier.setDescriptor(NSAppleEventDescriptor(descriptorType: code("abso"), bytes: &all, length: 4)!, forKeyword: Code.keyData)
@@ -58,7 +63,7 @@ extension ScriptedAppPlayer {
     }
 
     /// The object specifier for the property `property` of `container`.
-    static func propertySpecifier(_ property: String, of container: NSAppleEventDescriptor) -> NSAppleEventDescriptor {
+    package static func propertySpecifier(_ property: String, of container: NSAppleEventDescriptor) -> NSAppleEventDescriptor {
         let record = NSAppleEventDescriptor.record()
         record.setDescriptor(NSAppleEventDescriptor(typeCode: Code.property), forKeyword: Code.desiredClass)
         record.setDescriptor(NSAppleEventDescriptor(enumCode: Code.property), forKeyword: Code.keyForm)

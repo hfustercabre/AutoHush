@@ -220,7 +220,7 @@ struct PlayerOptionTests {
     @Test("apps count as installed only in /Applications, the user's Applications folder and /System/Applications")
     func applicationFolders() {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        #expect(PlayerOption.applicationFolders.map(\.path) == ["/Applications", "\(home)/Applications", "/System/Applications"])
+        #expect(ApplicationFolders.all.map(\.path) == ["/Applications", "\(home)/Applications", "/System/Applications"])
 
         let anywhere: (URL) -> Bool = { _ in true }
         func installed(_ path: String) -> Bool {

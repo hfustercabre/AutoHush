@@ -162,12 +162,7 @@ struct MenuPlayerTests {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayPauseWords-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
         func app(_ name: String, version: String) throws -> URL {
-            let url = folder.appending(path: "\(name).app")
-            try FileManager.default.createDirectory(at: url.appending(path: "Contents"), withIntermediateDirectories: true)
-            let info: [String: Any] = ["CFBundleShortVersionString": version, "CFBundleIdentifier": "com.example.\(name)"]
-            try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
-                .write(to: url.appending(path: "Contents/Info.plist"))
-            return url
+            try TestAppBundle.make(in: folder, name: name, info: ["CFBundleShortVersionString": version, "CFBundleIdentifier": "com.example.\(name)"])
         }
         var reads: [String] = []
         func read(_ url: URL) -> PlayPauseWords? {

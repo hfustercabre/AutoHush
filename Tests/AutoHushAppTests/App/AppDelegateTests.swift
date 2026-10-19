@@ -7,8 +7,9 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
+import PlayersTestSupport
 
-@Suite("AppDelegate")
+@Suite("AppDelegate", .timeLimit(.minutes(1)))
 struct AppDelegateTests {
     /// In-memory preferences, the choices kept beside them in a suite of its
     /// own, the apps added with Add an App in memory, and a downloads folder
@@ -22,10 +23,11 @@ struct AppDelegateTests {
         var preferences = Preferences(store: InMemoryPreferenceStore())
         private let suite = TestDefaults("AppDelegateTests")
         lazy var defaults = suite.defaults
-        let addedSetups = SetupsInMemory()
+        let addedSetups = MemorySetupStore()
         lazy var checkedPlayers = CheckedPlayers(store: addedSetups, locate: { _ in nil })
         let launchAtLogin = MockLaunchAtLoginController(isEnabled: false)
-        let downloads = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
+        private let downloadsFolder = TemporaryFolder("AppDelegateTests", create: false)
+        var downloads: URL { downloadsFolder.url }
         let notifier = MockUpdateNotifier()
         let first = MockMusicPlayer(bundleID: Players.first, name: "First")
         let second = MockMusicPlayer(bundleID: Players.second, name: "Second", canFade: false)
@@ -34,7 +36,7 @@ struct AppDelegateTests {
         let outputs = MockOutputMuting()
         let volume = MockSystemVolume([0: -10])
         /// The menu bar's Now Playing setting, shown for a press and hidden again.
-        let nowPlaying = NowPlayingInMemory()
+        let nowPlaying = NowPlayingSettingInMemory()
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
@@ -51,12 +53,18 @@ struct AppDelegateTests {
         var audio: AudioCapturePermission? = .granted
         var asked: [String] = []
         /// Holds the Automation queries while closed, as a busy player does.
-        let automationGate = AutomationGate()
+        let automationGate = Gate(open: true)
+        /// The clock a player's reopens are stamped by.
+        let clock = ManualClock()
+        /// Whether one of AutoHush's windows is open, for an update's quiet
+        /// moment: as if one were, so no test's update restarts the tests' own
+        /// process, unless a test says none is.
+        var windowOpen = true
         lazy var permissionCenter = PermissionCenter(system: .init(
             isTrusted: { [unowned self] in self.trusted },
             promptAccessibility: { [unowned self] in self.asked.append("prompt accessibility") },
             automation: { [status = automationStatus, gate = automationGate] _, ask in
-                await gate.pass()
+                await Self.pass(gate)
                 return ask ? noErr : status
             },
             runningPID: { [unowned self] in self.running.contains($0) ? 4242 : nil },
@@ -66,6 +74,11 @@ struct AppDelegateTests {
         ))
 
         private var onFolderChange: (@MainActor () -> Void)?
+
+        /// Waits at `gate`. A function of its own: a call to an actor written
+        /// in a property's initializer, even inside a closure, is refused as
+        /// isolated to that actor beside the main actor (Swift 6.4).
+        private nonisolated static func pass(_ gate: Gate) async { await gate.wait() }
 
         func locate(_ bundleID: String) -> URL? {
             guard installed.contains(bundleID) else { return nil }
@@ -83,15 +96,19 @@ struct AppDelegateTests {
         }
 
         deinit {
-            try? FileManager.default.removeItem(at: downloads)
             suite.remove()
+        }
+
+        /// A web app AutoHush must learn, installed and offered beside First.
+        func offerWebApp(_ status: LearningStatus) -> MockLearningPlayer {
+            let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: status)
+            players = MusicPlayerCatalog(players: [first], found: { [webApp] })
+            installed.insert(webApp.bundleID)
+            return webApp
         }
     }
 
-    private enum Players {
-        static let first = "com.example.first"
-        static let second = "com.example.second"
-    }
+    private typealias Players = TestPlayers
 
     /// `chosenPlayer`: the player already chosen before this launch, if any.
     /// Returns the monitorings its starts made, too.
@@ -136,7 +153,9 @@ struct AppDelegateTests {
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
             permissionCenter: scratch.permissionCenter,
-            windowWatchSleep: windowWatchSleep
+            windowWatchSleep: windowWatchSleep,
+            clock: { scratch.clock.now },
+            hasOpenWindow: { scratch.windowOpen }
         )
         return (sut, scratch.monitorings)
     }
@@ -151,18 +170,10 @@ struct AppDelegateTests {
     // MARK: - Players that learn
 
     @MainActor
-    private func waitFor(sourceLocation: SourceLocation = #_sourceLocation, _ condition: @MainActor () -> Bool) async {
-        await TestWait.until(sourceLocation: sourceLocation, condition)
-    }
-
-    @MainActor
     @Test("choosing a web app AutoHush must learn asks for it in a window, which shows the steps and closes once learned")
     func learningWindow() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         let (sut, _) = makeSUT(scratch)
         #expect(sut.status.learning == nil)
         #expect(sut.status.playerOptions.map(\.kind) == [.app, .safariWebApp])
@@ -173,11 +184,11 @@ struct AppDelegateTests {
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
 
         webApp.set(.learning(hasPlayed: true))
-        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
+        await TestWait.until { sut.settingsModel.learning == .learning(hasPlayed: true) }
         #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
 
         webApp.set(.learned)
-        await waitFor { !scratch.learningWindow.isOpen }
+        await TestWait.until { !scratch.learningWindow.isOpen }
         #expect(!scratch.learningWindow.isOpen)
         #expect(sut.status.learning == .learned)
         #expect(!scratch.learningWindow.isOpen && sut.status.canLearnControlsAgain)
@@ -192,18 +203,16 @@ struct AppDelegateTests {
     @Test("a web app's controls are learned afresh in a new window, which replaces an open one; closed before It's Playing, what it learned stays")
     func learnControlsAgain() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learned)
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.learning == .learned }
+        await TestWait.until { sut.status.learning == .learned }
         #expect(!scratch.learningWindow.isOpen)
         #expect(sut.status.canLearnControlsAgain)
         #expect(sut.settingsModel.canLearnControlsAgain)
 
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
+        await TestWait.until { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
         #expect(webApp.learnAgainCount == 1)
         #expect(scratch.learningWindowsMade == 1)
         #expect(sut.status.canLearnControlsAgain)
@@ -211,20 +220,20 @@ struct AppDelegateTests {
 
         // Later, or the close button, before It's Playing: what it learned stays.
         scratch.learningWindow.close()
-        await waitFor { sut.status.learning == .learned }
+        await TestWait.until { sut.status.learning == .learned }
         #expect(webApp.keepLearnedCount == 1)
 
         // Again, and It's Playing taken (the player forgets then); then again
         // while the window is open: it closes, a new one starts over, and
         // closing the old one keeps nothing.
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
+        await TestWait.until { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
         webApp.set(.learning(hasPlayed: true))
-        await waitFor { sut.settingsModel.learning == .learning(hasPlayed: true) }
+        await TestWait.until { sut.settingsModel.learning == .learning(hasPlayed: true) }
         sut.learnControlsAgain()
         #expect(!scratch.learningWindow.isOpen) // the old one, closed at once
         // The new window and the player's new status come by separate tasks, in either order.
-        await waitFor { scratch.learningWindow.isOpen && sut.settingsModel.learning == .learning(hasPlayed: false) }
+        await TestWait.until { scratch.learningWindow.isOpen && sut.settingsModel.learning == .learning(hasPlayed: false) }
         #expect(webApp.learnAgainCount == 3)
         #expect(scratch.learningWindowsMade == 3)
         #expect(webApp.keepLearnedCount == 1)
@@ -239,42 +248,43 @@ struct AppDelegateTests {
     @Test("learning a web app's controls opens it when it isn't running, as adding it does; a running one is left as it is")
     func learningOpensWebApp() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learned)
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.learning == .learned }
+        await TestWait.until { sut.status.learning == .learned }
         #expect(scratch.opened.isEmpty)
 
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isOpen && scratch.opened.count == 1 }
+        await TestWait.until { scratch.learningWindow.isOpen && scratch.opened.count == 1 }
         #expect(scratch.opened.count == 1)
 
         scratch.learningWindow.close()
         scratch.running.insert(webApp.bundleID)
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isOpen }
-        try? await Task.sleep(for: .milliseconds(50))
-        #expect(scratch.opened.count == 1) // running: not opened again
+        await TestWait.until { scratch.learningWindow.isOpen }
+        // Closed again, and not running: opened, after any open the running
+        // one could have asked for, which would make it three.
+        scratch.learningWindow.close()
+        scratch.running.remove(webApp.bundleID)
+        sut.learnControlsAgain()
+        await TestWait.until { scratch.opened.count >= 2 }
+        #expect(scratch.opened.count == 2) // running: not opened again
     }
 
     @MainActor
     @Test("learning again closes Add a Web App, which floats in the same corner, whatever its step")
     func learnAgainClosesAdd() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learned)
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.learning == .learned }
+        await TestWait.until { sut.status.learning == .learned }
         sut.showAddWebApp() // another site's address being typed
         #expect(scratch.addWindow.isOpen)
 
         sut.learnControlsAgain()
         #expect(!scratch.addWindow.isOpen)
-        await waitFor { scratch.learningWindow.isOpen }
+        await TestWait.until { scratch.learningWindow.isOpen }
         #expect(scratch.learningWindow.isOpen)
     }
 
@@ -282,19 +292,17 @@ struct AppDelegateTests {
     @Test("learning again, the window closed while the web app's button was missing still keeps what it learned")
     func keepLearnedWhileButtonMissing() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: .learned)
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learned)
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.learning == .learned }
+        await TestWait.until { sut.status.learning == .learned }
         sut.learnControlsAgain()
-        await waitFor { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
+        await TestWait.until { scratch.learningWindow.isOpen && sut.status.learning == .relearning }
 
         webApp.set(.learning(hasPlayed: false)) // its button went missing meanwhile
-        await waitFor { sut.status.learning == .learning(hasPlayed: false) }
+        await TestWait.until { sut.status.learning == .learning(hasPlayed: false) }
         scratch.learningWindow.close() // Later
-        await waitFor { webApp.keepLearnedCount == 1 }
+        await TestWait.until { webApp.keepLearnedCount == 1 }
         #expect(webApp.keepLearnedCount == 1) // the player decides: it was learning again
     }
 
@@ -302,19 +310,16 @@ struct AppDelegateTests {
     @Test("while a permission is missing, the learning window asks for it first, and the card's Controls row stays")
     func learningWaitsForPermission() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.health == .needsPermission(.accessibility(player: "YT Music")) }
+        await TestWait.until { sut.status.health == .needsPermission(.accessibility(player: "YT Music")) }
         #expect(scratch.learningWindow.isOpen) // with the permission as its first step
         #expect(sut.status.canLearnControlsAgain) // the card's Controls row stays
 
         webApp.setFailVerify(nil) // allowed: the retry starts monitoring
-        await waitFor { sut.status.health == .ready }
+        await TestWait.until { sut.status.health == .ready }
         #expect(sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(scratch.learningWindow.shownCount == 1)
     }
@@ -323,15 +328,12 @@ struct AppDelegateTests {
     @Test("a web app that isn't running yet still opens the learning window, which says to play it")
     func learningWindowForPlayerNotRunning() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         webApp.setFailVerify(.playerNotRunning)
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        await waitFor { sut.status.health == .degraded("YT Music isn’t running") }
+        await TestWait.until { sut.status.health == .degraded("YT Music isn’t running") }
         #expect(scratch.learningWindow.isOpen)
     }
 
@@ -340,29 +342,29 @@ struct AppDelegateTests {
     func addWebApp() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
-        let found = FoundPlayers()
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([])
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.value })
         scratch.installed.insert(webApp.bundleID)
         let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
-        scratch.maker.onMake = { found.players = [webApp] }
+        scratch.maker.onMake = { found.value = [webApp] }
         let (sut, _) = makeSUT(scratch)
 
         sut.showAddWebApp()
         #expect(scratch.addWindow.isOpen)
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
-        #expect(found.players.isEmpty) // nothing's added before the user clicks Add to Dock
+        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        #expect(found.value.isEmpty) // nothing's added before the user clicks Add to Dock
         sut.addWebAppModel.addTapped()
-        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.opened.isEmpty }
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && !scratch.opened.isEmpty }
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
         #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: false))
         #expect(scratch.opened == [appURL])
         #expect(!scratch.learningWindow.isOpen) // the add window shows the steps
 
         webApp.set(.learned)
-        await waitFor { !scratch.addWindow.isOpen }
+        await TestWait.until { !scratch.addWindow.isOpen }
         #expect(!scratch.addWindow.isOpen)
     }
 
@@ -377,8 +379,8 @@ struct AppDelegateTests {
     func addedWebAppNotFound(meanwhile: WhileNotFound) async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
-        let found = FoundPlayers() // macOS doesn't list it
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([]) // macOS doesn't list it
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.value })
         scratch.installed.insert(webApp.bundleID)
         let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
@@ -387,9 +389,9 @@ struct AppDelegateTests {
         sut.openAddWebApp() // the menu's Add a Web App…
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
-        await waitFor { sut.addWebAppModel.problem != nil }
+        await TestWait.until { sut.addWebAppModel.problem != nil }
         #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
         #expect(sut.addWebAppModel.phase == .entering)
         #expect(sut.addWebAppModel.address == "play.qobuz.com") // Continue tries again
@@ -402,7 +404,7 @@ struct AppDelegateTests {
         case .windowClosed: scratch.addWindow.close()
         }
         // Once macOS lists it, it's added again by itself, which finds it there and chooses it.
-        found.players = [webApp]
+        found.value = [webApp]
         scratch.maker.result = .success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true))
         sut.refreshPlayerOptions() // as the window watch does each second meanwhile
         guard meanwhile == .nothing else {
@@ -413,7 +415,7 @@ struct AppDelegateTests {
             #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
             return
         }
-        await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
         #expect(sut.addWebAppModel.problem == nil)
         #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: true))
     }
@@ -423,8 +425,8 @@ struct AppDelegateTests {
     func playerChosenWhileLookingForWebApp() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
-        let found = FoundPlayers() // macOS doesn't list it
-        scratch.players = MusicPlayerCatalog(players: [scratch.first, scratch.second], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([]) // macOS doesn't list it
+        scratch.players = MusicPlayerCatalog(players: [scratch.first, scratch.second], found: { found.value })
         scratch.installed.insert(webApp.bundleID)
         let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true)))
@@ -433,9 +435,9 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.madeBundleID == webApp.bundleID }
+        await TestWait.until { sut.addWebAppModel.madeBundleID == webApp.bundleID }
         sut.chooseMusicPlayer(Players.second) // from the menu, meanwhile
-        await waitFor { sut.addingWebApp == nil }
+        await TestWait.until { sut.addingWebApp == nil }
         #expect(sut.status.chosenPlayerID == Players.second)
         #expect(sut.addWebAppModel.problem == nil)
     }
@@ -445,12 +447,12 @@ struct AppDelegateTests {
     func addWebAppFromWelcome() async {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
-        let found = FoundPlayers()
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([])
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.value })
         scratch.installed = [Players.first, webApp.bundleID]
         let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: false)))
-        scratch.maker.onMake = { found.players = [webApp] }
+        scratch.maker.onMake = { found.value = [webApp] }
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         #expect(sut.isShowingPlayerChooser)
@@ -458,9 +460,9 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
-        await waitFor { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isOpen }
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isOpen }
         #expect(!scratch.addWindow.isOpen) // one window asks: the welcome window
         #expect(sut.isShowingPlayerChooser)
         #expect(sut.settingsModel.welcomeAsksPermissions)
@@ -501,18 +503,18 @@ struct AppDelegateTests {
         let appURL = URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app")
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learned,
                                         installedURL: appURL)
-        let found = FoundPlayers()
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([])
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.value })
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL,
                                                             alreadyThere: false)))
-        scratch.maker.onMake = { found.players = [webApp] }
+        scratch.maker.onMake = { found.value = [webApp] }
         let (sut, _) = makeSUT(scratch)
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
-        await waitFor { sut.status.chosenPlayerID == webApp.bundleID }
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
         #expect(sut.status.chosenPlayerID == webApp.bundleID) // not in `scratch.installed`: macOS doesn't know it
         #expect(sut.status.playerOptions.first { $0.bundleID == webApp.bundleID }?.appURL == appURL)
     }
@@ -529,7 +531,7 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         let adding = sut.addingWebApp
         sut.addWebAppModel.windowClosed()
         #expect(sut.addWebAppModel.phase == .entering)
@@ -549,12 +551,12 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.phase == .opening }
+        await TestWait.until { sut.addWebAppModel.phase == .opening }
         #expect(sut.addWebAppModel.phase == .opening)
 
         sut.addWebAppModel.windowClosed() // the window's Cancel, or its close button
         #expect(sut.addWebAppModel.phase == .entering)
-        await waitFor { scratch.maker.wasCancelled }
+        await TestWait.until { scratch.maker.wasCancelled }
         #expect(scratch.maker.wasCancelled)
         #expect(scratch.opened.isEmpty)
         #expect(sut.status.chosenPlayerID == Players.first)
@@ -564,7 +566,7 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.problem != nil }
+        await TestWait.until { sut.addWebAppModel.problem != nil }
         #expect(sut.addWebAppModel.problem == .noAnswer(host: "play.qobuz.com"))
     }
 
@@ -583,7 +585,7 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
-        await waitFor { !scratch.addWindow.isOpen }
+        await TestWait.until { !scratch.addWindow.isOpen }
         #expect(!scratch.addWindow.isOpen)
     }
 
@@ -613,7 +615,7 @@ struct AppDelegateTests {
         sut.showAddWebApp()
         sut.addWebAppModel.address = "nowhere.example"
         sut.addWebAppModel.continueTapped()
-        await waitFor { sut.addWebAppModel.problem != nil }
+        await TestWait.until { sut.addWebAppModel.problem != nil }
         #expect(sut.addWebAppModel.problem == .noAnswer(host: "nowhere.example"))
         #expect(sut.addWebAppModel.phase == .entering)
         #expect(sut.addWebAppModel.address == "nowhere.example")
@@ -628,16 +630,16 @@ struct AppDelegateTests {
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.DELETED-\(UUID())", name: "Spotify",
                                         status: .learning(hasPlayed: false),
                                         installedURL: URL(fileURLWithPath: "/Users/test/Applications/Spotify.app"))
-        let found = FoundPlayers()
-        found.players = [webApp]
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.players })
+        let found = Locked<[any MusicPlayer]>([])
+        found.value = [webApp]
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { found.value })
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
         #expect(sut.status.canLearnControlsAgain)
 
-        found.players = [] // moved to the Trash, or deleted
+        found.value = [] // moved to the Trash, or deleted
         scratch.changeFolder()
-        await waitFor { sut.status.chosenPlayerID == nil }
+        await TestWait.until { sut.status.chosenPlayerID == nil }
         #expect(sut.status.chosenPlayerID == nil)
         #expect(!sut.status.canLearnControlsAgain)
         #expect(sut.settingsModel.chosenPlayer == nil)
@@ -650,10 +652,7 @@ struct AppDelegateTests {
     @Test("a web app chosen earlier and not learned yet is offered to learn at launch, without opening the window")
     func learningAtLaunch() {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.canLearnControlsAgain && sut.settingsModel.learning == .learning(hasPlayed: false))
         #expect(!scratch.learningWindow.isOpen)
@@ -679,12 +678,12 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await waitFor { sut.status.health == .degraded("First isn’t running") }
+        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
 
         await scratch.first.setFailVerify(nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         #expect(sut.status.health == .starting)
-        await waitFor { sut.status.health == .ready }
+        await TestWait.until { sut.status.health == .ready }
         #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
         #expect(monitorings.made[0].isStopped && !monitorings.made[1].isStopped)
     }
@@ -708,7 +707,7 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await waitFor { sut.status.health == .degraded("First isn’t running") }
+        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
         sut.registerPlayerLaunchObserver()
         let observer = sut.playerLaunchObserver
         sut.registerPlayerLaunchObserver() // once only
@@ -722,24 +721,21 @@ struct AppDelegateTests {
 
         await scratch.first.setFailVerify(nil)
         launch(FakeRunningApplication(bundleID: Players.first))
-        await waitFor { sut.status.health == .ready }
+        await TestWait.until { sut.status.health == .ready }
         #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
 
         // BetterDisplay opened (an app on the disk: a running app's bundle names it).
         let folder = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
-        let betterDisplay = folder.appending(path: "BetterDisplay.app")
-        try FileManager.default.createDirectory(at: betterDisplay.appending(path: "Contents"), withIntermediateDirectories: true)
-        try (["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"] as NSDictionary)
-            .write(to: betterDisplay.appending(path: "Contents/Info.plist"))
+        let betterDisplay = try TestAppBundle.make(in: folder, name: "BetterDisplay", info: ["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"])
         launch(FakeRunningApplication(bundleID: "pro.betterdisplay.BetterDisplay", bundleURL: betterDisplay))
-        await waitFor { !sut.userSettings.state.ignoredApps.isEmpty }
+        await TestWait.until { !sut.userSettings.state.ignoredApps.isEmpty }
         #expect(sut.userSettings.state.ignoredApps.map(\.id) == ["pro.betterdisplay.BetterDisplay"])
 
         for (notice, asleep) in [(NSWorkspace.willSleepNotification, true), (NSWorkspace.didWakeNotification, false),
                                  (NSWorkspace.willSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)] {
             center.post(name: notice, object: nil)
-            await waitFor { sut.session.isAsleep == asleep }
+            await TestWait.until { sut.session.isAsleep == asleep }
         }
         #expect(monitorings.made.last?.asleep == [true, false, true, false])
 
@@ -763,35 +759,32 @@ struct AppDelegateTests {
         await radio.setNeedsReopening(true)
         scratch.players = MusicPlayerCatalog(players: [tunes, radio])
         scratch.installed = [tunes.bundleID, radio.bundleID]
-        // The alert's box ticked for Tunes. As at launch, AutoHush reopened no
-        // player yet (a run of this test before, in this process, did).
+        // The alert's box ticked for Tunes.
         ReopenChoices.setReopensAlways(tunes.bundleID, defaults: scratch.defaults)
-        AppDelegate.lastReopens = [:]
 
         // Reopened at once; found so again right after, it isn't quit and
         // reopened over and over.
         let (sut, _) = makeSUT(scratch, chosenPlayer: tunes.bundleID)
-        await waitFor { sut.status.playerNeedsReopen }
+        await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await tunes.reopenCount == 1)
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
-        try? await Task.sleep(for: .milliseconds(50))
+        await TestWait.until { sut.lastReopens[tunes.bundleID]?.gaveUp == true } // given up this time
         #expect(await tunes.reopenCount == 1)
         #expect(sut.status.playerNeedsReopen)
         // Found so again over a minute later, it's reopened by itself again.
-        AppDelegate.now = { Date().addingTimeInterval(61) }
-        defer { AppDelegate.now = Date.init }
+        scratch.clock.advance(by: 61)
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
         await TestWait.until { await tunes.reopenCount == 2 }
         #expect(await tunes.reopenCount == 2)
 
         await tunes.setNeedsReopening(true)
         sut.reopenChosenPlayer() // the card's Reopen
-        await waitFor { !sut.status.playerNeedsReopen }
+        await TestWait.until { !sut.status.playerNeedsReopen }
         #expect(!sut.status.playerNeedsReopen)
         #expect(await tunes.reopenCount == 3)
 
         sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false) // not asked: reopening it was just skipped in Add an App
-        await waitFor { sut.status.playerNeedsReopen }
+        await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await radio.reopenCount == 0)
 
         // Asked when one is chosen: Reopen (Return) or Cancel (Escape), and the box.
@@ -810,14 +803,14 @@ struct AppDelegateTests {
             return shown.calls.count == 1 ? .alertSecondButtonReturn : .alertFirstButtonReturn
         }
         sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
-        await waitFor { shown.calls.count == 1 }
+        await TestWait.until { shown.calls.count == 1 }
         #expect(await radio.reopenCount == 0)
         #expect(sut.status.playerNeedsReopen)
         #expect(!ReopenChoices.reopensAlways(radio.bundleID, defaults: scratch.defaults))
 
         sut.chooseMusicPlayer(radio.bundleID, replacing: true)
         await TestWait.until { await radio.reopenCount == 1 }
-        await waitFor { !sut.status.playerNeedsReopen }
+        await TestWait.until { !sut.status.playerNeedsReopen }
         #expect(!sut.status.playerNeedsReopen)
         #expect(shown.calls == ["Reopen Radio?", "Reopen Radio?"])
         #expect(ReopenChoices.reopensAlways(radio.bundleID, defaults: scratch.defaults))
@@ -853,7 +846,7 @@ struct AppDelegateTests {
         #expect(scratch.addedSetups.setups().map(\.bundleID) == ["com.example.added", "com.example.kept"])
         #expect(sut.status.playerOptions.filter { $0.kind == .checkedApp }.map(\.name) == ["Added", "Kept"])
         #expect(sut.player?.bundleID == "com.example.added")
-        await waitFor { sut.status.playerNeedsReopen }
+        await TestWait.until { sut.status.playerNeedsReopen }
         let used = try #require(added.player("com.example.added"))
 
         // Checked again while chosen: chosen again with its new setup, the
@@ -861,7 +854,7 @@ struct AppDelegateTests {
         sut.useCheckedApp(result("com.example.added", "Added", menu: "Playback"), asksToReopen: true)
         let usedAgain = try #require(added.player("com.example.added"))
         #expect(usedAgain !== used && sut.player.map { $0 as AnyObject } === usedAgain)
-        await waitFor { alerts.calls.count == 1 }
+        await TestWait.until { alerts.calls.count == 1 }
         await TestWait.until { await used.releases == 1 }
         #expect(await used.releases == 1)
 
@@ -871,11 +864,11 @@ struct AppDelegateTests {
         kept.save(KeptCheck(app: CheckableApp(bundleID: "com.example.added", name: "Added", url: URL(fileURLWithPath: "/Applications/com.example.added.app")),
                             result: result("com.example.added", "Added", menu: "Playback"), at: Date()))
         sut.removeAddedApp("com.example.added")
-        await waitFor { alerts.calls.count == 2 }
+        await TestWait.until { alerts.calls.count == 2 }
         #expect(sut.player?.bundleID == "com.example.added" && scratch.addedSetups.setups().count == 2) // Cancel
 
         sut.removeAddedApp("com.example.added")
-        await waitFor { alerts.calls.count == 3 }
+        await TestWait.until { alerts.calls.count == 3 }
         #expect(sut.player == nil && scratch.preferences.musicPlayer == nil)
         #expect(scratch.chooser.isOpen) // none is chosen: the welcome window asks
         #expect(scratch.addedSetups.setups().map(\.bundleID) == ["com.example.kept"])
@@ -886,7 +879,7 @@ struct AppDelegateTests {
         #expect(await usedAgain.releases == 1) // its mute or switch back off
 
         sut.removeAddedApp("com.example.kept")
-        await waitFor { alerts.calls.count == 4 }
+        await TestWait.until { alerts.calls.count == 4 }
         #expect(scratch.addedSetups.setups().isEmpty)
         #expect(!sut.status.playerOptions.contains { $0.kind == .checkedApp })
         #expect(alerts.calls == ["Reopen Added?", "Remove Added? (chosen)", "Remove Added? (chosen)", "Remove Kept?"])
@@ -910,7 +903,7 @@ struct AppDelegateTests {
         sut.showAddApp()
         let window = try #require(sut.addAppWindow)
         #expect(window.isOpen && sut.addAppModel === model)
-        await waitFor { !model.apps.isEmpty } // read at its first step
+        await TestWait.until { !model.apps.isEmpty } // read at its first step
         sut.showCheckWarning() // no app chosen yet: no warning
         #expect(sut.checkWarningWindow == nil)
 
@@ -918,7 +911,7 @@ struct AppDelegateTests {
         let chooser = try #require(sut.appChooserWindow)
         #expect(chooser.isOpen)
         model.choose(world.apps[0])
-        await waitFor { model.stage == .ready }
+        await TestWait.until { model.stage == .ready }
         sut.showAddApp() // open: shown as it is
         #expect(model.stage == .ready && sut.addAppWindow === window)
 
@@ -930,23 +923,23 @@ struct AppDelegateTests {
         model.continueToCheck()
         let macMuted = try #require(sut.checkWarningWindow)
         let macMutedView = try #require(macMuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
-        await waitFor { !warning.isOpen }
+        await TestWait.until { !warning.isOpen }
         #expect(macMuted !== warning && macMuted.isOpen && macMutedView.rootView.muting == .mac)
         world.macCanMute = false
         model.continueToCheck()
         let unmuted = try #require(sut.checkWarningWindow)
         let unmutedView = try #require(unmuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
-        await waitFor { !macMuted.isOpen }
+        await TestWait.until { !macMuted.isOpen }
         #expect(unmuted.isOpen && unmutedView.rootView.muting == .none)
 
         unmutedView.rootView.start()
-        await waitFor { world.runs == 1 }
+        await TestWait.until { world.runs == 1 }
         #expect(model.stage == .checking && !unmuted.isOpen)
 
         // Closed (the check stops), then opened again: from its first step.
         window.close()
         chooser.close()
-        await waitFor { !window.isOpen }
+        await TestWait.until { !window.isOpen }
         sut.showAddApp()
         #expect(sut.addAppWindow === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
         window.close()
@@ -970,16 +963,16 @@ struct AppDelegateTests {
         model.reset()
         await model.loadApps()
         model.choose(world.apps[0])
-        await waitFor { model.stage == .ready }
+        await TestWait.until { model.stage == .ready }
         func check() async {
             world.run = FakeCheckRun()
             let runs = world.runs
             model.startCheck()
-            await waitFor { world.runs == runs + 1 }
+            await TestWait.until { world.runs == runs + 1 }
         }
         func checkAgain() async {
             model.checkAgain()
-            await waitFor { model.stage == .ready }
+            await TestWait.until { model.stage == .ready }
         }
         let muted = { scratch.outputs.mutes[7] == true }
 
@@ -987,7 +980,7 @@ struct AppDelegateTests {
         await check()
         #expect(!muted())
         world.run.finish(.failed(1))
-        await waitFor { model.stage == .failed }
+        await TestWait.until { model.stage == .failed }
 
         world.antiDot = true
         #expect(model.checkMuting == .mac)
@@ -995,14 +988,14 @@ struct AppDelegateTests {
         await check()
         #expect(muted())
         world.run.finish(.failed(1)) // it ends
-        await waitFor { model.stage == .failed }
+        await TestWait.until { model.stage == .failed }
         #expect(!muted())
 
         await checkAgain()
         await check()
         #expect(muted())
         model.stopCheck()
-        await waitFor { model.stage == .stopped }
+        await TestWait.until { model.stage == .stopped }
         #expect(!muted())
 
         await checkAgain()
@@ -1010,7 +1003,7 @@ struct AppDelegateTests {
         sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
         #expect(!muted())
         world.run.finish(.stopped)
-        await waitFor { model.stage == .stopped }
+        await TestWait.until { model.stage == .stopped }
 
         await checkAgain()
         await check()
@@ -1019,7 +1012,7 @@ struct AppDelegateTests {
         next.putBackWhatWasLeft()
         #expect(!muted())
         world.run.finish(.stopped)
-        await waitFor { model.stage == .stopped }
+        await TestWait.until { model.stage == .stopped }
     }
 
     @MainActor
@@ -1107,7 +1100,7 @@ struct AppDelegateTests {
         #expect(sut.status.chosenPlayerID == Players.second)
         #expect(sut.settingsModel.chosenPlayerID == Players.second)
         #expect(sut.status.health == .starting)
-        await waitFor { sut.status.health == .ready }
+        await TestWait.until { sut.status.health == .ready }
         #expect(monitorings.made.map(\.bundleID) == [Players.second])
 
         sut.chooseMusicPlayer(Players.second)
@@ -1117,7 +1110,7 @@ struct AppDelegateTests {
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.status.playerName == "First")
         #expect(sut.settingsModel.playerCanFade)
-        await waitFor { monitorings.made.count == 2 }
+        await TestWait.until { monitorings.made.count == 2 }
         #expect(monitorings.made.map(\.bundleID) == [Players.second, Players.first])
     }
 
@@ -1329,6 +1322,7 @@ struct AppDelegateTests {
     func sessionShown() async {
         let scratch = Scratch()
         await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
+        scratch.windowOpen = false
         let (sut, monitorings) = makeSUT(scratch)
         let alerts = CallLog()
         sut.runAlert = { alert in
@@ -1354,6 +1348,7 @@ struct AppDelegateTests {
         await TestWait.until { sut.status.health == .ready }
         #expect(sut.status.controlError == nil)
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        #expect(sut.isQuietMoment)
         monitorings.made[0].send(.playback(.pausedByMonitor))
         monitorings.made[0].send(.activeSources([vlc]))
         #expect(sut.status.playback == .pausedByMonitor)
@@ -1411,7 +1406,7 @@ struct AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await waitFor { sut.status.health == .degraded("First isn’t running") }
+        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
 
         scratch.installed = []
         sut.refreshPlayerOptions() // what opening the menu or Settings does
@@ -1430,7 +1425,7 @@ struct AppDelegateTests {
     func watchesApplicationFolders() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
-        let applicationFolders = Set(PlayerOption.applicationFolders.map(\.path))
+        let applicationFolders = Set(ApplicationFolders.all.map(\.path))
         #expect(sut.watchedFolders == applicationFolders)
 
         sut.chooseMusicPlayer(Players.second) // in a folder inside /Applications
@@ -1456,10 +1451,8 @@ struct AppDelegateTests {
     @Test("a web app chosen in the welcome window is learned once the welcome window is done, or closed")
     func welcomeThenLearning() {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed = [Players.first, webApp.bundleID]
+        scratch.installed = [Players.first]
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         #expect(sut.isShowingPlayerChooser)
@@ -1502,13 +1495,13 @@ struct AppDelegateTests {
         let scratch = Scratch()
         scratch.running = [Players.first] // its Automation is asked, and is slow
         let (sut, _) = makeSUT(scratch)
-        scratch.automationGate.close()
+        await scratch.automationGate.close()
         let slow = Task { await sut.refreshPermissions() }
-        await waitFor { scratch.automationGate.waiting == 1 }
+        await TestWait.until { await scratch.automationGate.waiting == 1 }
         sut.chooseMusicPlayer(Players.second)
         await sut.refreshPermissions()
         #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
-        scratch.automationGate.open()
+        await scratch.automationGate.open()
         await slow.value
         #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
     }
@@ -1523,25 +1516,25 @@ struct AppDelegateTests {
 
         // Automation with the player closed: the button opens it.
         sut.requestPermission(.automation(player: "First"))
-        await waitFor { !scratch.opened.isEmpty }
+        await TestWait.until { !scratch.opened.isEmpty }
         #expect(scratch.opened.map(\.lastPathComponent) == ["\(Players.first).app"])
 
         // Automation turned down, the player running: System Settings, and no reopen is offered.
         scratch.running = [Players.first]
         sut.requestPermission(.automation(player: "First"))
-        await waitFor { !scratch.asked.isEmpty }
+        await TestWait.until { !scratch.asked.isEmpty }
         #expect(scratch.asked == ["open Privacy_Automation"])
         #expect(!sut.status.awaitsReopenForAudioRecording)
 
         // Accessibility (Add a Web App's Allow…): macOS's prompt, then System Settings.
         scratch.trusted = false
         sut.addWebAppModel.openAccessibilitySettings()
-        await waitFor { scratch.asked.count == 3 }
+        await TestWait.until { scratch.asked.count == 3 }
         #expect(scratch.asked.suffix(2) == ["prompt accessibility", "open Privacy_Accessibility"])
 
         // Audio Recording turned down: System Settings, then AutoHush is to be reopened.
         sut.requestPermission(.systemAudioRecording)
-        await waitFor { scratch.asked.count == 4 }
+        await TestWait.until { scratch.asked.count == 4 }
         #expect(scratch.asked.last == "open Privacy_AudioCapture")
         #expect(sut.status.awaitsReopenForAudioRecording)
         await sut.refreshPermissions()
@@ -1550,7 +1543,56 @@ struct AppDelegateTests {
         // Never asked: macOS's own prompt.
         scratch.audio = .notDetermined
         sut.requestPermission(.systemAudioRecording)
-        await waitFor { scratch.asked.count == 5 }
+        await TestWait.until { scratch.asked.count == 5 }
+        #expect(scratch.asked.last == "ask audio")
+    }
+
+    @MainActor
+    @Test("Add an App reads and asks for its app's permissions by the player's rules: Automation while the app runs; Audio Recording macOS can't tell about by what monitoring heard, also in AntiDot mode; allowed in System Settings, it waits for a reopen everywhere")
+    func addAppPermissions() async {
+        let scratch = Scratch()
+        scratch.automationStatus = OSStatus(errAEEventNotPermitted)
+        let (sut, _) = makeSUT(scratch)
+        let services = sut.liveAddAppServices()
+        let app = CheckableApp(bundleID: "com.example.radio", name: "Radio", url: URL(filePath: "/Applications/Radio.app"))
+
+        // Scripted and closed: Automation waits for it to run. Not scripted: no Automation.
+        #expect(await services.permissions(app, true) == CheckPermissions(accessibility: true, audio: .allowed, automation: .playerNotRunning))
+        #expect(await services.permissions(app, false).automation == nil)
+        scratch.running = [app.bundleID]
+        let scripted = await services.permissions(app, true)
+        #expect(scripted.automation == .denied)
+
+        // macOS can't tell about Audio Recording: allowed while monitoring
+        // hears sound, missing once it can't (Add an App read it as allowed
+        // before, 2026-10-19).
+        scratch.audio = nil
+        #expect(await services.permissions(app, false).audio == .allowed)
+        sut.status.detection = .unavailable
+        #expect(await services.permissions(app, false).audio == .denied)
+
+        // Read in AntiDot mode too: the window goes by the mode.
+        scratch.audio = .denied
+        sut.settingsModel.useAntiDotMode()
+        #expect(await services.permissions(app, false).audio == .denied)
+
+        // Allow…: Accessibility's prompt, then System Settings; Automation turned down, System Settings.
+        scratch.trusted = false
+        await services.request(.accessibility, app, await services.permissions(app, false))
+        #expect(scratch.asked == ["prompt accessibility", "open Privacy_Accessibility"])
+        await services.request(.automation, app, scripted)
+        #expect(scratch.asked.last == "open Privacy_Automation")
+
+        // Audio Recording turned down: System Settings, then AutoHush waits to reopen, here and in the menu.
+        #expect(!sut.status.awaitsReopenForAudioRecording)
+        await services.request(.audioRecording, app, await services.permissions(app, false))
+        #expect(scratch.asked.last == "open Privacy_AudioCapture")
+        #expect(sut.status.awaitsReopenForAudioRecording)
+        #expect(await services.permissions(app, false).audio == .needsReopen)
+
+        // Never asked: macOS's own prompt.
+        scratch.audio = .notDetermined
+        await services.request(.audioRecording, app, await services.permissions(app, false))
         #expect(scratch.asked.last == "ask audio")
     }
 
@@ -1562,28 +1604,28 @@ struct AppDelegateTests {
         let scratch = Scratch()
         scratch.installed = [Players.first]
         scratch.audio = .denied
-        let clock = SteppedSleep()
+        let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, windowWatchSleep: clock.sleep)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
-        await waitFor { clock.sleeping == 1 }
+        await TestWait.until { clock.sleeping == 1 }
         #expect(sut.settingsModel.permissions.audio == .denied)
 
         scratch.installed.insert(Players.second) // installed meanwhile
         clock.step()
-        await waitFor { sut.status.playerOptions.allSatisfy(\.isInstalled) }
+        await TestWait.until { sut.status.playerOptions.allSatisfy(\.isInstalled) }
         #expect(sut.status.playerOptions.allSatisfy { $0.isInstalled })
 
         sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
         #expect(sut.settingsModel.welcomeAsksPermissions)
         // A player is chosen: the folder watch follows the players, the window watch no longer.
-        await waitFor { clock.sleeping == 1 }
+        await TestWait.until { clock.sleeping == 1 }
         scratch.installed.remove(Players.first)
         clock.step()
-        await waitFor { clock.sleeping == 1 }
+        await TestWait.until { clock.sleeping == 1 }
         #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true)
         scratch.chooser.close() // closed instead of Done: the same
         clock.step()
-        await waitFor { !sut.settingsModel.welcomeAsksPermissions }
+        await TestWait.until { !sut.settingsModel.welcomeAsksPermissions }
         #expect(!sut.settingsModel.welcomeAsksPermissions)
     }
 
@@ -1591,17 +1633,17 @@ struct AppDelegateTests {
     @Test("while Settings is open, the window watch follows what its page needs: launch at login, switched on in System Settings")
     func watchFollowsSettings() async {
         let scratch = Scratch()
-        let clock = SteppedSleep()
+        let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
         sut.settingsWindowController = SettingsWindowController(model: sut.settingsModel)
         sut.settingsWindowController?.show(page: .general)
         defer { sut.settingsWindowController?.close() }
         sut.windowWatch.wake()
-        await waitFor { clock.sleeping == 1 }
+        await TestWait.until { clock.sleeping == 1 }
         #expect(!sut.settingsModel.launchAtLoginEnabled)
         scratch.launchAtLogin.isEnabled = true
         clock.step()
-        await waitFor { sut.settingsModel.launchAtLoginEnabled }
+        await TestWait.until { sut.settingsModel.launchAtLoginEnabled }
         #expect(sut.settingsModel.launchAtLoginEnabled)
     }
 
@@ -1609,20 +1651,17 @@ struct AppDelegateTests {
     @Test("while only the learning window shows, the permissions are followed, not the players")
     func watchFollowsLearning() async {
         let scratch = Scratch()
-        let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                                        status: .learning(hasPlayed: false))
-        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [webApp] })
-        scratch.installed.insert(webApp.bundleID)
-        let clock = SteppedSleep()
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
+        let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
         sut.chooseMusicPlayer(webApp.bundleID) // opens the learning window
         #expect(scratch.learningWindow.isOpen)
-        await waitFor { clock.sleeping == 1 }
+        await TestWait.until { clock.sleeping == 1 }
 
         scratch.audio = .denied
         scratch.installed.remove(Players.first)
         clock.step()
-        await waitFor { sut.settingsModel.permissions.audio == .denied }
+        await TestWait.until { sut.settingsModel.permissions.audio == .denied }
         #expect(sut.settingsModel.permissions.audio == .denied)
         #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true) // not looked at again
     }
@@ -1648,6 +1687,7 @@ struct AppDelegateTests {
     @Test("the menu shows the app's status, and its items reach AutoHush's own settings, player session, choice of player and the player itself; while it's open, an update doesn't restart AutoHush")
     func menuWiring() async throws {
         let scratch = Scratch()
+        scratch.windowOpen = false
         let (sut, _) = makeSUT(scratch)
         sut.showStatusMenu()
         let menu = try #require(sut.statusMenu)
@@ -1669,6 +1709,7 @@ struct AppDelegateTests {
         // Its own notification centers: no other test's window becoming key closes it.
         menu.notificationCenter = NotificationCenter()
         menu.workspaceCenter = NotificationCenter()
+        #expect(sut.isQuietMoment)
         menu.open(showsPanel: false)
         #expect(!sut.isQuietMoment) // the menu is open
         menu.perform(.openSide(.players))
@@ -1747,7 +1788,7 @@ struct AppDelegateTests {
 
         // An added app that doesn't let go of what it turned on in its app.
         let scratch = Scratch()
-        let added = AddedPlayer(bundleID: "com.example.added", name: "Added")
+        let added = MockMusicPlayer(bundleID: "com.example.added", name: "Added", canFade: false, kind: .checkedApp, releasesOnQuit: true)
         await added.holdReleases()
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [added] })
         scratch.installed.insert(added.bundleID)
@@ -1761,6 +1802,34 @@ struct AppDelegateTests {
         await stuck.quitting?.value
         #expect(stuckReplies.calls.count == 1) // not twice
         #expect(await added.releases == 1)
+    }
+
+    @MainActor
+    @Test("an update restarts AutoHush only at a quiet moment: no pause held, the menu closed, and none of its windows or alerts open")
+    func quietMoment() async throws {
+        let scratch = Scratch()
+        scratch.windowOpen = false
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+        #expect(sut.isQuietMoment)
+
+        scratch.windowOpen = true // Settings, say
+        #expect(!sut.isQuietMoment)
+        scratch.windowOpen = false
+        monitorings.made[0].send(.playback(.pausedByMonitor)) // a pause held
+        #expect(!sut.isQuietMoment)
+        monitorings.made[0].send(.playback(.musicPlaying))
+        #expect(sut.isQuietMoment)
+
+        sut.showStatusMenu()
+        let menu = try #require(sut.statusMenu)
+        defer { menu.remove() }
+        menu.notificationCenter = NotificationCenter()
+        menu.workspaceCenter = NotificationCenter()
+        menu.open(showsPanel: false)
+        #expect(!sut.isQuietMoment)
+        menu.close()
+        #expect(sut.isQuietMoment)
     }
 
     @MainActor
@@ -1799,97 +1868,27 @@ struct AppDelegateTests {
     }
 }
 
-/// An app macOS says opened, as the launch notice carries it.
-private final class FakeRunningApplication: NSRunningApplication, @unchecked Sendable {
-    private let fakeBundleID: String
-    private let fakeBundleURL: URL?
-    init(bundleID: String, bundleURL: URL? = nil) {
-        fakeBundleID = bundleID
-        fakeBundleURL = bundleURL
-        super.init()
-    }
-    override var bundleIdentifier: String? { fakeBundleID }
-    override var bundleURL: URL? { fakeBundleURL }
-}
-
-/// An app added with Add an App, as a check's setup makes one: what it
-/// turned on in its app to be controlled (a mute, a switch) is counted as
-/// it goes back off. Held, a release waits for `letGo()`.
-private actor AddedPlayer: MusicPlayer {
-    nonisolated let bundleID: String
-    nonisolated let name: String
-    private let needsReopening: Bool
-    private let inner: MockMusicPlayer
-    private(set) var releases = 0
-    private var heldReleases: [CheckedContinuation<Void, Never>]?
-
-    init(bundleID: String, name: String, needsReopening: Bool = false) {
-        self.bundleID = bundleID
-        self.name = name
-        self.needsReopening = needsReopening
-        inner = MockMusicPlayer(bundleID: bundleID, name: name)
-    }
-
-    nonisolated var kind: MusicPlayerKind { .checkedApp }
-    nonisolated var releasesOnQuit: Bool { true }
-    nonisolated var stateReportDelay: TimeInterval { 0 }
-    nonisolated var canFade: Bool { false }
-
-    func verifyControlAccess() async throws {}
-    func playerState() async -> PlayerState { await inner.playerState() }
-    func pause() async throws { try await inner.pause() }
-    func play() async throws { try await inner.play() }
-    func volume() async -> Int? { nil }
-    func setVolume(_ volume: Int) async throws {}
-    func needsReopen() async -> Bool { needsReopening }
-    @MainActor
-    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        MockStateObserver()
-    }
-
-    func holdReleases() { heldReleases = heldReleases ?? [] }
-
-    func letGo() {
-        heldReleases?.forEach { $0.resume() }
-        heldReleases = nil
-    }
-
-    func release() async {
-        if heldReleases != nil { await withCheckedContinuation { heldReleases?.append($0) } }
-        releases += 1
-    }
-}
-
-/// The setups of the apps added with Add an App, kept in memory as the
-/// preferences keep them: by bundle ID, read by name.
-private final class SetupsInMemory: PlayerSetupStore, @unchecked Sendable {
-    private let lock = NSLock()
-    private var kept: [String: PlayerSetup] = [:]
-    func setups() -> [PlayerSetup] { lock.withLock { kept.values.sorted { $0.name < $1.name } } }
-    func save(_ setup: PlayerSetup) { lock.withLock { kept[setup.bundleID] = setup } }
-    func forget(_ bundleID: String) { lock.withLock { kept[bundleID] = nil } }
-}
-
 /// The apps added with Add an App, as the catalog finds them: a stand-in for
-/// each setup kept, made again when its setup changes (checked again), as
+/// each setup kept (one that lets go of what it turned on in its app as it
+/// goes back off), made again when its setup changes (checked again), as
 /// `CheckedPlayers` makes them.
-private final class AddedApps: @unchecked Sendable {
-    private let setups: SetupsInMemory
+private final class AddedApps: Sendable {
+    private let setups: MemorySetupStore
     private let needReopening: Bool
-    private let lock = NSLock()
-    private var made: [String: (setup: PlayerSetup, player: AddedPlayer)] = [:]
+    private let made = Locked<[String: (setup: PlayerSetup, player: MockMusicPlayer)]>([:])
 
-    init(_ setups: SetupsInMemory, needReopening: Bool = false) {
+    init(_ setups: MemorySetupStore, needReopening: Bool = false) {
         self.setups = setups
         self.needReopening = needReopening
     }
 
     func players() -> [any MusicPlayer] {
         let kept = setups.setups()
-        return lock.withLock {
+        return made.withLock { made in
             kept.map { setup in
                 if let known = made[setup.bundleID], known.setup == setup { return known.player }
-                let player = AddedPlayer(bundleID: setup.bundleID, name: setup.name, needsReopening: needReopening)
+                let player = MockMusicPlayer(bundleID: setup.bundleID, name: setup.name, canFade: false, kind: .checkedApp,
+                                             releasesOnQuit: true, needsReopening: needReopening)
                 made[setup.bundleID] = (setup, player)
                 return player
             }
@@ -1897,58 +1896,5 @@ private final class AddedApps: @unchecked Sendable {
     }
 
     /// The one made last for `bundleID`.
-    func player(_ bundleID: String) -> AddedPlayer? { lock.withLock { made[bundleID]?.player } }
-}
-
-/// Holds the Automation queries that reach it while closed, until it opens.
-private final class AutomationGate: @unchecked Sendable {
-    private let lock = NSLock()
-    private var isClosed = false
-    private var held: [CheckedContinuation<Void, Never>] = []
-    var waiting: Int { lock.withLock { held.count } }
-
-    func close() { lock.withLock { isClosed = true } }
-
-    func open() {
-        let released = lock.withLock {
-            isClosed = false
-            defer { held = [] }
-            return held
-        }
-        released.forEach { $0.resume() }
-    }
-
-    func pass() async {
-        await withCheckedContinuation { continuation in
-            let passes = lock.withLock {
-                if isClosed { held.append(continuation) }
-                return !isClosed
-            }
-            if passes { continuation.resume() }
-        }
-    }
-}
-
-/// The menu bar's Now Playing setting, in memory.
-private final class NowPlayingInMemory: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _value: Int? = 24 // hidden by the user
-    var value: Int? {
-        get { lock.withLock { _value } }
-        set { lock.withLock { _value = newValue } }
-    }
-
-    var setting: NowPlayingSetting.Setting {
-        NowPlayingSetting.Setting(read: { self.value }, write: { self.value = $0 })
-    }
-}
-
-/// Players found on the Mac, changed by a test.
-private final class FoundPlayers: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _players: [any MusicPlayer] = []
-    var players: [any MusicPlayer] {
-        get { lock.withLock { _players } }
-        set { lock.withLock { _players = newValue } }
-    }
+    func player(_ bundleID: String) -> MockMusicPlayer? { made.value[bundleID]?.player }
 }

@@ -4,7 +4,7 @@ import Foundation
 /// paused, for the next one to take over.
 package struct PauseHandover: Equatable, Sendable {
     package let at: Date
-    /// The paused music player's bundle ID; AutoHush 0.8.2 and earlier
+    /// The paused media player's bundle ID; AutoHush 0.8.2 and earlier
     /// didn't say.
     package let player: String?
     /// The chosen player's pause is handed over; `false` when only `held`

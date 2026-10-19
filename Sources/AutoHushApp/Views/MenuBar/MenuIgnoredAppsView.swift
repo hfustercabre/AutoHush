@@ -21,7 +21,7 @@ struct MenuIgnoredAppsView: View {
             // None yet: "None" and what ignoring does (N1, the user's pick,
             // 2026-10-18), and its side window offers Ignore Another App….
             MenuSideRow(title: apps.isEmpty ? Self.noneTitle : Self.names(of: apps.map(\.name)),
-                        subtitle: apps.isEmpty ? Self.noneSubtitle : String(localized: "They don’t pause your player.", comment: "The menu, under the names of the ignored apps"),
+                        subtitle: Self.subtitle(count: apps.count),
                         leadingWidth: MenuSpacing.row.picture + (apps.count > 1 ? 10 : 0), isOpen: model.showsIgnoredApps,
                         action: { model.perform(.openSide(.ignoredApps)) },
                         onHover: { model.perform(.hoverSideRow(.ignoredApps, $0)) },
@@ -32,14 +32,25 @@ struct MenuIgnoredAppsView: View {
         .frame(width: menuContentWidth)
     }
 
-    /// Under "None", while no app is ignored: what ignoring one does.
-    static var noneSubtitle: String {
-        String(localized: "Apps you ignore don’t pause your player.",
-               comment: "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does")
+    /// Under the apps' names, as many as are ignored (U1, the user,
+    /// 2026-10-19: one app in the singular); under "None", what ignoring one
+    /// does.
+    static func subtitle(count: Int) -> String {
+        switch count {
+        case 0:
+            String(localized: "Apps you ignore don’t pause your player.",
+                   comment: "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does")
+        case 1:
+            String(localized: "It doesn’t pause your player.",
+                   comment: "The menu, Ignored Apps, under the name of the one app ignored")
+        default:
+            String(localized: "They don’t pause your player.",
+                   comment: "The menu, Ignored Apps, under the names of the ignored apps (two or more)")
+        }
     }
 
-    /// Its row while no app is ignored.
-    static var noneTitle: String {
+    /// Its row while no app is ignored; Diagnostics' while none is.
+    nonisolated static var noneTitle: String {
         String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
     }
 
@@ -72,13 +83,11 @@ struct MenuIgnoredAppsView: View {
     /// other rows have theirs.
     @ViewBuilder private var iconStack: some View {
         if apps.isEmpty {
-            Image(systemName: "speaker.slash")
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.appSecondary)
-                .frame(width: MenuSpacing.row.picture) // centered, as the other rows' symbols
+            MenuRowSymbol("speaker.slash")
         } else {
             ZStack(alignment: .leading) {
-                ForEach(Array(apps.prefix(3).enumerated()), id: \.offset) { index, app in
+                // By app: one that comes or goes leaves the others' icons be.
+                ForEach(Array(apps.prefix(3).enumerated()), id: \.element.id) { index, app in
                     icon(app).offset(x: CGFloat(index) * 7)
                 }
             }

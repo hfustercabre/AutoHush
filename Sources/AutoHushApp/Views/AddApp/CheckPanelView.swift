@@ -1,4 +1,5 @@
 import AppKit
+import CheckedPlayers
 import SwiftUI
 
 /// The check's panel, at the bottom right of the screen on every desktop

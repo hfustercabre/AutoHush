@@ -5,4 +5,4 @@ import AutoHushKit
 /// (`ChoiceChips`, small) need it in the app's language, with More Settings'
 /// margins around them (8 pt for its part, 10 for the choice, a side).
 @MainActor let menuContentWidth: CGFloat = max(345, ChoiceChips<Never>.fittingWidth(
-    [DetectionMethod.playbackSignals, .openStreams].map(\.title), size: .small) + 2 * (8 + 10))
+    DetectionMethod.antiDotWays.map(\.title), size: .small) + 2 * (8 + 10))

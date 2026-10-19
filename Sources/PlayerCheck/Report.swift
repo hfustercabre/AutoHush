@@ -4,28 +4,32 @@ import PlayerCheckKit
 
 // MARK: - Ways to control it
 
-/// One line per way known to control an app, each with a mark: ✓ it paused
-/// and played again in the test, in every window state tested; ⚠ in some
-/// (the states where it didn't, and why, on the lines under it); ✗ in none,
-/// or not there; ? found but not tried (read only, or it didn't play); –
-/// not checked. The Player Check app shows this section as a checklist.
-@MainActor func way(_ mark: String, _ text: String) { say("  \(mark) \(text)") }
+/// One line per way known to control an app, each with a mark
+/// (`CheckReportLine.WayMark`): ✓ it paused and played again in the test, in
+/// every window state tested; ⚠ in some (the states where it didn't, and
+/// why, on the lines under it); ✗ in none, or not there; ? found but not
+/// tried (read only, or it didn't play); – not checked. The Player Check app
+/// shows this section as a checklist (`CheckReportLine.way(in:)`).
+@MainActor func way(_ mark: CheckReportLine.WayMark, _ text: String) { say(CheckReportLine.way(mark, text)) }
+
+/// A way's title (`CheckReportLine.wayTitle`).
+func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
 
 /// A way's results in the window states, when the test went through them:
 /// its mark, what its line adds, and a line per state it failed in (only
 /// for ⚠: a ✗ failed in all) or that wasn't tested.
-@MainActor func stateSummary(_ key: Way) -> (mark: String, suffix: String, lines: [String])? {
+@MainActor func stateSummary(_ key: Way) -> (mark: CheckReportLine.WayMark, suffix: String, lines: [String])? {
     guard let windowTest, let results = stateResults[key], !results.isEmpty else { return nil }
     let passed = results.filter { $0.result == .worked }.count
-    let mark = passed == results.count ? "✓" : passed == 0 ? "✗" : "⚠"
+    let mark: CheckReportLine.WayMark = passed == results.count ? .works : passed == 0 ? .none : .some
     let all = WindowState.allCases.count
     let suffix = passed == results.count
         ? " (" + (passed == all ? "all \(all) window states" : passed == 1 ? "the one window state tested" : "the \(passed) window states tested") + ")"
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
-    var lines = mark == "⚠" ? results.filter { $0.result != .worked }.map { "      ✗ \($0.state.title): \($0.why)" } : []
+    var lines = mark == .some ? results.filter { $0.result != .worked }.map { CheckReportLine.wayState(.none, $0.state.title, $0.why) } : []
     for state in WindowState.allCases where !results.contains(where: { $0.state == state }) {
         let why = untestedStates[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
-        lines.append("      – \(state.title): not tested (\(why))")
+        lines.append(CheckReportLine.wayState(.notChecked, state.title, "not tested (\(why))"))
     }
     return (mark, suffix, lines)
 }
@@ -34,11 +38,11 @@ import PlayerCheckKit
 /// its only run when there were none), `worked` or `failed` saying how it went.
 @MainActor func triedWay(_ key: Way, _ title: String, _ result: TrialResult, worked: String, failed: String) {
     if let summary = stateSummary(key) {
-        way(summary.mark, "\(title): " + (summary.mark == "✗" ? failed : worked) + summary.suffix)
+        way(summary.mark, "\(title): " + (summary.mark == .none ? failed : worked) + summary.suffix)
         summary.lines.forEach { say($0) }
     } else {
-        way(result == .worked ? "✓" : "✗", "\(title): " + (result == .worked ? worked : failed))
-        if let windowStatesNote { say("      – window states: not tested (\(windowStatesNote))") }
+        way(result == .worked ? .works : .none, "\(title): " + (result == .worked ? worked : failed))
+        if let windowStatesNote { say(CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote))")) }
     }
 }
 
@@ -56,63 +60,62 @@ import PlayerCheckKit
         let kind = fits ? ", as the supported scriptable players do"
             : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")in a way of its own, unlike the supported scriptable players)"
         if let result = firstResults[.script] {
-            triedWay(.script, "AppleScript", result, worked: "“\(script.pause)” and “\(script.play)” paused and played it\(kind)",
-                     failed: result == .pausedOnly ? "“\(script.pause)” paused it, but “\(script.play)” didn't play it again"
-                                                   : scriptProblem ?? "“\(script.pause)” didn't pause it")
+            triedWay(.script, wayTitle(.script), result, worked: "“\(script.pause.name)” and “\(script.play.name)” paused and played it\(kind)",
+                     failed: result == .pausedOnly ? "“\(script.pause.name)” paused it, but “\(script.play.name)” didn't play it again"
+                                                   : scriptProblem ?? "“\(script.pause.name)” didn't pause it")
         } else if let scriptProblem {
-            way("✗", "AppleScript: \(scriptProblem)")
+            way(.none, "\(wayTitle(.script)): \(scriptProblem)")
         } else if fits {
-            way("?", "AppleScript: pause, play and its state, as the supported scriptable players have them (\(notTried))")
+            way(.notTried, "\(wayTitle(.script)): pause, play and its state, as the supported scriptable players have them (\(notTried))")
         } else {
             // The Player Check app offers no AppleScript Play or Pause for
-            // this line until a check tried it: it looks for "not as the
-            // supported scriptable players".
-            way("?", "AppleScript: play or pause commands, but not as the supported scriptable players have them (\(notTried))")
+            // this line until a check tried it: it looks for these words.
+            way(.notTried, "\(wayTitle(.script)): play or pause commands, but \(CheckReportLine.unlikeScriptablePlayers) have them (\(notTried))")
         }
     } else {
-        way("✗", "AppleScript: " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
+        way(.none, "\(wayTitle(.script)): " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
     }
     if running == nil {
-        way("–", "Playback menu: not checked (it isn't running)")
+        way(.notChecked, "\(wayTitle(.menu)): not checked (it isn't running)")
     } else if !AXIsProcessTrusted() {
-        way("–", "Playback menu: not checked (no Accessibility permission)")
+        way(.notChecked, "\(wayTitle(.menu)): not checked (no Accessibility permission)")
     } else if let menu {
-        let found = "Playback menu “\(menu.title)”" + (menu.arrows == "⌘← ⌘→" ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
+        let found = "\(wayTitle(.menu)) “\(menu.title)”" + (menu.arrows == "⌘← ⌘→" ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
         if let result = firstResults[.menu] {
             resultLine(.menu, found, result)
         } else {
-            way("?", "\(found): first item \(shown(menu.toggleTitle)) (\(notTried))")
+            way(.notTried, "\(found): first item \(shown(menu.toggleTitle)) (\(notTried))")
         }
     } else {
-        way("✗", "Playback menu: none with Play/Pause and Previous/Next")
+        way(.none, "\(wayTitle(.menu)): none with Play/Pause and Previous/Next")
     }
     if let pageNotChecked {
-        way("–", "Page button: not checked (\(pageNotChecked))")
+        way(.notChecked, "\(wayTitle(.page)): not checked (\(pageNotChecked))")
     } else if let page {
-        let kind = pageSwitch.map { "Page button, with \(switchName($0)) on" } ?? "Page button"
+        let kind = pageSwitch.map { "\(wayTitle(.page)), with \(switchName($0)) on" } ?? wayTitle(.page)
         if let toggle = page.toggle {
             let found = "\(kind): " + (learned.map { "\(shown($0.recipe.pauseLabel)) / \(shown($0.recipe.playLabel)), learned as AutoHush learns it" }
                                        ?? shown(toggle.label) + (page.withControls ? "" : ", but no player bar around it"))
             if let result = firstResults[.page] {
                 resultLine(.page, found, result)
             } else {
-                way("?", "\(found) (\(notTried))")
+                way(.notTried, "\(found) (\(notTried))")
             }
         } else {
-            way("✗", "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
+            way(.none, "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
         }
     }
     if let result = firstResults[.panel], canBeNowPlaying {
-        triedWay(.panel, "Now Playing panel", result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
+        triedWay(.panel, wayTitle(.panel), result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
                  failed: panelProblem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
     } else if running == nil {
-        way("–", "Now Playing panel: not checked (it isn't running)")
+        way(.notChecked, "\(wayTitle(.panel)): not checked (it isn't running)")
     } else if !canBeNowPlaying {
-        way("✗", "Now Playing panel: \(panelNotNowPlaying)")
+        way(.none, "\(wayTitle(.panel)): \(panelNotNowPlaying)")
     } else if !AXIsProcessTrusted() {
-        way("–", "Now Playing panel: not checked (no Accessibility permission)")
+        way(.notChecked, "\(wayTitle(.panel)): not checked (no Accessibility permission)")
     } else {
-        way("?", "Now Playing panel: its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
+        way(.notTried, "\(wayTitle(.panel)): its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
     }
 }
 
@@ -159,7 +162,7 @@ import PlayerCheckKit
         case nil:
             say("  \(its) has Play/Pause (\(shown(toggle.label))): confirm by testing it while it plays.")
         }
-        if let results = stateResults[.page], let summary = stateSummary(.page), summary.mark == "⚠" {
+        if let results = stateResults[.page], let summary = stateSummary(.page), summary.mark == .some {
             let worked = results.filter { $0.result == .worked }.map(\.state.title)
             let failed = results.filter { $0.result != .worked }.map(\.state.title)
             say("  It works with its window " + worked.joined(separator: ", ") + "; not " + failed.joined(separator: ", ") + ".")

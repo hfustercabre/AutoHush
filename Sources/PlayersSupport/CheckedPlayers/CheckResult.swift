@@ -42,6 +42,8 @@ package struct CheckResult: Codable, Equatable, Sendable {
         case visible, covered, otherDesktop, otherDesktopCovered, fullScreen, minimized, hidden
     }
 
+    /// How one way did over the window states it was tested in: its mark,
+    /// and the states it failed in when it worked in only some.
     package struct WayResult: Codable, Equatable, Sendable {
         package var kind: WayKind
         package var mark: Mark

@@ -1,6 +1,7 @@
 import AppKit
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 import AutoHushKit
 
 @Suite("AppIcon")
@@ -77,10 +78,10 @@ struct AppIconTests {
         // here Safari, which every Mac has); any other app shows its own.
         let folder = FileManager.default.temporaryDirectory.appending(path: "AppIconTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
-        let browserApp = folder.appending(path: "SoundCloud.app")
-        try FileManager.default.createDirectory(at: browserApp.appending(path: "Contents"), withIntermediateDirectories: true)
-        try (["CFBundleIdentifier": "com.example.browser.app.soundcloud", "CrAppModeShortcutURL": "https://soundcloud.com",
-              "CrBundleIdentifier": "com.apple.Safari"] as NSDictionary).write(to: browserApp.appending(path: "Contents/Info.plist"))
+        let browserApp = try TestAppBundle.make(in: folder, name: "SoundCloud", info: [
+            "CFBundleIdentifier": "com.example.browser.app.soundcloud", "CrAppModeShortcutURL": "https://soundcloud.com",
+            "CrBundleIdentifier": "com.apple.Safari",
+        ])
         let own = render(AppIcon.image(bundlePath: browserApp.path, size: 100))
         let badged = render(AppIcon.appImage(bundlePath: browserApp.path, size: 100))
         #expect(color(badged, at: 20, 20) == color(own, at: 20, 20))

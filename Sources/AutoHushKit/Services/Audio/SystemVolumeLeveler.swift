@@ -77,6 +77,9 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     /// Numbers each glide back up: one that's no longer the latest stops.
     private var glide = 0
     private var isGliding = false
+    /// What the volume read after the glide's latest step (what it was
+    /// lowered to, before the first): if it reads otherwise, the user changed it.
+    private var glidedTo: [AudioObjectPropertyElement: Float] = [:]
     private let logger = AutoHushLogger(category: "PlaybackArbiter")
 
     package init(volume: any SystemVolumeControlling = CoreAudioSystemVolume(), defaults: UserDefaults = .standard,
@@ -113,14 +116,15 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     package func restore(over duration: TimeInterval, lowered token: UUID) {
         lock.withLock {
             guard let lowered, lowered.token == token, !isGliding else { return }
-            guard let device = loweredDevice() else {
+            guard let device = loweredDevice(reading: lowered.lowered) else {
                 self.lowered = nil
                 return
             }
             glide += 1
             isGliding = true
+            glidedTo = lowered.lowered
             let number = glide
-            glideQueue.async { self.glideBack(number, on: device, from: lowered.lowered, over: duration) }
+            glideQueue.async { self.glideBack(number, on: device, over: duration) }
         }
     }
 
@@ -151,17 +155,15 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
         }
     }
 
-    /// Back up in steps over `duration`, from `start`, unless a newer change
-    /// stops it, or the volume no longer reads the last step: the user
-    /// changed it (or the output is gone), and theirs wins.
-    private func glideBack(_ number: Int, on device: AudioObjectID, from start: [AudioObjectPropertyElement: Float],
-                           over duration: TimeInterval) {
+    /// Back up in steps over `duration`, from what it was lowered to, unless
+    /// a newer change stops it, or the volume no longer reads the last step
+    /// (`glidedTo`): the user changed it (or the output is gone), and theirs wins.
+    private func glideBack(_ number: Int, on device: AudioObjectID, over duration: TimeInterval) {
         let steps = max(1, Int((duration / Self.restoreStep).rounded()))
-        var last = start
         for step in 1...steps {
             let goesOn: Bool = lock.withLock {
                 guard glide == number, let lowered else { return false }
-                guard Self.reads(volume.volume(of: device)?.decibels, as: last) else {
+                guard Self.reads(volume.volume(of: device)?.decibels, as: glidedTo) else {
                     logger.notice("[level] the volume was changed meanwhile, or its output is gone: it’s left as it is")
                     isGliding = false
                     self.lowered = nil
@@ -171,7 +173,7 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
                 let next = lowered.lowered.merging(lowered.original) { from, to in from + (to - from) * progress }
                 volume.setDecibels(next, of: device)
                 // What the output took (it may round): the next step checks against it.
-                last = volume.volume(of: device)?.decibels ?? next
+                glidedTo = volume.volume(of: device)?.decibels ?? next
                 guard step == steps else { return true }
                 isGliding = false
                 self.lowered = nil
@@ -184,25 +186,28 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     }
 
     /// Puts the volume back at once, under the lock: from where a glide back
-    /// up reached, or from what it was lowered to.
+    /// up reached, or from what it was lowered to, unless the user changed
+    /// it since.
     private func putBackNow() {
         guard let lowered else { return }
+        let reached = isGliding ? glidedTo : lowered.lowered
         if isGliding {
             glide += 1 // stops it
             isGliding = false
-            if let device = volume.device(withUID: lowered.uid) { volume.setDecibels(lowered.original, of: device) }
-        } else if let device = loweredDevice() {
+        }
+        if let device = loweredDevice(reading: reached) {
             volume.setDecibels(lowered.original, of: device)
             logger.notice("[level] the Mac’s volume is back")
         }
         self.lowered = nil
     }
 
-    /// The output it lowered, while its volume still reads what it was
-    /// lowered to; `nil` once it's gone or the user changed it.
-    private func loweredDevice() -> AudioObjectID? {
+    /// The output it lowered, while its volume still reads `expected` (what
+    /// it was lowered to, or the glide's last step); `nil` once it's gone or
+    /// the user changed it.
+    private func loweredDevice(reading expected: [AudioObjectPropertyElement: Float]) -> AudioObjectID? {
         guard let lowered, let device = volume.device(withUID: lowered.uid),
-              Self.reads(volume.volume(of: device)?.decibels, as: lowered.lowered)
+              Self.reads(volume.volume(of: device)?.decibels, as: expected)
         else {
             logger.notice("[level] the volume was changed meanwhile: it’s left as it is")
             return nil

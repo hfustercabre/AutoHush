@@ -107,16 +107,10 @@ package final class NowPlayingReports: @unchecked Sendable {
         return count < 0 || groups.prefix(Int(count)).contains(80)
     }()
 
-    /// The last state the app `bundleID` reported; `nil` when it reported
-    /// none, while the log is first read (it's followed from then on), or
-    /// when the log can't be read.
-    package func state(of bundleID: String, now: Date = Date()) -> PlayerState? {
-        latest(of: bundleID, now: now)?.state
-    }
-
     /// The app's newest client with a report (a web app's media process may
     /// come and go), whose process still runs: a crashed app's last report
-    /// doesn't outlive it.
+    /// doesn't outlive it. `nil` when it reported none, while the log is
+    /// first read (it's followed from then on), or when the log can't be read.
     package func latest(of bundleID: String, now: Date = Date()) -> Client? {
         guard isAvailable else { return nil }
         let ready = lock.withLock { () -> Bool in

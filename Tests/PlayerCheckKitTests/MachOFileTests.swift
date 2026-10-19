@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import PlayerCheckKit
+import AutoHushTestSupport
 
 /// Mach-O files made for the test: a 64-bit one linking `frameworks`, and a
 /// universal one holding it as its arm64 slice.
@@ -40,11 +41,11 @@ enum MachOSample {
 
 @Suite("MachOFile and NowPlayingReason")
 struct MachOFileTests {
-    private let folder = FileManager.default.temporaryDirectory.appendingPathComponent("MachO-\(UUID().uuidString)")
+    private let scratch = TemporaryFolder("MachO", create: false)
+    private var folder: URL { scratch.url }
 
     @Test("the frameworks a binary links, thin or universal (its arm64 slice); none for any other file")
     func linked() throws {
-        defer { try? FileManager.default.removeItem(at: folder) }
         let thin = folder.appendingPathComponent("thin"), fat = folder.appendingPathComponent("fat"), text = folder.appendingPathComponent("text")
         try MachOSample.write(MachOSample.thin(linking: ["MediaPlayer", "AppKit"]), to: thin)
         try MachOSample.write(MachOSample.universal(linking: ["WebKit"]), to: fat)
@@ -57,13 +58,10 @@ struct MachOFileTests {
 
     @Test("why an app can be in Now Playing, from what its binaries link; a browser's web app by its launcher, named by its browser")
     func reasons() throws {
-        defer { try? FileManager.default.removeItem(at: folder) }
         let player = folder.appendingPathComponent("Player.app"), electron = folder.appendingPathComponent("Electron.app")
         let plain = folder.appendingPathComponent("Plain.app"), pages = folder.appendingPathComponent("Pages.app")
-        let webApp = folder.appendingPathComponent("Web App.app")
-        try FileManager.default.createDirectory(at: webApp.appendingPathComponent("Contents"), withIntermediateDirectories: true)
-        try (["CrAppModeShortcutURL": "https://example.com/", "CrBundleIdentifier": "com.example.browser"] as NSDictionary)
-            .write(to: webApp.appendingPathComponent("Contents/Info.plist"))
+        let webApp = try TestAppBundle.make(in: folder, name: "Web App",
+                                            info: ["CrAppModeShortcutURL": "https://example.com/", "CrBundleIdentifier": "com.example.browser"])
         try MachOSample.write(MachOSample.thin(linking: ["MediaPlayer"]), to: player.appendingPathComponent("Contents/MacOS/Player"))
         try MachOSample.write(MachOSample.thin(linking: ["AppKit"]), to: electron.appendingPathComponent("Contents/MacOS/Electron"))
         try MachOSample.write(MachOSample.thin(linking: ["MediaPlayer"]),

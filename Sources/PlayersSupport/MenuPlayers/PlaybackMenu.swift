@@ -38,8 +38,8 @@ package protocol PlaybackMenu: Sendable {
 /// item is on Space and whose items include ← and → under other modifiers
 /// (Deezer's Play menu: Space, ⇧← and ⇧→).
 package struct AccessibilityPlaybackMenu: PlaybackMenu {
-    /// How long to wait for the app to answer, so a stuck app can't hold
-    /// AutoHush up.
+    /// How long to wait for the app to answer each read (its menu bar, each
+    /// menu and item), so a stuck app can't hold AutoHush up.
     package static let timeout: Float = 0.5
 
     package init() {}
@@ -64,10 +64,13 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
     /// Looked up afresh every time: TIDAL rebuilds its whole menu bar
     /// whenever its state changes.
     private func toggleItem(pid: pid_t) -> AXUIElement? {
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, Self.timeout)
-        guard let menuBar = app.element(kAXMenuBarAttribute) else { return nil }
+        guard let menuBar = Self.menuBar(of: pid) else { return nil }
         return Self.playbackMenu(in: menuBar)?.toggle
+    }
+
+    /// The menu bar of the app running as `pid`, read waiting `timeout`.
+    package static func menuBar(of pid: pid_t) -> AXUIElement? {
+        AXUIElement.application(pid, timeout: timeout).element(kAXMenuBarAttribute, timeout: timeout)
     }
 
     /// The playback menu in an app's `menuBar`, as AutoHush finds it: the
@@ -75,12 +78,12 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
     /// alone), else one whose first item is on Space and whose items include
     /// ← and → under any modifiers; its menu bar item, and its first item.
     /// Player Check finds an app's menu with this, so a check keeps only a
-    /// menu AutoHush finds.
+    /// menu AutoHush finds. Each element read waits `timeout`.
     package static func playbackMenu(in menuBar: AXUIElement) -> (barItem: AXUIElement, toggle: AXUIElement)? {
         var onOtherArrows: (barItem: AXUIElement, toggle: AXUIElement)?
-        for barItem in menuBar.children {
-            guard let menu = barItem.children.first else { continue }
-            let items = menu.children
+        for barItem in menuBar.children(timeout: timeout) {
+            guard let menu = barItem.children(timeout: timeout).first else { continue }
+            let items = menu.children(timeout: timeout)
             guard let first = items.first else { continue }
             var withCommand: Set<Int> = [], anyModifiers: Set<Int> = []
             for item in items {

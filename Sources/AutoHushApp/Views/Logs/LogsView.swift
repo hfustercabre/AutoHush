@@ -8,7 +8,6 @@ import AutoHushKit
 /// Copy Logs and Save… at the foot. The lines are in English, as logged.
 struct LogsView: View {
     @Bindable var model: LogsModel
-    @State private var copied = false
     /// The end of the entries, scrolled to on macOS 14 (`FollowsNewest`).
     static let bottom = "bottom"
 
@@ -40,7 +39,7 @@ struct LogsView: View {
             .padding(.bottom, 8)
             if !model.shown.isEmpty { columnTitles }
             lines
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Toggle(isOn: $model.followsNewEntries) { Text(verbatim: Self.followTitle) }
                     .toggleStyle(PillToggleStyle())
                 Text(verbatim: Self.followTitle)
@@ -53,11 +52,9 @@ struct LogsView: View {
                 }
                 .buttonStyle(.chip)
                 .disabled(model.shown.isEmpty)
-                Button(action: copy) {
-                    Text(verbatim: copied ? DiagnosticsSettingsView.copiedText : Self.copyTitle)
-                }
-                .buttonStyle(.chip)
-                .disabled(model.shown.isEmpty)
+                // "Copied" for a moment after a click, as Diagnostics' Copy Report.
+                CopyButton(title: Text(verbatim: Self.copyTitle)) { model.text }
+                    .disabled(model.shown.isEmpty)
             }
         }
         .font(.appBody)
@@ -94,9 +91,11 @@ struct LogsView: View {
                         Text(verbatim: emptyNote).foregroundStyle(.appSecondary)
                     } else {
                         LazyVStack(alignment: .leading, spacing: 10) {
-                            ForEach(Array(shown.enumerated()), id: \.offset) { index, entry in
-                                if index > 0 { CardDivider() }
-                                LogRow(entry: entry)
+                            // By time: as the oldest go and new ones come, the
+                            // others keep their rows.
+                            ForEach(shown.keyed(by: \.date)) { keyed in
+                                if keyed.offset > 0 { CardDivider() }
+                                LogRow(entry: keyed.element)
                             }
                         }
                     }
@@ -166,17 +165,6 @@ struct LogsView: View {
 
     private static var copyTitle: String {
         String(localized: "Copy Logs", comment: "The logs window: button that puts the entries shown on the clipboard")
-    }
-
-    private func copy() {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(model.text, forType: .string)
-        copied = true
-        AccessibilityNotification.Announcement(DiagnosticsSettingsView.copiedText).post()
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            copied = false
-        }
     }
 
     private func save() {

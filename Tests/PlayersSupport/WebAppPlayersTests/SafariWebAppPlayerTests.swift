@@ -3,6 +3,7 @@ import Testing
 import AutoHushKit
 @testable import WebAppPlayers
 import AutoHushTestSupport
+import PlayersTestSupport
 
 @Suite("SafariWebAppPlayer", .timeLimit(.minutes(1)))
 struct SafariWebAppPlayerTests {
@@ -16,7 +17,7 @@ struct SafariWebAppPlayerTests {
         let clock = ManualClock.webAppTests()
         let muter = FakeMuter()
         let probe = FakeLevelProbe()
-        let pid = PIDBox(4242)
+        let pid = Locked<pid_t>(4242)
         let key = PlayPauseKeyBox()
         let nowPlaying = NowPlayingBox()
         let player: SafariWebAppPlayer
@@ -1107,57 +1108,43 @@ struct SafariWebAppPlayerTests {
     }
 }
 
-/// A pid the tests change, as when the web app is opened again.
-final class PIDBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _value: pid_t
-    init(_ value: pid_t) { _value = value }
-    var value: pid_t {
-        get { lock.withLock { _value } }
-        set { lock.withLock { _value = newValue } }
-    }
-}
-
 /// The Now Playing app in tests: unknown (the key is pressed, as ever)
 /// unless a test sets it. `answers` come one per question, the last one
 /// for every question after; `asked` counts the questions.
-final class NowPlayingBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var _answers = [NowPlayingApp.Answer.unknown]
-    private var _asked = 0
+final class NowPlayingBox: Sendable {
+    private let state = Locked((answers: [NowPlayingApp.Answer.unknown], asked: 0))
+
     var answer: NowPlayingApp.Answer {
         get {
-            lock.withLock {
-                _asked += 1
-                return _answers.count > 1 ? _answers.removeFirst() : _answers[0]
+            state.withLock {
+                $0.asked += 1
+                return $0.answers.count > 1 ? $0.answers.removeFirst() : $0.answers[0]
             }
         }
-        set { lock.withLock { _answers = [newValue] } }
+        set { state.withLock { $0.answers = [newValue] } }
     }
     var answers: [NowPlayingApp.Answer] {
-        get { lock.withLock { _answers } }
-        set { lock.withLock { _answers = newValue } }
+        get { state.value.answers }
+        set { state.withLock { $0.answers = newValue } }
     }
-    var asked: Int { lock.withLock { _asked } }
+    var asked: Int { state.value.asked }
 }
 
 /// The keyboard's Play/Pause key in tests: counts its presses, and does
 /// what a test says (by default, nothing: it reached another app).
-final class PlayPauseKeyBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var presses = 0
-    private var action: (@Sendable () -> Void)?
+final class PlayPauseKeyBox: Sendable {
+    private let state = Locked<(presses: Int, onPress: (@Sendable () -> Void)?)>((0, nil))
 
-    var count: Int { lock.withLock { presses } }
+    var count: Int { state.value.presses }
     var onPress: (@Sendable () -> Void)? {
-        get { lock.withLock { action } }
-        set { lock.withLock { action = newValue } }
+        get { state.value.onPress }
+        set { state.withLock { $0.onPress = newValue } }
     }
 
     func press() {
-        let action = lock.withLock {
-            presses += 1
-            return self.action
+        let action = state.withLock {
+            $0.presses += 1
+            return $0.onPress
         }
         action?()
     }

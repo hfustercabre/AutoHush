@@ -3,7 +3,8 @@ import AutoHushKit
 
 /// Reads the permissions AutoHush needs, without asking, often enough for
 /// windows to follow them (about once a second while one shows), and turns a
-/// click on a missing one into the right request.
+/// click on a missing one into the right request: for the chosen player, and
+/// for the app Add an App checks, by the same rules.
 @MainActor
 final class PermissionCenter {
     /// The system calls, which tests replace.
@@ -38,22 +39,31 @@ final class PermissionCenter {
     /// Settings during this launch.
     func state(player: (any MusicPlayer)?, detectionMethod: DetectionMethod, detection: DetectionMode,
                awaitsReopen: Bool) async -> PermissionsState {
-        var state = PermissionsState(player: player?.bundleID, accessibility: system.isTrusted())
         // One muted instead of paused needs only Audio Recording, its own row.
-        if let player, player.controlPermission != .systemAudioRecording {
-            state.control = player.controlPermission
-            state.controlAccess = await controlAccess(player)
+        let control = player?.controlPermission == .systemAudioRecording ? nil : player?.controlPermission
+        return await state(app: player?.bundleID, control: control, detectionMethod: detectionMethod,
+                           detection: detection, awaitsReopen: awaitsReopen)
+    }
+
+    /// The permissions for the app with bundle ID `app`, controlled through
+    /// `control` (none: nothing to read for it); the rest as `state(player:…)`.
+    func state(app: String?, control: Permission?, detectionMethod: DetectionMethod, detection: DetectionMode,
+               awaitsReopen: Bool) async -> PermissionsState {
+        var state = PermissionsState(player: app, accessibility: system.isTrusted())
+        if let app, let control {
+            state.control = control
+            state.controlAccess = await controlAccess(control, app: app)
         }
         state.audio = audioAccess(detectionMethod: detectionMethod, detection: detection, awaitsReopen: awaitsReopen)
         return state
     }
 
-    private func controlAccess(_ player: any MusicPlayer) async -> PermissionAccess {
-        switch player.controlPermission {
+    private func controlAccess(_ control: Permission, app: String) async -> PermissionAccess {
+        switch control {
         case .accessibility:
             return system.isTrusted() ? .allowed : .denied
         case .automation:
-            guard let pid = system.runningPID(player.bundleID) else { return .playerNotRunning }
+            guard let pid = system.runningPID(app) else { return .playerNotRunning }
             return Self.access(automationStatus: await system.automation(pid, false))
         case .systemAudioRecording:
             return .allowed // never a player's control permission
@@ -97,16 +107,17 @@ final class PermissionCenter {
         system.runningPID(bundleID) != nil
     }
 
-    /// Carries out `request`. Asking for Accessibility shows macOS's prompt
-    /// and opens System Settings, where it's switched on; asking for
-    /// Automation waits for the user's answer to macOS's prompt.
-    func perform(_ request: PermissionRequest, player: (any MusicPlayer)?) async {
+    /// Carries out `request`, for the app with bundle ID `app`. Asking for
+    /// Accessibility shows macOS's prompt and opens System Settings, where
+    /// it's switched on; asking for Automation waits for the user's answer
+    /// to macOS's prompt.
+    func perform(_ request: PermissionRequest, app: String?) async {
         switch request {
         case .askMacOS(.accessibility):
             system.promptAccessibility()
             system.openPane(.accessibility)
         case .askMacOS(.automation):
-            guard let player, let pid = system.runningPID(player.bundleID) else { return }
+            guard let app, let pid = system.runningPID(app) else { return }
             _ = await system.automation(pid, true)
         case .askMacOS(.systemAudioRecording):
             system.requestAudio { _ in }

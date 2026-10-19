@@ -49,7 +49,7 @@ extension MenuPlayerProfile {
 /// It never presses the item blindly: pausing presses it only while the app
 /// plays, playing only while it's paused. Its volume can't be read, so it
 /// pauses and plays without fading.
-package actor MenuPlayer: MusicPlayer {
+package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     package nonisolated let profile: MenuPlayerProfile
 
     package nonisolated var bundleID: String { profile.bundleID }
@@ -57,8 +57,6 @@ package actor MenuPlayer: MusicPlayer {
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { profile.iconPlaceholder }
     /// It's controlled through its menu, which needs Accessibility.
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }
-    /// Its volume can't be read or set.
-    package nonisolated var canFade: Bool { false }
     /// Whether its words for Play and Pause could be read from its app (read
     /// once per copy and version).
     package nonisolated var ownWordsRead: Bool? { words() != nil }
@@ -121,17 +119,6 @@ package actor MenuPlayer: MusicPlayer {
     package func play() async throws {
         try await press(from: .paused)
     }
-
-    /// Its volume can't be read or set: no fades.
-    package func volume() async -> Int? { nil }
-    package func setVolume(_ volume: Int) async throws {}
-
-    @MainActor
-    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        PolledStateObserver(read: { [self] in await self.playerState() }, onChange: onChange)
-    }
-
-    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     /// What the Play/Pause item says: "Pause" while the app plays, "Play"
     /// while it's paused. A title in both lists, or neither, says nothing.

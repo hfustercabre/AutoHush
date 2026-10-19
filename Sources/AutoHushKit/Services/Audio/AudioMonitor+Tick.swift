@@ -34,7 +34,7 @@ extension AudioMonitor {
             let source = sourceIdentifier?.source(for: process)
                 ?? AudioSource(id: process.bundleID, name: process.bundleID)
             if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }
-            // An excluded owner (e.g. the music player's helper) excludes its processes too.
+            // An excluded owner (e.g. the media player's helper) excludes its processes too.
             guard configuration.isMediaSource(source.id) else { continue }
             sourceOfProcess[process.objectID] = source
             knownSources[source.id] = source
@@ -330,7 +330,7 @@ extension AudioMonitor {
 
     /// The active rate while another app has its audio running, a source is
     /// tracked, or the process list just changed; otherwise the idle rate.
-    /// The music player playing alone leaves nothing to judge, and a new app
+    /// The media player playing alone leaves nothing to judge, and a new app
     /// starting is announced by a HAL change, which ticks at once.
     static func tickInterval(
         otherAppsRunning: Bool, isTracking: Bool, recentlyChanged: Bool, configuration: AppConfiguration

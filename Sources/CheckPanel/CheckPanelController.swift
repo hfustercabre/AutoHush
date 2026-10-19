@@ -1,40 +1,48 @@
 import AppKit
+import PlayerCheckKit
 import SwiftUI
 
 /// The check's panel at the bottom right of the screen, on every desktop,
-/// as Player Check's: a borderless panel that never takes the keyboard (the
-/// check counts only ordinary windows as covering the app) and never comes
-/// forward. While the check blocks the mouse and keyboard, a shade dims
-/// every screen but the panel; the check lets clicks through on AutoHush's
-/// windows above the ordinary ones that don't cover a whole display: the
-/// panel, never the shade.
+/// for AutoHush's Add an App… and the Player Check app alike: a borderless
+/// panel that never takes the keyboard (the check counts only ordinary
+/// windows as covering the app) and never comes forward, so its Stop leaves
+/// the app in front where it is. While the check blocks the mouse and
+/// keyboard, a shade dims every screen but the panel; the check lets clicks
+/// through on the panel's windows above the ordinary ones that don't cover
+/// a whole display (`CheckPanelWindows`): the panel, never the shade.
 @MainActor
-final class CheckPanelController {
+package final class CheckPanelController {
     /// The shade's level, and the panel's while the screen is dimmed: above
     /// the menu bar, the Dock and Control Center's panels (the Now Playing
     /// panel a check opens), so the shade dims them all and the panel stays
     /// above it. Otherwise the panel floats, under menus and the Dock.
-    static let shadeLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
-    static let panelLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 2)
+    package static let shadeLevel = NSWindow.Level(rawValue: CheckPanelWindows.shadeLevel)
+    package static let panelLevel = NSWindow.Level(rawValue: CheckPanelWindows.dimmedLevel)
     private var panel: NSPanel?
     private var shades: [NSWindow] = []
 
-    func show(_ app: CheckableApp, model: AddAppModel) {
+    package init() {}
+
+    /// Shows the panel with `content`, made with what it calls with its size
+    /// (the panel fits it) and with whether the screen is to be dimmed (while
+    /// the check blocks the mouse and keyboard).
+    package func show<Content: View>(@ViewBuilder _ content: (_ resized: @escaping (CGSize) -> Void,
+                                                             _ dimmed: @escaping (Bool) -> Void) -> Content) {
         hide()
         let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 310, height: 120),
                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
-        panel.level = .floating
+        panel.level = NSWindow.Level(rawValue: CheckPanelWindows.floatingLevel)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.hidesOnDeactivate = false
         panel.canHide = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.isReleasedWhenClosed = false
-        let content = NSHostingView(rootView: CheckPanelView(model: model, app: app, resized: { [weak panel] size in
+        let content = NSHostingView(rootView: content({ [weak panel] size in
             Self.fit(panel, to: size)
-        }, dimmed: { [weak self] on in
+        }, { [weak self] on in
             self?.dim(on)
         }))
         let radius: CGFloat = 20
@@ -66,20 +74,22 @@ final class CheckPanelController {
         self.panel = panel
     }
 
-    func hide() {
+    package func hide() {
         panel?.orderOut(nil)
         panel = nil
         shades.forEach { $0.orderOut(nil) }
         shades = []
     }
 
-    /// Dims every screen but the panel, black at 50%, fading in or out. The
-    /// shade lets the check's drags through (it ignores the mouse), and
-    /// doesn't hide what's under it from the check: macOS still counts those
-    /// windows as visible, and Accessibility's hit tests pass it by.
+    /// Dims every screen but the panel, black at 50%, fading in or out; not
+    /// once the panel is hidden (a late call would leave a shade up with no
+    /// panel over it). The shade lets the check's drags through (it ignores
+    /// the mouse), and doesn't hide what's under it from the check: macOS
+    /// still counts those windows as visible (a Chromium page under it takes
+    /// presses), and Accessibility's hit tests pass it by.
     private func dim(_ on: Bool) {
         guard panel != nil else { return }
-        panel?.level = on ? Self.panelLevel : .floating
+        panel?.level = on ? Self.panelLevel : NSWindow.Level(rawValue: CheckPanelWindows.floatingLevel)
         if on, shades.isEmpty { shades = NSScreen.screens.map(Self.shade) }
         let shown = shades
         if !on { shades = [] }

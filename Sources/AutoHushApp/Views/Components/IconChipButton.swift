@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// A small chip showing a symbol, beside a heading or a pop-up: the Apps
-/// tab's order and search, and the music players' search. Its label is what
-/// VoiceOver says and, without a `help` of its own, its tooltip.
+/// A small chip showing a symbol, beside a heading or a pop-up: Settings →
+/// Sound Sources' arrow that reverses the order, and its magnifier. Its
+/// label is what VoiceOver says and, without a `help` of its own, its
+/// tooltip.
 struct IconChipButton: View {
     let symbol: String
     let label: Text

@@ -4,6 +4,16 @@ import Testing
 
 @Suite("AudioSourceIdentifier")
 struct AudioSourceIdentifierTests {
+    @Test("apps are sorted by name as people read it, ignoring case, then by ID; never by ID first")
+    func sortedByName() {
+        let apps = [
+            AudioSource(id: "a.zoom", name: "zoom"),
+            AudioSource(id: "z.apple", name: "Apple"),
+            AudioSource(id: "m.apple", name: "apple"),
+        ]
+        #expect(apps.sortedByName().map(\.id) == ["m.apple", "z.apple", "a.zoom"])
+    }
+
     @Test("the outermost app bundle in a path owns it")
     func outermostApp() {
         let path = "/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Helpers/Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper"

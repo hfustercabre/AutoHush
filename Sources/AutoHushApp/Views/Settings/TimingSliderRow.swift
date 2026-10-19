@@ -50,11 +50,7 @@ struct TimingSliderRow: View {
         // In the menu and Settings, highlighted by the arrow keys (← and →
         // move it) and the pointer, and tinted while its slider has the
         // keyboard's focus (F5).
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .modifier(Highlightable(isFocused: sliderFocused, adjust: step))
-        .padding(.horizontal, -6)
-        .padding(.vertical, -3)
+        .highlightableRow(isFocused: sliderFocused, adjust: step)
     }
 
     /// One step of the slider up (1) or down (-1), kept in its range.
@@ -76,7 +72,7 @@ struct RestoreDefaultsButton: View {
         HStack {
             Spacer()
             Button(action: action) {
-                Text("Restore Defaults", comment: "Settings → Detection and → Fades: button that sets the page's settings back to their defaults")
+                Text("Restore Defaults", comment: "Settings → Detection, → Fades and → Advanced: button that sets the page's settings back to their defaults")
             }
                 .buttonStyle(.chip)
                 .disabled(isDefault)

@@ -1,34 +1,33 @@
 import AppKit
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 @Suite("OtherInstances")
 struct OtherInstancesTests {
     /// Stand-in processes: which are running, which quit when asked, and the
     /// signals they got.
-    private final class Processes: @unchecked Sendable {
-        private let lock = NSLock()
-        private var running: Set<pid_t>
+    private final class Processes: Sendable {
+        private let state: Locked<(running: Set<pid_t>, signals: [String])>
         private let stubborn: Set<pid_t>
-        private var _signals: [String] = []
 
         init(running: Set<pid_t>, stubborn: Set<pid_t> = []) {
-            self.running = running
+            state = Locked((running, []))
             self.stubborn = stubborn
         }
 
-        var signals: [String] { lock.withLock { _signals } }
+        var signals: [String] { state.value.signals }
 
         var instances: OtherInstances {
             OtherInstances(
-                list: { self.lock.withLock { self.running.sorted() } },
+                list: { self.state.value.running.sorted() },
                 send: { pid, signal in
-                    self.lock.withLock {
-                        self._signals.append("\(signal == SIGTERM ? "TERM" : "KILL") \(pid)")
-                        if signal == SIGKILL || !self.stubborn.contains(pid) { self.running.remove(pid) }
+                    self.state.withLock { state in
+                        state.signals.append("\(signal == SIGTERM ? "TERM" : "KILL") \(pid)")
+                        if signal == SIGKILL || !self.stubborn.contains(pid) { state.running.remove(pid) }
                     }
                 },
-                isRunning: { pid in self.lock.withLock { self.running.contains(pid) } }
+                isRunning: { pid in self.state.value.running.contains(pid) }
             )
         }
     }

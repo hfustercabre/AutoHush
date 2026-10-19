@@ -4,12 +4,9 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PlayerSession")
+@Suite("PlayerSession", .timeLimit(.minutes(1)))
 struct PlayerSessionTests {
-    private enum Players {
-        static let first = "com.example.first"
-        static let second = "com.example.second"
-    }
+    private typealias Players = TestPlayers
 
     private static let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
     private static let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
@@ -28,7 +25,7 @@ struct PlayerSessionTests {
         var installed: Set<String> = [Players.first, Players.second]
         let monitorings = FakeMonitorings()
         /// The waits between startup checks, each over once the test steps it.
-        let startupWaits = SteppedSleep()
+        let startupWaits = ManualSleep()
         /// The states a session told, in order, once `record` is called.
         var changes: [PlayerSession.State] = []
 

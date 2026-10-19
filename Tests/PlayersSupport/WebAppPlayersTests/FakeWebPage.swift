@@ -157,67 +157,7 @@ enum Places {
     static let fullScreen = ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkMain", "AXGroup"], distanceFromBottom: 300)
 }
 
-/// Recipes kept in memory.
-final class MemoryRecipeStore: PlayPauseRecipeStore, @unchecked Sendable {
-    private let lock = NSLock()
-    private var recipes: [String: PlayPauseRecipe] = [:]
-
-    init(_ recipes: [String: PlayPauseRecipe] = [:]) {
-        self.recipes = recipes
-    }
-
-    func recipe(for bundleID: String) -> PlayPauseRecipe? { lock.withLock { recipes[bundleID] } }
-    func save(_ recipe: PlayPauseRecipe, for bundleID: String) { lock.withLock { recipes[bundleID] = recipe } }
-    func forget(for bundleID: String) { lock.withLock { recipes[bundleID] = nil } }
-}
-
 extension ManualClock {
     /// The web app tests' clock, from a date in 2026.
     static func webAppTests() -> ManualClock { ManualClock(start: Date(timeIntervalSinceReferenceDate: 800_000_000)) }
-}
-
-/// Records mutes; `canMute` false stands for a missing permission.
-final class FakeMuter: AudioMuting, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _muted: Set<pid_t> = []
-    private var _log: [String] = []
-    var canMute = true
-
-    var muted: Set<pid_t> { lock.withLock { _muted } }
-    var log: [String] { lock.withLock { _log } }
-
-    func mute(appPID: pid_t) -> Bool {
-        lock.withLock {
-            guard canMute else { return false }
-            _muted.insert(appPID)
-            _log.append("mute \(appPID)")
-            return true
-        }
-    }
-
-    func unmute(appPID: pid_t) {
-        lock.withLock {
-            if _muted.remove(appPID) != nil { _log.append("unmute \(appPID)") }
-        }
-    }
-}
-
-/// Says whether the web app can be heard; counts how often it listened.
-final class FakeLevelProbe: AudioLevelProbing, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _audible = false
-    private var _listens = 0
-
-    var audible: Bool {
-        get { lock.withLock { _audible } }
-        set { lock.withLock { _audible = newValue } }
-    }
-    var listens: Int { lock.withLock { _listens } }
-
-    func isAudible(appPID: pid_t) -> Bool {
-        lock.withLock {
-            _listens += 1
-            return _audible
-        }
-    }
 }

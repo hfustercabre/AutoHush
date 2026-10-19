@@ -169,7 +169,7 @@ final class InputBlock: @unchecked Sendable {
             tell(line)
             // As the stop signals' handler: while the window is away (the
             // whole block), the check stops itself and puts it back.
-            if !stopState.request() { stopNow(143) }
+            if !stopState.request() { stopNow(CheckExitStatus.stop) }
             return nil
         }
     }

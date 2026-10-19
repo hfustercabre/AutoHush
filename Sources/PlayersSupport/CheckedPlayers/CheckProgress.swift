@@ -1,18 +1,18 @@
 import Foundation
-import CheckedPlayers
 
 /// How far a check has got, from its report's lines as they come: the part
 /// it's in, the window state it has the app in and what it does there, what
 /// it asks of the user, and whether it blocks the mouse and keyboard.
 /// playercheck's report is English: the lines followed here are the ones it
-/// writes with `CheckReportLine`, and what's shown is AutoHush's own words.
-struct CheckProgress: Equatable {
-    enum Stage: Equatable {
+/// writes with `CheckReportLine`, and what's shown is the reader's own
+/// words (AutoHush's Add an App…, the Player Check app's panel).
+package struct CheckProgress: Equatable, Sendable {
+    package enum Stage: Equatable, Sendable {
         case reading, permissions, playing, movingWindow, readingPage, testing, finishing
     }
 
     /// A way being tried in the current window state.
-    enum Activity: Equatable {
+    package enum Activity: Equatable, Sendable {
         case moving
         case pausing(CheckResult.WayKind)
         case playingAgain(CheckResult.WayKind)
@@ -21,40 +21,42 @@ struct CheckProgress: Equatable {
     }
 
     /// What the check waits for the user to do.
-    enum Request: Equatable {
+    package enum Request: Equatable, Sendable {
         /// Start the app playing, within `minutes`.
         case play(minutes: Int)
         /// Pause it with its own Pause, within `minutes` (to learn its page's button).
         case pause(minutes: Int)
         case allowAccessibility(minutes: Int)
 
-        var minutes: Int {
+        package var minutes: Int {
             switch self {
             case .play(let minutes), .pause(let minutes), .allowAccessibility(let minutes): minutes
             }
         }
     }
 
-    struct WindowStep: Equatable {
-        let index: Int
-        let count: Int
-        let state: CheckResult.WindowState?
+    package struct WindowStep: Equatable, Sendable {
+        package let index: Int
+        package let count: Int
+        package let state: CheckResult.WindowState?
     }
 
-    private(set) var stage = Stage.reading
-    private(set) var windowStep: WindowStep?
-    private(set) var activity: Activity?
-    private(set) var request: Request?
+    package private(set) var stage = Stage.reading
+    package private(set) var windowStep: WindowStep?
+    package private(set) var activity: Activity?
+    package private(set) var request: Request?
     /// When the request came, for the time left.
-    private(set) var requestSince: Date?
+    package private(set) var requestSince: Date?
     /// From playercheck's "blocked" line until it says they're free again.
-    private(set) var inputBlocked = false
+    package private(set) var inputBlocked = false
+
+    package init() {}
 
     /// The mouse and keyboard are blocked now: not while the check asks
     /// something, when they're the user's again.
-    var blocksInput: Bool { inputBlocked && request == nil }
+    package var blocksInput: Bool { inputBlocked && request == nil }
 
-    mutating func add(_ line: String, at date: Date = Date()) {
+    package mutating func add(_ line: String, at date: Date = Date()) {
         guard !line.isEmpty else { return }
         if !line.hasPrefix(" ") {
             // A heading: a new part of the report, which ends any request.

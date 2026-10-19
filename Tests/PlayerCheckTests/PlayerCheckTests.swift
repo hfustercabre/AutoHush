@@ -5,6 +5,7 @@ import Testing
 import CheckedPlayers
 import PlayerCheckKit
 import WebAppPlayers
+import AutoHushTestSupport
 
 /// Where the tool's log and caches go while it's tested, removed at the end.
 private let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckTests-\(UUID().uuidString)").path
@@ -16,6 +17,8 @@ private let readOnlyRun: Void = {
     atexit { _ = try? FileManager.default.removeItem(atPath: folder) }
 }()
 
+/// One test at a time: the tool's command line and log are its process's,
+/// set once for all of them.
 @Suite("playercheck", .serialized)
 @MainActor
 struct PlayerCheckTests {
@@ -62,15 +65,7 @@ struct PlayerCheckTests {
     func apps() throws {
         let apps = URL(filePath: folder).appending(path: "Apps")
         func app(_ name: String, framework: String? = nil, version: String? = nil, info: [String: String] = [:]) throws -> URL {
-            let url = apps.appending(path: "\(name).app")
-            try FileManager.default.createDirectory(at: url.appending(path: "Contents"), withIntermediateDirectories: true)
-            try (info as NSDictionary).write(to: url.appending(path: "Contents/Info.plist"))
-            if let framework {
-                let resources = url.appending(path: "Contents/Frameworks/\(framework).framework/Resources")
-                try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
-                if let version { try (["CFBundleVersion": version] as NSDictionary).write(to: resources.appending(path: "Info.plist")) }
-            }
-            return url
+            try TestAppBundle.make(in: apps, name: name, info: info, frameworks: framework.map { [$0] } ?? [], frameworkVersion: version)
         }
         let plain = try app("Plain")
         #expect(HiddenInterface.of(plain) == nil)
@@ -109,27 +104,11 @@ struct PlayerCheckTests {
         #expect(discarded.withLock { $0 } == ["2000-01-01 00.00.00.000 Old check.log", "2000-01-01 00.00.01.000 Old check.log"])
         let all = try FileManager.default.contentsOfDirectory(atPath: folder)
         #expect(others.allSatisfy(all.contains))
-        let names = all.filter(RunLog.isRunLog).sorted()
+        let names = all.filter(RunLogName.isRunLog).sorted()
         #expect(names.count == RunLog.kept + 2) // the two noted, still there
         let newest = try #require(names.last)
         #expect(newest.hasSuffix(" Calculator read-only.log"))
         let text = try String(contentsOfFile: logs.appending(path: newest).path, encoding: .utf8)
         #expect(text.contains("Calculator ") && text.contains("music in ~/Music") && !text.contains(NSHomeDirectory()))
-    }
-
-    @Test("a run's log is named by its time, the app and what the run did", arguments: [
-        "2026-10-18 09.41.07.250 Jukebox pause via panel.log", "2026-10-18 09.41.07.250 Some Player relaunch.log",
-        "2026-10-18 09.41.07.250 Jukebox play.log",
-    ])
-    func runLogName(_ name: String) {
-        #expect(RunLog.isRunLog(name))
-    }
-
-    @Test("a name without its time, its app or what the run did, or not a log, is no run's log", arguments: [
-        "2026-10-18 09.41.07.250 check.log", "2026-10-18 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox check.txt",
-        "2026-13-18 09.41.07.250 Jukebox check.log", "2026-10-18 09.41.07.250 Jukebox listening.log",
-    ])
-    func notARunLogName(_ name: String) {
-        #expect(!RunLog.isRunLog(name))
     }
 }

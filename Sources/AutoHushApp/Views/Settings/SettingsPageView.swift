@@ -10,7 +10,7 @@ struct SettingsPageView: View {
         Group {
             switch navigation.page {
             case .general: GeneralSettingsView(model: model)
-            case .apps: AppsSettingsView(model: model)
+            case .soundSources: SoundSourcesSettingsView(model: model)
             case .detection: DetectionSettingsView(model: model)
             case .fades: FadesSettingsView(model: model)
             case .advanced: AdvancedSettingsView(model: model)

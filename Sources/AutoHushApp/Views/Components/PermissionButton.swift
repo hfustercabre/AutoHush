@@ -54,6 +54,11 @@ enum PermissionText {
         }
     }
 
+    /// A permission that is granted (`AllowedLabel`; Diagnostics' rows).
+    static var allowed: String {
+        String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")
+    }
+
     static var reopen: String {
         String(localized: "Reopen AutoHush",
                comment: "Menu item, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again")
@@ -101,8 +106,7 @@ struct PermissionButton: View {
         case .needsReopen:
             PermissionText.reopen
         case .notAsked, .denied:
-            long ? permission.grantTitle
-                : String(localized: "Allow…", comment: "Welcome window and Add an App window: button that asks for a permission (macOS's prompt, or System Settings)")
+            long ? permission.grantTitle : AddAppText.allowButton
         }
     }
 }

@@ -26,7 +26,7 @@ func fail(_ line: String) -> Never {
     let line = PrivateText.redacted(line)
     log("playercheck: \(line)")
     FileHandle.standardError.write(Data("playercheck: \(line)\n".utf8))
-    exit(1)
+    exit(CheckExitStatus.failed)
 }
 
 // MARK: - The run's log
@@ -70,46 +70,22 @@ final class RunLog: @unchecked Sendable {
     /// When the check last wrote a line of its own (`InputBlock`'s watchdog).
     var lastWrite: Date { lock.withLock { last } }
 
-    /// Starts this run's log, named by its time, the app and what it does,
-    /// and moves the oldest beyond `kept` to the Trash: only the logs this
-    /// tool names (`isRunLog`), as --logs' folder may hold others'.
+    /// Starts this run's log, named by its time, the app and what it does
+    /// (`RunLogName`), and moves the oldest beyond `kept` to the Trash: only
+    /// the logs this tool names, as --logs' folder may hold others'.
     func start(app: String, doing: String) {
         let files = FileManager.default
         try? files.createDirectory(at: Self.folder, withIntermediateDirectories: true)
-        let safe = { (text: String) in text.map { "/:".contains($0) ? "-" : String($0) }.joined() }
-        let url = Self.folder.appendingPathComponent("\(Self.nameTime().string(from: Date())) \(safe(app)) \(safe(doing)).log")
+        let url = Self.folder.appendingPathComponent(RunLogName.name(at: Date(), app: app, doing: doing))
         guard files.createFile(atPath: url.path, contents: nil), let handle = try? FileHandle(forWritingTo: url) else { return }
         lock.withLock { file = handle }
         let os = ProcessInfo.processInfo.operatingSystemVersion
         write("playercheck " + CommandLine.arguments.dropFirst().joined(separator: " ")
               + "  (pid \(getpid()), macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion), "
               + (ProcessInfo.processInfo.environment["__CFBundleIdentifier"].map { "run by \($0)" } ?? "run from a shell") + ")")
-        let logs = ((try? files.contentsOfDirectory(atPath: Self.folder.path)) ?? []).filter(Self.isRunLog).sorted()
+        let logs = ((try? files.contentsOfDirectory(atPath: Self.folder.path)) ?? []).filter(RunLogName.isRunLog).sorted()
         let discard = discard
         for old in logs.dropLast(Self.kept) { discard(Self.folder.appendingPathComponent(old)) }
-    }
-
-    /// The time a run's log is named by, e.g. "2026-10-18 09.41.07.250".
-    private static func nameTime() -> DateFormatter {
-        let format = DateFormatter()
-        format.locale = Locale(identifier: "en_US_POSIX")
-        format.dateFormat = "yyyy-MM-dd HH.mm.ss.SSS"
-        return format
-    }
-
-    /// What a run does, last in its log's name: a check, a press (by a way),
-    /// a relaunch.
-    static let doings: Set<String> = Set(["check", "read-only", "relaunch"] + Action.allCases.flatMap { action in
-        [action.rawValue] + Way.allCases.map { "\(action.rawValue) via \($0.rawValue)" }
-    })
-
-    /// Whether `name` is a run's log as `start` names it: its time, the app,
-    /// what the run did, ".log".
-    static func isRunLog(_ name: String) -> Bool {
-        guard name.hasSuffix(".log"), name.count > 24 else { return false }
-        let time = String(name.prefix(23)), rest = name.dropFirst(23).dropLast(4)
-        guard rest.first == " ", nameTime().date(from: time) != nil else { return false }
-        return doings.contains { rest.hasSuffix(" " + $0) && rest.count > $0.count + 2 }
     }
 }
 

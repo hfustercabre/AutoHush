@@ -7,6 +7,9 @@ import Foundation
 /// only once a switch for assistive tools is on, which AutoHush then keeps
 /// on while the app is its player (`AccessibilityWebPage`).
 package struct PageAccess: Codable, Equatable, Sendable {
+    /// What the app's interface is built with, as its bundle tells it
+    /// (`interface(ofAppAt:)`): whether its page shows as it is or needs a
+    /// switch (`switches(for:)`), and where that switch is set.
     package enum Interface: Codable, Equatable, Sendable {
         /// Safari's WebKit: shown as it is, its words current out of sight.
         case webKit

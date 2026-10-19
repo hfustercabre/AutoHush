@@ -1,6 +1,7 @@
 import AppKit
 import CheckedPlayers
 import PlayerCheckKit
+import WebAppPlayers
 
 // MARK: - The menu bar's Now Playing panel, as AutoHush reads and presses it
 
@@ -67,7 +68,8 @@ func openPanel(_ item: AXUIElement) -> [ShownRow]? { AccessibilityNowPlayingPane
 func closePanel(_ item: AXUIElement) { AccessibilityNowPlayingPanel.close(item) }
 
 /// The texts of the page's player bar (the song and the artist, where
-/// a web app's window may keep a generic title); none without a page or a bar.
+/// a web app's window may keep a generic title), each element read waiting
+/// 0.5 s, as the page's are; none without a page or a bar.
 @MainActor func playerBarTexts(_ pid: pid_t) -> [String] {
     guard page?.toggle != nil, pageToggleLabel(pid) != nil, let toggle = barToggle, let bar = playerBar(of: toggle) else { return [] }
     var texts: [String] = [], reads = 500
@@ -75,7 +77,7 @@ func closePanel(_ item: AXUIElement) { AccessibilityNowPlayingPanel.close(item) 
         guard reads > 0 else { return }
         reads -= 1
         texts += [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute].map { element.text($0) }.filter { !$0.isEmpty }
-        if depth < 8 { element.children.forEach { read($0, depth: depth + 1) } }
+        if depth < 8 { element.children(timeout: AccessibilityWebPage.timeout).forEach { read($0, depth: depth + 1) } }
     }
     read(bar, depth: 0)
     return texts

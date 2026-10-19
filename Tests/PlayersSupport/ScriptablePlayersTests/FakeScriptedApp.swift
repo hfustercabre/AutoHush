@@ -2,13 +2,14 @@ import AppKit
 import Foundation
 import os
 import AutoHushKit
+import PlayersTestSupport
 @testable import ScriptablePlayers
 
 /// An app scripted as its dictionary allows, without the app: its player
 /// state or `playing` flag (`jPly`) with its current time (`jTim`), its
 /// volume, its documents, the commands it was sent, and whether it answers.
-final class FakeScriptedApp: AppleEventSending {
-    struct State {
+final class FakeScriptedApp: FakeAppleEventApp {
+    struct State: AppleEventAppState {
         var pid: pid_t? = 4242
         /// `kPSP` playing, `kPSp` paused; its `jPly` flag the same.
         var playing = true
@@ -39,27 +40,15 @@ final class FakeScriptedApp: AppleEventSending {
         state = OSAllocatedUnfairLock(initialState: initial)
     }
 
-    var sent: [String] { state.withLock { $0.sent } }
     /// What was sent but its reads and sets: the commands.
     var commands: [String] { sent.filter { entry in !["ask", "get ", "set "].contains { entry.hasPrefix($0) } } }
 
-    func processIdentifier() -> pid_t? { state.withLock { $0.pid } }
-
-    func runningProcessIdentifier() throws -> pid_t {
-        guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        return pid
-    }
-
-    func requestPermission(pid: pid_t) async throws { state.withLock { $0.sent.append("ask") } }
-
     func send(_ makeEvent: @escaping @Sendable (pid_t) -> NSAppleEventDescriptor, to pid: pid_t) async throws -> PlayerReply {
-        // What the event asks, read before the lock: descriptors aren't Sendable.
         let event = makeEvent(pid)
-        let code = Self.text(event.eventClass) + Self.text(event.eventID)
-        let direct = event.paramDescriptor(forKeyword: fourCharCode("----"))
-        let property = (direct?.forKeyword(fourCharCode("seld"))?.typeCodeValue).map(Self.text)
+        let sentEvent = SentEvent(event)
+        let (code, direct, value) = (sentEvent.code, sentEvent.direct, sentEvent.value)
+        let property = sentEvent.property.map(SentEvent.text)
         let ofDocuments = direct?.forKeyword(fourCharCode("from")).map { $0.descriptorType != fourCharCode("null") } ?? false
-        let value = event.paramDescriptor(forKeyword: fourCharCode("data")).map { Int($0.int32Value) }
         let real = event.paramDescriptor(forKeyword: fourCharCode("data"))?.doubleValue
         // A property's document: by its name, else the front one.
         let container = direct?.forKeyword(fourCharCode("from"))
@@ -125,10 +114,5 @@ final class FakeScriptedApp: AppleEventSending {
                 return PlayerReply()
             }
         }
-    }
-
-    /// A four-char code as its text ("jukePaus" is "juke" and "Paus").
-    private static func text(_ code: OSType) -> String {
-        String(bytes: [24, 16, 8, 0].map { UInt8(truncatingIfNeeded: code >> $0) }, encoding: .macOSRoman) ?? "?"
     }
 }

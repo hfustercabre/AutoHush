@@ -44,10 +44,6 @@ struct AutoPauseFocusFilter: SetFocusFilterIntent {
 
     init() {}
 
-    init(choice: AutoPauseFocusChoice?) {
-        self.choice = choice
-    }
-
     /// How the Focus's settings list the filter once it's added.
     var displayRepresentation: DisplayRepresentation {
         switch choice {

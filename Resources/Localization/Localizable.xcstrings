@@ -1925,211 +1925,211 @@
         }
       }
     },
-    "%@ can’t be faded." : {
+    "%@ can’t be faded" : {
       "comment" : "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يمكن تطبيق التلاشي على %@."
+            "value" : "لا يمكن تطبيق التلاشي على %@"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ no admet esvaïments."
+            "value" : "%@ no admet esvaïments"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "U aplikace %@ nelze použít prolínání."
+            "value" : "U aplikace %@ nelze použít prolínání"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ kan ikke tones ud og ind."
+            "value" : "%@ kan ikke tones ud og ind"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ kann nicht ein- und ausgeblendet werden."
+            "value" : "%@ kann nicht ein- und ausgeblendet werden"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η εφαρμογή %@ δεν υποστηρίζει σταδιακή αλλαγή έντασης."
+            "value" : "Η εφαρμογή %@ δεν υποστηρίζει σταδιακή αλλαγή έντασης"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ no admite fundidos."
+            "value" : "%@ no admite fundidos"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ no admite fundidos."
+            "value" : "%@ no admite fundidos"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appia %@ ei voi häivyttää."
+            "value" : "Appia %@ ei voi häivyttää"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ne prend pas en charge les fondus."
+            "value" : "%@ ne prend pas en charge les fondus"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ ne prend pas en charge les fondus."
+            "value" : "%@ ne prend pas en charge les fondus"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ को फ़ेड नहीं किया जा सकता।"
+            "value" : "%@ को फ़ेड नहीं किया जा सकता"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikaciju %@ nije moguće postupno utišavati."
+            "value" : "Aplikaciju %@ nije moguće postupno utišavati"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A(z) %@ app nem halkítható fokozatosan."
+            "value" : "A(z) %@ app nem halkítható fokozatosan"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ tidak dapat dipudarkan."
+            "value" : "%@ tidak dapat dipudarkan"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non è possibile applicare dissolvenze a %@."
+            "value" : "Non è possibile applicare dissolvenze a %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@はフェードできません。"
+            "value" : "%@はフェードできません"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@은(는) 페이드할 수 없습니다."
+            "value" : "%@은(는) 페이드할 수 없습니다"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ kan ikke tones ut og inn."
+            "value" : "%@ kan ikke tones ut og inn"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bij %@ is faden niet mogelijk."
+            "value" : "Bij %@ is faden niet mogelijk"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikacja %@ nie obsługuje wyciszania."
+            "value" : "Aplikacja %@ nie obsługuje wyciszania"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não é possível aplicar fade em %@."
+            "value" : "Não é possível aplicar fade em %@"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não é possível aplicar fade a %@."
+            "value" : "Não é possível aplicar fade a %@"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplicația %@ nu poate fi estompată."
+            "value" : "Aplicația %@ nu poate fi estompată"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Для %@ затухание недоступно."
+            "value" : "Для %@ затухание недоступно"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apku %@ nemožno prelínať."
+            "value" : "Apku %@ nemožno prelínať"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Za aplikacijo %@ pojemanje ni mogoče."
+            "value" : "Za aplikacijo %@ pojemanje ni mogoče"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ kan inte tonas in och ut."
+            "value" : "%@ kan inte tonas in och ut"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ uygulamasının sesi yavaşça değiştirilemez."
+            "value" : "%@ uygulamasının sesi yavaşça değiştirilemez"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Для програми %@ згасання недоступне."
+            "value" : "Для програми %@ згасання недоступне"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Không thể giảm dần âm lượng của %@."
+            "value" : "Không thể giảm dần âm lượng của %@"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 無法淡入淡出。"
+            "value" : "%@ 無法淡入淡出"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 无法淡入淡出。"
+            "value" : "%@ 无法淡入淡出"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 無法淡入淡出。"
+            "value" : "%@ 無法淡入淡出"
           }
         }
       }
@@ -11577,6 +11577,221 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@。按一下即可反轉順序。"
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "comment" : "The menu's status line (the first %@, already translated) and an info symbol after it (the second %@), joined by a no-break space so the symbol stays with the last word: keep it as it is",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
           }
         }
       }
@@ -31126,7 +31341,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHushを置き換えられませんでした: %@"
+            "value" : "AutoHushを置き換えられませんでした：%@"
           }
         },
         "ko" : {
@@ -46079,7 +46294,7 @@
       }
     },
     "Collapsed" : {
-      "comment" : "VoiceOver: a heading or button while what's under it is hidden (Settings → Diagnostics' parts, the players under the menu's card); a click shows it",
+      "comment" : "VoiceOver: a heading or row while what it shows is hidden (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is closed); a click shows it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -50158,7 +50373,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ログイン項目を変更できませんでした: %@"
+            "value" : "ログイン項目を変更できませんでした：%@"
           }
         },
         "ko" : {
@@ -54864,7 +55079,7 @@
       }
     },
     "Expanded" : {
-      "comment" : "VoiceOver: a heading or button while what's under it shows (Settings → Diagnostics' parts, the players under the menu's card); a click hides it",
+      "comment" : "VoiceOver: a heading or row while what it shows is open (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is open); a click hides it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -56326,211 +56541,211 @@
         }
       }
     },
-    "Fades out and back in." : {
+    "Fades out and back in" : {
       "comment" : "The menu, under Fade playback: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تلاشٍ ثم ظهور تدريجي."
+            "value" : "تلاشٍ ثم ظهور تدريجي"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Esvaïment de sortida i d’entrada."
+            "value" : "Esvaïment de sortida i d’entrada"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ztlumí a znovu zesílí."
+            "value" : "Ztlumí a znovu zesílí"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toner ud og ind igen."
+            "value" : "Toner ud og ind igen"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aus- und wieder einblenden."
+            "value" : "Aus- und wieder einblenden"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Μείωση και ξανά αύξηση."
+            "value" : "Μείωση και ξανά αύξηση"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fundido de salida y de entrada."
+            "value" : "Fundido de salida y de entrada"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fundido de salida y de entrada."
+            "value" : "Fundido de salida y de entrada"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Häivyttää pois ja takaisin."
+            "value" : "Häivyttää pois ja takaisin"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fondu sortant puis entrant."
+            "value" : "Fondu sortant puis entrant"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fondu sortant puis entrant."
+            "value" : "Fondu sortant puis entrant"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "फ़ेड आउट और फिर फ़ेड इन।"
+            "value" : "फ़ेड आउट और फिर फ़ेड इन"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utišava i ponovno pojačava."
+            "value" : "Utišava i ponovno pojačava"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elhalkítás és felerősítés."
+            "value" : "Elhalkítás és felerősítés"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Memudar lalu kembali membesar."
+            "value" : "Memudar lalu kembali membesar"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dissolvenza in uscita e in entrata."
+            "value" : "Dissolvenza in uscita e in entrata"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フェードアウトして再びフェードイン。"
+            "value" : "フェードアウトして再びフェードイン"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "페이드 아웃 후 다시 페이드 인."
+            "value" : "페이드 아웃 후 다시 페이드 인"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toner ut og inn igjen."
+            "value" : "Toner ut og inn igjen"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uitfaden en weer infaden."
+            "value" : "Uitfaden en weer infaden"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wycisza i znów zgłaśnia."
+            "value" : "Wycisza i znów zgłaśnia"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fade-out e fade-in."
+            "value" : "Fade-out e fade-in"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fade-out e fade-in."
+            "value" : "Fade-out e fade-in"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Estompare și revenire treptată."
+            "value" : "Estompare și revenire treptată"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Затухание и нарастание."
+            "value" : "Затухание и нарастание"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stlmí a znova zosilní."
+            "value" : "Stlmí a znova zosilní"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pojemanje in ponovno naraščanje."
+            "value" : "Pojemanje in ponovno naraščanje"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tonar ut och in igen."
+            "value" : "Tonar ut och in igen"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kısılır ve yeniden açılır."
+            "value" : "Kısılır ve yeniden açılır"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Згасання й наростання."
+            "value" : "Згасання й наростання"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Giảm dần rồi tăng dần."
+            "value" : "Giảm dần rồi tăng dần"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "淡出後再淡入。"
+            "value" : "淡出後再淡入"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "淡出后再淡入。"
+            "value" : "淡出后再淡入"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "淡出後再淡入。"
+            "value" : "淡出後再淡入"
           }
         }
       }
@@ -61098,7 +61313,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Başka Bir Uygulamayı Yok Say…"
+            "value" : "Başka Uygulamayı Yok Say…"
           }
         },
         "uk" : {
@@ -64895,6 +65110,215 @@
         }
       }
     },
+    "It doesn’t pause your player." : {
+      "comment" : "The menu, Ignored Apps, under the name of the one app ignored",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوقف مشغّلك مؤقتًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No posa en pausa el reproductor."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepozastavuje váš přehrávač."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den sætter ikke din afspiller på pause."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie pausiert deinen Player nicht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν θέτει σε παύση την εφαρμογή αναπαραγωγής σας."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausa tu reproductor."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausa tu reproductor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se ei keskeytä soitintasi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle ne met pas votre lecteur en pause."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle ne met pas votre lecteur en pause."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यह आपके प्लेयर को पॉज़ नहीं करता।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pauzira vaš reproduktor."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nem szünetelteti a lejátszóját."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App ini tidak menjeda pemutar Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non mette in pausa il lettore."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーを一時停止しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어를 일시 정지하지 않습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den setter ikke spilleren din på pause."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deze pauzeert je speler niet."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie wstrzymuje Twojego odtwarzacza."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ele não pausa seu player."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não coloca o seu leitor em pausa."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu pune playerul dvs. pe pauză."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оно не ставит ваш плеер на паузу."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nepozastavuje váš prehrávač."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne zaustavi vašega predvajalnika."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den pausar inte din spelare."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oynatıcınızı duraklatmaz."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вона не призупиняє ваш програвач."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nó không tạm dừng trình phát của bạn."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它不會暫停你的播放器。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它不会暂停你的播放器。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它不會暫停你的播放器。"
+          }
+        }
+      }
+    },
     "It plays" : {
       "comment" : "Add an App window, under the step “Play something in %@” once done",
       "localizations" : {
@@ -67714,7 +68138,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最終確認: %@"
+            "value" : "最終確認：%@"
           }
         },
         "ko" : {
@@ -70747,211 +71171,211 @@
         }
       }
     },
-    "Matches quieter apps’ volume." : {
+    "Matches quieter apps’ volume" : {
       "comment" : "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يطابق صوت التطبيقات الأهدأ."
+            "value" : "يطابق صوت التطبيقات الأهدأ"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iguala el volum d’apps més baixes."
+            "value" : "Iguala el volum d’apps més baixes"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přizpůsobí se tišším aplikacím."
+            "value" : "Přizpůsobí se tišším aplikacím"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Følger lydstyrken i svagere apps."
+            "value" : "Følger lydstyrken i svagere apps"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Passt sich leiseren Apps an."
+            "value" : "Passt sich leiseren Apps an"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ταιριάζει με πιο ήσυχες εφαρμογές."
+            "value" : "Ταιριάζει με πιο ήσυχες εφαρμογές"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iguala el volumen de apps más bajas."
+            "value" : "Iguala el volumen de apps más bajas"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iguala el volumen de apps más bajas."
+            "value" : "Iguala el volumen de apps más bajas"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mukautuu hiljaisempiin appeihin."
+            "value" : "Mukautuu hiljaisempiin appeihin"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suit le volume des apps plus faibles."
+            "value" : "Suit le volume des apps plus faibles"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suit le volume des apps plus faibles."
+            "value" : "Suit le volume des apps plus faibles"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "शांत ऐप्स के वॉल्यूम से मेल खाता है।"
+            "value" : "शांत ऐप्स के वॉल्यूम से मेल खाता है"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prilagođava se tišim aplikacijama."
+            "value" : "Prilagođava se tišim aplikacijama"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A halkabb appokhoz igazodik."
+            "value" : "A halkabb appokhoz igazodik"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Menyamakan dengan app yang lebih pelan."
+            "value" : "Menyamakan dengan app yang lebih pelan"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Si adegua alle app più basse."
+            "value" : "Si adegua alle app più basse"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "静かなAppの音量に合わせます。"
+            "value" : "静かなAppの音量に合わせます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "더 조용한 앱의 음량에 맞춥니다."
+            "value" : "더 조용한 앱의 음량에 맞춥니다"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Følger volumet til svakere apper."
+            "value" : "Følger volumet til svakere apper"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Volgt het volume van stillere apps."
+            "value" : "Volgt het volume van stillere apps"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dopasowuje do cichszych aplikacji."
+            "value" : "Dopasowuje do cichszych aplikacji"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iguala o volume de apps mais baixos."
+            "value" : "Iguala o volume de apps mais baixos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iguala o volume de apps mais baixas."
+            "value" : "Iguala o volume de apps mais baixas"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se potrivește cu aplicațiile mai silențioase."
+            "value" : "Se potrivește cu aplicațiile mai silențioase"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Подстраивается под более тихие приложения."
+            "value" : "Подстраивается под более тихие приложения"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prispôsobí sa tichším aplikáciám."
+            "value" : "Prispôsobí sa tichším aplikáciám"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prilagodi se tišjim aplikacijam."
+            "value" : "Prilagodi se tišjim aplikacijam"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Följer tystare appars volym."
+            "value" : "Följer tystare appars volym"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Daha sessiz uygulamalara uyar."
+            "value" : "Daha sessiz uygulamalara uyar"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Підлаштовується під тихіші програми."
+            "value" : "Підлаштовується під тихіші програми"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Khớp âm lượng của ứng dụng nhỏ hơn."
+            "value" : "Khớp âm lượng của ứng dụng nhỏ hơn"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配合較安靜 App 的音量。"
+            "value" : "配合較安靜 App 的音量"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "匹配较安静 App 的音量。"
+            "value" : "匹配较安静 App 的音量"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配合較安靜 App 的音量。"
+            "value" : "配合較安靜 App 的音量"
           }
         }
       }
@@ -77853,211 +78277,211 @@
         }
       }
     },
-    "No purple dot, less precise." : {
+    "No purple dot, less precise" : {
       "comment" : "The menu, under AntiDot mode: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "بلا نقطة أرجوانية، دقة أقل."
+            "value" : "بلا نقطة أرجوانية، دقة أقل"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sense punt lila, menys precís."
+            "value" : "Sense punt lila, menys precís"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez fialové tečky, méně přesné."
+            "value" : "Bez fialové tečky, méně přesné"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen lilla prik, mindre præcis."
+            "value" : "Ingen lilla prik, mindre præcis"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kein violetter Punkt, weniger genau."
+            "value" : "Kein violetter Punkt, weniger genau"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Χωρίς μοβ κουκκίδα, λιγότερο ακριβές."
+            "value" : "Χωρίς μοβ κουκκίδα, λιγότερο ακριβές"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin punto morado, menos preciso."
+            "value" : "Sin punto morado, menos preciso"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin punto morado, menos preciso."
+            "value" : "Sin punto morado, menos preciso"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ei violettia pistettä, epätarkempi."
+            "value" : "Ei violettia pistettä, epätarkempi"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans point violet, moins précis."
+            "value" : "Sans point violet, moins précis"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans point violet, moins précis."
+            "value" : "Sans point violet, moins précis"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "बैंगनी बिंदु नहीं, कम सटीक।"
+            "value" : "बैंगनी बिंदु नहीं, कम सटीक"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez ljubičaste točke, manje precizno."
+            "value" : "Bez ljubičaste točke, manje precizno"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nincs lila pont, kevésbé pontos."
+            "value" : "Nincs lila pont, kevésbé pontos"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tanpa titik ungu, kurang presisi."
+            "value" : "Tanpa titik ungu, kurang presisi"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nessun punto viola, meno preciso."
+            "value" : "Nessun punto viola, meno preciso"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "紫色のドットなし、精度は低め。"
+            "value" : "紫色のドットなし、精度は低め"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "보라색 점 없음, 정확도 낮음."
+            "value" : "보라색 점 없음, 정확도 낮음"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen lilla prikk, mindre presis."
+            "value" : "Ingen lilla prikk, mindre presis"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Geen paarse stip, minder nauwkeurig."
+            "value" : "Geen paarse stip, minder nauwkeurig"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez fioletowej kropki, mniej dokładnie."
+            "value" : "Bez fioletowej kropki, mniej dokładnie"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sem ponto roxo, menos preciso."
+            "value" : "Sem ponto roxo, menos preciso"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sem ponto roxo, menos preciso."
+            "value" : "Sem ponto roxo, menos preciso"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fără punct violet, mai puțin precis."
+            "value" : "Fără punct violet, mai puțin precis"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без фиолетовой точки, менее точно."
+            "value" : "Без фиолетовой точки, менее точно"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez fialovej bodky, menej presné."
+            "value" : "Bez fialovej bodky, menej presné"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Brez vijoličaste pike, manj natančno."
+            "value" : "Brez vijoličaste pike, manj natančno"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen lila prick, mindre exakt."
+            "value" : "Ingen lila prick, mindre exakt"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mor nokta yok, daha az kesin."
+            "value" : "Mor nokta yok, daha az kesin"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без фіолетової крапки, менш точно."
+            "value" : "Без фіолетової крапки, менш точно"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Không có chấm tím, kém chính xác hơn."
+            "value" : "Không có chấm tím, kém chính xác hơn"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有紫色圓點，精確度較低。"
+            "value" : "沒有紫色圓點，精確度較低"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有紫色圆点，精度较低。"
+            "value" : "没有紫色圆点，精度较低"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有紫色圓點，精確度較低。"
+            "value" : "沒有紫色圓點，精確度較低"
           }
         }
       }
@@ -78271,211 +78695,211 @@
         }
       }
     },
-    "No resume after a call." : {
+    "No resume after a call" : {
       "comment" : "The menu, under Stay paused after calls: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا استئناف بعد مكالمة."
+            "value" : "لا استئناف بعد مكالمة"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sense reprendre després d’una trucada."
+            "value" : "Sense reprendre després d’una trucada"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez obnovení po hovoru."
+            "value" : "Bez obnovení po hovoru"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen genoptagelse efter opkald."
+            "value" : "Ingen genoptagelse efter opkald"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kein Fortsetzen nach Anrufen."
+            "value" : "Kein Fortsetzen nach Anrufen"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Χωρίς συνέχιση μετά από κλήση."
+            "value" : "Χωρίς συνέχιση μετά από κλήση"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin reanudar tras una llamada."
+            "value" : "Sin reanudar tras una llamada"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin reanudar tras una llamada."
+            "value" : "Sin reanudar tras una llamada"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ei jatkoa puhelun jälkeen."
+            "value" : "Ei jatkoa puhelun jälkeen"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pas de reprise après un appel."
+            "value" : "Pas de reprise après un appel"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pas de reprise après un appel."
+            "value" : "Pas de reprise après un appel"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कॉल के बाद फिर से शुरू नहीं।"
+            "value" : "कॉल के बाद फिर से शुरू नहीं"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez nastavljanja nakon poziva."
+            "value" : "Bez nastavljanja nakon poziva"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nincs folytatás hívás után."
+            "value" : "Nincs folytatás hívás után"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tidak dilanjutkan setelah panggilan."
+            "value" : "Tidak dilanjutkan setelah panggilan"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nessuna ripresa dopo una chiamata."
+            "value" : "Nessuna ripresa dopo una chiamata"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通話後は再開しません。"
+            "value" : "通話後は再開しません"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "통화 후 재개하지 않음."
+            "value" : "통화 후 재개하지 않음"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ingen gjenopptak etter samtaler."
+            "value" : "Ingen gjenopptak etter samtaler"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niet hervatten na een gesprek."
+            "value" : "Niet hervatten na een gesprek"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez wznawiania po połączeniu."
+            "value" : "Bez wznawiania po połączeniu"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não retoma após uma chamada."
+            "value" : "Não retoma após uma chamada"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não retoma após uma chamada."
+            "value" : "Não retoma após uma chamada"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fără reluare după un apel."
+            "value" : "Fără reluare după un apel"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без возобновления после звонка."
+            "value" : "Без возобновления после звонка"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez obnovenia po hovore."
+            "value" : "Bez obnovenia po hovore"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Brez nadaljevanja po klicu."
+            "value" : "Brez nadaljevanja po klicu"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inget återupptagande efter samtal."
+            "value" : "Inget återupptagande efter samtal"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aramadan sonra sürdürülmez."
+            "value" : "Aramadan sonra sürdürülmez"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без відновлення після дзвінка."
+            "value" : "Без відновлення після дзвінка"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Không tiếp tục sau cuộc gọi."
+            "value" : "Không tiếp tục sau cuộc gọi"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通話後不繼續播放。"
+            "value" : "通話後不繼續播放"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通话后不继续播放。"
+            "value" : "通话后不继续播放"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通話後不繼續播放。"
+            "value" : "通話後不繼續播放"
           }
         }
       }
@@ -81299,7 +81723,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "まだ学習していません: 学習するまでAutoHushは%@を一時停止できません。"
+            "value" : "まだ学習していません：学習するまでAutoHushは%@を一時停止できません。"
           }
         },
         "ko" : {
@@ -84750,6 +85174,215 @@
         }
       }
     },
+    "Off in AntiDot mode" : {
+      "comment" : "The menu, under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف في وضع AntiDot"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivat al mode AntiDot"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnuto v režimu AntiDot"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fra i AntiDot-tilstand"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im AntiDot-Modus aus"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ανενεργό στη λειτουργία AntiDot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado en el modo AntiDot"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado en el modo AntiDot"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pois AntiDot-tilassa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé en mode AntiDot"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé en mode AntiDot"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot मोड में बंद"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isključeno u načinu rada AntiDot"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot módban ki van kapcsolva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mati dalam mode AntiDot"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivato in modalità AntiDot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDotモードではオフです"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot 모드에서는 꺼집니다"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av i AntiDot-modus"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uit in AntiDot-modus"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłączone w trybie AntiDot"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado no modo AntiDot"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado no modo AntiDot"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivat în modul AntiDot"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выключено в режиме AntiDot"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnuté v režime AntiDot"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izklopljeno v načinu AntiDot"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av i AntiDot-läge"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AntiDot modunda kapalı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вимкнено в режимі AntiDot"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt ở Chế độ AntiDot"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下關閉"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AntiDot 模式下關閉"
+          }
+        }
+      }
+    },
     "Off in AntiDot mode, which doesn’t measure sound." : {
       "comment" : "Settings → Advanced, under the dimmed “Level the volume”",
       "localizations" : {
@@ -84955,215 +85588,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 AntiDot 模式下關閉，該模式不測量聲音。"
-          }
-        }
-      }
-    },
-    "Off in AntiDot mode." : {
-      "comment" : "The menu, under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound)",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "متوقف في وضع AntiDot."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desactivat al mode AntiDot."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vypnuto v režimu AntiDot."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fra i AntiDot-tilstand."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Im AntiDot-Modus aus."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ανενεργό στη λειτουργία AntiDot."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desactivado en el modo AntiDot."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desactivado en el modo AntiDot."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pois AntiDot-tilassa."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactivé en mode AntiDot."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactivé en mode AntiDot."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot मोड में बंद।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Isključeno u načinu rada AntiDot."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot módban ki van kapcsolva."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mati dalam mode AntiDot."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Disattivato in modalità AntiDot."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDotモードではオフです。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot 모드에서는 꺼집니다."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Av i AntiDot-modus."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uit in AntiDot-modus."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wyłączone w trybie AntiDot."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desativado no modo AntiDot."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desativado no modo AntiDot."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dezactivat în modul AntiDot."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выключено в режиме AntiDot."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vypnuté v režime AntiDot."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Izklopljeno v načinu AntiDot."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Av i AntiDot-läge."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot modunda kapalı."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Вимкнено в режимі AntiDot."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tắt ở Chế độ AntiDot."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 AntiDot 模式下關閉。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 AntiDot 模式下关闭。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 AntiDot 模式下關閉。"
           }
         }
       }
@@ -95929,7 +96353,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "再生中: 一時停止できませんでした"
+            "value" : "再生中：一時停止できませんでした"
           }
         },
         "ko" : {
@@ -102206,7 +102630,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appのリストをリセットしますか?"
+            "value" : "Appのリストをリセットしますか？"
           }
         },
         "ko" : {
@@ -102314,7 +102738,7 @@
       }
     },
     "Restore Defaults" : {
-      "comment" : "Settings → Detection and → Fades: button that sets the page's settings back to their defaults",
+      "comment" : "Settings → Detection, → Fades and → Advanced: button that sets the page's settings back to their defaults",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -115487,7 +115911,7 @@
       }
     },
     "They don’t pause your player." : {
-      "comment" : "The menu, under the names of the ignored apps",
+      "comment" : "The menu, Ignored Apps, under the names of the ignored apps (two or more)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -128767,7 +129191,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開発を応援しませんか?"
+            "value" : "開発を応援しませんか？"
           }
         },
         "ko" : {
@@ -130648,7 +131072,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "現在のバージョンは%@です。Homebrewでアップデートしてください:"
+            "value" : "現在のバージョンは%@です。Homebrewでアップデートしてください："
           }
         },
         "ko" : {

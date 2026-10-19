@@ -3,62 +3,44 @@ import Foundation
 import Security
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 /// The real installer against a real disk image: a tiny AutoHush.app, signed
 /// ad hoc, standing in for a release. Its designated requirement plays the
-/// running app's.
+/// running app's. One test at a time: the slow ones open the same disk image
+/// (`Fixture.shared`), which macOS won't attach again while it's attached
+/// (hdiutil: “Resource busy”, 2026-10-19).
 @Suite("UpdateInstaller", .serialized)
 struct UpdateInstallerTests {
     /// A folder of its own for each test, deleted afterwards.
     private final class Scratch {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerTests-\(UUID().uuidString)")
+        private let temporary = TemporaryFolder("UpdateInstallerTests", create: false)
+        var folder: URL { temporary.url }
         /// The installed app the update replaces.
         var installedApp: URL { folder.appending(path: "Applications/AutoHush.app") }
         /// What a test that opens no disk image downloads (`StandIn`).
         var download: URL { folder.appending(path: "download.dmg") }
         /// Where the installer opened disk images.
         let mounts = MountLog()
-        /// What the installer moved to the Trash.
-        let trashed = TrashLog()
+        /// What the installer moved to the Trash, in order.
+        let trashed = Locked<[URL]>([])
 
         init() throws {
             try FileManager.default.createDirectory(at: installedApp, withIntermediateDirectories: true)
             try Data("old".utf8).write(to: installedApp.appending(path: "version.txt"))
             try StandIn.contents.write(to: download)
         }
-
-        deinit {
-            try? FileManager.default.removeItem(at: folder)
-        }
-    }
-
-    /// The download requests made.
-    private final class RequestLog: @unchecked Sendable {
-        private let lock = NSLock()
-        private var _all: [URLRequest] = []
-        var all: [URLRequest] { lock.withLock { _all } }
-        func record(_ request: URLRequest) { lock.withLock { _all.append(request) } }
-    }
-
-    /// The files moved to the Trash, in order.
-    private final class TrashLog: @unchecked Sendable {
-        private let lock = NSLock()
-        private var _all: [URL] = []
-        var all: [URL] { lock.withLock { _all } }
-        func record(_ file: URL) { lock.withLock { _all.append(file) } }
     }
 
     /// Counts relaunches and their cancellations.
-    private final class RelaunchLog: @unchecked Sendable {
-        private let lock = NSLock()
-        private var _opened: [URL] = []
-        private var _cancelled = 0
-        var opened: [URL] { lock.withLock { _opened } }
-        var cancelled: Int { lock.withLock { _cancelled } }
+    private final class RelaunchLog: Sendable {
+        private let state = Locked((opened: [URL](), cancelled: 0))
+        var opened: [URL] { state.value.opened }
+        var cancelled: Int { state.value.cancelled }
 
         func relaunch(_ app: URL) -> @Sendable () -> Void {
-            lock.withLock { _opened.append(app) }
-            return { self.lock.withLock { self._cancelled += 1 } }
+            state.withLock { $0.opened.append(app) }
+            return { self.state.withLock { $0.cancelled += 1 } }
         }
     }
 
@@ -66,17 +48,16 @@ struct UpdateInstallerTests {
     /// none is left open (this test's own, whatever else runs on the Mac),
     /// and that the staging folders `prepare` makes beside the installed app
     /// are gone.
-    private final class MountLog: @unchecked Sendable {
-        private let lock = NSLock()
-        private var _noted: [String] = []
+    private final class MountLog: Sendable {
+        private let mountPoints = Locked<[String]>([])
         /// Each mount point a tool was given, in order.
-        var noted: [String] { lock.withLock { _noted } }
+        var noted: [String] { mountPoints.value }
 
         /// `tools`, each noting where it opens an image.
         func noting(_ tools: [DiskImageTool]) -> [DiskImageTool] {
             tools.map { tool in
                 DiskImageTool(path: tool.path, attachArguments: { image, mountPoint in
-                    self.lock.withLock { self._noted.append(mountPoint) }
+                    self.mountPoints.append(mountPoint)
                     return tool.attachArguments(image, mountPoint)
                 }, detachArguments: tool.detachArguments)
             }
@@ -108,15 +89,16 @@ struct UpdateInstallerTests {
         status: Int = 200,
         serving file: URL? = nil,
         relaunchLog: RelaunchLog = RelaunchLog(),
-        requests: RequestLog = RequestLog(),
-        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference
+        requests: Locked<[URLRequest]> = Locked([]),
+        diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference,
+        diskImageTimeout: TimeInterval = UpdateInstaller.diskImageToolTimeout
     ) -> UpdateInstaller {
         let file = file ?? scratch.download
         return UpdateInstaller(
             appURL: scratch.installedApp,
             requirement: requirement,
             download: { request in
-                requests.record(request)
+                requests.append(request)
                 // Like URLSession: a fresh temporary file the caller moves away.
                 let copy = FileManager.default.temporaryDirectory.appending(path: "download-\(UUID().uuidString)")
                 try FileManager.default.copyItem(at: file, to: copy)
@@ -124,7 +106,8 @@ struct UpdateInstallerTests {
             },
             relaunch: relaunchLog.relaunch,
             diskImageTools: scratch.mounts.noting(diskImageTools),
-            trash: { [trashed = scratch.trashed] in trashed.record($0) }
+            diskImageTimeout: diskImageTimeout,
+            trash: { [trashed = scratch.trashed] in trashed.append($0) }
         )
     }
 
@@ -199,6 +182,22 @@ struct UpdateInstallerTests {
         }
         #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
         #expect(scratch.mounts.stagingIsGone)
+    }
+
+    @Test("a disk image tool that hangs is stopped once its time is up, and the download refused as damaged: an install never waits for good; its staging folder goes")
+    func hungToolTimesOut() async throws {
+        let scratch = try Scratch()
+        // It ignores the request to stop, as one stuck in the kernel would.
+        let hung = DiskImageTool(path: "/bin/sh", attachArguments: { _, _ in ["-c", "trap '' TERM; sleep 5"] },
+                                 detachArguments: { _ in [] })
+        let started = Date()
+        await #expect(throws: UpdateInstallError.damaged) {
+            try await installer(scratch, diskImageTools: [hung], diskImageTimeout: 0.3)
+                .prepare(release(), image: nil, allowsConstrainedNetwork: true)
+        }
+        #expect(Date().timeIntervalSince(started) < 4) // not waited for
+        #expect(scratch.mounts.stagingIsGone)
+        #expect(UpdateInstaller.diskImageToolTimeout == 120)
     }
 
     @Test("a download that doesn't match GitHub's checksum is refused")
@@ -280,10 +279,10 @@ struct UpdateInstallerTests {
     @Test("automatic downloads wait out Low Data Mode; ones the user asks for don't", arguments: [false, true])
     func lowDataMode(allowed: Bool) async throws {
         let scratch = try Scratch()
-        let requests = RequestLog()
+        let requests = Locked<[URLRequest]>([]) // the download requests made
         _ = try await installer(scratch, requests: requests)
             .download(release(), to: scratch.folder.appending(path: "AutoHush.dmg"), allowsConstrainedNetwork: allowed)
-        #expect(requests.all.map(\.allowsConstrainedNetworkAccess) == [allowed])
+        #expect(requests.value.map(\.allowsConstrainedNetworkAccess) == [allowed])
     }
 
     @Test("an update is prepared from a kept image without downloading, and the image stays; the copy isn't marked as downloaded, and changed after signing it would fail the signature check", .slow)
@@ -294,14 +293,14 @@ struct UpdateInstallerTests {
         try FileManager.default.copyItem(at: fixture.diskImage, to: kept)
         let mark = "0083;00000000;Safari;" // downloaded, as a browser marks it
         #expect(setxattr(kept.path, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) == 0)
-        let requests = RequestLog()
+        let requests = Locked<[URLRequest]>([]) // the download requests made
         let sut = installer(scratch, requirement: fixture.requirement, requests: requests)
 
         let update = try await sut.prepare(release(sha256: fixture.sha256), image: KeptImage(file: kept, sha256: fixture.sha256),
                                          allowsConstrainedNetwork: true)
 
         #expect(UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
-        #expect(requests.all.isEmpty)
+        #expect(requests.value.isEmpty)
         #expect(FileManager.default.fileExists(atPath: kept.path))
         #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
         let files = FileManager.default.enumerator(at: update.app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
@@ -413,7 +412,7 @@ struct UpdateInstallerTests {
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: applications.path)
         #expect(try String(contentsOf: scratch.installedApp.appending(path: "version.txt"), encoding: .utf8) == "old")
         #expect(log.cancelled == 1)
-        #expect(scratch.trashed.all == [update.app])
+        #expect(scratch.trashed.value == [update.app])
         #expect(!FileManager.default.fileExists(atPath: update.folder.path))
     }
 

@@ -1,6 +1,6 @@
 import Foundation
 
-/// The music players the user chooses from, in the order they are offered.
+/// The media players the user chooses from, in the order they are offered.
 /// AutoHush controls one of them at a time: the one the user chose.
 package struct MusicPlayerCatalog: Sendable {
     /// The players AutoHush ships with.

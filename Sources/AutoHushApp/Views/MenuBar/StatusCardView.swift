@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// The card at the top of the menu, which stays put while the rest scrolls:
-/// the music player, what's happening and the Auto-Pause switch, then what
+/// the media player, what's happening and the Auto-Pause switch, then what
 /// AutoHush can do with the player, as Settings → General shows it
 /// (`PlayerChecks`, K3, the user's pick, 2026-10-18) (the player's choice is
 /// under it, `MenuMediaPlayerView`). The whole card is Auto-Pause's (the
@@ -21,7 +21,7 @@ struct StatusCardView: View {
     var body: some View {
         Card(clearGlass: true) {
             HStack(spacing: 10) {
-                playerIcon(size: 36)
+                PlayerIcon(player: status.chosenPlayer, size: 36)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: status.cardTitle)
                         .font(.appHeadline)
@@ -39,19 +39,21 @@ struct StatusCardView: View {
                         statusLine(withInfo: false)
                     }
                     if status.canRetry { retryButton }
-                    if status.playerNeedsReopen && status.isReady { reopenButton }
-                    if status.offersUnmute { unmuteButton }
+                    PlayerFixButtons(player: status.playerName,
+                                     reopen: status.playerNeedsReopen && status.isReady ? { model.perform(.reopenPlayer) } : nil,
+                                     unmute: status.offersUnmute ? { model.perform(.unmutePlayer) } : nil,
+                                     inCard: true)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 3) {
                     Toggle(isOn: Binding(get: { status.autoPause == .on }, set: { _ in model.perform(.toggleAutoPause) })) {
-                        Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
+                        Text(verbatim: AutoPauseText.title)
                     }
                     .toggleStyle(PillToggleStyle())
                     .controlSize(MenuSpacing.switchSize)
                     .focused($autoPauseFocused)
                     .focusEffectDisabled() // the whole card shows it
-                    Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
+                    Text(verbatim: AutoPauseText.title)
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
                         .fixedSize() // whole, in every language: the status line wraps instead
@@ -95,8 +97,12 @@ struct StatusCardView: View {
         let line = Text(verbatim: status.statusLine)
             .foregroundStyle(status.needsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
         let info = Text(Image(systemName: "info.circle")).foregroundStyle(.appSecondary)
-        // A no-break space: the symbol never ends up alone on a line.
-        return (withInfo ? line + Text(verbatim: "\u{00A0}") + info : line)
+        // A no-break space: the symbol never ends up alone on a line. By
+        // interpolation, each part keeping its color (`+` is deprecated from
+        // the macOS 26 SDK on).
+        return (withInfo
+                ? Text("\(line)\u{00A0}\(info)", comment: "The menu's status line (the first %@, already translated) and an info symbol after it (the second %@), joined by a no-break space so the symbol stays with the last word: keep it as it is")
+                : line)
             .font(.appSubheadline)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -107,70 +113,7 @@ struct StatusCardView: View {
 
     /// Tries starting again; the menu stays open and the card shows how it went.
     private var retryButton: some View {
-        Button { model.perform(.retry) } label: {
-            Label {
-                Text("Retry", comment: "Menu: button on the card that tries starting again after a problem")
-            } icon: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .font(.appCallout)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(ChipButtonStyle(filled: true))
-        .padding(.top, 4)
-    }
-
-    /// Reopens the player with what it needs (its launch option); the menu
-    /// closes, and the card shows how it went next time. The line above
-    /// names the player, so the chip doesn't.
-    private var reopenButton: some View {
-        Button { model.perform(.reopenPlayer) } label: {
-            Label {
-                Text(verbatim: AppStatus.reopenPlayerTitle)
-            } icon: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .font(.appCallout)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(ChipButtonStyle(filled: true))
-        .padding(.top, 4)
-        .help(AddAppText.reopenReason(status.playerName))
-        .accessibilityHint(Text(verbatim: AddAppText.reopenReason(status.playerName)))
-    }
-
-    /// Lifts the mute until the other apps stop, as playing it yourself does.
-    private var unmuteButton: some View {
-        Button { model.perform(.unmutePlayer) } label: {
-            Label {
-                Text(verbatim: AppStatus.unmuteTitle)
-            } icon: {
-                Image(systemName: "speaker.wave.2")
-            }
-            .font(.appCallout)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(ChipButtonStyle(filled: true))
-        .padding(.top, 4)
-    }
-
-    /// The chosen player's icon; AutoHush's own while none is chosen, and
-    /// faded while the chosen player isn't installed.
-    private func playerIcon(size: CGFloat) -> some View {
-        let image: NSImage
-        let installed = status.chosenPlayer?.isInstalled ?? true
-        if let player = status.chosenPlayer {
-            image = player.icon(size: size)
-        } else {
-            image = NSApp.applicationIconImage ?? AppIcon.image(bundlePath: nil, size: size)
-        }
-        return Image(nsImage: image)
-            .resizable()
-            .frame(width: size, height: size)
-            .opacity(installed ? 1 : 0.5)
-            .accessibilityHidden(true)
+        CardChip(title: Text("Retry", comment: "Menu: button on the card that tries starting again after a problem"),
+                 symbol: "arrow.clockwise") { model.perform(.retry) }
     }
 }

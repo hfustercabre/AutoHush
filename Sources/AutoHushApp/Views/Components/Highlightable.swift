@@ -76,17 +76,24 @@ struct Highlightable: ViewModifier {
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
-    /// closures stay those of the latest drawing.
+    /// closures stay those of the latest drawing (they may hold what it
+    /// drew: an order, a permission).
     @MainActor private final class Actions {
         var press: (() -> Void)?
         var adjust: ((Int) -> Void)?
         var isCurrent: (() -> Bool)?
     }
 
+    /// A drawing of it, unlike any other: each hands its closures over once
+    /// it's done (`onChange`), not while it's drawn (U17, the full check,
+    /// 2026-10-19: a view's body changes nothing).
+    private struct Drawing: Equatable {
+        let id = UUID()
+    }
+
     @ViewBuilder func body(content: Content) -> some View {
         if let keyboard {
             let enabled = isEnabled && isAvailable
-            let _ = { actions.press = press; actions.adjust = adjust; actions.isCurrent = isCurrent }()
             // Its own light: a move redraws the controls it concerns only.
             let lit = isFocused || isLit || (enabled && keyboard.light(id).isOn)
             content
@@ -108,6 +115,11 @@ struct Highlightable: ViewModifier {
                                                 isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true }))
                 }
                 .onChange(of: enabled) { keyboard.update(id, isEnabled: enabled) }
+                .onChange(of: Drawing(), initial: true) {
+                    actions.press = press
+                    actions.adjust = adjust
+                    actions.isCurrent = isCurrent
+                }
                 .onDisappear { keyboard.remove(id) }
         } else {
             content
@@ -116,15 +128,18 @@ struct Highlightable: ViewModifier {
 }
 
 extension View {
-    /// A row of Settings (or the menu) as `Highlightable`, its tint 6 pt out
-    /// to its sides and 3 pt above and below it, as the menu's rows.
-    func highlightableRow(isFocused: Bool = false, ownsControls: Bool = false,
+    /// A row of Settings (or the menu) as `Highlightable`, its tint out of
+    /// its layout, `horizontal` pt to its sides and `vertical` pt above and
+    /// below it: 6 and 3, as the menu's rows, unless it says otherwise.
+    func highlightableRow(isFocused: Bool = false, isAvailable: Bool = true, ownsControls: Bool = false,
+                          cornerRadius: CGFloat = 8, horizontal: CGFloat = 6, vertical: CGFloat = 3,
                           press: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil) -> some View {
-        padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .modifier(Highlightable(isFocused: isFocused, ownsControls: ownsControls, press: press, adjust: adjust))
-            .padding(.horizontal, -6)
-            .padding(.vertical, -3)
+        padding(.horizontal, horizontal)
+            .padding(.vertical, vertical)
+            .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, isAvailable: isAvailable,
+                                    ownsControls: ownsControls, press: press, adjust: adjust))
+            .padding(.horizontal, -horizontal)
+            .padding(.vertical, -vertical)
     }
 }
 

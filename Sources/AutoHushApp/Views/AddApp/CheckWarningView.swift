@@ -15,8 +15,9 @@ struct CheckWarningView: View {
     let start: () -> Void
     let cancel: () -> Void
 
-    /// The window's width, which its bottom bar's buttons fit in every language.
-    static let width: CGFloat = 460
+    /// The window's width, Add an App's, which its bottom bar's buttons fit
+    /// in every language.
+    static let width = AddAppView.width
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,8 +31,7 @@ struct CheckWarningView: View {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6, alignment: .top), count: 4), spacing: 10) {
                             ForEach(CheckResult.WindowState.allCases, id: \.self, content: tile)
                         }
-                        Text(verbatim: AddAppText.statesNote(app.name))
-                            .captionStyle().fixedSize(horizontal: false, vertical: true)
+                        Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
                     }
                 }
                 SectionHeading(Text(verbatim: AddAppText.movingHeading)).padding(.top, 8)
@@ -40,8 +40,7 @@ struct CheckWarningView: View {
                         DimmedScreenPicture()
                         VStack(alignment: .leading, spacing: 4) {
                             Text(verbatim: AddAppText.blockedTitle).fontWeight(.semibold)
-                            Text(verbatim: AddAppText.blockedDetail)
-                                .captionStyle().fixedSize(horizontal: false, vertical: true)
+                            Text(verbatim: AddAppText.blockedDetail).captionStyle()
                         }
                     }
                     .accessibilityElement(children: .combine)
@@ -60,16 +59,12 @@ struct CheckWarningView: View {
                 .padding(.top, 2)
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Button(action: cancel) { Text(verbatim: AddAppText.cancel) }
                     .buttonStyle(.chip)
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button(action: start) {
-                    Text(verbatim: AddAppText.startCheck).font(.appBody.weight(.semibold)).padding(.horizontal, 6)
-                }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
-                .keyboardShortcut(.defaultAction)
+                MainButton(AddAppText.startCheck, action: start)
             }
         }
         .frame(width: Self.width)

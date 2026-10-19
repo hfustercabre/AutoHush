@@ -39,10 +39,10 @@ struct BottomBarFitTests {
     static let spacing: CGFloat = 8
 
     static let bars: [Bar] = [
-        Bar(name: "Settings → Sound Sources", width: { settingsPage }, margin: 16, items: [
+        Bar(name: "Settings → Sound Sources", width: { settingsPage }, margin: 20, items: [
             Item(keys: ["Ignore Another App…"]), Item(keys: ["Remove"]), Item(keys: ["Reset List…"]),
         ], slots: 4),
-        Bar(name: "Settings → Diagnostics", width: { settingsPage }, margin: 16, items: [
+        Bar(name: "Settings → Diagnostics", width: { settingsPage }, margin: 20, items: [
             // "Updated as it happens." is at the top of the page; "Copied" shows on the button.
             Item(keys: ["Show Logs…"]), Item(keys: ["Copy Report", "Copied"]),
         ], slots: 3),
@@ -82,16 +82,8 @@ struct BottomBarFitTests {
 
     /// Every key's value per language, English as the key.
     static let catalog: [String: [String: String]] = {
-        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let url = root.appending(path: "Resources/Localization/Localizable.xcstrings")
-        guard let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let strings = json["strings"] as? [String: [String: Any]] else { return [:] }
-        return strings.mapValues { entry in
-            let localizations = entry["localizations"] as? [String: [String: Any]] ?? [:]
-            return localizations.compactMapValues { ($0["stringUnit"] as? [String: Any])?["value"] as? String }
-        }
+        guard let catalog = try? StringCatalog(contentsOf: PackagePaths.catalogs.appending(path: "Localizable.xcstrings")) else { return [:] }
+        return catalog.strings.mapValues { ($0.localizations ?? [:]).compactMapValues { $0.stringUnit?.value } }
     }()
 
     static var languages: [String] {

@@ -92,6 +92,11 @@ final class StatusMenuController: NSObject {
     var pause: @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) }
     /// Where the pointer is, in the screen's coordinates (tests move it).
     var pointerLocation: @MainActor () -> CGPoint = { NSEvent.mouseLocation }
+    /// The clock a click on the menu bar item is timed by (tests move it).
+    var now: @MainActor () -> Date = Date.init
+    /// The menu bar item's frame, from its window unless set (tests, whose
+    /// item the menu bar may not have placed).
+    var itemFrame: (@MainActor () -> CGRect?)?
     /// The menu's and the side window's frames, from their windows unless
     /// set (tests, which show no window).
     var windowFrames: (@MainActor () -> (menu: CGRect, side: CGRect)?)?
@@ -194,7 +199,7 @@ final class StatusMenuController: NSObject {
     @objc func statusItemClicked() {
         if isMenuOpen {
             close()
-        } else if let closed = lastClosedByClick, Date().timeIntervalSince(closed) < 0.4 {
+        } else if let closed = lastClosedByClick, now().timeIntervalSince(closed) < 0.4 {
             lastClosedByClick = nil
         } else {
             open()
@@ -327,16 +332,7 @@ final class StatusMenuController: NSObject {
     private func watchWhileOpen() {
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.close()
-                // Only a click on the menu bar item itself, which then
-                // reaches it too (the full check, 2026-10-18: a quick click
-                // elsewhere and then on the icon opened nothing).
-                if let item = self.statusItem.button?.window?.frame, item.contains(self.pointerLocation()) {
-                    self.lastClosedByClick = Date()
-                }
-            }
+            MainActor.assumeIsolated { self?.closeForClickElsewhere() }
         }) { monitors.append(global) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
             let isFlags = event.type == .flagsChanged
@@ -353,6 +349,17 @@ final class StatusMenuController: NSObject {
             }
             return event
         }) { monitors.append(local) }
+    }
+
+    /// A click outside the menu closes it. One on the menu bar item itself
+    /// reaches the item too, as its next click: noted, so it doesn't open
+    /// the menu again (`statusItemClicked`). Only that one (the full check,
+    /// 2026-10-18: a quick click elsewhere and then on the icon opened nothing).
+    func closeForClickElsewhere() {
+        close()
+        if let item = itemFrame?() ?? statusItem.button?.window?.frame, item.contains(pointerLocation()) {
+            lastClosedByClick = now()
+        }
     }
 
     /// Closes the menu as another window becomes key (one of AutoHush's, or
@@ -477,9 +484,8 @@ final class StatusMenuController: NSObject {
                 await self?.updates.checkNow()
                 self?.model.isCheckingForUpdates = false
             }
-        case .snooze, .removeAddedApp, .addApp, .addWebApp, .ignoreAnotherApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
-             .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
-             .reopenPlayer, .unmutePlayer, .quit:
+        default:
+            guard command.closesMenuFirst else { return }
             close()
             // Once the menu has closed, as for a menu's rows.
             RunLoop.main.perform(inModes: [.default]) { [weak self] in
@@ -497,7 +503,9 @@ final class StatusMenuController: NSObject {
         case .ignoreAnotherApp:          IgnoreAppsPicker.run { settings.setIgnored($0, true) }
         case .resolveWarning(let need):  actions?.requestPermission(need)
         case .reopenAutoHush:            actions?.reopenAutoHush()
-        case .useAntiDotMode:            settings.setDetectionMethod(.playbackSignals)
+        // Through Settings' model, whose guard keeps AntiDot mode off for a
+        // player only its sound tells about (U18, the full check, 2026-10-19).
+        case .useAntiDotMode:            settingsModel?.useAntiDotMode()
         case .showUpdate:                updates.presentAvailableUpdate()
         case .openSettings:              actions?.openSettings(page: nil)
         case .showDiagnostics:           actions?.openSettings(page: .diagnostics)
@@ -508,9 +516,7 @@ final class StatusMenuController: NSObject {
         case .reopenPlayer:              actions?.reopenPlayer()
         case .unmutePlayer:              actions?.unmutePlayer()
         case .quit:                      actions?.quit()
-        case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
-             .toggleSettings, .openSide, .hoverSideRow, .pointerEntered, .retry:
-            break // they act in perform(_:)
+        default:                         break // they act in perform(_:) (`closesMenuFirst`)
         }
     }
 }

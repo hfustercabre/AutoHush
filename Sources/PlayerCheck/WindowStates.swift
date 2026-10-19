@@ -72,16 +72,16 @@ extension CheckResult.WindowState {
     }
 
     private typealias GetWindow = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
-    private static let getWindow = privateSymbol("_AXUIElementGetWindow", as: GetWindow.self)
+    private static let getWindow = PrivateSymbol.function("_AXUIElementGetWindow", as: GetWindow.self)
 
     /// The app's windows Accessibility knows, with their numbers: this
-    /// desktop's (minimized ones too) and every other's (`AccessibilityWindows`).
+    /// desktop's (minimized ones too) and every other's (`AccessibilityWindows`),
+    /// each read waiting 1 s.
     static func windowElements(of pid: pid_t) -> [(number: Int, element: AXUIElement)] {
         guard let getWindow else { return [] }
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, 1)
+        let app = AXUIElement.application(pid, timeout: 1)
         var found: [(number: Int, element: AXUIElement)] = []
-        for element in app.elements(kAXWindowsAttribute) + (AccessibilityWindows.windows(ofProcess: pid) ?? []) {
+        for element in app.elements(kAXWindowsAttribute, timeout: 1) + (AccessibilityWindows.windows(ofProcess: pid) ?? []) {
             var id: CGWindowID = 0
             if getWindow(element, &id) == .success, !found.contains(where: { $0.number == Int(id) }) { found.append((Int(id), element)) }
         }
@@ -126,8 +126,7 @@ extension CheckResult.WindowState {
     /// A closed window an app keeps counts as none.
     static func state(of app: NSRunningApplication) -> WindowState? {
         let pid = app.processIdentifier
-        let appElement = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(appElement, 1)
+        let appElement = AXUIElement.application(pid, timeout: 1)
         if appElement.value(kAXHiddenAttribute) as? Bool == true { return .hidden }
         guard let (info, element) = main(of: pid) else { return nil }
         if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimized }
@@ -147,10 +146,10 @@ extension CheckResult.WindowState {
     private typealias SetFrontProcess = @convention(c) (UnsafePointer<ProcessSerialNumber>, UInt32, UInt32) -> Int32
     private typealias ProcessForPID = @convention(c) (pid_t, UnsafeMutablePointer<ProcessSerialNumber>) -> Int32
     private typealias PIDForProcess = @convention(c) (UnsafePointer<ProcessSerialNumber>, UnsafeMutablePointer<pid_t>) -> Int32
-    private static let getFrontProcess = privateSymbol("_SLPSGetFrontProcess", as: GetFrontProcess.self)
-    private static let setFrontProcess = privateSymbol("_SLPSSetFrontProcessWithOptions", as: SetFrontProcess.self)
-    private static let processForPID = privateSymbol("GetProcessForPID", as: ProcessForPID.self)
-    private static let pidForProcess = privateSymbol("GetProcessPID", as: PIDForProcess.self)
+    private static let getFrontProcess = PrivateSymbol.function("_SLPSGetFrontProcess", as: GetFrontProcess.self)
+    private static let setFrontProcess = PrivateSymbol.function("_SLPSSetFrontProcessWithOptions", as: SetFrontProcess.self)
+    private static let processForPID = PrivateSymbol.function("GetProcessForPID", as: ProcessForPID.self)
+    private static let pidForProcess = PrivateSymbol.function("GetProcessPID", as: PIDForProcess.self)
 
     /// The app in front now, by name, for the log.
     static var frontName: String {
@@ -295,7 +294,7 @@ extension CheckResult.WindowState {
     /// so each spot is tried in turn.
     private static func grips(_ element: AXUIElement, _ box: CGRect) -> [CGPoint] {
         var points: [CGPoint] = []
-        if let zoom = element.element(kAXZoomButtonAttribute)?.frame, zoom.width > 0 {
+        if let zoom = element.element(kAXZoomButtonAttribute, timeout: 1)?.frame, zoom.width > 0 {
             points.append(CGPoint(x: zoom.maxX + 16, y: zoom.midY))
         }
         for y in [box.minY + 14, box.minY + 24] {
@@ -305,12 +304,16 @@ extension CheckResult.WindowState {
                 x -= 60
             }
         }
+        // A timeout set on the system-wide element would be every element's
+        // in this process (Apple's header): its hit tests keep macOS's own;
+        // what they find waits 1 s.
         let system = AXUIElementCreateSystemWide()
         let controls: Set<String> = [kAXButtonRole, kAXTextFieldRole, "AXSearchField", "AXLink", kAXCheckBoxRole, kAXPopUpButtonRole,
                                      kAXMenuButtonRole, kAXRadioButtonRole, kAXSliderRole, kAXComboBoxRole, kAXTextAreaRole, kAXImageRole]
         return points.filter { point in
             var hit: AXUIElement?
             guard AXUIElementCopyElementAtPosition(system, Float(point.x), Float(point.y), &hit) == .success, let hit else { return true }
+            hit.waiting(1)
             return !controls.contains(hit.text(kAXRoleAttribute)) && !hit.actionNames.contains(kAXPressAction)
         }
     }

@@ -59,7 +59,7 @@ extension StatePresentation {
 
 extension PlaybackState {
     /// `playing`: the apps that paused the music. The line goes under the
-    /// music player's name, so it doesn't repeat it.
+    /// media player's name, so it doesn't repeat it.
     func presentation(playing: [String] = []) -> StatePresentation {
         switch self {
         case .unknown: // the player's state is not known yet: as when starting up
@@ -141,11 +141,6 @@ struct ControlError: Equatable {
     let detail: String
     /// Now Playing is hidden in the menu bar: its alert opens the pane to show it.
     var opensMenuBarSettings = false
-
-    init(text: String, detail: String) {
-        self.text = text
-        self.detail = detail
-    }
 
     init(_ error: any Error, player: String) {
         detail = error.localizedDescription

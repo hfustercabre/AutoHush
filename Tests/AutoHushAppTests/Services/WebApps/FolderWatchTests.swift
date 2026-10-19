@@ -9,19 +9,10 @@ struct FolderWatchTests {
     /// Counts the changes reported for a temporary folder of its own.
     @MainActor
     private final class Scratch {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "FolderWatchTests-\(UUID().uuidString)")
-        let elsewhere = FileManager.default.temporaryDirectory.appending(path: "FolderWatchTests-\(UUID().uuidString)")
+        private let watched = TemporaryFolder("FolderWatchTests"), other = TemporaryFolder("FolderWatchTests")
+        var folder: URL { watched.url }
+        var elsewhere: URL { other.url }
         var changes = 0
-
-        init() throws {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: true)
-        }
-
-        deinit {
-            try? FileManager.default.removeItem(at: folder)
-            try? FileManager.default.removeItem(at: elsewhere)
-        }
 
         /// Waits until a change beyond `count` is reported.
         func waitForChange(after count: Int, sourceLocation: SourceLocation = #_sourceLocation) async {
@@ -31,7 +22,7 @@ struct FolderWatchTests {
 
     @Test("installing an app, moving it away as the Trash does, and deleting it are each reported")
     func reportsChanges() async throws {
-        let scratch = try Scratch()
+        let scratch = Scratch()
         let watch = FolderWatch(folder: scratch.folder) { scratch.changes += 1 }
         #expect(watch != nil)
         let app = scratch.folder.appending(path: "Player.app")
@@ -57,14 +48,19 @@ struct FolderWatchTests {
 
     @Test("a released watch reports nothing")
     func stopsWhenReleased() async throws {
-        let scratch = try Scratch()
+        let scratch = Scratch()
         var watch = FolderWatch(folder: scratch.folder) { scratch.changes += 1 }
         #expect(watch != nil)
         watch = nil
+        // Another watch of the folder, kept: once it hears of the change, the
+        // released one would have too.
+        let heard = Locked(0)
+        let kept = FolderWatch(folder: scratch.folder) { heard.increment() }
 
         try FileManager.default.createDirectory(at: scratch.folder.appending(path: "Player.app"), withIntermediateDirectories: false)
-        try? await Task.sleep(for: .milliseconds(200))
+        await TestWait.until { heard.value > 0 }
         #expect(scratch.changes == 0)
+        withExtendedLifetime(kept) {}
     }
 
     @Test("a folder that doesn't exist can't be watched")

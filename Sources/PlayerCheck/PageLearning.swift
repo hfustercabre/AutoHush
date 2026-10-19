@@ -14,15 +14,15 @@ let savedButtonStore = SavedButtonStore(file: placesFile)
 func savedButtons() -> [String: SavedButton] { savedButtonStore.all() }
 func saveButton(_ change: (inout SavedButton) -> Void) { savedButtonStore.change(bundleID, change) }
 
-/// The button's place, climbing from it to its page or window.
+/// The button's place, climbing from it to its page or window, each parent
+/// read waiting AutoHush's 0.5 s (`AccessibilityWebPage.timeout`).
 func placeOf(_ element: AXUIElement) -> ButtonPath? {
     var path: [Int] = [], node = element
     for _ in 0..<40 {
         let role = node.text(kAXRoleAttribute)
         if role == "AXWebArea" { return ButtonPath(root: .page, path: path.reversed()) }
         if role == kAXWindowRole { return isFlutter ? ButtonPath(root: .window, path: path.reversed()) : nil }
-        guard let parent = node.value(kAXParentAttribute), CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
-        let up = parent as! AXUIElement
+        guard let up = node.element(kAXParentAttribute, timeout: AccessibilityWebPage.timeout) else { return nil }
         guard let index = up.children.firstIndex(where: { CFEqual($0, node) }) else { return nil }
         path.append(index)
         node = up
@@ -45,17 +45,15 @@ func rememberPlace(of element: AXUIElement) {
     guard let saved = savedButtons()[bundleID] else { return nil }
     let recipe = saved.recipe?.recipe
     let (windows, onThisDesktop) = appWindows(of: pid)
-    let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 1)
-    let hidden = app.value(kAXHiddenAttribute) as? Bool == true
+    let hidden = AXUIElement.application(pid, timeout: 1).value(kAXHiddenAttribute) as? Bool == true
     for window in windows {
         guard let path = saved.path else { break }
-        AXUIElementSetMessagingTimeout(window, 1)
         guard let windowFrame = window.frame else { continue }
         for root in path.root == .window ? [window] : webAreas(in: window) {
             var node: AXUIElement? = root
             for index in path.path {
-                let children = node?.children ?? []
+                // Each element down the path waiting 0.5 s, as the page's are read.
+                let children = node?.children(timeout: AccessibilityWebPage.timeout) ?? []
                 node = index < children.count ? children[index] : nil
             }
             guard let node, let frame = node.frame else { continue }

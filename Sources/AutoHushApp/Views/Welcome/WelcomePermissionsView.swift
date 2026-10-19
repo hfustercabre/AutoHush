@@ -43,51 +43,34 @@ struct WelcomePermissionsView: View {
                 }
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Button { model.showWelcomePlayers() } label: {
                     Text("Back", comment: "Welcome window: button that goes back to the list of media players")
                 }
                 .buttonStyle(.chip)
                 Spacer()
-                Button { model.actions?.finishWelcome() } label: {
-                    Text("Done", comment: "Welcome window: button that closes it once the permissions are allowed")
-                        .font(.appBody.weight(.semibold))
-                        .padding(.horizontal, 6)
-                }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
-                .keyboardShortcut(.defaultAction)
-                .disabled(!state.allSatisfied)
+                MainButton(Self.doneTitle) { model.actions?.finishWelcome() }
+                    .disabled(!state.allSatisfied)
             }
         }
         .frame(width: PlayerChooserView.width)
         .font(.appBody)
     }
 
+    private static var doneTitle: String {
+        String(localized: "Done", comment: "Welcome window: button that closes it once the permissions are allowed")
+    }
+
     private func row<Trailing: View>(symbol: String, title: String, note: String, access: PermissionAccess,
                                      @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack(spacing: 10) {
-            SymbolTile(symbol: symbol)
-            RowTitle(Text(verbatim: title), subtitle: Text(verbatim: note))
-            Spacer(minLength: 8)
-            switch access {
-            case .allowed:
-                // Green is for the symbol only: as text it's too faint in light mode.
-                Label {
-                    Text("Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")
-                } icon: {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.appSuccess)
-                }
-                .font(.appCallout)
-                .foregroundStyle(.appSecondary)
-            case .notNeeded:
+        PermissionRow(symbol: symbol, title: title, note: note, isAllowed: access == .allowed) {
+            if access == .notNeeded {
                 Text("Not needed", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
                     .font(.appCallout)
                     .foregroundStyle(.appSecondary)
-            default:
+            } else {
                 trailing()
             }
         }
-        .accessibilityElement(children: .contain)
     }
 }

@@ -54,9 +54,9 @@ struct GeneralSettingsView: View {
     /// the menu's card has them) and what works; what it lacks and the way
     /// to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
-        Card(Text("Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")) {
+        Card(Text(verbatim: MenuMediaPlayerView.title)) {
             HStack(alignment: .center, spacing: 12) {
-                playerIcon
+                PlayerIcon(player: model.chosenPlayer, size: 56)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: model.chosenPlayerName ?? PlayerOption.noneChosenLabel)
                         .font(.appHeadline)
@@ -66,9 +66,16 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(model.statusNeedsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
                     if model.offersReopenPlayer || model.offersUnmute {
-                        playerButtons.padding(.vertical, 4)
+                        // As the menu's card has them.
+                        HStack(spacing: 8) {
+                            PlayerFixButtons(player: model.chosenPlayerName ?? "",
+                                             reopen: model.offersReopenPlayer ? { model.actions?.reopenPlayer() } : nil,
+                                             unmute: model.offersUnmute ? { model.actions?.unmutePlayer() } : nil)
+                        }
+                        .padding(.vertical, 4)
                     }
-                    checks.padding(.top, 2)
+                    // What works: the permission the player needs, once allowed, and whether it fades.
+                    PlayerChecks(model: model).padding(.top, 2)
                 }
                 Spacer(minLength: 0)
             }
@@ -85,7 +92,7 @@ struct GeneralSettingsView: View {
             }
             CardDivider()
             SwitchRow(
-                Text("Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice"),
+                Text(verbatim: AutoPauseText.title),
                 subtitle: Text("Choose which apps pause your player on the Sound Sources page.",
                                comment: "Settings → General, under the Auto-Pause switch; Sound Sources is the Settings page that lists them"),
                 isOn: Binding(get: { model.isAutoPauseOn }, set: { model.settings.setAutoPause($0) })
@@ -94,44 +101,5 @@ struct GeneralSettingsView: View {
                 Text(note).captionStyle()
             }
         }
-    }
-
-    /// Under the status line, as in the menu's card: Reopen while the player
-    /// needs reopening, Unmute while it's muted for another app.
-    private var playerButtons: some View {
-        HStack(spacing: 8) {
-            if model.offersReopenPlayer {
-                let reason = AddAppText.reopenReason(model.chosenPlayerName ?? "")
-                Button { model.actions?.reopenPlayer() } label: {
-                    Label { Text(verbatim: AppStatus.reopenPlayerTitle) } icon: { Image(systemName: "arrow.clockwise") }
-                }
-                .buttonStyle(.chip)
-                .help(reason)
-                .accessibilityHint(Text(verbatim: reason))
-            }
-            if model.offersUnmute {
-                Button { model.actions?.unmutePlayer() } label: {
-                    Label { Text(verbatim: AppStatus.unmuteTitle) } icon: { Image(systemName: "speaker.wave.2") }
-                }
-                .buttonStyle(.chip)
-            }
-        }
-    }
-
-    /// The chosen player's icon (its placeholder while it isn't installed,
-    /// faded), or AutoHush's while none is chosen.
-    private var playerIcon: some View {
-        let image = model.chosenPlayer?.icon(size: 56) ?? NSApp.applicationIconImage ?? NSImage()
-        return Image(nsImage: image)
-            .resizable()
-            .frame(width: 56, height: 56)
-            .opacity(model.chosenPlayer?.isInstalled == false ? 0.5 : 1)
-            .accessibilityHidden(true)
-    }
-
-    /// Under the status line: the permission the player needs, once allowed,
-    /// and whether the music fades.
-    @ViewBuilder private var checks: some View {
-        PlayerChecks(model: model)
     }
 }

@@ -35,20 +35,9 @@ package enum NowPlayingApp {
     /// one by default). Blocks for up to `timeout`.
     package static func current(executable: URL? = Bundle.main.executableURL, timeout: TimeInterval = 2) -> Answer {
         guard let executable else { return .unknown }
-        let child = Process()
-        child.executableURL = executable
-        child.arguments = [argument]
-        let output = Pipe()
-        child.standardOutput = output
-        child.standardError = FileHandle.nullDevice
-        let finished = DispatchSemaphore(value: 0)
-        child.terminationHandler = { _ in finished.signal() }
-        guard (try? child.run()) != nil else { return .unknown }
-        guard finished.wait(timeout: .now() + timeout) == .success else {
-            child.terminate()
-            return .unknown
-        }
-        return answer(from: String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self))
+        let copy = ToolRun(executable, [argument], timeout: timeout).runBlocking()
+        // One that couldn't start printed nothing: unknown.
+        return copy.timedOut ? .unknown : answer(from: copy.text)
     }
 
     /// In the fresh copy: MediaRemote's answer, as `current()` reads it.
@@ -96,11 +85,8 @@ package enum NowPlayingApp {
     }
 
     private static let functions: Functions? = {
-        guard let framework = dlopen("/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", RTLD_NOW) else {
-            return nil
-        }
         func symbol<T>(_ name: String, _ type: T.Type) -> T? {
-            dlsym(framework, name).map { unsafeBitCast($0, to: type) }
+            PrivateSymbol.function(name, in: "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", as: type)
         }
         guard let localOrigin = symbol("MRMediaRemoteGetLocalOrigin", GetLocalOrigin.self),
               let createPath = symbol("MRNowPlayingPlayerPathCreate", CreatePath.self),

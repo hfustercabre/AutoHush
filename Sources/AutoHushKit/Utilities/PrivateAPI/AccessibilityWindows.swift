@@ -147,9 +147,5 @@ package enum AccessibilityWindows {
 
     private typealias Function = @convention(c) (CFData) -> Unmanaged<AXUIElement>?
 
-    private static let function: Function? = {
-        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_AXUIElementCreateWithRemoteToken")
-        else { return nil }
-        return unsafeBitCast(symbol, to: Function.self)
-    }()
+    private static let function = PrivateSymbol.function("_AXUIElementCreateWithRemoteToken", as: Function.self)
 }

@@ -50,60 +50,53 @@ struct MenuPlayerListView: View {
         }
     }
 
+    /// Its rows' picture column (their 18 pt icons) and the gap to their
+    /// names, from the side window's margin.
+    static let rowLayout = MenuSpacing.RowLayout(leading: 14, picture: 18, gap: 8)
+
     private func rows(_ rows: [MenuPlayerList.Row]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(rows) { row in
                 let removes = model.isOptionHeld && row.isRemovable
-                Button {
-                    model.perform(removes ? .removeAddedApp(row.id) : .choosePlayer(row.id))
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(nsImage: row.option.icon(size: 18))
-                            .resizable()
-                            .frame(width: 18, height: 18)
+                MenuActionRow(place: .sideWindow, layout: Self.rowLayout, action: {
+                    // With Option held as it's pressed, an added app is removed.
+                    model.perform(model.isOptionHeld && row.isRemovable ? .removeAddedApp(row.id) : .choosePlayer(row.id))
+                }) {
+                    Image(nsImage: row.option.icon(size: 18))
+                        .resizable()
+                        .frame(width: 18, height: 18)
+                        .accessibilityHidden(true)
+                } content: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 6) {
+                            Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.option.name)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            if row.option.isUntested, !removes { HeadingBadge(text: PlayerOption.untestedBadge) }
+                        }
+                        if let subtitle = row.subtitle, !removes { MenuRowSubtitle(text: subtitle) }
+                    }
+                    Spacer(minLength: 4)
+                    if row.isChosen, !removes {
+                        Image(systemName: "checkmark")
+                            .font(.callout.weight(.semibold))
                             .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack(spacing: 6) {
-                                Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.option.name)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                if row.option.isUntested, !removes { HeadingBadge(text: PlayerOption.untestedBadge) }
-                            }
-                            if let subtitle = row.subtitle, !removes { MenuRowSubtitle(text: subtitle) }
-                        }
-                        Spacer(minLength: 4)
-                        if row.isChosen, !removes {
-                            Image(systemName: "checkmark")
-                                .font(.callout.weight(.semibold))
-                                .accessibilityHidden(true)
-                        }
                     }
                 }
-                .buttonStyle(MenuRowButtonStyle(tinted: true))
-                .modifier(HighlightableControl(cornerRadius: 6, press: {
-                    model.perform(model.isOptionHeld && row.isRemovable ? .removeAddedApp(row.id) : .choosePlayer(row.id))
-                }))
                 .disabled(!row.isEnabled && !removes)
                 .help(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityLabel(Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.accessibilityLabel))
                 .accessibilityHint(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityAddTraits(row.isChosen ? .isSelected : [])
-                .padding(.horizontal, -6)
             }
         }
     }
 
     private func addRow(_ title: String, _ command: StatusMenuCommand) -> some View {
-        Button { model.perform(command) } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus.circle")
-                    .frame(width: 18)
-                    .accessibilityHidden(true)
-                Text(verbatim: title)
-            }
+        MenuActionRow(place: .sideWindow, layout: Self.rowLayout, action: { model.perform(command) }) {
+            Image(systemName: "plus.circle").accessibilityHidden(true)
+        } content: {
+            Text(verbatim: title)
         }
-        .buttonStyle(MenuRowButtonStyle(tinted: true))
-        .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(command) }))
-        .padding(.horizontal, -6)
     }
 }

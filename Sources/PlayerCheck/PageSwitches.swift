@@ -12,9 +12,7 @@ import AutoHushKit
 /// page kept for later goes stale out of sight (an Electron player's took
 /// no presses after minutes on another desktop).
 @MainActor func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
-    let app = AXUIElementCreateApplication(switchTarget(pid))
-    AXUIElementSetMessagingTimeout(app, 1)
-    if attribute == enhancedUserInterface, app.value(attribute) as? Bool == true {
+    if attribute == enhancedUserInterface, AXUIElement.application(switchTarget(pid), timeout: 1).value(attribute) as? Bool == true {
         say("  \(switchName(attribute)) (\(attribute)) is on already: VoiceOver or another tool turned it on, so it's left on")
         changes.foundOn(attribute)
         return true
@@ -27,9 +25,21 @@ import AutoHushKit
         say("  \(switchName(attribute)) on, and left on: VoiceOver or another tool may have it on")
         changes.foundOn(attribute)
     } else {
-        changes.switchesOn.append(attribute)
+        changes.noteOn(attribute)
     }
     return true
+}
+
+/// Turns the page's switch on, as a press of Player Check's own turns it
+/// (noted, to be put back at the end), giving its page up to 4 s to show;
+/// or off.
+@MainActor func setPageSwitch(_ attribute: String, on: Bool, pid: pid_t) {
+    guard on else {
+        _ = setSwitch(attribute, false, pid: pid)
+        return
+    }
+    if setSwitch(attribute, true, pid: pid) { changes.noteOn(attribute) }
+    _ = waitForPage(pid, seconds: 4)
 }
 
 /// An Electron app takes presses on its page only in its fuller
@@ -51,9 +61,7 @@ func waitForFullerMode(pid: pid_t) {
     }
     guard let since = changes.switchSetOnAt(attribute) else { return }
     if isElectron {
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, 1)
-        guard app.value(manualAccessibility) as? Bool != true else { return }
+        guard AXUIElement.application(pid, timeout: 1).value(manualAccessibility) as? Bool != true else { return }
     }
     let wait = 2.2 - Date().timeIntervalSince(since)
     guard wait > 0 else { return }
@@ -77,9 +85,7 @@ func waitForFullerMode(pid: pid_t) {
 @MainActor func showPage(with switches: [String], pid: pid_t, count: inout Int, shownAfter: inout TimeInterval?) -> Bool? {
     /// Turns a switch this tool turned on back off.
     func off(_ attribute: String) {
-        if changes.switchesOn.contains(attribute), setSwitch(attribute, false, pid: pid) {
-            changes.switchesOn.removeAll { $0 == attribute }
-        }
+        if changes.switchesOn.contains(attribute), setSwitch(attribute, false, pid: pid) { changes.noteOff(attribute) }
     }
     // The switches it took, and whether this tool turned each on (VoiceOver's
     // may have been on already: left as it is).
@@ -101,9 +107,7 @@ func waitForFullerMode(pid: pid_t) {
     if shown == nil, action == nil {
         shown = inFront(pid: pid) {
             for (attribute, ours) in taken {
-                if ours, !changes.switchesOn.contains(attribute), setSwitch(attribute, true, pid: pid) {
-                    changes.switchesOn.append(attribute)
-                }
+                if ours, !changes.switchesOn.contains(attribute), setSwitch(attribute, true, pid: pid) { changes.noteOn(attribute) }
                 let waited = waitForPage(pid, seconds: 6)
                 if waited.count > 0 { return (attribute, waited) }
                 off(attribute)

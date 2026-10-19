@@ -9,6 +9,24 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
+  is now signed with an Apple developer certificate, because macOS runs an
+  app's Shortcuts actions only when a developer team signed it. Copies
+  before 1.0.0 accept only their old certificate, so they can't install
+  this version themselves and say they couldn't install the update.
+  Download it once from the [releases
+  page](https://github.com/hfustercabre/AutoHush/releases) (**Open Release
+  Page** goes there), quit AutoHush and drag the new one onto Applications,
+  replacing the old one (`brew upgrade --cask autohush` does it too). Later
+  versions update themselves as before. After this install:
+  - macOS asks you once more to confirm opening it, as on your first
+    install: **Open Anyway**, in System Settings → Privacy & Security
+    (Homebrew handles this).
+  - macOS may ask again for AutoHush's permissions: Audio Recording, and
+    Accessibility if your player needs it.
+  - If AutoHush says a permission is missing while System Settings shows
+    AutoHush switched on, that switch belongs to the old copy: select
+    AutoHush there, remove it with **−**, then allow it again.
 - **AutoHush looks like the macOS it runs on.** Its text uses macOS's text
   styles and sizes, its switches, buttons, choices and sliders are macOS's
   own, and its colors are macOS's, in light and dark mode. Settings' pages
@@ -94,24 +112,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Deleting your chosen Safari web app opens the window to choose
   another,** as removing an app you added does, instead of only saying
   that none is chosen.
-- **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
-  is now signed with an Apple developer certificate, because macOS runs an
-  app's Shortcuts actions only when a developer team signed it. Copies
-  before 1.0.0 accept only their old certificate, so they can't install
-  this version themselves and say they couldn't install the update.
-  Download it once from the [releases
-  page](https://github.com/hfustercabre/AutoHush/releases) (**Open Release
-  Page** goes there), quit AutoHush and drag the new one onto Applications,
-  replacing the old one (`brew upgrade --cask autohush` does it too). Later
-  versions update themselves as before. After this install:
-  - macOS asks you once more to confirm opening it, as on your first
-    install: **Open Anyway**, in System Settings → Privacy & Security
-    (Homebrew handles this).
-  - macOS may ask again for AutoHush's permissions: Audio Recording, and
-    Accessibility if your player needs it.
-  - If AutoHush says a permission is missing while System Settings shows
-    AutoHush switched on, that switch belongs to the old copy: select
-    AutoHush there, remove it with **−**, then allow it again.
 - **Every pause and play is checked.** After pausing or playing your
   player, AutoHush reads its state for up to 3 seconds; one that didn't
   take is made once more, and if the player still didn't follow, the menu
@@ -147,6 +147,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   your player's state, rather than "Working normally"; the permission is
   called "Audio Recording" there, as in System Settings; and Settings →
   Updates says "AutoHush's version is unknown." rather than "the app's".
+- **A smaller download.** The app ships without its debugging symbols:
+  less than half the size.
 
 ### Added
 
@@ -265,31 +267,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **Settings opens on the desktop you're on.** Closed on one desktop and
   opened again from another, it took you back to the first.
-- **A click on AutoHush's menu bar icon closes its open menu**, as macOS's
-  own menu bar items do. It closed and opened again at once.
-- **Level the volume no longer leaves the Mac's volume lowered** when the
-  music doesn't resume after all, or after AutoHush quits unexpectedly (the
-  next launch puts it back, within the hour). A volume you set while it
-  glides back up stays yours.
-- **Add an App's check leaves the Mac's sound as you set it.** Muted or
-  unmuted by you during the check, it stays so; an output the sound moves
-  to meanwhile is muted too, and each is put back; an output unplugged
-  during it is unmuted at the next launch within the hour, once it's back.
-- **Add an App's check helper no longer deletes other apps' logs.** Run
-  from Terminal with `--logs` on a folder of other logs, it kept the
-  newest 50 `.log` files of any kind and deleted the rest. Now it trims
-  only its own, to the Trash.
 - **A player's error message no longer reaches the log or Copy Report.**
   Some apps' messages name the document that was playing; only the
   error's number is kept now.
-- **An Electron app checked again keeps its page.** Using it right after a
-  new check could leave its accessibility switch off, so its presses
-  failed until it was reopened.
 - **An ignored app installed later shows its icon** without reopening
   AutoHush.
-- **The menu reads AntiDot mode as it changes.** Switched in the menu's own
-  settings, Media Player's players follow at once, and the fade lengths
-  are greyed out for a player AutoHush can't fade.
 - **Settings and the logs window keep their size and place on macOS 14
   and 15.** They opened at their first size and place at every launch.
 - **After an update, a paused player no longer comes back too early in
@@ -405,15 +387,12 @@ This project follows [Semantic Versioning](https://semver.org/).
     Retry; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
-  - Diagnostics' headings, the menu's Media Player and Ignored Apps rows,
-    and its Detection and Fades titles say whether their part is expanded
-    or collapsed, the side window a row opens is named after its part, and
-    "Copied" is said after Copy Report;
+  - Diagnostics' headings say whether their part is expanded or
+    collapsed, and "Copied" is said after Copy Report;
   - symbols beside their text, such as the menu toolbar's, are no longer
     read on their own;
   - a switch is one stop, its name and state, with what it does as its
     hint (the menu, Playing Now, Settings), and the menu is "AutoHush";
-  - pressing a row of the menu with VoiceOver no longer closes it;
   - a checklist's next step is announced at high priority, so the focus
     moving to a window that opens with it cuts it off less often (Add a Web
     App, the learning window).
@@ -421,6 +400,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   after a web app was added, it could ask for a moment to allow the
   previous player's Automation; it now waits until the web app's own
   permission is read.
+- **Add a Web App takes http:// sites.** An address starting with http://,
+  or an https:// site that sends you on to http://, always said the site
+  didn't answer; AutoHush now checks that such a site answers.
+- **A busy app no longer holds AutoHush up for seconds.** Reading a
+  player's menu (TIDAL, Apple Podcasts), a web app's page or Safari's Add
+  to Dock gives up within a second, not macOS's six.
+- **An update whose disk tool hangs gives up after 2 minutes,** instead of
+  blocking every install until AutoHush is reopened.
+- **Japanese uses full-width punctuation throughout.**
 
 ## [0.12.1] — 2026-10-11
 

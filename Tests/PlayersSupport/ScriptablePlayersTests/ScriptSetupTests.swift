@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import Testing
 @testable import ScriptablePlayers
+import AutoHushTestSupport
 
 @Suite("ScriptSetup")
 struct ScriptSetupTests {
@@ -85,13 +86,8 @@ struct ScriptSetupTests {
         defer { try? FileManager.default.removeItem(at: folder) }
         /// An app holding `files` (name: text) in its resources, its Info.plist naming `named`.
         func app(_ name: String, named: String? = nil, files: [String: String]) throws -> URL {
-            let url = folder.appendingPathComponent("\(name).app")
-            let resources = url.appendingPathComponent("Contents/Resources")
-            try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
-            try (["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 } as NSDictionary)
-                .write(to: url.appendingPathComponent("Contents/Info.plist"))
-            for (file, text) in files { try Data(text.utf8).write(to: resources.appendingPathComponent(file)) }
-            return url
+            let info = ["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 }
+            return try TestAppBundle.make(in: folder, name: name, info: info, resources: files)
         }
         // Named without its extension, as many apps name it; the other .sdef isn't read.
         let named = try ScriptingDictionary.read(appAt: app("Spotify", named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc]),
@@ -109,6 +105,40 @@ struct ScriptSetupTests {
         #expect(ScriptingDictionary.isInBundle(at: old))
         #expect(ScriptingDictionary.read(appAt: old, isRunning: false) == nil)
         #expect(ScriptingDictionary.read(appAt: old, isRunning: true) == nil)
+    }
+
+    @Test("its state is read where AutoHush reads it: player state only with its three values, else its playing flag, else none; also without commands")
+    func stateAsAutoHushReadsIt() throws {
+        // A player state of its own values, and a playing flag: the flag.
+        let ownValues = try dictionary("""
+            <dictionary><suite name="Jukebox" code="juke">
+              <command name="pause" code="jukePaus"/><command name="play" code="jukePlay"/>
+              <class name="application" code="capp">
+                <property name="player state" code="pPlS"/><property name="playing" code="jPlg"/>
+              </class>
+              <enumeration name="eSta" code="eSta"><enumerator name="spinning" code="jSpn"/></enumeration>
+            </suite></dictionary>
+            """)
+        #expect(ownValues.hasPlayerState && !ownValues.hasStateValues)
+        #expect(ScriptSetup.State(dictionary: ownValues) == .playingFlag(property: "jPlg", currentTime: nil))
+        #expect(ScriptSetup(dictionary: ownValues)?.state == .playingFlag(property: "jPlg", currentTime: nil))
+        #expect(ownValues.hasState)
+        // Its own values only: no state AutoHush can read, so none for Player Check either.
+        let unreadable = try dictionary("""
+            <dictionary><suite name="Jukebox" code="juke">
+              <command name="playpause" code="jukeTogl"/>
+              <class name="application" code="capp"><property name="player state" code="pPlS"/></class>
+              <enumeration name="eSta" code="eSta"><enumerator name="spinning" code="jSpn"/></enumeration>
+            </suite></dictionary>
+            """)
+        #expect(ScriptSetup.State(dictionary: unreadable) == nil)
+        #expect(ScriptSetup(dictionary: unreadable)?.state == nil)
+        #expect(!unreadable.hasState)
+        // A state, and no command: read all the same.
+        let stateOnly = try dictionary(spotify.replacingOccurrences(of: #"<command name="pause" code="spfyPaus"/><command name="play" code="spfyPlay"/>"#, with: "")
+            .replacingOccurrences(of: #"<command name="playpause" code="spfyPlPs"/>"#, with: ""))
+        #expect(ScriptSetup(dictionary: stateOnly) == nil)
+        #expect(ScriptSetup.State(dictionary: stateOnly) == .playerState)
     }
 
     @Test("an app with no play or pause can't be scripted")
@@ -141,5 +171,10 @@ struct ScriptSetupTests {
         #expect(target?.forKeyword(ScriptablePlayer.Code.desiredClass)?.typeCodeValue == fourCharCode("docu"))
         let every = ScriptedAppPlayer.documentSpecifier("docu")
         #expect(every.forKeyword(ScriptablePlayer.Code.keyData)?.descriptorType == fourCharCode("abso"))
+        // "document 1", the front one, as Player Check plays one when it paused none.
+        let front = ScriptedAppPlayer.documentSpecifier("docu", index: 1)
+        #expect(front.forKeyword(ScriptablePlayer.Code.keyForm)?.enumCodeValue == fourCharCode("indx"))
+        #expect(front.forKeyword(ScriptablePlayer.Code.keyData)?.int32Value == 1)
+        #expect(front.forKeyword(ScriptablePlayer.Code.desiredClass)?.typeCodeValue == fourCharCode("docu"))
     }
 }

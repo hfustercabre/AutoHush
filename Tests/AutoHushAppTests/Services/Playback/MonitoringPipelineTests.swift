@@ -81,56 +81,9 @@ struct MonitoringPipelineTests {
         /// The other app's sound comes on, loud, as the audio server announces it.
         func otherAppPlays() async {
             meter.peaks = [MonitoringPipelineTests.otherApp.objectID: 0.5]
-            await waitUntil { processes.isObserving }
+            await TestWait.until { processes.isObserving }
             processes.triggerChange()
         }
-    }
-
-    /// Where a player's observer reports its state.
-    @MainActor
-    private final class StateReports {
-        var onChange: (@MainActor (PlayerState) -> Void)?
-    }
-
-    /// A player the user plays and pauses: a `MockMusicPlayer`, whose
-    /// changes its observer reports (the mock's own reports none).
-    private struct UserPlayedPlayer: MusicPlayer {
-        let mock = MockMusicPlayer(state: .playing)
-        let reports: StateReports
-
-        var bundleID: String { mock.bundleID }
-        var name: String { mock.name }
-        var volumeCurve: VolumeCurve { mock.volumeCurve }
-        var canFade: Bool { mock.canFade }
-        var stateReportDelay: TimeInterval { mock.stateReportDelay }
-
-        func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
-        func playerState() async -> PlayerState { await mock.playerState() }
-        func pause() async throws { try await mock.pause() }
-        func play() async throws { try await mock.play() }
-        func volume() async -> Int? { await mock.volume() }
-        func setVolume(_ volume: Int) async throws { try await mock.setVolume(volume) }
-
-        @MainActor
-        func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-            reports.onChange = onChange
-            return MockStateObserver()
-        }
-
-        /// The user plays or pauses it.
-        @MainActor
-        func user(_ state: PlayerState) async {
-            await mock.overrideState(state)
-            reports.onChange?(state)
-        }
-    }
-
-    private static func waitUntil(sourceLocation: SourceLocation = #_sourceLocation, _ condition: () async -> Bool) async {
-        await TestWait.until(sourceLocation: sourceLocation, condition)
-    }
-
-    private func waitUntil(sourceLocation: SourceLocation = #_sourceLocation, _ condition: () async -> Bool) async {
-        await Self.waitUntil(sourceLocation: sourceLocation, condition)
     }
 
     @Test("once started, another app playing pauses the player, and the menu and Diagnostics hear of it; ignored, the music comes back")
@@ -139,14 +92,14 @@ struct MonitoringPipelineTests {
         let setup = Setup(player: player)
         await setup.pipeline.start()
         await setup.otherAppPlays()
-        await waitUntil { await player.pauseCallCount == 1 }
+        await TestWait.until { await player.pauseCallCount == 1 }
         #expect(await player.pauseCallCount == 1)
-        await waitUntil { setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"] }
+        await TestWait.until { setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"] }
         #expect(setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"])
         #expect(setup.pipeline.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .level(0.5))])
 
         setup.pipeline.setIgnoredSources(["org.videolan.vlc"])
-        await waitUntil { await player.playCallCount == 1 }
+        await TestWait.until { await player.playCallCount == 1 }
         await setup.pipeline.waitForResume()
         #expect(await player.playCallCount == 1)
         setup.pipeline.stop()
@@ -154,13 +107,13 @@ struct MonitoringPipelineTests {
 
     @Test("each command reaches the arbiter: held resumes, Auto-Pause, new timings, the user's own play and pause, an app no longer ignored")
     func commandsReachArbiter() async {
-        let player = UserPlayedPlayer(reports: StateReports())
+        // The user plays and pauses it: its observer reports the changes.
+        let mock = MockMusicPlayer(state: .playing)
         // A minute: Auto-Pause back on pauses only after it, unless shorter timings reached the arbiter.
-        let setup = Setup(player: player, stopGrace: 60)
-        let mock = player.mock
+        let setup = Setup(player: mock, stopGrace: 60)
         await setup.pipeline.start()
         await setup.otherAppPlays()
-        await waitUntil { setup.updates.playback.last == .pausedByMonitor }
+        await TestWait.until { setup.updates.playback.last == .pausedByMonitor }
         #expect(await mock.pauseCallCount == 1)
 
         // Held, nothing resumes, not even with Auto-Pause off (the arbiter's state, told three
@@ -168,10 +121,10 @@ struct MonitoringPipelineTests {
         var told = setup.updates.playback.count
         setup.pipeline.holdResumes(true)
         setup.pipeline.setAutoPauseEnabled(false)
-        await waitUntil { await mock.playCallCount > 0 || setup.updates.playback.count >= told + 3 }
+        await TestWait.until { await mock.playCallCount > 0 || setup.updates.playback.count >= told + 3 }
         #expect(await mock.playCallCount == 0)
         setup.pipeline.holdResumes(false)
-        await waitUntil { await mock.playCallCount == 1 }
+        await TestWait.until { await mock.playCallCount == 1 }
         await setup.pipeline.waitForResume()
         #expect(await mock.playCallCount == 1)
 
@@ -180,25 +133,25 @@ struct MonitoringPipelineTests {
         shorter.sourceStopGrace = 0
         setup.pipeline.setConfiguration(shorter)
         setup.pipeline.setAutoPauseEnabled(true)
-        await waitUntil { setup.updates.playback.last == .pausedByMonitor }
+        await TestWait.until { setup.updates.playback.last == .pausedByMonitor }
         #expect(await mock.pauseCallCount == 2)
 
         // The user plays it during that pause, then pauses it: it's theirs, so it stays paused once the app stops.
-        await player.user(.playing)
-        await waitUntil { setup.updates.playback.last == .musicPlaying }
-        await player.user(.paused)
-        await waitUntil { setup.updates.playback.last == .musicIdle }
+        await mock.userSets(.playing)
+        await TestWait.until { setup.updates.playback.last == .musicPlaying }
+        await mock.userSets(.paused)
+        await TestWait.until { setup.updates.playback.last == .musicIdle }
         told = setup.updates.playback.count
         setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
-        await waitUntil { await mock.playCallCount > 1 || setup.updates.playback.count > told }
+        await TestWait.until { await mock.playCallCount > 1 || setup.updates.playback.count > told }
         #expect(await mock.playCallCount == 1)
 
         // Played again, it can't be paused once the app counts again: the menu hears why.
         await mock.setFailPause(MusicPlayerError.playerCommandFailed(.pressIgnored))
-        await player.user(.playing)
-        await waitUntil { setup.updates.playback.last == .musicPlaying }
+        await mock.userSets(.playing)
+        await TestWait.until { setup.updates.playback.last == .musicPlaying }
         setup.pipeline.setIgnoredSources([])
-        await waitUntil { !setup.updates.pauseFailures.isEmpty }
+        await TestWait.until { !setup.updates.pauseFailures.isEmpty }
         #expect(setup.updates.pauseFailures == [.playerCommandFailed(.pressIgnored)])
         setup.pipeline.stop()
     }
@@ -240,9 +193,9 @@ struct MonitoringPipelineTests {
             { updates.all.append($0) }
         )
         await monitoring.start(takingOverPause: false, asleep: false)
-        await waitUntil { processes.isObserving }
+        await TestWait.until { processes.isObserving }
         processes.triggerChange()
-        await waitUntil { updates.playback.last == .pausedByMonitor }
+        await TestWait.until { updates.playback.last == .pausedByMonitor }
         #expect(await player.pauseCallCount == 1)
         #expect(updates.activeSources.last == [site]) // the page named by its app
         #expect(updates.detection.last == .audioLevel)
@@ -252,7 +205,7 @@ struct MonitoringPipelineTests {
         // The site stops counting: its pause stays, resumes being held.
         let told = updates.playback.count
         monitoring.setIgnoredSources([ignored.bundleID, site.id])
-        await waitUntil { await player.playCallCount > 0 || updates.playback.count > told }
+        await TestWait.until { await player.playCallCount > 0 || updates.playback.count > told }
         #expect(await player.playCallCount == 0)
         await monitoring.stopAndRestoreVolume()
     }
@@ -277,7 +230,7 @@ struct MonitoringPipelineTests {
         setup.pipeline.setAsleep(false)
         _ = await starting.value
         await setup.otherAppPlays()
-        await waitUntil { await player.pauseCallCount == 1 }
+        await TestWait.until { await player.pauseCallCount == 1 }
         #expect(await player.pauseCallCount == 1)
         setup.pipeline.stop()
     }
@@ -286,7 +239,7 @@ struct MonitoringPipelineTests {
     func stopEndsMonitoring() async {
         let setup = Setup(player: MockMusicPlayer(state: .playing))
         await setup.pipeline.start()
-        await waitUntil { setup.processes.isObserving }
+        await TestWait.until { setup.processes.isObserving }
         await setup.pipeline.stopAndRestoreVolume()
         setup.processes.flush()
         #expect(!setup.processes.isObserving)
@@ -296,14 +249,14 @@ struct MonitoringPipelineTests {
         // it asks again, to take a pause over.
         for takingOver in [false, true] {
             let player = MockMusicPlayer(state: .paused)
-            let answers = SteppedSleep()
+            let answers = ManualSleep()
             await player.setBeforeStateAnswer { await answers.sleep(.zero) }
             let stopped = Setup(player: player)
             let starting = Task { await stopped.pipeline.start(takingOverPause: takingOver) }
-            await waitUntil { answers.sleeping == 1 }
+            await TestWait.until { answers.sleeping == 1 }
             if takingOver {
                 answers.step()
-                await waitUntil { answers.sleeping == 1 }
+                await TestWait.until { answers.sleeping == 1 }
             }
             await stopped.pipeline.stopAndRestoreVolume()
             answers.step()
@@ -353,13 +306,12 @@ struct MonitoringPipelineTests {
 
 /// Counts the volume leveler's put-backs at once, whatever was lowered or
 /// not (it lowers nothing).
-private final class CountingLeveler: ResumeLeveling, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _restores = 0
-    var restores: Int { lock.withLock { _restores } }
+private final class CountingLeveler: ResumeLeveling {
+    private let count = Locked(0)
+    var restores: Int { count.value }
 
     func lower(by decibels: Float) -> UUID? { nil }
     func restore(over duration: TimeInterval, lowered token: UUID) {}
-    func restoreNow(lowered token: UUID) { lock.withLock { _restores += 1 } }
-    func restoreNow() { lock.withLock { _restores += 1 } }
+    func restoreNow(lowered token: UUID) { count.increment() }
+    func restoreNow() { count.increment() }
 }

@@ -83,4 +83,19 @@ struct ResultWaysTests {
         #expect(nothing.setup == nil && nothing.ways.map(\.mark) == [.notThere, .notThere, .notThere, .notThere])
         #expect(findings([.panel: .init(isThere: true)]).result().result.ways.last?.mark == .notTried)
     }
+
+    @Test("where the app's song showed besides its windows' titles goes into its setup with the panel only, which reads it there")
+    func panelClues() throws {
+        let url = URL(filePath: "/Applications/Jukebox.app")
+        let clues = try #require(PanelClues(page: PanelClues.Page(access: .webKit, labels: ["Pause", "Play"]), script: .currentTrack))
+        var found = CheckFindings(bundleID: "com.example.jukebox", appName: "Jukebox", appURL: url, ways: [
+            .menu: .init(isThere: true, first: .worked, setup: .menu(menuName: "Controls")),
+            .panel: .init(isThere: true, first: .worked, setup: .panel(rememberedRow: nil)),
+        ])
+        found.panelClues = clues
+        #expect(found.result().result.setup?.panelClues == clues)
+        found.ways[.panel] = .init(isThere: true, first: .didNotPause, setup: .panel(rememberedRow: nil))
+        #expect(found.result().result.setup?.ways == [.menu(menuName: "Controls")] && found.result().result.setup?.panelClues == nil)
+        #expect(PanelClues(page: nil, script: nil) == nil) // nothing more than its titles
+    }
 }

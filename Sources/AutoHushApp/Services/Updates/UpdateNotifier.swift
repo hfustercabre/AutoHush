@@ -51,7 +51,7 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
                     let content = UNMutableNotificationContent()
                     content.title = notice.title
                     content.body = notice.body
-                    content.userInfo = ["kind": notice.kind.rawValue, "version": notice.version.description]
+                    content.userInfo = notice.userInfo
                     try await UNUserNotificationCenter.current()
                         .add(UNNotificationRequest(identifier: SystemUpdateNotifier.identifier, content: content, trigger: nil))
                 },
@@ -154,12 +154,10 @@ extension SystemUpdateNotifier: UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
-        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
-        let info = response.notification.request.content.userInfo
-        guard let kind = (info["kind"] as? String).flatMap(UpdateNotice.Kind.init),
-              let version = (info["version"] as? String).flatMap(AppVersion.init)
+        guard let clicked = UpdateNotice.clicked(action: response.actionIdentifier,
+                                                 userInfo: response.notification.request.content.userInfo)
         else { return }
-        await MainActor.run { onClick?(kind, version) }
+        await MainActor.run { onClick?(clicked.kind, clicked.version) }
     }
 
     /// Shows notifications as banners even while AutoHush is the active app.

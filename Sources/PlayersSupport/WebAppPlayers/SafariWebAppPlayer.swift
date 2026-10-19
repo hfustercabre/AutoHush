@@ -17,7 +17,7 @@ import AutoHushKit
 /// Its volume can't be read, so it pauses and plays without fading. A pause
 /// the site refuses, or an ad that plays while its button says "Play", mutes
 /// the web app instead.
-package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
+package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     package nonisolated let app: SafariWebApp
     /// Its site isn't one AutoHush has been tested with.
     package nonisolated let isUntested: Bool
@@ -32,8 +32,6 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
     package nonisolated var installedURL: URL? { app.url }
     /// Its page is read and pressed through Accessibility.
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }
-    /// Its volume can't be read or set.
-    package nonisolated var canFade: Bool { false }
 
     private let page: any WebPage
     private let processIdentifier: @Sendable () -> pid_t?
@@ -185,10 +183,6 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
         try await press(from: .paused)
     }
 
-    /// Its volume can't be read or set: no fades.
-    package func volume() async -> Int? { nil }
-    package func setVolume(_ volume: Int) async throws {}
-
     /// Read about once a second; when it stops (monitoring stops), a mute
     /// in place of a pause is lifted, so the web app is never left silent.
     @MainActor
@@ -198,8 +192,6 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer {
             onStop: { [self] in Task { await self.releaseMute() } }
         )
     }
-
-    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     /// Lifts a mute in place of a pause, without playing anything.
     package func releaseMute() async {

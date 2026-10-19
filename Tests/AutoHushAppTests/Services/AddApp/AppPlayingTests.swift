@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Testing
 @testable import AutoHushApp
 
@@ -12,6 +13,19 @@ struct AppPlayingTests {
     func openSilentOutput() async {
         #expect(await playing(output: true, measured: true, audible: false).plays(42) == false)
         #expect(await playing(output: true, measured: true, audible: true).plays(42))
+    }
+
+    @Test("reading and listening block a queue of their own, never Swift's shared threads")
+    func offSharedThreads() async {
+        let queues = OSAllocatedUnfairLock<[String]>(initialState: [])
+        let note: @Sendable () -> Void = {
+            let label = String(cString: __dispatch_queue_get_label(nil))
+            queues.withLock { $0.append(label) }
+        }
+        let playing = AppPlaying(outputRunning: { _ in note(); return true }, levelMeasured: { note(); return true },
+                                 audible: { _ in note(); return true })
+        #expect(await playing.plays(42))
+        #expect(queues.withLock { $0 } == Array(repeating: "AutoHush.AppPlaying", count: 3))
     }
 
     @Test("no output, no play; its level not measured, the open output decides")

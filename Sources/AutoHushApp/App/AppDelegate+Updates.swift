@@ -40,6 +40,6 @@ extension AppDelegate {
     var isQuietMoment: Bool {
         !session.isHoldingPause
             && statusMenu?.isMenuOpen != true
-            && !NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey }
+            && !hasOpenWindow()
     }
 }

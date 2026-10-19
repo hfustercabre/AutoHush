@@ -6,11 +6,6 @@ import AutoHushTestSupport
 @Suite("Preferences")
 @MainActor
 struct PreferencesTests {
-    /// Shared by several `Preferences` instances to check persistence.
-    private final class Scratch {
-        let defaults = InMemoryPreferenceStore()
-    }
-
     @Test("the learned buttons of web apps that are gone are forgotten, the others kept")
     func forgetsWebAppButtons() {
         let store = InMemoryPreferenceStore()
@@ -24,9 +19,9 @@ struct PreferencesTests {
 
     @Test("auto-pause defaults to enabled without snooze")
     func defaults() {
-        let scratch = Scratch()
-        #expect(Preferences(store: scratch.defaults).autoPause == AutoPauseSetting())
-        #expect(Preferences(store: scratch.defaults).ignoredApps.isEmpty)
+        let store = InMemoryPreferenceStore() // shared by the Preferences below, as kept on disk
+        #expect(Preferences(store: store).autoPause == AutoPauseSetting())
+        #expect(Preferences(store: store).ignoredApps.isEmpty)
     }
 
     /// Everything AutoHush 0.12.1 keeps, as it writes it: the keys, the keys
@@ -124,86 +119,86 @@ struct PreferencesTests {
 
     @Test("auto-pause and its snooze persist")
     func autoPausePersists() {
-        let scratch = Scratch()
+        let store = InMemoryPreferenceStore()
         let until = Date(timeIntervalSinceReferenceDate: 1_000_000)
-        Preferences(store: scratch.defaults).autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: until)
-        #expect(Preferences(store: scratch.defaults).autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: until))
+        Preferences(store: store).autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: until)
+        #expect(Preferences(store: store).autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: until))
 
-        Preferences(store: scratch.defaults).autoPause = AutoPauseSetting(isEnabled: false)
-        #expect(Preferences(store: scratch.defaults).autoPause == AutoPauseSetting(isEnabled: false))
+        Preferences(store: store).autoPause = AutoPauseSetting(isEnabled: false)
+        #expect(Preferences(store: store).autoPause == AutoPauseSetting(isEnabled: false))
     }
 
     @Test("a Focus's note of Auto-Pause persists with its timed turn off; nil removes it")
     func focusAutoPauseNote() {
-        let scratch = Scratch()
+        let store = InMemoryPreferenceStore()
         let until = Date(timeIntervalSinceReferenceDate: 1_000_000)
-        #expect(Preferences(store: scratch.defaults).focusAutoPause == nil)
+        #expect(Preferences(store: store).focusAutoPause == nil)
 
         let note = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: true, snoozedUntil: until), applied: false)
-        Preferences(store: scratch.defaults).focusAutoPause = note
-        #expect(Preferences(store: scratch.defaults).focusAutoPause == note)
+        Preferences(store: store).focusAutoPause = note
+        #expect(Preferences(store: store).focusAutoPause == note)
 
         let other = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: false), applied: true)
-        Preferences(store: scratch.defaults).focusAutoPause = other
-        #expect(Preferences(store: scratch.defaults).focusAutoPause == other)
+        Preferences(store: store).focusAutoPause = other
+        #expect(Preferences(store: store).focusAutoPause == other)
 
-        Preferences(store: scratch.defaults).focusAutoPause = nil
-        #expect(Preferences(store: scratch.defaults).focusAutoPause == nil)
+        Preferences(store: store).focusAutoPause = nil
+        #expect(Preferences(store: store).focusAutoPause == nil)
         for key in ["focusNotedAutoPauseEnabled", "focusNotedAutoPauseSnoozedUntil", "focusAppliedAutoPause"] {
-            #expect(scratch.defaults.object(forKey: key) == nil)
+            #expect(store.object(forKey: key) == nil)
         }
     }
 
-    @Test("ignored apps persist with their names, sorted by name")
+    @Test("ignored apps persist with their names, sorted by name, not by ID")
     func ignoredAppsPersist() {
-        let scratch = Scratch()
-        Preferences(store: scratch.defaults).ignoredApps = [
-            AudioSource(id: "org.videolan.vlc", name: "VLC"),
+        let store = InMemoryPreferenceStore()
+        Preferences(store: store).ignoredApps = [
             AudioSource(id: "com.google.Chrome", name: "Google Chrome"),
+            AudioSource(id: "org.mozilla.firefox", name: "Firefox"),
         ]
-        #expect(Preferences(store: scratch.defaults).ignoredApps == [
+        #expect(Preferences(store: store).ignoredApps == [
+            AudioSource(id: "org.mozilla.firefox", name: "Firefox"),
             AudioSource(id: "com.google.Chrome", name: "Google Chrome"),
-            AudioSource(id: "org.videolan.vlc", name: "VLC"),
         ])
     }
 
     @Test("timings persist and are clamped")
     func timingsPersist() {
-        let scratch = Scratch()
-        #expect(Preferences(store: scratch.defaults).timings == .defaults)
-        Preferences(store: scratch.defaults).timings = TimingSettings(startConfirmation: 2.5, stopGrace: 99)
-        #expect(Preferences(store: scratch.defaults).timings == TimingSettings(startConfirmation: 2.5, stopGrace: 10))
+        let store = InMemoryPreferenceStore()
+        #expect(Preferences(store: store).timings == .defaults)
+        Preferences(store: store).timings = TimingSettings(startConfirmation: 2.5, stopGrace: 99)
+        #expect(Preferences(store: store).timings == TimingSettings(startConfirmation: 2.5, stopGrace: 10))
         #expect(TimingSettings.defaults.fadeOutDuration == 1 && TimingSettings.defaults.fadeInDuration == 2)
-        Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 0.5, fadeInDuration: 4)
-        #expect(Preferences(store: scratch.defaults).timings.fadeOutDuration == 0.5)
-        #expect(Preferences(store: scratch.defaults).timings.fadeInDuration == 4)
-        Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 99, fadeInDuration: -1)
-        #expect(Preferences(store: scratch.defaults).timings.fadeOutDuration == 5)
-        #expect(Preferences(store: scratch.defaults).timings.fadeInDuration == 0)
+        Preferences(store: store).timings = TimingSettings(fadeOutDuration: 0.5, fadeInDuration: 4)
+        #expect(Preferences(store: store).timings.fadeOutDuration == 0.5)
+        #expect(Preferences(store: store).timings.fadeInDuration == 4)
+        Preferences(store: store).timings = TimingSettings(fadeOutDuration: 99, fadeInDuration: -1)
+        #expect(Preferences(store: store).timings.fadeOutDuration == 5)
+        #expect(Preferences(store: store).timings.fadeInDuration == 0)
     }
 
     @Test("fades turned off persist with their durations, as Settings → Advanced's switches do, and timings stored before the switches keep fades on and the others off")
     func fadesSwitchPersists() {
-        let scratch = Scratch()
-        Preferences(store: scratch.defaults).timings = TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false)
-        #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
+        let store = InMemoryPreferenceStore()
+        Preferences(store: store).timings = TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false)
+        #expect(Preferences(store: store).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
         let advanced = TimingSettings(levelsMusic: true, staysPausedAfterCalls: true)
-        Preferences(store: scratch.defaults).timings = advanced
-        #expect(Preferences(store: scratch.defaults).timings == advanced)
-        scratch.defaults.set(["fadeOutDuration": 1.5], forKey: "timings") // as 0.7.0 stored them
-        #expect(Preferences(store: scratch.defaults).timings == TimingSettings(fadeOutDuration: 1.5))
+        Preferences(store: store).timings = advanced
+        #expect(Preferences(store: store).timings == advanced)
+        store.set(["fadeOutDuration": 1.5], forKey: "timings") // as 0.7.0 stored them
+        #expect(Preferences(store: store).timings == TimingSettings(fadeOutDuration: 1.5))
     }
 
     @Test("seen apps keep the most recent first, once each, up to the limit")
     func seenApps() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         preferences.recordSeen([vlc])
         preferences.recordSeen([chrome])
         preferences.recordSeen([vlc])
-        #expect(Preferences(store: scratch.defaults).seenApps == [vlc, chrome])
+        #expect(Preferences(store: store).seenApps == [vlc, chrome])
 
         preferences.recordSeen((0..<60).map { AudioSource(id: "app.\($0)", name: "App \($0)") })
         let kept = preferences.seenApps.map(\.id)
@@ -214,8 +209,8 @@ struct PreferencesTests {
 
     @Test("keeping an app seen adds it at the front once, and leaves a known app where it is")
     func keepSeen() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         preferences.recordSeen([vlc])
@@ -230,22 +225,22 @@ struct PreferencesTests {
 
     @Test("the apps' order defaults to the most recent first, and persists")
     func appListOrder() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         #expect(preferences.appListOrder == .standard)
         #expect(preferences.appListOrder == AppListOrder(criterion: .lastPlayed, isReversed: false))
 
         preferences.appListOrder = AppListOrder(criterion: .state, isReversed: true)
-        #expect(Preferences(store: scratch.defaults).appListOrder == AppListOrder(criterion: .state, isReversed: true))
+        #expect(Preferences(store: store).appListOrder == AppListOrder(criterion: .state, isReversed: true))
 
-        scratch.defaults.set("someday", forKey: "appListOrder") // from a later version
-        #expect(Preferences(store: scratch.defaults).appListOrder == AppListOrder(criterion: .lastPlayed, isReversed: true))
+        store.set("someday", forKey: "appListOrder") // from a later version
+        #expect(Preferences(store: store).appListOrder == AppListOrder(criterion: .lastPlayed, isReversed: true))
     }
 
     @Test("update settings default to automatic checks and installs, and persist")
     func updateSettings() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         #expect(preferences.checksForUpdatesAutomatically)
         #expect(preferences.automaticUpdates == .install)
         #expect(preferences.lastUpdateCheck == nil)
@@ -253,41 +248,41 @@ struct PreferencesTests {
         preferences.checksForUpdatesAutomatically = false
         preferences.automaticUpdates = .download
         preferences.lastUpdateCheck = date
-        #expect(!Preferences(store: scratch.defaults).checksForUpdatesAutomatically)
-        #expect(Preferences(store: scratch.defaults).automaticUpdates == .download)
-        #expect(Preferences(store: scratch.defaults).lastUpdateCheck == date)
+        #expect(!Preferences(store: store).checksForUpdatesAutomatically)
+        #expect(Preferences(store: store).automaticUpdates == .download)
+        #expect(Preferences(store: store).lastUpdateCheck == date)
 
         #expect(preferences.pauseHandover == nil)
         preferences.pauseHandover = PauseHandover(at: date, player: "com.example.jukebox")
-        #expect(Preferences(store: scratch.defaults).pauseHandover == PauseHandover(at: date, player: "com.example.jukebox"))
+        #expect(Preferences(store: store).pauseHandover == PauseHandover(at: date, player: "com.example.jukebox"))
         preferences.pauseHandover = PauseHandover(at: date, player: nil)
-        #expect(Preferences(store: scratch.defaults).pauseHandover == PauseHandover(at: date, player: nil))
+        #expect(Preferences(store: store).pauseHandover == PauseHandover(at: date, player: nil))
         preferences.pauseHandover = nil
-        #expect(Preferences(store: scratch.defaults).pauseHandover == nil)
+        #expect(Preferences(store: store).pauseHandover == nil)
 
         // Only players held paused when another was chosen.
         let held = PauseHandover(at: date, player: nil, holdsChosen: false, held: ["org.videolan.vlc", "com.example.jukebox"])
         preferences.pauseHandover = held
-        #expect(Preferences(store: scratch.defaults).pauseHandover == held)
+        #expect(Preferences(store: store).pauseHandover == held)
         let both = PauseHandover(at: date, player: "com.spotify.client", held: ["org.videolan.vlc"])
         preferences.pauseHandover = both
-        #expect(Preferences(store: scratch.defaults).pauseHandover == both)
+        #expect(Preferences(store: store).pauseHandover == both)
     }
 
     @Test("a handover from AutoHush 0.8.2 or earlier names no player, even with one left from before; one from 0.8.3 to 0.11.0 is the chosen player's alone")
     func pauseHandoverFromAnEarlierVersion() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         let earlier = Date(timeIntervalSinceReferenceDate: 5_000)
         preferences.pauseHandover = PauseHandover(at: earlier, player: "com.example.jukebox")
         // An earlier version takes it over (clearing only the date), then hands one over itself.
-        scratch.defaults.set(nil, forKey: "pauseHandedOverAt")
+        store.set(nil, forKey: "pauseHandedOverAt")
         let later = earlier.addingTimeInterval(120)
-        scratch.defaults.set(later, forKey: "pauseHandedOverAt")
+        store.set(later, forKey: "pauseHandedOverAt")
         #expect(preferences.pauseHandover == PauseHandover(at: later, player: nil))
 
         // 0.8.3 to 0.11.0 wrote the date and the player only.
-        scratch.defaults.set(["at": later, "player": "com.example.jukebox"], forKey: "pauseHandedOverPlayer")
+        store.set(["at": later, "player": "com.example.jukebox"], forKey: "pauseHandedOverPlayer")
         #expect(preferences.pauseHandover == PauseHandover(at: later, player: "com.example.jukebox", holdsChosen: true, held: []))
     }
 
@@ -295,18 +290,18 @@ struct PreferencesTests {
         (false, AutomaticUpdates.notify), (true, .install),
     ])
     func legacyInstallSwitch(installed: Bool, choice: AutomaticUpdates) {
-        let scratch = Scratch()
-        scratch.defaults.set(installed, forKey: "installsUpdatesAutomatically")
-        #expect(Preferences(store: scratch.defaults).automaticUpdates == choice)
-        Preferences(store: scratch.defaults).automaticUpdates = .download
-        #expect(scratch.defaults.object(forKey: "installsUpdatesAutomatically") == nil)
-        #expect(Preferences(store: scratch.defaults).automaticUpdates == .download)
+        let store = InMemoryPreferenceStore()
+        store.set(installed, forKey: "installsUpdatesAutomatically")
+        #expect(Preferences(store: store).automaticUpdates == choice)
+        Preferences(store: store).automaticUpdates = .download
+        #expect(store.object(forKey: "installsUpdatesAutomatically") == nil)
+        #expect(Preferences(store: store).automaticUpdates == .download)
     }
 
     @Test("a kept download, an expired version, the last notice and the last version persist")
     func updateRecords() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         #expect(preferences.downloadedUpdate == nil)
         let download = DownloadedUpdate(version: "0.3.8", sha256: String(repeating: "ab", count: 32),
                                         downloadedAt: Date(timeIntervalSinceReferenceDate: 9_000))
@@ -314,67 +309,67 @@ struct PreferencesTests {
         preferences.expiredUpdateVersion = "0.3.7"
         preferences.lastUpdateNotice = "downloaded 0.3.8"
         preferences.lastLaunchedVersion = "0.3.6"
-        let reread = Preferences(store: scratch.defaults)
+        let reread = Preferences(store: store)
         #expect(reread.downloadedUpdate == download)
         #expect(reread.expiredUpdateVersion == "0.3.7")
         #expect(reread.lastUpdateNotice == "downloaded 0.3.8")
         #expect(reread.lastLaunchedVersion == "0.3.6")
         preferences.downloadedUpdate = nil
-        #expect(Preferences(store: scratch.defaults).downloadedUpdate == nil)
+        #expect(Preferences(store: store).downloadedUpdate == nil)
     }
 
     @Test("detection defaults to audio levels and persists")
     func detectionMethod() {
-        let scratch = Scratch()
-        #expect(Preferences(store: scratch.defaults).detectionMethod == .audioLevels)
-        Preferences(store: scratch.defaults).detectionMethod = .playbackSignals
-        #expect(Preferences(store: scratch.defaults).detectionMethod == .playbackSignals)
+        let store = InMemoryPreferenceStore()
+        #expect(Preferences(store: store).detectionMethod == .audioLevels)
+        Preferences(store: store).detectionMethod = .playbackSignals
+        #expect(Preferences(store: store).detectionMethod == .playbackSignals)
     }
 
     @Test("what AntiDot mode learns about apps is remembered; the earlier list without names is dropped")
     func playbackAssertions() {
-        let scratch = Scratch()
-        scratch.defaults.set(["com.google.Chrome"], forKey: "announcingApps")
-        #expect(Preferences(store: scratch.defaults).playbackAssertions.isEmpty)
+        let store = InMemoryPreferenceStore()
+        store.set(["com.google.Chrome"], forKey: "announcingApps")
+        #expect(Preferences(store: store).playbackAssertions.isEmpty)
 
         let learned = [
             "com.google.Chrome": AnnouncedAssertions(system: ["Playing audio"], display: ["Video Wake Lock"]),
             "com.apple.Safari": AnnouncedAssertions(display: ["com.apple.WebCore: HTMLMediaElement playback"]),
         ]
-        Preferences(store: scratch.defaults).playbackAssertions = learned
-        #expect(Preferences(store: scratch.defaults).playbackAssertions == learned)
-        #expect(scratch.defaults.object(forKey: "announcingApps") == nil)
+        Preferences(store: store).playbackAssertions = learned
+        #expect(Preferences(store: store).playbackAssertions == learned)
+        #expect(store.object(forKey: "announcingApps") == nil)
     }
 
     @Test("the earlier 'measure audio levels: off' setting becomes open streams only")
     func legacyMeasuringOff() {
-        let scratch = Scratch()
-        scratch.defaults.set(false, forKey: "measuresAudioLevels")
-        #expect(Preferences(store: scratch.defaults).detectionMethod == .openStreams)
-        Preferences(store: scratch.defaults).detectionMethod = .audioLevels
-        #expect(scratch.defaults.object(forKey: "measuresAudioLevels") == nil)
+        let store = InMemoryPreferenceStore()
+        store.set(false, forKey: "measuresAudioLevels")
+        #expect(Preferences(store: store).detectionMethod == .openStreams)
+        Preferences(store: store).detectionMethod = .audioLevels
+        #expect(store.object(forKey: "measuresAudioLevels") == nil)
     }
 
     @Test("the chosen music player persists; none is chosen at first")
     func musicPlayer() {
-        let scratch = Scratch()
-        #expect(Preferences(store: scratch.defaults).musicPlayer == nil)
-        Preferences(store: scratch.defaults).musicPlayer = "com.example.player"
-        #expect(Preferences(store: scratch.defaults).musicPlayer == "com.example.player")
+        let store = InMemoryPreferenceStore()
+        #expect(Preferences(store: store).musicPlayer == nil)
+        Preferences(store: store).musicPlayer = "com.example.player"
+        #expect(Preferences(store: store).musicPlayer == "com.example.player")
     }
 
     @Test("someone updating from before the choice keeps the former player")
     func updatingKeepsFormerPlayer() {
-        let scratch = Scratch()
-        scratch.defaults.set("0.3.11", forKey: "lastLaunchedVersion")
-        Preferences(store: scratch.defaults).keepFormerPlayer("com.example.former")
-        #expect(Preferences(store: scratch.defaults).musicPlayer == "com.example.former")
+        let store = InMemoryPreferenceStore()
+        store.set("0.3.11", forKey: "lastLaunchedVersion")
+        Preferences(store: store).keepFormerPlayer("com.example.former")
+        #expect(Preferences(store: store).musicPlayer == "com.example.former")
     }
 
     @Test("on a Mac where AutoHush never ran, no player is chosen, even on later launches")
     func newUserIsAsked() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         preferences.keepFormerPlayer("com.example.former")
         #expect(preferences.musicPlayer == nil)
         // The first launch stores settings of its own; the user still hasn't chosen.
@@ -385,8 +380,8 @@ struct PreferencesTests {
 
     @Test("a chosen player is never replaced by the former one")
     func choiceIsKept() {
-        let scratch = Scratch()
-        let preferences = Preferences(store: scratch.defaults)
+        let store = InMemoryPreferenceStore()
+        let preferences = Preferences(store: store)
         preferences.lastLaunchedVersion = "0.3.11"
         preferences.musicPlayer = "com.example.chosen"
         preferences.keepFormerPlayer("com.example.former")

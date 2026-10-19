@@ -25,7 +25,7 @@ struct AppStatusTests {
     func muted() {
         var status = ready(.pausedByMonitor)
         status.setActiveSources([chrome])
-        status.playerMutes = true
+        status.playerOptions[0].pausesByMuting = true
         #expect(status.statusLine == "Muted — Google Chrome is playing")
         #expect(status.icon == .pausedForApp && status.offersUnmute)
         status.playback = .musicPlaying
@@ -33,7 +33,7 @@ struct AppStatusTests {
         #expect(AppStatus.unmuteTitle == "Unmute")
 
         // Kept paused while Add an App checks an app, also when nothing plays in its gaps.
-        status.playerMutes = false
+        status.playerOptions[0].pausesByMuting = false
         status.playerHeldForCheck = true
         status.playback = .pausedByMonitor
         status.setActiveSources([])
@@ -70,9 +70,10 @@ struct AppStatusTests {
     func controlErrorAlert() {
         var status = ready(.pauseFailed)
         #expect(status.controlErrorAlert == nil) // nothing to tell
-        status.controlError = ControlError(text: "Jukebox didn’t respond to its Play/Pause.", detail: "In English.")
+        let error = ControlError(MusicPlayerError.playerCommandFailed(.pressIgnored), player: "Jukebox")
+        status.controlError = error
         #expect(status.controlErrorAlert?.title == "Couldn’t Pause Jukebox")
-        #expect(status.controlErrorAlert?.message == "Jukebox didn’t respond to its Play/Pause.\n\nIn English.")
+        #expect(status.controlErrorAlert?.message == "\(error.text)\n\n\(error.detail)")
         status.setHealth(.retrying("Can’t control Jukebox right now"))
         #expect(status.controlErrorAlert?.title == "Can’t Control Jukebox")
     }
@@ -86,15 +87,12 @@ struct AppStatusTests {
         #expect(status.warning == nil && !status.canRetry && !status.dimsIcon)
     }
 
-    @Test("when ready, icon and status line follow playback", arguments: [
-        (PlaybackState.musicPlaying, MenuBarIcon.playing, "Playing"),
-        (.musicIdle, .noMusic, "Not playing"),
-        (.playingElsewhere, .elsewhere, "Playing on another device"),
-    ])
-    func readyFollowsPlayback(playback: PlaybackState, icon: MenuBarIcon, line: String) {
-        let status = ready(playback)
-        #expect(status.icon == icon)
-        #expect(status.statusLine == line)
+    @Test("when ready, icon and status line follow playback, as the playback state presents itself")
+    func readyFollowsPlayback() {
+        let status = ready(.playingElsewhere)
+        let presentation = PlaybackState.playingElsewhere.presentation()
+        #expect(status.icon == presentation.icon)
+        #expect(status.statusLine == presentation.line)
     }
 
     @Test("the card is titled with the chosen player, or AutoHush while none is chosen")

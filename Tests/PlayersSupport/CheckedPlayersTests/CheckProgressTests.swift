@@ -1,7 +1,6 @@
 import Foundation
 import Testing
-@testable import AutoHushApp
-import CheckedPlayers
+@testable import CheckedPlayers
 
 @Suite("CheckProgress")
 struct CheckProgressTests {

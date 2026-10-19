@@ -4,7 +4,7 @@ import AutoHushKit
 import AutoHushTestSupport
 @testable import AutoHushApp
 
-@Suite("HeldPauses")
+@Suite("HeldPauses", .timeLimit(.minutes(1)))
 @MainActor
 struct HeldPausesTests {
     @Test("a held pause's monitoring runs on while its player is paused by it, and stops once it plays again")

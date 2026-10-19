@@ -9,6 +9,9 @@ extension PlaybackArbiter {
         pauseTask = Task {
             await pauseMusicIfNeeded()
             pauseTask = nil
+            // No pause came of it (the fade-out called off, the pause failed,
+            // the player still learning): a call during its fade-out is forgotten.
+            if !pausedByUs { callDuringPause = false }
             publishPlaybackState()
         }
     }
@@ -28,6 +31,7 @@ extension PlaybackArbiter {
     }
 
     private func pauseIfStillPending(id: UUID) {
+        defer { pendingTaskEnded(id) }
         guard pendingPauseID == id else { return }
         pendingPauseTask = nil
         pendingPauseWait = nil
@@ -36,6 +40,7 @@ extension PlaybackArbiter {
     }
 
     func cancelPendingPause() {
+        if let pendingPauseID, let pendingPauseTask { calledOff[pendingPauseID] = (pendingPauseTask, pendingPauseWait) }
         pendingPauseTask?.cancel()
         pendingPauseTask = nil
         pendingPauseWait = nil
@@ -160,6 +165,9 @@ extension PlaybackArbiter {
     private func holdPause() -> Bool {
         guard isAsleep else {
             pausedByUs = true
+            // A call already playing counts too: a pause taken over, or a
+            // mute, has no fade-out that noted it.
+            noteCalls()
             return true
         }
         forgotPauseInSleep = true

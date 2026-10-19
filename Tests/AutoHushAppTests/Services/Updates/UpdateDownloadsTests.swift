@@ -10,15 +10,12 @@ import AutoHushTestSupport
 struct UpdateDownloadsTests {
     @MainActor
     private final class Scratch {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "UpdateDownloadsTests-\(UUID().uuidString)")
+        private let scratchFolder = TemporaryFolder("UpdateDownloadsTests", create: false)
+        var folder: URL { scratchFolder.url }
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let installer = MockUpdateInstaller()
         lazy var sut = UpdateDownloads(folder: folder, preferences: preferences, installer: installer)
         let now = Date(timeIntervalSinceReferenceDate: 800_000_000)
-
-        deinit {
-            try? FileManager.default.removeItem(at: folder)
-        }
 
         var files: [String] { ((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []).sorted() }
     }

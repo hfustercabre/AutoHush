@@ -11,7 +11,7 @@ import PodcastsSupport
 import VLCSupport
 import QuickTimeSupport
 
-/// The music players AutoHush ships with, plus the Safari web apps on this
+/// The media players AutoHush ships with, plus the Safari web apps on this
 /// Mac. Each app lives in its own `<App>Support` target; adding one means
 /// adding it to `catalog`.
 package enum SupportedPlayers {

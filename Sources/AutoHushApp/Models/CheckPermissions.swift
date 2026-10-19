@@ -1,4 +1,6 @@
-/// What a check needs allowed for the chosen app.
+/// What a check needs allowed for the chosen app: its `PermissionsState`,
+/// read by `PermissionCenter` as the chosen player's is, seen as the Allow
+/// step's rows.
 struct CheckPermissions: Equatable {
     var accessibility = false
     var audio = PermissionAccess.notAsked
@@ -19,5 +21,22 @@ struct CheckPermissions: Equatable {
     /// The ones not allowed that the check can go without.
     func missingOptional(antiDot: Bool) -> [CheckPermission] {
         (audio == .allowed || antiDot ? [] : [.audioRecording]) + (automation == nil || automation == .allowed ? [] : [.automation])
+    }
+}
+
+extension CheckPermissions {
+    /// The rows of `state`: Automation when the app is controlled through it.
+    init(_ state: PermissionsState) {
+        self.init(accessibility: state.accessibility, audio: state.audio,
+                  automation: state.control == nil ? nil : state.controlAccess)
+    }
+
+    /// Where `permission` stands, for `PermissionCenter.request`.
+    func access(_ permission: CheckPermission) -> PermissionAccess {
+        switch permission {
+        case .accessibility: accessibility ? .allowed : .denied
+        case .audioRecording: audio
+        case .automation: automation ?? .notNeeded
+        }
     }
 }

@@ -1,30 +1,46 @@
 import AppKit
 import Foundation
 import AutoHushKit
+import ScriptablePlayers
 
 /// Pausing and playing an app through its row in the menu bar's Now Playing
 /// panel: the last way (the user, 2026-10-15), since the panel shows on
 /// screen for about half a second and takes the keyboard. Its row is the one
-/// showing what the app plays (its windows' titles) or its name, else the
-/// row it changed with last (kept in its setup), else, pausing, the only one
-/// playing while it holds Now Playing. Its state comes from its other signs;
-/// for a row that doesn't follow the app (`PlayerSetup.panelRowIsStale`),
-/// from its sound, and the row is pressed as a toggle, only when its sound
-/// says it isn't as wanted yet, then checked here by its sound.
+/// showing what the app plays or its name, else the row it changed with last
+/// (kept in its setup), else, pausing, the only one playing while it holds
+/// Now Playing, as its check told it (`PanelRows.row`). What it plays shows
+/// in its windows' titles and, where its check found them (`PanelClues`),
+/// what it plays by AppleScript and its page's player bar; the bar is read
+/// only when nothing else told its row, as the check reads it (a page can
+/// take a second), and the panel opened again. Its state comes from its
+/// other signs; for a row that doesn't follow the app
+/// (`PlayerSetup.panelRowIsStale`), from its sound, and the row is pressed
+/// as a toggle, only when its sound says it isn't as wanted yet, then
+/// checked here by its sound.
 package actor PanelWay: MusicPlayer {
     /// What tells the app's row, read just before the panel opens: its
-    /// windows' titles, the other running apps' names, and whether it holds
-    /// Now Playing.
+    /// windows' titles, what it plays by AppleScript, the other running
+    /// apps' names, and whether it holds Now Playing; its page's player bar,
+    /// later, when those don't tell.
     package struct Shown: Sendable {
         package var titles: [String]
+        /// What it plays, by AppleScript (`PanelClues.script`).
+        package var track: String?
+        /// Its page's player bar's texts (`PanelClues.page`).
+        package var bar: [String]
         package var otherApps: Set<String>
         package var holdsNowPlaying: Bool
 
-        package init(titles: [String], otherApps: Set<String>, holdsNowPlaying: Bool) {
+        package init(titles: [String], track: String? = nil, bar: [String] = [], otherApps: Set<String>, holdsNowPlaying: Bool) {
             self.titles = titles
+            self.track = track
+            self.bar = bar
             self.otherApps = otherApps
             self.holdsNowPlaying = holdsNowPlaying
         }
+
+        /// Each text its song may show in.
+        package var texts: [String] { titles + (track.map { [$0] } ?? []) + bar }
     }
 
     package nonisolated let bundleID: String
@@ -41,6 +57,8 @@ package actor PanelWay: MusicPlayer {
     private let panel: any NowPlayingPanel
     private let processIdentifier: @Sendable () -> pid_t?
     private let shown: @Sendable (pid_t) -> Shown
+    /// Its page's player bar's texts, where its check found its song there.
+    private let playerBar: (@Sendable (pid_t) -> [String])?
     /// Its row doesn't follow it: its sound tells (`hearing`).
     private nonisolated let rowIsStale: Bool
     private let hearing: LateHearing?
@@ -48,11 +66,14 @@ package actor PanelWay: MusicPlayer {
     private let queue = DispatchQueue(label: "AutoHush.NowPlayingPanel", qos: .userInitiated)
 
     /// `panel`, `processIdentifier`, `shown` and `sleep` (while a toggle is
-    /// checked): the real ones; tests stand in for them.
+    /// checked): the real ones by default, `shown` reading what the setup's
+    /// clues say; tests stand in for them. `playerBar` reads its page's
+    /// player bar, where its check found its song there (`PanelClues.page`).
     package init(setup: PlayerSetup, remembered: String?, store: any PlayerSetupStore,
                  panel: any NowPlayingPanel = AccessibilityNowPlayingPanel(),
                  processIdentifier: (@Sendable () -> pid_t?)? = nil,
-                 shown: @escaping @Sendable (pid_t) -> Shown = PanelWay.shown, hearing: LateHearing? = nil,
+                 shown: (@Sendable (pid_t) -> Shown)? = nil, playerBar: (@Sendable (pid_t) -> [String])? = nil,
+                 hearing: LateHearing? = nil,
                  sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         bundleID = setup.bundleID
         rowIsStale = setup.panelRowIsStale == true
@@ -64,15 +85,24 @@ package actor PanelWay: MusicPlayer {
         self.processIdentifier = processIdentifier ?? { [bundleID = setup.bundleID] in
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
-        self.shown = shown
+        self.shown = shown ?? Self.shown(song: setup.panelClues?.script)
+        self.playerBar = playerBar
         self.sleep = sleep
     }
 
-    /// What the app shows now, through Accessibility and NSWorkspace.
-    package static let shown: @Sendable (pid_t) -> Shown = { pid in
-        let titles = AXUIElementCreateApplication(pid).elements(kAXWindowsAttribute).compactMap { $0.string(kAXTitleAttribute) }
-        let others = Set(NSWorkspace.shared.runningApplications.filter { $0.processIdentifier != pid }.compactMap(\.localizedName))
-        return Shown(titles: titles, otherApps: others, holdsNowPlaying: NowPlayingApp.current() == .process(pid))
+    /// How long each read of the app's windows waits for it (macOS's 6 s
+    /// otherwise), as a menu's and a page's do.
+    static let timeout: Float = 0.5
+
+    /// What the app shows now, through Accessibility and NSWorkspace, and
+    /// what it plays by AppleScript (`song`), where its check found it says.
+    package static func shown(song: ScriptedSong?) -> @Sendable (pid_t) -> Shown {
+        { pid in
+            let titles = AXUIElement.application(pid, timeout: timeout).elements(kAXWindowsAttribute, timeout: timeout)
+                .compactMap { $0.string(kAXTitleAttribute) }
+            let others = Set(NSWorkspace.shared.runningApplications.filter { $0.processIdentifier != pid }.compactMap(\.localizedName))
+            return Shown(titles: titles, track: song?.read(pid: pid), otherApps: others, holdsNowPlaying: NowPlayingApp.current() == .process(pid))
+        }
     }
 
     package func verifyControlAccess() async throws {
@@ -104,16 +134,32 @@ package actor PanelWay: MusicPlayer {
 
     /// Presses its row's Play/Pause, and keeps the row in its setup.
     private func pressRow(pid: pid_t, pausing: Bool) async throws {
-        let (name, remembered, panel, shown, asToggle) = (name, remembered, panel, shown, rowIsStale)
+        let (name, remembered, panel, shown, playerBar, asToggle) = (name, remembered, panel, shown, playerBar, rowIsStale)
         let (pressed, hidden): (String?, Bool) = await queue.run {
             // Read before the panel opens (Now Playing is asked of a fresh process).
-            let now = shown(pid)
-            var chosen: String?
-            let opened = panel.pressRow { rows in
-                let row = PanelRows.row(in: rows, pausing: pausing, appName: name, otherApps: now.otherApps, texts: now.titles,
-                                        remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying, asToggle: asToggle)
-                chosen = row?.text
+            var now = shown(pid)
+            var chosen: String?, declined = false
+            /// Its row (`PanelRows.row`); `told`: only one its song, its name
+            /// or memory tells (its player bar is still to be read).
+            func pick(_ rows: [PanelRow], told: Bool) -> PanelRow? {
+                guard let row = PanelRows.row(in: rows, pausing: pausing, appName: name, otherApps: now.otherApps, texts: now.texts,
+                                              remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying, asToggle: asToggle)
+                else { return nil }
+                guard !told || row.text == remembered
+                        || !PanelRows.appRows([row], appName: name, otherApps: now.otherApps, texts: now.texts).isEmpty else {
+                    declined = true
+                    return nil
+                }
+                chosen = row.text
                 return row
+            }
+            var opened = panel.pressRow { pick($0, told: playerBar != nil) }
+            // Nothing it shows told its row: its page's player bar may, as
+            // its check found, read now (with the panel closed) and the
+            // panel opened again.
+            if opened == false, chosen == nil, let playerBar {
+                now.bar = playerBar(pid)
+                if declined || !now.bar.isEmpty { opened = panel.pressRow { pick($0, told: false) } }
             }
             // Not opened: hidden in the menu bar, which the user can change.
             return (chosen, opened == nil && !panel.isInMenuBar())

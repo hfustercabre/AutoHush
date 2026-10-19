@@ -38,19 +38,16 @@ enum TCC {
         CFString, CFDictionary?, @escaping @convention(block) (Bool) -> Void
     ) -> Void
 
-    private struct Functions: @unchecked Sendable {
+    private struct Functions: Sendable {
         let preflight: PreflightFunction
         let request: RequestFunction
     }
 
     private static let functions: Functions? = {
-        guard let handle = dlopen("/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC", RTLD_NOW),
-              let preflight = dlsym(handle, "TCCAccessPreflight"),
-              let request = dlsym(handle, "TCCAccessRequest")
+        let framework = "/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC"
+        guard let preflight = PrivateSymbol.function("TCCAccessPreflight", in: framework, as: PreflightFunction.self),
+              let request = PrivateSymbol.function("TCCAccessRequest", in: framework, as: RequestFunction.self)
         else { return nil }
-        return Functions(
-            preflight: unsafeBitCast(preflight, to: PreflightFunction.self),
-            request: unsafeBitCast(request, to: RequestFunction.self)
-        )
+        return Functions(preflight: preflight, request: request)
     }()
 }

@@ -33,6 +33,8 @@ final class WindowWatch {
 
     private var windows: [Window] = []
     private var loop: Task<Void, Never>?
+    /// The loop under way, if any: for tests, to await its end.
+    var loopTask: Task<Void, Never>? { loop }
     private let interval: Duration
     private let sleep: @Sendable (Duration) async -> Void
     private let refresh: @MainActor (Refresh) async -> Void

@@ -17,7 +17,7 @@ typealias Scripting = ScriptingDictionary
 /// `sdef` opens an app to ask it, and this tool never launches one, as
 /// AutoHush never does. `nil` when it has none.
 @MainActor func readScripting(_ url: URL) -> Scripting? {
-    let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).contains { !$0.isTerminated }
+    let running = NSRunningApplication.running(bundleID) != nil
     if let found = ScriptingDictionary.read(appAt: url, isRunning: running) { return found }
     if !running, ScriptingDictionary.isInBundle(at: url) {
         scriptingNote = "its dictionary is read from the app itself, so only while it runs"
@@ -52,22 +52,47 @@ typealias Scripting = ScriptingDictionary
     }
 }
 
-/// Its AppleScript commands to pause and play it: pause and play in its own
-/// suite (what ScriptablePlayers needs), else commands named so, else one
-/// that toggles (playpause, or a play that toggles).
-@MainActor func scriptControls() -> (pause: String, play: String, toggles: Bool)? {
-    guard let scripting else { return nil }
-    if let suite = scripting.suite, let pause = scripting.commands[suite + "Paus"], let play = scripting.commands[suite + "Play"] {
-        return (pause, play, false)
-    }
-    let names = Set(scripting.commands.values.map { $0.lowercased() })
-    if names.contains("pause"), names.contains("play") { return ("pause", "play", false) }
-    if names.contains("playpause") { return ("playpause", "playpause", true) }
-    if names.contains("play") { return ("play", "play", true) }
-    return nil
+/// How AutoHush would script it (`ScriptSetup(dictionary:)`, the setup a
+/// check keeps): its commands, whether they act on its documents, and where
+/// its state is read. Nil without play or pause commands.
+@MainActor let scriptSetup = scripting.flatMap(ScriptSetup.init(dictionary:))
+
+/// Where its state is read by script, as AutoHush reads it
+/// (`ScriptSetup.State`), also without commands: it tells how the app plays
+/// whichever way presses it. Nil when it can't be read by script.
+@MainActor let scriptState = scripting.flatMap(ScriptSetup.State.init(dictionary:))
+
+/// One of its AppleScript commands, as AutoHush sends it: by its code
+/// ("spfyPaus"), named in the report as its dictionary names it ("pause").
+/// `pauses`: sent to pause it (a toggle is sent both ways).
+struct ScriptCommand: Equatable {
+    let code: String
+    let name: String
+    let pauses: Bool
 }
 
+/// Its AppleScript commands to pause and play it, as AutoHush chooses them
+/// (`ScriptSetup(dictionary:)`): pause and play in its own suite (what
+/// ScriptablePlayers needs), else commands named so, else one that toggles
+/// (playpause, or a play that toggles).
+func scriptControls(of scripting: Scripting?) -> (pause: ScriptCommand, play: ScriptCommand, toggles: Bool)? {
+    guard let scripting, let setup = ScriptSetup(dictionary: scripting) else { return nil }
+    func command(_ code: String, pauses: Bool) -> ScriptCommand {
+        ScriptCommand(code: code, name: scripting.commands[code] ?? code, pauses: pauses)
+    }
+    switch setup.commands {
+    case .pauseAndPlay(let pause, let play): return (command(pause, pauses: true), command(play, pauses: false), false)
+    case .toggle(let toggle): return (command(toggle, pauses: true), command(toggle, pauses: false), true)
+    }
+}
+
+/// The app's AppleScript commands to pause and play it (`scriptControls(of:)`).
+@MainActor func scriptControls() -> (pause: ScriptCommand, play: ScriptCommand, toggles: Bool)? { scriptControls(of: scripting) }
+
 // MARK: - Apple events, as AutoHush sends them
+
+// Built by ScriptablePlayers' own builders (`ScriptablePlayer`,
+// `ScriptedAppPlayer+AppleEvents`), from the codes the dictionary gives as text.
 
 /// Why AppleScript can't be used, when macOS refuses it (no Automation permission).
 @MainActor var scriptProblem: String?
@@ -83,25 +108,15 @@ typealias Scripting = ScriptingDictionary
 /// suites', and the keywords of events, replies and object specifiers.
 typealias EventCode = ScriptablePlayer.Code
 
-/// A code read from a dictionary at run time as a number ("abcd" →
-/// 0x61626364): ScriptablePlayers' `fourCharCode` takes only literals.
-func osType(_ text: String) -> FourCharCode {
-    text.utf8.prefix(4).reduce(0) { $0 << 8 | FourCharCode($1) }
-}
-
 /// A code as its four characters, as an app's dictionary writes it.
 func fourCharacters(_ code: FourCharCode) -> String {
     String(bytes: [24, 16, 8, 0].map { UInt8(truncatingIfNeeded: code >> $0) }, encoding: .macOSRoman) ?? "?"
 }
 
-/// The object specifier for the property `code` of `container`: of the
-/// application as AutoHush builds it (`ScriptablePlayer.propertySpecifier`,
-/// "player state"), else of what `container` names ("name of current
-/// track", "playing of every document").
-func propertySpecifier(_ code: String, of container: NSAppleEventDescriptor? = nil) -> NSAppleEventDescriptor {
-    let specifier = ScriptablePlayer.propertySpecifier(osType(code))
-    if let container { specifier.setDescriptor(container, forKeyword: EventCode.container) }
-    return specifier
+/// The object specifier for the application's property `code` ("player
+/// state", "current track"), as AutoHush builds it (`ScriptablePlayer.propertySpecifier`).
+func propertySpecifier(_ code: String) -> NSAppleEventDescriptor {
+    ScriptablePlayer.propertySpecifier(ScriptedAppPlayer.code(code))
 }
 
 /// Whether macOS lets this tool (or the app running it) send the app Apple
@@ -153,8 +168,9 @@ func eventError(_ error: NSError) -> String {
 /// `ScriptablePlayer.replyError` reads it (-1743: macOS refused it; -600:
 /// it isn't running).
 @MainActor func sendAppleEvent(_ makeEvent: (pid_t) -> NSAppleEventDescriptor) -> Result<NSAppleEventDescriptor?, NSError> {
-    guard let pid = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first(where: { !$0.isTerminated })?
-        .processIdentifier else { return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(procNotFound))) }
+    guard let pid = NSRunningApplication.running(bundleID)?.processIdentifier else {
+        return .failure(NSError(domain: NSOSStatusErrorDomain, code: Int(procNotFound)))
+    }
     if let refusal = automationRefusal(pid: pid) { return .failure(refusal) }
     do {
         let reply = try makeEvent(pid).sendEvent(options: [.waitForReply, .canInteract], timeout: AppleEventChannel.replyTimeout)
@@ -170,63 +186,32 @@ func eventError(_ error: NSError) -> String {
 /// `get <property>` of the application, as AutoHush asks a player's state
 /// or volume (`ScriptablePlayer.makeGetPropertyEvent`).
 @MainActor func getProperty(_ code: String) -> Result<NSAppleEventDescriptor?, NSError> {
-    sendAppleEvent { ScriptablePlayer.makeGetPropertyEvent(osType(code), processIdentifier: $0) }
+    sendAppleEvent { ScriptablePlayer.makeGetPropertyEvent(ScriptedAppPlayer.code(code), processIdentifier: $0) }
 }
 
 /// `set <property> to <value>` of the application, as AutoHush sets a
 /// player's volume (`ScriptablePlayer.makeSetPropertyEvent`); nil once set.
 @MainActor func setProperty(_ code: String, to value: Int) -> NSError? {
-    if case .failure(let error) = sendAppleEvent({ ScriptablePlayer.makeSetPropertyEvent(osType(code), to: value, processIdentifier: $0) }) {
+    if case .failure(let error) = sendAppleEvent({ ScriptablePlayer.makeSetPropertyEvent(ScriptedAppPlayer.code(code), to: value, processIdentifier: $0) }) {
         return error
     }
     return nil
 }
 
 /// `get` of what `specifier` names (a document's property, the current
-/// track's name): AutoHush's get event with that direct object.
+/// track's name), as AutoHush asks it (`ScriptedAppPlayer.makeGetDataEvent`).
 @MainActor func getData(of specifier: NSAppleEventDescriptor) -> Result<NSAppleEventDescriptor?, NSError> {
-    sendAppleEvent { pid in
-        let event = ScriptablePlayer.makeCommandEvent(suite: EventCode.coreSuite, EventCode.getData, processIdentifier: pid)
-        event.setParam(specifier, forKeyword: EventCode.directObject)
-        return event
-    }
+    sendAppleEvent { ScriptedAppPlayer.makeGetDataEvent(specifier, processIdentifier: $0) }
 }
 
 /// One of its dictionary's commands by code ("abcdPaus": suite, then
-/// command), as AutoHush sends pause and play (`ScriptablePlayer.makeCommandEvent`),
+/// command), as AutoHush sends pause and play (`ScriptedAppPlayer.makeCommandEvent`),
 /// told which document to act on when it needs one; nil once sent.
 @MainActor func sendCommand(_ code: String, to target: NSAppleEventDescriptor? = nil) -> NSError? {
-    let result = sendAppleEvent { pid in
-        let event = ScriptablePlayer.makeCommandEvent(suite: osType(String(code.prefix(4))), osType(String(code.suffix(4))),
-                                                      processIdentifier: pid)
-        if let target { event.setParam(target, forKeyword: EventCode.directObject) }
-        return event
+    if case .failure(let error) = sendAppleEvent({ ScriptedAppPlayer.makeCommandEvent(code, to: target, processIdentifier: $0) }) {
+        return error
     }
-    if case .failure(let error) = result { return error }
     return nil
-}
-
-/// The object specifier for the app's documents: every one, or one by name
-/// or by index (1: the front one), as AppleScript builds "document 1".
-@MainActor func documentSpecifier(named name: String? = nil, index: Int? = nil) -> NSAppleEventDescriptor {
-    let record = NSAppleEventDescriptor.record()
-    let specifier = record.coerce(toDescriptorType: EventCode.objectSpecifier) ?? record
-    specifier.setDescriptor(NSAppleEventDescriptor(typeCode: osType(scripting?.documentClass ?? "docu")), forKeyword: EventCode.desiredClass)
-    specifier.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: EventCode.container)
-    if let name {
-        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("name")), forKeyword: EventCode.keyForm)
-        specifier.setDescriptor(NSAppleEventDescriptor(string: name), forKeyword: EventCode.keyData)
-    } else {
-        specifier.setDescriptor(NSAppleEventDescriptor(enumCode: osType("indx")), forKeyword: EventCode.keyForm)
-        if let index {
-            specifier.setDescriptor(NSAppleEventDescriptor(int32: Int32(index)), forKeyword: EventCode.keyData)
-        } else {
-            var all = osType("all ")
-            specifier.setDescriptor(NSAppleEventDescriptor(descriptorType: osType("abso"), bytes: &all, length: 4)!,
-                                    forKeyword: EventCode.keyData)
-        }
-    }
-    return specifier
 }
 
 /// A reply's items: a list's, else the one value.
@@ -236,12 +221,13 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     return descriptor.numberOfItems > 0 ? (1...descriptor.numberOfItems).compactMap { descriptor.atIndex($0) } : []
 }
 
-/// Its open documents by script (an app that plays documents), front first: each
-/// one's name and whether it's playing.
-@MainActor func scriptedDocuments() -> Result<[(name: String, playing: Bool)], NSError> {
-    guard let playing = scripting?.documentPlaying else { return .success([]) }
-    let every = documentSpecifier()
-    switch (getData(of: propertySpecifier("pnam", of: every)), getData(of: propertySpecifier(playing, of: every))) {
+/// Its open documents of class `documentClass` by script (an app that plays
+/// documents), front first: each one's name and whether it's playing (its
+/// property `playing`), as AutoHush reads them.
+@MainActor func scriptedDocuments(_ documentClass: String, playing: String) -> Result<[(name: String, playing: Bool)], NSError> {
+    let every = ScriptedAppPlayer.documentSpecifier(documentClass)
+    switch (getData(of: ScriptedAppPlayer.propertySpecifier("pnam", of: every)),
+            getData(of: ScriptedAppPlayer.propertySpecifier(playing, of: every))) {
     case (.failure(let error), _), (_, .failure(let error)):
         return .failure(error)
     case (.success(let names), .success(let flags)):
@@ -258,17 +244,18 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 @MainActor var scriptErrorsSaid: Set<Int> = []
 @MainActor var unknownStatesSaid: Set<FourCharCode> = []
 
-/// The app's state by script, when its dictionary has it and it answers:
-/// its `player state` (stopped, playing, paused, read as AutoHush reads it:
+/// The app's state by script, read where AutoHush reads it (`scriptState`)
+/// and when it answers: its `player state`, only with its three standard
+/// values (stopped, playing, paused, read as AutoHush reads it:
 /// `ScriptablePlayer.playerState(fromEnumCode:)`, which counts fast
 /// forwarding and rewinding as playing), else its `playing` flag (with its
-/// `current time` telling stopped from paused, `ScriptSetup.State.playingFlag`),
-/// else its documents' (playing while one is, stopped with none open),
-/// asked by Apple event. Only macOS refusing it (-1743: no Automation
-/// permission for whatever runs this tool) stops the asking; another error
-/// (a timeout, -1712, from a busy app) counts for that look only.
+/// `current time` telling stopped from paused), else its documents'
+/// (playing while one is, stopped with none open), asked by Apple event.
+/// Only macOS refusing it (-1743: no Automation permission for whatever
+/// runs this tool) stops the asking; another error (a timeout, -1712, from
+/// a busy app) counts for that look only.
 @MainActor func scriptedState() -> PlayerState? {
-    guard let scripting, scripting.hasState, !scriptRefused else { return nil }
+    guard let scriptState, !scriptRefused else { return nil }
     func failed(_ error: NSError) -> PlayerState? {
         noteScriptError(error.code)
         let refused = error.code == -1743
@@ -278,34 +265,37 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
         }
         return nil
     }
-    if !scripting.hasPlayerState, !scripting.hasPlayingFlag {
-        switch scriptedDocuments() {
+    switch scriptState {
+    case .documents(let documentClass, let playing):
+        switch scriptedDocuments(documentClass, playing: playing) {
         case .failure(let error): return failed(error)
         case .success(let documents): return documents.isEmpty ? .stopped : documents.contains(where: \.playing) ? .playing : .paused
         }
-    }
-    let property = scripting.hasPlayerState ? "pPlS" : scripting.properties.first { $0.value == "playing" }!.key
-    switch getProperty(property) {
-    case .failure(let error):
-        return failed(error)
-    case .success(let result):
-        guard let result else { return nil }
-        guard scripting.hasPlayerState else {
+    case .playingFlag(let playing, let currentTime):
+        switch getProperty(playing) {
+        case .failure(let error):
+            return failed(error)
+        case .success(let result):
+            guard let result else { return nil }
             if result.booleanValue { return .playing }
             // Not playing: a `current time` of -1 means nothing is loaded, so
-            // it's stopped, else paused, as AutoHush tells them apart for an
-            // app added with a playing flag (`ScriptSetup.State.playingFlag`).
-            guard let time = scripting.properties.first(where: { $0.value == "current time" })?.key,
-                  case .success(let reply?) = getProperty(time)
-            else { return .paused }
+            // it's stopped, else paused, as AutoHush tells them apart.
+            guard let currentTime, case .success(let reply?) = getProperty(currentTime) else { return .paused }
             return reply.int32Value < 0 ? .stopped : .paused
         }
-        let code = result.enumCodeValue
-        let state = ScriptablePlayer.playerState(fromEnumCode: code)
-        if state == .unknown, unknownStatesSaid.insert(code).inserted {
-            say("  its state reads “\(fourCharacters(code))”, a value AutoHush doesn't know: taken as not playing")
+    case .playerState:
+        switch getProperty("pPlS") {
+        case .failure(let error):
+            return failed(error)
+        case .success(let result):
+            guard let result else { return nil }
+            let code = result.enumCodeValue
+            let state = ScriptablePlayer.playerState(fromEnumCode: code)
+            if state == .unknown, unknownStatesSaid.insert(code).inserted {
+                say("  its state reads “\(fourCharacters(code))”, a value AutoHush doesn't know: taken as not playing")
+            }
+            return state
         }
-        return state
     }
 }
 
@@ -318,7 +308,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 @MainActor func scriptedSong() -> String? {
     guard let scripting, scripting.namesItsSong, !scriptRefused else { return nil }
     let specifier = scripting.hasCurrentTrack || scripting.currentItemName == nil
-        ? propertySpecifier("pnam", of: propertySpecifier("pTrk")) : propertySpecifier(scripting.currentItemName!)
+        ? ScriptedAppPlayer.propertySpecifier("pnam", of: propertySpecifier("pTrk")) : propertySpecifier(scripting.currentItemName!)
     switch getData(of: specifier) {
     case .failure(let error):
         noteScriptError(error.code)
@@ -328,47 +318,43 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     }
 }
 
-/// Sends the app one of its dictionary's commands (by name: "pause", "play",
-/// "playpause"), as an Apple event; false (and why) when it fails. One that
-/// acts on a document goes to each playing one for a
-/// pause or stop, and for a play to those a test paused, else the front one.
-@MainActor func sendScript(_ command: String) -> Bool {
-    guard let code = scripting?.commandCode(command) else {
-        say("    \(command): not in its dictionary")
-        return false
-    }
+/// Sends the app one of its AppleScript commands (`scriptControls`), as an
+/// Apple event; false (and why) when it fails. To its documents as AutoHush
+/// sends it (`ScriptedAppPlayer`), when its commands act on one and its
+/// state is theirs: a pause to each playing one, a play to those a test
+/// paused, else the front one.
+@MainActor func sendScript(_ command: ScriptCommand) -> Bool {
     func failed(_ error: NSError) -> Bool {
         noteScriptError(error.code)
-        say("    \(command): \(eventError(error))")
+        say("    \(command.name): \(eventError(error))")
         return false
     }
-    guard scripting?.documentCommands.contains(code) == true else {
-        if let error = sendCommand(code) { return failed(error) }
+    guard scriptSetup?.actsOnDocuments == true, case .documents(let documentClass, let playing)? = scriptSetup?.state else {
+        if let error = sendCommand(command.code) { return failed(error) }
         return true
     }
     let documents: [(name: String, playing: Bool)]
-    switch scriptedDocuments() {
+    switch scriptedDocuments(documentClass, playing: playing) {
     case .failure(let error): return failed(error)
     case .success(let found): documents = found
     }
-    let stopping = ["pause", "stop"].contains(command.lowercased())
     var targets: [NSAppleEventDescriptor]
-    if stopping {
+    if command.pauses {
         let playing = documents.filter(\.playing).map(\.name)
-        if command.lowercased() == "pause" { pausedDocuments = playing }
-        targets = playing.map { documentSpecifier(named: $0) }
+        pausedDocuments = playing
+        targets = playing.map { ScriptedAppPlayer.documentSpecifier(documentClass, named: $0) }
     } else {
         let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
-        targets = paused.map { documentSpecifier(named: $0) }
-        if targets.isEmpty, !documents.isEmpty { targets = [documentSpecifier(index: 1)] }
+        targets = paused.map { ScriptedAppPlayer.documentSpecifier(documentClass, named: $0) }
+        if targets.isEmpty, !documents.isEmpty { targets = [ScriptedAppPlayer.documentSpecifier(documentClass, index: 1)] }
         pausedDocuments = []
     }
     guard !targets.isEmpty else {
-        say("    \(command): no document \(stopping ? "playing" : "open")")
+        say("    \(command.name): no document \(command.pauses ? "playing" : "open")")
         return false
     }
     for target in targets {
-        if let error = sendCommand(code, to: target) { return failed(error) }
+        if let error = sendCommand(command.code, to: target) { return failed(error) }
     }
     return true
 }

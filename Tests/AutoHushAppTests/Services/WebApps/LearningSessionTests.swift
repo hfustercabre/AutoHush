@@ -4,17 +4,13 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("LearningSession")
+@Suite("LearningSession", .timeLimit(.minutes(1)))
 @MainActor
 struct LearningSessionTests {
     /// A web app AutoHush must learn, whose learning the test moves along.
     private func webApp(_ status: LearningStatus = .learning(hasPlayed: false), id: String = "com.apple.Safari.WebApp.TEST",
                         name: String = "YT Music") -> MockLearningPlayer {
         MockLearningPlayer(bundleID: id, name: name, status: status)
-    }
-
-    private func waitFor(sourceLocation: SourceLocation = #_sourceLocation, _ condition: @MainActor () -> Bool) async {
-        await TestWait.until(sourceLocation: sourceLocation, condition)
     }
 
     @Test("It's Playing, Pause It Manually and It's Paused go to the player; a click it can't take says why under its step")
@@ -25,13 +21,13 @@ struct LearningSessionTests {
 
         player.answer(playing: .notHeard)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.note == .notHeard }
+        await TestWait.until { session.state.pause.note == .notHeard }
         #expect(session.state.pause.deadline == nil)
 
         player.answer(playing: .noted, paused: .nothingChanged)
         session.step(.itsPlaying)
         // AutoHush's own pause didn't take: its step failed, and no minute counts yet.
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
         #expect(session.state.status == .learning(hasPlayed: true))
         #expect(session.state.pause.note == nil)
         #expect(session.state.pause.deadline == nil)
@@ -39,29 +35,29 @@ struct LearningSessionTests {
         // Pause It Manually: the user has a minute to pause it.
         let asked = Date()
         session.step(.pauseManually)
-        await waitFor { session.state.pause.deadline != nil }
+        await TestWait.until { session.state.pause.deadline != nil }
         #expect(session.state.pause.mode == .byHand)
         let deadline = session.state.pause.deadline
         #expect(deadline.map { (asked...Date()).contains($0.addingTimeInterval(-60)) } == true)
 
         session.step(.itsPaused)
-        await waitFor { session.state.pause.note == .nothingChanged }
+        await TestWait.until { session.state.pause.note == .nothingChanged }
         #expect(session.state.pause.deadline == deadline) // the minute goes on
 
         // The page went before It's Paused: back to the first step, saying why.
         player.answer(paused: .cantSeePage)
         session.step(.itsPaused)
-        await waitFor { session.state.status == .learning(hasPlayed: false) && session.state.pause.note == .cantSeePage }
+        await TestWait.until { session.state.status == .learning(hasPlayed: false) && session.state.pause.note == .cantSeePage }
         #expect(session.state.pause.deadline == nil)
         #expect(session.state.pause.mode == .automatic)
 
         player.answer(playing: .noted, paused: .noted)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
         session.step(.pauseManually)
-        await waitFor { session.state.pause.mode == .byHand }
+        await TestWait.until { session.state.pause.mode == .byHand }
         session.step(.itsPaused)
-        await waitFor { session.state.status == .learned }
+        await TestWait.until { session.state.status == .learned }
         #expect(session.state.pause.note == nil)
         #expect(session.state.pause.deadline == nil)
         #expect(session.state.pause.mode == .byHand) // the steps show the user paused it
@@ -73,12 +69,12 @@ struct LearningSessionTests {
         let session = LearningSession()
         session.follow(player)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
 
         // The song stopped meanwhile: back to the first step, saying why.
         player.answer(playing: .notHeard)
         session.step(.pauseManually)
-        await waitFor { session.state.status == .learning(hasPlayed: false) }
+        await TestWait.until { session.state.status == .learning(hasPlayed: false) }
         #expect(player.restartCount == 1)
         #expect(session.state.pause.note == .notHeard)
         #expect(session.state.pause.mode == .automatic)
@@ -86,11 +82,11 @@ struct LearningSessionTests {
 
         player.answer(playing: .noted)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
         player.pausesByItself(true)
         session.step(.tryAgain)
         #expect(session.state.pause.mode == .trying)
-        await waitFor { session.state.status == .learned }
+        await TestWait.until { session.state.status == .learned }
         #expect(session.state.pause.deadline == nil)
         #expect(session.state.pause.note == nil)
     }
@@ -104,7 +100,7 @@ struct LearningSessionTests {
         player.pausesByItself(true)
         session.step(.itsPlaying)
         #expect(session.state.pause.mode == .trying)
-        await waitFor { session.state.status == .learned }
+        await TestWait.until { session.state.status == .learned }
         #expect(session.countdown == nil) // no minute counts
         clock.timeIsUp()
         #expect(session.state.pause.mode != .failed)
@@ -120,8 +116,8 @@ struct LearningSessionTests {
         session.follow(player)
         player.keyGoesElsewhere()
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .keyElsewhere }
-        await waitFor { session.state.pause.deadline != nil } // its minute counts down
+        await TestWait.until { session.state.pause.mode == .keyElsewhere }
+        await TestWait.until { session.state.pause.deadline != nil } // its minute counts down
         #expect(session.state.pause.note == nil)
         #expect(session.state.status == .learning(hasPlayed: true))
     }
@@ -134,10 +130,10 @@ struct LearningSessionTests {
         session.follow(player)
         player.learnAtTheLastMoment()
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
         session.step(.pauseManually)
         clock.timeIsUp() // the minute ends: It's Paused comes just then
-        await waitFor { session.state.status == .learned }
+        await TestWait.until { session.state.status == .learned }
         await session.countdown?.value
         #expect(player.restartCount == 0)
         #expect(session.state.pause.note == nil)
@@ -150,13 +146,13 @@ struct LearningSessionTests {
         let session = LearningSession(pauseWait: .seconds(42), sleep: clock.sleep)
         session.follow(player)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.mode == .failed }
+        await TestWait.until { session.state.pause.mode == .failed }
         #expect(session.countdown == nil) // no minute counts until Pause It Manually
         #expect(session.state.status == .learning(hasPlayed: true))
         session.step(.pauseManually)
-        await waitFor { clock.durations == [.seconds(42)] } // its minute counts
+        await TestWait.until { clock.durations == [.seconds(42)] } // its minute counts
         clock.timeIsUp()
-        await waitFor { session.state.status == .learning(hasPlayed: false) }
+        await TestWait.until { session.state.status == .learning(hasPlayed: false) }
         #expect(player.restartCount == 1)
         #expect(session.state.pause.note == .timedOut)
         #expect(session.state.pause.mode == .automatic)
@@ -174,7 +170,7 @@ struct LearningSessionTests {
         session.follow(first)
         first.answer(playing: .notHeard)
         session.step(.itsPlaying)
-        await waitFor { session.state.pause.note == .notHeard }
+        await TestWait.until { session.state.pause.note == .notHeard }
 
         session.follow(second)
         #expect(session.state == LearningSession.State(status: .learned, pause: LearningPause()))
@@ -190,8 +186,9 @@ struct LearningSessionTests {
         session.step(.itsPlaying) // answered once the second one is chosen
         session.follow(second)
         first.set(.learned)
-        await waitFor { first.markPlayingCount == 1 } // the first one's answer is on its way
-        await Task.yield()
+        await TestWait.until { first.markPlayingCount == 1 } // the first one's answer is on its way
+        // A round trip to the first player, behind its answer: that answer is back by now.
+        try? await first.verifyControlAccess()
         #expect(session.state == LearningSession.State(status: .learning(hasPlayed: false), pause: LearningPause()))
 
         // Learning again is the chosen one's.

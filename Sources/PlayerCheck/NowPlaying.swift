@@ -34,12 +34,11 @@ func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
 /// (a web app's, for WebKit's media process), else its bundle ID.
 func displayName(of client: NowPlayingReports.Client) -> String {
     if !client.name.isEmpty { return client.name }
-    let app = client.id.contains("/") ? NSRunningApplication.runningApplications(withBundleIdentifier: client.appID).first
-                                      : NSRunningApplication(processIdentifier: client.pid)
+    let app = client.id.contains("/") ? NSRunningApplication.running(client.appID) : NSRunningApplication(processIdentifier: client.pid)
     return app?.localizedName ?? client.appID
 }
 
-/// The apps macOS keeps in Now Playing, one tab-separated line each:
+/// The apps macOS keeps in Now Playing, one tab-separated line each (`NowPlayingListLine`):
 /// bundle ID, process, last state (or Registered: ready for Now Playing,
 /// never said it plays), 1 for the active one (the Now Playing app), name.
 /// Unentitled apps can't ask MediaRemote for that list (since macOS 15.4),
@@ -56,19 +55,19 @@ func printNowPlayingList() -> Never {
     let rest = Array(CommandLine.arguments.dropFirst(2))
     // --since: only what changed since then (a caller that read the whole list
     // before keeps it up to date this way, without reading days of log again).
-    let since = CommandLineOptions.value(of: "--since", in: rest).flatMap(Double.init)
+    let since = CommandLineOptions.value(of: CommandLineOptions.since, in: rest).flatMap(Double.init)
     let start = since.map { Date(timeIntervalSince1970: $0) }
         ?? CommandLineOptions.operands(in: rest).first.flatMap(Double.init).map { Date().addingTimeInterval(-$0 * 3600) }
         ?? Date(timeIntervalSince1970: TimeInterval(boot.tv_sec))
     let store: OSLogStore
     do { store = try OSLogStore.local() } catch {
         print("can't read macOS's log: \(error.localizedDescription)")
-        exit(1)
+        exit(CheckExitStatus.failed)
     }
     var clients: [pid_t: NowPlayingReports.Client] = [:]
     guard NowPlayingReports.read(store, from: start, into: &clients) else {
         print("can't read macOS's log from \(start)")
-        exit(1)
+        exit(CheckExitStatus.failed)
     }
     let active = nowPlayingPID()
     // Still there: not removed, and its process still runs. With --since, the
@@ -76,27 +75,29 @@ func printNowPlayingList() -> Never {
     for client in clients.values {
         let there = !client.removed && NowPlayingReports.stillRuns(client.pid)
         guard there || since != nil else { continue }
-        print([client.appID, "\(client.pid)", there ? client.reported ?? "Registered" : "Removed", client.pid == active ? "1" : "0",
-               displayName(of: client)].joined(separator: "\t"))
+        print(NowPlayingListLine(bundleID: client.appID, pid: client.pid,
+                                 state: there ? client.reported ?? NowPlayingListLine.registered : NowPlayingListLine.removed,
+                                 isActive: client.pid == active, name: displayName(of: client)).line)
     }
-    print("#active\t\(active)")
-    exit(0)
+    print(NowPlayingListLine.activeLine(active))
+    exit(CheckExitStatus.done)
 }
 
 /// --now-playing-reasons <app path>…: for Add an App…'s list and the Player
-/// Check app's, a line per app, "<path>\t<why it can be in Now Playing, or
-/// nothing>\t<the framework that hides its interface, or nothing>\t<the
-/// switches a check turns on for it, in order>", so the window shows this
-/// tool's own rule. The paths are the arguments that are no option (nor
-/// --logs' or --caches' folder).
+/// Check app's, a line per app (`NowPlayingReasonsLine`): why it can be in
+/// Now Playing, the framework that hides its interface, and the switches a
+/// check turns on for it, in order, so the window shows this tool's own
+/// rule. The paths are the arguments that are no option (nor --logs' or
+/// --caches' folder).
 func printNowPlayingReasons() -> Never {
     for path in CommandLineOptions.operands(in: Array(CommandLine.arguments.dropFirst(2))) {
         let url = URL(fileURLWithPath: path)
         let hidden = HiddenInterface.of(url)
-        print([path, NowPlayingReason.of(appAt: url, bundleID: Bundle(url: url)?.bundleIdentifier) ?? "", hidden?.name ?? "",
-               hidden?.switches.map { switchName($0, of: hidden) }.joined(separator: ", else ") ?? ""].joined(separator: "\t"))
+        print(NowPlayingReasonsLine(path: path, reason: NowPlayingReason.of(appAt: url, bundleID: Bundle(url: url)?.bundleIdentifier),
+                                    interface: hidden?.name,
+                                    switches: hidden?.switches.map { switchName($0, of: hidden) }.joined(separator: ", else ")).line)
     }
-    exit(0)
+    exit(CheckExitStatus.done)
 }
 
 // MARK: - Whether it can report to Now Playing

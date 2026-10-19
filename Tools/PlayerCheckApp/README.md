@@ -10,10 +10,18 @@ sh Tools/PlayerCheckApp/build.sh              # writes "Player Check.app" here, 
 open "Player Check.app"
 ```
 
-playercheck is built as a product of AutoHush's package (it runs AutoHush's
-own code for what the two share), so `build.sh` runs
-`swift build -c release --product playercheck` in the repository first;
-the first build compiles AutoHush's modules and takes a few minutes.
+Both are products of AutoHush's package: the window (`PlayerCheckApp`, from
+this folder) and playercheck (it runs AutoHush's own code for what the two
+share). So `build.sh` runs `swift build -c release --product PlayerCheckApp`
+and `--product playercheck` in the repository, then puts them in the app
+with this folder's `Info.plist`; the first build compiles AutoHush's modules
+and takes a few minutes. The window runs playercheck as AutoHush's Add an
+App… does, through the same interface: its command line, exit statuses and
+one-line answers (`PlayerCheckKit`), the report's lines and the progress they
+show (`CheckReportLine`, `CheckProgress`), the same check panel
+(`CheckPanel`), and the same runner (AutoHushKit's `ToolRun`). AutoHush.app
+never includes it: no app target depends on `Tools/`, and
+`Scripts/build-app.sh` builds only AutoHush and playercheck.
 
 `build.sh` takes a folder to build into (the current one by default). The
 app is signed ad hoc, for your own Mac, unless `SIGNING_IDENTITY` names a

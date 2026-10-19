@@ -1,5 +1,8 @@
 import AppKit
+import AutoHushKit
+import CheckedPlayers
 import PlayerCheckKit
+import WebAppPlayers
 
 // MARK: - What to do, and to which app
 
@@ -10,10 +13,10 @@ nonisolated(unsafe) var argumentsForTests: [String]?
 let arguments = argumentsForTests ?? Array(CommandLine.arguments.dropFirst())
 
 /// What --play and --pause do.
-enum Action: String, CaseIterable { case play, pause }
+typealias Action = CommandLineOptions.Action
 
 /// The ways to control an app, as --via names them, in the order a check tries them.
-enum Way: String, CaseIterable { case script, menu, page, panel }
+typealias Way = CheckResult.WayKind
 
 /// The value after `option`, if it's given.
 func value(of option: String) -> String? { CommandLineOptions.value(of: option, in: arguments) }
@@ -27,13 +30,13 @@ let target: String = {
 }()
 
 /// --read-only: the checks without the test.
-let readOnly = arguments.contains("--read-only")
+let readOnly = arguments.contains(CommandLineOptions.readOnly)
 /// --play or --pause: does just that, by `via`, else by the first way that
 /// works: AppleScript, the page's button, the menu.
-let action: Action? = arguments.contains("--play") ? .play : arguments.contains("--pause") ? .pause : nil
+let action: Action? = Action.allCases.first { arguments.contains($0.option) }
 /// --via's way.
 let via: Way? = {
-    guard let index = arguments.firstIndex(of: "--via") else { return nil }
+    guard let index = arguments.firstIndex(of: CommandLineOptions.via) else { return nil }
     guard index + 1 < arguments.count, let way = Way(rawValue: arguments[index + 1]) else {
         fail("--via takes one of: " + Way.allCases.map(\.rawValue).joined(separator: ", "))
     }
@@ -43,28 +46,28 @@ let via: Way? = {
 let testing = !readOnly && action == nil
 /// --result <file>: where a check writes what it found, for AutoHush's Add
 /// an App… (`CheckResult`, as JSON), once it's done.
-let resultFile = value(of: "--result").map { URL(fileURLWithPath: $0) }
+let resultFile = value(of: CommandLineOptions.result).map { URL(fileURLWithPath: $0) }
 /// --logs <folder>: where the run's log goes, instead of ~/Library/Logs/PlayerCheck
 /// (AutoHush keeps its checks' with its own log).
-let logsFolder = value(of: "--logs").map { URL(fileURLWithPath: $0, isDirectory: true) }
+let logsFolder = value(of: CommandLineOptions.logs).map { URL(fileURLWithPath: $0, isDirectory: true) }
 /// --caches <folder>: where what's kept between runs goes (the page buttons
 /// found and learned, the apps' own words), instead of ~/Library/Caches/PlayerCheck
 /// (AutoHush keeps its checks' in its own caches folder).
-let cachesFolder = value(of: "--caches").map { URL(fileURLWithPath: $0, isDirectory: true) }
+let cachesFolder = value(of: CommandLineOptions.caches).map { URL(fileURLWithPath: $0, isDirectory: true) }
     ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/PlayerCheck", isDirectory: true)
 /// --partial: a test goes on without Audio Recording (the app isn't muted,
 /// whether it plays is told by other signs) or Automation (its AppleScript
 /// isn't tried); only Accessibility is needed. AutoHush's Add an App… says
 /// what's missing first, and passes it whether anything is missing or not.
-let partial = arguments.contains("--partial")
+let partial = arguments.contains(CommandLineOptions.partial)
 /// --no-taps: AntiDot mode's promise, no audio taps at all: its level isn't
 /// measured and it isn't muted during the test, as without Audio Recording
 /// (whether it plays is told by other signs), and Audio Recording isn't needed.
-let noTaps = arguments.contains("--no-taps")
+let noTaps = arguments.contains(CommandLineOptions.noTaps)
 /// --block-input: while the test moves the window and presses, whoever runs
 /// it can't click, scroll or type (`InputBlock`). AutoHush and the Player
 /// Check app pass it; a shell has no panel to stop from, and Ctrl-C would be blocked.
-let blockInput = testing && arguments.contains("--block-input")
+let blockInput = testing && arguments.contains(CommandLineOptions.blockInput)
 /// --developer: the report's lines for whoever adds a player to the code
 /// too (`forDevelopers`).
 let developer = arguments.contains(CommandLineOptions.developer)
@@ -109,10 +112,10 @@ struct CheckedApp: Sendable {
 var appURL: URL { CheckedApp.found.url }
 var bundleID: String { CheckedApp.found.bundleID }
 var appName: String { CheckedApp.found.name }
-var isWebApp: Bool { bundleID.hasPrefix("com.apple.Safari.WebApp.") }
+var isWebApp: Bool { bundleID.hasPrefix(SafariWebApp.bundleIDPrefix) }
 
 /// The app's process, when it runs.
-@MainActor var running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
+@MainActor var running = NSRunningApplication.running(bundleID)
 
 /// The app in front when the run started: the one a test comes back to
 /// when it wasn't run from an app (a shell), as by then whoever started the
@@ -122,7 +125,7 @@ var isWebApp: Bool { bundleID.hasPrefix("com.apple.Safari.WebApp.") }
 /// Opens this run's log and says which app it is.
 @MainActor func startRun() {
     frontAtStart = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
-    runLog.start(app: appName, doing: action.map { $0.rawValue + (via.map { " via \($0.rawValue)" } ?? "") } ?? (readOnly ? "read-only" : "check"))
+    runLog.start(app: appName, doing: RunLogName.doing(action, via: via, readOnly: readOnly))
     say("\(appName) \(CheckedApp.found.version) (\(bundleID))")
     say("  \(appURL.path)")
     say("  " + (running.map { "running, pid \($0.processIdentifier)" } ?? "not running: the menu, sound and Now Playing checks need it running"))

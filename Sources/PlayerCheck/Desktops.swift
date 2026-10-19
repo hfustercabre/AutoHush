@@ -1,13 +1,5 @@
 import AppKit
-
-/// A function of macOS's private frameworks by one of its names, as window
-/// managers resolve them at run time; nil when gone.
-func privateSymbol<T>(_ names: String..., as type: T.Type) -> T? {
-    for name in names {
-        if let found = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) { return unsafeBitCast(found, to: type) }
-    }
-    return nil
-}
+import AutoHushKit
 
 /// macOS's desktops (Spaces), read through SkyLight's read-only calls, as
 /// window managers read them. Only the main display's.
@@ -15,9 +7,11 @@ enum Desktops {
     private typealias MainConnection = @convention(c) () -> Int32
     private typealias CopyDisplaySpaces = @convention(c) (Int32) -> Unmanaged<CFArray>?
     private typealias CopySpacesForWindows = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?
-    private static let connection = privateSymbol("SLSMainConnectionID", "CGSMainConnectionID", as: MainConnection.self)
-    private static let displaySpaces = privateSymbol("SLSCopyManagedDisplaySpaces", "CGSCopyManagedDisplaySpaces", as: CopyDisplaySpaces.self)
-    private static let spacesForWindows = privateSymbol("SLSCopySpacesForWindows", "CGSCopySpacesForWindows", as: CopySpacesForWindows.self)
+    private static let connection = PrivateSymbol.function("SLSMainConnectionID", "CGSMainConnectionID", as: MainConnection.self)
+    private static let displaySpaces = PrivateSymbol.function("SLSCopyManagedDisplaySpaces", "CGSCopyManagedDisplaySpaces",
+                                                               as: CopyDisplaySpaces.self)
+    private static let spacesForWindows = PrivateSymbol.function("SLSCopySpacesForWindows", "CGSCopySpacesForWindows",
+                                                                  as: CopySpacesForWindows.self)
 
     /// The main display's desktops in order (full screen apps' among them),
     /// and the current one.

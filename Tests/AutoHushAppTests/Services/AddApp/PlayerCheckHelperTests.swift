@@ -48,7 +48,7 @@ struct PlayerCheckHelperTests {
     func check() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
-        let log = "check \(UUID().uuidString).log"
+        let log = "2026-10-19 10.00.00.000 Player check.log"
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)], setup: nil)
         let finishing = try PlayerCheckHelper.standIn(#"""
             for argument in "$@"; do
@@ -99,6 +99,21 @@ struct PlayerCheckHelperTests {
         #expect(PlayerCheckHelper.bundled(in: app, beside: executable) == nil)
         let beside = try PlayerCheckHelper.standIn("exit 0", in: executable.deletingLastPathComponent())
         #expect(PlayerCheckHelper.bundled(in: app, beside: executable)?.url.path == beside.url.path)
+    }
+
+    @Test("Show Log opens the newest run's log the helper wrote, never another file there (Finder's .DS_Store, once the folder was opened)")
+    func newestLog() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        #expect(PlayerCheckHelper.newestLog(in: folder) == nil)
+        let names = ["2026-10-19 09.00.00.000 Player check.log", "2026-10-19 10.00.00.000 Player check.log", ".DS_Store", "notes.log", "Open Me.command"]
+        for (index, name) in names.enumerated() {
+            let url = folder.appending(path: name)
+            #expect(FileManager.default.createFile(atPath: url.path, contents: Data("x".utf8)))
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: Double(index - 10) * 60)], ofItemAtPath: url.path)
+        }
+        #expect(PlayerCheckHelper.newestLog(in: folder)?.lastPathComponent == names[1])
     }
 
     @Test("the Now Playing list: each app's bundle ID and whether it plays, apart from those removed and the active line")

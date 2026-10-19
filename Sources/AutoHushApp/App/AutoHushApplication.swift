@@ -2,9 +2,9 @@ import AppKit
 import AutoHushKit
 
 /// Starts AutoHush: a menu bar accessory app driven by `AppDelegate`.
-public enum AutoHushApplication {
+package enum AutoHushApplication {
     @MainActor
-    public static func run() {
+    package static func run() {
         // Started by itself only to say which app is Now Playing (a fresh
         // process gets a fresh answer: see `NowPlayingApp`): it answers and
         // quits before anything of the app starts.

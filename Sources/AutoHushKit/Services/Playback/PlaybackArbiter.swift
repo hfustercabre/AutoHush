@@ -1,6 +1,6 @@
 import Foundation
 
-/// Decides when to pause and resume the music player. Rule: pause when any
+/// Decides when to pause and resume the media player. Rule: pause when any
 /// foreign source starts; resume when ALL foreign sources have stopped (each
 /// counts as stopped once silent for its stop grace), but only music it
 /// paused itself, or found paused just as an app started (see
@@ -100,6 +100,11 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `nil` for one that runs at once (`waitUntilIdle`).
     var pendingResumeWait: Task<Void, Never>?
     var pendingPauseWait: Task<Void, Never>?
+    /// Pending resumes and pauses called off while their task still runs,
+    /// by their ID, each with its debounce: the task ends on its own once
+    /// that's over, finding it was called off (`pendingTaskEnded`). For
+    /// `waitUntilIdle`, so a test sees that nothing more happens.
+    var calledOff: [UUID: (task: Task<Void, Never>, wait: Task<Void, Never>?)] = [:]
     /// How long an app must play, at most, before the monitor counts it, as
     /// it last said (`handleStartConfirmationChange`); `nil` until it says.
     var longestStartConfirmation: TimeInterval?
@@ -261,7 +266,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     ///
     /// The other apps' sound stops as the Mac falls asleep, which isn't them
     /// ending: a pause AutoHush holds is forgotten, so the music stays paused
-    /// after waking, as music players keep it after a sleep. While asleep
+    /// after waking, as media players keep it after a sleep. While asleep
     /// nothing is paused or resumed (a web page can't be pressed then); once
     /// awake, apps playing pause the music as usual.
     ///

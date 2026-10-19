@@ -442,7 +442,7 @@ A web app can’t be scripted and has no playback menu, so AutoHush learns its P
 
 ```mermaid
 flowchart TD
-  ST(["Add an App…: after Other Apps<br/>in the menu, or the Add… tile<br/>in Settings → General"])
+  ST(["Add an App…: after Other Apps<br/>in the menu, or the Add… tile<br/>in Settings → General or<br/>the welcome window"])
   KEPT{"A finished check<br/>kept from the last day?"}
   RES["Back at its last step,<br/>to choose a way and Use"]
   CHO["1 · Choose an App…: the apps<br/>that can play, Now Playing’s<br/>first, with a search (not Apple’s<br/>other apps, not supported players)"]

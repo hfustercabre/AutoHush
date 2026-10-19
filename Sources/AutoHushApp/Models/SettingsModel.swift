@@ -30,7 +30,7 @@ final class SettingsModel {
     private(set) var launchAtLoginNeedsApproval = false
     /// Whether AutoHush can fade the chosen player; the fade settings are
     /// dimmed when it can't.
-    var playerCanFade = true
+    var playerCanFade: Bool { chosenPlayer?.canFade ?? true }
 
     /// What AutoHush needs for the chosen player, as it stands; followed
     /// about once a second while a window that waits for it shows.
@@ -39,7 +39,7 @@ final class SettingsModel {
     var welcomeAsksPermissions = false
 
     // From the app's state.
-    /// The music players to choose from (also in the welcome window).
+    /// The media players to choose from (also in the welcome window).
     var playerOptions: [PlayerOption] { state.playerOptions }
     /// The players as Settings → General and the welcome window offer
     /// them: in AntiDot mode, the apps that can only be muted can't be chosen.
@@ -63,7 +63,7 @@ final class SettingsModel {
     /// Once the user said it plays: AutoHush pauses it itself, to learn
     /// which button changes, or, when it couldn't, the user does.
     var learningPauseMode: LearningPauseMode { state.learningPause.mode }
-    /// What the music player is doing, as the menu's card says it, e.g.
+    /// What the media player is doing, as the menu's card says it, e.g.
     /// "Paused — Safari is playing"; orange (`statusNeedsAttention`) when
     /// something needs the user.
     var statusLine: String { state.statusLine }
@@ -390,8 +390,10 @@ final class SettingsModel {
 
     /// The media player, when only its sound tells how it is
     /// (`PlayerOption.needsAudioLevels`): AntiDot mode can't be used with it.
+    /// Read from the chosen player as it's followed, so a player checked
+    /// again (the same app, muted now) updates the switch.
     var antiDotUnavailablePlayer: PlayerOption? {
-        state.status.playerOptions.first { $0.bundleID == chosenPlayerID && $0.needsAudioLevels }
+        chosenPlayer.flatMap { $0.needsAudioLevels ? $0 : nil }
     }
 
     /// On: judges apps by what they tell macOS (the indicator-free method

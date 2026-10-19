@@ -5,7 +5,7 @@ import AutoHushKit
 enum AppHealthState: Equatable, Sendable {
     case starting
     case ready
-    /// No music player is chosen yet: AutoHush waits for the user.
+    /// No media player is chosen yet: AutoHush waits for the user.
     case needsPlayer(String)
     /// The player isn't running or isn't installed: AutoHush starts on when
     /// it opens or is back.
@@ -26,13 +26,13 @@ extension AppHealthState {
         .needsPlayer(String(localized: "Choose a media player", comment: "Status line: no media player chosen yet"))
     }
 
-    /// The chosen music player is no longer installed.
+    /// The chosen media player is no longer installed.
     static func playerNotInstalled(_ playerName: String) -> AppHealthState {
         .degraded(String(localized: "\(playerName) isn’t installed",
                          comment: "Status line; %@ is the media player, e.g. Spotify"))
     }
 
-    /// The health shown when the startup check against the music player fails.
+    /// The health shown when the startup check against the media player fails.
     init(startupError error: any Error, playerName: String) {
         switch error as? MusicPlayerError {
         case .automationPermissionDenied:

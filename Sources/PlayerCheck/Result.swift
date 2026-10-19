@@ -40,6 +40,7 @@ import WebAppPlayers
     findings.stateNotification = announcingNotification
     findings.needsLaunchOption = LaunchOption.needed(by: appURL) != nil
     findings.panelRowIsStale = panelRowStale
+    findings.panelClues = foundPanelClues()
     findings.pageButton = page?.toggle == nil ? nil : learned?.recipe ?? savedRecipe
     let (result, toggleLeftOut) = findings.result()
     if toggleLeftOut { log("  AppleScript’s toggle isn’t kept: it has no state, and nothing else tells AutoHush when to send it") }
@@ -48,4 +49,20 @@ import WebAppPlayers
     } catch {
         log("couldn’t write the result to \(resultFile.path): \(error)")
     }
+}
+
+/// Where its song shows besides its windows' titles, as this check read it
+/// for the panel (`songTexts`): its page's player bar, around its Play/Pause
+/// (by the words it's known by), and what it plays by AppleScript, while
+/// it may be asked. AutoHush's `PanelWay` reads the same.
+@MainActor func foundPanelClues() -> PanelClues? {
+    let pageClue = page.flatMap { found -> PanelClues.Page? in
+        guard found.withControls, let toggle = found.toggle else { return nil }
+        let recipe = learned?.recipe ?? savedRecipe
+        let labels = (recipe.map { [$0.pauseLabel, $0.playLabel] } ?? []) + [toggle.label]
+        return PanelClues.Page(access: PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch),
+                               labels: labels.reduce(into: []) { if !$0.contains($1) { $0.append($1) } })
+    }
+    let scriptClue = automationAnswer == .allowed && !scriptRefused ? scripting.flatMap(ScriptedSong.init(dictionary:)) : nil
+    return PanelClues(page: pageClue, script: scriptClue)
 }

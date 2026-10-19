@@ -72,7 +72,7 @@ import PlayerCheckKit
             say("  not tested: \(why), so its window wasn't moved")
         } else if let test = WindowTest(app: running) {
             windowTest = test
-            guard stopState.beginMoving() else { stopIfRequested("stopped: nothing was moved"); stopNow(143) }
+            guard stopState.beginMoving() else { stopIfRequested("stopped: nothing was moved"); stopNow(CheckExitStatus.stop) }
             if blockInput {
                 say(inputBlock.start()
                     ? CheckReportLine.blocked + " until its window is put back (the pointer still moves;"
@@ -83,12 +83,7 @@ import PlayerCheckKit
                 let pid = running.processIdentifier
                 test.revealPage = { on in
                     guard let attribute = pageSwitch ?? hidden.switches.first else { return }
-                    if on {
-                        if setSwitch(attribute, true, pid: pid), !changes.switchesOn.contains(attribute) { changes.switchesOn.append(attribute) }
-                        _ = waitForPage(pid, seconds: 4)
-                    } else {
-                        _ = setSwitch(attribute, false, pid: pid)
-                    }
+                    setPageSwitch(attribute, on: on, pid: pid)
                 }
             }
             say("  each way is tested with its window in each state: " + WindowState.allCases.map(\.title).joined(separator: ", ")
@@ -151,7 +146,7 @@ import PlayerCheckKit
     // it only when another sign tells its state, so with none it isn't tried.
     if let script, script.toggles, scripting?.hasState != true, menu == nil, !pageOffersAPress,
        !(canBeNowPlaying && isAdministrator), scriptProblem == nil {
-        scriptProblem = "only “\(script.pause)”, which toggles, and no state it can be read by: AutoHush couldn't tell when to send it,"
+        scriptProblem = "only “\(script.pause.name)”, which toggles, and no state it can be read by: AutoHush couldn't tell when to send it,"
             + " so it isn't tried"
         say("  AppleScript: \(scriptProblem!)")
     }
@@ -198,14 +193,7 @@ import PlayerCheckKit
     let pressSwitchLeftOn = pressSwitch.map(changes.wasFoundOn) ?? false
     func switchForPress(_ on: Bool) {
         guard let pressSwitch, !first else { return }
-        if on {
-            if setSwitch(pressSwitch, true, pid: pid), !changes.switchesOn.contains(pressSwitch) {
-                changes.switchesOn.append(pressSwitch)
-            }
-            _ = waitForPage(pid, seconds: 4)
-        } else {
-            _ = setSwitch(pressSwitch, false, pid: pid)
-        }
+        setPageSwitch(pressSwitch, on: on, pid: pid)
     }
     let panelReachable = canBeNowPlaying && AXIsProcessTrusted()
     /// Each way's play, to play it again quietly when a way left it paused.
@@ -321,7 +309,7 @@ import PlayerCheckKit
         if let script, scriptProblem == nil, ready() {
             // A toggle is sent for the pause only while it plays, and again to play.
             record(.script, trialAgainIfEnded(.script) {
-                trial(CheckReportLine.trial(.script, detail: "\(script.pause), \(script.play)"), pid: pid,
+                trial(CheckReportLine.trial(.script, detail: "\(script.pause.name), \(script.play.name)"), pid: pid,
                       pause: { _ in sendScript(script.pause) }, play: { _ in sendScript(script.play) },
                       whilePaused: first ? { checkVolume(); learnPageButton(pid: pid) } : nil)
             })
@@ -431,7 +419,7 @@ import PlayerCheckKit
         stopIfRequested()
     }
     if pressSwitchLeftOn, let pressSwitch, setSwitch(pressSwitch, true, pid: pid) {
-        changes.switchesOn.removeAll { $0 == pressSwitch }
+        changes.noteOff(pressSwitch)
     }
     if let seen = notifications?.seen, !seen.isEmpty {
         for (name, keys) in seen.sorted(by: { $0.key < $1.key }) {

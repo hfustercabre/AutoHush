@@ -1,16 +1,20 @@
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("LogFile")
 struct LogFileTests {
     /// A log in a folder of its own, at a clock the test moves.
-    final class Scratch: @unchecked Sendable {
-        let url = FileManager.default.temporaryDirectory
-            .appending(path: "LogFileTests-\(UUID().uuidString)/AutoHush.log")
-        var now = Date(timeIntervalSince1970: 1_800_000_000)
-        func file() -> LogFile { LogFile(url: url, now: { [unowned self] in self.now }) }
-        deinit { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+    final class Scratch: Sendable {
+        private let folder = TemporaryFolder("LogFileTests", create: false)
+        private let clock = Locked(Date(timeIntervalSince1970: 1_800_000_000))
+        var url: URL { folder.appending(path: "AutoHush.log") }
+        var now: Date {
+            get { clock.value }
+            set { clock.value = newValue }
+        }
+        func file() -> LogFile { LogFile(url: url, now: { [clock] in clock.value }) }
     }
 
     private func entry(_ date: Date, _ message: String, level: LogLevel = .notice) -> LogEntry {
@@ -118,13 +122,12 @@ struct LogFileTests {
     func observers() {
         let scratch = Scratch()
         let log = scratch.file()
-        final class Heard: @unchecked Sendable { var messages: [String] = [] }
-        let heard = Heard()
-        let token = log.observe { heard.messages.append($0.message) }
+        let heard = Locked<[String]>([])
+        let token = log.observe { heard.append($0.message) }
         log.append(entry(scratch.now, "one"))
         log.stopObserving(token)
         log.append(entry(scratch.now, "two"))
         log.flush()
-        #expect(heard.messages == ["one"])
+        #expect(heard.value == ["one"])
     }
 }

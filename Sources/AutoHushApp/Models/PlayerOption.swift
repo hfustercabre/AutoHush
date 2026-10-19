@@ -1,7 +1,7 @@
 import AppKit
 import AutoHushKit
 
-/// A music player as the menu, Settings and the welcome window offer it.
+/// A media player as the menu, Settings and the welcome window offer it.
 struct PlayerOption: Equatable, Identifiable {
     /// A suggested web app's is made up (`suggestionID(_:)`): it has none yet.
     let bundleID: String
@@ -26,6 +26,9 @@ struct PlayerOption: Equatable, Identifiable {
     /// Only its sound level tells how it is: muted only, or controlled
     /// through a Now Playing row that doesn't follow it (Qobuz's).
     var needsAudioLevels = false
+    /// AutoHush can fade it (`MusicPlayer.canFade`); chosen, the fade
+    /// settings are dimmed when it can't.
+    var canFade = true
     /// An app added with Add an App that's a Chromium browser's web app (a
     /// Chrome app, a Brave app…): its browser's name, e.g. "Google Chrome".
     /// Its icon carries the browser's, and VoiceOver says it (`spokenName`).
@@ -46,7 +49,8 @@ struct PlayerOption: Equatable, Identifiable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bundleID == rhs.bundleID && lhs.name == rhs.name && lhs.appURL == rhs.appURL && lhs.kind == rhs.kind
             && lhs.webAddress == rhs.webAddress && lhs.isUntested == rhs.isUntested && lhs.pausesByMuting == rhs.pausesByMuting
-            && lhs.needsAudioLevels == rhs.needsAudioLevels && lhs.browserName == rhs.browserName && lhs.isUnavailableInAntiDotMode == rhs.isUnavailableInAntiDotMode
+            && lhs.needsAudioLevels == rhs.needsAudioLevels && lhs.canFade == rhs.canFade && lhs.browserName == rhs.browserName
+            && lhs.isUnavailableInAntiDotMode == rhs.isUnavailableInAntiDotMode
     }
 
     /// A suggested web app, not added yet.
@@ -65,21 +69,12 @@ struct PlayerOption: Equatable, Identifiable {
         firstInstalled(NSWorkspace.shared.urlsForApplications(withBundleIdentifier: $0))
     }
 
-    /// Where apps are installed: /Applications, the current user's
-    /// Applications folder and /System/Applications. macOS also lists copies
-    /// elsewhere, such as one in the Trash or on the disk image it came from.
-    static let applicationFolders: [URL] = [
-        URL(filePath: "/Applications", directoryHint: .isDirectory),
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: "Applications", directoryHint: .isDirectory),
-        URL(filePath: "/System/Applications", directoryHint: .isDirectory),
-    ]
-
     /// The first app in one of `folders`, or a folder inside one, that is
     /// still on disk: macOS can list an app deleted moments ago until Launch
     /// Services catches up.
     static func firstInstalled(
         _ urls: [URL],
-        in folders: [URL] = applicationFolders,
+        in folders: [URL] = ApplicationFolders.all,
         exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }
     ) -> URL? {
         urls.first { url in
@@ -98,7 +93,7 @@ struct PlayerOption: Equatable, Identifiable {
             let appURL = $0.installedURL ?? locate($0.bundleID)
             return PlayerOption(bundleID: $0.bundleID, name: $0.name, appURL: appURL,
                                 iconPlaceholder: $0.iconPlaceholder, kind: $0.kind, isUntested: $0.isUntested,
-                                pausesByMuting: $0.pausesByMuting, needsAudioLevels: $0.needsAudioLevels,
+                                pausesByMuting: $0.pausesByMuting, needsAudioLevels: $0.needsAudioLevels, canFade: $0.canFade,
                                 browserName: $0.kind == .checkedApp ? appURL.flatMap(CheckableApp.browserName(ofAppAt:)) : nil)
         } + catalog.webAppSuggestions.map(suggestion)
     }

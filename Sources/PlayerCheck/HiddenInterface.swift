@@ -80,15 +80,12 @@ var isElectron: Bool { if case .electron? = hiddenInterface { true } else { fals
 /// A Chromium browser's web app: its browser's name; nil for any other app.
 var webAppBrowser: String? { if case .chromiumWebApp(_, let browser)? = hiddenInterface { browser } else { nil } }
 
-/// The process a switch is set on: a Chromium browser's web app's browser
-/// (its own process serves the page; set on the web app, nothing shows),
-/// else the app itself. Its sound and keep-awake assertions are the
+/// The process a switch is set on, as AutoHush sets it
+/// (`AccessibilityWebPage.switchTarget`): a Chromium browser's web app's
+/// browser (its own process serves the page; set on the web app, nothing
+/// shows), else the app itself. Its sound and keep-awake assertions are the
 /// browser's too (`soundOwner`).
-func switchTarget(_ pid: pid_t) -> pid_t {
-    guard case .chromiumWebApp(let browserID, _)? = hiddenInterface,
-          let browser = NSRunningApplication.runningApplications(withBundleIdentifier: browserID).first else { return pid }
-    return browser.processIdentifier
-}
+func switchTarget(_ pid: pid_t) -> pid_t { AccessibilityWebPage.switchTarget(pid, access: pageAccess) }
 
 /// Whether its page is Safari's WebKit: a Safari web app's, or the app's
 /// own (a Tauri app's), not Chromium inside Qt (Qt

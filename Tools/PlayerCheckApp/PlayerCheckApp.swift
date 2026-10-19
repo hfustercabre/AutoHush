@@ -14,9 +14,17 @@
 // Electron app running without the launch option its page needs out of view
 // gets a Relaunch button (playercheck --launch-option, --relaunch). While a
 // check runs, a small panel at the screen's bottom right shows how far it
-// has got, with Stop, on every desktop.
-// Build: sh Tools/PlayerCheckApp/build.sh [folder]
+// has got, with Stop, on every desktop (the check's panel, as AutoHush's Add
+// an App… shows it). It runs playercheck as AutoHush does, through the same
+// interface (PlayerCheckKit's command line, exit statuses and answers,
+// CheckedPlayers' report lines and progress) and AutoHushKit's `ToolRun`.
+// Build: sh Tools/PlayerCheckApp/build.sh [folder] (the package's PlayerCheckApp
+// product, in an app with playercheck inside it).
 import AppKit
+import AutoHushKit
+import CheckPanel
+import CheckedPlayers
+import PlayerCheckKit
 import SwiftUI
 
 // MARK: - The apps
@@ -86,7 +94,25 @@ struct InstalledApp: Identifiable, Hashable {
     /// Every .app in the Applications folders and their subfolders (not
     /// inside other apps), by name. Why each can be in Now Playing comes from
     /// `tool` (playercheck), asked once for them all.
-    static func scan(tool: URL?) -> [InstalledApp] {
+    static func scan(tool: URL?) async -> [InstalledApp] {
+        let found = applications()
+        var told: [String: NowPlayingReasonsLine] = [:]
+        if let tool, !found.isEmpty {
+            let (status, output) = await Checker.runAndWait(tool, CommandLineOptions.nowPlayingReasons(found.map(\.url.path)))
+            if status == CheckExitStatus.done {
+                for case let line? in output.split(separator: "\n").map({ NowPlayingReasonsLine(line: $0) }) { told[line.path] = line }
+            }
+        }
+        return found.map { app in
+            let line = told[app.url.path]
+            return InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
+                                isSafariWebApp: app.bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
+                                hiddenInterface: line?.interface, switches: line?.switches, nowPlayingReason: line?.reason)
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// The .app bundles in the Applications folders and their subfolders.
+    private static func applications() -> [(url: URL, name: String, bundleID: String?, root: Root, subfolder: String?)] {
         var found: [(url: URL, name: String, bundleID: String?, root: Root, subfolder: String?)] = []
         for root in Root.allCases {
             let base = root.url.standardizedFileURL.path
@@ -110,62 +136,33 @@ struct InstalledApp: Identifiable, Hashable {
                 found.append((url, name, bundleID, root, subfolder))
             }
         }
-        // "<path>\t<reason>\t<framework>\t<switches>", each empty when none.
-        var told: [String: [String]] = [:]
-        if let tool, !found.isEmpty {
-            let (status, output) = Checker.runAndWait(tool, ["--now-playing-reasons"] + found.map(\.url.path))
-            if status == 0 {
-                for line in output.split(separator: "\n") {
-                    let parts = line.components(separatedBy: "\t")
-                    if parts.count == 4 { told[parts[0]] = parts[1...].map { $0 } }
-                }
-            }
-        }
-        return found.map { app in
-            let columns = told[app.url.path]?.map { $0.isEmpty ? nil : $0 } ?? [nil, nil, nil]
-            return InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
-                                isSafariWebApp: app.bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
-                                hiddenInterface: columns[1], switches: columns[2], nowPlayingReason: columns[0])
-        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        return found
     }
 }
 
 // MARK: - macOS's own Now Playing list
 
 /// An app mediaremoted keeps in Now Playing now, as `playercheck
-/// --now-playing-list` reads it from macOS's log (administrators only).
-struct NowPlayingClient {
-    let bundleID: String
-    let pid: String
-    /// Its last state (Playing, Paused, Stopped…), or Registered: ready for
-    /// Now Playing, never said it plays; Removed, gone (`--since` only).
-    let state: String
-    /// The active one: the Now Playing app.
-    var isActive: Bool
+/// --now-playing-list` reads it from macOS's log (administrators only): its
+/// last state (Playing, Paused, Stopped…), or Registered: ready for Now
+/// Playing, never said it plays; Removed, gone (`--since` only).
+typealias NowPlayingClient = NowPlayingListLine
 
-    /// "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>"
-    init?(line: String) {
-        let parts = line.components(separatedBy: "\t")
-        guard parts.count >= 4 else { return nil }
-        bundleID = parts[0]
-        pid = parts[1]
-        state = parts[2]
-        isActive = parts[3] == "1"
-    }
-
+extension NowPlayingListLine {
     var summary: String { isActive ? "Now Playing (\(state))" : "In Now Playing: \(state)" }
 }
 
 // MARK: - A check's report
 
-/// One line of playercheck's "Ways to control it", with the window states
-/// under it (those it failed in, or that weren't tested).
+/// One line of playercheck's "Ways to Control It" (`CheckReportLine.way(in:)`),
+/// with the window states under it (those it failed in, or that weren't tested).
 struct Way: Identifiable {
+    let id: Int
     /// ✓ worked in every window state tested, ⚠ in some, ✗ in none (or not
     /// there), ? found but not tried, – not checked.
-    enum Mark { case works, some, found, no, notChecked }
-    let id: Int
-    let mark: Mark
+    let mark: CheckReportLine.WayMark
+    /// The way its title names.
+    let kind: CheckResult.WayKind?
     let title: String
     let detail: String
     /// "      ✗ covered: why" → (failed, "covered", "why"); "– …: not tested (…)" → not failed.
@@ -173,25 +170,12 @@ struct Way: Identifiable {
 
     /// "  ✓ AppleScript: pausing … worked" → works, "AppleScript", "pausing … worked".
     init?(id: Int, line: String) {
-        let text = line.trimmingCharacters(in: .whitespaces)
-        guard let first = text.first else { return nil }
-        switch first {
-        case "✓": mark = .works
-        case "⚠": mark = .some
-        case "?": mark = .found
-        case "✗": mark = .no
-        case "–": mark = .notChecked
-        default: return nil
-        }
-        let rest = text.dropFirst().trimmingCharacters(in: .whitespaces)
-        if let colon = rest.range(of: ": ") {
-            title = String(rest[..<colon.lowerBound])
-            detail = String(rest[colon.upperBound...])
-        } else {
-            title = rest
-            detail = ""
-        }
+        guard let way = CheckReportLine.way(in: line) else { return nil }
         self.id = id
+        mark = way.mark
+        kind = way.way
+        title = way.title
+        detail = way.detail
     }
 
     /// Its playercheck --via, for the ways that can play and pause: AppleScript
@@ -199,25 +183,21 @@ struct Way: Identifiable {
     /// a play that toggles too), but before that only as the supported
     /// scriptable players have it (commands of their own kind, not tried,
     /// aren't offered); the menu, the page, the Now Playing panel.
-    var via: String? {
-        if title == "AppleScript", !detail.contains("not as the supported scriptable players") { return "script" }
-        if title.hasPrefix("Playback menu") { return "menu" }
-        if title.hasPrefix("Page button") { return "page" }
-        if title == "Now Playing panel" { return "panel" }
-        return nil
+    var via: CheckResult.WayKind? {
+        kind == .script && detail.contains(CheckReportLine.unlikeScriptablePlayers) ? nil : kind
     }
     /// A way to play and pause with: it worked in the check (in every window
     /// state or some), or was found.
-    var canControl: Bool { via != nil && (mark == .works || mark == .some || mark == .found) }
+    var canControl: Bool { via != nil && (mark == .works || mark == .some || mark == .notTried) }
 
     /// Whether it worked in its check with the app's window in `state` (as
-    /// `playercheck --window-state` names it): it worked in every state
+    /// `playercheck --window-state` tells it): it worked in every state
     /// tested, or some, and that one isn't listed under it as failed or not
     /// tested. On another desktop, covered there too: the window list can't
     /// tell the two apart.
-    func passes(_ state: String) -> Bool {
+    func passes(_ state: CheckResult.WindowState) -> Bool {
         guard mark == .works || mark == .some else { return false }
-        let wanted = state == "on another desktop" ? [state, "covered on another desktop"] : [state]
+        let wanted = (state == .otherDesktop ? [state, .otherDesktopCovered] : [state]).map(\.title)
         return !states.contains { wanted.contains($0.state) || $0.state == "window states" }
     }
 }
@@ -229,80 +209,65 @@ struct Report {
     var state: State
     var lines: [String] = []
     var date = Date()
-    /// When its last request ("waiting: …") came, for the time left.
-    var requestSince: Date?
+    /// How far the check has got, from its lines as they came (`CheckProgress`,
+    /// as AutoHush follows it): while it runs.
+    var progress = CheckProgress()
+
+    /// Adds a line as it comes.
+    mutating func add(_ line: String) {
+        lines.append(line)
+        progress.add(line)
+    }
 
     /// The lines under a heading (a line that isn't indented), whatever its
     /// case: playercheck's headings are title case, older saved checks' not.
-    func section(_ title: String) -> [String] {
-        guard let start = lines.firstIndex(where: { $0.caseInsensitiveCompare(title) == .orderedSame }) else { return [] }
+    func section(_ heading: CheckReportLine.Heading) -> [String] {
+        guard let start = lines.firstIndex(where: { $0.caseInsensitiveCompare(heading.rawValue) == .orderedSame }) else { return [] }
         return Array(lines[(start + 1)...].prefix { $0.hasPrefix(" ") })
     }
     /// Each way's line, with the more indented lines under it (its window
     /// states) attached to it.
     var ways: [Way] {
         var found: [Way] = []
-        for (index, line) in section("Ways to Control It").enumerated() {
-            if line.hasPrefix("      ") {
-                let text = line.trimmingCharacters(in: .whitespaces)
-                guard let mark = text.first, !found.isEmpty, let colon = text.range(of: ": ") else { continue }
-                let state = String(text[text.index(after: text.startIndex)..<colon.lowerBound]).trimmingCharacters(in: .whitespaces)
-                    .replacingOccurrences(of: "minimised", with: "minimized")
-                found[found.count - 1].states.append((mark == "✗", state, String(text[colon.upperBound...])))
+        for (index, line) in section(.ways).enumerated() {
+            if let state = CheckReportLine.wayState(in: line) {
+                guard !found.isEmpty else { continue }
+                found[found.count - 1].states.append((state.failed, state.state.replacingOccurrences(of: "minimised", with: "minimized"), state.why))
             } else if let way = Way(id: index, line: line) {
                 found.append(way)
             }
         }
         return found
     }
-    /// The window state the check has the app in now, from its last "State
-    /// N of M: <state>" line.
-    var testedState: (index: Int, count: Int, name: String)? {
-        guard state == .checking, let line = lines.last(where: { $0.hasPrefix("  State ") }),
-              let colon = line.range(of: ": ") else { return nil }
-        let numbers = line.dropFirst("  State ".count)[..<colon.lowerBound].components(separatedBy: " of ").compactMap { Int($0) }
-        guard numbers.count == 2 else { return nil }
-        return (numbers[0], numbers[1], String(line[colon.upperBound...]))
-    }
+    /// The window state the check has the app in now, while it checks.
+    var testedState: CheckProgress.WindowStep? { state == .checking ? progress.windowStep : nil }
     /// The same as "covered, 2 of 7".
-    var windowState: String? { testedState.map { "\($0.name), \($0.index) of \($0.count)" } }
+    var windowState: String? { testedState.map { "\($0.state?.title ?? ""), \($0.index) of \($0.count)" } }
     /// What the check does in that window state: the way it's pressing and
     /// whether it's pausing or playing it again ("By its playback menu:
     /// playing it again"), why the state isn't tested, or the move there.
     var stateActivity: String? {
-        guard testedState != nil, let start = lines.lastIndex(where: { $0.hasPrefix("  State ") }) else { return nil }
-        let after = lines[(start + 1)...]
-        if let by = after.lastIndex(where: { $0.hasPrefix("  by ") }) {
-            let line = lines[by]
-            let way = line.hasPrefix("  by script") ? "AppleScript" : line.hasPrefix("  by its menu") ? "its playback menu"
-                : line.hasPrefix("  by its page") ? "its page's button" : line.hasPrefix("  by the Now Playing panel") ? "the Now Playing panel"
-                : String(line.dropFirst("  by ".count).prefix { $0 != ":" && $0 != "(" }).trimmingCharacters(in: .whitespaces)
-            let result = lines[(by + 1)...].last { $0.hasPrefix("    after ") }
-            let doing = result == nil ? ": pausing it" : result!.hasPrefix("    after the pause") ? ": playing it again" : ""
-            return "By \(way)\(doing)"
-        }
-        if let untested = after.last(where: { $0.hasPrefix("    not tested") }) {
-            let text = untested.trimmingCharacters(in: .whitespaces)
+        guard testedState != nil else { return nil }
+        switch progress.activity {
+        case .pausing(let way)?: return "By \(AppDetail.wayName(way)): pausing it"
+        case .playingAgain(let way)?: return "By \(AppDetail.wayName(way)): playing it again"
+        case .untested?:
+            let text = lines.last { $0.hasPrefix(CheckReportLine.notTested) }?.trimmingCharacters(in: .whitespaces) ?? ""
             return text.prefix(1).uppercased() + text.dropFirst()
+        case .moving?, nil: return "Moving its window there"
         }
-        return "Moving its window there"
     }
-    /// The heading of the section playercheck is in.
-    var lastHeading: String? { lines.last { !$0.hasPrefix(" ") } }
     var verdict: String {
-        section("Verdict").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
+        section(.verdict).map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
     }
     /// What playercheck asks of whoever runs it while it waits ("start
-    /// playing something in <app>; …"): the app must play for the test.
-    /// Asked until it's answered (it plays, it paused, Accessibility is
-    /// decided), the wait ends ("stopped…", "it didn't…") or its section
-    /// does: a line said meanwhile (a script error, a browser's page count)
-    /// doesn't end it.
+    /// playing something in <app>; …"), in its own words: the app must play
+    /// for the test. Asked until it's answered (it plays, it paused,
+    /// Accessibility is decided), the wait ends ("stopped…", "it didn't…")
+    /// or its section does (`CheckProgress.request`).
     var request: String? {
-        guard state == .checking, let asked = lines.lastIndex(where: { $0.hasPrefix("  waiting: ") }) else { return nil }
-        let ends = ["  it plays", "  it paused", "  it didn't", "  stopped", "  Accessibility:"]
-        guard !lines[(asked + 1)...].contains(where: { line in !line.hasPrefix(" ") || ends.contains { line.hasPrefix($0) } }) else { return nil }
-        let text = lines[asked].dropFirst("  waiting: ".count)
+        guard state == .checking, progress.request != nil,
+              let text = lines.lazy.reversed().compactMap({ CheckReportLine.requestText(in: $0) }).first else { return nil }
         return text.prefix(1).uppercased() + text.dropFirst()
     }
     /// The whole report, with a blank line before each heading.
@@ -315,42 +280,26 @@ struct Report {
 
 // MARK: - Running playercheck
 
-/// playercheck started: its lines as it prints them (its errors too), and
-/// its exit status, awaited without blocking the main thread (waitUntilExit
-/// would spin its run loop).
-struct ToolRun {
-    let process: Process
+/// playercheck started, as AutoHush starts it (`ToolRun.start`): its lines
+/// as it prints them (its errors too), and its exit status, both awaited
+/// without blocking the main thread.
+struct LineRun {
+    /// What Stop ends.
+    let running: ToolRun.Running
     let lines: AsyncStream<String>
     private let ended: AsyncStream<Int32>
 
     init(_ tool: URL, _ arguments: [String]) throws {
-        let process = Process()
-        process.executableURL = tool
-        process.arguments = arguments
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        // Set before it starts, so its end can't come first.
-        ended = AsyncStream { continuation in
-            process.terminationHandler = { continuation.yield($0.terminationStatus); continuation.finish() }
-        }
-        try process.run()
-        self.process = process
-        let handle = pipe.fileHandleForReading
-        lines = AsyncStream { continuation in
-            Thread.detachNewThread {
-                var pending = Data()
-                while case let data = handle.availableData, !data.isEmpty {
-                    pending.append(data)
-                    while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
-                        continuation.yield(String(decoding: pending[..<newline], as: UTF8.self))
-                        pending.removeSubrange(...newline)
-                    }
-                }
-                if !pending.isEmpty { continuation.yield(String(decoding: pending, as: UTF8.self)) }
-                continuation.finish()
-            }
-        }
+        let (lines, line) = AsyncStream.makeStream(of: String.self)
+        let (ended, end) = AsyncStream.makeStream(of: Int32.self)
+        // Its end comes after its last line.
+        running = try ToolRun(tool, arguments, readsErrors: true).start(onLine: { line.yield($0) }, onEnd: { result in
+            line.finish()
+            end.yield(result.status)
+            end.finish()
+        })
+        self.lines = lines
+        self.ended = ended
     }
 
     /// Its exit status, once it has ended.
@@ -378,9 +327,9 @@ final class Checker {
     /// check is shown instead.
     var attemptNotes: [InstalledApp.ID: String] = [:]
     /// A check cancelled before it did anything, as a permission it needs
-    /// isn't allowed (playercheck's exit status 3): what it said, and the
-    /// first permission missing, for its pane in System Settings.
-    var permissionProblems: [InstalledApp.ID: (text: String, missing: String)] = [:]
+    /// isn't allowed (`CheckExitStatus.permissionMissing`): what it said, and
+    /// the first permission missing, for its pane in System Settings.
+    var permissionProblems: [InstalledApp.ID: (text: String, missing: CheckReportLine.Permission?)] = [:]
     var checkingID: InstalledApp.ID?
     /// The check running, to tell it from one started after it was stopped.
     private var attempt: UUID?
@@ -399,18 +348,17 @@ final class Checker {
     var controls: [InstalledApp.ID: (text: String, worked: Bool?)] = [:]
     var controllingID: InstalledApp.ID?
     /// Per Electron app: the launch option it needs, and whether its running
-    /// copy has it ("yes", "no", "not running"), as `playercheck
-    /// --launch-option` tells it.
-    var launchOptions: [InstalledApp.ID: (option: String, running: String)] = [:]
+    /// copy has it, as `playercheck --launch-option` tells it.
+    var launchOptions: [InstalledApp.ID: (option: String, running: LaunchOptionAnswer.Running?)] = [:]
     /// A Relaunch running (its app), and how the last one went per app.
     var relaunchingID: InstalledApp.ID?
     var relaunches: [InstalledApp.ID: (text: String, worked: Bool)] = [:]
     /// The check's playercheck, and the Play or Pause's: what Stop ends.
-    private var process: Process?
-    private var pressProcess: Process?
+    private var process: ToolRun.Running?
+    private var pressProcess: ToolRun.Running?
     private var pressStopped = false
     /// The running check's progress and Stop, on every desktop.
-    @ObservationIgnored private let panel = CheckPanel()
+    @ObservationIgnored private let panel = CheckPanelController()
 
     /// A check, a Play/Pause or a Relaunch is running: one at a time.
     var isBusy: Bool { checkingID != nil || controllingID != nil || relaunchingID != nil }
@@ -458,39 +406,39 @@ final class Checker {
     /// Plays or pauses it by the first way that worked in its last check with
     /// its window as it is now: playercheck --window-state tells the state,
     /// then --via that way alone.
-    func controlByState(_ app: InstalledApp, _ action: String) {
+    func controlByState(_ app: InstalledApp, _ action: CommandLineOptions.Action) {
         guard !isBusy, let tool, let ways = finished[app.id]?.ways else { return }
         controllingID = app.id
-        controls[app.id] = ((action == "play" ? "Playing" : "Pausing") + "…", nil)
+        controls[app.id] = ((action == .play ? "Playing" : "Pausing") + "…", nil)
         Task {
-            let (_, output) = await Task.detached { Self.runAndWait(tool, ["--window-state", app.url.path]) }.value
-            let state = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            let (_, output) = await Self.runAndWait(tool, CommandLineOptions.AppQuery.windowState.arguments(app.url.path))
             controllingID = nil
             // Without a window (or not known), only a way that worked in every state.
-            let known = !state.isEmpty && state != "no window" && state != "not running" && !state.contains(" found")
-            guard let way = ways.first(where: { $0.canControl && (known ? $0.passes(state) : $0.mark == .works) }), let via = way.via else {
-                controls[app.id] = (known ? "No way worked in its check with its window \(state)." : "No way worked in every window state in its check.", false)
+            let known = WindowStateAnswer(line: output)?.windowState
+            guard let way = ways.first(where: { $0.canControl && (known.map($0.passes) ?? ($0.mark == .works)) }), let via = way.via else {
+                controls[app.id] = (known.map { "No way worked in its check with its window \($0.title)." }
+                                    ?? "No way worked in every window state in its check.", false)
                 return
             }
-            control(app, action, via: via, note: known ? "Its window \(state): by \(AppDetail.wayName(via))." : nil)
+            control(app, action, via: via, note: known.map { "Its window \($0.title): by \(AppDetail.wayName(via))." })
         }
     }
 
     /// Plays or pauses it by that one way: playercheck --play or --pause
     /// --via `via` tries no other. `stopPress` ends it. `note` goes before
     /// what playercheck says (the window's state and the way chosen).
-    func control(_ app: InstalledApp, _ action: String, via: String, note: String? = nil) {
+    func control(_ app: InstalledApp, _ action: CommandLineOptions.Action, via: CheckResult.WayKind, note: String? = nil) {
         guard !isBusy, let tool else { return }
-        let run: ToolRun
+        let run: LineRun
         do {
-            run = try ToolRun(tool, [app.url.path, "--" + action, "--via", via])
+            run = try LineRun(tool, CommandLineOptions.press(app.url.path, action, via: via))
         } catch {
             controls[app.id] = ("Couldn't run playercheck: \(error.localizedDescription)", false)
             return
         }
         controllingID = app.id
-        controls[app.id] = ((action == "play" ? "Playing" : "Pausing") + "…", nil)
-        pressProcess = run.process
+        controls[app.id] = ((action == .play ? "Playing" : "Pausing") + "…", nil)
+        pressProcess = run.running
         pressStopped = false
         Task {
             var output: [String] = []
@@ -499,7 +447,7 @@ final class Checker {
             let said = output.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
             controls[app.id] = pressStopped
                 ? ("Stopped before it said whether it worked.", false)
-                : ((note.map { $0 + " " } ?? "") + said, status == 0)
+                : ((note.map { $0 + " " } ?? "") + said, status == CheckExitStatus.done)
             pressProcess = nil
             controllingID = nil
             readClients()
@@ -511,13 +459,12 @@ final class Checker {
     func readLaunchOption(_ app: InstalledApp) {
         guard let tool, app.hiddenInterface?.hasPrefix("Electron") == true else { return }
         Task {
-            let (status, output) = await Task.detached { Self.runAndWait(tool, ["--launch-option", app.url.path]) }.value
-            let parts = output.trimmingCharacters(in: .newlines).components(separatedBy: "\t")
-            guard status == 0, parts.count == 2, !parts[0].isEmpty else {
+            let (status, output) = await Self.runAndWait(tool, CommandLineOptions.AppQuery.launchOption.arguments(app.url.path))
+            guard status == CheckExitStatus.done, let answer = LaunchOptionAnswer(line: output), let option = answer.option else {
                 launchOptions[app.id] = nil
                 return
             }
-            launchOptions[app.id] = (parts[0], parts[1])
+            launchOptions[app.id] = (option, answer.running)
         }
     }
 
@@ -528,8 +475,8 @@ final class Checker {
         relaunchingID = app.id
         relaunches[app.id] = nil
         Task {
-            let (status, output) = await Task.detached { Self.runAndWait(tool, ["--relaunch", app.url.path]) }.value
-            relaunches[app.id] = (output.trimmingCharacters(in: .whitespacesAndNewlines), status == 0)
+            let (status, output) = await Self.runAndWait(tool, CommandLineOptions.AppQuery.relaunch.arguments(app.url.path))
+            relaunches[app.id] = (output.trimmingCharacters(in: .whitespacesAndNewlines), status == CheckExitStatus.done)
             relaunchingID = nil
             refreshRunning()
             readLaunchOption(app)
@@ -541,7 +488,7 @@ final class Checker {
     func stopPress() {
         guard let pressProcess else { return }
         pressStopped = true
-        pressProcess.terminate()
+        pressProcess.stop()
     }
 
     /// When the app quits: stops what runs, so no playercheck goes on unwatched.
@@ -550,18 +497,11 @@ final class Checker {
         stopPress()
     }
 
-    /// Runs a tool to the end: its exit status and all it printed.
-    nonisolated static func runAndWait(_ tool: URL, _ arguments: [String]) -> (Int32, String) {
-        let process = Process()
-        process.executableURL = tool
-        process.arguments = arguments
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        guard (try? process.run()) != nil else { return (-1, "couldn't run \(tool.lastPathComponent)") }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        return (process.terminationStatus, String(decoding: data, as: UTF8.self))
+    /// Runs a tool to the end (`ToolRun`, its errors read too): its exit
+    /// status and all it printed.
+    nonisolated static func runAndWait(_ tool: URL, _ arguments: [String]) async -> (Int32, String) {
+        let result = await ToolRun(tool, arguments, readsErrors: true).run()
+        return result == .notStarted ? (-1, "couldn't run \(tool.lastPathComponent)") : (result.status, result.text)
     }
 
     /// playercheck, built into this app's Resources by build.sh.
@@ -571,7 +511,7 @@ final class Checker {
         isScanning = true
         let tool = self.tool
         Task {
-            let found = await Task.detached { InstalledApp.scan(tool: tool) }.value
+            let found = await Task.detached { await InstalledApp.scan(tool: tool) }.value
             apps = found
             isScanning = false
         }
@@ -595,19 +535,19 @@ final class Checker {
         let since = full ? nil : clientsReadAt
         let started = Date()
         // A little overlap, so nothing written meanwhile is missed.
-        let arguments = ["--now-playing-list"] + (since.map { ["--since", String($0.timeIntervalSince1970 - 2)] } ?? [])
+        let arguments = since.map { CommandLineOptions.nowPlayingList(since: $0.addingTimeInterval(-2)) } ?? CommandLineOptions.nowPlayingList(hours: nil)
         Task {
-            let (status, output) = await Task.detached { Checker.runAndWait(tool, arguments) }.value
-            if status == 0 {
+            let (status, output) = await Checker.runAndWait(tool, arguments)
+            if status == CheckExitStatus.done {
                 var updated = since == nil ? [:] : clients
-                var active: String?
-                for line in output.split(separator: "\n").map(String.init) {
-                    if line.hasPrefix("#active\t") {
-                        active = String(line.dropFirst("#active\t".count))
+                var active: pid_t?
+                for line in output.split(separator: "\n") {
+                    if let pid = NowPlayingListLine.active(in: line) {
+                        active = pid
                     } else if let client = NowPlayingClient(line: line) {
-                        if client.state == "Removed" {
+                        if client.state == NowPlayingListLine.removed {
                             if updated[client.bundleID]?.pid == client.pid { updated[client.bundleID] = nil }
-                        } else if client.state == "Registered", updated[client.bundleID]?.pid == client.pid {
+                        } else if client.state == NowPlayingListLine.registered, updated[client.bundleID]?.pid == client.pid {
                             // An update names a client it saw without a state (logged
                             // again, created again): the state known for that process
                             // still holds, as playercheck's own check keeps it.
@@ -683,7 +623,9 @@ final class Checker {
         refreshRunning()
         let allowing = !isTrusted
         reports[app.id] = Report(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
-        panel.show(app, checker: self)
+        panel.show { resized, dimmed in
+            CheckPanelView(app: app, checker: self, resized: resized, dimmed: dimmed)
+        }
         Task {
             if allowing {
                 Self.askForAccessibility()
@@ -701,9 +643,8 @@ final class Checker {
                 // An Electron app opens with the option its page needs to take
                 // presses out of view.
                 if app.hiddenInterface?.hasPrefix("Electron") == true {
-                    let (_, said) = await Task.detached { Self.runAndWait(tool, ["--launch-option", app.url.path]) }.value
-                    let option = said.components(separatedBy: "\t").first ?? ""
-                    if !option.isEmpty { configuration.arguments = [option] }
+                    let (_, said) = await Self.runAndWait(tool, CommandLineOptions.AppQuery.launchOption.arguments(app.url.path))
+                    if let option = LaunchOptionAnswer(line: said)?.option { configuration.arguments = [option] }
                 }
                 do {
                     _ = try await NSWorkspace.shared.openApplication(at: app.url, configuration: configuration)
@@ -750,39 +691,36 @@ final class Checker {
     }
 
     private func run(_ tool: URL, on app: InstalledApp) async {
-        let run: ToolRun
+        let run: LineRun
         do {
             // --developer: the verdict also says how a built-in player of
             // its kind would be made, as AutoHush's Add an App… doesn't ask.
-            run = try ToolRun(tool, [app.url.path, "--block-input", "--developer"])
+            run = try LineRun(tool, CommandLineOptions.check(app.url.path, developer: true))
         } catch {
             reports[app.id]?.state = .failed("Couldn't run playercheck: \(error.localizedDescription)")
             endAttempt(app.id)
             return
         }
-        self.process = run.process
+        self.process = run.running
         let id = app.id
         for await line in run.lines where !line.isEmpty {
-            if line.hasPrefix("  waiting: ") { reports[id]?.requestSince = Date() }
-            reports[id]?.lines.append(line)
+            reports[id]?.add(line)
         }
         let status = await run.status()
         if reports[id]?.state == .checking {
-            if status == 3 {
+            if status == CheckExitStatus.permissionMissing {
                 // Cancelled before doing anything: a permission it needs isn't
-                // allowed (named in a line ending "not allowed" or "not
-                // answered"), or the app didn't answer whether it is (no
-                // permission to show in System Settings).
+                // allowed (or not answered), or the app didn't answer whether
+                // it is (no permission to show in System Settings).
                 let lines = reports[id]?.lines ?? []
-                let said = lines.last { $0.hasPrefix("Not checked: ") }.map { String($0.dropFirst("Not checked: ".count)) }
+                let said = lines.lazy.compactMap { CheckReportLine.notChecked(in: $0) }.last
                     ?? "A permission the check needs isn't allowed."
-                let missing = lines.first { $0.hasPrefix("  ") && ($0.hasSuffix(": not allowed") || $0.hasSuffix(": not answered")) }
-                    .map { $0.trimmingCharacters(in: .whitespaces).components(separatedBy: ":")[0] } ?? ""
-                permissionProblems[id] = (said, missing)
+                permissionProblems[id] = (said, lines.lazy.compactMap { CheckReportLine.missingPermission(in: $0) }.first)
                 reports[id]?.state = .failed("The check was cancelled: \(said)")
             } else {
-                // 143: stopped by Escape, while it blocked the mouse and keyboard.
-                reports[id]?.state = status == 0 ? .finished : status == 143 ? .stopped : .failed("playercheck ended with status \(status)")
+                // Stopped by Escape too, while it blocked the mouse and keyboard.
+                reports[id]?.state = status == CheckExitStatus.done ? .finished : CheckExitStatus.isStop(status) ? .stopped
+                    : .failed("playercheck ended with status \(status)")
             }
         }
         endAttempt(id)
@@ -796,7 +734,7 @@ final class Checker {
         guard let id = checkingID else { return }
         reports[id]?.state = .stopped
         if let process {
-            process.terminate()
+            process.stop()
         } else {
             endAttempt(id) // still opening the app
         }
@@ -971,7 +909,7 @@ struct AppDetail: View {
     /// presses out of view: a warning (a check now would show those window
     /// states failing) and a button to relaunch it with it.
     @ViewBuilder private var launchOptionNote: some View {
-        if let launch = checker.launchOptions[app.id], launch.running == "no" || checker.relaunchingID == app.id {
+        if let launch = checker.launchOptions[app.id], launch.running == .no || checker.relaunchingID == app.id {
             VStack(alignment: .leading, spacing: 8) {
                 Label("\(app.name) is running without Chromium's \(launch.option): its page can't be pressed while its window is covered"
                       + " or on another desktop, so a check now would show those states failing.",
@@ -1025,13 +963,14 @@ struct AppDetail: View {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
-    /// Privacy & Security at a permission's list, as playercheck names it
-    /// (Audio Recording is under Screen & System Audio Recording; older
-    /// checks called it "System Audio Recording").
-    static func openPrivacySettings(for permission: String) {
-        let pane = permission == "Accessibility" ? "Privacy_Accessibility"
-            : permission.hasSuffix("Audio Recording") ? "Privacy_ScreenCapture"
-            : permission.hasPrefix("Automation") ? "Privacy_Automation" : "Privacy"
+    /// Privacy & Security at a permission's list (Audio Recording is under
+    /// Screen & System Audio Recording).
+    static func openPrivacySettings(for permission: CheckReportLine.Permission) {
+        let pane = switch permission {
+        case .accessibility: "Privacy_Accessibility"
+        case .audioRecording: "Privacy_ScreenCapture"
+        case .automation: "Privacy_Automation"
+        }
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)")!)
     }
 
@@ -1093,8 +1032,8 @@ struct AppDetail: View {
                         .font(.body.weight(.medium))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
-                    if !problem.missing.isEmpty {
-                        Button("Open System Settings") { Self.openPrivacySettings(for: problem.missing) }
+                    if let missing = problem.missing {
+                        Button("Open System Settings") { Self.openPrivacySettings(for: missing) }
                     }
                 }
                 .padding(10)
@@ -1114,8 +1053,8 @@ struct AppDetail: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text("Play and Pause").font(.headline)
             HStack {
-                Button { checker.controlByState(app, "play") } label: { Label("Play", systemImage: "play.fill") }
-                Button { checker.controlByState(app, "pause") } label: { Label("Pause", systemImage: "pause.fill") }
+                Button { checker.controlByState(app, .play) } label: { Label("Play", systemImage: "play.fill") }
+                Button { checker.controlByState(app, .pause) } label: { Label("Pause", systemImage: "pause.fill") }
             }
             .disabled(checker.isBusy || !running || checker.tool == nil)
             Text(!running ? "Open it first: it isn't running."
@@ -1142,12 +1081,12 @@ struct AppDetail: View {
         }
     }
 
-    static func wayName(_ via: String) -> String {
-        switch via {
-        case "script": "AppleScript"
-        case "menu": "its playback menu"
-        case "page": "its page's button"
-        default: "its row in the Now Playing panel"
+    nonisolated static func wayName(_ way: CheckResult.WayKind) -> String {
+        switch way {
+        case .script: "AppleScript"
+        case .menu: "its playback menu"
+        case .page: "its page's button"
+        case .panel: "its row in the Now Playing panel"
         }
     }
 
@@ -1168,7 +1107,7 @@ struct AppDetail: View {
         parts.append("Then it tests each way to control it: it pauses \(app.name) and plays it again by each, the menu bar's Now Playing panel included (it shows for a moment).")
         parts.append("It does so with \(app.name)'s window in each state: visible, covered (Player Check puts a window over it), on another desktop, covered there, full screen, minimized and hidden. Player Check moves the window there itself and comes back to the front each time; for the desktops it drags the window with the pointer and Control-arrow, so from the first move until the window is put back your clicks, scrolling and keys are blocked (the pointer still moves, except during a drag) and the screen dims, apart from the panel. The panel's Stop and Escape still work, and stop the check; whenever the check asks you something, they're all yours again. Player Check's own window may move aside. Everything is put back as it was at the end. It takes about 3 minutes.")
         parts.append("A small panel at the bottom right of the screen shows how far it has got, with Stop, on every desktop.")
-        if let launch = checker.launchOptions[app.id], launch.running == "no" {
+        if let launch = checker.launchOptions[app.id], launch.running == .no {
             parts.append("\(app.name) is running without \(launch.option): its page's presses may fail while its window is covered or on another desktop.")
         }
         if let note = app.switchNote { parts.append(note) }
@@ -1229,8 +1168,8 @@ struct AppDetail: View {
 
 struct WayRow: View {
     let way: Way
-    /// Plays ("play") or pauses ("pause") it this way; nil: no buttons.
-    var control: ((String) -> Void)?
+    /// Plays or pauses it this way; nil: no buttons.
+    var control: ((CommandLineOptions.Action) -> Void)?
     var isBusy = false
 
     var body: some View {
@@ -1263,9 +1202,9 @@ struct WayRow: View {
             Spacer(minLength: 8)
             if let control, let via = way.via {
                 let name = AppDetail.wayName(via)
-                Button { control("play") } label: { Image(systemName: "play.fill") }
+                Button { control(.play) } label: { Image(systemName: "play.fill") }
                     .help("Play by \(name)").accessibilityLabel("Play by \(name)")
-                Button { control("pause") } label: { Image(systemName: "pause.fill") }
+                Button { control(.pause) } label: { Image(systemName: "pause.fill") }
                     .help("Pause by \(name)").accessibilityLabel("Pause by \(name)")
             }
         }
@@ -1277,8 +1216,8 @@ struct WayRow: View {
         switch way.mark {
         case .works: "checkmark.circle.fill"
         case .some: "exclamationmark.triangle.fill"
-        case .found: "questionmark.circle.fill"
-        case .no: "xmark.circle.fill"
+        case .notTried: "questionmark.circle.fill"
+        case .none: "xmark.circle.fill"
         case .notChecked: "minus.circle"
         }
     }
@@ -1286,8 +1225,8 @@ struct WayRow: View {
         switch way.mark {
         case .works: .green
         case .some: .orange
-        case .found: .orange
-        case .no: .red
+        case .notTried: .orange
+        case .none: .red
         case .notChecked: .secondary
         }
     }
@@ -1295,8 +1234,8 @@ struct WayRow: View {
         switch way.mark {
         case .works: "Works"
         case .some: "Works in some states"
-        case .found: "Found, not tried"
-        case .no: "No"
+        case .notTried: "Found, not tried"
+        case .none: "No"
         case .notChecked: "Not checked"
         }
     }
@@ -1316,131 +1255,14 @@ struct Tag: View {
 
 // MARK: - The check's panel
 
-/// A check's progress and Stop, in a small panel at the bottom right of the
-/// screen while the check runs. It's on every desktop, full screen apps'
-/// too: the check moves the app's window between them, and whoever starts
-/// the app playing may be on its desktop. It floats above other windows
-/// (the check counts only ordinary windows as covering the app) and never
-/// comes forward: clicking Stop leaves the app in front where it is. While
-/// playercheck blocks the mouse and keyboard, a shade dims every screen
-/// but the panel.
-@MainActor
-final class CheckPanel {
-    /// The shade's level, and the panel's while the screen is dimmed: above
-    /// the menu bar, the Dock and Control Center's panels (level 101: the Now
-    /// Playing panel a check opens), so the shade dims them all and the panel
-    /// stays above it. Otherwise the panel floats, under menus and the Dock,
-    /// as the user may need them. playercheck's InputBlock lets clicks through
-    /// on Player Check's windows above the ordinary ones that don't cover a
-    /// whole display: the panel, never the shade.
-    static let shadeLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
-    static let panelLevel = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 2)
-    private var panel: NSPanel?
-    private var shades: [NSWindow] = []
-
-    func show(_ app: InstalledApp, checker: Checker) {
-        hide()
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 310, height: 120),
-                            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = true
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        panel.hidesOnDeactivate = false
-        panel.canHide = false
-        panel.becomesKeyOnlyIfNeeded = true
-        panel.isReleasedWhenClosed = false
-        let content = NSHostingView(rootView: CheckPanelView(app: app, checker: checker, resized: { [weak panel] size in
-            Self.fit(panel, to: size)
-        }, dimmed: { [weak self] on in
-            self?.dim(on)
-        }))
-        let radius: CGFloat = 20
-        if #available(macOS 26, *) {
-            let glass = NSGlassEffectView()
-            glass.cornerRadius = radius
-            glass.contentView = content
-            panel.contentView = glass
-        } else {
-            let effect = NSVisualEffectView()
-            effect.material = .popover
-            effect.blendingMode = .behindWindow
-            effect.state = .active
-            let mask = NSImage(size: NSSize(width: radius * 2 + 1, height: radius * 2 + 1), flipped: false) { rect in
-                NSColor.black.setFill()
-                NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
-                return true
-            }
-            mask.capInsets = NSEdgeInsets(top: radius, left: radius, bottom: radius, right: radius)
-            mask.resizingMode = .stretch
-            effect.maskImage = mask
-            content.frame = effect.bounds
-            content.autoresizingMask = [.width, .height]
-            effect.addSubview(content)
-            panel.contentView = effect
-        }
-        Self.fit(panel, to: content.fittingSize)
-        panel.orderFrontRegardless()
-        self.panel = panel
-    }
-
-    func hide() {
-        panel?.orderOut(nil)
-        panel = nil
-        shades.forEach { $0.orderOut(nil) }
-        shades = []
-    }
-
-    /// Dims every screen but the panel, black at 50%, fading in or out. The
-    /// shade lets the check's drags through (it ignores the mouse), and
-    /// doesn't hide what's under it from the check: macOS still counts those
-    /// windows as visible (a Chromium page under it takes presses), and
-    /// Accessibility's hit tests pass it by.
-    private func dim(_ on: Bool) {
-        panel?.level = on ? Self.panelLevel : .floating
-        if on, shades.isEmpty { shades = NSScreen.screens.map(Self.shade) }
-        let shown = shades
-        if !on { shades = [] }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.25
-            for shade in shown { shade.animator().alphaValue = on ? 1 : 0 }
-        } completionHandler: {
-            if !on { shown.forEach { $0.orderOut(nil) } }
-        }
-    }
-
-    private static func shade(_ screen: NSScreen) -> NSWindow {
-        let shade = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
-        shade.isOpaque = false
-        shade.backgroundColor = NSColor.black.withAlphaComponent(0.5)
-        shade.alphaValue = 0
-        shade.ignoresMouseEvents = true
-        shade.hasShadow = false
-        shade.level = shadeLevel
-        shade.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-        shade.canHide = false
-        shade.hidesOnDeactivate = false
-        shade.isReleasedWhenClosed = false
-        shade.setFrame(screen.frame, display: false)
-        shade.orderFrontRegardless()
-        return shade
-    }
-
-    /// Its size for its content, its bottom right corner 16 pt from the
-    /// main display's (above the Dock).
-    private static func fit(_ panel: NSPanel?, to size: CGSize) {
-        guard let panel, size.width > 0, size.height > 0 else { return }
-        let screen = NSScreen.screens.first?.visibleFrame ?? .zero
-        panel.setFrame(NSRect(x: screen.maxX - size.width - 16, y: screen.minY + 16, width: size.width, height: size.height), display: true)
-    }
-}
-
-/// What the check's panel shows: the app, what the check is doing, Stop;
-/// what it asks of you (with the time left), or the window states as
-/// segments (each one filled once tested), the one it's in and the way
-/// it's pressing; and, while playercheck blocks the mouse and keyboard,
-/// that it does (the screen dims meanwhile).
+/// What the check's panel shows (`CheckPanelController`, as AutoHush's: a
+/// small panel at the bottom right of the screen while the check runs, on
+/// every desktop, full screen apps' too, and a shade dimming every screen
+/// but it while playercheck blocks the mouse and keyboard): the app, what
+/// the check is doing, Stop; what it asks of you (with the time left), or
+/// the window states as segments (each one filled once tested), the one
+/// it's in and the way it's pressing; and, while the mouse and keyboard are
+/// blocked, that they are.
 struct CheckPanelView: View {
     let app: InstalledApp
     let checker: Checker
@@ -1470,8 +1292,8 @@ struct CheckPanelView: View {
             } else if report?.state == .allowing {
                 note("Turn on Player Check in the list System Settings opens", detail: "The check starts as soon as it's allowed.",
                      systemImage: "checkmark.shield")
-            } else if let state = report?.testedState {
-                progress(state)
+            } else if let step = report?.testedState {
+                progress(step)
             }
             if inputBlocked {
                 // As the window's warnings: the check drags windows with the pointer.
@@ -1502,14 +1324,14 @@ struct CheckPanelView: View {
         case .checking: break
         }
         if report.request != nil { return "Waiting for you" }
-        switch report.lastHeading {
-        case "Permissions": return "Checking permissions"
-        case "Playing": return "Checking that it plays"
-        case "Window States": return "Moving its window to where the test starts"
-        case "Page Buttons": return "Reading its page"
-        case "Press Test": return "Testing its window states"
-        case "Ways to Control It", "Verdict": return "Writing the report"
-        default: return "Reading its dictionary, menus and sound"
+        switch report.progress.stage {
+        case .permissions: return "Checking permissions"
+        case .playing: return "Checking that it plays"
+        case .movingWindow: return "Moving its window to where the test starts"
+        case .readingPage: return "Reading its page"
+        case .testing: return "Testing its window states"
+        case .finishing: return "Writing the report"
+        case .reading: return "Reading its dictionary, menus and sound"
         }
     }
 
@@ -1517,9 +1339,8 @@ struct CheckPanelView: View {
     /// a stop's put-back included; not while it asks something of you,
     /// when it lifts the block.
     private var inputBlocked: Bool {
-        guard let report, report.state == .checking || report.state == .stopped, report.request == nil,
-              let start = report.lines.lastIndex(where: { $0.hasPrefix("  your clicks, scrolling and keys are blocked") }) else { return false }
-        return !report.lines[start...].contains { $0.hasPrefix("  mouse and keyboard free again") }
+        guard let report, report.state == .checking || report.state == .stopped else { return false }
+        return report.progress.blocksInput
     }
 
     /// The request ("start playing something in <app>; the test goes on …
@@ -1531,7 +1352,7 @@ struct CheckPanelView: View {
         if !rest.isEmpty { rest = rest.prefix(1).uppercased() + rest.dropFirst() + (rest.hasSuffix(".") ? "" : ".") }
         let symbol = asked.hasPrefix("Pause") ? "pause.circle" : asked.hasPrefix("Allow") ? "checkmark.shield" : "play.circle"
         return TimelineView(.periodic(from: .now, by: 1)) { context in
-            note(asked, detail: Self.withTimeLeft(rest, since: report?.requestSince, now: context.date), systemImage: symbol)
+            note(asked, detail: Self.withTimeLeft(rest, since: report?.progress.requestSince, now: context.date), systemImage: symbol)
         }
     }
 
@@ -1561,27 +1382,28 @@ struct CheckPanelView: View {
     }
 
     /// The window states as segments, the one it's in, and what it does there.
-    private func progress(_ state: (index: Int, count: Int, name: String)) -> some View {
-        let name = state.name.prefix(1).uppercased() + state.name.dropFirst()
+    private func progress(_ step: CheckProgress.WindowStep) -> some View {
+        let title = step.state?.title ?? ""
+        let name = title.prefix(1).uppercased() + title.dropFirst()
         let activity = report?.stateActivity ?? ""
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 3) {
-                ForEach(1...max(state.count, 1), id: \.self) { index in
+                ForEach(1...max(step.count, 1), id: \.self) { index in
                     Capsule()
-                        .fill(index < state.index ? Color.accentColor
-                              : index == state.index ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.22))
+                        .fill(index < step.index ? Color.accentColor
+                              : index == step.index ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.22))
                         .frame(height: 5)
                 }
             }
             HStack {
                 Text(name).font(.callout.weight(.medium))
                 Spacer()
-                Text("\(state.index) of \(state.count)").font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                Text("\(step.index) of \(step.count)").font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
             Text(activity).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Window state \(state.index) of \(state.count): \(state.name). \(activity)")
+        .accessibilityLabel("Window state \(step.index) of \(step.count): \(title). \(activity)")
     }
 }
 

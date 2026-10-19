@@ -34,22 +34,33 @@ extension AppDelegate {
             case .automation: .denied
             }
             guard let request = PermissionCenter.request(for: permission, access: access) else { return }
-            switch request {
-            case .openPlayer:
+            await self.carryOut(request, app: self.player?.bundleID) {
                 if let url = self.status.chosenPlayer?.appURL { await self.openApp(url) }
-            case .reopen:
-                self.reopen()
-            case .openSettings, .askMacOS:
-                await self.permissionCenter.perform(request, player: self.player)
-                // macOS applies Audio Recording switched on there only from the next launch.
-                if request == .openSettings(.audioCapture) { self.noteAudioRecordingAllowedInSettings() }
             }
             await self.refreshPermissions()
         }
     }
 
+    /// Carries out `request` for the app with bundle ID `app`, wherever its
+    /// button shows (Add an App's too): `openingApp` opens the app, for
+    /// Automation; Audio Recording allowed in System Settings marks AutoHush
+    /// as waiting to reopen.
+    func carryOut(_ request: PermissionRequest, app: String?, openingApp: () async -> Void) async {
+        switch request {
+        case .openPlayer:
+            await openingApp()
+        case .reopen:
+            reopen()
+        case .openSettings, .askMacOS:
+            await permissionCenter.perform(request, app: app)
+            // macOS applies Audio Recording switched on there only from the next launch.
+            if request == .openSettings(.audioCapture) { noteAudioRecordingAllowedInSettings() }
+        }
+    }
+
     /// The user went to allow Audio Recording in System Settings: macOS
-    /// applies it only from the next launch, so the menu offers to reopen.
+    /// applies it only from the next launch, so the menu, Settings and Add
+    /// an App offer to reopen.
     func noteAudioRecordingAllowedInSettings() {
         status.awaitsReopenForAudioRecording = true
     }

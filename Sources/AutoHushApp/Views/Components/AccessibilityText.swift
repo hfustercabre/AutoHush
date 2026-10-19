@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// What VoiceOver says of a control that shows or hides what's under it:
-/// Settings → Diagnostics' headings, the menu card's player button.
+/// What VoiceOver says of a control that shows or hides what's under it or
+/// beside it: Settings → Diagnostics' headings, the menu's parts' titles
+/// that fold (Detection, Fades), and its rows that open a side window
+/// (Media Player, Ignored Apps).
 enum AccessibilityText {
     static var expanded: Text {
-        Text("Expanded", comment: "VoiceOver: a heading or button while what's under it shows (Settings → Diagnostics' parts, the players under the menu's card); a click hides it")
+        Text("Expanded", comment: "VoiceOver: a heading or row while what it shows is open (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is open); a click hides it")
     }
 
     static var collapsed: Text {
-        Text("Collapsed", comment: "VoiceOver: a heading or button while what's under it is hidden (Settings → Diagnostics' parts, the players under the menu's card); a click shows it")
+        Text("Collapsed", comment: "VoiceOver: a heading or row while what it shows is hidden (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is closed); a click shows it")
     }
 }

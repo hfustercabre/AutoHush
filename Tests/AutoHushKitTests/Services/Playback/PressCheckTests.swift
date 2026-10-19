@@ -95,29 +95,10 @@ struct PressCheckTests {
 
     @Test("a player that checks its own presses isn't checked again")
     func checksItself() async throws {
-        let player = SelfCheckingPlayer()
+        let player = MockMusicPlayer(state: .playing, checksItsPresses: true)
+        await player.setIgnoredPresses(1) // a press checked again would be made twice
         try await check(player).press(to: .paused)
-        #expect(await player.mock.pauseCallCount == 1)
-        #expect(await player.mock.stateQueryCount == 0)
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.stateQueryCount == 0)
     }
-}
-
-/// A player whose presses check themselves (as a web app's).
-private struct SelfCheckingPlayer: MusicPlayer {
-    let mock = MockMusicPlayer(state: .playing)
-    var bundleID: String { mock.bundleID }
-    var name: String { mock.name }
-    var checksItsPresses: Bool { true }
-    var stateReportDelay: TimeInterval { 0 }
-    func verifyControlAccess() async throws {}
-    func playerState() async -> PlayerState { await mock.playerState() }
-    func pause() async throws {
-        await mock.setIgnoredPresses(1)
-        try await mock.pause()
-    }
-    func play() async throws { try await mock.play() }
-    func volume() async -> Int? { nil }
-    func setVolume(_ volume: Int) async throws {}
-    @MainActor
-    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving { MockStateObserver() }
 }

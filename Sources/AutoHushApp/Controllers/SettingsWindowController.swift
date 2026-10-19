@@ -11,16 +11,16 @@ import AutoHushKit
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, apps, detection, fades, advanced, diagnostics, updates, about
+        case general, soundSources, detection, fades, advanced, diagnostics, updates, about
 
         /// The sidebar's groups of pages, a gap between each.
-        static let groups: [[Page]] = [[.general, .apps], [.detection, .fades, .advanced], [.diagnostics, .updates, .about]]
+        static let groups: [[Page]] = [[.general, .soundSources], [.detection, .fades, .advanced], [.diagnostics, .updates, .about]]
 
         var title: String {
             switch self {
             case .general:
                 String(localized: "General", comment: "Settings: a page in the sidebar")
-            case .apps:
+            case .soundSources:
                 String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
             case .detection:
                 String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
@@ -42,7 +42,7 @@ final class SettingsWindowController: NSWindowController {
         var symbol: String {
             switch self {
             case .general: "gearshape.fill"
-            case .apps: "square.grid.2x2.fill"
+            case .soundSources: "square.grid.2x2.fill"
             case .detection: "waveform"
             case .fades: "speaker.wave.2.fill"
             case .advanced: "slider.horizontal.3"
@@ -66,8 +66,8 @@ final class SettingsWindowController: NSWindowController {
     /// The page's least width: 480, or the widest choice (`ChoiceChips`)
     /// with the form's margins around it (20 pt to its box, 10 in it, a side).
     private static let leastPageWidth: CGFloat = {
-        let choices = [[AutomaticUpdates.notify, .download, .install].map(\.title),
-                       [DetectionMethod.playbackSignals, .openStreams].map(\.title)]
+        let choices = [AutomaticUpdates.allCases.map(\.title),
+                       DetectionMethod.antiDotWays.map(\.title)]
         return max(480, (choices.map { ChoiceChips<Never>.fittingWidth($0) }.max() ?? 0) + 2 * (20 + 10))
     }()
     static let initialSize = NSSize(width: 760, height: 620)
@@ -82,7 +82,10 @@ final class SettingsWindowController: NSWindowController {
     /// The window has a place: kept from a previous launch, or centered once.
     private var isPlaced: Bool
 
-    init(model: SettingsModel) {
+    /// `frameName`: where the window's place and size are kept; tests give
+    /// each window a name of its own, since AppKit gives a name to one
+    /// window at a time.
+    init(model: SettingsModel, frameName: String = SettingsWindowController.frameName) {
         self.model = model
         let split = SettingsSplitViewController()
         let sidebar = NSHostingController(rootView: SettingsSidebar(model: model, navigation: navigation).environment(keys.sidebar))
@@ -117,7 +120,7 @@ final class SettingsWindowController: NSWindowController {
         window.contentMinSize = Self.minimumSize
         window.contentMaxSize = Self.maximumSize
         window.setContentSize(Self.initialSize)
-        isPlaced = window.setFrameUsingName(Self.frameName)
+        isPlaced = window.setFrameUsingName(frameName)
         // A size kept from before a choice needed more room, another language,
         // or the sidebar's foot more height (600 from 2026-10-18).
         if let content = window.contentView?.frame.size,
@@ -131,7 +134,7 @@ final class SettingsWindowController: NSWindowController {
         // window it gets its own name, on macOS 14 and 15 an empty one too,
         // which cleared the window's (it opened at its first place and size
         // at each launch).
-        windowFrameAutosaveName = Self.frameName
+        windowFrameAutosaveName = frameName
         navigation.onChange = { [weak window] page in window?.title = page.title }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.

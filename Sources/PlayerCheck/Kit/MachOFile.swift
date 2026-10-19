@@ -1,7 +1,7 @@
 import Foundation
 
 /// What an app's binaries link, read from their Mach-O load commands, as
-/// `nowPlayingReason` needs it.
+/// `NowPlayingReason.of(appAt:bundleID:)` needs it.
 package enum MachOFile {
     /// The frameworks a Mach-O file links ("MediaPlayer" for
     /// /System/Library/Frameworks/MediaPlayer.framework/…), from its load

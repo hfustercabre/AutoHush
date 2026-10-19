@@ -58,6 +58,9 @@ package struct CheckFindings: Sendable {
     package var needsLaunchOption = false
     /// Its row in Now Playing didn't follow it (`PanelRows.staleRow`).
     package var panelRowIsStale = false
+    /// Where its song showed besides its windows' titles, which told its
+    /// row in Now Playing too.
+    package var panelClues: PanelClues?
     /// Its page's Play/Pause, as learned, when it has one.
     package var pageButton: PlayPauseRecipe?
 
@@ -96,9 +99,11 @@ package struct CheckFindings: Sendable {
             toggleLeftOut = true
         }
         let ordered = ResultWays.ordered(working)
+        let panel = ordered.contains(where: \.isPanel)
         let setup = ordered.isEmpty ? nil
             : PlayerSetup(bundleID: bundleID, name: appName, appURL: appURL, ways: ordered, stateNotification: stateNotification,
-                          needsLaunchOption: needsLaunchOption, panelRowIsStale: panelRowIsStale && ordered.contains(where: \.isPanel) ? true : nil)
+                          needsLaunchOption: needsLaunchOption, panelRowIsStale: panelRowIsStale && panel ? true : nil,
+                          panelClues: panel ? panelClues : nil)
         return (CheckResult(ways: marks, setup: setup, pageButton: pageButton), toggleLeftOut)
     }
 }

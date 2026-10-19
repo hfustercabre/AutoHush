@@ -23,9 +23,5 @@ package enum ProcessResponsibility {
 
     private typealias Function = @convention(c) (pid_t) -> pid_t
 
-    private static let function: Function? = {
-        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid")
-        else { return nil }
-        return unsafeBitCast(symbol, to: Function.self)
-    }()
+    private static let function = PrivateSymbol.function("responsibility_get_pid_responsible_for_pid", as: Function.self)
 }

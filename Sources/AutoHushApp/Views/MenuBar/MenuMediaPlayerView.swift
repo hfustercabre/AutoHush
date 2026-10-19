@@ -25,8 +25,9 @@ struct MenuMediaPlayerView: View {
         .frame(width: menuContentWidth)
     }
 
-    /// The part's title, over its row and atop its side window.
-    static var title: String {
+    /// The part's title, over its row and atop its side window; also
+    /// Settings → General's card's and Diagnostics' part's.
+    nonisolated static var title: String {
         String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")
     }
 
@@ -49,18 +50,13 @@ struct MenuMediaPlayerView: View {
         }
     }
 
-    /// The chosen player's icon, faded while it isn't installed.
+    /// The chosen player's icon, faded while it isn't installed; a note
+    /// while none is chosen.
     @ViewBuilder private var playerIcon: some View {
         if let player = status.chosenPlayer {
-            Image(nsImage: player.icon(size: 22))
-                .resizable()
-                .frame(width: 22, height: 22)
-                .opacity(player.isInstalled ? 1 : 0.5)
+            PlayerIcon(player: player, size: 22)
         } else {
-            Image(systemName: "music.note")
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.appSecondary)
-                .frame(width: MenuSpacing.row.picture) // centered, as the other rows' symbols
+            MenuRowSymbol("music.note")
         }
     }
 }

@@ -25,15 +25,13 @@ final class FakeLearningWindow: LearningWindowPresenting {
 /// A player that must learn, whose learning the test moves along; it can't
 /// be controlled (Accessibility is missing) unless a test says otherwise,
 /// so a start stops at once.
-actor MockLearningPlayer: LearningMusicPlayer {
+actor MockLearningPlayer: LearningMusicPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     nonisolated let bundleID: String
     nonisolated let name: String
     nonisolated let installedURL: URL?
     nonisolated let isUntested: Bool
     nonisolated var kind: MusicPlayerKind { .safariWebApp }
     nonisolated var controlPermission: Permission { .accessibility(player: name) }
-    nonisolated var canFade: Bool { false }
-    nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 
     private struct State {
         var status: LearningStatus
@@ -178,8 +176,6 @@ actor MockLearningPlayer: LearningMusicPlayer {
     func playerState() async -> PlayerState { .unknown }
     func pause() async throws {}
     func play() async throws {}
-    func volume() async -> Int? { nil }
-    func setVolume(_ volume: Int) async throws {}
 
     @MainActor
     func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {

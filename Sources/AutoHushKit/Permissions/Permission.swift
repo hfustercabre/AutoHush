@@ -3,7 +3,7 @@ import Foundation
 /// A macOS permission AutoHush needs, and where the user grants it. (The
 /// app has the menu text that leads there.)
 ///
-/// - Automation: control a scriptable music player (pause, play, volume).
+/// - Automation: control a scriptable media player (pause, play, volume).
 /// - Accessibility: control a player that can't be scripted, through its
 ///   own menu.
 ///

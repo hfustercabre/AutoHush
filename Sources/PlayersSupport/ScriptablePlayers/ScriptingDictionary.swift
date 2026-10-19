@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import AutoHushKit
 
 /// An app's AppleScript dictionary, as Player Check reads it: its commands,
 /// the application's properties, its enumerators, and how it acts on its
@@ -40,9 +41,10 @@ package struct ScriptingDictionary: Equatable, Sendable {
         documentClass != nil && documentPlaying != nil
             && ["pause", "play"].allSatisfy { commandCode($0).map(documentCommands.contains) == true }
     }
-    /// Whether its state can be read by script: `player state`, a `playing`
-    /// flag, or its documents'.
-    package var hasState: Bool { hasPlayerState || hasPlayingFlag || playsDocuments }
+    /// Whether its state can be read by script, as AutoHush reads it
+    /// (`ScriptSetup.State`): `player state` with its three values, a
+    /// `playing` flag, or its documents'.
+    package var hasState: Bool { ScriptSetup.State(dictionary: self) != nil }
     /// A `sound volume` (pVol), 0–100, so it can fade.
     package var hasVolume: Bool { properties["pVol"] != nil }
     /// A `current track` (pTrk) with a name: what it plays, by script.
@@ -85,17 +87,9 @@ package struct ScriptingDictionary: Equatable, Sendable {
             }
         }
         guard isRunning else { return nil }
-        let sdef = Process()
-        sdef.executableURL = URL(fileURLWithPath: "/usr/bin/sdef")
-        sdef.arguments = [url.path]
-        let output = Pipe()
-        sdef.standardOutput = output
-        sdef.standardError = FileHandle.nullDevice
-        guard (try? sdef.run()) != nil else { return nil }
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        sdef.waitUntilExit()
-        guard sdef.terminationStatus == 0,
-              let document = try? XMLDocument(data: data, options: [.nodeLoadExternalEntitiesNever]) else { return nil }
+        let sdef = ToolRun(URL(fileURLWithPath: "/usr/bin/sdef"), [url.path]).runBlocking()
+        guard sdef.succeeded,
+              let document = try? XMLDocument(data: sdef.output, options: [.nodeLoadExternalEntitiesNever]) else { return nil }
         return parse(document)
     }
 

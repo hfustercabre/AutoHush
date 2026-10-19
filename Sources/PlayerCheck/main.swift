@@ -47,6 +47,7 @@
 import AppKit
 import AutoHushKit
 import CheckedPlayers
+import PlayerCheckKit
 
 // Whoever reads the output may go first (Player Check quitting mid-check):
 // writing then fails quietly, and a test that paused the app still plays
@@ -62,10 +63,10 @@ MainActor.assumeIsolated {
     switch CommandLine.arguments.dropFirst().first {
     case NowPlayingApp.argument?:
         NowPlayingApp.printAnswer()
-        exit(0)
-    case "--now-playing-list"?:
+        exit(CheckExitStatus.done)
+    case CommandLineOptions.nowPlayingList?:
         printNowPlayingList()
-    case "--now-playing-reasons"?:
+    case CommandLineOptions.nowPlayingReasons?:
         printNowPlayingReasons()
     case let option? where AppQuery(rawValue: option) != nil:
         answer(AppQuery(rawValue: option)!)

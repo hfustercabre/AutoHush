@@ -1,7 +1,7 @@
 import Foundation
 
 /// Makes a web app, an app of its own for a website, from an address the
-/// user typed, so it can be chosen as the music player. The app shows the
+/// user typed, so it can be chosen as the media player. The app shows the
 /// steps; `AutoHushPlayers` provides the way (Safari's Add to Dock).
 package protocol WebAppMaking: Sendable {
     /// Checks the address, asks the site whether it answers, opens it, then

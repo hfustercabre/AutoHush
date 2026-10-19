@@ -13,6 +13,12 @@ package actor MockMusicPlayer: MusicPlayer {
     package nonisolated let canFade: Bool
     package nonisolated let iconPlaceholder: PlayerIconPlaceholder?
     package nonisolated let stateReportDelay: TimeInterval
+    package nonisolated let kind: MusicPlayerKind
+    package nonisolated let releasesOnQuit: Bool
+    package nonisolated let checksItsPresses: Bool
+    /// The changes its observer reports: a test plays or pauses it as the
+    /// user would (`userSets`).
+    package nonisolated let stateReports = StateReports()
     package var state: PlayerState
     package var pauseCallCount = 0
     package var playCallCount = 0
@@ -39,6 +45,10 @@ package actor MockMusicPlayer: MusicPlayer {
         canFade: Bool = true,
         iconPlaceholder: PlayerIconPlaceholder? = nil,
         stateReportDelay: TimeInterval = 0,
+        kind: MusicPlayerKind = .app,
+        releasesOnQuit: Bool = false,
+        checksItsPresses: Bool = false,
+        needsReopening: Bool = false,
         failPauseWith: Error? = nil,
         failPlayWith: Error? = nil,
         failVerifyWith: Error? = nil
@@ -50,6 +60,10 @@ package actor MockMusicPlayer: MusicPlayer {
         self.canFade = canFade
         self.iconPlaceholder = iconPlaceholder
         self.stateReportDelay = stateReportDelay
+        self.kind = kind
+        self.releasesOnQuit = releasesOnQuit
+        self.checksItsPresses = checksItsPresses
+        self.needsReopening = needsReopening
         self.failPauseWith = failPauseWith
         self.failPlayWith = failPlayWith
         self.failVerifyWith = failVerifyWith
@@ -107,11 +121,20 @@ package actor MockMusicPlayer: MusicPlayer {
 
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        MockStateObserver()
+        stateReports.onChange = onChange
+        return MockStateObserver()
     }
 
     /// Lets tests override the reported state without going through pause/play.
     package func overrideState(_ newState: PlayerState) { state = newState }
+
+    /// The user plays or pauses it: its state changes, and its observer
+    /// reports it.
+    @MainActor
+    package func userSets(_ newState: PlayerState) async {
+        await overrideState(newState)
+        stateReports.onChange?(newState)
+    }
 
     /// How many presses (pauses or plays) to ignore, as a player that
     /// doesn't follow one: the call succeeds, but its state stays.
@@ -169,6 +192,30 @@ package actor MockMusicPlayer: MusicPlayer {
         needsReopening = reopenKeepsNeed
         return true
     }
+
+    /// How many times it let go of what it turned on in its app.
+    package private(set) var releases = 0
+    /// Held, a release waits for `letGo()`.
+    private var heldReleases: [CheckedContinuation<Void, Never>]?
+
+    package func holdReleases() { heldReleases = heldReleases ?? [] }
+
+    package func letGo() {
+        heldReleases?.forEach { $0.resume() }
+        heldReleases = nil
+    }
+
+    package func release() async {
+        if heldReleases != nil { await withCheckedContinuation { heldReleases?.append($0) } }
+        releases += 1
+    }
+}
+
+/// What a `MockMusicPlayer`'s observer reports to, once made.
+@MainActor
+package final class StateReports {
+    var onChange: (@MainActor (PlayerState) -> Void)?
+    nonisolated init() {}
 }
 
 // MARK: - MockMutingMusicPlayer
@@ -189,7 +236,16 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
     package nonisolated var tapsAreAllowed: Bool { tapsAllowed.withLock { $0 } }
 
     package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.withLock { $0 = allowed } }
-    package func muteIfPlayingAnyway() async -> Bool { await mock.muteIfPlayingAnyway() }
+
+    /// Runs inside every check before muting, so a test can hold one there
+    /// while it changes something.
+    private var beforeMute: (@Sendable () async -> Void)?
+    package func setBeforeMute(_ hook: (@Sendable () async -> Void)?) { beforeMute = hook }
+
+    package func muteIfPlayingAnyway() async -> Bool {
+        if let beforeMute { await beforeMute() }
+        return await mock.muteIfPlayingAnyway()
+    }
     package func forgetPause() async { await mock.forgetPause() }
     package func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
     package func playerState() async -> PlayerState { await mock.playerState() }
@@ -211,6 +267,8 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
     private var pendingTasks: [Task<Void, Never>] = []
     private var recordedDelays: [TimeInterval] = []
     private let lock = NSLock()
+    /// Never stepped: a debounce's task sleeps until it's cancelled.
+    private let held = ManualSleep()
 
     /// A task that ends once it's cancelled (by the arbiter, or
     /// `completeNext`). Until then it waits without running, so one the
@@ -218,37 +276,9 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
     package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
         lock.withLock {
             recordedDelays.append(delay)
-            let hold = Hold()
-            let task = Task<Void, Never> { await hold.untilCancelled() }
+            let task = Task<Void, Never> { [held] in await held.sleep(.seconds(delay)) }
             pendingTasks.append(task)
             return task
-        }
-    }
-
-    /// Holds a debounce's task until it's cancelled.
-    private final class Hold: @unchecked Sendable {
-        private let lock = NSLock()
-        private var waiting: CheckedContinuation<Void, Never>?
-        private var cancelled = false
-
-        func untilCancelled() async {
-            await withTaskCancellationHandler {
-                await withCheckedContinuation { continuation in
-                    let now = lock.withLock { () -> Bool in
-                        guard !cancelled else { return true }
-                        waiting = continuation
-                        return false
-                    }
-                    if now { continuation.resume() }
-                }
-            } onCancel: {
-                let continuation = lock.withLock { () -> CheckedContinuation<Void, Never>? in
-                    cancelled = true
-                    defer { waiting = nil }
-                    return waiting
-                }
-                continuation?.resume()
-            }
         }
     }
 

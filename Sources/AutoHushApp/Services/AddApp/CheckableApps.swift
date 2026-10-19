@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import AutoHushPlayers
 
 /// The apps Add an App… offers: those in the Applications folders that can
@@ -7,17 +8,10 @@ import AutoHushPlayers
 /// supports, Apple's apps that are no players) and AutoHush itself; those
 /// in macOS's Now Playing list first, the playing one first.
 enum CheckableApps {
-    /// Where apps are looked for, and their folders one level down
-    /// ("Chrome Apps").
-    static let folders: [URL] = [
-        URL(filePath: "/Applications", directoryHint: .isDirectory),
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: "Applications", directoryHint: .isDirectory),
-        URL(filePath: "/System/Applications", directoryHint: .isDirectory),
-    ]
-
-    /// The apps in `folders` (tests give their own).
+    /// The apps in `folders` (tests give their own), and their folders one
+    /// level down ("Chrome Apps").
     static func find(helper: PlayerCheckHelper?, excluding: Set<String>,
-                     in folders: [URL] = CheckableApps.folders) async -> [CheckableApp] {
+                     in folders: [URL] = ApplicationFolders.all) async -> [CheckableApp] {
         let installed = await Task.detached { installedApps(in: folders, excluding: excluding) }.value
         guard let helper else { return order(installed) }
         async let playing = helper.canPlay(installed.map(\.url))

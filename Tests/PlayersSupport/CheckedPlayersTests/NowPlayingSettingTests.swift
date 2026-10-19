@@ -1,22 +1,11 @@
 import Foundation
 import Testing
 import AutoHushTestSupport
+import PlayersTestSupport
 @testable import CheckedPlayers
 
 @Suite("NowPlayingSetting")
 struct NowPlayingSettingTests {
-    /// The setting as a test holds it, instead of Control Center's.
-    private final class Held: @unchecked Sendable {
-        private let lock = NSLock()
-        private var stored: Int?
-        init(_ value: Int?) { stored = value }
-        var value: Int? {
-            get { lock.withLock { stored } }
-            set { lock.withLock { stored = newValue } }
-        }
-        var setting: NowPlayingSetting.Setting { .init(read: { self.value }, write: { self.value = $0 }) }
-    }
-
     /// Defaults in a suite of their own, removed after.
     private func withDefaults(_ body: (UserDefaults) -> Void) {
         let suite = TestDefaults("AutoHush.NowPlayingSettingTests")
@@ -27,7 +16,7 @@ struct NowPlayingSettingTests {
     @Test("shown for a press, then put back, unless the user changed it meanwhile; not shown within a second, no press; the record goes either way")
     func whileShown() {
         withDefaults { defaults in
-            let held = Held(24)
+            let held = NowPlayingSettingInMemory(24)
             #expect(NowPlayingSetting.whileShown(defaults: defaults, setting: held.setting, until: { true }) { held.value } == 16)
             #expect(held.value == 24)
             _ = NowPlayingSetting.whileShown(defaults: defaults, setting: held.setting, until: { true }) { held.value = 2 }
@@ -58,7 +47,7 @@ struct NowPlayingSettingTests {
     @Test("a press left shown is put back when it was this process's or its process is gone, only while still shown; a record with nothing to put back goes", arguments: left)
     func restoreIfLeft(pid: Int?, value: Int?, now: Int, after: Int, kept: Bool) {
         withDefaults { defaults in
-            let held = Held(now)
+            let held = NowPlayingSettingInMemory(now)
             if let pid {
                 var record = ["pid": pid]
                 record["value"] = value

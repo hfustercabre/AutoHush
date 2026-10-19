@@ -6,17 +6,6 @@ import AutoHushKit
 import AutoHushTestSupport
 @testable import ScriptablePlayers
 
-/// A state the test says, read by a toggle without a state of its own.
-private final class StateBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var state: PlayerState
-    init(_ state: PlayerState) { self.state = state }
-    var value: PlayerState {
-        get { lock.withLock { state } }
-        set { lock.withLock { state = newValue } }
-    }
-}
-
 @Suite("ScriptedAppPlayer")
 struct ScriptedAppPlayerTests {
     private func player(_ setup: ScriptSetup, app: FakeScriptedApp) -> ScriptedAppPlayer {
@@ -54,7 +43,7 @@ struct ScriptedAppPlayerTests {
     @Test("a toggle with no state of its own goes by the app's other signs, which check it: never sent twice; none answering, it's never sent")
     func toggleByOtherSigns() async throws {
         let app = FakeScriptedApp()
-        let answers = StateBox(.playing) // `.unknown`: the other signs don't answer
+        let answers = Locked(PlayerState.playing) // `.unknown`: the other signs don't answer
         let jukebox = ScriptedAppPlayer(bundleID: "com.example.jukebox", name: "Jukebox",
                                         setup: ScriptSetup(commands: .toggle("jukeTogl"), state: nil, hasVolume: false),
                                         toggleState: { answers.value == .unknown ? .unknown : app.state.withLock { $0.playing } ? .playing : .paused },

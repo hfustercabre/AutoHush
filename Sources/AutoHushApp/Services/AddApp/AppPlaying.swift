@@ -16,14 +16,18 @@ struct AppPlaying: Sendable {
     var levelMeasured: @Sendable () -> Bool = { TCCAudioCapturePermission().status() == .granted }
     var audible: @Sendable (pid_t) -> Bool = { ProcessTapLevelProbe().isAudible(appPID: $0) }
 
+    /// Reading the audio processes and listening block: done here, one at
+    /// a time, as `CheckedPlayer` listens on a queue of its own.
+    private static let queue = DispatchQueue(label: "AutoHush.AppPlaying", qos: .userInitiated)
+
     /// Reads the audio processes, and listens for half a second: off the
-    /// main thread.
+    /// main thread, and off Swift's shared threads.
     func plays(_ pid: pid_t) async -> Bool {
         let (outputRunning, levelMeasured, audible) = (outputRunning, levelMeasured, audible)
-        return await Task.detached {
+        return await Self.queue.run {
             guard outputRunning(pid) else { return false }
             guard levelMeasured() else { return true }
             return audible(pid)
-        }.value
+        }
     }
 }

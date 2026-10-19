@@ -50,24 +50,27 @@ struct LearningWindowView: View {
                 }
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Spacer()
-                Button {
-                    later()
-                } label: {
-                    Text("Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
-                }
-                .buttonStyle(.chip)
-                .keyboardShortcut(.cancelAction)
+                Button { later() } label: { Text(verbatim: Self.laterTitle) }
+                    .buttonStyle(.chip)
+                    .keyboardShortcut(.cancelAction)
             }
         }
-        .frame(width: 440)
+        .frame(width: AddWebAppView.width) // a guiding window's, as Add a Web App's
         .font(.appBody)
+    }
+
+    /// Closes it for now; here and in the Add a Web App window once its web
+    /// app is made (learning can wait for the Controls row).
+    static var laterTitle: String {
+        String(localized: "Later", comment: "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)")
     }
 }
 
-/// The permission learning needs first, as a step with its button: in the
-/// learning window and the Add a Web App window, above the steps it locks.
+/// The permission learning needs first, as the checklist's step to do now
+/// with its button under it: in the learning window and the Add a Web App
+/// window, above the steps it locks.
 struct LearningPermissionStep: View {
     let model: SettingsModel
     let permission: Permission
@@ -75,31 +78,13 @@ struct LearningPermissionStep: View {
     let name: String
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            // The step to do now, as a checklist marks it (`StepSymbol`).
-            Image(systemName: "arrow.forward.circle.fill")
-                .foregroundStyle(Color.accentColor)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(verbatim: permission.statusLine)
-                        .fontWeight(.semibold)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(verbatim: Self.note(name))
-                        .captionStyle()
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                // As a checklist step: its words as the label, where it
-                // stands as the value (a combined text's words are its value).
-                .accessibilityElement(children: .ignore)
-                .accessibilityAddTraits(.isStaticText)
-                .accessibilityLabel(Text(verbatim: Self.announcement(permission, name: name)))
-                .accessibilityValue(Text(verbatim: StepState.current.voiceOverValue))
-                PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
-                    .padding(.top, 2)
-            }
+        let step = Self.step(permission, name: name)
+        ChecklistStepRow(step: step, dimmed: false, bold: true, action: { _ in }) {
+            StepSymbol(step: step)
+        } accessory: {
+            PermissionButton(model: model, permission: permission, access: access, long: true, prominent: true)
+                .padding(.top, 2)
         }
-        .accessibilityElement(children: .contain)
     }
 
     /// Why the steps wait, under the permission.
@@ -108,8 +93,15 @@ struct LearningPermissionStep: View {
                comment: "The learning window, under the permission it needs first; %@ is the web app")
     }
 
-    /// What VoiceOver announces while the steps wait: the permission, then why.
+    /// The step: the permission to allow, why the steps wait under it.
+    static func step(_ permission: Permission, name: String) -> ChecklistStep {
+        ChecklistStep(title: permission.statusLine, notes: [note(name)], state: .current)
+    }
+
+    /// What VoiceOver announces while the steps wait: the permission, then
+    /// why, as the step reads.
     static func announcement(_ permission: Permission, name: String) -> String {
-        [permission.statusLine, note(name)].joined(separator: "\n")
+        let step = step(permission, name: name)
+        return ([step.title] + step.notes).joined(separator: "\n")
     }
 }

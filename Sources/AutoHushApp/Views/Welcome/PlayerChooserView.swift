@@ -53,16 +53,11 @@ struct PlayerChooserView: View {
                 players
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Spacer()
-                Button { continueTapped() } label: {
-                    Text("Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed")
-                        .font(.appBody.weight(.semibold))
-                        .padding(.horizontal, 6)
-                }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
-                .keyboardShortcut(.defaultAction) // the search, when it shows, keeps Return: `returnInSearch`
-                .disabled(!canContinue)
+                // The search, when it shows, keeps Return: `returnInSearch`.
+                MainButton(AddAppText.continueButton) { continueTapped() }
+                    .disabled(!canContinue)
             }
         }
         .frame(width: Self.width)

@@ -11,6 +11,7 @@ extension PlaybackArbiter {
 
     /// Forgets the pending resume, for a newer one to take its place.
     private func forgetPendingResume() {
+        if let pendingResumeID, let pendingResumeTask { calledOff[pendingResumeID] = (pendingResumeTask, pendingResumeWait) }
         pendingResumeTask?.cancel()
         pendingResumeTask = nil
         pendingResumeWait = nil
@@ -42,6 +43,7 @@ extension PlaybackArbiter {
     }
 
     private func resumeIfStillPending(id: UUID, retriesLeft: Int) async {
+        defer { pendingTaskEnded(id) }
         if takenOver?.resume == id { takenOver = nil } // its wait is over
         guard pendingResumeID == id, !isShutDown, !isAsleep else { return }
         // With auto-pause off, music we paused comes back even while others play.
@@ -64,6 +66,9 @@ extension PlaybackArbiter {
             logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: a call came during the pause (Stay paused after calls)")
             pausedByUs = false
             putBackResumeLevel()
+            // A mute standing in for the pause: the player is paused for real
+            // and the mute lifted, as when the Mac slept (`forgetPause`).
+            if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
             publishPlaybackState()
             return
         }

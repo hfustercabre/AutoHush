@@ -87,7 +87,7 @@ final class PlayerSession {
     var settings: MonitoringSettings {
         didSet { follow(settings, from: oldValue) }
     }
-    /// The music player AutoHush pauses and resumes; `nil` until one is chosen.
+    /// The media player AutoHush pauses and resumes; `nil` until one is chosen.
     var player: (any MusicPlayer)?
 
     let players: MusicPlayerCatalog

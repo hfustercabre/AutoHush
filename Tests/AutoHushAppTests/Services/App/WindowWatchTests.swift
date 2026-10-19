@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("WindowWatch")
+@Suite("WindowWatch", .timeLimit(.minutes(1)))
 @MainActor
 struct WindowWatchTests {
     /// A window the watch follows, opened or closed by the test.
@@ -18,7 +18,7 @@ struct WindowWatchTests {
     /// how many rounds it ended.
     @MainActor
     private final class Bench {
-        let clock = SteppedSleep()
+        let clock = ManualSleep()
         var refreshed: [WindowWatch.Refresh] = []
         var ticks = 0
         private(set) var windows: [Window] = []
@@ -89,9 +89,8 @@ struct WindowWatchTests {
 
         window.isOpen = false
         bench.clock.step()
-        await TestWait.until { bench.ticks == 2 }
-        try? await Task.sleep(for: .milliseconds(30))
-        #expect(bench.clock.sleeping == 0) // stopped
+        await bench.watch.loopTask?.value // stopped
+        #expect(bench.clock.sleeping == 0)
         #expect(bench.refreshed == [.players])
         #expect(bench.ticks == 2)
 
@@ -108,16 +107,16 @@ struct WindowWatchTests {
         bench.watch.wake()
         await bench.asleep()
 
+        let first = bench.watch.loopTask
         bench.watch.wake() // the window opened again, say
+        await first?.value // the first loop is over
         await TestWait.until { bench.refreshed.count == 2 }
         await bench.asleep()
-        try? await Task.sleep(for: .milliseconds(30))
         #expect(bench.clock.sleeping == 1)
 
         bench.clock.step()
         await TestWait.until { bench.refreshed.count == 3 }
         await bench.asleep()
-        try? await Task.sleep(for: .milliseconds(30))
         #expect(bench.refreshed.count == 3)
     }
 

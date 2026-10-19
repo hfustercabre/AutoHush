@@ -113,8 +113,8 @@ extension WebPage {
 /// Windows on another Space are reached through `AccessibilityWindows`, a
 /// private function; the public list has only the current Space's.
 package struct AccessibilityWebPage: WebPage {
-    /// How long to wait for the app to answer, so a stuck page can't hold
-    /// AutoHush up.
+    /// How long to wait for the app to answer each read (its windows, and
+    /// each element a walk reads), so a stuck page can't hold AutoHush up.
     package static let timeout: Float = 0.5
     /// The page is this deep in a window at most (measured: 3 to 5), and
     /// found among this many of the window's elements, read breadth first,
@@ -133,7 +133,7 @@ package struct AccessibilityWebPage: WebPage {
     /// A player's controls are looked for in this many elements around a
     /// button (its parent first), each this deep, with at most this many
     /// elements read in all: a player bar's slider is in its button's
-    /// parent on SoundCloud and YouTube Music.
+    /// parent on SoundCloud and YouTube Music (`playerBar(around:)`).
     private static let controlsLevels = 3
     private static let controlsDepth = 6
     private static let controlsReadLimit = 500
@@ -165,17 +165,14 @@ package struct AccessibilityWebPage: WebPage {
         showPage(pid: pid)
         let windows = windows(of: pid)
         guard !windows.isEmpty else { return nil }
-        return windows.flatMap { Self.pageElements(in: $0, access: access) }.compactMap { element in
-            // Each element waits macOS's default 6 s otherwise.
-            AXUIElementSetMessagingTimeout(element, Self.timeout)
-            return button(ButtonHandle(element))
-        }
+        return windows.flatMap { Self.pageElements(in: $0, access: access) }.compactMap { button(ButtonHandle($0)) }
     }
 
     /// The buttons of the pages in `window` (each web area's, by
     /// Accessibility's search for buttons), or a Flutter window's items that
-    /// can be pressed. Player Check finds a page's buttons with this, so a
-    /// check keeps only a page way AutoHush can press.
+    /// can be pressed, each read waiting `timeout`. Player Check finds a
+    /// page's buttons with this, so a check keeps only a page way AutoHush
+    /// can press.
     package static func pageElements(in window: AXUIElement, access: PageAccess) -> [AXUIElement] {
         if access.pageIsWindow { return pressableItems(in: window) }
         let search: [String: Any] = [
@@ -187,7 +184,7 @@ package struct AccessibilityWebPage: WebPage {
             guard AXUIElementCopyParameterizedAttributeValue(
                 area, "AXUIElementsForSearchPredicate" as CFString, search as CFDictionary, &result
             ) == .success else { return [] }
-            return AXUIElement.elements(in: result)
+            return AXUIElement.elements(in: result).map { $0.waiting(timeout) }
         }
     }
 
@@ -214,22 +211,71 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     package func place(of handle: ButtonHandle) -> ButtonPlace? {
-        guard let element = Self.element(of: handle), let frame = Self.frame(of: element) else { return nil }
+        guard let element = Self.element(of: handle), let frame = element.frame else { return nil }
         let (around, window) = Self.surroundings(of: element)
-        guard let window, let windowFrame = Self.frame(of: window) else { return nil }
+        guard let window, let windowFrame = window.frame else { return nil }
         let path = around.map { node, role in node.string(kAXSubroleAttribute).map { "\(role):\($0)" } ?? role }
         return ButtonPlace(path: path, distanceFromBottom: windowFrame.maxY - frame.midY)
     }
 
     package func standing(of handle: ButtonHandle) -> ButtonStanding? {
-        guard let element = Self.element(of: handle), let frame = Self.frame(of: element) else { return nil }
+        guard let element = Self.element(of: handle), let frame = element.frame else { return nil }
         let (around, window) = Self.surroundings(of: element)
-        guard let window, let windowFrame = Self.frame(of: window) else { return nil }
-        var reads = Self.controlsReadLimit
-        let withControls = around.prefix(Self.controlsLevels).contains { Self.holdsSlider($0.element, depth: 0, reads: &reads) }
+        guard let window, let windowFrame = window.frame else { return nil }
         return ButtonStanding(isInWindow: (windowFrame.minY...windowFrame.maxY).contains(frame.midY),
-                              isWithPlayerControls: withControls)
+                              isWithPlayerControls: Self.playerBar(among: around.map(\.element)) != nil)
     }
+
+    /// The player's bar around a page's button: the nearest of the
+    /// `controlsLevels` elements around it in its page (its parent first)
+    /// that holds a slider or a progress bar, as a player's bar does; `nil`
+    /// without one. What learning weighs (`ButtonStanding.isWithPlayerControls`);
+    /// Player Check ranks a page's buttons by it.
+    package static func playerBar(around element: AXUIElement) -> AXUIElement? {
+        var around: [AXUIElement] = []
+        var node = element
+        while around.count < controlsLevels, let parent = node.element(kAXParentAttribute, timeout: timeout) {
+            node = parent
+            let role = node.string(kAXRoleAttribute)
+            if role == "AXWebArea" || role == kAXWindowRole { break }
+            around.append(node)
+        }
+        return playerBar(among: around)
+    }
+
+    /// The first of `around`'s `controlsLevels` elements holding a slider or
+    /// a progress bar, each read `controlsDepth` deep, `controlsReadLimit`
+    /// elements in all.
+    private static func playerBar(among around: [AXUIElement]) -> AXUIElement? {
+        var reads = controlsReadLimit
+        return around.prefix(controlsLevels).first { holdsSlider($0, depth: 0, reads: &reads) }
+    }
+
+    /// The texts of the player's bar around the page's button saying one of
+    /// `labels` (its Play/Pause's words): the song and the artist, where the
+    /// window's title may not name them. The bar is the nearest element
+    /// around the button holding a slider or a progress bar, as `standing`
+    /// looks for one; its texts are read at most `barTextDepth` deep. None
+    /// without such a button or bar. `PanelWay` tells the app's row in the
+    /// Now Playing panel by them, as its check did (2026-10-19).
+    package func playerBarTexts(pid: pid_t, labels: Set<String>) -> [String] {
+        for button in buttons(pid: pid) ?? [] where labels.contains(button.label) {
+            guard let element = Self.element(of: button.handle) else { continue }
+            var reads = Self.controlsReadLimit
+            guard let bar = Self.surroundings(of: element).inPage.prefix(Self.controlsLevels)
+                .first(where: { Self.holdsSlider($0.element, depth: 0, reads: &reads) })?.element else { continue }
+            var texts: [String] = []
+            Self.walk(from: bar, limit: Self.controlsReadLimit, maxDepth: Self.barTextDepth) { element, _ in
+                texts += [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute].compactMap { element.string($0) }.filter { !$0.isEmpty }
+                return true
+            }
+            return texts
+        }
+        return []
+    }
+
+    /// A player bar's texts are this deep in it at most.
+    private static let barTextDepth = 8
 
     /// The elements around `element` in its page, its parent first, with
     /// their roles (the page itself, and what holds it, aren't among them),
@@ -241,7 +287,7 @@ package struct AccessibilityWebPage: WebPage {
         var node = element
         var pastPage = false
         for _ in 0..<pathDepth {
-            guard let parent = node.element(kAXParentAttribute) else { break }
+            guard let parent = node.element(kAXParentAttribute, timeout: timeout) else { break }
             node = parent
             let role = node.string(kAXRoleAttribute) ?? ""
             if role == kAXWindowRole { return (inPage, node) }
@@ -259,7 +305,7 @@ package struct AccessibilityWebPage: WebPage {
         let role = element.string(kAXRoleAttribute)
         if role == kAXSliderRole || role == kAXProgressIndicatorRole { return true }
         guard depth < controlsDepth else { return false }
-        for child in element.children where holdsSlider(child, depth: depth + 1, reads: &reads) { return true }
+        for child in element.children(timeout: timeout) where holdsSlider(child, depth: depth + 1, reads: &reads) { return true }
         return false
     }
 
@@ -291,18 +337,15 @@ package struct AccessibilityWebPage: WebPage {
         guard !access.wordsCurrentOutOfSight else { return true }
         // Seen: the app isn't hidden, and a window of it on this desktop isn't minimized.
         guard NSRunningApplication(processIdentifier: pid)?.isHidden == false else { return false }
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, Self.timeout)
-        return app.elements(kAXWindowsAttribute).contains { $0.value(kAXMinimizedAttribute) as? Bool != true }
+        return AXUIElement.application(pid, timeout: Self.timeout).elements(kAXWindowsAttribute, timeout: Self.timeout)
+            .contains { $0.value(kAXMinimizedAttribute) as? Bool != true }
     }
 
     /// Its switches go back off, those AutoHush turned on that no other page
     /// of AutoHush uses still.
     package func release() {
         Self.switches.release(id) { key in
-            let app = AXUIElementCreateApplication(key.process)
-            AXUIElementSetMessagingTimeout(app, Self.timeout)
-            AXUIElementSetAttributeValue(app, key.attribute as CFString, kCFBooleanFalse)
+            AXUIElementSetAttributeValue(AXUIElement.application(key.process, timeout: Self.timeout), key.attribute as CFString, kCFBooleanFalse)
         }
     }
 
@@ -319,8 +362,7 @@ package struct AccessibilityWebPage: WebPage {
     private func showPage(pid: pid_t) {
         guard let attribute = access.switchAttribute else { return }
         let process = switchTarget(pid)
-        let app = AXUIElementCreateApplication(process)
-        AXUIElementSetMessagingTimeout(app, Self.timeout)
+        let app = AXUIElement.application(process, timeout: Self.timeout)
         Self.switches.use(attribute, on: process, by: id, readsBack: attribute == PageAccess.voiceOverSwitch, isOn: {
             // Electron's reads back off even while it's on (Deezer): its page
             // showing tells it's on.
@@ -333,7 +375,13 @@ package struct AccessibilityWebPage: WebPage {
 
     /// The process its switch is set on: a Chromium web app's browser (its
     /// own process serves the page), else the app.
-    private func switchTarget(_ pid: pid_t) -> pid_t {
+    private func switchTarget(_ pid: pid_t) -> pid_t { Self.switchTarget(pid, access: access) }
+
+    /// The process the switch of a page shown as `access` says is set on, for
+    /// the app running as `pid`: a Chromium web app's browser (its own
+    /// process serves the page; set on the web app, nothing shows), else the
+    /// app. Player Check sets its switches there too.
+    package static func switchTarget(_ pid: pid_t, access: PageAccess) -> pid_t {
         guard let browserID = access.browserID, let browser = NSRunningApplication.running(browserID) else { return pid }
         return browser.processIdentifier
     }
@@ -342,13 +390,19 @@ package struct AccessibilityWebPage: WebPage {
 
     /// The app's windows on the current Space (minimized ones too), else on
     /// any Space.
-    private func windows(of pid: pid_t) -> [AXUIElement] {
-        let app = AXUIElementCreateApplication(pid)
-        AXUIElementSetMessagingTimeout(app, Self.timeout)
-        let shown = app.elements(kAXWindowsAttribute)
-        let windows = shown.isEmpty ? (AccessibilityWindows.windows(ofProcess: pid) ?? []) : shown
-        windows.forEach { AXUIElementSetMessagingTimeout($0, Self.timeout) }
-        return windows
+    private func windows(of pid: pid_t) -> [AXUIElement] { Self.windows(of: pid).windows }
+
+    /// The windows of the app running as `pid` on the current Space
+    /// (minimized ones too), else on any other (`elsewhere`: through
+    /// `AccessibilityWindows`, about 70 ms), each read waiting `timeout`;
+    /// `onThisDesktop` false for those. Player Check finds an app's windows
+    /// with this (keeping those found elsewhere a while, and waiting longer).
+    package static func windows(of pid: pid_t, timeout: Float = AccessibilityWebPage.timeout,
+                                elsewhere: (pid_t) -> [AXUIElement]? = AccessibilityWindows.windows(ofProcess:))
+        -> (windows: [AXUIElement], onThisDesktop: Bool) {
+        let shown = AXUIElement.application(pid, timeout: timeout).elements(kAXWindowsAttribute, timeout: timeout)
+        guard shown.isEmpty else { return (shown, true) }
+        return ((elsewhere(pid) ?? []).map { $0.waiting(timeout) }, false)
     }
 
     /// The web pages (AXWebArea) in a window, nearest first, reading at most
@@ -380,14 +434,14 @@ package struct AccessibilityWebPage: WebPage {
     }
 
     /// Walks an element's tree breadth first, reading at most `limit`
-    /// elements and going at most `maxDepth` levels down; `visit` says
-    /// whether to go into each one's children.
+    /// elements and going at most `maxDepth` levels down, each read waiting
+    /// `timeout`; `visit` says whether to go into each one's children.
     package static func walk(from root: AXUIElement, limit: Int, maxDepth: Int, _ visit: (AXUIElement, Int) -> Bool) {
         var queue: [(AXUIElement, Int)] = [(root, 0)], next = 0
         while next < queue.count, next < limit {
             let (element, depth) = queue[next]
             next += 1
-            if visit(element, depth), depth < maxDepth { queue += element.children.map { ($0, depth + 1) } }
+            if visit(element, depth), depth < maxDepth { queue += element.children(timeout: timeout).map { ($0, depth + 1) } }
         }
     }
 
@@ -398,15 +452,4 @@ package struct AccessibilityWebPage: WebPage {
         return (element as! AXUIElement)
     }
 
-    /// Its frame on screen, from the top left corner.
-    private static func frame(of element: AXUIElement) -> CGRect? {
-        var origin = CGPoint.zero
-        var size = CGSize.zero
-        guard let position = element.value(kAXPositionAttribute), let extent = element.value(kAXSizeAttribute),
-              CFGetTypeID(position) == AXValueGetTypeID(), CFGetTypeID(extent) == AXValueGetTypeID(),
-              AXValueGetValue(position as! AXValue, .cgPoint, &origin),
-              AXValueGetValue(extent as! AXValue, .cgSize, &size)
-        else { return nil }
-        return CGRect(origin: origin, size: size)
-    }
 }

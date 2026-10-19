@@ -1,17 +1,15 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 @Suite("CheckableApps")
 struct CheckableAppsTests {
     /// An app bundle in `folder` with `id` and, optionally, a display name.
     private func app(_ name: String, id: String, displayName: String? = nil, in folder: URL) throws -> URL {
-        let url = folder.appending(path: "\(name).app")
-        try FileManager.default.createDirectory(at: url.appending(path: "Contents"), withIntermediateDirectories: true)
         var info: [String: Any] = ["CFBundleIdentifier": id, "CFBundlePackageType": "APPL"]
         if let displayName { info["CFBundleDisplayName"] = displayName }
-        try (info as NSDictionary).write(to: url.appending(path: "Contents/Info.plist"))
-        return url
+        return try TestAppBundle.make(in: folder, name: name, info: info)
     }
 
     @Test("every app in the folders and one level down, by its bundle's name, but those excluded, AutoHush and Safari web apps; links followed, hidden ones too")

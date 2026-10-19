@@ -35,6 +35,20 @@ enum UpdateNotice: Equatable, Sendable {
     /// E.g. "available 0.3.8": each notice is sent once.
     var key: String { "\(kind.rawValue) \(version)" }
 
+    /// What its notification carries for a click to hand back: its kind and version.
+    var userInfo: [String: String] { ["kind": kind.rawValue, "version": version.description] }
+
+    /// The kind and version of the notice whose notification was clicked
+    /// (`action`, its default action), read from its `userInfo`; `nil` for
+    /// another action, or for what isn't a notice's.
+    static func clicked(action: String, userInfo: [AnyHashable: Any]) -> (kind: Kind, version: AppVersion)? {
+        guard action == UNNotificationDefaultActionIdentifier,
+              let kind = (userInfo["kind"] as? String).flatMap(Kind.init),
+              let version = (userInfo["version"] as? String).flatMap(AppVersion.init)
+        else { return nil }
+        return (kind, version)
+    }
+
     var title: String {
         let version = version.description
         switch self {

@@ -60,16 +60,16 @@ final class AddAppModel {
     private(set) var openFailed = false
     /// Why the app last picked on the disk can't be checked.
     var otherAppProblem: OtherAppProblem?
-    /// The check found Accessibility missing after all (exit status 3).
+    /// The check found Accessibility missing after all (`CheckExitStatus.permissionMissing`).
     private(set) var permissionMissingInCheck = false
     private(set) var progress = CheckProgress()
     /// The chosen app quit while it was waited for, or during the check.
     private(set) var appQuit = false
     /// Why the last check couldn't finish, as far as AutoHush can tell.
     private(set) var failureReason: PlayerCheckEnd.Reason?
-    /// Audio Recording was allowed in System Settings: macOS applies it once
-    /// AutoHush reopens.
-    private(set) var audioAwaitsReopen = false
+    /// Audio Recording was allowed in System Settings (here or elsewhere in
+    /// AutoHush): macOS applies it once AutoHush reopens.
+    var audioAwaitsReopen: Bool { permissions.audio == .needsReopen }
     /// A check that was stopped and still puts things back: the next one
     /// waits for it.
     private(set) var isEndingLastCheck = false
@@ -391,13 +391,18 @@ final class AddAppModel {
         afterPermissions()
     }
 
-    /// A permission's Allow…. Audio Recording turned on in System Settings
-    /// applies once AutoHush reopens: the window then offers to.
+    /// A permission's Allow…, then the permissions read again, so its row
+    /// follows at once. Audio Recording turned on in System Settings applies
+    /// once AutoHush reopens: the window then offers to.
     func request(_ permission: CheckPermission) {
-        guard let app = chosen else { return }
+        guard let app = chosen, let traits else { return }
         let current = permissions
-        if permission == .audioRecording, current.audio == .denied { audioAwaitsReopen = true }
-        Task { await services.request(permission, app, current) }
+        Task { [weak self] in
+            guard let self else { return }
+            await self.services.request(permission, app, current)
+            guard self.chosen == app else { return }
+            self.permissions = await self.services.permissions(app, traits.scriptable)
+        }
     }
 
     /// Reopen AutoHush, for Audio Recording: a finished check is kept.
@@ -599,7 +604,6 @@ final class AddAppModel {
     func allowMuting() {
         guard let app = chosen, let traits else { return }
         let current = permissions
-        if current.audio == .denied { audioAwaitsReopen = true }
         Task { [weak self] in
             await self?.services.request(.audioRecording, app, current)
             for _ in 0..<60 {

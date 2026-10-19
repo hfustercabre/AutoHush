@@ -2,15 +2,8 @@ import Foundation
 import Testing
 @testable import CheckedPlayers
 import WebAppPlayers
-
-/// Recipes kept in memory.
-private final class Recipes: PlayPauseRecipeStore, @unchecked Sendable {
-    private let lock = NSLock()
-    private var kept: [String: PlayPauseRecipe] = [:]
-    func recipe(for bundleID: String) -> PlayPauseRecipe? { lock.withLock { kept[bundleID] } }
-    func save(_ recipe: PlayPauseRecipe, for bundleID: String) { lock.withLock { kept[bundleID] = recipe } }
-    func forget(for bundleID: String) { lock.withLock { kept[bundleID] = nil } }
-}
+import AutoHushTestSupport
+import PlayersTestSupport
 
 @Suite("CheckResult")
 struct CheckResultTests {
@@ -32,8 +25,8 @@ struct CheckResultTests {
 
     @Test("keeping it keeps the setup, and its page's button as a web app's; nothing when no way worked")
     func keeping() {
-        let store = MemoryStore()
-        let recipes = Recipes()
+        let store = MemorySetupStore()
+        let recipes = MemoryRecipeStore()
         let players = CheckedPlayers(store: store)
         players.keep(CheckResult(ways: [], setup: nil, pageButton: recipe), recipes: recipes)
         #expect(store.setups().isEmpty && recipes.recipe(for: setup.bundleID) == nil)
@@ -44,20 +37,20 @@ struct CheckResultTests {
 
     @Test("an app checked again gets a new player, even with the same setup: the one made before doesn't know the button the new check learned")
     func checkedAgain() {
-        let store = MemoryStore()
+        let store = MemorySetupStore()
         let players = CheckedPlayers(store: store, locate: { _ in nil })
-        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup), recipes: Recipes())
+        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup), recipes: MemoryRecipeStore())
         let first = players.current()
         #expect(players.current().first === first.first) // kept while nothing changes
-        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: Recipes())
+        players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: MemoryRecipeStore())
         #expect(players.current().map(\.bundleID) == [setup.bundleID])
         #expect(players.current().first !== first.first)
     }
 
     @Test("removing an added app forgets its setup and its page's button; it's no longer offered")
     func forgetting() {
-        let store = MemoryStore()
-        let recipes = Recipes()
+        let store = MemorySetupStore()
+        let recipes = MemoryRecipeStore()
         let players = CheckedPlayers(store: store, locate: { _ in nil })
         players.keep(CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .works)], setup: setup, pageButton: recipe), recipes: recipes)
         #expect(players.current().map(\.bundleID) == [setup.bundleID])
@@ -71,22 +64,15 @@ struct CheckResultTests {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("CheckResultTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
         func app(_ name: String, framework: String) throws -> URL {
-            let app = folder.appendingPathComponent("\(name).app")
-            try FileManager.default.createDirectory(at: app.appendingPathComponent("Contents/Frameworks/\(framework).framework"),
-                                                    withIntermediateDirectories: true)
-            return app
+            try TestAppBundle.make(in: folder, name: name, frameworks: [framework])
         }
         let electron = try app("Electron", framework: "Electron Framework")
         let cef = try app("Embedded", framework: "Chromium Embedded Framework"), flutter = try app("Flutter", framework: "FlutterMacOS")
-        let scripted = folder.appendingPathComponent("Scripted.app")
-        try FileManager.default.createDirectory(at: scripted.appendingPathComponent("Contents/Resources"), withIntermediateDirectories: true)
-        try Data().write(to: scripted.appendingPathComponent("Contents/Resources/Scripted.sdef"))
-
-        let chromeApp = folder.appendingPathComponent("SoundCloud.app")
-        try FileManager.default.createDirectory(at: chromeApp.appendingPathComponent("Contents"), withIntermediateDirectories: true)
-        try (["CFBundleIdentifier": "com.google.Chrome.app.test", "CrAppModeShortcutURL": "https://soundcloud.com/",
-              "CrBundleIdentifier": "com.google.Chrome"] as NSDictionary)
-            .write(to: chromeApp.appendingPathComponent("Contents/Info.plist"))
+        let scripted = try TestAppBundle.make(in: folder, name: "Scripted", resources: ["Scripted.sdef": ""])
+        let chromeApp = try TestAppBundle.make(in: folder, name: "SoundCloud", info: [
+            "CFBundleIdentifier": "com.google.Chrome.app.test", "CrAppModeShortcutURL": "https://soundcloud.com/",
+            "CrBundleIdentifier": "com.google.Chrome",
+        ])
 
         #expect(CheckedAppTraits.browser(ofAppAt: chromeApp) == "com.google.Chrome")
         #expect(CheckedAppTraits.browser(ofAppAt: electron) == nil)

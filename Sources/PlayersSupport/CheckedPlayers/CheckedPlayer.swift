@@ -66,6 +66,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
         var announcing: (any MusicPlayer)?
         /// Its page's player, whose switch is released with it.
         var page: SafariWebAppPlayer?
+        /// The page its panel way reads its player bar through
+        /// (`PanelClues.page`), whose switch is released with it too.
+        var cluePage: AccessibilityWebPage?
         /// It's muted instead of paused: no way pauses it (`PlayerSetup.Way.mute`).
         var mutes = false
         /// Its panel row doesn't follow it (`PlayerSetup.panelRowIsStale`):
@@ -187,7 +190,13 @@ package actor CheckedPlayer: MutingMusicPlayer {
             case .panel(let remembered):
                 let hearing = setup.panelRowIsStale == true ? LateHearing() : nil
                 parts.hearing = hearing
-                parts.ways.append(PanelWay(setup: setup, remembered: remembered, store: store, hearing: hearing))
+                var playerBar: (@Sendable (pid_t) -> [String])?
+                if let clue = setup.panelClues?.page {
+                    let page = AccessibilityWebPage(access: clue.access), labels = Set(clue.labels)
+                    parts.cluePage = page
+                    playerBar = { page.playerBarTexts(pid: $0, labels: labels) }
+                }
+                parts.ways.append(PanelWay(setup: setup, remembered: remembered, store: store, playerBar: playerBar, hearing: hearing))
             case .mute:
                 parts.mutes = true
             }
@@ -412,9 +421,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
         parts.announcing != nil ? 0 : PolledStateObserver.reportDelay
     }
 
-    /// Whether `release` has something to undo: its page's switch, or a mute
-    /// (its own, or its page's).
-    package nonisolated var releasesOnQuit: Bool { parts.page != nil || parts.mutes }
+    /// Whether `release` has something to undo: its page's switch (its page
+    /// way's, or the one its panel way reads), or a mute (its own, or its page's).
+    package nonisolated var releasesOnQuit: Bool { parts.page != nil || parts.cluePage != nil || parts.mutes }
 
     /// Turns back off the switch its page needed and lifts a mute, its own
     /// or its page's, without playing anything: as AutoHush quits, or once
@@ -423,6 +432,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
     package func release() async {
         await parts.page?.releaseMute()
         await parts.page?.releasePage()
+        parts.cluePage?.release()
         endMute()
     }
 

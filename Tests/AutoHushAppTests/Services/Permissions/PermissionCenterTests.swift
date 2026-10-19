@@ -60,6 +60,23 @@ struct PermissionCenterTests {
         #expect(unreadableFine.audio == .allowed)
     }
 
+    @Test("any app is read by the same rules as the chosen player (Add an App's): Automation while it runs, nothing to read without a control permission")
+    func anyApp() async {
+        let scripted = await center(automation: OSStatus(errAEEventNotPermitted))
+            .state(app: "com.example.radio", control: .automation(player: "Radio"), detectionMethod: .audioLevels,
+                   detection: .audioLevel, awaitsReopen: false)
+        #expect(scripted.player == "com.example.radio" && scripted.control == .automation(player: "Radio"))
+        #expect(scripted.controlAccess == .denied && scripted.audio == .allowed && scripted.accessibility)
+        let closed = await center(running: false)
+            .state(app: "com.example.radio", control: .automation(player: "Radio"), detectionMethod: .audioLevels,
+                   detection: .audioLevel, awaitsReopen: false)
+        #expect(closed.controlAccess == .playerNotRunning)
+        let unscripted = await center(trusted: false, audio: .notDetermined)
+            .state(app: "com.example.radio", control: nil, detectionMethod: .audioLevels, detection: .pending, awaitsReopen: false)
+        #expect(unscripted.control == nil && unscripted.controlAccess == .allowed)
+        #expect(!unscripted.accessibility && unscripted.audio == .notAsked)
+    }
+
     @Test("a missing control permission counts only as read for that player: the previous player's, read before the switch, doesn't lock the new one's steps")
     func controlMissingForPlayer() {
         let previous = PermissionsState(player: "com.example.jukebox", control: .automation(player: "Jukebox"), controlAccess: .notAsked)
@@ -104,12 +121,13 @@ struct PermissionCenterTests {
                 audio: { .granted }, requestAudio: { _ in }, openPane: { _ in }
             ))
         }
-        let jukebox = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
-        await recording(running: true).perform(.askMacOS(automation), player: jukebox)
+        let jukebox = "com.example.jukebox"
+        await recording(running: true).perform(.askMacOS(automation), app: jukebox)
         #expect(asked.calls == ["4242 asking"])
-        await recording(running: false).perform(.askMacOS(automation), player: jukebox) // nothing to ask about
-        await recording(running: true).perform(.openPlayer, player: jukebox)
-        await recording(running: true).perform(.reopen, player: jukebox)
+        await recording(running: false).perform(.askMacOS(automation), app: jukebox) // nothing to ask about
+        await recording(running: true).perform(.openPlayer, app: jukebox)
+        await recording(running: true).perform(.reopen, app: jukebox)
+        await recording(running: true).perform(.askMacOS(automation), app: nil) // no app
         #expect(asked.calls == ["4242 asking"])
     }
 }

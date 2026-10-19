@@ -200,6 +200,24 @@ else
     note "warning: xcstringstool not found (it comes with Xcode); the app is built in English only"
 fi
 
+# A release ships without its local symbols, less than half the size (the
+# App Intents step above has read them already). They're kept for reading
+# crash logs: each build's dSYMs go to a folder of their own in
+# dist/dSYMs/ (version, build and the app's UUID, which a crash log names),
+# never overwritten; dist/ is git-ignored, so they stay on this Mac.
+if [[ "$BUILD_CONFIG" == release ]]; then
+    step "Keeping the symbols, then stripping them"
+    APP_UUID="$(xcrun dwarfdump --uuid "$APP_BUNDLE/Contents/MacOS/$APP_NAME" | awk '/arm64/ {print $2; exit}')"
+    DSYM_DIR="$DIST_DIR/dSYMs/$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString)-$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleVersion)-${APP_UUID:0:8}"
+    mkdir -p "$DSYM_DIR"
+    for binary in "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$HELPER"; do
+        xcrun dsymutil "$binary" -o "$DSYM_DIR/$(basename "$binary").dSYM" 2>/dev/null \
+            || fail "dsymutil could not keep $(basename "$binary")'s symbols"
+        xcrun strip -x "$binary"
+    done
+    note "symbols kept in ${DSYM_DIR#"$PROJECT_DIR/"}"
+fi
+
 IDENTITY="$(resolve_signing_identity)"
 if [[ "$IDENTITY" == "-" ]]; then
     step "Signing ad hoc (hardened runtime)"

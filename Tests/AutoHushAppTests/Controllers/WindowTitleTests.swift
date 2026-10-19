@@ -4,6 +4,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
+import CheckPanel
 import CheckedPlayers
 
 @Suite("Windows")
@@ -12,10 +13,7 @@ struct WindowTitleTests {
     private let actions = FakeAppActions()
     private let updates = FakeUpdateCommands()
 
-    private func makeModel() -> SettingsModel {
-        SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
-                      launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
-    }
+    private func makeModel() -> SettingsModel { .forTests(actions: actions, updates: updates) }
 
     @Test("the welcome window's title is its page's, and follows it")
     func welcomeTitle() async {

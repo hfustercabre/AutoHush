@@ -24,6 +24,23 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
         /// Its documents' `playing` (QuickTime Player's): it plays while one
         /// does, and is stopped with none open.
         case documents(documentClass: String, playing: String)
+
+        /// Where `dictionary`'s state is read: its `player state` only with
+        /// its three standard values, else its `playing` flag (with its
+        /// `current time`), else its documents'; `nil` when it can't be read
+        /// by script. Player Check reads an app's state by this too, so it
+        /// judges a way by the state AutoHush reads.
+        package init?(dictionary: ScriptingDictionary) {
+            if dictionary.hasPlayerState, dictionary.hasStateValues {
+                self = .playerState
+            } else if let playing = dictionary.properties.first(where: { $0.value == "playing" })?.key {
+                self = .playingFlag(property: playing, currentTime: dictionary.properties.first { $0.value == "current time" }?.key)
+            } else if dictionary.playsDocuments, let documentClass = dictionary.documentClass, let playing = dictionary.documentPlaying {
+                self = .documents(documentClass: documentClass, playing: playing)
+            } else {
+                return nil
+            }
+        }
     }
 
     package var commands: Commands
@@ -66,15 +83,7 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
         case .toggle(let toggle): [toggle]
         }
         actsOnDocuments = codes.allSatisfy(dictionary.documentCommands.contains)
-        if dictionary.hasPlayerState, dictionary.hasStateValues {
-            state = .playerState
-        } else if let playing = dictionary.properties.first(where: { $0.value == "playing" })?.key {
-            state = .playingFlag(property: playing, currentTime: dictionary.properties.first { $0.value == "current time" }?.key)
-        } else if dictionary.playsDocuments, let documentClass = dictionary.documentClass, let playing = dictionary.documentPlaying {
-            state = .documents(documentClass: documentClass, playing: playing)
-        } else {
-            state = nil
-        }
+        state = State(dictionary: dictionary)
         hasVolume = dictionary.hasVolume
     }
 }

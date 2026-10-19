@@ -16,7 +16,7 @@ final class SystemVolumeLevelerTests {
 
     /// A leveler of `volume`, with this test's preferences: its glide back
     /// up steps at once, unless `sleep` waits.
-    private func leveler(_ volume: MockSystemVolume, sleep: @escaping @Sendable (TimeInterval) -> Void = { _ in },
+    private func leveler(_ volume: any SystemVolumeControlling, sleep: @escaping @Sendable (TimeInterval) -> Void = { _ in },
                          now: @escaping @Sendable () -> Date = Date.init) -> SystemVolumeLeveler {
         SystemVolumeLeveler(volume: volume, defaults: defaults, sleep: sleep, now: now)
     }
@@ -189,5 +189,78 @@ final class SystemVolumeLevelerTests {
         #expect(volume.decibels == [0: -10] && !isKept)
         goOn.signal()
         #expect(!timedOut.withLock { $0 })
+    }
+
+    @Test("a put-back at once during the glide back up leaves a volume the user changed since its last step as they set it")
+    func putBackDuringGlideYieldsToTheUser() throws {
+        let volume = MockSystemVolume([0: -10])
+        let stepped = DispatchSemaphore(value: 0), goOn = DispatchSemaphore(value: 0)
+        let leveler = leveler(volume, sleep: { _ in
+            stepped.signal()
+            _ = goOn.wait(timeout: TestWait.dispatchDeadline)
+        })
+        let token = try #require(leveler.lower(by: -8))
+        leveler.restore(over: 0.2, lowered: token) // 4 steps: -16, -14, -12, -10
+        #expect(stepped.wait(timeout: TestWait.dispatchDeadline) == .success)
+        volume.decibels = [0: -30] // the volume keys, between two steps
+
+        leveler.restoreNow(lowered: token) // the music resumes, or its monitoring stops
+        #expect(volume.decibels == [0: -30] && !isKept)
+        goOn.signal()
+        #expect(volume.sets == [[0: -18], [0: -16]])
+    }
+
+    @Test("with sound moved to another output meanwhile, the output it lowered is put back, found by its UID, at once or over the fade-out; the other is left alone")
+    func putsBackTheOutputItLowered() async throws {
+        let outputs = TwoOutputs()
+        let leveler = leveler(outputs)
+        let token = try #require(leveler.lower(by: -6))
+        #expect(outputs.decibels == [42: [0: -16], 43: [0: -20]])
+        outputs.current = 43 // headphones plugged in
+        leveler.restoreNow(lowered: token)
+        #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
+
+        let again = try #require(leveler.lower(by: -6)) // the headphones, now
+        #expect(outputs.decibels[43] == [0: -26])
+        outputs.current = 42 // unplugged
+        leveler.restore(over: 0.2, lowered: again)
+        await TestWait.until { !self.isKept }
+        #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
+        #expect(outputs.sets.map(\.device) == [42, 42, 43, 43, 43, 43, 43])
+    }
+}
+
+/// Two outputs, each with its own volume, in memory: the speakers (42) and
+/// headphones (43); sound plays through `current`.
+private final class TwoOutputs: SystemVolumeControlling, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _current: AudioObjectID = 42
+    private var _decibels: [AudioObjectID: [AudioObjectPropertyElement: Float]] = [42: [0: -10], 43: [0: -20]]
+    private var _sets: [(device: AudioObjectID, decibels: [AudioObjectPropertyElement: Float])] = []
+    private let uids: [AudioObjectID: String] = [42: "Speakers", 43: "Headphones"]
+
+    var current: AudioObjectID {
+        get { lock.withLock { _current } }
+        set { lock.withLock { _current = newValue } }
+    }
+
+    var decibels: [AudioObjectID: [AudioObjectPropertyElement: Float]] { lock.withLock { _decibels } }
+
+    /// Each volume set, in turn, with its output.
+    var sets: [(device: AudioObjectID, decibels: [AudioObjectPropertyElement: Float])] { lock.withLock { _sets } }
+
+    func defaultOutput() -> AudioObjectID? { current }
+    func uid(of device: AudioObjectID) -> String? { uids[device] }
+    func device(withUID uid: String) -> AudioObjectID? { uids.first { $0.value == uid }?.key }
+
+    func volume(of device: AudioObjectID) -> SystemVolume? {
+        lock.withLock { _decibels[device].map { SystemVolume(decibels: $0, lowest: -60) } }
+    }
+
+    func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID) {
+        lock.withLock {
+            _decibels[device] = decibels
+            _sets.append((device, decibels))
+        }
     }
 }

@@ -137,7 +137,14 @@ struct UpdateInstaller: UpdateInstalling {
     /// The tools tried, in order, to open the disk image; when the one that
     /// opened it can't close it, the others are tried.
     private let diskImageTools: [DiskImageTool]
+    /// How long each of them may take (`diskImageToolTimeout`).
+    private let diskImageTimeout: TimeInterval
     private let trash: Trash
+
+    /// How long a disk image tool may take before it's stopped and the image
+    /// taken as damaged: one that hangs (DiskArbitration stuck) would
+    /// otherwise hold every install until AutoHush quits.
+    static let diskImageToolTimeout: TimeInterval = 120
 
     init(
         appURL: URL = Bundle.main.bundleURL,
@@ -145,6 +152,7 @@ struct UpdateInstaller: UpdateInstalling {
         download: @escaping Download = { try await URLSession.updates.download(for: $0) },
         relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit,
         diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference,
+        diskImageTimeout: TimeInterval = UpdateInstaller.diskImageToolTimeout,
         trash: @escaping Trash = { try? FileManager.default.trashItem(at: $0, resultingItemURL: nil) }
     ) {
         self.appURL = appURL
@@ -152,6 +160,7 @@ struct UpdateInstaller: UpdateInstalling {
         self.fetchFile = download
         self.relaunch = relaunch
         self.diskImageTools = diskImageTools
+        self.diskImageTimeout = diskImageTimeout
         self.trash = trash
     }
 
@@ -252,11 +261,11 @@ struct UpdateInstaller: UpdateInstalling {
 
     /// Opens the disk image at `mountPoint` with the first tool that manages
     /// to, and returns that tool's place in `diskImageTools`, to close it
-    /// again. A tool this macOS lacks fails, and the next one is tried.
+    /// again. A tool this macOS lacks fails, as does one that takes too
+    /// long, and the next one is tried.
     private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> Int {
         for (index, tool) in diskImageTools.enumerated() {
-            let status = try? await Self.run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint)))
-            if status == 0 { return index }
+            if await run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint))) { return index }
         }
         throw UpdateInstallError.damaged
     }
@@ -268,9 +277,9 @@ struct UpdateInstaller: UpdateInstalling {
     private func detach(_ mountPoint: URL, openedWith opener: Int) async {
         let path = Self.resolvedPath(mountPoint)
         let tool = diskImageTools[opener]
-        _ = try? await Self.run(tool.path, tool.detachArguments(path))
+        await run(tool.path, tool.detachArguments(path))
         for other in diskImageTools[(opener + 1)...] + diskImageTools[..<opener] where Self.isMounted(at: path) {
-            _ = try? await Self.run(other.path, other.detachArguments(path))
+            await run(other.path, other.detachArguments(path))
         }
     }
 
@@ -383,22 +392,11 @@ struct UpdateInstaller: UpdateInstalling {
         return withUnsafeBytes(of: volume.f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) } == path
     }
 
-    /// Runs a command-line tool and returns its exit status, without blocking
-    /// a thread while it runs.
-    private static func run(_ tool: String, _ arguments: [String]) async throws -> Int32 {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(filePath: tool)
-            process.arguments = arguments
-            process.standardOutput = FileHandle.nullDevice
-            process.standardError = FileHandle.nullDevice
-            process.terminationHandler = { continuation.resume(returning: $0.terminationStatus) }
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
-        }
+    /// Runs a disk image tool, for `diskImageTimeout` at most: whether it
+    /// did what it was asked (exited with 0).
+    @discardableResult
+    private func run(_ tool: String, _ arguments: [String]) async -> Bool {
+        await ToolRun(URL(filePath: tool), arguments, timeout: diskImageTimeout).run().succeeded
     }
 }
 

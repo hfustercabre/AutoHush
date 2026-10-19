@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// A symbol on a square tinted with the accent color: Settings' sidebar
-/// shows its pages this way, the welcome window its permissions.
+/// shows its pages this way, a `PermissionRow` its permission, and the
+/// check's warning the window's states.
 struct SymbolTile: View {
     let symbol: String
 

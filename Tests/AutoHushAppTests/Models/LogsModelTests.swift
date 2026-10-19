@@ -4,7 +4,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("LogsModel")
+@Suite("LogsModel", .timeLimit(.minutes(1)))
 @MainActor
 struct LogsModelTests {
     /// A log in memory; its reads can be held, as a long log's take a while.

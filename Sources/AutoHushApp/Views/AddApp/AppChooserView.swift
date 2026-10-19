@@ -12,8 +12,9 @@ struct AppChooserView: View {
     let otherApp: () -> Void
     let close: () -> Void
 
-    /// The window's width, which its bottom bar's buttons fit in every language.
-    static let width: CGFloat = 460
+    /// The window's width, Add an App's, which its bottom bar's buttons fit
+    /// in every language.
+    static let width = AddAppView.width
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -25,19 +26,15 @@ struct AppChooserView: View {
                 if let problem = model.otherAppProblem { NoteLabel(AddAppText.otherAppProblem(problem)) }
             }
             .windowMargins()
-            BottomBar(margin: HostedWindowController.margin) {
+            BottomBar {
                 Button(action: otherApp) { Text(verbatim: AddAppText.otherApp) }
                     .buttonStyle(.chip)
                 Spacer()
                 Button(action: close) { Text(verbatim: AddAppText.cancel) }
                     .buttonStyle(.chip)
                     .keyboardShortcut(.cancelAction)
-                Button(action: chooseSelected) {
-                    Text(verbatim: AddAppText.choose).font(.appBody.weight(.semibold)).padding(.horizontal, 6)
-                }
-                .buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
-                .keyboardShortcut(.defaultAction)
-                .disabled(selected == nil)
+                MainButton(AddAppText.choose, action: chooseSelected)
+                    .disabled(selected == nil)
             }
         }
         .frame(width: Self.width)

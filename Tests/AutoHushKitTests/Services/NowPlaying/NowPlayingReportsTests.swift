@@ -59,9 +59,9 @@ struct NowPlayingReportsTests {
         // Stopped, the next question follows the log: a stream that ends at once stands in for it.
         let reports = NowPlayingReports(clients: clients, streamCommand: ["/usr/bin/true"]) { _ in [:] }
         #expect(reports.isAvailable)
-        #expect(reports.state(of: "com.example.app") == .playing)
+        #expect(reports.latest(of: "com.example.app")?.state == .playing)
         reports.stop()
-        #expect(reports.state(of: "com.example.app") == nil)
+        #expect(reports.latest(of: "com.example.app")?.state == nil)
     }
 
     /// A folder of its own for a stream's script: the files it waits for, or writes.
@@ -109,15 +109,15 @@ struct NowPlayingReportsTests {
         #expect(reports.follow(since: since))
         #expect(reads.withLock { $0 } == [since])
         // The live line says only that it's there: its name, ID and report are the past's.
-        #expect(reports.state(of: webApp) == .playing)
+        #expect(reports.latest(of: webApp)?.state == .playing)
         #expect(reports.latest(of: webApp)?.name == "Web App")
         try Data().write(to: folder.appendingPathComponent("more"))
-        await TestWait.until { reports.state(of: webApp) == .paused }
-        #expect(reports.state(of: webApp) == .paused)
+        await TestWait.until { reports.latest(of: webApp)?.state == .paused }
+        #expect(reports.latest(of: webApp)?.state == .paused)
         let ending = Date()
         try Data().write(to: folder.appendingPathComponent("end"))
         // Nothing said once it ended; that question follows it again, its past read back `lookBack`.
-        await TestWait.until { reports.state(of: webApp) == nil }
+        await TestWait.until { reports.latest(of: webApp)?.state == nil }
         await TestWait.until { reads.withLock { $0.count } == 2 }
         let again = try #require(reads.withLock { $0.dropFirst().first })
         #expect((ending...Date()).contains(again.addingTimeInterval(NowPlayingReports.firstLookBack)))
@@ -136,13 +136,13 @@ struct NowPlayingReportsTests {
             (try? String(contentsOfFile: file, encoding: .utf8)).flatMap { pid_t($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
         }
         #expect(reports.follow(since: Date()))
-        await TestWait.until { reports.state(of: "com.example.app") == .playing }
-        #expect(reports.state(of: "com.example.app") == .playing)
+        await TestWait.until { reports.latest(of: "com.example.app")?.state == .playing }
+        #expect(reports.latest(of: "com.example.app")?.state == .playing)
         let first = try #require(stream())
         await TestWait.until { !NowPlayingReports.stillRuns(first) }
         #expect(!NowPlayingReports.stillRuns(first))
-        #expect(reports.state(of: "com.example.app") == nil)
-        await TestWait.until { reports.state(of: "com.example.app") == .playing }
+        #expect(reports.latest(of: "com.example.app")?.state == nil)
+        await TestWait.until { reports.latest(of: "com.example.app")?.state == .playing }
         let second = try #require(stream())
         #expect(second != first)
         reports.stop()
@@ -152,6 +152,6 @@ struct NowPlayingReportsTests {
         let closed = NowPlayingReports(streamCommand: ["/bin/sh", "-c", "exec sleep 60"], isAdministrator: true) { _ in nil }
         #expect(!closed.follow(since: Date()))
         #expect(!closed.isAvailable)
-        #expect(closed.state(of: "com.example.app") == nil)
+        #expect(closed.latest(of: "com.example.app")?.state == nil)
     }
 }

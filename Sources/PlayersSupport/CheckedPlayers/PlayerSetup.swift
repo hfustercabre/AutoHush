@@ -56,9 +56,13 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// otherwise, the row is pressed as a toggle (`PanelWay`), so only its
     /// sound tells, and AntiDot mode, which hears none, can't control it.
     package var panelRowIsStale: Bool?
+    /// Where its song shows besides its windows' titles, as its check found
+    /// it, which tells its Now Playing row (`PanelWay`); `nil` without the
+    /// panel, or with nothing more than its titles.
+    package var panelClues: PanelClues?
 
     package init(bundleID: String, name: String, appURL: URL, ways: [Way], stateNotification: String? = nil,
-                 needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil) {
+                 needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil, panelClues: PanelClues? = nil) {
         self.bundleID = bundleID
         self.name = name
         self.appURL = appURL
@@ -66,6 +70,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         self.stateNotification = stateNotification
         self.needsLaunchOption = needsLaunchOption
         self.panelRowIsStale = panelRowIsStale
+        self.panelClues = panelClues
     }
 }
 

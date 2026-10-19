@@ -55,8 +55,8 @@ struct MainMenuTests {
             FindTarget(window: window, settingsPage: page, hasApps: hasApps, welcomeShowsPlayers: showsPlayers,
                        playersSearchable: searchable)
         }
-        #expect(target(.settings, page: .apps) == .appsSearch)
-        #expect(target(.settings, page: .apps, hasApps: false) == nil) // its magnifier is dimmed too
+        #expect(target(.settings, page: .soundSources) == .soundSourcesSearch)
+        #expect(target(.settings, page: .soundSources, hasApps: false) == nil) // its magnifier is dimmed too
         #expect(target(.settings, page: .general) == nil)
         #expect(target(.welcome) == .welcomeSearch)
         #expect(target(.welcome, searchable: false) == nil)

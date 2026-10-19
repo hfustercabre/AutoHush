@@ -102,13 +102,8 @@ package final class SafariWebAppFinder: Sendable {
     /// The last look's result, and when.
     private let lastLook = OSAllocatedUnfairLock<(at: Date, apps: [SafariWebApp])?>(initialState: nil)
 
-    /// The current user's Applications folder and /Applications.
-    package static let applicationFolders: [URL] = [
-        FileManager.default.homeDirectoryForCurrentUser.appending(path: "Applications", directoryHint: .isDirectory),
-        URL(filePath: "/Applications", directoryHint: .isDirectory),
-    ]
-
-    package init(folders: [URL] = SafariWebAppFinder.applicationFolders) {
+    /// `folders`: the current user's Applications folder and /Applications.
+    package init(folders: [URL] = ApplicationFolders.forWebApps) {
         self.folders = folders
     }
 

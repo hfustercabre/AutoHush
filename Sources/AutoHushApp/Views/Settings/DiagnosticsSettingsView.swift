@@ -2,14 +2,13 @@ import AppKit
 import SwiftUI
 
 /// Settings → Diagnostics: how AutoHush is doing, every app with its sound
-/// on and how AutoHush judges it, then the music player, the detection, the
+/// on and how AutoHush judges it, then the media player, the detection, the
 /// permissions, AutoHush and the Mac, kept up to date while shown, as
 /// macOS's grouped form. Each part folds away under its heading, leaving a
 /// one-line summary; the form scrolls, and Copy Report stays at the
 /// window's foot.
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
-    @State private var copied = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,10 +67,9 @@ struct DiagnosticsSettingsView: View {
     private func part(_ id: DiagnosticsSnapshot.Part, title: String, symbol: String, summary: String,
                       @ViewBuilder content: () -> some View) -> some View {
         let isOpen = !model.foldedDiagnostics.contains(id)
+        let toggle = { if model.foldedDiagnostics.remove(id) == nil { model.foldedDiagnostics.insert(id) } }
         // A section of the form, its folding title over it.
-        return Card(heading: AnyView(Button {
-                if isOpen { model.foldedDiagnostics.insert(id) } else { model.foldedDiagnostics.remove(id) }
-            } label: {
+        return Card(heading: AnyView(Button(action: toggle) {
                 HStack(spacing: 7) {
                     Image(systemName: symbol)
                         .foregroundStyle(.tint)
@@ -98,9 +96,7 @@ struct DiagnosticsSettingsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .modifier(HighlightableControl(cornerRadius: 6, press: {
-                if model.foldedDiagnostics.contains(id) { model.foldedDiagnostics.remove(id) } else { model.foldedDiagnostics.insert(id) }
-            }))
+            .modifier(HighlightableControl(cornerRadius: 6, press: toggle))
             .accessibilityAddTraits(.isHeader)
             .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed))) {
             if isOpen { content() }
@@ -134,8 +130,10 @@ struct DiagnosticsSettingsView: View {
     /// Each fact: its label on the left, its value on the right.
     private func rows(_ rows: [DiagnosticsSnapshot.Row]) -> some View {
         Group {
-            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                if index > 0 { CardDivider() }
+            // By label: a row that comes or goes leaves the others be.
+            ForEach(rows.keyed(by: \.label)) { keyed in
+                let row = keyed.element
+                if keyed.offset > 0 { CardDivider() }
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(verbatim: row.label).foregroundStyle(.appSecondary)
                     Spacer(minLength: 8)
@@ -155,12 +153,6 @@ struct DiagnosticsSettingsView: View {
                 }
             }
         }
-    }
-
-    /// Said after Copy Report, and on the logs window's Copy Logs, briefly;
-    /// VoiceOver hears it too.
-    static var copiedText: String {
-        String(localized: "Copied", comment: "Settings → Diagnostics after Copy Report, and the logs window's Copy Logs button, for a moment after a click")
     }
 
     private func symbol(for kind: DiagnosticsSnapshot.Section.Kind) -> String {
@@ -183,29 +175,10 @@ struct DiagnosticsSettingsView: View {
             }
             .buttonStyle(.chip)
             // "Copied" for a moment after a click, as the logs window's Copy Logs.
-            Button {
-                copyReport()
-            } label: {
-                if copied {
-                    Text(verbatim: Self.copiedText)
-                } else {
-                    Text("Copy Report", comment: "Settings → Diagnostics: puts the report on the clipboard")
-                }
+            CopyButton(title: Text("Copy Report", comment: "Settings → Diagnostics: puts the report on the clipboard")) {
+                model.diagnostics?.text
             }
-            .buttonStyle(.chip)
             .disabled(model.diagnostics == nil)
-        }
-    }
-
-    private func copyReport() {
-        guard let text = model.diagnostics?.text else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
-        copied = true
-        AccessibilityNotification.Announcement(Self.copiedText).post()
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            copied = false
         }
     }
 }
