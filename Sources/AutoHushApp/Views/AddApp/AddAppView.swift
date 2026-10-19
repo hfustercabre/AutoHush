@@ -363,7 +363,7 @@ private struct CheckPermissionRows: View {
             row(symbol: "accessibility", title: AddAppText.accessibilityTitle, note: AddAppText.accessibilityUse(app),
                 allowed: model.permissions.accessibility, permission: .accessibility)
             if model.antiDot {
-                row(symbol: "waveform", title: PermissionText.audioTitle, note: AddAppText.audioInAntiDot,
+                row(symbol: "waveform", title: PermissionText.audioTitle, note: AntiDotText.notNeeded,
                     allowed: nil, permission: .audioRecording)
             } else {
                 row(symbol: "waveform", title: PermissionText.audioTitle,

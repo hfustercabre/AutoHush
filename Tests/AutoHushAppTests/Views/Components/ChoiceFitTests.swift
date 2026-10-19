@@ -33,9 +33,9 @@ struct ChoiceFitTests {
     func leastWidths() {
         let page = SettingsWindowController.minimumSize.width - SettingsWindowController.sidebarWidth
         #expect(page >= ChoiceChips<Never>.fittingWidth([AutomaticUpdates.notify, .download, .install].map(\.title)) + 60)
-        #expect(page >= ChoiceChips<Never>.fittingWidth([DetectionMethod.playbackSignals, .openStreams].map(\.title)) + 60)
+        #expect(page >= ChoiceChips<Never>.fittingWidth(DetectionMethod.antiDotWays.map(\.title)) + 60)
         #expect(SettingsWindowController.maximumSize.width >= SettingsWindowController.minimumSize.width)
-        #expect(menuContentWidth >= ChoiceChips<Never>.fittingWidth([DetectionMethod.playbackSignals, .openStreams].map(\.title), size: .small) + 36)
+        #expect(menuContentWidth >= ChoiceChips<Never>.fittingWidth(DetectionMethod.antiDotWays.map(\.title), size: .small) + 36)
         #expect(menuContentWidth >= 345)
     }
 }

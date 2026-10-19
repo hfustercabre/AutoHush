@@ -31,9 +31,10 @@ extension NSWindow {
     var isOpen: Bool { isVisible || isMiniaturized || DockPresence.isShown(self) }
 
     /// Brings it in front of other apps' windows, on the desktop the user is
-    /// on, without making it key or AutoHush active.
-    func bringForward() {
-        comeToActiveSpace()
+    /// on, without making it key or AutoHush active. `following`: how long
+    /// it follows the user to their desktop (tests shorten it).
+    func bringForward(following: TimeInterval = 1) {
+        comeToActiveSpace(following: following)
         orderFrontRegardless()
     }
 
@@ -43,13 +44,13 @@ extension NSWindow {
     /// (macOS 27, 2026-10-17), so it follows them for a second. Closed, it
     /// follows them too: macOS shows a closed window again on the desktop
     /// it was last on, and took the user there (2026-10-18).
-    private func comeToActiveSpace() {
+    private func comeToActiveSpace(following: TimeInterval = 1) {
         if isVisible {
             guard !isOnActiveSpace else { return }
             orderOut(nil)
         }
         guard collectionBehavior.insert(.moveToActiveSpace).inserted else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + following) { [weak self] in
             MainActor.assumeIsolated { _ = self?.collectionBehavior.remove(.moveToActiveSpace) }
         }
     }

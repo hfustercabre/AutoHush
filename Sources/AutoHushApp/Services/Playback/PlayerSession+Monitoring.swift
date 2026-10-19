@@ -22,10 +22,14 @@ extension PlayerSession {
     }
 
     /// The engine's configuration: the user's timings, and the player, whose
-    /// own audio never counts as another app playing.
+    /// own audio never counts as another app playing. While it only lists
+    /// the apps playing (`listenUntilPlayerOpens`), it looks at the idle
+    /// rate: it can pause nothing, so the menu's lists may come up to a
+    /// second late (S16, the full check, 2026-10-19).
     func configuration(for player: (any MusicPlayer)?) -> AppConfiguration {
         var configuration = AppConfiguration(timings: settings.timings)
         configuration.musicPlayerBundleID = player?.bundleID
+        if waitsForPlayerToOpen { configuration.activeSampleInterval = configuration.idleSampleInterval }
         return configuration
     }
 

@@ -49,8 +49,7 @@ enum PermissionText {
             String(localized: "Allowed. Reopen AutoHush to start using it.",
                    comment: "Welcome window and Settings: Audio Recording was allowed in System Settings, which macOS applies at AutoHush's next launch")
         case .notNeeded:
-            String(localized: "Not needed in AntiDot mode.",
-                   comment: "Welcome window, under “Audio Recording” while AntiDot mode is on")
+            AntiDotText.notNeeded
         }
     }
 

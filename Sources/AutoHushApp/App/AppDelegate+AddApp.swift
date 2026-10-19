@@ -44,7 +44,7 @@ extension AppDelegate {
             reopen: { app in await helper?.reopenWithLaunchOption(app.url) ?? false },
             permissions: { [weak self] app, scriptable in await self?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions() },
             request: { [weak self] permission, app, current in await self?.requestCheckPermission(permission, app: app, current: current) },
-            antiDot: { [weak self] in self?.preferences.detectionMethod != .audioLevels },
+            antiDot: { [weak self] in self?.userSettings.state.detection.isAntiDot ?? true },
             macCanMute: { [weak self] in self?.checkOutputMute.canMute ?? false },
             turnOffAntiDot: { [weak self] in self?.userSettings.setDetectionMethod(.audioLevels) },
             isPlaying: { [weak self] app, traits in
@@ -52,7 +52,7 @@ extension AppDelegate {
                 let source = if case .browserWebApp(let browser)? = traits.framework { browser } else { app.bundleID }
                 guard let pid = NSRunningApplication.running(source)?.processIdentifier else { return false }
                 // AntiDot mode taps no sound: its level isn't measured.
-                let antiDot = self?.preferences.detectionMethod != .audioLevels
+                let antiDot = self?.userSettings.state.detection.isAntiDot ?? true
                 var playing = AppPlaying()
                 if antiDot { playing.levelMeasured = { false } }
                 return await playing.plays(pid)

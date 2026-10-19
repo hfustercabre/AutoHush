@@ -11,7 +11,7 @@ import WebAppPlayers
 /// supported app is; one moved since its check gets its new place.
 package final class CheckedPlayers: Sendable {
     let store: any PlayerSetupStore
-    private let players = OSAllocatedUnfairLock<[String: CheckedPlayer]>(initialState: [:])
+    private let players = OSAllocatedUnfairLock<[String: any AddedAppPlayer]>(initialState: [:])
     /// Where Launch Services finds an app now, by bundle ID; tests stand in for it.
     private let locate: @Sendable (String) -> URL?
 
@@ -21,12 +21,12 @@ package final class CheckedPlayers: Sendable {
         self.locate = locate
     }
 
-    package func current() -> [CheckedPlayer] {
+    package func current() -> [any AddedAppPlayer] {
         let setups = store.setups().map(moved)
         // New players are made outside the lock: each reads its page's
         // learned button from the preferences as it's made.
         let known = players.withLock { $0 }
-        let made = Dictionary(setups.filter { known[$0.bundleID]?.setup != $0 }.map { ($0.bundleID, CheckedPlayer(setup: $0, store: store)) },
+        let made = Dictionary(setups.filter { known[$0.bundleID]?.setup != $0 }.map { ($0.bundleID, Self.player(for: $0, store: store)) },
                               uniquingKeysWith: { first, _ in first })
         return players.withLock { players in
             // A player another call kept meanwhile wins, so each app has one.
@@ -40,6 +40,12 @@ package final class CheckedPlayers: Sendable {
                 return player
             }
         }
+    }
+
+    /// The player for `setup`: muted instead of paused when that's its way
+    /// (Mute It Instead), else pressed by its ways.
+    package static func player(for setup: PlayerSetup, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) -> any AddedAppPlayer {
+        setup.ways.contains(.mute) ? MutedApp(setup: setup) : CheckedPlayer(setup: setup, store: store)
     }
 
     /// `setup`, at its app's new place when it was moved since its check

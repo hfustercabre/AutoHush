@@ -135,18 +135,20 @@ func playingPages(of browserPID: pid_t) -> Int { PlayingPages.count(ofBrowser: b
 /// apps hold one while they play and let it go when they pause, though their
 /// output stays open.
 func assertions(of pid: pid_t) -> Set<PowerAssertion> {
-    IOKitPowerAssertionReader().assertionsByProcess()
-        .filter { ProcessResponsibility.isOwned($0.key, by: pid) }
-        .reduce(into: Set()) { $0.formUnion($1.value) }
+    IOKitPowerAssertionReader().assertions(ownedBy: pid)
 }
 
-/// Whether it plays as its assertions tell it, AntiDot mode's rule: holding
-/// its own "keep the Mac awake" one, it plays; seen holding one while its
-/// sound was on (in this run), but not now, it's paused; nil while it never did.
+/// Whether it plays as its assertions tell it, AntiDot mode's rule
+/// (`AnnouncedAssertions.announcing`, its names learned while its sound is
+/// on, in this run): announcing, it plays; seen announcing while its sound
+/// was on, but not now, it's paused; nil while it never did.
+@MainActor var announcedAssertions = AnnouncedAssertions()
 @MainActor var heldWhileSounding = false
 @MainActor func awake(_ pid: pid_t, sounding: Bool) -> Bool? {
     if webAppBrowser != nil { return pagesSay(pid) }
-    let held = assertions(of: pid).contains { $0.kind == .system }
+    let own = assertions(of: pid)
+    if sounding { announcedAssertions.learn(own) }
+    let held = announcedAssertions.announcing(own)
     if held, sounding { heldWhileSounding = true }
     return held ? true : heldWhileSounding ? false : nil
 }

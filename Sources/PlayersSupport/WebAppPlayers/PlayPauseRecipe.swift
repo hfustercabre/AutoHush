@@ -96,41 +96,27 @@ package protocol PlayPauseRecipeStore: Sendable {
 }
 
 /// The recipes in AutoHush's preferences, by the web app's bundle ID. Read
-/// and written from the players' own queues: `UserDefaults` is thread-safe.
+/// and written from the players' own queues, each change under
+/// `KeyedDefaults`' lock: another web app may be saving its own, or old ones
+/// being cleared out, at the same time.
 package struct DefaultsRecipeStore: PlayPauseRecipeStore {
     package static let key = Preferences.webAppButtonsKey
-    /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
-    private let suiteName: String?
+    private let stored: KeyedDefaults
 
+    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
     package init(suiteName: String? = nil) {
-        self.suiteName = suiteName
+        stored = KeyedDefaults(key: Self.key, suiteName: suiteName)
     }
-
-    private var defaults: UserDefaults { suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
 
     package func recipe(for bundleID: String) -> PlayPauseRecipe? {
-        let stored = defaults.dictionary(forKey: Self.key) as? [String: [String: Any]]
-        return stored?[bundleID].flatMap(PlayPauseRecipe.init(propertyList:))
+        (stored.values()[bundleID] as? [String: Any]).flatMap(PlayPauseRecipe.init(propertyList:))
     }
 
-    /// Under `Preferences.webAppButtonsLock`: another web app may be saving
-    /// its own, or old ones being cleared out, at the same time.
     package func save(_ recipe: PlayPauseRecipe, for bundleID: String) {
-        let defaults = defaults
-        Preferences.webAppButtonsLock.withLockUnchecked {
-            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
-            stored[bundleID] = recipe.propertyList
-            defaults.set(stored, forKey: Self.key)
-        }
+        stored.set(recipe.propertyList, for: bundleID)
     }
 
-    /// Under `Preferences.webAppButtonsLock`, like `save`.
     package func forget(for bundleID: String) {
-        let defaults = defaults
-        Preferences.webAppButtonsLock.withLockUnchecked {
-            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
-            guard stored.removeValue(forKey: bundleID) != nil else { return }
-            defaults.set(stored, forKey: Self.key)
-        }
+        stored.set(nil, for: bundleID)
     }
 }

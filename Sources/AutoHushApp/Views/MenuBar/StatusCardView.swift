@@ -113,7 +113,7 @@ struct StatusCardView: View {
 
     /// Tries starting again; the menu stays open and the card shows how it went.
     private var retryButton: some View {
-        CardChip(title: Text("Retry", comment: "Menu: button on the card that tries starting again after a problem"),
+        CardChip(title: Text(TryAgainText.title),
                  symbol: "arrow.clockwise") { model.perform(.retry) }
     }
 }

@@ -2,46 +2,10 @@
 import PackageDescription
 
 // AutoHush is split into modules, so the compiler keeps the layers apart:
-//
-//   AutoHush (executable, entry point only)
-//     └─ AutoHushApp       menu bar, Settings, updates… and the app's wiring
-//          ├─ CheckPanel        the check's panel and shade, while a check runs
-//          │                   (Add an App… and the Player Check app)
-//          ├─ PlayerCheckKit    playercheck's command line, exit statuses and
-//          │                   answers, to run it (below)
-//          ├─ AutoHushPlayers   the supported media players
-//          │    ├─ SpotifySupport, AppleMusicSupport, TidalSupport…
-//          │    │                   one <App>Support target per player, all in
-//          │    │                   Sources/PlayersSupport/: what's special about it
-//          │    ├─ ScriptablePlayers  controls any app scripted with Apple events
-//          │    │                   (state, pause, play, volume, its notification)
-//          │    ├─ MenuPlayers      controls an app through its playback menu
-//          │    ├─ WebAppPlayers    controls Safari web apps through the site's
-//          │    │                   own Play/Pause button, learned once
-//          │    └─ CheckedPlayers   controls an app added with Add an App…, the
-//          │                        way the user chose (on the three above)
-//          ├─ CheckedPlayers    Add an App…'s check results, its report's lines
-//          │                   and the progress they show
-//          └─ AutoHushKit       the engine: audio detection, playback decisions,
-//                               fades, the MusicPlayer interface, permissions,
-//                               private APIs, configuration and storage
-//
-//   measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
-//   PlayerCheckApp (Player Check, in Tools/) → PlayerCheckKit, CheckedPlayers,
-//                               CheckPanel, AutoHushKit: playercheck in a window,
-//                               run as AutoHush runs it (ToolRun), through the
-//                               same interface
-//   listen-to-fades (developer tool, in Tools/): records a loopback device
-//                               and measures AutoHush's fades in it
-//   playercheck (AutoHush.app's helper, in Sources/PlayerCheck) → PlayerCheckKit,
-//                               ScriptablePlayers, MenuPlayers, WebAppPlayers,
-//                               CheckedPlayers, AutoHushKit: whether and how
-//                               AutoHush could control an app, checked with
-//                               AutoHush's own code (Add an App… runs it); it
-//                               names no player
-//     └─ PlayerCheckKit    its parts that need no app to check (in its Kit/
-//                          folder), so tests can reach them, and its
-//                          interface, which whoever runs it uses too
+// the app, the engine (AutoHushKit), one module per media player and the
+// ones they share, the check (playercheck and PlayerCheckKit) and its panel
+// (CheckPanel), and the tools in Tools/. DEVELOPMENT.md's Architecture draws
+// them and what each depends on; this file only declares them.
 //
 // Code inside a module is sorted by kind of code first (Models, Services,
 // Views…), then by area. Types shared between modules use `package` access:

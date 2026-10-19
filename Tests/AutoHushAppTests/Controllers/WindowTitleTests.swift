@@ -279,7 +279,7 @@ struct WindowTitleTests {
         window.isReleasedWhenClosed = false
         defer { window.orderOut(nil) }
         #expect(!window.isVisible && !window.collectionBehavior.contains(.moveToActiveSpace))
-        window.bringForward()
+        window.bringForward(following: 0) // a second in the app
         #expect(window.collectionBehavior.contains(.moveToActiveSpace))
         await TestWait.until { !window.collectionBehavior.contains(.moveToActiveSpace) }
         #expect(!window.collectionBehavior.contains(.moveToActiveSpace))

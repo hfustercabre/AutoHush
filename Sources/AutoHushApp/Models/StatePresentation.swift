@@ -210,11 +210,9 @@ extension ControlFailure {
             String(localized: "\(player) didn’t respond to its Play/Pause.",
                    comment: "Why the media player couldn't be controlled: a press didn't change it; %@ is the player")
         case .muteUnavailable:
-            String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
-                   comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled; %@ is the player")
+            AntiDotText.onlyMuted(player)
         case .hearingUnavailable:
-            String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing.",
-                   comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played; %@ is the player")
+            AntiDotText.onlyHeard(player)
         case .nowPlayingHidden:
             String(localized: "AutoHush pauses \(player) with Now Playing in the menu bar, which is hidden: show it in \(Self.nowPlayingSettings).",
                    comment: "Why the media player (added with Add an App, paused through the menu bar's Now Playing panel) couldn't be controlled; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”")

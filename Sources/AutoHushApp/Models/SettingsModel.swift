@@ -202,7 +202,7 @@ final class SettingsModel {
 
     /// AntiDot mode: no visual signs of AutoHush working — it never
     /// captures audio, so macOS never shows the purple recording indicator.
-    var isAntiDotMode: Bool { detectionMethod != .audioLevels }
+    var isAntiDotMode: Bool { detectionMethod.isAntiDot }
 
     /// What the menu shows too, and learning's pause.
     @ObservationIgnored let state: AppState
@@ -376,7 +376,7 @@ final class SettingsModel {
     /// AntiDot mode isn't turned on while the player can only be muted,
     /// which AntiDot mode can't do (its switch is off and dimmed then).
     func setDetectionMethod(_ method: DetectionMethod) {
-        if method != .audioLevels, !isAntiDotMode, antiDotUnavailableFor != nil { return }
+        if method.isAntiDot, !isAntiDotMode, antiDotUnavailableFor != nil { return }
         settings.setDetectionMethod(method)
     }
 

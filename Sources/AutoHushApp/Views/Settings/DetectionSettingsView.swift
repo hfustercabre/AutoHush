@@ -87,13 +87,10 @@ struct DetectionSettingsView: View {
         String(localized: "Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps")
     }
 
-    /// Under the AntiDot mode switch while it's off and dimmed.
+    /// Under the AntiDot mode switch while it's off and dimmed: as the menu
+    /// says why the player couldn't be controlled in AntiDot mode.
     static func unavailableNote(_ player: String, mutes: Bool = true) -> String {
-        mutes
-            ? String(localized: "Unavailable with \(player): AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.",
-                     comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App that can only be muted; %@ is the player")
-            : String(localized: "Unavailable with \(player): only its sound tells whether it plays, which needs Audio Recording, and AntiDot mode doesn’t use it.",
-                     comment: "Settings → Detection, under the AntiDot mode switch, dimmed while the media player is an app added with Add an App whose Now Playing row doesn't show whether it plays; %@ is the player")
+        mutes ? AntiDotText.onlyMuted(player) : AntiDotText.onlyHeard(player)
     }
 
     private var audioNote: String {

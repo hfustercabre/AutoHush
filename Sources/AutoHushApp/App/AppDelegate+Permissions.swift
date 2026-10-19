@@ -11,7 +11,7 @@ extension AppDelegate {
     func refreshPermissions() async {
         let player = player
         let state = await permissionCenter.state(
-            player: player, detectionMethod: preferences.detectionMethod, detection: status.detection,
+            player: player, detectionMethod: userSettings.state.detection, detection: status.detection,
             awaitsReopen: status.awaitsReopenForAudioRecording
         )
         guard self.player?.bundleID == player?.bundleID else { return }

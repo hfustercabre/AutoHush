@@ -202,6 +202,25 @@ struct PlayerSessionTests {
     }
 
     @MainActor
+    @Test("while the player isn't open, the apps are listed at the idle rate, as nothing can be paused; opened, it's watched at the active rate again")
+    func listingAtIdleRate() async {
+        let bench = Bench()
+        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
+        let session = bench.makeSession(bench.second)
+        session.launch()
+        await TestWait.until { bench.monitorings.made.count == 1 }
+        let listing = bench.monitorings.made[0].setup?.configuration
+        #expect(listing?.activeSampleInterval == listing?.idleSampleInterval)
+
+        await bench.second.setFailVerify(nil)
+        session.playerLaunched(Players.second)
+        await TestWait.until { session.state.health == .ready }
+        let watching = bench.monitorings.made.last?.setup?.configuration
+        #expect(watching?.activeSampleInterval == AppConfiguration(timings: TimingSettings()).activeSampleInterval)
+        #expect(watching?.activeSampleInterval != watching?.idleSampleInterval)
+    }
+
+    @MainActor
     @Test("while the player isn't running and Auto-Pause is on, its monitoring runs to list the apps playing, the line still saying it isn't running; Auto-Pause off stops it until it's on again; the player opening starts it as usual")
     func listsAppsWhilePlayerIsClosed() async {
         let bench = Bench()

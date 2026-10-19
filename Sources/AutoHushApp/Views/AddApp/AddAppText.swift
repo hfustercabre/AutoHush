@@ -245,12 +245,6 @@ enum AddAppText {
         String(localized: "Allow \(permission)…", comment: "VoiceOver label of the Allow… button beside a permission in the Add an App window; %@ is the permission, e.g. Accessibility")
     }
 
-    /// Audio Recording in AntiDot mode: the check doesn't listen.
-    static var audioInAntiDot: String {
-        String(localized: "Not used in AntiDot mode: the check doesn’t listen to the app, and whether it plays is told by other signs.",
-               comment: "Add an App window, under “Audio Recording” while AntiDot mode is on")
-    }
-
     // MARK: Step 3: reopening
 
     static func reopenTitle(_ app: String) -> String {

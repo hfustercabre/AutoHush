@@ -31,6 +31,16 @@ package protocol PowerAssertionReading: Sendable {
     func assertionsByProcess() -> [pid_t: Set<PowerAssertion>]
 }
 
+extension PowerAssertionReading {
+    /// The assertions the app running as `pid` holds, its helpers' too (a
+    /// helper may hold one for its app).
+    package func assertions(ownedBy pid: pid_t) -> Set<PowerAssertion> {
+        assertionsByProcess()
+            .filter { ProcessResponsibility.isOwned($0.key, by: pid) }
+            .reduce(into: Set()) { $0.formUnion($1.value) }
+    }
+}
+
 /// Reads the assertions from IOKit's power management.
 package struct IOKitPowerAssertionReader: PowerAssertionReading {
     package init() {}

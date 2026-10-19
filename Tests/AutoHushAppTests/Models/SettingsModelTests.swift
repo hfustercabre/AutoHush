@@ -83,7 +83,7 @@ struct SettingsModelTests {
         model.setAntiDotMode(true)
         model.useAntiDotMode()
         #expect(!model.isAntiDotMode)
-        #expect(DetectionSettingsView.unavailableNote("Muted") == "Unavailable with Muted: AutoHush can only mute it, which needs Audio Recording, and AntiDot mode doesn’t use it.")
+        #expect(DetectionSettingsView.unavailableNote("Muted") == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
     @Test("the chosen player's traits come from its option, followed: checked again to be muted (the same app), AntiDot mode's switch is off at once; its fades too")

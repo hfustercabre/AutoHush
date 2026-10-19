@@ -227,9 +227,7 @@ struct UpdateInstallerTests {
           ])
     func refusesUnfitImage(imaged: ImagedApp, announced: String, refusal: UpdateInstallError) async throws {
         let scratch = try Scratch()
-        let made = imaged == .needing(macOS: "14.4") ? nil : try Fixture(imaged)
-        defer { if let made { try? FileManager.default.removeItem(at: made.diskImage.deletingLastPathComponent()) } }
-        let fixture = try made ?? Fixture.shared.get()
+        let fixture = try Fixture.kept(imaged)
         await #expect(throws: refusal) {
             try await installer(scratch, requirement: fixture.requirement, serving: fixture.diskImage)
                 .prepare(release(announced, sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)
@@ -471,17 +469,37 @@ private enum StandIn {
 /// A release's disk image in miniature, for the `.slow` tests: AutoHush.app
 /// (`/usr/bin/true` with an Info.plist), signed ad hoc as
 /// com.autohush.AutoHush, needing macOS 14.4 as releases do, on a compressed
-/// disk image. The shared one is made once per test run and removed when it
-/// ends; a test makes the others it needs. Should codesign or hdiutil fail,
-/// the tests that need one fail; the others run.
+/// disk image. Each kind is kept between test runs, by what it's made of
+/// (B7, the full check, 2026-10-19: hdiutil takes seconds, 16 s under the
+/// parallel suite). Should codesign or hdiutil fail, the tests that need one
+/// fail; the others run.
 private struct Fixture: Sendable {
     static let version = "1.2.0"
-    static let shared = Result { () throws -> Fixture in
-        atexit { _ = try? FileManager.default.removeItem(at: Fixture.sharedFolder) }
-        return try Fixture(in: sharedFolder)
+    /// A release's, which most tests share.
+    static let shared = Result { try Fixture.kept(.needing(macOS: "14.4")) }
+
+    /// One of `imaged`, made in a folder of its own, then moved where it's
+    /// kept: another run making it at the same time keeps either.
+    static func kept(_ imaged: ImagedApp) throws -> Fixture {
+        let folder = keptFolder(for: imaged)
+        if let kept = try? Fixture(madeIn: folder) { return kept }
+        let made = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
+        _ = try Fixture(imaged, in: made)
+        do {
+            try FileManager.default.moveItem(at: made, to: folder)
+        } catch {
+            return try Fixture(madeIn: made)
+        }
+        return try Fixture(madeIn: folder)
     }
-    /// Where the shared one is made.
-    private static let sharedFolder = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
+
+    /// Where one of `imaged` is kept: named by it, the app's version and its
+    /// executable (bump "v1" when `make` makes it otherwise).
+    private static func keptFolder(for imaged: ImagedApp) -> URL {
+        let inputs = Data("v1 \(version) \(imaged) ".utf8) + ((try? Data(contentsOf: URL(filePath: "/usr/bin/true"))) ?? Data())
+        let key = SHA256.hash(data: inputs).prefix(8).map { String(format: "%02x", $0) }.joined()
+        return FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-kept-\(key)")
+    }
 
     let diskImage: URL
     let sha256: String
@@ -490,6 +508,27 @@ private struct Fixture: Sendable {
 
     init(_ imaged: ImagedApp = .needing(macOS: "14.4"),
          in folder: URL = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")) throws {
+        try Self.make(imaged, in: folder)
+        try self.init(madeIn: folder)
+    }
+
+    /// One made in `folder` before.
+    init(madeIn folder: URL) throws {
+        let app = folder.appending(path: "Image/AutoHush.app")
+        diskImage = folder.appending(path: "AutoHush.dmg")
+        sha256 = SHA256.hash(data: try Data(contentsOf: diskImage)).map { String(format: "%02x", $0) }.joined()
+
+        var code: SecStaticCode?
+        var designated: SecRequirement?
+        var text: CFString?
+        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
+              SecCodeCopyDesignatedRequirement(code, [], &designated) == errSecSuccess, let designated,
+              SecRequirementCopyString(designated, [], &text) == errSecSuccess, let text
+        else { throw CocoaError(.featureUnsupported) }
+        requirement = text as String
+    }
+
+    private static func make(_ imaged: ImagedApp, in folder: URL) throws {
         let app = folder.appending(path: "Image/AutoHush.app")
         switch imaged {
         case .needing(let minimum):
@@ -505,31 +544,21 @@ private struct Fixture: Sendable {
             ]
             try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
                 .write(to: app.appending(path: "Contents/Info.plist"))
-            try Self.run("/usr/bin/codesign", ["--force", "--sign", "-", "--identifier", "com.autohush.AutoHush", app.path])
+            try run("/usr/bin/codesign", ["--force", "--sign", "-", "--identifier", "com.autohush.AutoHush", app.path])
         case .link(let target):
             try FileManager.default.createDirectory(at: app.deletingLastPathComponent(), withIntermediateDirectories: true)
             try FileManager.default.createSymbolicLink(at: app, withDestinationURL: URL(filePath: target))
         }
 
-        diskImage = folder.appending(path: "AutoHush.dmg")
+        let diskImage = folder.appending(path: "AutoHush.dmg")
         let contents = folder.appending(path: "Image").path
         if case .link = imaged {
             // No signature to keep intact: a hybrid image, made at once, not in seconds.
-            try Self.run("/usr/bin/hdiutil", ["makehybrid", "-quiet", "-hfs", "-o", diskImage.path, contents])
+            try run("/usr/bin/hdiutil", ["makehybrid", "-quiet", "-hfs", "-o", diskImage.path, contents])
         } else {
-            try Self.run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
-                                              "-volname", "AutoHush", "-srcfolder", contents, diskImage.path])
+            try run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
+                                         "-volname", "AutoHush", "-srcfolder", contents, diskImage.path])
         }
-        sha256 = SHA256.hash(data: try Data(contentsOf: diskImage)).map { String(format: "%02x", $0) }.joined()
-
-        var code: SecStaticCode?
-        var designated: SecRequirement?
-        var text: CFString?
-        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
-              SecCodeCopyDesignatedRequirement(code, [], &designated) == errSecSuccess, let designated,
-              SecRequirementCopyString(designated, [], &text) == errSecSuccess, let text
-        else { throw CocoaError(.featureUnsupported) }
-        requirement = text as String
     }
 
     private static func run(_ tool: String, _ arguments: [String]) throws {

@@ -81,7 +81,7 @@ final class PermissionCenter {
     }
 
     private func audioAccess(detectionMethod: DetectionMethod, detection: DetectionMode, awaitsReopen: Bool) -> PermissionAccess {
-        guard detectionMethod == .audioLevels else { return .notNeeded }
+        guard !detectionMethod.isAntiDot else { return .notNeeded }
         switch system.audio() {
         case .granted: return .allowed
         case .notDetermined: return .notAsked

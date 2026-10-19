@@ -21,8 +21,9 @@ Settings show its state.
 **Start**: checking that AutoHush may control the chosen player, then
 starting its monitoring. A start that fails says why in the health, and is
 tried again by itself. One that finds the player not running still starts
-its monitoring while Auto-Pause is on, only to list the apps playing, until
-the player opens. _Avoid_: bootstrap.
+its monitoring while Auto-Pause is on, only to list the apps playing (at
+the idle rate, as it can pause nothing), until the player opens. _Avoid_:
+bootstrap.
 
 **Health** (`AppHealthState`): whether the chosen player's monitoring
 runs, and if not, why: starting, ready, not running or not installed,
@@ -136,11 +137,12 @@ view, covered, on another desktop, covered there, full screen,
 minimized or hidden. A way that works in every state works wherever the
 user leaves the window.
 
-**Checked app** (`CheckedPlayer`, kind `.checkedApp`): an app added with
+**Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
 controlled the one way the user chose among those its check found (a setup
 kept before that choice may hold several, a press handed to the next when
-one fails). That way is kept as its **player setup** (`PlayerSetup`).
+one fails): pressed by it (`CheckedPlayer`), or muted instead of paused
+(`MutedApp`). That way is kept as its **player setup** (`PlayerSetup`).
 _Avoid_: custom player.
 
 **Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,

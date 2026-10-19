@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// A stop (Ctrl-C, Stop in AutoHush's panel or the Player Check app, or
 /// Escape while input is blocked: `InputBlock`) arrives on another thread. While the app's window
@@ -9,37 +10,38 @@ import Foundation
 /// from the stop's thread meanwhile, the window was dragged while the next
 /// trial ran, and stayed out of place. Otherwise the tool stops at once
 /// (`stopNow`).
-package final class StopState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var inTrial = false, away = false
-    private var requestedAt: Date?
+package final class StopState: Sendable {
+    private struct State {
+        var inTrial = false, away = false
+        var requestedAt: Date?
+    }
+    private let state = OSAllocatedUnfairLock(initialState: State())
 
     package init() {}
 
-    package func setInTrial(_ value: Bool) { lock.withLock { inTrial = value } }
+    package func setInTrial(_ value: Bool) { state.withLock { $0.inTrial = value } }
     /// Records the stop; true when the check must stop itself: in a trial,
     /// or while the window is away (`beginMoving`).
     package func request() -> Bool {
-        lock.withLock {
-            if requestedAt == nil { requestedAt = Date() }
-            return inTrial || away
+        state.withLock {
+            if $0.requestedAt == nil { $0.requestedAt = Date() }
+            return $0.inTrial || $0.away
         }
     }
     /// When the first stop came, while the check is to stop itself
     /// (`InputBlock` frees the mouse and keyboard if it takes long).
-    package var since: Date? { lock.withLock { requestedAt } }
-    private var requested: Bool { requestedAt != nil }
+    package var since: Date? { state.withLock { $0.requestedAt } }
     /// Before the window is first moved; false when a stop came first (then
     /// nothing may move).
     package func beginMoving() -> Bool {
-        lock.withLock {
-            guard !requested else { return false }
-            away = true
+        state.withLock {
+            guard $0.requestedAt == nil else { return false }
+            $0.away = true
             return true
         }
     }
     /// The window is back where it was.
-    package func windowBack() { lock.withLock { away = false } }
-    package var isWindowAway: Bool { lock.withLock { away } }
-    package var isRequested: Bool { lock.withLock { requested } }
+    package func windowBack() { state.withLock { $0.away = false } }
+    package var isWindowAway: Bool { state.withLock { $0.away } }
+    package var isRequested: Bool { state.withLock { $0.requestedAt != nil } }
 }

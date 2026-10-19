@@ -28,8 +28,17 @@ package struct AnnouncedAssertions: Equatable, Sendable {
     /// announces nothing.
     var announcesVideoOnly: Bool { !system.isDisjoint(with: display) }
 
+    /// Whether `held` says the app plays, AntiDot mode's rule: an assertion
+    /// keeping the Mac awake, or, for an app announcing only video, one of
+    /// its names keeping just the display awake. The check and an added app
+    /// in use read it too (R3, the full check, 2026-10-19: one rule).
+    package func announcing(_ held: Set<PowerAssertion>) -> Bool {
+        held.contains { $0.kind == .system || (announcesVideoOnly && system.contains($0.name)) }
+    }
+
     /// Adds the names among `assertions`; `true` when one was new.
-    mutating func learn(_ assertions: Set<PowerAssertion>) -> Bool {
+    @discardableResult
+    package mutating func learn(_ assertions: Set<PowerAssertion>) -> Bool {
         var changed = false
         for assertion in assertions {
             switch assertion.kind {
@@ -119,7 +128,7 @@ struct PlaybackSignals {
                 judgement.learned[id] = known
             }
             let videoOnly = known.announcesVideoOnly
-            let announcing = held.contains { $0.kind == .system || (videoOnly && known.system.contains($0.name)) }
+            let announcing = known.announcing(held)
             if held.contains(where: { $0.kind == .display }) || (videoOnly && announcing) {
                 judgement.showingVideo.insert(id)
             }

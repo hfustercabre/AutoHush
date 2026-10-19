@@ -1,5 +1,6 @@
 import AppKit
 import CheckedPlayers
+import os
 import AutoHushKit
 import ScriptablePlayers
 
@@ -421,11 +422,13 @@ let stateNotificationSuffixes = ["PlaybackStateChanged", "playbackStateChanged",
 /// read it (`PlayerStateObserver`), which is how AutoHush follows such a
 /// player instead of asking it. Delivered while the run loop runs; behind a
 /// lock rather than the main actor, so where macOS delivers them doesn't matter.
-final class NotificationLog: NSObject, @unchecked Sendable {
-    private let lock = NSLock()
-    private var seenKeys: [String: Set<String>] = [:]
-    /// Each one with a state, in order: its name, the state, when.
-    private var announcements: [(name: String, state: PlayerState, at: Date)] = []
+final class NotificationLog: NSObject, Sendable {
+    private struct State {
+        var seenKeys: [String: Set<String>] = [:]
+        /// Each one with a state, in order: its name, the state, when.
+        var announcements: [(name: String, state: PlayerState, at: Date)] = []
+    }
+    private let state = OSAllocatedUnfairLock(initialState: State())
     init(bundleID: String) {
         super.init()
         for suffix in stateNotificationSuffixes {
@@ -436,17 +439,17 @@ final class NotificationLog: NSObject, @unchecked Sendable {
     }
     @objc func note(_ notification: Notification) {
         let keys = (notification.userInfo ?? [:]).keys.map { "\($0)" }
-        let state = PlayerStateObserver.playerState(from: notification.userInfo)
-        lock.withLock {
-            seenKeys[notification.name.rawValue, default: []].formUnion(keys)
-            if state != .unknown { announcements.append((notification.name.rawValue, state, Date())) }
+        let said = PlayerStateObserver.playerState(from: notification.userInfo), name = notification.name.rawValue
+        state.withLock {
+            $0.seenKeys[name, default: []].formUnion(keys)
+            if said != .unknown { $0.announcements.append((name, said, Date())) }
         }
     }
     /// The notifications seen, with their userInfo keys.
-    var seen: [String: Set<String>] { lock.withLock { seenKeys } }
+    var seen: [String: Set<String>] { state.withLock { $0.seenKeys } }
     /// What was announced since `date`, in order.
     func announced(since date: Date) -> [(name: String, state: PlayerState, at: Date)] {
-        lock.withLock { announcements.filter { $0.at >= date } }
+        state.withLock { $0.announcements.filter { $0.at >= date } }
     }
     /// The last state announced since `date`; a player may post each change
     /// twice, the state before, then the new one.

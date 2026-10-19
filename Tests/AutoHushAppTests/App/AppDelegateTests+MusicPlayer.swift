@@ -1,0 +1,407 @@
+import AppKit
+import CheckedPlayers
+import Foundation
+import os
+import SwiftUI
+import Testing
+@testable import AutoHushApp
+import AutoHushKit
+import AutoHushTestSupport
+import PlayersTestSupport
+
+extension AppDelegateTests {
+    // MARK: - Music player
+
+    @MainActor
+    @Test("with no player chosen, AutoHush waits for one and offers them all")
+    func waitsForPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: nil)
+        #expect(sut.player == nil)
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
+        #expect(sut.status.statusLine == "Choose a media player")
+        #expect(sut.status.playerOptions.map(\.name) == ["First", "Second"])
+        #expect(sut.settingsModel.playerOptions == sut.status.playerOptions)
+        #expect(sut.settingsModel.chosenPlayerID == nil)
+    }
+
+    @MainActor
+    @Test("with no supported player installed, AutoHush asks for one, and none can be chosen until one is")
+    func noPlayerInstalled() {
+        let scratch = Scratch()
+        scratch.installed = []
+        let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
+        #expect(sut.status.playerOptions.allSatisfy { !$0.isInstalled })
+
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.player == nil)
+        #expect(scratch.preferences.musicPlayer == nil)
+        #expect(monitorings.made.isEmpty)
+
+        // Installed later: it can be chosen.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.player?.bundleID == Players.first)
+    }
+
+    @MainActor
+    @Test("choosing a player stores it, shows it and starts over with it; choosing it again does nothing")
+    func choosePlayer() async {
+        let scratch = Scratch()
+        let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
+
+        sut.chooseMusicPlayer(Players.second)
+        #expect(scratch.preferences.musicPlayer == Players.second)
+        #expect(sut.status.playerName == "Second")
+        #expect(!sut.settingsModel.playerCanFade) // its fade settings are dimmed
+        #expect(sut.settingsModel.chosenPlayerName == "Second")
+        #expect(sut.status.chosenPlayerID == Players.second)
+        #expect(sut.settingsModel.chosenPlayerID == Players.second)
+        #expect(sut.status.health == .starting)
+        await TestWait.until { sut.status.health == .ready }
+        #expect(monitorings.made.map(\.bundleID) == [Players.second])
+
+        sut.chooseMusicPlayer(Players.second)
+        await sut.session.waitUntilIdle()
+        #expect(monitorings.made.count == 1)
+
+        sut.chooseMusicPlayer(Players.first)
+        #expect(sut.status.playerName == "First")
+        #expect(sut.settingsModel.playerCanFade)
+        await TestWait.until { monitorings.made.count == 2 }
+        #expect(monitorings.made.map(\.bundleID) == [Players.second, Players.first])
+    }
+
+    /// A player only its sound tells about (`needsAudioLevels`), as an app
+    /// added with Add an App can be.
+    private struct HeardPlayer: MusicPlayer {
+        static let id = "com.example.heard"
+        let bundleID = Self.id
+        let name = "Heard"
+        let stateReportDelay: TimeInterval = 0
+        var needsAudioLevels: Bool { true }
+        func verifyControlAccess() async throws {}
+        func playerState() async -> PlayerState { .playing }
+        func pause() async throws {}
+        func play() async throws {}
+        func volume() async -> Int? { nil }
+        func setVolume(_ volume: Int) async throws {}
+        @MainActor
+        func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+            MockStateObserver()
+        }
+    }
+
+    @MainActor
+    @Test("a player that isn't installed, isn't supported, or in AntiDot mode is told only by its sound, can't be chosen")
+    func chooseUnavailablePlayer() {
+        let scratch = Scratch()
+        scratch.installed = [Players.first, HeardPlayer.id]
+        scratch.players = MusicPlayerCatalog(players: [scratch.first, scratch.second, HeardPlayer()], formerDefault: Players.first)
+        scratch.preferences.detectionMethod = .playbackSignals // AntiDot mode
+        let (sut, monitorings) = makeSUT(scratch)
+
+        sut.chooseMusicPlayer(Players.second)
+        sut.chooseMusicPlayer("com.example.unknown")
+        sut.chooseMusicPlayer(HeardPlayer.id)
+        #expect(sut.player?.bundleID == Players.first)
+        #expect(scratch.preferences.musicPlayer == Players.first)
+        #expect(monitorings.made.isEmpty)
+    }
+
+    @MainActor
+    @Test("another supported player opening shows it as installed, without starting over")
+    func otherPlayerLaunch() async {
+        let scratch = Scratch()
+        scratch.installed = [Players.first]
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+
+        scratch.installed.insert(Players.second)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
+        #expect(sut.status.playerOptions.map(\.isInstalled) == [true, true])
+        await sut.session.waitUntilIdle()
+        #expect(sut.status.health == .ready)
+        #expect(monitorings.made.count == 1)
+    }
+
+    @MainActor
+    @Test("while no player is chosen, a supported player opening brings the welcome window back")
+    func playerLaunchWhileWaiting() {
+        let (sut, monitorings) = makeSUT(chosenPlayer: nil)
+        #expect(!sut.isShowingPlayerChooser)
+
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second)
+        #expect(sut.isShowingPlayerChooser)
+        #expect(monitorings.made.isEmpty)
+
+        sut.chooseMusicPlayer(Players.second)
+        // It goes on to what the player needs, and closes once done.
+        #expect(sut.isShowingPlayerChooser)
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        sut.finishWelcome()
+        #expect(!sut.isShowingPlayerChooser)
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+    }
+
+    @MainActor
+    @Test("opening the menu brings the welcome window forward while it's open, in case other windows covered it")
+    func menuBringsWelcomeForward() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 0) // not open
+
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.second) // brings the welcome window
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 1)
+
+        scratch.chooser.close()
+        sut.menuWillOpen()
+        #expect(scratch.chooser.broughtForward == 1)
+    }
+
+    @MainActor
+    @Test("the chosen player is left out of Settings → Sound Sources and the ignored apps")
+    func chosenPlayerNotListedAsApp() {
+        let scratch = Scratch()
+        let first = AudioSource(id: Players.first, name: "First")
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        scratch.preferences.recordSeen([first, vlc])
+        scratch.preferences.ignoredApps = [first]
+        let (sut, _) = makeSUT(scratch)
+        #expect(sut.settingsModel.apps.map(\.id) == ["org.videolan.vlc"])
+        #expect(sut.status.ignoredApps.isEmpty)
+
+        // Once another player is chosen, it's an app like any other.
+        sut.chooseMusicPlayer(Players.second)
+        #expect(sut.settingsModel.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
+        #expect(sut.status.ignoredApps == [first])
+    }
+
+    @MainActor
+    @Test("someone updating from before the choice keeps the former player, unasked")
+    func updatingKeepsFormerPlayer() {
+        let scratch = Scratch()
+        scratch.preferences.lastLaunchedVersion = "0.3.11"
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        #expect(sut.player?.bundleID == Players.first)
+        #expect(sut.status.health == .starting)
+    }
+
+    @MainActor
+    @Test("a stored player that is no longer supported is asked for again")
+    func unknownStoredPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: "com.example.gone")
+        #expect(sut.player == nil)
+        #expect(sut.status.health == .needsPlayer("Choose a media player"))
+    }
+
+    @MainActor
+    @Test("Diagnostics in Settings follows what AutoHush sees: the apps with sound, found where Settings → Sound Sources lists them, and an added app's ways; while Settings is open, the window watch follows it on its page, launch at login, and the players while none is chosen")
+    func diagnostics() async {
+        let scratch = Scratch()
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        scratch.preferences.recordSeen([vlc])
+        let (sut, monitorings) = makeSUT(scratch)
+        #expect(sut.settingsModel.diagnostics == nil)
+        await sut.refresh(.diagnostics)
+        var diagnostics = sut.settingsModel.diagnostics
+        #expect(diagnostics?.apps.isEmpty == true)
+        #expect(diagnostics?.text.contains("Apps with Sound\nNo other app is playing sound right now.") == true)
+        #expect(diagnostics?.sections.first?.rows.first?.value.hasPrefix("First") == true)
+        #expect(diagnostics?.text.contains("Automation for First") == true)
+
+        await start(sut)
+        monitorings.made[0].audioReport = [ActiveAudioReport.Entry(id: vlc.id, name: "VLC", state: .playing)]
+        await sut.refresh(.diagnostics)
+        diagnostics = sut.settingsModel.diagnostics
+        #expect(diagnostics?.apps.map(\.bundlePath) == [vlc.bundlePath])
+        #expect(diagnostics?.text.contains("Apps with Sound\nVLC (org.videolan.vlc) — playing") == true)
+
+        scratch.launchAtLogin.isEnabled = true // in System Settings
+        await sut.refresh(.launchAtLogin)
+        #expect(sut.settingsModel.launchAtLoginEnabled)
+        #expect(AppDelegate.settingsNeeds(page: .general, hasPlayer: true) == [.notifications, .launchAtLogin, .permissions])
+        #expect(AppDelegate.settingsNeeds(page: .diagnostics, hasPlayer: false)
+                == [.notifications, .launchAtLogin, .permissions, .diagnostics, .players])
+
+        // An app added with Add an App: the ways its check found.
+        let added = Scratch()
+        let setup = PlayerSetup(bundleID: "com.example.added", name: "Added", appURL: URL(fileURLWithPath: "/Applications/Added.app"),
+                                ways: [.menu(menuName: "Controls")])
+        let checked = CheckedPlayer(setup: setup, reports: nil)
+        added.players = MusicPlayerCatalog(players: [added.first], found: { [checked] })
+        added.installed.insert(setup.bundleID)
+        let (withAdded, _) = makeSUT(added, chosenPlayer: setup.bundleID)
+        withAdded.refreshDiagnostics()
+        #expect(withAdded.settingsModel.diagnostics?.text.contains("Controlled by: \(AddAppText.wayTitle(.menu))") == true)
+    }
+
+    @MainActor
+    @Test("only the chosen player is ever asked for permission to control it, and only once chosen")
+    func onlyChosenPlayerIsAsked() async {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+
+        // Nothing is asked before a player is chosen, not even when one opens.
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        await sut.session.waitUntilIdle()
+        #expect(await scratch.first.verifyCallCount == 0)
+        #expect(await scratch.second.verifyCallCount == 0)
+
+        sut.chooseMusicPlayer(Players.second) // also closes the welcome window
+        await TestWait.until { sut.status.health != .starting }
+        #expect(sut.status.health == .ready)
+        #expect(await scratch.second.verifyCallCount == 1)
+        #expect(await scratch.first.verifyCallCount == 0)
+    }
+
+    @MainActor
+    @Test("a chosen player that was uninstalled is reported as not installed")
+    func chosenPlayerUninstalled() async {
+        let scratch = Scratch()
+        scratch.installed = []
+        // The start stops at the install check, before scripting the player.
+        let (sut, _) = makeSUT(scratch)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        await TestWait.until { sut.status.health != .starting }
+        #expect(sut.status.health == .degraded("First isn’t installed"))
+
+        // Installed again: it's controlled afresh as soon as AutoHush notices.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        await TestWait.until { sut.status.health == .ready }
+        #expect(await scratch.first.verifyCallCount == 1)
+    }
+
+    @MainActor
+    @Test("what the player session knows shows in the menu and Settings: why it can't control the player (its info button's alert too), the music, the apps playing and those that played, those playing as another player is chosen too; a pause held is no moment for an update's restart, and while Add an App's check runs it's held until the check ends")
+    func sessionShown() async {
+        let scratch = Scratch()
+        await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
+        scratch.windowOpen = false
+        let (sut, monitorings) = makeSUT(scratch)
+        let alerts = CallLog()
+        sut.runAlert = { alert in
+            alerts.calls.append(([alert.messageText, alert.informativeText] + alert.buttons.map(\.title)).joined(separator: " | "))
+            return .alertSecondButtonReturn // OK: System Settings stays closed
+        }
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        await TestWait.until { sut.status.health != .starting }
+        #expect(sut.status.statusLine == "Can’t control First right now")
+        #expect(sut.settingsModel.statusLine == "Can’t control First right now")
+        #expect(sut.status.controlError?.text == "AutoHush can’t find Play/Pause in First’s menus.")
+        // The info button after the card's line: what failed, then why, with OK only.
+        sut.showControlError()
+        #expect(alerts.calls.count == 1)
+        #expect(alerts.calls.first?.hasPrefix("Can’t Control First | AutoHush can’t find Play/Pause in First’s menus.\n\n") == true)
+        #expect(alerts.calls.first?.contains(ControlFailure.openMenuBarSettings) == false)
+        // Now Playing hidden in the menu bar: it offers the pane that shows it.
+        sut.status.controlError = ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "First")
+        sut.showControlError()
+        #expect(alerts.calls.last?.hasSuffix(" | \(ControlFailure.openMenuBarSettings) | OK") == true)
+
+        await scratch.first.setFailVerify(nil)
+        await TestWait.until { sut.status.health == .ready }
+        #expect(sut.status.controlError == nil)
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        #expect(sut.isQuietMoment)
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        monitorings.made[0].send(.activeSources([vlc]))
+        #expect(sut.status.playback == .pausedByMonitor)
+        #expect(sut.status.activeSources == [vlc])
+        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id]) // listed in Settings → Sound Sources as it plays
+        #expect(!sut.isQuietMoment) // it holds a pause: no restart for an update now
+
+        // Add an App's check runs: the pause stays until it ends.
+        sut.holdsPlayerForCheck(true)
+        sut.holdsPlayerForCheck(true) // again: nothing more
+        #expect(sut.session.resumesHeld && monitorings.made[0].resumesHeld == [true])
+        #expect(sut.status.statusLine == "Paused while a check runs")
+        sut.holdsPlayerForCheck(false)
+        #expect(!sut.session.resumesHeld && monitorings.made[0].resumesHeld == [true, false])
+        #expect(!sut.status.playerHeldForCheck)
+
+        // VLC stops: Recently Played lists it. Safari plays as another
+        // player is chosen, which stops the monitoring: Safari too.
+        monitorings.made[0].send(.activeSources([]))
+        #expect(sut.status.recentSources() == [vlc])
+        let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
+        monitorings.made[0].send(.activeSources([safari]))
+        sut.chooseMusicPlayer(Players.second)
+        #expect(sut.status.activeSources.isEmpty)
+        #expect(sut.status.recentSources() == [safari, vlc])
+    }
+
+    @MainActor
+    @Test("the chosen player uninstalled while AutoHush runs is noticed without a restart, and put back starts it again")
+    func playerUninstalledWhileRunning() async {
+        let scratch = Scratch()
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+        monitorings.made[0].send(.playback(.musicPlaying))
+
+        // Moved to the Trash: its folder changes, and nothing else happens.
+        scratch.installed = []
+        scratch.changeFolder()
+        await TestWait.until { sut.status.health != .ready }
+        #expect(sut.status.health == .degraded("First isn’t installed"))
+        #expect(sut.status.playback == .unknown)
+        #expect(monitorings.made[0].isStopped)
+
+        // Put back: controlled afresh.
+        scratch.installed = [Players.first]
+        scratch.changeFolder()
+        await TestWait.until { sut.status.health == .ready }
+        #expect(monitorings.made.count == 2)
+    }
+
+    @MainActor
+    @Test("opening the menu notices a player that was uninstalled while it wasn't running")
+    func menuNoticesUninstalledPlayer() async {
+        let scratch = Scratch()
+        await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, monitorings) = makeSUT(scratch)
+        sut.session.launch()
+        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
+
+        scratch.installed = []
+        sut.refreshPlayerOptions() // what opening the menu or Settings does
+        #expect(sut.status.health == .degraded("First isn’t installed"))
+        #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == false)
+
+        // Asked again, it stays as it is.
+        sut.refreshPlayerOptions()
+        #expect(sut.status.health == .degraded("First isn’t installed"))
+        // Only what listed the apps while it wasn't running, stopped now.
+        #expect(monitorings.made.count == 1 && monitorings.made.allSatisfy(\.isStopped))
+    }
+
+    @MainActor
+    @Test("the Applications folders are watched, and the one holding the chosen player's app")
+    func watchesApplicationFolders() {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        let applicationFolders = Set(ApplicationFolders.all.map(\.path))
+        #expect(sut.watchedFolders == applicationFolders)
+
+        sut.chooseMusicPlayer(Players.second) // in a folder inside /Applications
+        #expect(sut.watchedFolders == applicationFolders.union(["/Applications/Players"]))
+
+        // Gone: the Applications folders are enough to notice it coming back.
+        scratch.installed = [Players.first]
+        sut.refreshPlayerOptions()
+        #expect(sut.watchedFolders == applicationFolders)
+    }
+
+    @MainActor
+    @Test("with no player chosen, no folder is watched")
+    func noWatchWithoutPlayer() {
+        let (sut, _) = makeSUT(chosenPlayer: nil)
+        sut.refreshPlayerOptions()
+        #expect(sut.watchedFolders.isEmpty)
+    }
+}

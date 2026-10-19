@@ -7,6 +7,9 @@ import AutoHushKit
 import AutoHushTestSupport
 import PlayersTestSupport
 
+/// A keep-awake assertion as a player holds one while it plays.
+private let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
+
 @Suite("CheckedPlayer")
 struct CheckedPlayerTests {
     private let app = URL(fileURLWithPath: "/Applications/Jukebox.app")
@@ -28,88 +31,8 @@ struct CheckedPlayerTests {
         #expect(try JSONDecoder().decode(PlayerSetup.self, from: JSONEncoder().encode(found)) == found)
     }
 
-    @Test("muted instead of paused: a pause mutes it and it reads paused; a play unmutes it; once its assertion was seen, it tells; stopped 3 s by the user and played again, it's unmuted; after a sleep, unmuted once it stops, not while it plays; AntiDot mode lifts a mute")
-    func muting() async throws {
-        let muter = FakeMuter()
-        let held = Locked(false)
-        let clock = ManualClock()
-        let setup = setup([.mute])
-        let player = CheckedPlayer(setup: setup, parts: CheckedPlayer.parts(for: setup, store: MemorySetupStore()), reports: nil,
-                                   processIdentifier: { 4242 }, muter: muter, assertionHeld: { _ in held.value }, clock: { clock.now })
-        #expect(player.pausesByMuting && player.needsAudioLevels && player.controlPermission == .systemAudioRecording && !player.canFade)
-        held.value = true
-        #expect(await player.playerState() == .playing)
-        try await player.pause()
-        #expect(muter.isMuted)
-        #expect(await player.playerState() == .paused) // still plays, muted: our pause
-        try await player.play()
-        #expect(!muter.isMuted)
-        held.value = false
-        #expect(await player.playerState() == .paused) // its assertion seen: without it, it's paused
-
-        // Muted, the user pauses it for 3 s, then plays it: theirs to hear.
-        held.value = true
-        try await player.pause()
-        held.value = false
-        #expect(await player.playerState() == .paused)
-        clock.advance(by: MuteState.stopTime)
-        #expect(await player.playerState() == .paused)
-        #expect(muter.isMuted)
-        held.value = true
-        #expect(await player.playerState() == .playing)
-        #expect(!muter.isMuted)
-
-        try await player.pause()
-        await player.forgetPause() // the Mac slept: AutoHush no longer holds the pause
-        #expect(muter.isMuted) // it plays on
-        held.value = false
-        #expect(await player.playerState() == .paused)
-        clock.advance(by: MuteState.stopTime)
-        #expect(await player.playerState() == .paused)
-        #expect(!muter.isMuted) // stopped for 3 s: lifted
-
-        held.value = true
-        try await player.pause()
-        player.allowTaps(false) // AntiDot mode: no taps, no mute
-        await TestWait.until { !muter.isMuted }
-        #expect(!muter.isMuted)
-        await #expect(throws: MusicPlayerError.playerCommandFailed(.muteUnavailable)) { try await player.pause() }
-    }
-
-    @Test("muted, then quit: what the mute stood for goes with it, also when it's opened again before a read sees it quit")
-    func mutedThenQuit() async throws {
-        let muter = FakeMuter()
-        let running = Locked<pid_t?>(4242)
-        let setup = setup([.mute])
-        let player = CheckedPlayer(setup: setup, parts: CheckedPlayer.parts(for: setup, store: MemorySetupStore()), reports: nil,
-                                   processIdentifier: { running.value }, muter: muter, assertionHeld: { _ in true })
-        try await player.pause()
-        #expect(muter.isMuted)
-        running.value = nil
-        #expect(await player.playerState() == .notRunning)
-        #expect(!muter.isMuted)
-        running.value = 4343 // opened again, playing: it's heard, not taken for paused
-        #expect(await player.playerState() == .playing)
-        try await player.pause()
-        running.value = 4444 // quit and opened again within a read
-        #expect(await player.playerState() == .playing)
-        #expect(!muter.isMuted)
-        try await player.pause()
-        #expect(muter.isMuted)
-    }
-
-    @Test("released, its page's switch goes back off and a mute is lifted, whenever it's asked")
+    @Test("released, its page's switch goes back off, whenever it's asked")
     func release() async throws {
-        let muter = FakeMuter()
-        let setup = setup([.mute])
-        let muted = CheckedPlayer(setup: setup, parts: CheckedPlayer.parts(for: setup, store: MemorySetupStore()), reports: nil,
-                                  processIdentifier: { 4242 }, muter: muter, assertionHeld: { _ in true })
-        try await muted.pause()
-        #expect(muted.releasesOnQuit)
-        await muted.release()
-        #expect(!muter.isMuted)
-        #expect(await muted.playerState() == .playing)
-
         let page = StubPage()
         let paged = CheckedPlayer(setup: self.setup([.page(.webKit)]), parts: .init(ways: [], signs: [], page: page.player()),
                                   reports: nil, processIdentifier: { 4242 })
@@ -182,7 +105,7 @@ struct CheckedPlayerTests {
         #expect(parts.ways.count == 3)
         #expect(parts.signs.map { "\(type(of: $0))" } == ["SafariWebAppPlayer", "MenuPlayer"])
         #expect(parts.toggleState != nil && parts.page != nil)
-        #expect(parts.volume == nil && parts.announcing == nil && parts.hearing == nil && !parts.mutes)
+        #expect(parts.volume == nil && parts.announcing == nil && parts.hearing == nil)
         var announced = setup([.script(script)])
         announced.stateNotification = "com.example.jukebox.playerInfo"
         let own = CheckedPlayer.parts(for: announced, store: MemorySetupStore())
@@ -293,7 +216,7 @@ struct CheckedPlayerTests {
         let heard = FakeLevelProbe(audible: false)
         let held = Locked(false)
         let qobuz = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
-                                  processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, assertionHeld: { _ in held.value })
+                                  processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, assertionsHeld: { _ in held.value ? playing : [] })
         #expect(qobuz.needsAudioLevels && !qobuz.pausesByMuting) // heard, through Audio Recording, but pressed, not muted
         #expect(await qobuz.polledState() == .unknown) // its output open, and no assertion seen yet: nothing told
         held.value = true
@@ -305,7 +228,25 @@ struct CheckedPlayerTests {
         #expect(heard.listens == 1)
     }
 
-    @Test("its access is checked way by way until one answers, the panel only when it's the only way; muted only, it needs only to run")
+    @Test("its assertions tell by AntiDot mode's rule: one keeping only the display awake doesn't, unless it kept the Mac awake under the same name while its sound was on (a video)")
+    func assertionsByAntiDotRule() async {
+        var stale = setup([.panel(rememberedRow: nil)])
+        stale.panelRowIsStale = true
+        let held = Locked<Set<PowerAssertion>>([])
+        let player = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
+                                   processIdentifier: { 4242 }, levelProbe: FakeLevelProbe(audible: false), soundOn: { _ in true },
+                                   assertionsHeld: { _ in held.value })
+        held.value = [PowerAssertion(.display, "Showing a picture")]
+        #expect(await player.polledState() == .unknown) // the display only: nothing told
+        held.value = [PowerAssertion(.system, "Video")] // its video hidden keeps the Mac awake
+        #expect(await player.polledState() == .playing)
+        held.value = [PowerAssertion(.display, "Video")] // shown, the same one keeps only the display awake
+        #expect(await player.polledState() == .playing)
+        held.value = [PowerAssertion(.display, "Showing a picture")]
+        #expect(await player.polledState() == .paused)
+    }
+
+    @Test("its access is checked way by way until one answers, the panel only when it's the only way")
     func access() async throws {
         let denied = MockMusicPlayer(failVerifyWith: MusicPlayerError.automationPermissionDenied), allowed = MockMusicPlayer()
         let panelAsked = Locked(false) // here: whether the panel way was asked
@@ -322,14 +263,6 @@ struct CheckedPlayerTests {
         #expect(!panelAsked.value)
         await #expect(throws: MusicPlayerError.playerNotRunning) { try await player(ways: [panel], signs: []).verifyControlAccess() }
         #expect(panelAsked.value)
-
-        let mute = setup([.mute])
-        let running = Locked<pid_t?>(4242)
-        let muted = CheckedPlayer(setup: mute, parts: CheckedPlayer.parts(for: mute, store: MemorySetupStore()), reports: nil,
-                                  processIdentifier: { running.value }, muter: FakeMuter())
-        try await muted.verifyControlAccess()
-        running.value = nil
-        await #expect(throws: MusicPlayerError.playerNotRunning) { try await muted.verifyControlAccess() }
     }
 
     @MainActor
@@ -372,7 +305,7 @@ struct CheckedPlayerTests {
         #expect(await player(ways: [script], signs: [script, page], running: false).playerState() == .notRunning)
     }
 
-    @Test("every setup is a player, one not installed with no place; each kept while its setup stays the same")
+    @Test("every setup is a player, muted instead of paused when that's its way, one not installed with no place; each kept while its setup stays the same")
     func players() throws {
         let installed = FileManager.default.temporaryDirectory.appendingPathComponent("Checked-\(UUID().uuidString).app")
         try FileManager.default.createDirectory(at: installed, withIntermediateDirectories: true)
@@ -381,9 +314,12 @@ struct CheckedPlayerTests {
         store.save(PlayerSetup(bundleID: "com.example.installed", name: "Installed", appURL: installed, ways: [.menu(menuName: "Play")]))
         store.save(PlayerSetup(bundleID: "com.example.gone", name: "Gone", appURL: URL(fileURLWithPath: "/nonexistent/Gone.app"),
                                ways: [.menu(menuName: "Play")]))
+        store.save(PlayerSetup(bundleID: "com.example.muted", name: "Muted", appURL: installed, ways: [.mute]))
         let players = CheckedPlayers(store: store, locate: { _ in nil })
         let first = players.current()
-        #expect(Set(first.map(\.bundleID)) == ["com.example.installed", "com.example.gone"])
+        #expect(Set(first.map(\.bundleID)) == ["com.example.installed", "com.example.gone", "com.example.muted"])
+        #expect(first.first { $0.bundleID == "com.example.installed" } is CheckedPlayer)
+        #expect(first.first { $0.bundleID == "com.example.muted" } is MutedApp)
         #expect(first.first { $0.bundleID == "com.example.installed" }?.installedURL == installed)
         #expect(first.first { $0.bundleID == "com.example.gone" }.map { $0.installedURL == nil } == true)
         let again = players.current()

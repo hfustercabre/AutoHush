@@ -79,8 +79,7 @@ enum SettingsSwitch: CaseIterable {
             return String(localized: "\(player) can’t be faded",
                           comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
         case .levelsMusic:
-            return String(localized: "Off in AntiDot mode",
-                          comment: "The menu, under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound)")
+            return AntiDotText.featureOff
         case .staysPausedAfterCalls:
             return nil
         }

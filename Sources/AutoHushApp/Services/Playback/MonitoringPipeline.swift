@@ -33,7 +33,7 @@ final class MonitoringPipeline {
     private let arbiter: PlaybackArbiter
     private let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
-    private let tappingPlayer: (any TappingMusicPlayer)?
+    private let mutingPlayer: (any MutingMusicPlayer)?
     private let playerObserver: any PlayerStateObserving
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
@@ -106,8 +106,8 @@ final class MonitoringPipeline {
             onDetectionModeChange: { statusUpdates.yield(.detection($0)) }
         )
         monitorLink.monitor = monitor
-        tappingPlayer = player as? any TappingMusicPlayer
-        Self.allowTaps(for: tappingPlayer, in: detectionMethod)
+        mutingPlayer = player as? any MutingMusicPlayer
+        Self.allowTaps(for: mutingPlayer, in: detectionMethod)
         self.playerObserver = player.makeStateObserver { [weak monitor] state in
             arbiterCommands.yield(.playerState(state))
             monitor?.setPlayerPlaying(state == .playing)
@@ -208,18 +208,18 @@ final class MonitoringPipeline {
 
     func setDetectionMethod(_ method: DetectionMethod) {
         monitor.setDetectionMethod(method)
-        Self.allowTaps(for: tappingPlayer, in: method)
+        Self.allowTaps(for: mutingPlayer, in: method)
     }
 
     /// AntiDot mode promises no audio taps, with either of its ways of
     /// detecting: a player that mutes itself through one (a web app that
     /// refuses to pause) doesn't then, nor listens to itself first.
-    private static func allowTaps(for player: (any TappingMusicPlayer)?, in method: DetectionMethod) {
+    private static func allowTaps(for player: (any MutingMusicPlayer)?, in method: DetectionMethod) {
         player?.allowTaps(Self.allowsTaps(method))
     }
 
     /// Only while audio levels are measured: AntiDot mode is off.
-    static func allowsTaps(_ method: DetectionMethod) -> Bool { method == .audioLevels }
+    static func allowsTaps(_ method: DetectionMethod) -> Bool { !method.isAntiDot }
 
     func setIgnoredSources(_ ids: Set<String>) {
         monitor.setIgnoredSources(ids)

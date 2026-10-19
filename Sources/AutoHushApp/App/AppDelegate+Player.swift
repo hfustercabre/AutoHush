@@ -27,7 +27,7 @@ extension AppDelegate {
               let appURL = option?.appURL
         else { return }
         // AntiDot mode hears no sound, so it can't tell how this one is.
-        if chosen.needsAudioLevels, userSettings.state.detection != .audioLevels {
+        if chosen.needsAudioLevels, userSettings.state.detection.isAntiDot {
             logger.notice("\(chosen.name, privacy: .public) isn’t chosen: only its sound tells how it is, and AntiDot mode doesn’t hear it")
             return
         }

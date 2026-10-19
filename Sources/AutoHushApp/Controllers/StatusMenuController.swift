@@ -3,35 +3,10 @@ import SwiftUI
 import AutoHushKit
 
 /// Owns the menu bar item and the menu it opens, and renders an `AppStatus`
-/// into them. The menu is AutoHush's own panel (`MenuPanel`, the user's
-/// choice, 2026-10-17), so its parts fold and unfold smoothly:
-///
-/// ```text
-/// ╭────────────────────────────────────────────────╮
-/// │ [icon] Spotify                             (●) │  the card (pinned): the player,
-/// │        Paused — Safari is playing   Auto-Pause │  what's happening, the Auto-Pause
-/// │        ✓ Automation allowed  ✓ Fades           │  switch, what AutoHush can do with
-/// │        [Retry] · [Reopen] · [Unmute]           │  it, a chip when one helps;
-/// │ Controls                     [Learn Controls…] │  a web app's controls
-/// ╰────────────────────────────────────────────────╯
-///  Media Player
-///  [icon] Spotify · Supported app             ›   the players beside the menu (a side
-///                                                 window: search, Supported Apps,
-///                                                 Other Apps, Safari Web Apps)
-///  ⚠ Allow Audio Recording Access…        (only when something needs fixing)
-///  Turn off for  [5 min] [15 min] [30 min] [1 hr] [24 hr]
-///  ─────  Playing Now · Recently Played  (each app with its switch)
-///  ─────  Ignored Apps
-///         [icons] VLC, Messages           ›   (a side window: each with its switch)
-///  ─────  Detection                       ⌄   (each page's switches always, under its
-///         AntiDot mode               (●)       title; the title unfolds the rest of
-///  ─────  Fades                           ⌄    its part in its place: T1)
-///         Fade playback              (●)
-///  ─────  Advanced
-///         Level the volume · Stay paused after calls
-///  ─────  Install AutoHush 0.3.8…        (once one is found)
-///  [Settings]  [Updates]  [About]  [Quit]   (pinned; ⌥-click Settings: Diagnostics)
-/// ```
+/// into them. The menu is AutoHush's own panel (`MenuPanel`), so its parts
+/// fold and unfold smoothly; its layout, part by part, is STYLE_GUIDE.md's
+/// (Layout → Menu, and its components), and README's "Using AutoHush" says
+/// what each part does.
 ///
 /// The menu follows `status` while it's open, but the apps listed under
 /// Playing Now and Recently Played are fixed then, so no row moves under the
@@ -185,7 +160,7 @@ final class StatusMenuController: NSObject {
         model.sideKeyboard.clear()
         hoveredSideRow = nil
         pointerSection = nil
-        model.isAntiDotMode = settings.state.detection != .audioLevels
+        model.isAntiDotMode = settings.state.detection.isAntiDot
         model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
         model.announcesRetryOutcome = false
     }

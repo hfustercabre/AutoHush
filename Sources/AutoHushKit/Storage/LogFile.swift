@@ -9,7 +9,7 @@ import os
 ///
 /// One line per entry: the time (ISO 8601), the level, the category and the
 /// message, separated by tabs, the message's line breaks and tabs escaped.
-package final class LogFile: @unchecked Sendable {
+package final class LogFile: Sendable {
     /// How long a line is kept.
     package static let keptFor: TimeInterval = 24 * 60 * 60
     /// The most it holds, the oldest lines going first past it.
@@ -38,8 +38,9 @@ package final class LogFile: @unchecked Sendable {
     private let now: @Sendable () -> Date
     /// Writes, trims and reads, one at a time.
     private let queue = DispatchQueue(label: "AutoHush.LogFile", qos: .utility)
-    /// When old lines were last dropped (on `queue`).
-    private var lastTrim: Date?
+    /// When old lines were last dropped (read and set on `queue`; the lock
+    /// lets the compiler check it).
+    private let lastTrim = OSAllocatedUnfairLock<Date?>(initialState: nil)
     private let observers = OSAllocatedUnfairLock<[UUID: @Sendable (LogEntry) -> Void]>(initialState: [:])
 
     package init(url: URL, now: @escaping @Sendable () -> Date = { Date() }) {
@@ -54,7 +55,7 @@ package final class LogFile: @unchecked Sendable {
         queue.async {
             self.write(Self.line(for: entry))
             for observer in following { observer(entry) }
-            if self.lastTrim.map({ self.now().timeIntervalSince($0) >= Self.trimInterval }) ?? true { self.trim() }
+            if self.lastTrim.withLock({ $0 }).map({ self.now().timeIntervalSince($0) >= Self.trimInterval }) ?? true { self.trim() }
         }
     }
 
@@ -108,7 +109,8 @@ package final class LogFile: @unchecked Sendable {
 
     /// Drops the lines older than `keptFor`, and the oldest past `maxBytes`.
     private func trim() {
-        lastTrim = now()
+        let time = now()
+        lastTrim.withLock { $0 = time }
         guard let data = try? Data(contentsOf: url) else { return }
         let cutoff = now().addingTimeInterval(-Self.keptFor)
         let lines = String(decoding: data, as: UTF8.self).split(separator: "\n")

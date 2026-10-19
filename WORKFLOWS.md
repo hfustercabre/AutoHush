@@ -32,7 +32,7 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu, AutoHush's<br/>own panel: the card and Auto-Pause,<br/>Media Player (the players<br/>beside it, a submenu, opened<br/>by the pointer), Turn off for, Playing Now,<br/>Recently Played, Ignored Apps<br/>(always; beside it too, with Ignore<br/>Another App…, several at once),<br/>the settings' switches (a part's<br/>title unfolds its other settings),<br/>the buttons (the card and<br/>the buttons stay put)"]
+  MENU["The menu bar menu: the card<br/>and Auto-Pause, the players,<br/>Turn off for, the apps playing<br/>and played, Ignored Apps,<br/>the settings' switches,<br/>the buttons (laid out in<br/>STYLE_GUIDE.md)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
@@ -668,7 +668,7 @@ flowchart TD
   W{"What’s wrong?"}
   INS["Isn’t installed:<br/>the folders watched"]
   RUN["Isn’t running: waits<br/>for it to open, then<br/>3 tries, 2 s apart; meanwhile,<br/>with Auto-Pause on, the menu<br/>lists the apps playing"]
-  RESP["Isn’t responding:<br/>tried again after 5 s,<br/>doubling up to a minute;<br/>Retry on the card"]
+  RESP["Isn’t responding:<br/>tried again after 5 s,<br/>doubling up to a minute;<br/>Try Again on the card"]
   CTRL["Can’t control it<br/>right now: ⓘ says why;<br/>tried again likewise"]
   PERM["A permission missing:<br/>the card in orange,<br/>with Allow…"]
   MACOS["macOS’s own prompt,<br/>or System Settings<br/>(Automation: the<br/>player opened first)"]

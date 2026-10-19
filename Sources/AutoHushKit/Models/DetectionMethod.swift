@@ -14,4 +14,9 @@ package enum DetectionMethod: String, Sendable {
     case playbackSignals = "askApps"
     /// Any open audio output counts as playing. Nothing is captured or asked.
     case openStreams
+
+    /// AntiDot mode: apps judged by what they tell macOS or by their open
+    /// output, never by their sound (X13, the full check, 2026-10-19: decided
+    /// here only).
+    package var isAntiDot: Bool { self != .audioLevels }
 }

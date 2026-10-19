@@ -146,7 +146,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   other app is playing sound right now.", and "Starting…" until it knows
   your player's state, rather than "Working normally"; the permission is
   called "Audio Recording" there, as in System Settings; and Settings →
-  Updates says "AutoHush's version is unknown." rather than "the app's".
+  Updates says "AutoHush's version is unknown." rather than "the app's";
+  the card's Retry button says "Try Again", as everywhere one tries again.
 - **A smaller download.** The app ships without its debugging symbols:
   less than half the size.
 

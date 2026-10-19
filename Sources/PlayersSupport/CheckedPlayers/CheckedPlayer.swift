@@ -25,31 +25,19 @@ import WebAppPlayers
 /// signs (`sureState`) and never by its output alone, which stays open for
 /// seconds after a pause; a page checks its own, a toggle judged by another
 /// sign (a row that doesn't follow it, a script without a state) checks its
-/// own without pressing again, and a mute always takes.
-package actor CheckedPlayer: MutingMusicPlayer {
+/// own without pressing again. One muted instead of paused is a `MutedApp`.
+package actor CheckedPlayer: AddedAppPlayer {
     package nonisolated let setup: PlayerSetup
 
-    package nonisolated var bundleID: String { setup.bundleID }
-    package nonisolated var name: String { setup.name }
-    /// Where it was checked, else where macOS finds it now (it was moved);
-    /// `nil` while it isn't installed.
-    package nonisolated var installedURL: URL? { Self.installedURL(of: setup) }
-    package nonisolated var kind: MusicPlayerKind { .checkedApp }
-    /// Muted only, it needs Audio Recording, as AutoHush's own hearing does.
-    /// Through a Now Playing row that doesn't follow it, it needs both:
-    /// Accessibility is named, since nothing presses the row without it,
-    /// and Audio Recording has its own row and warning, as AutoHush's (and
-    /// AntiDot mode can't be used with it).
+    /// Through a Now Playing row that doesn't follow it, it needs
+    /// Accessibility and Audio Recording: Accessibility is named, since
+    /// nothing presses the row without it, and Audio Recording has its own
+    /// row and warning, as AutoHush's (and AntiDot mode can't be used with it).
     package nonisolated var controlPermission: Permission {
-        switch setup.ways.first {
-        case .script?: .automation(player: name)
-        case .mute?: .systemAudioRecording
-        default: .accessibility(player: name)
-        }
+        if case .script? = setup.ways.first { return .automation(player: name) }
+        return .accessibility(player: name)
     }
     package nonisolated var canFade: Bool { parts.volume?.canFade == true }
-    /// Checked here (see above): `PressCheck` doesn't check it again.
-    package nonisolated var checksItsPresses: Bool { true }
 
     /// Its ways' players, and which of them read its state, its volume, its
     /// notification.
@@ -69,8 +57,6 @@ package actor CheckedPlayer: MutingMusicPlayer {
         /// The page its panel way reads its player bar through
         /// (`PanelClues.page`), whose switch is released with it too.
         var cluePage: AccessibilityWebPage?
-        /// It's muted instead of paused: no way pauses it (`PlayerSetup.Way.mute`).
-        var mutes = false
         /// Its panel row doesn't follow it (`PlayerSetup.panelRowIsStale`):
         /// the panel way asks its sound through this.
         var hearing: LateHearing?
@@ -89,18 +75,8 @@ package actor CheckedPlayer: MutingMusicPlayer {
     private let levelProbe: any AudioLevelProbing
     private let pressSleep: VolumeFader.Sleep
     private let logger = AutoHushLogger(category: "CheckedPlayer")
-    /// For one that's muted instead of paused: the mute, what it stands for,
-    /// and whether it plays now (its keep-awake assertion, once it has shown
-    /// one: Qobuz holds one only while it plays; its sound output before).
-    /// The assertion also tells whether one told by its level plays, read
-    /// once a second (`polledState`).
-    private let muter: any AudioMuting
-    private var hush = MuteState()
-    private var mutedPID: pid_t?
-    private let assertionHeld: @Sendable (pid_t) -> Bool
-    private var assertionSeen = false
-    /// What a stop is timed by (`MuteState.stopTime`).
-    private let clock: @Sendable () -> Date
+    /// Whether one told by its level plays, read once a second (`polledState`).
+    private var assertions: PlaybackAssertions
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Its Now Playing report said it wasn't playing while it was heard: an
     /// app may report only while it's the Now Playing app (Qobuz's said
@@ -118,11 +94,9 @@ package actor CheckedPlayer: MutingMusicPlayer {
     init(setup: PlayerSetup, parts: Parts, reports: NowPlayingReports?,
          processIdentifier: (@Sendable () -> pid_t?)? = nil,
          processArguments: @escaping @Sendable (pid_t) -> [String] = { ProcessArguments.of($0) },
-         muter: any AudioMuting = ProcessTapMuter(),
          levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
-         assertionHeld: @escaping @Sendable (pid_t) -> Bool = CheckedPlayer.holdsAssertion,
-         clock: @escaping @Sendable () -> Date = { Date() },
+         assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
          pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         self.setup = setup
         self.parts = parts
@@ -131,35 +105,18 @@ package actor CheckedPlayer: MutingMusicPlayer {
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
         self.processArguments = processArguments
-        self.muter = muter
         self.levelProbe = levelProbe
         let sound = OwnedAudioProcesses()
         self.soundOn = soundOn ?? { sound.isPlayingSound(appPID: $0) }
-        self.assertionHeld = assertionHeld
-        self.clock = clock
+        self.assertions = PlaybackAssertions(read: assertionsHeld)
         self.pressSleep = pressSleep
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
     }
 
-    /// Whether the app running as `pid`, or a process of its own, holds a
-    /// keep-awake assertion (media apps hold one while they play).
-    package static let holdsAssertion: @Sendable (pid_t) -> Bool = { pid in
-        IOKitPowerAssertionReader().assertionsByProcess().contains { owner, assertions in
-            !assertions.isEmpty && (owner == pid || ProcessResponsibility.isOwned(owner, by: pid))
-        }
-    }
-
     /// Read where macOS's log can be read (an administrator's account),
     /// followed while a player asks.
     package static let sharedReports = NowPlayingReports()
-
-    /// Where `setup`'s app is: where it was checked, else where Launch
-    /// Services finds it (moved since); `nil` while it isn't installed.
-    package static func installedURL(of setup: PlayerSetup) -> URL? {
-        if FileManager.default.fileExists(atPath: setup.appURL.path) { return setup.appURL }
-        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: setup.bundleID)
-    }
 
     /// The players of `setup`'s ways.
     static func parts(for setup: PlayerSetup, store: any PlayerSetupStore) -> Parts {
@@ -198,7 +155,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
                 }
                 parts.ways.append(PanelWay(setup: setup, remembered: remembered, store: store, playerBar: playerBar, hearing: hearing))
             case .mute:
-                parts.mutes = true
+                break // a `MutedApp`'s
             }
         }
         if let scripted, scripted.setup.state != nil { parts.signs.append(scripted) }
@@ -208,10 +165,6 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     package func verifyControlAccess() async throws {
-        if parts.mutes {
-            guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
-            return
-        }
         var firstError: (any Error)?
         for way in parts.ways where !(way is PanelWay) {
             do {
@@ -239,21 +192,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     private func state(polled: Bool) async -> PlayerState {
-        guard let pid = processIdentifier() else {
-            // Quit while muted: what the mute stood for goes with it.
-            if parts.mutes { endMute() }
-            return .notRunning
-        }
-        if parts.mutes {
-            // Opened again since it was muted: that mute was the old process's.
-            if let mutedPID, mutedPID != pid { endMute() }
-            let (state, unmute) = hush.read(playing: playsNow(pid), at: clock())
-            if unmute {
-                liftMute()
-                logger.notice("\(self.name, privacy: .public): unmuted, as it was played again (or stopped after a sleep)")
-            }
-            return state
-        }
+        guard let pid = processIdentifier() else { return .notRunning }
         let sure = await sureState(pid: pid, polled: polled)
         if sure != .unknown { return sure }
         // Told by its level, which isn't listened to now: an open output
@@ -290,7 +229,10 @@ package actor CheckedPlayer: MutingMusicPlayer {
         // Its Now Playing row (and report) doesn't follow it: only its sound
         // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
-            if polled { return asserted(pid) }
+            if polled {
+                let soundOn = soundOn
+                return assertions.state(of: pid, soundOn: { soundOn(pid) })
+            }
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
         return await reported(pid: pid, polled: polled) ?? .unknown
@@ -325,56 +267,11 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     package func pause() async throws {
-        if parts.mutes {
-            guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-            guard tapsAllowed.withLock({ $0 }), muter.mute(appPID: pid) else {
-                throw MusicPlayerError.playerCommandFailed(.muteUnavailable)
-            }
-            mutedPID = pid
-            hush.mute()
-            return
-        }
         try await press(to: .paused)
     }
 
     package func play() async throws {
-        if parts.mutes {
-            endMute()
-            return
-        }
         try await press(to: .playing)
-    }
-
-    /// Whether it plays now, for one that's muted: its keep-awake assertion
-    /// once it has held one, else its sound output (open while it plays, and
-    /// for some apps paused too).
-    private func playsNow(_ pid: pid_t) -> Bool {
-        switch asserted(pid) {
-        case .playing: true
-        case .paused: false
-        default: soundOn(pid)
-        }
-    }
-
-    /// What its keep-awake assertion says: playing while it holds one,
-    /// paused once it has held one before; `.unknown` until it has.
-    private func asserted(_ pid: pid_t) -> PlayerState {
-        if assertionHeld(pid) {
-            assertionSeen = true
-            return .playing
-        }
-        return assertionSeen ? .paused : .unknown
-    }
-
-    private func liftMute() {
-        if let mutedPID { muter.unmute(appPID: mutedPID) }
-        mutedPID = nil
-    }
-
-    /// Unmuted, and nothing left of what the mute stood for.
-    private func endMute() {
-        liftMute()
-        hush.unmute()
     }
 
     /// Presses by the first way that takes it, checked as that way allows
@@ -402,7 +299,7 @@ package actor CheckedPlayer: MutingMusicPlayer {
         throw firstError ?? MusicPlayerError.playerCommandFailed(.pressFailed)
     }
 
-    package func volume() async -> Int? { parts.mutes ? nil : await parts.volume?.volume() }
+    package func volume() async -> Int? { await parts.volume?.volume() }
 
     package func setVolume(_ volume: Int) async throws { try await parts.volume?.setVolume(volume) }
 
@@ -422,57 +319,45 @@ package actor CheckedPlayer: MutingMusicPlayer {
     }
 
     /// Whether `release` has something to undo: its page's switch (its page
-    /// way's, or the one its panel way reads), or a mute (its own, or its page's).
-    package nonisolated var releasesOnQuit: Bool { parts.page != nil || parts.cluePage != nil || parts.mutes }
+    /// way's, or the one its panel way reads), or its page's mute.
+    package nonisolated var releasesOnQuit: Bool { parts.page != nil || parts.cluePage != nil }
 
-    /// Turns back off the switch its page needed and lifts a mute, its own
-    /// or its page's, without playing anything: as AutoHush quits, or once
-    /// another player is chosen and AutoHush holds no pause in it. Chosen
-    /// again, its page's switch goes back on at its next look.
+    /// Turns back off the switch its page needed and lifts its page's mute,
+    /// without playing anything: as AutoHush quits, or once another player
+    /// is chosen and AutoHush holds no pause in it. Chosen again, its page's
+    /// switch goes back on at its next look.
     package func release() async {
         await parts.page?.releaseMute()
         await parts.page?.releasePage()
         parts.cluePage?.release()
-        endMute()
     }
 
-    // MARK: Muted instead of paused
+    /// Controlled through a Now Playing row that doesn't follow it: only its
+    /// sound tells how it is.
+    package nonisolated var needsAudioLevels: Bool { parts.hearing != nil }
 
-    package nonisolated var pausesByMuting: Bool { parts.mutes }
-    /// Muted only, or controlled through a Now Playing row that doesn't
-    /// follow it: only its sound tells how it is.
-    package nonisolated var needsAudioLevels: Bool { parts.mutes || parts.hearing != nil }
+    // MARK: Its page's mute in place of a pause
 
-    /// Not in AntiDot mode, which taps no sound: then it can't be muted (nor
-    /// its page in place of a pause), and a mute under way is lifted.
+    /// Not in AntiDot mode, which taps no sound: then it isn't listened to,
+    /// its page can't mute it in place of a pause, and a mute under way is
+    /// lifted.
     package nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
         parts.page?.allowTaps(allowed)
-        guard !allowed else { return }
-        Task { await self.unmuteForGood() }
-    }
-
-    private func unmuteForGood() async {
-        endMute()
-        await parts.page?.releaseMute()
+        guard !allowed, let page = parts.page else { return }
+        Task { await page.releaseMute() }
     }
 
     /// Its page's (an ad its site won't pause, its button saying "Play"
-    /// meanwhile). One that's muted instead of paused reads as paused while
-    /// muted: nothing more to mute.
+    /// meanwhile).
     package func muteIfPlayingAnyway() async -> Bool {
-        guard !parts.mutes, let page = parts.page else { return false }
+        guard let page = parts.page else { return false }
         return await page.muteIfPlayingAnyway()
     }
 
-    /// The Mac slept: AutoHush no longer holds the pause a mute stands for.
-    /// Its page's mute is lifted once the page is paused for real, or
-    /// silent; its own once it has been stopped for `MuteState.stopTime`,
-    /// never while it plays.
+    /// The Mac slept: AutoHush no longer holds the pause its page's mute
+    /// stands for, lifted once the page is paused for real, or silent.
     package func forgetPause() async {
         await parts.page?.forgetPause()
-        guard parts.mutes, hush.isMuted else { return }
-        hush.forget()
-        _ = await playerState()
     }
 }

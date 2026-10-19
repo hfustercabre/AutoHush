@@ -13,7 +13,7 @@ extension AppDelegate {
             uniquingKeysWith: { first, _ in first }
         )
         // An app added through a check: the ways its player uses.
-        let checked = player as? CheckedPlayer
+        let checked = player as? any AddedAppPlayer
         let snapshot = DiagnosticsReport.snapshot(
             activeAudio: session.activeAudioReport(), status: status, facts: diagnosticsFacts(),
             bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path },
@@ -43,8 +43,8 @@ extension AppDelegate {
             playerWordsRead: player?.ownWordsRead,
             audioRecording: TCCAudioCapturePermission().status(),
             notificationsOff: settingsModel.notificationsOff,
-            detectionMethod: preferences.detectionMethod,
-            timings: preferences.timings,
+            detectionMethod: userSettings.state.detection,
+            timings: userSettings.state.timings,
             appVersion: settingsModel.fullVersion ?? "",
             launchAtLogin: settingsModel.launchAtLoginEnabled,
             checksForUpdates: settingsModel.checksForUpdatesAutomatically,

@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 import ScriptablePlayers
 import WebAppPlayers
 
@@ -107,54 +108,38 @@ extension PlayerSetupStore {
 /// The setups in AutoHush's preferences, each as JSON by bundle ID.
 package struct DefaultsPlayerSetupStore: PlayerSetupStore {
     package static let key = "checkedPlayerSetups"
-    private static let lock = NSLock()
-    /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
-    private let suiteName: String?
+    private let stored: KeyedDefaults
 
+    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
     package init(suiteName: String? = nil) {
-        self.suiteName = suiteName
+        stored = KeyedDefaults(key: Self.key, suiteName: suiteName)
     }
-
-    private var defaults: UserDefaults { suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
 
     /// The setups that can be read, by name; one that can't is left out.
     package func setups() -> [PlayerSetup] {
-        let stored = defaults.dictionary(forKey: Self.key) as? [String: Data] ?? [:]
-        return stored.values.compactMap { try? JSONDecoder().decode(PlayerSetup.self, from: $0) }
+        stored.values().values.compactMap { ($0 as? Data).flatMap { try? JSONDecoder().decode(PlayerSetup.self, from: $0) } }
             .sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
     }
 
     package func save(_ setup: PlayerSetup) {
         guard let data = try? JSONEncoder().encode(setup) else { return }
-        let defaults = defaults
-        Self.lock.withLock {
-            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
-            stored[setup.bundleID] = data
-            defaults.set(stored, forKey: Self.key)
-        }
+        stored.set(data, for: setup.bundleID)
     }
 
     package func forget(_ bundleID: String) {
-        let defaults = defaults
-        Self.lock.withLock {
-            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
-            guard stored.removeValue(forKey: bundleID) != nil else { return }
-            defaults.set(stored, forKey: Self.key)
-        }
+        stored.set(nil, for: bundleID)
     }
 
     /// Read, changed and saved under the lock: a change (a panel row kept,
     /// a moved app's place) can't bring back a setup the user removed
     /// meanwhile, nor put its old ways over a new check's.
     package func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
-        let defaults = defaults
-        Self.lock.withLock {
-            var stored = defaults.dictionary(forKey: Self.key) ?? [:]
-            guard let data = stored[bundleID] as? Data, var setup = try? JSONDecoder().decode(PlayerSetup.self, from: data) else { return }
+        stored.change { setups in
+            guard let data = setups[bundleID] as? Data, var setup = try? JSONDecoder().decode(PlayerSetup.self, from: data) else { return false }
             change(&setup)
-            guard let changed = try? JSONEncoder().encode(setup) else { return }
-            stored[bundleID] = changed
-            defaults.set(stored, forKey: Self.key)
+            guard let changed = try? JSONEncoder().encode(setup) else { return false }
+            setups[bundleID] = changed
+            return true
         }
     }
 }

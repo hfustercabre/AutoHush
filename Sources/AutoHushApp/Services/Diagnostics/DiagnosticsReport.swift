@@ -136,7 +136,7 @@ enum DiagnosticsReport {
 
     private static func detection(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         let method = describe(status.detection)
-        let antiDot = facts.detectionMethod != .audioLevels
+        let antiDot = facts.detectionMethod.isAntiDot
         // Nothing measured with AntiDot mode off (no Audio Recording access,
         // or before the first level): apps wait AntiDot mode's minimums.
         let unmeasured = !antiDot && [.pending, .unavailable].contains(status.detection)
@@ -163,15 +163,13 @@ enum DiagnosticsReport {
 
     private static func permissions(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
         var rows: [Row] = []
-        let antiDot = facts.detectionMethod != .audioLevels
+        let antiDot = facts.detectionMethod.isAntiDot
         let audio = PermissionText.audioTitle
         switch facts.audioRecording {
         case .granted?:
             rows.append(Row(label: audio, value: allowed, mark: .ok))
         case _ where antiDot:
-            rows.append(Row(label: audio, value: String(localized: "Not needed in AntiDot mode",
-                                                        comment: "Diagnostics: a permission AntiDot mode doesn't use"),
-                            mark: .neutral))
+            rows.append(Row(label: audio, value: AntiDotText.notNeeded, mark: .neutral))
         case .denied?:
             rows.append(Row(label: audio, value: notAllowed, mark: .problem))
         case .notDetermined?:
@@ -234,7 +232,7 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         // Off in AntiDot mode, which measures no sound, whatever the switch.
                         Row(label: String(localized: "Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
-                            value: facts.timings.levelsMusic && facts.detectionMethod == .audioLevels ? on : off),
+                            value: facts.timings.levelsMusic && !facts.detectionMethod.isAntiDot ? on : off),
                         Row(label: String(localized: "Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call"),
                             value: facts.timings.staysPausedAfterCalls ? on : off),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
