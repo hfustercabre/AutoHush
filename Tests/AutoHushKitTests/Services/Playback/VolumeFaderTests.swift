@@ -267,7 +267,6 @@ struct VolumeFaderTests {
         try await fader.playAndFadeIn()
         await TestWait.until { await paused.value }
 
-        #expect(await paused.value)
         #expect(await player.volumeLevel == 70)
     }
 }

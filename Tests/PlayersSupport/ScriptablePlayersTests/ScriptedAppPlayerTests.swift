@@ -127,16 +127,36 @@ struct ScriptedAppPlayerTests {
         #expect(app.sent.dropFirst(sent).allSatisfy { $0.hasSuffix("of docu") }) // only the documents were read
     }
 
-    @Test("by its documents: it plays while one does; a pause goes to each one playing, a play back to those it paused still open, never to another (the front one); having paused none (a pause handed over at an update's relaunch), it plays the only one open, none of several; none open, it's stopped")
-    func documents() async throws {
-        let app = FakeScriptedApp { $0.documents = [("Song A", true), ("Song B", false), ("Song C", true)] }
-        let setup = ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
-                                state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false)
-        let quickTime = player(setup, app: app)
+    /// A player told by its documents (of class "docu", playing by "jPly"),
+    /// as QuickTime Player is.
+    private static let documentsSetup = ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), actsOnDocuments: true,
+                                                    state: .documents(documentClass: "docu", playing: "jPly"), hasVolume: false)
+
+    /// Three documents open: Song A and Song C play, Song B doesn't.
+    private func documentsApp() -> FakeScriptedApp {
+        FakeScriptedApp { $0.documents = [("Song A", true), ("Song B", false), ("Song C", true)] }
+    }
+
+    @Test("by its documents: it plays while one does")
+    func playsByItsDocuments() async {
+        let quickTime = player(Self.documentsSetup, app: documentsApp())
         #expect(await quickTime.playerState() == .playing)
+    }
+
+    @Test("by its documents: a pause goes to each one playing")
+    func pausesEachDocument() async throws {
+        let app = documentsApp()
+        let quickTime = player(Self.documentsSetup, app: app)
         try await quickTime.pause()
         #expect(app.commands == ["jukePaus Song A", "jukePaus Song C"])
         #expect(await quickTime.playerState() == .paused)
+    }
+
+    @Test("by its documents: a play goes back to those it paused still open, never to another (the front one)")
+    func playsWhatItPaused() async throws {
+        let app = documentsApp()
+        let quickTime = player(Self.documentsSetup, app: app)
+        try await quickTime.pause()
         app.state.withLock { _ = $0.documents.removeLast() } // Song C closed meanwhile
         try await quickTime.play()
         #expect(app.commands == ["jukePaus Song A", "jukePaus Song C", "jukePlay Song A"]) // not Song B: it wasn't paused by us
@@ -145,14 +165,23 @@ struct ScriptedAppPlayerTests {
         #expect(await quickTime.playerState() == .paused)
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await quickTime.play() }
         #expect(app.commands.count == 3)
+    }
 
-        let relaunched = player(setup, app: app)
+    @Test("by its documents, having paused none (a pause handed over at an update's relaunch): a play goes to the only one open, to none of several")
+    func playsTheOnlyDocument() async throws {
+        let app = documentsApp()
+        let relaunched = player(Self.documentsSetup, app: app)
         app.state.withLock { $0.documents = [("Song B", false), ("Song D", false)] }
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await relaunched.play() }
         app.state.withLock { $0.documents = [("Song D", false)] }
         try await relaunched.play()
-        #expect(app.commands.count == 4 && app.commands.last == "jukePlay Song D")
+        #expect(app.commands.count == 1 && app.commands.last == "jukePlay Song D")
+    }
 
+    @Test("by its documents, none open: it's stopped, and has nothing to play")
+    func stoppedWithoutDocuments() async {
+        let app = documentsApp()
+        let quickTime = player(Self.documentsSetup, app: app)
         app.state.withLock { $0.documents = [] }
         #expect(await quickTime.playerState() == .stopped)
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nothingToPlay)) { try await quickTime.play() }

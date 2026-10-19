@@ -112,49 +112,76 @@ extension AppDelegateTests {
         #expect(scratch.asked.last == "ask audio")
     }
 
+    /// The app Add an App checks, and AutoHush with Automation turned down.
     @MainActor
-    @Test("Add an App reads and asks for its app's permissions by the player's rules: Automation while the app runs; Audio Recording macOS can't tell about by what monitoring heard, also in AntiDot mode; allowed in System Settings, it waits for a reopen everywhere")
-    func addAppPermissions() async {
+    private func addAppPermissionsBench() -> (scratch: Scratch, sut: AppDelegate, app: CheckableApp) {
         let scratch = Scratch()
         scratch.automationStatus = OSStatus(errAEEventNotPermitted)
         let (sut, _) = makeSUT(scratch)
-        let app = CheckableApp(bundleID: "com.example.radio", name: "Radio", url: URL(filePath: "/Applications/Radio.app"))
+        return (scratch, sut, CheckableApp(bundleID: "com.example.radio", name: "Radio", url: URL(filePath: "/Applications/Radio.app")))
+    }
 
+    @MainActor
+    @Test("Add an App reads Automation for its app while the app runs, and only for one it scripts")
+    func addAppReadsAutomation() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
         // Scripted and closed: Automation waits for it to run. Not scripted: no Automation.
         #expect(await sut.checkPermissions(app, scriptable: true) == CheckPermissions(accessibility: true, audio: .allowed, automation: .playerNotRunning))
         #expect(await sut.checkPermissions(app, scriptable: false).automation == nil)
         scratch.running = [app.bundleID]
-        let scripted = await sut.checkPermissions(app, scriptable: true)
-        #expect(scripted.automation == .denied)
+        #expect(await sut.checkPermissions(app, scriptable: true).automation == .denied)
+    }
 
-        // macOS can't tell about Audio Recording: allowed while monitoring
-        // hears sound, missing once it can't (Add an App read it as allowed
-        // before, 2026-10-19).
+    @MainActor
+    @Test("Add an App reads Audio Recording, when macOS can't tell about it, by what monitoring hears")
+    func addAppReadsUnknownAudioRecording() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
+        // Allowed while monitoring hears sound, missing once it can't (Add
+        // an App read it as allowed before, 2026-10-19).
         scratch.audio = nil
         #expect(await sut.checkPermissions(app, scriptable: false).audio == .allowed)
         sut.status.detection = .unavailable
         #expect(await sut.checkPermissions(app, scriptable: false).audio == .denied)
+    }
 
-        // Read in AntiDot mode too: the window goes by the mode.
+    @MainActor
+    @Test("Add an App reads Audio Recording in AntiDot mode too: its window goes by the mode")
+    func addAppReadsAudioRecordingInAntiDot() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
         scratch.audio = .denied
         sut.settingsModel.useAntiDotMode()
         #expect(await sut.checkPermissions(app, scriptable: false).audio == .denied)
+    }
 
-        // Allow…: Accessibility's prompt, then System Settings; Automation turned down, System Settings.
+    @MainActor
+    @Test("Add an App's Allow… asks for Accessibility by macOS's prompt, then System Settings, and for Automation turned down, by System Settings")
+    func addAppAsksAccessibilityAndAutomation() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
+        scratch.running = [app.bundleID]
+        let scripted = await sut.checkPermissions(app, scriptable: true)
         scratch.trusted = false
         await sut.requestCheckPermission(.accessibility, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked == ["prompt accessibility", "open Privacy_Accessibility"])
         await sut.requestCheckPermission(.automation, app: app, current: scripted)
         #expect(scratch.asked.last == "open Privacy_Automation")
+    }
 
-        // Audio Recording turned down: System Settings, then AutoHush waits to reopen, here and in the menu.
+    @MainActor
+    @Test("Add an App's Allow… for Audio Recording turned down opens System Settings; then AutoHush waits for a reopen, in Add an App and in the menu")
+    func addAppAsksAudioRecording() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
+        scratch.audio = .denied
         #expect(!sut.status.awaitsReopenForAudioRecording)
         await sut.requestCheckPermission(.audioRecording, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked.last == "open Privacy_AudioCapture")
         #expect(sut.status.awaitsReopenForAudioRecording)
         #expect(await sut.checkPermissions(app, scriptable: false).audio == .needsReopen)
+    }
 
-        // Never asked: macOS's own prompt.
+    @MainActor
+    @Test("Add an App's Allow… for Audio Recording never asked shows macOS's own prompt")
+    func addAppAsksAudioRecordingFirst() async {
+        let (scratch, sut, app) = addAppPermissionsBench()
         scratch.audio = .notDetermined
         await sut.requestCheckPermission(.audioRecording, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked.last == "ask audio")
@@ -177,7 +204,6 @@ extension AppDelegateTests {
         scratch.installed.insert(Players.second) // installed meanwhile
         clock.step()
         await TestWait.until { sut.status.playerOptions.allSatisfy(\.isInstalled) }
-        #expect(sut.status.playerOptions.allSatisfy { $0.isInstalled })
 
         sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
         #expect(sut.settingsModel.welcomeAsksPermissions)
@@ -190,7 +216,6 @@ extension AppDelegateTests {
         scratch.chooser.close() // closed instead of Done: the same
         clock.step()
         await TestWait.until { !sut.settingsModel.welcomeAsksPermissions }
-        #expect(!sut.settingsModel.welcomeAsksPermissions)
     }
 
     @MainActor
@@ -208,7 +233,6 @@ extension AppDelegateTests {
         scratch.launchAtLogin.isEnabled = true
         clock.step()
         await TestWait.until { sut.settingsModel.launchAtLoginEnabled }
-        #expect(sut.settingsModel.launchAtLoginEnabled)
     }
 
     @MainActor
@@ -226,7 +250,6 @@ extension AppDelegateTests {
         scratch.installed.remove(Players.first)
         clock.step()
         await TestWait.until { sut.settingsModel.permissions.audio == .denied }
-        #expect(sut.settingsModel.permissions.audio == .denied)
         #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true) // not looked at again
     }
 

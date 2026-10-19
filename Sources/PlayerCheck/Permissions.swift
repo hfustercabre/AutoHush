@@ -14,15 +14,12 @@ import PlayerCheckKit
 /// as one Player Check opened just before), so it's asked again for up to
 /// 20 s while the app runs.
 @MainActor func askAutomation(pid: pid_t) -> AutomationPermission {
-    var answer = AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true))
+    let answer = AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true))
     guard answer == .notRunning else { return answer }
     say(CheckReportLine.permission(.automation(app: appName), "\(appName) didn't answer yet (it may still be starting): asked again for up to 20 s"))
-    let deadline = Date().addingTimeInterval(20)
-    while answer == .notRunning, Date() < deadline, running?.isTerminated == false {
-        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
-        answer = AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true))
-    }
-    return answer
+    return Polling.wait(seconds: 20, every: 0.5, runLoop: true, from: answer,
+                        reading: { AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true)) },
+                        until: { $0 != .notRunning || running?.isTerminated != false })
 }
 
 /// What a test needs, asked before it does anything: Accessibility (the
@@ -42,8 +39,7 @@ import PlayerCheckKit
     if !AXIsProcessTrusted() {
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
         say(CheckReportLine.waitingForAccessibility(holder, minutes: 2))
-        let deadline = Date().addingTimeInterval(120)
-        while !AXIsProcessTrusted(), Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+        Polling.wait(seconds: 120, every: 0.5, runLoop: true, until: AXIsProcessTrusted)
     }
     let trusted = AXIsProcessTrusted()
     say(CheckReportLine.permission(.accessibility, trusted ? .allowed : .notAllowed))

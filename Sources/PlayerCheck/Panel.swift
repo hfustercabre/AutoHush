@@ -228,7 +228,7 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
     // Read before the panel opens: a page takes a moment, its level half a second.
     let read = choice == .lastOnly ? nil : PanelRead(pid, pausing: pausing, heard: heard)
     let remembered = choice == .lastElseApp ? panelRowText ?? keptPanelRow() : keptPanelRow()
-    return withOpenPanel(failing: false, logsShown: true) { item, rows in
+    return withOpenPanel(failing: false) { item, rows in
         defer { closePanel(item) }
         let shown = rows.map(\.row)
         let state = pausing ? "Pause" : "Play"
@@ -256,8 +256,8 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
 /// bar item and its rows (`body` closes it); `failed` when the item isn't
 /// found or doesn't open, `panelProblem` saying which. Hidden by the user,
 /// Now Playing is shown for this press only, as AutoHush does (the user,
-/// 2026-10-16); `logsShown` notes it in the log.
-@MainActor func withOpenPanel<T>(failing failed: T, logsShown: Bool, _ body: (_ item: AXUIElement, _ rows: [ShownRow]) -> T) -> T {
+/// 2026-10-16), and the log says so.
+@MainActor func withOpenPanel<T>(failing failed: T, _ body: (_ item: AXUIElement, _ rows: [ShownRow]) -> T) -> T {
     func open() -> T {
         guard let item = nowPlayingMenuItem() else {
             log("    no Now Playing item found; in front: \(WindowStates.frontName)")
@@ -274,7 +274,7 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
     }
     if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
        let result = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, open) {
-        if logsShown { log("    Now Playing, hidden in the menu bar, shown for the press and hidden again") }
+        log("    Now Playing, hidden in the menu bar, shown for the press and hidden again")
         return result
     }
     return open()
@@ -304,7 +304,7 @@ enum PanelPress { case already, changed, pressed, notPressed }
     if !pageRead { _ = useRememberedBar(pid: pid) }
     var read = PanelRead(pid, pausing: pausing, heard: nil)
     let remembered = keptPanelRow()
-    return withOpenPanel(failing: PanelPress.notPressed, logsShown: false) { item, rows in
+    return withOpenPanel(failing: PanelPress.notPressed) { item, rows in
         var rows = rows
         var row = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered)
         var own = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered, asToggle: true)

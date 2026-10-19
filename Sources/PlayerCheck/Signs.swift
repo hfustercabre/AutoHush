@@ -93,21 +93,19 @@ extension Look {
     countPagesBeforePlaying(pid, saying: true)
     say(CheckReportLine.waitingToPlay(appName, minutes: Int(seconds / 60))
         + (testMute == nil ? "" : ". It stays muted meanwhile, so you won't hear it start"))
-    let deadline = Date().addingTimeInterval(seconds)
     // Whoever runs the check may need the mouse and keyboard for it.
     inputBlock.pause()
     defer { inputBlock.resume() }
-    while Date() < deadline, !stopState.isRequested {
-        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+    // From the look above (it didn't play): a stop ends the wait before its first pause.
+    let plays = Polling.wait(seconds: seconds, every: 0.5, runLoop: true, from: false, reading: {
         countPagesBeforePlaying(pid, saying: false)
-        if isPlaying(pid) {
-            say("  it plays: testing")
-            RunLoop.main.run(until: Date().addingTimeInterval(1.5)) // it settles, and reports to Now Playing
-            countOtherPages(pid)
-            return true
-        }
-    }
-    return false
+        return isPlaying(pid)
+    }, until: { $0 || stopState.isRequested })
+    guard plays else { return false }
+    say("  it plays: testing")
+    RunLoop.main.run(until: Date().addingTimeInterval(1.5)) // it settles, and reports to Now Playing
+    countOtherPages(pid)
+    return true
 }
 
 // MARK: - A trial

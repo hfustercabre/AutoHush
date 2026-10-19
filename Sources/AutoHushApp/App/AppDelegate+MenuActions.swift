@@ -72,8 +72,8 @@ extension AppDelegate {
     /// App's list of apps. The item is dimmed elsewhere.
     func find() {
         guard let target = findTarget else { return }
-        if target == .soundSourcesSearch, settingsModel.appSearch == nil {
-            settingsModel.appSearch = "" // it opens, taking the keyboard as it appears
+        if target == .soundSourcesSearch, settingsModel.appList.search == nil {
+            settingsModel.appList.search = "" // it opens, taking the keyboard as it appears
         } else if let window = NSApp.keyWindow, let field = window.contentView?.firstEditableTextField {
             window.makeFirstResponder(field)
         }
@@ -86,7 +86,7 @@ extension AppDelegate {
             : window === logsWindowController?.window ? .logs
             : window.windowController is AppChooserWindowController ? .appChooser
             : window.windowController is PlayerChooserWindowController ? .welcome : .other
-        return FindTarget(window: front, settingsPage: settingsWindowController?.shownPage, hasApps: !settingsModel.apps.isEmpty,
+        return FindTarget(window: front, settingsPage: settingsWindowController?.shownPage, hasApps: !settingsModel.appList.apps.isEmpty,
                           welcomeShowsPlayers: !settingsModel.welcomeAsksPermissions,
                           playersSearchable: settingsModel.playerOptions.isSearchable)
     }

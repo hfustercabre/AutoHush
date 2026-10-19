@@ -23,6 +23,18 @@ import AutoHushKit
 final class UpdateController {
     static let automaticCheckInterval: TimeInterval = 24 * 60 * 60
 
+    /// What it works through: GitHub's releases, the installer, the
+    /// notifications, the folder downloads are kept in, and the version
+    /// running. Tests replace them.
+    @MainActor
+    struct System {
+        var checker = UpdateChecker()
+        var installer: any UpdateInstalling = UpdateInstaller()
+        var notifier: any UpdateNotifying = SystemUpdateNotifier()
+        var downloadsFolder = UpdateDownloads.defaultFolder
+        var currentVersion: AppVersion? = .current
+    }
+
     let currentVersion: AppVersion?
     /// The last check's, download's or install's outcome in one line, e.g.
     /// "Checking…"; `nil` before any.
@@ -49,8 +61,6 @@ final class UpdateController {
     let openURL: @MainActor (URL) -> Void
     /// The update the menu offers.
     let onOffer: @MainActor (UpdateOffer?) -> Void
-    /// Hears each status as it's shown, in turn (tests follow them).
-    let onStatus: @MainActor (String) -> Void
     @ObservationIgnored var timer: Timer?
     /// The check under way: one asked for meanwhile is answered by it.
     @ObservationIgnored var checking: Task<Void, Never>?
@@ -83,31 +93,25 @@ final class UpdateController {
     let logger = AutoHushLogger(category: "Updates")
 
     init(
-        checker: UpdateChecker,
-        installer: any UpdateInstalling,
-        notifier: any UpdateNotifying,
+        system: System,
         preferences: Preferences,
-        downloadsFolder: URL = UpdateDownloads.defaultFolder,
-        currentVersion: AppVersion?,
         now: @escaping @MainActor () -> Date = { Date() },
         isQuietMoment: @escaping @MainActor () -> Bool,
         quit: @escaping @MainActor () -> Void,
         openURL: @escaping @MainActor (URL) -> Void = { NSWorkspace.shared.open($0) },
-        onOffer: @escaping @MainActor (UpdateOffer?) -> Void,
-        onStatus: @escaping @MainActor (String) -> Void = { _ in }
+        onOffer: @escaping @MainActor (UpdateOffer?) -> Void
     ) {
-        self.checker = checker
-        self.installer = installer
-        self.downloads = UpdateDownloads(folder: downloadsFolder, preferences: preferences, installer: installer)
-        self.notifier = notifier
+        checker = system.checker
+        installer = system.installer
+        downloads = UpdateDownloads(folder: system.downloadsFolder, preferences: preferences, installer: system.installer)
+        notifier = system.notifier
         self.preferences = preferences
-        self.currentVersion = currentVersion
+        currentVersion = system.currentVersion
         self.now = now
         self.isQuietMoment = isQuietMoment
         self.quit = quit
         self.openURL = openURL
         self.onOffer = onOffer
-        self.onStatus = onStatus
         notifier.onClick = { [weak self] kind, version in self?.open(kind, version: version) }
     }
 
@@ -155,7 +159,6 @@ final class UpdateController {
     /// Shows `status` in Settings.
     func showStatus(_ status: String) {
         self.status = status
-        onStatus(status)
     }
 
     /// Why this copy of AutoHush can't install updates, or nil when it can.

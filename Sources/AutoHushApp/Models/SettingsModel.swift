@@ -5,25 +5,16 @@ import AutoHushKit
 /// What the Settings window shows and edits, and the welcome, learning and
 /// Add a Web App windows with it. It reads each part from its owner: what
 /// the app's state holds (the chosen player, the status line, Auto-Pause,
-/// learning and its pause, the apps) from `AppState`; the timings,
-/// detection and the apps' order from `UserSettings`; the updates' settings
-/// and status from `updates`; the chosen player's permissions from
-/// `PermissionCenter`. The views' actions go to the modules that own them
-/// (`settings`, `updates`, `learningSession`), or to `actions` for what only
-/// AppDelegate does. Launch at login is handled here directly.
+/// learning and its pause) from `AppState`; the timings and detection from
+/// `UserSettings`; the updates' settings and status from `updates`; the
+/// chosen player's permissions from `PermissionCenter`; Settings → Sound
+/// Sources' list from `appList`. The views' actions go to the modules that
+/// own them (`settings`, `updates`, `learningSession`, `appList`), or to
+/// `actions` for what only AppDelegate does. Launch at login is handled
+/// here directly.
 @MainActor
 @Observable
 final class SettingsModel {
-    /// One app in Settings → Sound Sources, and whether it is ignored.
-    struct AppRow: Identifiable, Equatable {
-        let source: AudioSource
-        let isIgnored: Bool
-        /// When it played, as a place in line: 0 played most recently. `nil`
-        /// for an app ignored before it ever played.
-        var playedRank: Int?
-        var id: String { source.id }
-    }
-
     // General
     private(set) var launchAtLoginEnabled = false
     private(set) var launchAtLoginError: String?
@@ -91,9 +82,6 @@ final class SettingsModel {
 
     // From the user's settings.
     var detectionMethod: DetectionMethod { settings.state.detection }
-    /// How the apps are ordered; the most recent first unless the user
-    /// chose otherwise.
-    var appListOrder: AppListOrder { settings.state.listOrder }
     var timings: TimingSettings { settings.state.timings }
 
     // From the updates.
@@ -125,48 +113,10 @@ final class SettingsModel {
     /// When updates were last checked for, by hand or automatically.
     var lastUpdateCheck: Date? { updates.lastCheck }
 
-    // Apps
-    /// The apps that played sound, the most recent first, plus the ignored
-    /// ones, in `appListOrder`. Ordered again only when the apps or the
-    /// order changed, not each time a view reads them.
-    var apps: [AppRow] {
-        let seen = state.seenApps, ignored = state.ignoredApps, order = appListOrder
-        if let last = orderedApps, last.seen == seen, last.ignored == ignored, last.order == order { return last.rows }
-        let rows = Self.ordered(Self.rows(seen: seen, ignored: ignored), by: order)
-        orderedApps = (seen, ignored, order, rows)
-        return rows
-    }
-    /// The rows `apps` ordered last, and what from.
-    @ObservationIgnored private var orderedApps: (seen: [AudioSource], ignored: [AudioSource], order: AppListOrder, rows: [AppRow])?
-    /// The search in Settings → Sound Sources: `nil` while it's closed. It's closed
-    /// again each time Settings opens.
-    var appSearch: String?
-    /// The apps whose names match the search, ignoring case and accents, in
-    /// `appListOrder`; all of them while there's nothing to search for.
-    var shownApps: [AppRow] {
-        let query = appSearch?.trimmingCharacters(in: .whitespaces) ?? ""
-        guard !query.isEmpty else { return apps }
-        return apps.filter { $0.source.name.localizedStandardContains(query) }
-    }
-    /// The apps selected in Settings → Sound Sources, which Remove takes off
-    /// the list: several at once, as in macOS's lists (the user, 2026-10-18).
-    private(set) var selectedAppIDs: Set<String> = []
-    /// The selected apps the list shows, in its order: the search may hide
-    /// some, which stay selected but aren't removed.
-    var selectedApps: [AppRow] { shownApps.filter { selectedAppIDs.contains($0.id) } }
-    /// Where a ⇧-click selects from: the last row clicked without ⇧, or
-    /// added or taken out from the keyboard.
-    @ObservationIgnored private var selectionAnchor: String?
-    /// What was selected besides it then. A ⇧-click adds its range to this,
-    /// so a second one changes the range, as in macOS's lists, and keeps
-    /// what was selected before.
-    @ObservationIgnored private var selectionBesidesRange: Set<String> = []
-    /// The apps the user asked to remove, while that's confirmed: one that's
-    /// turned off, or several with one turned off at least. Empty otherwise.
-    private(set) var appsAwaitingRemoval: [AppRow] = []
-    /// Their names, kept while the confirmation closes (its title shows the
-    /// name, or how many they are).
-    private(set) var removalNames: [String] = []
+    // Sound Sources
+    /// Its list: the rows, their order, the search, the selection and
+    /// the removals.
+    @ObservationIgnored let appList: AppListModel
 
     // Diagnostics
     /// What AutoHush sees, kept up to date while the Diagnostics tab shows.
@@ -234,6 +184,7 @@ final class SettingsModel {
         self.learningSession = learningSession
         self.actions = actions
         self.launchAtLoginController = launchAtLoginController
+        appList = AppListModel(state: state, settings: settings)
         refreshLaunchAtLogin()
     }
 
@@ -260,115 +211,7 @@ final class SettingsModel {
         launchAtLoginController.openSystemSettings()
     }
 
-    // MARK: - Apps
-
-    /// A click on an app in Settings → Sound Sources, as in macOS's lists.
-    /// Alone, it selects only that app, or unselects it when it's the only
-    /// one the list shows selected. With ⌘, it adds the app or takes it out.
-    /// With ⇧ (⌘ too), it selects every app shown from the last one clicked
-    /// to this one, or adds this one when that one isn't shown.
-    func click(on id: String, command: Bool = false, shift: Bool = false) {
-        if shift {
-            if let anchor = selectionAnchor, let range = shownRange(from: anchor, to: id) {
-                selectedAppIDs = selectionBesidesRange.union(range)
-            } else {
-                selectionBesidesRange = selectedAppIDs
-                selectionAnchor = id
-                selectedAppIDs.insert(id)
-            }
-        } else if command {
-            toggleSelection(of: id)
-        } else if selectedApps.map(\.id) == [id] {
-            clearSelection()
-        } else {
-            selectedAppIDs = [id]
-            selectionAnchor = id
-            selectionBesidesRange = []
-        }
-    }
-
-    /// Adds the app to the selection, or takes it out: a ⌘-click, or Return
-    /// or Space on the row, so the keyboard can select several too.
-    func toggleSelection(of id: String) {
-        if selectedAppIDs.remove(id) == nil { selectedAppIDs.insert(id) }
-        selectionAnchor = id
-        selectionBesidesRange = selectedAppIDs
-    }
-
-    /// Settings closed: a selection doesn't outlive it.
-    func clearSelection() {
-        selectedAppIDs = []
-        selectionAnchor = nil
-        selectionBesidesRange = []
-    }
-
-    /// The IDs of the apps shown from `anchor` to `id`, both included, in
-    /// the list's order; `nil` when either isn't shown.
-    private func shownRange(from anchor: String, to id: String) -> [String]? {
-        let ids = shownApps.map(\.id)
-        guard let start = ids.firstIndex(of: anchor), let end = ids.firstIndex(of: id) else { return nil }
-        return Array(ids[min(start, end)...max(start, end)])
-    }
-
-    /// Remove: takes the selected apps the list shows off it. Those that
-    /// pause the music go at once; one that's turned off would pause it
-    /// again, so that's asked first (`appsAwaitingRemoval`), once for all.
-    func removeSelected() {
-        let rows = selectedApps
-        if rows.contains(where: \.isIgnored) {
-            askToRemove(rows)
-        } else {
-            rows.forEach(takeOff)
-        }
-    }
-
-    /// Takes this app off the list, whatever is selected; asked first when
-    /// it's turned off.
-    func remove(_ row: AppRow) {
-        if row.isIgnored {
-            askToRemove([row])
-        } else {
-            takeOff(row)
-        }
-    }
-
-    private func askToRemove(_ rows: [AppRow]) {
-        removalNames = rows.map(\.source.name)
-        appsAwaitingRemoval = rows
-    }
-
-    /// Remove from List, on an app's row: the whole selection when the app
-    /// is one of several selected, as in Finder (the full check, 2026-10-18);
-    /// else that app alone.
-    func removeFromList(_ row: AppRow) {
-        if selectedAppIDs.contains(row.id), selectedApps.count > 1 {
-            removeSelected()
-        } else {
-            remove(row)
-        }
-    }
-
-    /// The apps asked about are removed after all.
-    func confirmRemoval() {
-        let rows = appsAwaitingRemoval
-        appsAwaitingRemoval = []
-        rows.forEach(takeOff)
-    }
-
-    /// The confirmation closed without removing them.
-    func cancelRemoval() { appsAwaitingRemoval = [] }
-
-    private func takeOff(_ row: AppRow) {
-        settings.forget(row.source)
-        selectedAppIDs.remove(row.id)
-        selectionBesidesRange.remove(row.id)
-        if selectionAnchor == row.id { selectionAnchor = nil }
-    }
-
-    func setAppListOrder(_ order: AppListOrder) {
-        guard order != appListOrder else { return }
-        settings.setListOrder(order)
-    }
+    // MARK: - Choices
 
     /// Back to the welcome window's list, to choose another player.
     func showWelcomePlayers() { welcomeAsksPermissions = false }
@@ -424,39 +267,6 @@ final class SettingsModel {
 
     func restoreDefaultAdvanced() {
         setTimings(timings.withDefaultAdvanced)
-    }
-
-    // MARK: - The apps' rows
-
-    /// A row for each app that played audio, ranked the most recent first,
-    /// then one for each ignored app that never played.
-    static func rows(seen: [AudioSource], ignored: [AudioSource]) -> [AppRow] {
-        let ignoredIDs = Set(ignored.map(\.id))
-        var rows = seen.enumerated().map {
-            AppRow(source: $0.element, isIgnored: ignoredIDs.contains($0.element.id), playedRank: $0.offset)
-        }
-        for app in ignored where !rows.contains(where: { $0.id == app.id }) {
-            rows.append(AppRow(source: app, isIgnored: true))
-        }
-        return rows
-    }
-
-    /// The rows in `order`. Ties, and the apps that never played, go by name;
-    /// for a reversed On/Off order, only the groups swap.
-    static func ordered(_ rows: [AppRow], by order: AppListOrder) -> [AppRow] {
-        let name = { (row: AppRow) in row.source.name.localizedLowercase }
-        switch order.criterion {
-        case .lastPlayed:
-            let rank = { (row: AppRow) in row.playedRank ?? .max }
-            let list = rows.sorted { (rank($0), name($0), $0.id) < (rank($1), name($1), $1.id) }
-            return order.isReversed ? list.reversed() : list
-        case .name:
-            let list = rows.sorted { (name($0), $0.id) < (name($1), $1.id) }
-            return order.isReversed ? list.reversed() : list
-        case .state:
-            let group = { (row: AppRow) in row.isIgnored != order.isReversed ? 1 : 0 }
-            return rows.sorted { (group($0), name($0), $0.id) < (group($1), name($1), $1.id) }
-        }
     }
 }
 

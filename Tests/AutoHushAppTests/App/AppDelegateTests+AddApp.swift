@@ -12,100 +12,167 @@ import PlayersTestSupport
 extension AppDelegateTests {
     // MARK: - Apps added with Add an App
 
+    /// What Add an App's check found for an app it controls by its menu `menu`.
+    private static func checked(_ id: String, _ name: String, menu: String) -> CheckResult {
+        CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)],
+                    setup: PlayerSetup(bundleID: id, name: name, appURL: URL(fileURLWithPath: "/Applications/\(id).app"),
+                                       ways: [.menu(menuName: menu)]))
+    }
+
+    /// First chosen, and two apps added with Add an App that need reopening:
+    /// Kept, added before, and Added, checked now. AutoHush's alerts are
+    /// answered by `answers` in turn (then Cancel), and noted by title, a
+    /// removal of the chosen app marked so.
     @MainActor
-    @Test("Add an App's Use keeps what the check found and chooses the app, again once checked again (its new setup used, asking to reopen it as told); Remove asks first: Cancel keeps it; Remove forgets it, and the chosen app lets go of its app, none is chosen and the welcome window asks; one not chosen just leaves the list")
-    func addedAppUsedAndRemoved() async throws {
+    private func addedAppsBench(answers: [NSApplication.ModalResponse] = []) throws
+        -> (scratch: Scratch, added: AddedApps, sut: AppDelegate, alerts: CallLog) {
         let scratch = Scratch()
         let added = AddedApps(scratch.addedSetups, needReopening: true)
         scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { added.players() })
         scratch.installed.formUnion(["com.example.added", "com.example.kept"])
-        func result(_ id: String, _ name: String, menu: String) -> CheckResult {
-            CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)],
-                        setup: PlayerSetup(bundleID: id, name: name, appURL: URL(fileURLWithPath: "/Applications/\(id).app"),
-                                           ways: [.menu(menuName: menu)]))
-        }
-        scratch.addedSetups.save(try #require(result("com.example.kept", "Kept", menu: "Controls").setup)) // added before
+        scratch.addedSetups.save(try #require(Self.checked("com.example.kept", "Kept", menu: "Controls").setup)) // added before
         let (sut, _) = makeSUT(scratch)
         let alerts = CallLog()
-        // Reopen Added?: Cancel. Remove Added?: Cancel, then Remove. Remove Kept?: Remove.
-        let answers: [NSApplication.ModalResponse] = [.alertSecondButtonReturn, .alertSecondButtonReturn,
-                                                      .alertFirstButtonReturn, .alertFirstButtonReturn]
         sut.runAlert = { alert in
             alerts.calls.append(alert.messageText + (alert.informativeText.hasPrefix("It’s your current player") ? " (chosen)" : ""))
             return alerts.calls.count <= answers.count ? answers[alerts.calls.count - 1] : .alertSecondButtonReturn
         }
+        return (scratch, added, sut, alerts)
+    }
 
+    /// Added used right after Skip in its Reopen step: chosen, and not asked
+    /// to reopen it, which the card says it needs.
+    @MainActor
+    private func useAdded(_ sut: AppDelegate) async {
+        sut.useCheckedApp(Self.checked("com.example.added", "Added", menu: "Controls"), asksToReopen: false)
+        await TestWait.until { sut.status.playerNeedsReopen }
+    }
+
+    @MainActor
+    @Test("Add an App's Use keeps what the check found and chooses the app, not asking to reopen it when told not to")
+    func addedAppUsed() async throws {
+        let (scratch, _, sut, alerts) = try addedAppsBench()
         // Used right after Skip in its Reopen step: chosen, and not asked to reopen it.
-        sut.useCheckedApp(result("com.example.added", "Added", menu: "Controls"), asksToReopen: false)
+        sut.useCheckedApp(Self.checked("com.example.added", "Added", menu: "Controls"), asksToReopen: false)
         #expect(scratch.addedSetups.setups().map(\.bundleID) == ["com.example.added", "com.example.kept"])
         #expect(sut.status.playerOptions.filter { $0.kind == .checkedApp }.map(\.name) == ["Added", "Kept"])
         #expect(sut.player?.bundleID == "com.example.added")
         await TestWait.until { sut.status.playerNeedsReopen }
+        #expect(alerts.calls.isEmpty)
+    }
+
+    @MainActor
+    @Test("an app added with Add an App, checked again while chosen and used, is chosen again with its new setup, the player it replaces letting go of its app, and reopening it is asked")
+    func addedAppCheckedAgain() async throws {
+        let (_, added, sut, alerts) = try addedAppsBench(answers: [.alertSecondButtonReturn]) // Reopen Added?: Cancel
+        await useAdded(sut)
         let used = try #require(added.player("com.example.added"))
 
-        // Checked again while chosen: chosen again with its new setup, the
-        // player it replaces lets go of its app, and reopening is asked.
-        sut.useCheckedApp(result("com.example.added", "Added", menu: "Playback"), asksToReopen: true)
+        sut.useCheckedApp(Self.checked("com.example.added", "Added", menu: "Playback"), asksToReopen: true)
         let usedAgain = try #require(added.player("com.example.added"))
         #expect(usedAgain !== used && sut.player.map { $0 as AnyObject } === usedAgain)
         await TestWait.until { alerts.calls.count == 1 }
         await TestWait.until { await used.releases == 1 }
-        #expect(await used.releases == 1)
+        #expect(alerts.calls == ["Reopen Added?"])
+    }
 
-        // Remove Added… (its row with Option held), while it's chosen, as Add an App kept its check.
+    @MainActor
+    @Test("Remove on an app added with Add an App asks first: Cancel keeps it, chosen")
+    func addedAppRemoveCancelled() async throws {
+        let (scratch, _, sut, alerts) = try addedAppsBench(answers: [.alertSecondButtonReturn]) // Remove Added?: Cancel
+        await useAdded(sut)
+        sut.removeAddedApp("com.example.added") // its row with Option held
+        await TestWait.until { alerts.calls.count == 1 }
+        #expect(sut.player?.bundleID == "com.example.added" && scratch.addedSetups.setups().count == 2)
+        #expect(alerts.calls == ["Remove Added? (chosen)"])
+    }
+
+    @MainActor
+    @Test("Remove forgets an app added with Add an App (its setup, its reopen choice and its kept check); chosen, it lets go of its app, none is chosen and the welcome window asks")
+    func addedAppRemoved() async throws {
+        let (scratch, added, sut, alerts) = try addedAppsBench(answers: [.alertFirstButtonReturn]) // Remove Added?: Remove
+        await useAdded(sut)
+        let used = try #require(added.player("com.example.added"))
+        // Removed while it's chosen, as Add an App kept its check.
         ReopenChoices.setReopensAlways("com.example.added", defaults: scratch.defaults)
         let kept = KeptCheckStore(defaults: scratch.defaults)
         kept.save(KeptCheck(app: CheckableApp(bundleID: "com.example.added", name: "Added", url: URL(fileURLWithPath: "/Applications/com.example.added.app")),
-                            result: result("com.example.added", "Added", menu: "Playback"), at: Date()))
+                            result: Self.checked("com.example.added", "Added", menu: "Controls"), at: Date()))
         sut.removeAddedApp("com.example.added")
-        await TestWait.until { alerts.calls.count == 2 }
-        #expect(sut.player?.bundleID == "com.example.added" && scratch.addedSetups.setups().count == 2) // Cancel
-
-        sut.removeAddedApp("com.example.added")
-        await TestWait.until { alerts.calls.count == 3 }
+        await TestWait.until { alerts.calls.count == 1 }
         #expect(sut.player == nil && scratch.preferences.musicPlayer == nil)
         #expect(scratch.chooser.isOpen) // none is chosen: the welcome window asks
         #expect(scratch.addedSetups.setups().map(\.bundleID) == ["com.example.kept"])
         #expect(sut.status.playerOptions.filter { $0.kind == .checkedApp }.map(\.name) == ["Kept"])
         #expect(!ReopenChoices.reopensAlways("com.example.added", defaults: scratch.defaults))
         #expect(kept.load() == nil)
-        await TestWait.until { await usedAgain.releases == 1 }
-        #expect(await usedAgain.releases == 1) // its mute or switch back off
+        await TestWait.until { await used.releases == 1 } // its mute or switch back off
+        #expect(alerts.calls == ["Remove Added? (chosen)"])
+    }
 
+    @MainActor
+    @Test("an app added with Add an App that isn't chosen just leaves the list once removed")
+    func addedAppNotChosenRemoved() async throws {
+        let (scratch, added, sut, alerts) = try addedAppsBench(answers: [.alertFirstButtonReturn]) // Remove Kept?: Remove
         sut.removeAddedApp("com.example.kept")
-        await TestWait.until { alerts.calls.count == 4 }
+        await TestWait.until { alerts.calls.count == 1 }
         #expect(scratch.addedSetups.setups().isEmpty)
         #expect(!sut.status.playerOptions.contains { $0.kind == .checkedApp })
-        #expect(alerts.calls == ["Reopen Added?", "Remove Added? (chosen)", "Remove Added? (chosen)", "Remove Kept?"])
+        #expect(alerts.calls == ["Remove Kept?"])
         let keptPlayer = try #require(added.player("com.example.kept"))
         #expect(await keptPlayer.releases == 0) // not chosen: nothing to let go of
     }
 
+    /// Add an App opened on the stand-ins (its windows are AutoHush's own),
+    /// an app playing to check, and the apps read at its first step.
     @MainActor
-    @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window; its list of apps and the warning before the check open in windows of their own, a new warning replacing the last, which mutes the app only with Audio Recording allowed outside AntiDot mode, else the Mac's sound, if its output can be muted; its Start starts the check")
-    func addAppWindows() async throws {
+    private func addAppOpened() async throws -> (scratch: Scratch, world: World, sut: AppDelegate, feature: AddAppFeature) {
         let scratch = Scratch()
         let world = World()
         world.playing = true
-        // Add an App on the stand-ins: its windows are AutoHush's own.
         let (sut, _) = makeSUT(scratch, addApp: world)
         let feature = try #require(sut.addApp)
-
         sut.openAddApp()
+        let model = try #require(feature.model)
+        await TestWait.until { !model.apps.isEmpty } // read at its first step
+        return (scratch, world, sut, feature)
+    }
+
+    @MainActor
+    @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window")
+    func addAppOpensAsItIs() async throws {
+        let (_, world, sut, feature) = try await addAppOpened()
         let window = try #require(feature.window)
         let model = try #require(feature.model)
+        defer { window.close() }
         #expect(window.isOpen)
-        await TestWait.until { !model.apps.isEmpty } // read at its first step
-        feature.showWarning() // no app chosen yet: no warning
-        #expect(feature.warningWindow == nil)
-
-        model.openChooser()
-        let chooser = try #require(feature.chooserWindow)
-        #expect(chooser.isOpen)
         model.choose(world.apps[0])
         await TestWait.until { model.stage == .ready }
         sut.openAddApp() // open: shown as it is
         #expect(model.stage == .ready && feature.window === window && feature.model === model)
+    }
+
+    @MainActor
+    @Test("Add an App's list of apps opens in a window of its own")
+    func addAppChooserWindow() async throws {
+        let (_, _, _, feature) = try await addAppOpened()
+        let model = try #require(feature.model)
+        defer { feature.window?.close() } // its list too
+        model.openChooser()
+        let chooser = try #require(feature.chooserWindow)
+        #expect(chooser.isOpen)
+    }
+
+    @MainActor
+    @Test("the warning before Add an App's check opens in a window of its own once an app is chosen, a new one replacing the last; it mutes the app only with Audio Recording allowed outside AntiDot mode, else the Mac's sound, if its output can be muted")
+    func checkWarningWindows() async throws {
+        let (scratch, world, sut, feature) = try await addAppOpened()
+        let model = try #require(feature.model)
+        defer { feature.window?.close() } // its warning too
+        feature.showWarning() // no app chosen yet: no warning
+        #expect(feature.warningWindow == nil)
+        model.choose(world.apps[0])
+        await TestWait.until { model.stage == .ready }
 
         model.continueToCheck()
         let warning = try #require(feature.warningWindow)
@@ -123,83 +190,110 @@ extension AppDelegateTests {
         let unmutedView = try #require(unmuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
         await TestWait.until { !macMuted.isOpen }
         #expect(unmuted.isOpen && unmutedView.rootView.muting == .none)
+    }
 
-        unmutedView.rootView.start()
+    @MainActor
+    @Test("the warning's Start starts Add an App's check; closed while it runs, Add an App opens again at its first step, in the same window")
+    func checkWarningStarts() async throws {
+        let (_, world, sut, feature) = try await addAppOpened()
+        let window = try #require(feature.window)
+        let model = try #require(feature.model)
+        model.choose(world.apps[0])
+        await TestWait.until { model.stage == .ready }
+        model.continueToCheck()
+        let warning = try #require(feature.warningWindow)
+        let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
+        warningView.rootView.start()
         await TestWait.until { world.runs == 1 }
-        #expect(model.stage == .checking && !unmuted.isOpen)
+        #expect(model.stage == .checking && !warning.isOpen)
 
         // Closed (the check stops), then opened again: from its first step.
         window.close()
-        chooser.close()
         await TestWait.until { !window.isOpen }
         sut.openAddApp()
         #expect(feature.window === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
         window.close()
     }
 
+    /// Add an App opened on the stand-ins, its app ready to check, in
+    /// AntiDot mode or not: AutoHush's own start and end of a check, around
+    /// the stand-in check.
     @MainActor
-    @Test("a check that can't mute only its app (AntiDot mode, or no Audio Recording) mutes the Mac's output while it runs, never one that taps the app's own sound; the output is put back as the check ends, as it stops, as AutoHush quits, and at the next launch after a crash during one")
-    func checkMutesTheMac() async throws {
+    private func readyToCheck(antiDot: Bool) async throws -> CheckBench {
         let scratch = Scratch()
         let world = World()
         world.playing = true
-        // AutoHush's own start and end of a check, around the stand-in check.
         let (sut, _) = makeSUT(scratch, addApp: world)
+        if antiDot { sut.settingsModel.useAntiDotMode() }
         sut.openAddApp()
         let model = try #require(sut.addApp.model)
-        defer { sut.addApp.window?.close() }
         await model.loadApps()
         model.choose(world.apps[0])
         await TestWait.until { model.stage == .ready }
-        func check() async {
-            world.run = FakeCheckRun()
-            let runs = world.runs
-            model.startCheck()
-            await TestWait.until { world.runs == runs + 1 }
-        }
-        func checkAgain() async {
-            model.checkAgain()
-            await TestWait.until { model.stage == .ready }
-        }
-        let muted = { scratch.outputs.mutes[7] == true }
+        return CheckBench(scratch: scratch, world: world, sut: sut, model: model)
+    }
 
-        #expect(model.checkMuting == .app) // its own sound tapped: the Mac's is left alone
-        await check()
-        #expect(!muted())
-        world.run.finish(.failed(1))
-        await TestWait.until { model.stage == .failed }
+    @MainActor
+    @Test("a check that taps the app's own sound never mutes the Mac's output")
+    func checkTappingLeavesTheMac() async throws {
+        let bench = try await readyToCheck(antiDot: false)
+        defer { bench.sut.addApp.window?.close() }
+        #expect(bench.model.checkMuting == .app) // its own sound tapped: the Mac's is left alone
+        await bench.check()
+        #expect(!bench.muted)
+        bench.world.run.finish(.failed(1))
+        await TestWait.until { bench.model.stage == .failed }
+    }
 
-        sut.settingsModel.useAntiDotMode()
-        #expect(model.checkMuting == .mac)
-        await checkAgain()
-        await check()
-        #expect(muted())
-        world.run.finish(.failed(1)) // it ends
-        await TestWait.until { model.stage == .failed }
-        #expect(!muted())
+    @MainActor
+    @Test("a check that can't mute only its app (AntiDot mode) mutes the Mac's output while it runs, and puts it back as it ends")
+    func checkMutesTheMac() async throws {
+        let bench = try await readyToCheck(antiDot: true)
+        defer { bench.sut.addApp.window?.close() }
+        #expect(bench.model.checkMuting == .mac)
+        await bench.check()
+        #expect(bench.muted)
+        bench.world.run.finish(.failed(1)) // it ends
+        await TestWait.until { bench.model.stage == .failed }
+        #expect(!bench.muted)
+    }
 
-        await checkAgain()
-        await check()
-        #expect(muted())
-        model.stopCheck()
-        await TestWait.until { model.stage == .stopped }
-        #expect(!muted())
+    @MainActor
+    @Test("the Mac's output, muted for a check, is put back as the check stops")
+    func checkStoppedUnmutesTheMac() async throws {
+        let bench = try await readyToCheck(antiDot: true)
+        defer { bench.sut.addApp.window?.close() }
+        await bench.check()
+        #expect(bench.muted)
+        bench.model.stopCheck()
+        await TestWait.until { bench.model.stage == .stopped }
+        #expect(!bench.muted)
+    }
 
-        await checkAgain()
-        await check()
-        sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
-        #expect(!muted())
-        world.run.finish(.stopped)
-        await TestWait.until { model.stage == .stopped }
+    @MainActor
+    @Test("the Mac's output, muted for a check, is put back as AutoHush quits")
+    func quitUnmutesTheMac() async throws {
+        let bench = try await readyToCheck(antiDot: true)
+        defer { bench.sut.addApp.window?.close() }
+        await bench.check()
+        bench.sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+        #expect(!bench.muted)
+        bench.world.run.finish(.stopped)
+        await TestWait.until { bench.model.stage == .stopped }
+    }
 
-        await checkAgain()
-        await check()
-        #expect(muted())
-        let (next, _) = makeSUT(scratch) // AutoHush crashed: the next launch
+    @MainActor
+    @Test("the Mac's output, muted for a check AutoHush crashed during, is put back at the next launch")
+    func nextLaunchUnmutesTheMac() async throws {
+        let bench = try await readyToCheck(antiDot: true)
+        defer { bench.sut.addApp.window?.close() }
+        await bench.check()
+        #expect(bench.muted)
+        let (next, _) = makeSUT(bench.scratch) // AutoHush crashed: the next launch
         next.putBackWhatWasLeft()
-        #expect(!muted())
-        world.run.finish(.stopped)
-        await TestWait.until { model.stage == .stopped }
+        #expect(!bench.muted)
+        bench.world.run.finish(.stopped)
+        await TestWait.until { bench.model.stage == .stopped }
     }
 
     @MainActor
@@ -267,4 +361,25 @@ private final class AddedApps: Sendable {
 
     /// The one made last for `bundleID`.
     func player(_ bundleID: String) -> MockMusicPlayer? { made.value[bundleID]?.player }
+}
+
+/// Add an App's check on the stand-ins, its app ready to check
+/// (`AppDelegateTests.readyToCheck`).
+@MainActor
+private struct CheckBench {
+    let scratch: AppDelegateTests.Scratch
+    let world: World
+    let sut: AppDelegate
+    let model: AddAppModel
+
+    /// Whether the Mac's output is muted.
+    var muted: Bool { scratch.outputs.mutes[7] == true }
+
+    /// Starts a check and waits until it runs.
+    func check() async {
+        world.run = FakeCheckRun()
+        let runs = world.runs
+        model.startCheck()
+        await TestWait.until { world.runs == runs + 1 }
+    }
 }

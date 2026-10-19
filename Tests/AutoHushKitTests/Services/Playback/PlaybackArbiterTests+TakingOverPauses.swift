@@ -48,7 +48,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("music playing again by the time AutoHush restarts is not taken over")
@@ -72,7 +71,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.takeOverPause()
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
         #expect(scheduler.scheduledDelays.isEmpty)
     }
 
@@ -117,7 +115,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("music the user paused before the app was heard stays paused afterwards", arguments: [0.6, 2.0, 60.0])
@@ -167,7 +164,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("a player whose reports come late: only a pause surely after the app was heard is taken over",
@@ -297,7 +293,6 @@ extension PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
 
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("a player paused here is taken over even once its output has closed (an app counted after 3 s)")
@@ -315,7 +310,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("a pause on another device (Spotify Connect) is never taken over")

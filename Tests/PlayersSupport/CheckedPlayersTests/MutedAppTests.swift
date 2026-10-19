@@ -12,13 +12,20 @@ struct MutedAppTests {
     private let muted = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox",
                                     appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"), ways: [.mute])
 
-    @Test("muted instead of paused: a pause mutes it and it reads paused; a play unmutes it; once its assertion was seen, it tells; stopped 3 s by the user and played again, it's unmuted; after a sleep, unmuted once it stops, not while it plays; AntiDot mode lifts a mute")
-    func muting() async throws {
+    /// A muted app on stand-ins: its mute, whether it holds its keep-awake
+    /// assertion (not yet), and the clock its stops are timed by.
+    private func mutedApp() -> (player: MutedApp, muter: FakeMuter, held: Locked<Bool>, clock: ManualClock) {
         let muter = FakeMuter()
         let held = Locked(false)
         let clock = ManualClock()
         let player = MutedApp(setup: muted, processIdentifier: { 4242 }, muter: muter,
                               assertionsHeld: { _ in held.value ? playing : [] }, clock: { clock.now })
+        return (player, muter, held, clock)
+    }
+
+    @Test("muted instead of paused: a pause mutes it and it reads paused; a play unmutes it")
+    func muting() async throws {
+        let (player, muter, held, _) = mutedApp()
         #expect(player.pausesByMuting && player.needsAudioLevels && player.controlPermission == .systemAudioRecording && !player.canFade)
         held.value = true
         #expect(await player.playerState() == .playing)
@@ -27,11 +34,22 @@ struct MutedAppTests {
         #expect(await player.playerState() == .paused) // still plays, muted: our pause
         try await player.play()
         #expect(!muter.isMuted)
-        held.value = false
-        #expect(await player.playerState() == .paused) // its assertion seen: without it, it's paused
+    }
 
-        // Muted, the user pauses it for 3 s, then plays it: theirs to hear.
+    @Test("a muted app's keep-awake assertion, once seen, tells: without it, it's paused")
+    func assertionTells() async {
+        let (player, _, held, _) = mutedApp()
         held.value = true
+        _ = await player.playerState() // its assertion seen
+        held.value = false
+        #expect(await player.playerState() == .paused)
+    }
+
+    @Test("muted, then stopped 3 s by the user and played again, a muted app is theirs to hear: unmuted")
+    func unmutedOncePlayedAgain() async throws {
+        let (player, muter, held, clock) = mutedApp()
+        held.value = true
+        _ = await player.playerState() // its assertion seen
         try await player.pause()
         held.value = false
         #expect(await player.playerState() == .paused)
@@ -41,7 +59,13 @@ struct MutedAppTests {
         held.value = true
         #expect(await player.playerState() == .playing)
         #expect(!muter.isMuted)
+    }
 
+    @Test("after a sleep, a muted app is unmuted once it stops, not while it plays")
+    func unmutedAfterSleepOnceStopped() async throws {
+        let (player, muter, held, clock) = mutedApp()
+        held.value = true
+        _ = await player.playerState() // its assertion seen
         try await player.pause()
         await player.forgetPause() // the Mac slept: AutoHush no longer holds the pause
         #expect(muter.isMuted) // it plays on
@@ -50,12 +74,15 @@ struct MutedAppTests {
         clock.advance(by: MuteState.stopTime)
         #expect(await player.playerState() == .paused)
         #expect(!muter.isMuted) // stopped for 3 s: lifted
+    }
 
+    @Test("AntiDot mode lifts a muted app's mute, and it can't be muted then")
+    func antiDotLiftsMute() async throws {
+        let (player, muter, held, _) = mutedApp()
         held.value = true
         try await player.pause()
         player.allowTaps(false) // AntiDot mode: no taps, no mute
         await TestWait.until { !muter.isMuted }
-        #expect(!muter.isMuted)
         await #expect(throws: MusicPlayerError.playerCommandFailed(.muteUnavailable)) { try await player.pause() }
     }
 

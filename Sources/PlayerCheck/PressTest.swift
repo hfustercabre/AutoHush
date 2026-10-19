@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
 
@@ -335,9 +336,8 @@ import PlayerCheckKit
                 learnPageButton(pid: pid)
             } else {
                 say(CheckReportLine.waitingToPause(appName, minutes: 2))
-                let deadline = Date().addingTimeInterval(120)
                 inputBlock.pause()
-                while isPlaying(pid), Date() < deadline, !stopState.isRequested { RunLoop.main.run(until: Date().addingTimeInterval(0.5)) }
+                Polling.wait(seconds: 120, every: 0.5, runLoop: true, until: { !isPlaying(pid) || stopState.isRequested })
                 inputBlock.resume()
                 stopIfRequested("stopped while waiting for \(appName) to be paused")
                 if !isPlaying(pid) {

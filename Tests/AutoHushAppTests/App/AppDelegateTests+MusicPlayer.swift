@@ -172,12 +172,12 @@ extension AppDelegateTests {
         scratch.preferences.recordSeen([first, vlc])
         scratch.preferences.ignoredApps = [first]
         let (sut, _) = makeSUT(scratch)
-        #expect(sut.settingsModel.apps.map(\.id) == ["org.videolan.vlc"])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == ["org.videolan.vlc"])
         #expect(sut.status.ignoredApps.isEmpty)
 
         // Once another player is chosen, it's an app like any other.
         sut.chooseMusicPlayer(Players.second)
-        #expect(sut.settingsModel.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
         #expect(sut.status.ignoredApps == [first])
     }
 
@@ -200,44 +200,63 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("Diagnostics in Settings follows what AutoHush sees: the apps with sound, found where Settings → Sound Sources lists them, and an added app's ways; while Settings is open, the window watch follows it on its page, launch at login, and the players while none is chosen")
-    func diagnostics() async {
-        let scratch = Scratch()
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-        scratch.preferences.recordSeen([vlc])
-        let (sut, monitorings) = makeSUT(scratch)
+    @Test("Diagnostics in Settings is read once asked for: no app with sound yet, the chosen player and the permission it needs")
+    func diagnosticsRead() async {
+        let (sut, _) = makeSUT()
         #expect(sut.settingsModel.diagnostics == nil)
         await sut.refresh(.diagnostics)
-        var diagnostics = sut.settingsModel.diagnostics
+        let diagnostics = sut.settingsModel.diagnostics
         #expect(diagnostics?.apps.isEmpty == true)
         #expect(diagnostics?.text.contains("Apps with Sound\nNo other app is playing sound right now.") == true)
         #expect(diagnostics?.sections.first?.rows.first?.value.hasPrefix("First") == true)
         #expect(diagnostics?.text.contains("Automation for First") == true)
+    }
 
+    @MainActor
+    @Test("Diagnostics in Settings lists the apps with sound, found where Settings → Sound Sources lists them")
+    func diagnosticsAppsWithSound() async {
+        let scratch = Scratch()
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        scratch.preferences.recordSeen([vlc])
+        let (sut, monitorings) = makeSUT(scratch)
         await start(sut)
         monitorings.made[0].audioReport = [ActiveAudioReport.Entry(id: vlc.id, name: "VLC", state: .playing)]
         await sut.refresh(.diagnostics)
-        diagnostics = sut.settingsModel.diagnostics
+        let diagnostics = sut.settingsModel.diagnostics
         #expect(diagnostics?.apps.map(\.bundlePath) == [vlc.bundlePath])
         #expect(diagnostics?.text.contains("Apps with Sound\nVLC (org.videolan.vlc) — playing") == true)
+    }
 
-        scratch.launchAtLogin.isEnabled = true // in System Settings
-        await sut.refresh(.launchAtLogin)
-        #expect(sut.settingsModel.launchAtLoginEnabled)
-        #expect(AppDelegate.settingsNeeds(page: .general, hasPlayer: true) == [.notifications, .launchAtLogin, .permissions])
-        #expect(AppDelegate.settingsNeeds(page: .diagnostics, hasPlayer: false)
-                == [.notifications, .launchAtLogin, .permissions, .diagnostics, .players])
-
-        // An app added with Add an App: the ways its check found.
-        let added = Scratch()
+    @MainActor
+    @Test("Diagnostics in Settings says the ways an app added with Add an App is controlled by")
+    func diagnosticsAddedAppWays() {
+        let scratch = Scratch()
         let setup = PlayerSetup(bundleID: "com.example.added", name: "Added", appURL: URL(fileURLWithPath: "/Applications/Added.app"),
                                 ways: [.menu(menuName: "Controls")])
         let checked = CheckedPlayer(setup: setup, reports: nil)
-        added.players = MusicPlayerCatalog(players: [added.first], found: { [checked] })
-        added.installed.insert(setup.bundleID)
-        let (withAdded, _) = makeSUT(added, chosenPlayer: setup.bundleID)
-        withAdded.refreshDiagnostics()
-        #expect(withAdded.settingsModel.diagnostics?.text.contains("Controlled by: \(AddAppText.wayTitle(.menu))") == true)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [checked] })
+        scratch.installed.insert(setup.bundleID)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: setup.bundleID)
+        sut.refreshDiagnostics()
+        #expect(sut.settingsModel.diagnostics?.text.contains("Controlled by: \(AddAppText.wayTitle(.menu))") == true)
+    }
+
+    @MainActor
+    @Test("the window watch's refresh of launch at login shows it switched on in System Settings")
+    func launchAtLoginRefreshed() async {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        scratch.launchAtLogin.isEnabled = true // in System Settings
+        await sut.refresh(.launchAtLogin)
+        #expect(sut.settingsModel.launchAtLoginEnabled)
+    }
+
+    @MainActor
+    @Test("while Settings is open, the window watch follows what its page shows: launch at login and the permissions on each, Diagnostics on its own, and the players while none is chosen")
+    func settingsNeedsByPage() {
+        #expect(AppDelegate.settingsNeeds(page: .general, hasPlayer: true) == [.notifications, .launchAtLogin, .permissions])
+        #expect(AppDelegate.settingsNeeds(page: .diagnostics, hasPlayer: false)
+                == [.notifications, .launchAtLogin, .permissions, .diagnostics, .players])
     }
 
     @MainActor
@@ -278,12 +297,11 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("what the player session knows shows in the menu and Settings: why it can't control the player (its info button's alert too), the music, the apps playing and those that played, those playing as another player is chosen too; a pause held is no moment for an update's restart, and while Add an App's check runs it's held until the check ends")
-    func sessionShown() async {
+    @Test("why the player session can't control the player shows in the menu and Settings; its info button's alert says what failed and why, with OK only, or with the pane that shows Now Playing; it goes once the player is controlled")
+    func controlErrorShown() async {
         let scratch = Scratch()
         await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
-        scratch.windowOpen = false
-        let (sut, monitorings) = makeSUT(scratch)
+        let (sut, _) = makeSUT(scratch)
         let alerts = CallLog()
         sut.runAlert = { alert in
             alerts.calls.append(([alert.messageText, alert.informativeText] + alert.buttons.map(\.title)).joined(separator: " | "))
@@ -307,16 +325,40 @@ extension AppDelegateTests {
         await scratch.first.setFailVerify(nil)
         await TestWait.until { sut.status.health == .ready }
         #expect(sut.status.controlError == nil)
+    }
+
+    @MainActor
+    @Test("what the player session knows of the music and the apps playing shows in the menu, and in Settings → Sound Sources")
+    func musicAndAppsShown() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
         let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        #expect(sut.isQuietMoment)
         monitorings.made[0].send(.playback(.pausedByMonitor))
         monitorings.made[0].send(.activeSources([vlc]))
         #expect(sut.status.playback == .pausedByMonitor)
         #expect(sut.status.activeSources == [vlc])
-        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id]) // listed in Settings → Sound Sources as it plays
-        #expect(!sut.isQuietMoment) // it holds a pause: no restart for an update now
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [vlc.id]) // listed in Settings → Sound Sources as it plays
+    }
 
-        // Add an App's check runs: the pause stays until it ends.
+    @MainActor
+    @Test("a pause the player session holds is no moment for an update's restart")
+    func heldPauseIsNoQuietMoment() async {
+        let scratch = Scratch()
+        scratch.windowOpen = false
+        let (sut, monitorings) = makeSUT(scratch)
+        await start(sut)
+        #expect(sut.isQuietMoment)
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        #expect(!sut.isQuietMoment) // it holds a pause: no restart for an update now
+    }
+
+    @MainActor
+    @Test("while Add an App's check runs, the player session's pause is held until the check ends, and the menu says so")
+    func pauseHeldForCheck() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        monitorings.made[0].send(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC")]))
         sut.holdsPlayerForCheck(true)
         sut.holdsPlayerForCheck(true) // again: nothing more
         #expect(sut.session.resumesHeld && monitorings.made[0].resumesHeld == [true])
@@ -324,9 +366,17 @@ extension AppDelegateTests {
         sut.holdsPlayerForCheck(false)
         #expect(!sut.session.resumesHeld && monitorings.made[0].resumesHeld == [true, false])
         #expect(!sut.status.playerHeldForCheck)
+    }
 
+    @MainActor
+    @Test("the apps that played show in the menu's Recently Played, those playing as another player is chosen too")
+    func recentlyPlayedShown() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
         // VLC stops: Recently Played lists it. Safari plays as another
         // player is chosen, which stops the monitoring: Safari too.
+        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        monitorings.made[0].send(.activeSources([vlc]))
         monitorings.made[0].send(.activeSources([]))
         #expect(sut.status.recentSources() == [vlc])
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")

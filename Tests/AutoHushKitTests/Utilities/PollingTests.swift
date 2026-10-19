@@ -35,6 +35,34 @@ struct PollingTests {
         #expect(firstLook.map { $0.timeIntervalSince(start) >= 0.1 } == true)
     }
 
+    @Test("not looking late, no look is made once the time is up: its last pause comes after its last look")
+    func notLookingLate() {
+        var looks = 0
+        #expect(Polling.wait(seconds: 1, every: 0.01, lookingLate: false) { looks += 1; return looks == 3 })
+        let start = Date()
+        var lastLook = start
+        #expect(!Polling.wait(seconds: 0.1, every: 0.04, lookingLate: false) { lastLook = Date(); return false })
+        let end = Date()
+        #expect(end.timeIntervalSince(start) >= 0.1)
+        #expect(end.timeIntervalSince(lastLook) >= 0.04)
+    }
+
+    @Test("from a first look already made, what holds of it, or no time left, ends the wait unread")
+    func fromAFirstLook() {
+        var reads = 0
+        #expect(Polling.wait(seconds: 5, every: 1, from: 3, reading: { reads += 1; return 0 }, until: { $0 == 3 }) == 3)
+        #expect(Polling.wait(seconds: 0, every: 1, from: 1, reading: { reads += 1; return 3 }, until: { $0 == 3 }) == 1)
+        #expect(reads == 0)
+    }
+
+    @Test("from a first look that doesn't hold, it waits an interval before reading again")
+    func fromAFirstLookWaits() {
+        let start = Date()
+        var firstRead: Date?
+        #expect(Polling.wait(seconds: 1, every: 0.1, from: 0, reading: { firstRead = firstRead ?? Date(); return 1 }, until: { $0 == 1 }) == 1)
+        #expect(firstRead.map { $0.timeIntervalSince(start) >= 0.1 } == true)
+    }
+
     @Test("with the run loop, what's due on it runs between looks")
     func runsTheRunLoop() {
         let ran = Locked(false)

@@ -127,7 +127,6 @@ struct PlayerSessionTests {
         let session = bench.makeSession(bench.first)
         session.launch()
         await TestWait.until { await bench.first.verifyCallCount >= 3 }
-        #expect(await bench.first.verifyCallCount >= 3)
         #expect(session.state.health == .needsPermission(.automation(player: "First")))
         #expect(bench.monitorings.made.isEmpty)
         // Logged as an error once; the repeats are the same problem.
@@ -146,8 +145,7 @@ struct PlayerSessionTests {
         await bench.second.setFailVerify(MusicPlayerError.playerNotResponding)
         let session = bench.makeSession(bench.second)
         session.launch()
-        await TestWait.until { session.failedStarts >= 3 }
-        #expect(session.failedStarts >= 3) // each wait longer than the one before
+        await TestWait.until { session.failedStarts >= 3 } // each wait longer than the one before
         #expect(await bench.second.verifyCallCount >= 3)
         #expect(session.state.health == .retrying("Second isn’t responding"))
         session.retry()
@@ -184,7 +182,6 @@ struct PlayerSessionTests {
         await bench.second.setFailVerify(nil)
         bench.startupWaits.step()
         await TestWait.until { session.state.health == .ready }
-        #expect(session.state.health == .ready)
         #expect(await bench.second.verifyCallCount == 4)
 
         // Again, and Retry is clicked during that moment: its start takes over, the one waiting gives up.
@@ -543,7 +540,6 @@ struct PlayerSessionTests {
         #expect(session.state.activeSources.isEmpty)
         held.send(.playback(.musicPlaying))
         await TestWait.until { held.isStopped }
-        #expect(held.isStopped)
         #expect(!session.isHoldingPause)
     }
 

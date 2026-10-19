@@ -9,7 +9,7 @@ extension AppDelegate {
     func refreshDiagnostics() {
         // Only apps with a known path: the others are looked up.
         let known = Dictionary(
-            settingsModel.apps.compactMap { app in app.source.bundlePath.map { (app.id, $0) } },
+            settingsModel.appList.apps.compactMap { app in app.source.bundlePath.map { (app.id, $0) } },
             uniquingKeysWith: { first, _ in first }
         )
         // An app added through a check: the ways its player uses.

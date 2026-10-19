@@ -124,10 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences: Preferences = Preferences(),
         defaults: UserDefaults = .standard,
         launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
-        updateChecker: UpdateChecker = UpdateChecker(),
-        updateInstaller: any UpdateInstalling = UpdateInstaller(),
-        updateNotifier: any UpdateNotifying = SystemUpdateNotifier(),
-        updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
+        updateSystem: UpdateController.System = UpdateController.System(),
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
         checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
         addAppSystem: AddAppFeature.System = AddAppFeature.System(),
@@ -157,7 +154,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         },
         learnedWindowDelay: Duration = .seconds(1.5),
         madeWebAppWait: Duration = .milliseconds(500),
-        currentVersion: AppVersion? = .current,
         otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
         retries: PlayerSession.Retries = PlayerSession.Retries(),
         watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
@@ -209,12 +205,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         userSettings.didChange = { [weak self] in self?.showUserSettings($0) }
         learning.didChange = { [weak self] in self?.showLearning($0) }
         updates = UpdateController(
-            checker: updateChecker,
-            installer: updateInstaller,
-            notifier: updateNotifier,
+            system: updateSystem,
             preferences: preferences,
-            downloadsFolder: updateDownloadsFolder,
-            currentVersion: currentVersion,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
             quit: { [weak self] in self?.quitToFinishUpdate() },
             onOffer: { [weak self] in self?.status.updateOffer = $0 }

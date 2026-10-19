@@ -91,7 +91,7 @@ struct AudioMonitorTests {
 
     // MARK: - Starting and stopping (stream fallback)
 
-    @Test("the tracker's timings, through the monitor: a source starts once it played for the start confirmation, saying when it was first heard; a gap within the stop grace (a new stream for the next track) keeps it; silent for the stop grace, it stops, saying nothing of when")
+    @Test("the tracker's timings, through the monitor: a source starts once it played for the start confirmation, saying when it was first heard")
     func startSaysWhenFirstHeard() async {
         let h = Harness(meter: false)
         h.start()
@@ -104,12 +104,37 @@ struct AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
         #expect(h.activeSources.value.last?.map(\.id) == ["org.videolan.vlc"])
 
+        #expect(await h.recorder.events.map(\.isPlaying) == [true])
+        #expect(await h.recorder.heardSince == [heard])
+    }
+
+    @Test("the tracker's timings, through the monitor: a gap within the stop grace (a new stream for the next track) keeps a source")
+    func gapWithinStopGraceKeepsSource() async {
+        let h = Harness(meter: false)
+        h.start()
+        h.step(after: 2, [Self.process(1, "org.videolan.vlc")])
+        h.step(after: 1) // counts as playing
+        await h.recorder.waitForEvents(count: 1)
+
         h.step(after: 0.25, [])
         h.step(after: 1.5, [Self.process(2, "org.videolan.vlc")]) // the next track's stream
         h.step(after: 0.25, [])
         h.step(after: 1.5)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.count == 1)
+    }
+
+    @Test("the tracker's timings, through the monitor: silent for the stop grace, a source stops, saying nothing of when; heard again, it starts anew, from then")
+    func silentForStopGraceStops() async {
+        let h = Harness(meter: false)
+        h.start()
+        h.step(after: 2, [Self.process(1, "org.videolan.vlc")]) // first heard
+        let heard = h.clock.now
+        h.step(after: 1) // counts as playing
+        await h.recorder.waitForEvents(count: 1)
+
+        h.step(after: 0.25, [])
+        h.step(after: 1.5)
         h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 2)
         // Heard again: a new start, from then.

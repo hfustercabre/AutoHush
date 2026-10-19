@@ -124,7 +124,6 @@ struct AddAppModelTests {
         #expect(model.stage == .allowing)
         world.permissions.automation = .allowed
         await TestWait.until { model.currentStep == .play }
-        #expect(model.currentStep == .play)
     }
 
     @Test("an Electron app opened without its option asks before reopening, again when it didn't quit; Skip goes on without")
@@ -172,7 +171,6 @@ struct AddAppModelTests {
         world.playing = true
         model.waitForPlaying()
         await TestWait.until { model.stage == .ready }
-        #expect(model.stage == .ready)
     }
 
     /// A model ready for its check.
@@ -288,7 +286,6 @@ struct AddAppModelTests {
         #expect(world.run.stopped && model.mark(of: .check) == .failed)
         model.checkAgain()
         await TestWait.until { model.stage == .ready }
-        #expect(model.stage == .ready)
 
         let none = World()
         let empty = await ready(none)
@@ -340,7 +337,6 @@ struct AddAppModelTests {
         model.windowClosed()
         #expect(world.run.stopped)
         await TestWait.until { world.panel == ["shown", "hidden"] }
-        #expect(world.panel == ["shown", "hidden"])
     }
 
     @Test("closing the window closes the warning, and its Start then runs nothing")
@@ -462,7 +458,6 @@ struct AddAppModelTests {
         #expect(world.menuBarSettingsOpened == 1)
         model.checkAgain()
         await TestWait.until { model.stage == .ready }
-        #expect(model.stage == .ready)
     }
 
     @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")

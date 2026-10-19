@@ -288,7 +288,6 @@ extension PlaybackArbiterTests {
 
         await scheduler.completeNext()
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
         #expect(scheduler.scheduledDelays == [PlaybackArbiter.resumeRetryDelay])
     }
 

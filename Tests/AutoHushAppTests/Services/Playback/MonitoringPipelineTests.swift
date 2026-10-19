@@ -93,9 +93,7 @@ struct MonitoringPipelineTests {
         await setup.pipeline.start()
         await setup.otherAppPlays()
         await TestWait.until { await player.pauseCallCount == 1 }
-        #expect(await player.pauseCallCount == 1)
         await TestWait.until { setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"] }
-        #expect(setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"])
         #expect(setup.pipeline.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .level(0.5))])
 
         setup.pipeline.setIgnoredSources(["org.videolan.vlc"])
@@ -231,7 +229,6 @@ struct MonitoringPipelineTests {
         _ = await starting.value
         await setup.otherAppPlays()
         await TestWait.until { await player.pauseCallCount == 1 }
-        #expect(await player.pauseCallCount == 1)
         setup.pipeline.stop()
     }
 

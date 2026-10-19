@@ -113,7 +113,6 @@ struct NowPlayingReportsTests {
         #expect(reports.latest(of: webApp)?.name == "Web App")
         try Data().write(to: folder.appendingPathComponent("more"))
         await TestWait.until { reports.latest(of: webApp)?.state == .paused }
-        #expect(reports.latest(of: webApp)?.state == .paused)
         let ending = Date()
         try Data().write(to: folder.appendingPathComponent("end"))
         // Nothing said once it ended; that question follows it again, its past read back `lookBack`.
@@ -137,17 +136,14 @@ struct NowPlayingReportsTests {
         }
         #expect(reports.follow(since: Date()))
         await TestWait.until { reports.latest(of: "com.example.app")?.state == .playing }
-        #expect(reports.latest(of: "com.example.app")?.state == .playing)
         let first = try #require(stream())
         await TestWait.until { !NowPlayingReports.stillRuns(first) }
-        #expect(!NowPlayingReports.stillRuns(first))
         #expect(reports.latest(of: "com.example.app")?.state == nil)
         await TestWait.until { reports.latest(of: "com.example.app")?.state == .playing }
         let second = try #require(stream())
         #expect(second != first)
         reports.stop()
         await TestWait.until { !NowPlayingReports.stillRuns(second) }
-        #expect(!NowPlayingReports.stillRuns(second))
 
         let closed = NowPlayingReports(streamCommand: ["/bin/sh", "-c", "exec sleep 60"], isAdministrator: true) { _ in nil }
         #expect(!closed.follow(since: Date()))

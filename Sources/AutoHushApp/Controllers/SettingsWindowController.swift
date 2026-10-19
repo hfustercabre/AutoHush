@@ -176,7 +176,7 @@ final class SettingsWindowController: NSWindowController {
         let reopening = window?.isOpen != true
         if reopening {
             model.foldedDiagnostics = []
-            model.appSearch = nil
+            model.appList.search = nil
             keys.clear()
         }
         if let target = page ?? (reopening ? .general : nil) { navigation.page = target }

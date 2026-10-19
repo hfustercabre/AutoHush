@@ -110,10 +110,10 @@ final class SettingsWindowControllerTests {
         let sut = makeController(model)
         defer { sut.close() }
         sut.show(page: .soundSources)
-        model.appSearch = "chr"
+        model.appList.search = "chr"
         model.foldedDiagnostics = [.apps]
         sut.show(page: .diagnostics)
-        #expect(model.appSearch == "chr") // still open while the window is
+        #expect(model.appList.search == "chr") // still open while the window is
         #expect(model.foldedDiagnostics == [.apps])
 
         await TestWait.until { !sut.keys.sidebar.rows.isEmpty } // its rows, as they register
@@ -122,7 +122,7 @@ final class SettingsWindowControllerTests {
 
         sut.close()
         sut.show()
-        #expect(model.appSearch == nil)
+        #expect(model.appList.search == nil)
         #expect(model.foldedDiagnostics.isEmpty)
         #expect(sut.keys.side == .page && sut.keys.sidebar.highlighted == nil) // nothing highlighted
     }

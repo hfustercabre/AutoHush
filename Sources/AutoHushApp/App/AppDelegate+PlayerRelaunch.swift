@@ -117,13 +117,12 @@ extension AppDelegate {
     }
 
     static func reopenAlert(_ name: String) -> NSAlert {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Reopen \(name)?",
-                                   comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player")
-        alert.informativeText = AddAppText.reopenAlertMessage(name)
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: AddAppText.reopenTitle(name))
-        alert.addButton(withTitle: AddAppText.cancel).keyEquivalent = "\u{1b}" // Escape; Return reopens
+        let alert = PlayerAlerts.confirm(
+            title: String(localized: "Reopen \(name)?",
+                          comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player"),
+            message: AddAppText.reopenAlertMessage(name),
+            button: AddAppText.reopenTitle(name)
+        )
         alert.showsSuppressionButton = true
         alert.suppressionButton?.title = AddAppText.reopenAlways(name)
         return alert

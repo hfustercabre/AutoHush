@@ -54,8 +54,7 @@ func soundProcesses(of pid: pid_t) -> [String] {
         say("  Audio Recording: asked (to measure its sound as AutoHush does, and to keep it silent meanwhile)")
         let answer = OSAllocatedUnfairLock<Bool?>(initialState: nil)
         permission.request { @Sendable granted in answer.withLock { $0 = granted } } // answered on another thread
-        let deadline = Date().addingTimeInterval(120)
-        while answer.withLock({ $0 }) == nil, Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.2)) }
+        Polling.wait(seconds: 120, every: 0.2, runLoop: true, until: { answer.withLock { $0 } != nil })
         status = answer.withLock { $0 } == true ? .granted : permission.status()
     }
     levelsAllowed = status == .granted

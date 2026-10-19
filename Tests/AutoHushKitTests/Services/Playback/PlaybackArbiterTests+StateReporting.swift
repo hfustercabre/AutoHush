@@ -111,8 +111,6 @@ extension PlaybackArbiterTests {
         await arbiter.handlePlayerStateChange(.paused)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
-
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("when the player doesn't answer, a report that it plays ends our pause")

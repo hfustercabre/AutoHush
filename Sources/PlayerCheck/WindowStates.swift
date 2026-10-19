@@ -178,16 +178,13 @@ extension CheckResult.WindowState {
     @discardableResult
     static func activate(_ app: NSRunningApplication, showing window: Int? = nil) -> Bool {
         func there(within seconds: Double) -> Bool {
-            let deadline = Date().addingTimeInterval(seconds)
-            repeat {
+            Polling.wait(seconds: seconds, every: 0.1, lookingLate: false) {
                 let front = frontPID() == app.processIdentifier
                 let shown = window.map { number in
                     infos(.optionOnScreenOnly).contains { WindowStates.number(of: $0) == number }
                 } ?? true
-                if front && shown { return true }
-                Thread.sleep(forTimeInterval: 0.1)
-            } while Date() < deadline
-            return false
+                return front && shown
+            }
         }
         // Without Accessibility, reading its windows would make macOS ask for
         // it there and then (Add an App opens the app with its launch option

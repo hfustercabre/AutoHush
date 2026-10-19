@@ -214,8 +214,7 @@ extension PlaybackArbiterTests {
 
         await TestWait.until { await player.playCallCount == 1 }
         await TestWait.until { await player.volumeLevel == 60 }
-        #expect(await player.playCallCount == 1)
-        #expect(await player.volumeLevel == 60)
+        #expect(await player.playCallCount == 1) // once only
     }
 
     @Test("music the user pauses during the fade-out is not taken over, and not resumed later")

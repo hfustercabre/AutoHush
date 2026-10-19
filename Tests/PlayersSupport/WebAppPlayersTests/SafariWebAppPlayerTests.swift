@@ -777,7 +777,6 @@ struct SafariWebAppPlayerTests {
         observer.start()
         observer.stop()
         await TestWait.until { setup.muter.muted.isEmpty }
-        #expect(setup.muter.muted.isEmpty)
         #expect(setup.page.presses.isEmpty)
     }
 

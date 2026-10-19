@@ -62,8 +62,7 @@ struct CheckedPlayerTests {
         await paged.forgetPause()
         #expect(await paged.muteIfPlayingAnyway() == false) // the pause it stood for is forgotten
         paged.allowTaps(false)
-        await TestWait.until { !muter.isMuted }
-        #expect(!muter.isMuted) // AntiDot mode lifts it
+        await TestWait.until { !muter.isMuted } // AntiDot mode lifts it
         #expect(await paged.muteIfPlayingAnyway() == false) // and mutes nothing
         paged.allowTaps(true)
         #expect(await paged.muteIfPlayingAnyway())
@@ -293,7 +292,6 @@ struct CheckedPlayerTests {
         #expect(states == [.paused]) // read by its page: muted in place of a pause
         observer.stop()
         await TestWait.until { !muter.isMuted }
-        #expect(!muter.isMuted)
     }
 
     @Test("its state is the surest sign that answers; not running, it isn't asked")

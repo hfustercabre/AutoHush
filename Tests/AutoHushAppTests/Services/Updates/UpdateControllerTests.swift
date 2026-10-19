@@ -23,7 +23,8 @@ struct UpdateControllerTests {
         var folder: URL { scratchFolder.url }
         var now = Date(timeIntervalSinceReferenceDate: 800_000_000)
         var offers: [UpdateOffer?] = []
-        var statuses: [String] = []
+        /// Each status Settings showed, as the next replaced it (`followStatus`).
+        private var replacedStatuses: [String] = []
         var opened: [URL] = []
         var quits = 0
         /// How many times the update settings changed, as Settings follows them.
@@ -33,8 +34,8 @@ struct UpdateControllerTests {
         var answer = NSApplication.ModalResponse.alertFirstButtonReturn
         /// How many times the menu was closed for an alert.
         var menuClosings = 0
-        /// Runs after each status the controller reports is recorded.
-        var afterStatus: @MainActor (String) -> Void = { _ in }
+        /// Runs as each status gives way to the next, with the one it replaces.
+        var asStatusChanges: @MainActor (_ replaced: String?) -> Void = { _ in }
         private(set) var controller: UpdateController!
 
         init(
@@ -48,24 +49,18 @@ struct UpdateControllerTests {
             self.quiet = quiet
             preferences.automaticUpdates = mode
             controller = UpdateController(
-                checker: checker,
-                installer: installer,
-                notifier: notifier,
+                system: UpdateController.System(checker: checker, installer: installer, notifier: notifier,
+                                                downloadsFolder: folder, currentVersion: currentVersion),
                 preferences: preferences,
-                downloadsFolder: folder,
-                currentVersion: currentVersion,
                 // Weak: an automatic run a setting started may end after its test.
                 now: { [weak self] in self?.now ?? Date(timeIntervalSinceReferenceDate: 800_000_000) },
                 isQuietMoment: { quiet.value },
                 quit: { [weak self] in self?.quits += 1 },
                 openURL: { [weak self] in self?.opened.append($0) },
-                onOffer: { [weak self] in self?.offers.append($0) },
-                onStatus: { [weak self] in
-                    self?.statuses.append($0)
-                    self?.afterStatus($0)
-                }
+                onOffer: { [weak self] in self?.offers.append($0) }
             )
             followSettings()
+            followStatus()
             controller.beforePresenting = { [weak self] in self?.menuClosings += 1 }
             controller.showAlert = { $0() }
             controller.runAlert = { [weak self] alert in
@@ -85,6 +80,25 @@ struct UpdateControllerTests {
                 }
             }
         }
+
+        /// Follows the status Settings reads. Observation tells a change
+        /// before it's made, so each status is noted as the next replaces it.
+        private func followStatus() {
+            withObservationTracking {
+                _ = controller.status
+            } onChange: { [weak self] in
+                MainActor.assumeIsolated { // changed on the main actor, the controller's
+                    guard let self else { return }
+                    let replaced = self.controller.status
+                    if let replaced { self.replacedStatuses.append(replaced) }
+                    self.asStatusChanges(replaced)
+                    self.followStatus()
+                }
+            }
+        }
+
+        /// The statuses Settings showed, in turn, the one it shows now last.
+        var statuses: [String] { replacedStatuses + (controller.status.map { [$0] } ?? []) }
 
         /// The update the menu offers now.
         var offer: UpdateOffer? { offers.last ?? nil }
@@ -114,7 +128,7 @@ struct UpdateControllerTests {
         #expect(!h.controller.isCheckDue())
 
         h.controller.setChecksAutomatically(true) // none has run yet: one is due
-        await TestWait.until { h.statuses.last == "AutoHush 0.2.0 is up to date." }
+        await TestWait.until { h.controller.status == "AutoHush 0.2.0 is up to date." }
         #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
         #expect(h.settingsChanges == 2)
     }
@@ -153,10 +167,11 @@ struct UpdateControllerTests {
         #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date"])
         #expect(h.menuClosings == 1)
 
-        // Asked for once an automatic check has read that nobody asked, before its caller is back.
-        h.afterStatus = { status in
-            guard status == "AutoHush 0.2.0 is up to date." else { return }
-            h.afterStatus = { _ in }
+        // Asked for once an automatic check has read that nobody asked, before its caller is back:
+        // as its result replaces "Checking…".
+        h.asStatusChanges = { replaced in
+            guard replaced == "Checking…" else { return }
+            h.asStatusChanges = { _ in }
             Task { await h.controller.checkNow() }
         }
         await h.controller.check(userInitiated: false)
@@ -190,7 +205,7 @@ struct UpdateControllerTests {
         #expect(h.controller.availableUpdate == nil)
         #expect(h.offers.last == .some(nil))
         #expect(h.notifier.withdrawals == 1)
-        #expect(h.statuses.last == "AutoHush 0.2.0 is up to date.")
+        #expect(h.controller.status == "AutoHush 0.2.0 is up to date.")
     }
 
     @Test("an up-to-date check leaves an \"updated to\" notification alone")
@@ -205,7 +220,7 @@ struct UpdateControllerTests {
     func failedCheck() async {
         let h = Harness(checker: .offline)
         await h.controller.check(userInitiated: false)
-        #expect(h.statuses.last == "Couldn’t check for updates.")
+        #expect(h.controller.status == "Couldn’t check for updates.")
         #expect(h.preferences.lastUpdateCheck == nil)
         #expect(h.offers.isEmpty)
     }
@@ -347,7 +362,7 @@ struct UpdateControllerTests {
         let installer = MockUpdateInstaller(downloadError: URLError(.notConnectedToInternet))
         let h = Harness(checker: .latestRelease("v0.3.0"), installer: installer, mode: .download)
         await h.controller.runAutomaticTasks()
-        #expect(h.statuses.last == "Couldn’t download version 0.3.0.")
+        #expect(h.controller.status == "Couldn’t download version 0.3.0.")
         #expect(h.keptFiles.isEmpty)
         #expect(h.notifier.announced.isEmpty)
 
@@ -468,7 +483,7 @@ struct UpdateControllerTests {
         #expect(h.installer.calls == ["prepare 0.3.0", "discard 0.3.0"])
         #expect(h.quits == 0)
         #expect(h.offer?.state == .available)
-        #expect(h.statuses.last == "Version 0.3.0 is available.")
+        #expect(h.controller.status == "Version 0.3.0 is available.")
     }
 
     @Test("nothing happens automatically with automatic checks off")
@@ -501,7 +516,7 @@ struct UpdateControllerTests {
     func failedAutomaticInstall() async {
         let h = Harness(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(prepareError: UpdateInstallError.notGenuine))
         await h.controller.runAutomaticTasks()
-        #expect(h.statuses.last == "Couldn’t install version 0.3.0.")
+        #expect(h.controller.status == "Couldn’t install version 0.3.0.")
         #expect(h.offer?.state == .available)
         #expect(h.quits == 0)
         #expect(h.notifier.announced == [.installFailed(v030)])
@@ -683,7 +698,7 @@ struct UpdateControllerTests {
         #expect(timer.isValid && timer.timeInterval == 60 * 60)
         #expect(abs(timer.fireDate.timeIntervalSinceNow - 30) < 5)
         timer.fire() // its run: a check is due
-        await TestWait.until { h.statuses.last == "Couldn’t check for updates." }
+        await TestWait.until { h.controller.status == "Couldn’t check for updates." }
         #expect(h.statuses == ["Checking…", "Couldn’t check for updates."])
 
         let now = Date()

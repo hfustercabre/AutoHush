@@ -103,9 +103,11 @@ extension AppDelegateTests {
 
     // MARK: - A player opened without what it needs
 
+    /// Tunes, which the user chose to reopen always (the alert's box) and
+    /// which drops the option it needs again when reopened (a launcher), and
+    /// Radio, which needs reopening once; `chosen` is chosen at launch.
     @MainActor
-    @Test("a player opened without the option it needs: one to reopen always is reopened at once, but found so again within a minute only the card says so; its Reopen reopens it; any other is left to the card, or, just chosen, asked about: Cancel leaves it so, Reopen with the box ticked reopens it from then on")
-    func playerNeedingReopen() async {
+    private func reopenBench(chosen: String?) async -> (scratch: Scratch, tunes: MockMusicPlayer, radio: MockMusicPlayer, sut: AppDelegate) {
         let scratch = Scratch()
         let tunes = MockMusicPlayer(bundleID: "com.example.tunes", name: "Tunes")
         let radio = MockMusicPlayer(bundleID: "com.example.radio", name: "Radio")
@@ -113,14 +115,45 @@ extension AppDelegateTests {
         await radio.setNeedsReopening(true)
         scratch.players = MusicPlayerCatalog(players: [tunes, radio])
         scratch.installed = [tunes.bundleID, radio.bundleID]
-        // The alert's box ticked for Tunes.
         ReopenChoices.setReopensAlways(tunes.bundleID, defaults: scratch.defaults)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: chosen)
+        return (scratch, tunes, radio, sut)
+    }
 
-        // Reopened at once; found so again right after, it isn't quit and
-        // reopened over and over.
-        let (sut, _) = makeSUT(scratch, chosenPlayer: tunes.bundleID)
+    /// Radio chosen without asking: reopening it was just skipped in Add an App.
+    @MainActor
+    private func radioChosenUnasked() async -> (scratch: Scratch, radio: MockMusicPlayer, sut: AppDelegate) {
+        let (scratch, _, radio, sut) = await reopenBench(chosen: nil)
+        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false)
+        await TestWait.until { sut.status.playerNeedsReopen }
+        return (scratch, radio, sut)
+    }
+
+    /// AutoHush's alerts answered with `answer`, their box ticked; their titles noted.
+    @MainActor
+    private func answerAlerts(_ sut: AppDelegate, with answer: NSApplication.ModalResponse) -> CallLog {
+        let shown = CallLog()
+        sut.runAlert = { alert in
+            shown.calls.append(alert.messageText)
+            alert.suppressionButton?.state = .on
+            return answer
+        }
+        return shown
+    }
+
+    @MainActor
+    @Test("a player opened without the option it needs, which the user chose to reopen always, is reopened at once")
+    func reopenedAtOnce() async {
+        let (_, tunes, _, sut) = await reopenBench(chosen: "com.example.tunes")
         await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await tunes.reopenCount == 1)
+    }
+
+    @MainActor
+    @Test("a player to reopen always, found without its option again within a minute of being reopened, isn't reopened over and over: only the card says so; over a minute later, it's reopened by itself again")
+    func reopenedOnlyOnceAMinute() async {
+        let (scratch, tunes, _, sut) = await reopenBench(chosen: "com.example.tunes")
+        await TestWait.until { sut.status.playerNeedsReopen } // reopened at once
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
         await TestWait.until { sut.lastReopens[tunes.bundleID]?.gaveUp == true } // given up this time
         #expect(await tunes.reopenCount == 1)
@@ -129,44 +162,60 @@ extension AppDelegateTests {
         scratch.clock.advance(by: 61)
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
         await TestWait.until { await tunes.reopenCount == 2 }
-        #expect(await tunes.reopenCount == 2)
+    }
 
+    @MainActor
+    @Test("the card's Reopen reopens a player that needs it")
+    func cardReopens() async {
+        let (_, tunes, _, sut) = await reopenBench(chosen: "com.example.tunes")
+        await TestWait.until { sut.status.playerNeedsReopen } // reopened at once, and without its option again
         await tunes.setNeedsReopening(true)
         sut.reopenChosenPlayer() // the card's Reopen
         await TestWait.until { !sut.status.playerNeedsReopen }
-        #expect(!sut.status.playerNeedsReopen)
-        #expect(await tunes.reopenCount == 3)
+        #expect(await tunes.reopenCount == 2)
+    }
 
-        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false) // not asked: reopening it was just skipped in Add an App
+    @MainActor
+    @Test("a player opened without the option it needs, chosen without asking (reopening it was just skipped in Add an App), is left to the card")
+    func reopenLeftToTheCard() async {
+        let (_, _, radio, sut) = await reopenBench(chosen: nil)
+        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false)
         await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await radio.reopenCount == 0)
+    }
 
-        // Asked when one is chosen: Reopen (Return) or Cancel (Escape), and the box.
+    @MainActor
+    @Test("a player that needs reopening, as it's chosen, is asked about: Reopen (Return) or Cancel (Escape), and a box to reopen it so always")
+    func reopenAlert() {
         let alert = AppDelegate.reopenAlert("Radio")
         #expect(alert.messageText == "Reopen Radio?")
         #expect(alert.buttons.map(\.title) == ["Reopen Radio", "Cancel"])
         #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}"])
         #expect(alert.showsSuppressionButton && alert.suppressionButton?.title == "Always reopen Radio this way")
+    }
 
-        // Cancel leaves it to the card, the box ticked or not; Reopen with the
-        // box ticked reopens it, and from then on without asking.
-        let shown = CallLog()
-        sut.runAlert = { alert in
-            shown.calls.append(alert.messageText)
-            alert.suppressionButton?.state = .on
-            return shown.calls.count == 1 ? .alertSecondButtonReturn : .alertFirstButtonReturn
-        }
+    @MainActor
+    @Test("asked about reopening a player just chosen, Cancel leaves it to the card, the box ticked or not")
+    func reopenCancelled() async {
+        let (scratch, radio, sut) = await radioChosenUnasked()
+        let shown = answerAlerts(sut, with: .alertSecondButtonReturn) // Cancel
         sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { shown.calls.count == 1 }
         #expect(await radio.reopenCount == 0)
         #expect(sut.status.playerNeedsReopen)
         #expect(!ReopenChoices.reopensAlways(radio.bundleID, defaults: scratch.defaults))
+        #expect(shown.calls == ["Reopen Radio?"])
+    }
 
-        sut.chooseMusicPlayer(radio.bundleID, replacing: true)
+    @MainActor
+    @Test("asked about reopening a player just chosen, Reopen with the box ticked reopens it, and from then on without asking")
+    func reopenedAlways() async {
+        let (scratch, radio, sut) = await radioChosenUnasked()
+        let shown = answerAlerts(sut, with: .alertFirstButtonReturn) // Reopen
+        sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { await radio.reopenCount == 1 }
         await TestWait.until { !sut.status.playerNeedsReopen }
-        #expect(!sut.status.playerNeedsReopen)
-        #expect(shown.calls == ["Reopen Radio?", "Reopen Radio?"])
+        #expect(shown.calls == ["Reopen Radio?"])
         #expect(ReopenChoices.reopensAlways(radio.bundleID, defaults: scratch.defaults))
     }
 }

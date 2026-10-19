@@ -33,8 +33,7 @@ enum LaunchOption {
         let front = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
         if let app {
             _ = app.terminate()
-            let deadline = Date().addingTimeInterval(15)
-            while !app.isTerminated, Date() < deadline { RunLoop.main.run(until: Date().addingTimeInterval(0.2)) }
+            Polling.wait(seconds: 15, every: 0.2, runLoop: true, until: { app.isTerminated })
             guard app.isTerminated else {
                 tell("\(name) didn't quit within 15 s (it may be asking something): quit it yourself, then try again.")
                 return false

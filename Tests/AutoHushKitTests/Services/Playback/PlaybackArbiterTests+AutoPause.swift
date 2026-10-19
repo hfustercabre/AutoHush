@@ -25,7 +25,6 @@ extension PlaybackArbiterTests {
         await arbiter.setAutoPauseEnabled(false)
         await TestWait.until { await player.playCallCount == 1 } // the resume runs on its own
 
-        #expect(await player.playCallCount == 1)
         #expect(await player.state == .playing)
     }
 
@@ -71,7 +70,6 @@ extension PlaybackArbiterTests {
         await scheduler.completeNext()
 
         await TestWait.until { await player.playCallCount == 1 }
-        #expect(await player.playCallCount == 1)
     }
 
     @Test("turning auto-pause back on pauses the player for an app still playing once it is measured again")
@@ -89,7 +87,6 @@ extension PlaybackArbiterTests {
 
         await scheduler.completeNext()
         await TestWait.until { await player.pauseCallCount == 1 }
-        #expect(await player.pauseCallCount == 1)
     }
 
     @Test("turning auto-pause back on doesn't pause the player for an app found silent meanwhile")

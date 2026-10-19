@@ -15,10 +15,13 @@ struct SoundSourcesSettingsView: View {
     let model: SettingsModel
     @State private var confirmingReset = false
 
+    /// The list's rows, order, search, selection and removals.
+    private var list: AppListModel { model.appList }
+
     var body: some View {
         page
         // Settings' window is kept when closed: a selection doesn't outlive it.
-        .onDisappear { model.clearSelection() }
+        .onDisappear { list.clearSelection() }
     }
 
     /// The heading, the list that scrolls, and the buttons.
@@ -27,15 +30,15 @@ struct SoundSourcesSettingsView: View {
             // The list as a section of macOS's grouped form, its sort and search over it.
             Form {
                 Card(heading: AnyView(header)) {
-                    if model.apps.isEmpty {
+                    if list.apps.isEmpty {
                         Text("Apps appear here once they have played audio.", comment: "Settings → Sound Sources, while the list is empty")
                             .foregroundStyle(.appSecondary)
-                    } else if model.shownApps.isEmpty, let search = model.appSearch {
+                    } else if list.shownApps.isEmpty, let search = list.search {
                         Text(verbatim: String(localized: "No apps match “\(search)”.",
                                               comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed"))
                             .foregroundStyle(.appSecondary)
                     }
-                    ForEach(Array(model.shownApps.enumerated()), id: \.element.id) { index, row in
+                    ForEach(Array(list.shownApps.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { CardDivider() }
                         SoundSourceRow(model: model, row: row)
                     }
@@ -44,7 +47,7 @@ struct SoundSourcesSettingsView: View {
                          comment: "Settings → Sound Sources, under the list; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
                         .captionStyle()
                 }
-                .animation(.default, value: model.apps)
+                .animation(.default, value: list.apps)
             }
             .formStyle(.grouped)
             .environment(\.cardsAreFormSections, true)
@@ -56,17 +59,17 @@ struct SoundSourcesSettingsView: View {
                 }
                     .buttonStyle(.chip)
                     .fixedSize()
-                Button { model.removeSelected() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
+                Button { list.removeSelected() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
                     .buttonStyle(.chip)
                     .fixedSize()
-                    .disabled(model.selectedApps.isEmpty)
+                    .disabled(list.selectedApps.isEmpty)
                 Spacer(minLength: 0)
                 Button(role: .destructive) { confirmingReset = true } label: {
                     Text("Reset List…", comment: "Settings → Sound Sources: button that asks to forget every app in the list")
                 }
                     .buttonStyle(.chip)
                     .fixedSize()
-                    .disabled(model.apps.isEmpty)
+                    .disabled(list.apps.isEmpty)
             }
             // The arrow keys reach them after the list, however it's scrolled.
             .environment(\.highlightBand, .bottom)
@@ -80,10 +83,10 @@ struct SoundSourcesSettingsView: View {
             Text("Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
                  comment: "Settings → Sound Sources: what Reset List does, in its confirmation")
         }
-        .confirmationDialog(Text(verbatim: Self.removalTitle(names: model.removalNames)),
-                            isPresented: Binding(get: { !model.appsAwaitingRemoval.isEmpty }, set: { if !$0 { model.cancelRemoval() } }),
-                            presenting: model.appsAwaitingRemoval.isEmpty ? nil : model.appsAwaitingRemoval) { _ in
-            Button(role: .destructive) { model.confirmRemoval() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
+        .confirmationDialog(Text(verbatim: Self.removalTitle(names: list.removalNames)),
+                            isPresented: Binding(get: { !list.appsAwaitingRemoval.isEmpty }, set: { if !$0 { list.cancelRemoval() } }),
+                            presenting: list.appsAwaitingRemoval.isEmpty ? nil : list.appsAwaitingRemoval) { _ in
+            Button(role: .destructive) { list.confirmRemoval() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
         } message: { rows in
             Text(verbatim: Self.removalMessage(rows))
         }
@@ -92,7 +95,7 @@ struct SoundSourcesSettingsView: View {
     /// The removal's confirmation's message: the app turned off by its name
     /// when only one of those asked about is (the full check, 2026-10-18),
     /// else "some of them".
-    static func removalMessage(_ rows: [SettingsModel.AppRow]) -> String {
+    static func removalMessage(_ rows: [AppListModel.Row]) -> String {
         let off = rows.filter(\.isIgnored)
         guard off.count > 1 else {
             let name = (off.first ?? rows.first)?.source.name ?? ""
@@ -115,16 +118,16 @@ struct SoundSourcesSettingsView: View {
     /// The heading, or the search while it's open, then "Sort by" with the
     /// order's pop-up, an arrow that reverses it, and the magnifier.
     private var header: some View {
-        let order = model.appListOrder
+        let order = list.order
         return HStack(spacing: 6) {
-            if model.appSearch != nil {
+            if list.search != nil {
                 // A closing field hands back its text as it loses focus:
                 // only an open search takes it.
                 SearchField(text: Binding(
-                    get: { model.appSearch ?? "" },
-                    set: { text in if model.appSearch != nil { model.appSearch = text } }
+                    get: { list.search ?? "" },
+                    set: { text in if list.search != nil { list.search = text } }
                 ), focusesOnAppear: true) {
-                    model.appSearch = nil
+                    list.search = nil
                 }
                 .padding(.trailing, 10)
             } else {
@@ -138,7 +141,7 @@ struct SoundSourcesSettingsView: View {
                 .accessibilityHidden(true) // the pop-up says it, as its label
             Picker(selection: Binding(
                 get: { order.criterion },
-                set: { model.setAppListOrder(AppListOrder(criterion: $0)) }
+                set: { list.setOrder(AppListOrder(criterion: $0)) }
             )) {
                 ForEach(AppListOrder.Criterion.allCases, id: \.self) { Text($0.title).tag($0) }
             } label: {
@@ -150,8 +153,8 @@ struct SoundSourcesSettingsView: View {
             .fixedSize()
             // ← and → choose the order, while the arrow keys' highlight is on it.
             .modifier(Highlightable(cornerRadius: 6, outset: 3, adjust: { step in
-                if let criterion = AppListOrder.Criterion.allCases.stepping(from: model.appListOrder.criterion, by: step) {
-                    model.setAppListOrder(AppListOrder(criterion: criterion))
+                if let criterion = AppListOrder.Criterion.allCases.stepping(from: list.order.criterion, by: step) {
+                    list.setOrder(AppListOrder(criterion: criterion))
                 }
             }))
             IconChipButton(
@@ -160,15 +163,15 @@ struct SoundSourcesSettingsView: View {
                 help: Text(verbatim: String(localized: "\(order.directionTitle). Click to reverse the order.",
                                             comment: "Settings → Sound Sources, the arrow beside Sort by; %@ is the order now, e.g. “Newest first”"))
             ) {
-                model.setAppListOrder(AppListOrder(criterion: order.criterion, isReversed: !order.isReversed))
+                list.setOrder(AppListOrder(criterion: order.criterion, isReversed: !order.isReversed))
             }
             .accessibilityValue(Text(verbatim: order.directionTitle))
-            if model.appSearch == nil {
+            if list.search == nil {
                 IconChipButton(symbol: "magnifyingglass",
                                label: Text("Search by name", comment: "The magnifier that opens a search")) {
-                    model.appSearch = ""
+                    list.search = ""
                 }
-                .disabled(model.apps.isEmpty)
+                .disabled(list.apps.isEmpty)
             }
         }
     }
@@ -213,7 +216,7 @@ extension AppListOrder {
 /// other rows.
 private struct SoundSourceRow: View {
     let model: SettingsModel
-    let row: SettingsModel.AppRow
+    let row: AppListModel.Row
     @FocusState private var rowFocused: Bool
     @FocusState private var switchFocused: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
@@ -235,7 +238,7 @@ private struct SoundSourceRow: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 let keys = NSEvent.modifierFlags
-                model.click(on: row.id, command: keys.contains(.command), shift: keys.contains(.shift))
+                list.click(on: row.id, command: keys.contains(.command), shift: keys.contains(.shift))
             }
             Toggle(isOn: Binding(
                 get: { !row.isIgnored },
@@ -260,20 +263,21 @@ private struct SoundSourceRow: View {
         // the selection's; Return or Space adds it to the selection or takes
         // it out.
         .highlightableRow(isFocused: rowFocused || switchFocused, cornerRadius: 6, vertical: 4,
-                          press: { model.toggleSelection(of: row.id) })
+                          press: { list.toggleSelection(of: row.id) })
         .onKeyPress(.space) {
-            model.toggleSelection(of: row.id)
+            list.toggleSelection(of: row.id)
             return .handled
         }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityAction(named: Self.removeFromListTitle) { model.removeFromList(row) }
+        .accessibilityAction(named: Self.removeFromListTitle) { list.removeFromList(row) }
         .contextMenu {
             // The selection, when this row is one of several selected, as in Finder.
-            Button { model.removeFromList(row) } label: { Self.removeFromListTitle }
+            Button { list.removeFromList(row) } label: { Self.removeFromListTitle }
         }
     }
 
-    private var isSelected: Bool { model.selectedAppIDs.contains(row.id) }
+    private var list: AppListModel { model.appList }
+    private var isSelected: Bool { list.selectedAppIDs.contains(row.id) }
 
     private static var removeFromListTitle: Text {
         Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")

@@ -37,12 +37,10 @@ struct PlayerSessionReleaseTests {
         let session = await session()
         session.choose(other)
         await TestWait.until { await added.releases == 1 }
-        #expect(await added.releases == 1)
         // Chosen again, then another: once more.
         session.choose(added)
         session.choose(other)
         await TestWait.until { await added.releases == 2 }
-        #expect(await added.releases == 2)
 
         // Chosen again and monitored, then AutoHush quits.
         session.choose(added)
@@ -66,6 +64,5 @@ struct PlayerSessionReleaseTests {
         #expect(await added.releases == 0)
         monitorings.made[0].send(.playback(.musicPlaying))
         await TestWait.until { await added.releases == 1 }
-        #expect(await added.releases == 1)
     }
 }

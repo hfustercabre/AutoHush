@@ -119,7 +119,6 @@ struct HeldPausesTests {
         #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"])
         _ = held.takes(.playback(.musicIdle), from: token) // the user stopped or quit it
         await TestWait.until { monitoring.stops == 1 }
-        #expect(monitoring.stops == 1)
     }
 
     @Test("what AntiDot learns in a held pause's monitoring goes to the app; the current monitoring's updates aren't taken")

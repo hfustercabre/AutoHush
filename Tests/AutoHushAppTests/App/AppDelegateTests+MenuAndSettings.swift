@@ -12,18 +12,34 @@ import PlayersTestSupport
 extension AppDelegateTests {
     // MARK: - The menu
 
+    /// AutoHush's menu bar menu, with notification centers of its own: no
+    /// other test's window becoming key closes it.
     @MainActor
-    @Test("the menu shows the app's status, and its items reach AutoHush's own settings, player session, choice of player and the player itself; while it's open, an update doesn't restart AutoHush")
-    func menuWiring() async throws {
-        let scratch = Scratch()
-        scratch.windowOpen = false
-        let (sut, _) = makeSUT(scratch)
+    private func statusMenu(_ sut: AppDelegate) throws -> StatusMenuController {
         sut.showStatusMenu()
         let menu = try #require(sut.statusMenu)
+        menu.notificationCenter = NotificationCenter()
+        menu.workspaceCenter = NotificationCenter()
+        return menu
+    }
+
+    @MainActor
+    @Test("the menu shows the app's status")
+    func menuShowsStatus() async throws {
+        let (sut, _) = makeSUT()
+        let menu = try statusMenu(sut)
         defer { menu.remove() }
         await start(sut)
         #expect(menu.status == sut.status)
+    }
 
+    @MainActor
+    @Test("the menu's items reach AutoHush's own settings: auto-pause and the ignored apps")
+    func menuReachesSettings() async throws {
+        let (sut, _) = makeSUT()
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        await start(sut)
         menu.perform(.toggleAutoPause)
         #expect(!sut.userSettings.state.autoPauseActive)
         #expect(sut.status.autoPause == .off && menu.status.autoPause == .off)
@@ -32,36 +48,64 @@ extension AppDelegateTests {
         menu.perform(.setIgnored(vlc, true))
         #expect(sut.session.settings.ignored == [vlc.id])
         #expect(menu.status.ignoredApps == [vlc])
+    }
 
-        // A player chosen from its list is AppDelegate's to choose.
-        await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
-        // Its own notification centers: no other test's window becoming key closes it.
-        menu.notificationCenter = NotificationCenter()
-        menu.workspaceCenter = NotificationCenter()
+    @MainActor
+    @Test("while the menu is open, an update doesn't restart AutoHush")
+    func openMenuIsNoQuietMoment() async throws {
+        let scratch = Scratch()
+        scratch.windowOpen = false
+        let (sut, _) = makeSUT(scratch)
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        await start(sut)
         #expect(sut.isQuietMoment)
         menu.open(showsPanel: false)
         #expect(!sut.isQuietMoment) // the menu is open
+    }
+
+    @MainActor
+    @Test("a player chosen from the menu's list is AppDelegate's to choose, in place: the menu stays open")
+    func menuChoosesPlayer() async throws {
+        let (sut, _) = makeSUT()
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        await start(sut)
+        menu.open(showsPanel: false)
         menu.perform(.openSide(.players))
         #expect(menu.model.players.supportedApps.contains { $0.id == Players.second })
         menu.perform(.choosePlayer(Players.second)) // chosen in place: the menu stays open
         await TestWait.until { sut.player?.bundleID == Players.second }
-        #expect(sut.player?.bundleID == Players.second)
         #expect(menu.status.chosenPlayerID == Players.second)
         #expect(menu.isMenuOpen && !menu.model.isChoosingPlayer)
         menu.close()
+    }
 
-        // Its start failed: Retry is the player session's.
-        await TestWait.until { sut.status.canRetry }
+    @MainActor
+    @Test("the menu's Retry, once a start failed, is the player session's")
+    func menuRetries() async throws {
+        let scratch = Scratch()
+        await scratch.second.setFailVerify(MusicPlayerError.playerNotResponding)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.second)
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        sut.session.launch()
+        await TestWait.until { sut.status.canRetry } // its start failed
         menu.perform(.retry)
         #expect(sut.status.health == .starting && menu.status.health == .starting)
+    }
 
-        // The card's chips: Unmute plays the player, Reopen reopens it.
+    @MainActor
+    @Test("the menu card's chips reach the player itself: Unmute plays it, Reopen reopens it")
+    func menuReachesPlayer() async throws {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.second)
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
         menu.perform(.unmutePlayer)
         await TestWait.until { await scratch.second.playCallCount == 1 }
-        #expect(await scratch.second.playCallCount == 1)
         menu.perform(.reopenPlayer)
         await TestWait.until { await scratch.second.reopenCount == 1 }
-        #expect(await scratch.second.reopenCount == 1)
     }
 
     // MARK: - Settings and updates
@@ -89,8 +133,8 @@ extension AppDelegateTests {
 
         sut.userSettings.setIgnored(vlc, true)
         #expect(sut.status.ignoredApps == [AudioSource(id: vlc.id, name: "VLC")])
-        #expect(sut.settingsModel.apps.map(\.id) == [vlc.id])
-        #expect(sut.settingsModel.apps.first?.isIgnored == true)
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [vlc.id])
+        #expect(sut.settingsModel.appList.apps.first?.isIgnored == true)
         #expect(monitoring.ignored == [vlc.id])
 
         sut.userSettings.setTimings(TimingSettings(stopGrace: 4))
@@ -125,7 +169,6 @@ extension AppDelegateTests {
         let stuckReplies = CallLog()
         #expect(stuck.shouldTerminate(wait: 0.05) { stuckReplies.calls.append("reply") } == .terminateLater)
         await TestWait.until { stuckReplies.calls.count == 1 } // after the wait
-        #expect(stuckReplies.calls.count == 1)
         #expect(await added.releases == 0)
         await added.letGo()
         await stuck.quitting?.value

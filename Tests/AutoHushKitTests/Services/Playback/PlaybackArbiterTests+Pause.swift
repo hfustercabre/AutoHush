@@ -143,7 +143,6 @@ extension PlaybackArbiterTests {
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { states.value.last == .musicPlaying }
-        #expect(states.value.last == .musicPlaying)
         #expect(failures.value == [.playerCommandFailed(.buttonDisabled), nil])
     }
 

@@ -28,11 +28,9 @@ extension AppDelegateTests {
 
         webApp.set(.learning(hasPlayed: true))
         await TestWait.until { sut.settingsModel.learning == .learning(hasPlayed: true) }
-        #expect(sut.settingsModel.learning == .learning(hasPlayed: true))
 
         webApp.set(.learned)
         await TestWait.until { !scratch.learningWindow.isOpen }
-        #expect(!scratch.learningWindow.isOpen)
         #expect(sut.status.learning == .learned)
         #expect(!scratch.learningWindow.isOpen && sut.status.canLearnControlsAgain)
 
@@ -128,7 +126,6 @@ extension AppDelegateTests {
         sut.learnControlsAgain()
         #expect(!scratch.addWindow.isOpen)
         await TestWait.until { scratch.learningWindow.isOpen }
-        #expect(scratch.learningWindow.isOpen)
     }
 
     @MainActor
@@ -145,8 +142,7 @@ extension AppDelegateTests {
         webApp.set(.learning(hasPlayed: false)) // its button went missing meanwhile
         await TestWait.until { sut.status.learning == .learning(hasPlayed: false) }
         scratch.learningWindow.close() // Later
-        await TestWait.until { webApp.keepLearnedCount == 1 }
-        #expect(webApp.keepLearnedCount == 1) // the player decides: it was learning again
+        await TestWait.until { webApp.keepLearnedCount == 1 } // the player decides: it was learning again
     }
 
     @MainActor
@@ -208,7 +204,6 @@ extension AppDelegateTests {
 
         webApp.set(.learned)
         await TestWait.until { !scratch.addWindow.isOpen }
-        #expect(!scratch.addWindow.isOpen)
     }
 
     /// What the user does while the add window says the web app made isn't found.
@@ -357,8 +352,7 @@ extension AppDelegateTests {
         sut.addWebAppModel.continueTapped()
         await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
-        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
-        #expect(sut.status.chosenPlayerID == webApp.bundleID) // not in `scratch.installed`: macOS doesn't know it
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID } // not in `scratch.installed`: macOS doesn't know it
         #expect(sut.status.playerOptions.first { $0.bundleID == webApp.bundleID }?.appURL == appURL)
     }
 
@@ -395,12 +389,10 @@ extension AppDelegateTests {
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
         await TestWait.until { sut.addWebAppModel.phase == .opening }
-        #expect(sut.addWebAppModel.phase == .opening)
 
         sut.addWebAppModel.windowClosed() // the window's Cancel, or its close button
         #expect(sut.addWebAppModel.phase == .entering)
         await TestWait.until { scratch.maker.wasCancelled }
-        #expect(scratch.maker.wasCancelled)
         #expect(scratch.opened.isEmpty)
         #expect(sut.status.chosenPlayerID == Players.first)
 
@@ -429,7 +421,6 @@ extension AppDelegateTests {
         sut.addWebAppModel.address = "play.qobuz.com"
         sut.addWebAppModel.continueTapped()
         await TestWait.until { !scratch.addWindow.isOpen }
-        #expect(!scratch.addWindow.isOpen)
     }
 
     @MainActor
@@ -483,7 +474,6 @@ extension AppDelegateTests {
         found.value = [] // moved to the Trash, or deleted
         scratch.changeFolder()
         await TestWait.until { sut.status.chosenPlayerID == nil }
-        #expect(sut.status.chosenPlayerID == nil)
         #expect(!sut.status.canLearnControlsAgain)
         #expect(sut.settingsModel.chosenPlayer == nil)
         #expect(scratch.preferences.musicPlayer == nil)

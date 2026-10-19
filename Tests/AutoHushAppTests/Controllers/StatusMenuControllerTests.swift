@@ -498,53 +498,97 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.First"])
     }
 
-    @Test("elsewhere the keys work as in macOS's menus, whatever the keyboard navigation setting: ↑ ↓ move the highlight, Return or Space presses, ← → adjust, → opens a side window on its first row and ← closes it, keys with nothing to act on don't beep, Tab leaves it to the focus")
-    func menuKeys() async {
-        final class Log { var calls: [String] = [] }
+    /// What the menu's rows did.
+    private final class Presses { var calls: [String] = [] }
+
+    /// The menu open, with Ignored Apps listing VLC, and two rows its views
+    /// registered: a slider, then the row that opens Ignored Apps' side
+    /// window. The keys work as in macOS's menus, whatever the keyboard
+    /// navigation setting.
+    private func menuWithRows() -> (sut: StatusMenuController, presses: Presses, slider: UUID, sideRow: UUID) {
         let sut = makeController()
-        defer { sut.remove() }
         var status = readyStatus()
         status.ignoredApps = [vlc]
         sut.status = status
         reopen(sut)
-        let calls = Log()
-        let keyboard = sut.model.keyboard
-        let slider = UUID(), sideRow = UUID(), appRow = UUID(), addRow = UUID()
-        keyboard.register(slider, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 20), adjust: { calls.calls.append("adjust \($0)") }))
-        keyboard.register(sideRow, .init(frame: CGRect(x: 0, y: 40, width: 300, height: 20),
-                                         press: { sut.perform(.openSide(.ignoredApps)) }, opensSide: true))
+        let presses = Presses()
+        let slider = UUID(), sideRow = UUID()
+        sut.model.keyboard.register(slider, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 20), adjust: { presses.calls.append("adjust \($0)") }))
+        sut.model.keyboard.register(sideRow, .init(frame: CGRect(x: 0, y: 40, width: 300, height: 20),
+                                                   press: { sut.perform(.openSide(.ignoredApps)) }, opensSide: true))
+        return (sut, presses, slider, sideRow)
+    }
 
+    @Test("in the menu, ↓ moves the highlight to its first control, as in macOS's menus")
+    func downMovesHighlight() {
+        let (sut, _, slider, _) = menuWithRows()
+        defer { sut.remove() }
         #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓: the first
-        #expect(keyboard.highlighted == slider)
+        #expect(sut.model.keyboard.highlighted == slider)
+    }
+
+    @Test("in the menu, Return on a control with nothing to press does nothing, without a beep")
+    func returnWithNothingToPress() {
+        let (sut, presses, _, _) = menuWithRows()
+        defer { sut.remove() }
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(sut.handleKey(MenuPanelTests.key(36))) // Return: nothing to press, and no beep
+        #expect(presses.calls.isEmpty)
+    }
+
+    @Test("in the menu, → and ← adjust a slider")
+    func arrowsAdjust() {
+        let (sut, presses, _, _) = menuWithRows()
+        defer { sut.remove() }
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(sut.handleKey(MenuPanelTests.key(124))) // →
         #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
-        #expect(calls.calls == ["adjust 1", "adjust -1"])
+        #expect(presses.calls == ["adjust 1", "adjust -1"])
+    }
+
+    @Test("in the menu, → opens a side window from its row, on its first row once they've come; ↓ goes on from it, Space presses, and ← closes it")
+    func arrowsOpenAndCloseSide() async {
+        let (sut, presses, _, sideRow) = menuWithRows()
+        defer { sut.remove() }
+        let keyboard = sut.model.keyboard
+        let appRow = UUID(), addRow = UUID()
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(sut.handleKey(MenuPanelTests.key(124))) // → opens its side window
         #expect(sut.model.openSide == .ignoredApps)
 
         // Its rows, as its views register them: the first lights up once they've come.
-        sut.model.sideKeyboard.register(addRow, .init(frame: CGRect(x: 0, y: 40, width: 280, height: 30), press: { calls.calls.append("add") }))
-        sut.model.sideKeyboard.register(appRow, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 30), press: { calls.calls.append("app") }))
+        sut.model.sideKeyboard.register(addRow, .init(frame: CGRect(x: 0, y: 40, width: 280, height: 30), press: { presses.calls.append("add") }))
+        sut.model.sideKeyboard.register(appRow, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 30), press: { presses.calls.append("app") }))
         await TestWait.until { sut.model.sideKeyboard.highlighted == appRow }
         #expect(keyboard.highlighted == sideRow)
         #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓ goes on from it
         #expect(sut.model.sideKeyboard.highlighted == addRow)
         #expect(sut.handleKey(MenuPanelTests.key(49))) // Space
-        #expect(calls.calls.last == "add")
+        #expect(presses.calls.last == "add")
         #expect(sut.handleKey(MenuPanelTests.key(123))) // ← closes it
         #expect(sut.model.openSide == nil)
         #expect(sut.model.sideKeyboard.highlighted == nil)
         #expect(keyboard.highlighted == sideRow)
+    }
 
-        // One the pointer opened: → lights its first row.
+    @Test("in a side window the pointer opened, → lights its first row")
+    func rightLightsPointerOpenedSide() {
+        let (sut, _, _, _) = menuWithRows()
+        defer { sut.remove() }
+        let appRow = UUID()
         sut.perform(.openSide(.ignoredApps))
         sut.model.sideKeyboard.register(appRow, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 30), press: {}))
         #expect(sut.handleKey(MenuPanelTests.key(124)))
         #expect(sut.model.sideKeyboard.highlighted == appRow)
-        sut.handle(.left)
+    }
 
+    @Test("in the menu, Tab leaves the highlight to the keyboard's focus; a menu opens with nothing highlighted")
+    func tabLeavesToFocus() {
+        let (sut, _, _, _) = menuWithRows()
+        defer { sut.remove() }
+        let keyboard = sut.model.keyboard
+        #expect(sut.handleKey(MenuPanelTests.key(125)))
         #expect(!sut.handleKey(MenuPanelTests.key(48))) // Tab: the keyboard's focus takes over
         #expect(keyboard.highlighted == nil)
         keyboard.move(1)
@@ -741,8 +785,7 @@ struct StatusMenuControllerTests {
         sut.searchTakesKeyboard(replaying: key)
         #expect(side.isKeyWindow)
         #expect(sut.model.searchFocus == focus + 1)
-        await TestWait.until { sut.model.playerSearch == "a" }
-        #expect(sut.model.playerSearch == "a") // typed once
+        await TestWait.until { sut.model.playerSearch == "a" } // typed once
     }
 
     // MARK: - The settings
@@ -859,7 +902,6 @@ struct StatusMenuControllerTests {
 
         updates.finishCheck()
         await TestWait.until { !sut.model.isCheckingForUpdates }
-        #expect(!sut.model.isCheckingForUpdates)
         #expect(log.calls == ["checkNow"])
     }
 

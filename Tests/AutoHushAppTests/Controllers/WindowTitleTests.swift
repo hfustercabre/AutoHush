@@ -22,10 +22,8 @@ struct WindowTitleTests {
         #expect(sut.window?.title == "Choose Your Media Player")
         model.welcomeAsksPermissions = true
         await TestWait.until { sut.window?.title == "Allow AutoHush to Work" }
-        #expect(sut.window?.title == "Allow AutoHush to Work")
         model.showWelcomePlayers()
         await TestWait.until { sut.window?.title == "Choose Your Media Player" }
-        #expect(sut.window?.title == "Choose Your Media Player")
     }
 
     @Test("the learning window's title names the chosen player, and follows it; closed (Later, or its close button), it says so")
@@ -42,7 +40,6 @@ struct WindowTitleTests {
         #expect(sut.window?.title == "Learn YT Music’s Controls")
         model.state.status.chosenPlayerID = "com.apple.Safari.WebApp.B"
         await TestWait.until { sut.window?.title == "Learn Deezer’s Controls" }
-        #expect(sut.window?.title == "Learn Deezer’s Controls")
 
         let closes = CallLog()
         sut.onClose = { closes.calls.append("closed") } // AppDelegate keeps what was learned then
@@ -52,8 +49,8 @@ struct WindowTitleTests {
     }
 
     /// Settings and the logs window are checked where they're made one at a
-    /// time (SettingsWindowControllerTests.limits, showingAndClosing): each
-    /// takes the name its place is kept under, which a second can't have.
+    /// time (SettingsWindowControllerTests.limits, logsWindow): each takes
+    /// the name its place is kept under, which a second can't have.
     @Test("no AutoHush window can go full screen: welcome and Add an App's none; Add a Web App and learning only over another app's")
     func noFullScreen() {
         let model = makeModel()
@@ -76,31 +73,49 @@ struct WindowTitleTests {
         #expect(windows.suffix(2).allSatisfy { $0?.collectionBehavior.contains(.fullScreenAuxiliary) == true })
     }
 
-    @Test("a window opens centered, or floating in the top-right corner with its top edge kept as it grows; shown again, it stays put; brought forward as the menu opens, it comes in front if it's open; closed, what it shows stops; the check's warning closes before its Start starts the check")
-    func showingAndClosing() async throws {
+    /// The windows that open centered: Add an App's, its list of apps, and
+    /// the warning before its check.
+    private func centeredWindows() -> (world: World, windows: [HostedWindowController]) {
         let world = World()
         let addApp = AddAppModel(world)
-        let started = CallLog()
-        var warningWindow: NSWindow?
-        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none) {
-            started.calls.append(warningWindow?.isVisible == false ? "started, closed" : "started, open")
-        }
-        warningWindow = warning.window
-        let centered: [HostedWindowController] = [
+        return (world, [
             AddAppWindowController(model: addApp),
             AppChooserWindowController(model: addApp),
-            warning,
-        ]
-        for sut in centered {
+            CheckWarningWindowController(app: world.apps[0], muting: .none) {},
+        ])
+    }
+
+    @Test("a window opens centered, under a title bar of the usual height")
+    func opensCentered() throws {
+        for sut in centeredWindows().windows {
             let window = try #require(sut.window)
             sut.show()
             let area = try #require(window.screen?.visibleFrame)
             #expect(sut.isOpen && abs(window.frame.midX - area.midX) <= 1)
             #expect(window.frame.height - window.contentLayoutRect.height == HostedWindowController.titleBarHeight)
+            sut.close()
+        }
+    }
+
+    @Test("a window shown again stays where the user moved it")
+    func shownAgainStaysPut() throws {
+        for sut in centeredWindows().windows {
+            let window = try #require(sut.window)
+            sut.show()
+            let area = try #require(window.screen?.visibleFrame)
             let moved = NSPoint(x: area.minX + 10, y: area.minY + 10) // by the user
             window.setFrameOrigin(moved)
             sut.show()
             #expect(window.frame.origin == moved)
+            sut.close()
+        }
+    }
+
+    @Test("brought forward as the menu opens, a window comes in front if it's open; a closed one stays closed")
+    func broughtForwardIfOpen() async throws {
+        for sut in centeredWindows().windows {
+            let window = try #require(sut.window)
+            sut.show()
             // Another app's window over it, as the menu opens.
             let other = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
             other.isReleasedWhenClosed = false
@@ -114,9 +129,27 @@ struct WindowTitleTests {
             sut.bringForward() // as when the menu opens: a closed window stays closed
             #expect(!sut.isOpen)
         }
-        #expect(world.warningsClosed == 1) // Add an App closed: what it opened closes too
+    }
 
-        // The warning's Start closes it, then starts the check (which counts the windows over the app); Cancel closes it.
+    @Test("Add an App's window closed, what it opened closes too")
+    func addAppClosesWhatItOpened() async throws {
+        let (world, windows) = centeredWindows()
+        let sut = try #require(windows.first)
+        sut.show()
+        sut.close()
+        await TestWait.until { !sut.isOpen }
+        #expect(world.warningsClosed == 1)
+    }
+
+    @Test("the check's warning closes before its Start starts the check (which counts the windows over the app); its Cancel closes it")
+    func warningClosesBeforeStart() async throws {
+        let world = World()
+        let started = CallLog()
+        var warningWindow: NSWindow?
+        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none) {
+            started.calls.append(warningWindow?.isVisible == false ? "started, closed" : "started, open")
+        }
+        warningWindow = warning.window
         let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
         warning.show()
         warningView.rootView.start()
@@ -126,12 +159,16 @@ struct WindowTitleTests {
         warningView.rootView.cancel()
         await TestWait.until { !warning.isOpen }
         #expect(!warning.isOpen && started.calls.count == 1)
+    }
 
+    @Test("Add a Web App's window floats in the top-right corner, its top edge kept as it grows")
+    func floatsInTheCorner() async throws {
         let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
         let window = try #require(floating.window)
         let screen = try #require(NSScreen.screens.last) // as if the pointer were on it
         floating.cornerScreen = { screen }
         floating.show()
+        defer { floating.close() }
         let area = screen.visibleFrame
         let margin = HostedWindowController.cornerMargin
         #expect(window.level == .floating)
@@ -143,8 +180,10 @@ struct WindowTitleTests {
             await TestWait.until { window.frame.maxY == top }
             #expect(window.frame.maxY == top && window.frame.height == height)
         }
-        floating.close()
+    }
 
+    @Test("the logs window keeps its place and size under its name, opens centered, resizable but never full screen; shown again, its search stays; closed, it no longer follows new lines")
+    func logsWindow() async throws {
         let log = LogsModelTests.FakeLog()
         UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LogsWindowController.frameName)") // never opened before
         let logs = LogsWindowController(model: LogsModel(source: log))
@@ -192,16 +231,13 @@ struct WindowTitleTests {
 
         world.report?(CheckReportLine.blocked)
         await TestWait.until { panel.level == CheckPanelController.panelLevel && shades().count == NSScreen.screens.count }
-        #expect(panel.level == CheckPanelController.panelLevel && shades().count == NSScreen.screens.count)
         #expect(shades().allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
         #expect(shades().allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
         world.report?(CheckReportLine.free)
         await TestWait.until { panel.level == .floating && shades().isEmpty }
-        #expect(panel.level == .floating && shades().isEmpty)
 
         world.report?(CheckReportLine.blocked)
         await TestWait.until { !shades().isEmpty }
-        #expect(!shades().isEmpty)
         sut.hide()
         #expect(!panel.isVisible && shades().isEmpty)
         world.run.finish(.stopped)
@@ -269,7 +305,6 @@ struct WindowTitleTests {
         #expect(!window.isVisible && window.isOpen)
         window.close()
         await TestWait.until { !window.isOpen }
-        #expect(!window.isOpen)
     }
 
     @Test("a closed window brought forward follows the user to the desktop they're on for a moment, then stays where it opened")
@@ -282,6 +317,5 @@ struct WindowTitleTests {
         window.bringForward(following: 0) // a second in the app
         #expect(window.collectionBehavior.contains(.moveToActiveSpace))
         await TestWait.until { !window.collectionBehavior.contains(.moveToActiveSpace) }
-        #expect(!window.collectionBehavior.contains(.moveToActiveSpace))
     }
 }
