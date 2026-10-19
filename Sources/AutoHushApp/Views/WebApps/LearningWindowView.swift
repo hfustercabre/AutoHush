@@ -30,11 +30,12 @@ struct LearningWindowView: View {
                     // Without the permission AutoHush can't watch the player:
                     // asking for it comes first, and the steps unlock once it's allowed.
                     let state = model.permissions
-                    if let control = state.control, !state.controlAccess.isSatisfied {
+                    let locked = state.controlMissing(for: model.chosenPlayerID)
+                    if locked, let control = state.control {
                         LearningPermissionStep(model: model, permission: control, access: state.controlAccess, name: name)
                     }
                     LearningSteps(name: name, hasPlayed: hasPlayed, hasPaused: learned,
-                                  locked: state.control != nil && !state.controlAccess.isSatisfied, announces: true,
+                                  locked: locked, announces: true,
                                   lockedAnnouncement: state.control.map { LearningPermissionStep.announcement($0, name: name) },
                                   deadline: model.learningPauseDeadline, note: model.learningNote,
                                   pauseMode: model.learningPauseMode, action: { model.learningSession.step($0) })

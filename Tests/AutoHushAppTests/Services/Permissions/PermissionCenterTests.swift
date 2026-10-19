@@ -33,6 +33,7 @@ struct PermissionCenterTests {
     func scriptablePlayer() async {
         let spotify = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
         let closed = await center(running: false).state(player: spotify, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
+        #expect(closed.player == "com.example.jukebox")
         #expect(closed.control == .automation(player: "Jukebox"))
         #expect(closed.controlAccess == .playerNotRunning)
         #expect(closed.audio == .allowed)
@@ -57,6 +58,16 @@ struct PermissionCenterTests {
         #expect(unreadable.audio == .denied)
         let unreadableFine = await center(audio: nil).state(player: nil, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
         #expect(unreadableFine.audio == .allowed)
+    }
+
+    @Test("a missing control permission counts only as read for that player: the previous player's, read before the switch, doesn't lock the new one's steps")
+    func controlMissingForPlayer() {
+        let previous = PermissionsState(player: "com.example.jukebox", control: .automation(player: "Jukebox"), controlAccess: .notAsked)
+        #expect(previous.controlMissing(for: "com.example.jukebox"))
+        #expect(!previous.controlMissing(for: "com.example.webapp"))
+        let allowed = PermissionsState(player: "com.example.webapp", control: .accessibility(player: "Web App"), controlAccess: .allowed)
+        #expect(!allowed.controlMissing(for: "com.example.webapp"))
+        #expect(!PermissionsState().controlMissing(for: nil)) // no player, nothing to control
     }
 
     @Test("Accessibility, for a web app or adding one, is read as it stands")

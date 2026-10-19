@@ -413,7 +413,14 @@ This project follows [Semantic Versioning](https://semver.org/).
     read on their own;
   - a switch is one stop, its name and state, with what it does as its
     hint (the menu, Playing Now, Settings), and the menu is "AutoHush";
-  - pressing a row of the menu with VoiceOver no longer closes it.
+  - pressing a row of the menu with VoiceOver no longer closes it;
+  - a checklist's next step is announced at high priority, so the focus
+    moving to a window that opens with it cuts it off less often (Add a Web
+    App, the learning window).
+- **The learning window could show the previous player's permission.** Right
+  after a web app was added, it could ask for a moment to allow the
+  previous player's Automation; it now waits until the web app's own
+  permission is read.
 
 ## [0.12.1] — 2026-10-11
 

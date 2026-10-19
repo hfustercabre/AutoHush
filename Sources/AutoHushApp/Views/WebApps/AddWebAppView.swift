@@ -205,8 +205,7 @@ struct AddWebAppView: View {
     /// (Accessibility): without it, the learning steps wait, locked.
     private var learningLocked: Bool {
         guard case .learning = model.phase else { return false }
-        let state = settings.permissions
-        return state.control != nil && !state.controlAccess.isSatisfied
+        return settings.permissions.controlMissing(for: settings.chosenPlayerID)
     }
 
     /// Each step of adding `phase`'s web app and learning it, with where it

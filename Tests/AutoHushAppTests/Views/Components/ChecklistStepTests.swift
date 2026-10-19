@@ -1,3 +1,4 @@
+import AppKit
 import Testing
 import AutoHushKit
 @testable import AutoHushApp
@@ -169,5 +170,12 @@ struct ChecklistStepTests {
         let adding = AddWebAppView.stepGroups(for: .adding, learning: nil)
         #expect(adding.learning.isEmpty) // nothing to learn before it's made
         #expect(adding.adding.last?.title == "Learn its controls")
+    }
+
+    @Test("a step's announcement goes out at high priority, so the focus change that comes with the step doesn't cut it off")
+    func announcementPriority() {
+        let info = stepAnnouncementInfo("Play something in YT Music")
+        #expect(info[.announcement] as? String == "Play something in YT Music")
+        #expect(info[.priority] as? Int == NSAccessibilityPriorityLevel.high.rawValue)
     }
 }

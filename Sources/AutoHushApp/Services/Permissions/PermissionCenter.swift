@@ -38,7 +38,7 @@ final class PermissionCenter {
     /// Settings during this launch.
     func state(player: (any MusicPlayer)?, detectionMethod: DetectionMethod, detection: DetectionMode,
                awaitsReopen: Bool) async -> PermissionsState {
-        var state = PermissionsState(accessibility: system.isTrusted())
+        var state = PermissionsState(player: player?.bundleID, accessibility: system.isTrusted())
         // One muted instead of paused needs only Audio Recording, its own row.
         if let player, player.controlPermission != .systemAudioRecording {
             state.control = player.controlPermission

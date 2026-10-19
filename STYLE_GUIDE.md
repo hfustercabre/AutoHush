@@ -565,7 +565,8 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   "selected" trait. The element sets its own label instead of combining its
   texts (the step that asks for a permission too): combined, a value of its
   own would replace their words. A window's checklist announces the step to
-  do now each time it changes (`announcesCurrentStep`).
+  do now each time it changes (`announcesCurrentStep`), at high priority
+  through AppKit, so the focus change a step brings doesn't cut it off.
 - **Numbered steps** (`NumberedStepRow`, Add an App): each step's title is a
   heading read with its number ("Step 2 of 6, …"), with where it stands as
   its value ("Completed", "In progress", "To do", "Failed"), so VoiceOver
