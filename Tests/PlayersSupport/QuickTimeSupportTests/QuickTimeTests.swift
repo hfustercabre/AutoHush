@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import AutoHushKit
-import ScriptablePlayers
+@testable import ScriptablePlayers
 @testable import QuickTimeSupport
 
 @Suite("QuickTime Player")

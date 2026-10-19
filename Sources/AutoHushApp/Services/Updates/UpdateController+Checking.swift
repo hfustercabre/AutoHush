@@ -34,15 +34,15 @@ extension UpdateController {
             let unknown = String(localized: "AutoHush’s version is unknown.",
                                  comment: "Update status in Settings, and the alert after a check asked for from the menu or Settings")
             logger.error("Can’t check for updates: AutoHush’s version is unknown")
-            onStatus(unknown)
+            showStatus(unknown)
             if resultWanted { await presentFailure(unknown) }
             return
         }
         logger.info("Checking for updates (\(resultWanted ? "asked for" : "automatic", privacy: .public))")
-        onStatus(UpdateOffer.checkingTitle)
+        showStatus(UpdateOffer.checkingTitle)
         do {
             let result = try await checker.check(currentVersion: currentVersion)
-            preferences.lastUpdateCheck = now()
+            lastCheck = now()
             switch result {
             case .available(let release):
                 logger.info("Version \(release.version.description, privacy: .public) is available (running \(currentVersion.description, privacy: .public))")
@@ -66,12 +66,12 @@ extension UpdateController {
             tidy()
             switch result {
             case .available(let release):
-                onStatus(availableStatus(release))
+                showStatus(availableStatus(release))
             case .upToDate:
-                onStatus(String(localized: "AutoHush \(currentVersion.description) is up to date.",
-                                comment: "Update status in Settings; %@ is a version number"))
+                showStatus(String(localized: "AutoHush \(currentVersion.description) is up to date.",
+                                  comment: "Update status in Settings; %@ is a version number"))
             case .noReleases:
-                onStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
+                showStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
             }
             if resultWanted {
                 await beforePresenting()
@@ -79,7 +79,7 @@ extension UpdateController {
             }
         } catch {
             logger.error("Update check failed: \(error)")
-            onStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
+            showStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
             if resultWanted { await presentFailure(error.localizedDescription) }
         }
     }

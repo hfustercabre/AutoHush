@@ -82,8 +82,16 @@ extension [ChecklistStep] {
     /// warning that appears under the same step (AutoHush can't hear it,
     /// say) changes it, so it's said too. `nil` when there's none.
     var currentAnnouncement: String? {
-        (first { $0.state == .current } ?? first { $0.state == .failed }).map { step in
+        currentStep.map { step in
             [step.announcement ?? step.title, step.warning].compactMap { $0 }.joined(separator: "\n")
         }
+    }
+
+    /// The title of the step to do now (or the one that failed): VoiceOver's
+    /// cursor goes to it as it changes.
+    var currentTitle: String? { currentStep?.title }
+
+    private var currentStep: ChecklistStep? {
+        first { $0.state == .current } ?? first { $0.state == .failed }
     }
 }

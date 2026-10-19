@@ -1,4 +1,5 @@
 import ApplicationServices
+import AutoHushKit
 import Foundation
 
 /// The menu bar's Now Playing setting (System Settings → Menu Bar; Control
@@ -21,7 +22,7 @@ package enum NowPlayingSetting {
     /// Where the value to put back is kept meanwhile, as "value", with the
     /// process that wrote it as "pid": in the defaults it's given (AutoHush's
     /// own, also for the check run inside AutoHush).
-    package static let leftKey = "nowPlayingShownForAPress"
+    static let leftKey = "nowPlayingShownForAPress"
 
     /// The setting, read and written: Control Center's (`controlCenter`);
     /// tests stand in for it.
@@ -60,11 +61,7 @@ package enum NowPlayingSetting {
         defaults.set(["value": original, "pid": Int(getpid())], forKey: leftKey)
         setting.write(shownWhenActive)
         defer { putBack(original, defaults: defaults, setting: setting) }
-        let deadline = Date().addingTimeInterval(1)
-        while !shown() {
-            guard Date() < deadline else { return nil }
-            Thread.sleep(forTimeInterval: 0.05)
-        }
+        guard Polling.wait(seconds: 1, every: 0.05, until: shown) else { return nil }
         return body()
     }
 

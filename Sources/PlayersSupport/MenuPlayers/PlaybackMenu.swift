@@ -9,7 +9,7 @@ package struct MenuToggle: Equatable, Sendable {
     package let title: String
     package let isEnabled: Bool
 
-    package init(title: String, isEnabled: Bool) {
+    init(title: String, isEnabled: Bool) {
         self.title = title
         self.isEnabled = isEnabled
     }
@@ -103,5 +103,5 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
 
     /// ← and → (Previous and Next), and Space, by their key codes.
     package static let arrows: Set<Int> = [123, 124]
-    package static let space = 49
+    static let space = 49
 }

@@ -11,12 +11,12 @@ import os
 /// then, whether the tool does or not: one stuck in the kernel can't hold
 /// its caller.
 package struct ToolRun: Sendable {
-    package let executable: URL
-    package let arguments: [String]
+    let executable: URL
+    let arguments: [String]
     /// How long it may take; `nil`, as long as it takes.
-    package var timeout: TimeInterval?
+    var timeout: TimeInterval?
     /// Its standard error read with its output; else dropped.
-    package var readsErrors: Bool
+    var readsErrors: Bool
 
     package init(_ executable: URL, _ arguments: [String] = [], timeout: TimeInterval? = nil, readsErrors: Bool = false) {
         self.executable = executable
@@ -33,11 +33,11 @@ package struct ToolRun: Sendable {
         /// A signal ended it: it crashed, or was stopped.
         package var bySignal = false
         /// It took longer than its timeout, and was stopped.
-        package var timedOut = false
+        var timedOut = false
         /// What it printed; nothing for `start`, whose lines went to `onLine`.
         package var output = Data()
 
-        package init(status: Int32, bySignal: Bool = false, timedOut: Bool = false, output: Data = Data()) {
+        init(status: Int32, bySignal: Bool = false, timedOut: Bool = false, output: Data = Data()) {
             self.status = status
             self.bySignal = bySignal
             self.timedOut = timedOut
@@ -54,7 +54,7 @@ package struct ToolRun: Sendable {
 
     /// How much of its output is kept: the rest is read and dropped, so a
     /// tool that never stops printing neither fills the memory nor stalls.
-    package static let maxOutput = 16 << 20
+    static let maxOutput = 16 << 20
 
     /// Runs it and waits for its end, without holding a thread meanwhile.
     package func run() async -> Result {

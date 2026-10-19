@@ -47,7 +47,7 @@ package enum SupportedPlayers {
     /// Deezer (about 10 million), then SoundCloud, most of whose listeners
     /// don't subscribe. Their web apps are offered first, and suggested
     /// until added; any other web app is offered after them, marked untested.
-    package static let testedWebApps: [TestedWebApp] = [
+    static let testedWebApps: [TestedWebApp] = [
         TestedWebApp(name: "Spotify", address: "open.spotify.com"),
         TestedWebApp(name: "YouTube Music", address: "music.youtube.com"),
         TestedWebApp(countrySites: amazonMusicSites, region: Locale.current.region?.identifier),
@@ -107,7 +107,7 @@ package enum SupportedPlayers {
     /// over, so the web app opens the Mac's own, and Add a Web App offers the
     /// others. Checked: music.amazon.ae, .sa and .eg answer with an empty
     /// page (Amazon Music isn't offered there).
-    package static let amazonMusicSites = CountrySites(
+    static let amazonMusicSites = CountrySites(
         name: "Amazon Music",
         byRegion: [
             "US": "music.amazon.com", "GB": "music.amazon.co.uk", "IE": "music.amazon.co.uk",

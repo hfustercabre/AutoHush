@@ -11,46 +11,46 @@ extension ScriptablePlayer {
     /// standard Apple event suites. Only the suite of pause and play differs
     /// from app to app; it's in the profile.
     package enum Code {
-        package static let coreSuite = fourCharCode("core")
-        package static let getData = fourCharCode("getd")
-        package static let setData = fourCharCode("setd")
-        package static let setDataValue = fourCharCode("data")
-        package static let pause = fourCharCode("Paus")
-        package static let play = fourCharCode("Play")
-        package static let playerStateProperty = fourCharCode("pPlS")
-        package static let soundVolumeProperty = fourCharCode("pVol")
-        package static let stateStopped = fourCharCode("kPSS")
-        package static let statePlaying = fourCharCode("kPSP")
-        package static let statePaused = fourCharCode("kPSp")
+        static let coreSuite = fourCharCode("core")
+        static let getData = fourCharCode("getd")
+        static let setData = fourCharCode("setd")
+        static let setDataValue = fourCharCode("data")
+        static let pause = fourCharCode("Paus")
+        static let play = fourCharCode("Play")
+        static let playerStateProperty = fourCharCode("pPlS")
+        static let soundVolumeProperty = fourCharCode("pVol")
+        static let stateStopped = fourCharCode("kPSS")
+        static let statePlaying = fourCharCode("kPSP")
+        static let statePaused = fourCharCode("kPSp")
         /// Music only: seeking still counts as playing.
-        package static let stateFastForwarding = fourCharCode("kPSF")
-        package static let stateRewinding = fourCharCode("kPSR")
+        static let stateFastForwarding = fourCharCode("kPSF")
+        static let stateRewinding = fourCharCode("kPSR")
 
         package static let directObject = fourCharCode("----")
         package static let errorNumber = fourCharCode("errn")
-        package static let desiredClass = fourCharCode("want")
-        package static let keyForm = fourCharCode("form")
-        package static let keyData = fourCharCode("seld")
-        package static let container = fourCharCode("from")
-        package static let property = fourCharCode("prop")
-        package static let objectSpecifier = fourCharCode("obj ")
+        static let desiredClass = fourCharCode("want")
+        static let keyForm = fourCharCode("form")
+        static let keyData = fourCharCode("seld")
+        static let container = fourCharCode("from")
+        static let property = fourCharCode("prop")
+        static let objectSpecifier = fourCharCode("obj ")
     }
 
     // MARK: - Event construction (pure, unit-tested)
 
     /// `get player state` — a `core/getd` event whose direct object is an
     /// object specifier for the application's `pPlS` property.
-    package static func makeGetPlayerStateEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+    static func makeGetPlayerStateEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         makeGetPropertyEvent(Code.playerStateProperty, processIdentifier: pid)
     }
 
     /// `get sound volume` (`pVol`, 0–100).
-    package static func makeGetVolumeEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+    static func makeGetVolumeEvent(processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         makeGetPropertyEvent(Code.soundVolumeProperty, processIdentifier: pid)
     }
 
     /// `set sound volume to <volume>`.
-    package static func makeSetVolumeEvent(_ volume: Int, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+    static func makeSetVolumeEvent(_ volume: Int, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         makeSetPropertyEvent(Code.soundVolumeProperty, to: volume, processIdentifier: pid)
     }
 
@@ -106,14 +106,14 @@ extension ScriptablePlayer {
 
     // MARK: - Reply decoding and error mapping (pure, unit-tested)
 
-    package static func playerState(fromReply reply: PlayerReply) -> PlayerState {
+    static func playerState(fromReply reply: PlayerReply) -> PlayerState {
         guard let code = reply.directObjectCode else { return .unknown }
         return playerState(fromEnumCode: code)
     }
 
     /// The volume in the reply, 0–100, as `reading` corrects it (see
     /// `ScriptablePlayerProfile.readVolume`).
-    package static func volume(fromReply reply: PlayerReply, reading: (Int) -> Int) -> Int? {
+    static func volume(fromReply reply: PlayerReply, reading: (Int) -> Int) -> Int? {
         guard let reported = reply.directObjectInteger else { return nil }
         return min(max(reading(reported), 0), 100)
     }
@@ -131,7 +131,7 @@ extension ScriptablePlayer {
     /// number only. Its message (`errs`) isn't read: it can name what the app
     /// was playing ("Can't get document …"), and errors go to the log and
     /// Diagnostics' report.
-    package static func replyError(_ reply: NSAppleEventDescriptor) -> MusicPlayerError? {
+    static func replyError(_ reply: NSAppleEventDescriptor) -> MusicPlayerError? {
         guard let number = reply.paramDescriptor(forKeyword: Code.errorNumber) else { return nil }
         let code = Int(number.int32Value)
         guard code != 0 else { return nil }
@@ -139,7 +139,7 @@ extension ScriptablePlayer {
     }
 
     /// Maps an error thrown by `sendEvent` (an `NSOSStatusErrorDomain` error).
-    package static func mapError(_ error: any Error) -> MusicPlayerError {
+    static func mapError(_ error: any Error) -> MusicPlayerError {
         if let error = error as? MusicPlayerError { return error }
         let nsError = error as NSError
         return mapError(number: nsError.code)
@@ -164,25 +164,25 @@ extension ScriptablePlayer {
 /// event queue so they can cross into the actors.
 package struct PlayerReply: Sendable, Equatable {
     /// Enum or type code of the reply's direct object (`----`), if any.
-    package let directObjectCode: OSType?
+    let directObjectCode: OSType?
     /// The direct object as a number, if it is one (e.g. the volume).
     package let directObjectInteger: Int?
     /// The direct object as a truth value, if it is one (e.g. VLC's `playing`).
     package let directObjectBoolean: Bool?
     /// A list's items as texts and as truth values (each document's name, or
     /// whether it's playing: QuickTime Player's); empty for any other reply.
-    package var listTexts: [String] = []
-    package var listBooleans: [Bool] = []
+    var listTexts: [String] = []
+    var listBooleans: [Bool] = []
     /// The direct object as a text, if it is one (a document's name).
-    package var directObjectText: String?
+    var directObjectText: String?
     /// The direct object as a real number, if it is one (a document's
     /// `audio volume`, 0–1: QuickTime Player's).
-    package var directObjectReal: Double?
+    var directObjectReal: Double?
 
     /// A reply made of these parts: for tests, whose stand-in apps answer
     /// with one.
-    package init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil, directObjectBoolean: Bool? = nil,
-                 listTexts: [String] = [], listBooleans: [Bool] = []) {
+    init(directObjectCode: OSType? = nil, directObjectInteger: Int? = nil, directObjectBoolean: Bool? = nil,
+         listTexts: [String] = [], listBooleans: [Bool] = []) {
         self.directObjectCode = directObjectCode
         self.directObjectInteger = directObjectInteger
         self.directObjectBoolean = directObjectBoolean
@@ -190,7 +190,7 @@ package struct PlayerReply: Sendable, Equatable {
         self.listBooleans = listBooleans
     }
 
-    package init(_ reply: NSAppleEventDescriptor) {
+    init(_ reply: NSAppleEventDescriptor) {
         guard let direct = reply.paramDescriptor(forKeyword: ScriptablePlayer.Code.directObject) else {
             directObjectCode = nil
             directObjectInteger = nil

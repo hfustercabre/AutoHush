@@ -5,15 +5,15 @@ import AutoHushKit
 /// What AutoHush needs to know about a music app it controls through its
 /// playback menu. Each `<App>Support` module describes its app with one.
 package struct MenuPlayerProfile: Sendable {
-    package let bundleID: String
+    let bundleID: String
     /// Shown to the user, e.g. "TIDAL".
-    package let name: String
+    let name: String
     /// The menu's English name, for error reports, e.g. "Playback".
-    package let menuName: String
+    let menuName: String
     /// Reads the app's own words for Play and Pause from a copy of the app.
-    package let readWords: @Sendable (URL) -> PlayPauseWords?
+    let readWords: @Sendable (URL) -> PlayPauseWords?
     /// Drawn in place of the app's icon while it isn't installed.
-    package let iconPlaceholder: PlayerIconPlaceholder?
+    let iconPlaceholder: PlayerIconPlaceholder?
 
     package init(
         bundleID: String,
@@ -50,7 +50,7 @@ extension MenuPlayerProfile {
 /// plays, playing only while it's paused. Its volume can't be read, so it
 /// pauses and plays without fading.
 package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
-    package nonisolated let profile: MenuPlayerProfile
+    nonisolated let profile: MenuPlayerProfile
 
     package nonisolated var bundleID: String { profile.bundleID }
     package nonisolated var name: String { profile.name }

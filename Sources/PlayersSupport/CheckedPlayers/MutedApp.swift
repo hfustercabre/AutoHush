@@ -9,13 +9,13 @@ import AutoHushKit
 /// keep-awake assertion once it has shown one (Qobuz holds one only while
 /// it plays), else its sound output. A mute stands for a pause until the
 /// user plays it again or stops it (`MuteState`), and always takes.
-package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
-    package nonisolated let setup: PlayerSetup
-    package nonisolated var controlPermission: Permission { .systemAudioRecording }
-    package nonisolated var releasesOnQuit: Bool { true }
-    package nonisolated var pausesByMuting: Bool { true }
+actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
+    nonisolated let setup: PlayerSetup
+    nonisolated var controlPermission: Permission { .systemAudioRecording }
+    nonisolated var releasesOnQuit: Bool { true }
+    nonisolated var pausesByMuting: Bool { true }
     /// Only its sound tells how it is.
-    package nonisolated var needsAudioLevels: Bool { true }
+    nonisolated var needsAudioLevels: Bool { true }
 
     /// Its running process, if it runs: AutoHush never launches it.
     private let processIdentifier: @Sendable () -> pid_t?
@@ -31,12 +31,12 @@ package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     private let logger = AutoHushLogger(category: "MutedApp")
 
-    package init(setup: PlayerSetup,
-                 processIdentifier: (@Sendable () -> pid_t?)? = nil,
-                 muter: any AudioMuting = ProcessTapMuter(),
-                 soundOn: (@Sendable (pid_t) -> Bool)? = nil,
-                 assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
-                 clock: @escaping @Sendable () -> Date = { Date() }) {
+    init(setup: PlayerSetup,
+         processIdentifier: (@Sendable () -> pid_t?)? = nil,
+         muter: any AudioMuting = ProcessTapMuter(),
+         soundOn: (@Sendable (pid_t) -> Bool)? = nil,
+         assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
+         clock: @escaping @Sendable () -> Date = { Date() }) {
         self.setup = setup
         self.processIdentifier = processIdentifier ?? { [bundleID = setup.bundleID] in
             NSRunningApplication.running(bundleID)?.processIdentifier
@@ -48,11 +48,11 @@ package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
         self.clock = clock
     }
 
-    package func verifyControlAccess() async throws {
+    func verifyControlAccess() async throws {
         guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
     }
 
-    package func playerState() async -> PlayerState {
+    func playerState() async -> PlayerState {
         guard let pid = processIdentifier() else {
             // Quit while muted: what the mute stood for goes with it.
             endMute()
@@ -68,7 +68,7 @@ package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
         return state
     }
 
-    package func pause() async throws {
+    func pause() async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         guard tapsAllowed.withLock({ $0 }), muter.mute(appPID: pid) else {
             throw MusicPlayerError.playerCommandFailed(.muteUnavailable)
@@ -77,7 +77,7 @@ package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
         hush.mute()
     }
 
-    package func play() async throws {
+    func play() async throws {
         endMute()
     }
 
@@ -105,25 +105,25 @@ package actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
 
     /// Lifts its mute without playing anything: as AutoHush quits, or once
     /// another player is chosen and AutoHush holds no pause in it.
-    package func release() async {
+    func release() async {
         endMute()
     }
 
     /// Not in AntiDot mode, which taps no sound: then it can't be muted,
     /// and a mute under way is lifted.
-    package nonisolated func allowTaps(_ allowed: Bool) {
+    nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
         guard !allowed else { return }
         Task { await self.endMute() }
     }
 
     /// It reads as paused while muted: nothing more to mute.
-    package func muteIfPlayingAnyway() async -> Bool { false }
+    func muteIfPlayingAnyway() async -> Bool { false }
 
     /// The Mac slept: AutoHush no longer holds the pause the mute stands
     /// for. It's lifted once the app has been stopped for
     /// `MuteState.stopTime`, never while it plays.
-    package func forgetPause() async {
+    func forgetPause() async {
         guard hush.isMuted else { return }
         hush.forget()
         _ = await playerState()

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import AutoHushPlayers
+@testable import AutoHushPlayers
 
 /// The helper names no player: outside AutoHushPlayers and PlayersSupport/,
 /// code never does. A name in its report comes from the app it checks.

@@ -179,4 +179,11 @@ struct CoreAudioOutputsReadTests {
         _ = outputs.isMuted(device) // a value, or nil for an output with no mute: either reads without failing
         #expect(outputs.device(withUID: "AutoHush.NoSuchOutput.\(UUID().uuidString)") == nil)
     }
+
+    @Test("an output control of no object reads nothing and takes nothing")
+    func noObject() {
+        let none = AudioObjectID(kAudioObjectUnknown), output = kAudioDevicePropertyScopeOutput
+        #expect(CoreAudioProperty.value(kAudioDevicePropertyMute, of: none, scope: output, element: 1, initial: UInt32(0)) == nil)
+        #expect(!CoreAudioProperty.set(kAudioDevicePropertyMute, of: none, scope: output, element: 1, to: UInt32(1)))
+    }
 }

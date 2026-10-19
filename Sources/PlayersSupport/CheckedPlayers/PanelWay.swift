@@ -17,21 +17,21 @@ import ScriptablePlayers
 /// (`PlayerSetup.panelRowIsStale`), from its sound, and the row is pressed
 /// as a toggle, only when its sound says it isn't as wanted yet, then
 /// checked here by its sound.
-package actor PanelWay: MusicPlayer {
+actor PanelWay: MusicPlayer {
     /// What tells the app's row, read just before the panel opens: its
     /// windows' titles, what it plays by AppleScript, the other running
     /// apps' names, and whether it holds Now Playing; its page's player bar,
     /// later, when those don't tell.
-    package struct Shown: Sendable {
-        package var titles: [String]
+    struct Shown: Sendable {
+        var titles: [String]
         /// What it plays, by AppleScript (`PanelClues.script`).
-        package var track: String?
+        var track: String?
         /// Its page's player bar's texts (`PanelClues.page`).
-        package var bar: [String]
-        package var otherApps: Set<String>
-        package var holdsNowPlaying: Bool
+        var bar: [String]
+        var otherApps: Set<String>
+        var holdsNowPlaying: Bool
 
-        package init(titles: [String], track: String? = nil, bar: [String] = [], otherApps: Set<String>, holdsNowPlaying: Bool) {
+        init(titles: [String], track: String? = nil, bar: [String] = [], otherApps: Set<String>, holdsNowPlaying: Bool) {
             self.titles = titles
             self.track = track
             self.bar = bar
@@ -40,18 +40,18 @@ package actor PanelWay: MusicPlayer {
         }
 
         /// Each text its song may show in.
-        package var texts: [String] { titles + (track.map { [$0] } ?? []) + bar }
+        var texts: [String] { titles + (track.map { [$0] } ?? []) + bar }
     }
 
-    package nonisolated let bundleID: String
-    package nonisolated let name: String
-    package nonisolated var controlPermission: Permission { .accessibility(player: name) }
-    package nonisolated var canFade: Bool { false }
+    nonisolated let bundleID: String
+    nonisolated let name: String
+    nonisolated var controlPermission: Permission { .accessibility(player: name) }
+    nonisolated var canFade: Bool { false }
     /// A row pressed as a toggle is checked here, by the app's sound, and
     /// never pressed again: a second press would undo a first the app is
     /// only slow to show (Qobuz buffering). Any other row's press is checked
     /// by the player's other signs.
-    package nonisolated var checksItsPresses: Bool { rowIsStale }
+    nonisolated var checksItsPresses: Bool { rowIsStale }
     private var remembered: String?
     private let store: any PlayerSetupStore
     private let panel: any NowPlayingPanel
@@ -69,12 +69,12 @@ package actor PanelWay: MusicPlayer {
     /// checked): the real ones by default, `shown` reading what the setup's
     /// clues say; tests stand in for them. `playerBar` reads its page's
     /// player bar, where its check found its song there (`PanelClues.page`).
-    package init(setup: PlayerSetup, remembered: String?, store: any PlayerSetupStore,
-                 panel: any NowPlayingPanel = AccessibilityNowPlayingPanel(),
-                 processIdentifier: (@Sendable () -> pid_t?)? = nil,
-                 shown: (@Sendable (pid_t) -> Shown)? = nil, playerBar: (@Sendable (pid_t) -> [String])? = nil,
-                 hearing: LateHearing? = nil,
-                 sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
+    init(setup: PlayerSetup, remembered: String?, store: any PlayerSetupStore,
+         panel: any NowPlayingPanel = AccessibilityNowPlayingPanel(),
+         processIdentifier: (@Sendable () -> pid_t?)? = nil,
+         shown: (@Sendable (pid_t) -> Shown)? = nil, playerBar: (@Sendable (pid_t) -> [String])? = nil,
+         hearing: LateHearing? = nil,
+         sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         bundleID = setup.bundleID
         rowIsStale = setup.panelRowIsStale == true
         self.hearing = hearing
@@ -96,7 +96,7 @@ package actor PanelWay: MusicPlayer {
 
     /// What the app shows now, through Accessibility and NSWorkspace, and
     /// what it plays by AppleScript (`song`), where its check found it says.
-    package static func shown(song: ScriptedSong?) -> @Sendable (pid_t) -> Shown {
+    static func shown(song: ScriptedSong?) -> @Sendable (pid_t) -> Shown {
         { pid in
             let titles = AXUIElement.application(pid, timeout: timeout).elements(kAXWindowsAttribute, timeout: timeout)
                 .compactMap { $0.string(kAXTitleAttribute) }
@@ -105,17 +105,17 @@ package actor PanelWay: MusicPlayer {
         }
     }
 
-    package func verifyControlAccess() async throws {
+    func verifyControlAccess() async throws {
         guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
         guard AccessibilityPermission.isTrusted(prompt: false) else { throw MusicPlayerError.accessibilityPermissionDenied }
     }
 
     /// Its state isn't read here: the player's other signs tell it.
-    package func playerState() async -> PlayerState { .unknown }
+    func playerState() async -> PlayerState { .unknown }
 
-    package func pause() async throws { try await press(pausing: true) }
+    func pause() async throws { try await press(pausing: true) }
 
-    package func play() async throws { try await press(pausing: false) }
+    func play() async throws { try await press(pausing: false) }
 
     private func press(pausing: Bool) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
@@ -176,13 +176,13 @@ package actor PanelWay: MusicPlayer {
         }
     }
 
-    package func volume() async -> Int? { nil }
-    package func setVolume(_ volume: Int) async throws {}
+    func volume() async -> Int? { nil }
+    func setVolume(_ volume: Int) async throws {}
 
     @MainActor
-    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
+    func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
         PolledStateObserver(read: { .unknown }, onChange: onChange)
     }
 
-    package nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
+    nonisolated var stateReportDelay: TimeInterval { PolledStateObserver.reportDelay }
 }

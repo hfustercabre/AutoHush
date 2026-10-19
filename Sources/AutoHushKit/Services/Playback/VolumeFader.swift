@@ -20,13 +20,13 @@ package actor VolumeFader {
     package typealias Sleep = @Sendable (TimeInterval) async -> Void
 
     /// Time between two volume steps.
-    package static let stepInterval: TimeInterval = 0.1
+    static let stepInterval: TimeInterval = 0.1
     /// How far below the user's volume a fade-out ends (before pausing) and a
     /// fade-in starts: practically inaudible next to the music.
-    package static let fadeRange: Double = 50
+    static let fadeRange: Double = 50
     /// Wait after pausing before the volume is set back, so the last of the
     /// player's buffered audio can't blip out at full volume.
-    package static let restoreDelay: TimeInterval = 0.3
+    static let restoreDelay: TimeInterval = 0.3
 
     private let player: any MusicPlayer
     private let curve: VolumeCurve
@@ -50,7 +50,7 @@ package actor VolumeFader {
     /// Set by `abandon()`: fades stop where they are, without coming back.
     private var isAbandoned = false
 
-    package init(
+    init(
         player: any MusicPlayer,
         fadeOut: TimeInterval,
         fadeIn: TimeInterval,
@@ -64,14 +64,14 @@ package actor VolumeFader {
         presses = PressCheck(player: player, sleep: sleep)
     }
 
-    package func setDurations(fadeOut: TimeInterval, fadeIn: TimeInterval) {
+    func setDurations(fadeOut: TimeInterval, fadeIn: TimeInterval) {
         self.fadeOut = fadeOut
         self.fadeIn = fadeIn
     }
 
     /// Fades the music out, then pauses it. Returns `false` when `cancel()`
     /// stopped the fade first: the music then fades back up and keeps playing.
-    package func fadeOutAndPause() async throws -> Bool {
+    func fadeOutAndPause() async throws -> Bool {
         let fade = startFade()
         guard case let (current, target)? = await fadeVolumes(lasting: fadeOut) else {
             try await presses.press(to: .paused)
@@ -122,7 +122,7 @@ package actor VolumeFader {
     }
 
     /// Plays from near silence, then fades the music in to the user's volume.
-    package func playAndFadeIn() async throws {
+    func playAndFadeIn() async throws {
         let fade = startFade()
         guard let target = await fadeVolumes(lasting: fadeIn)?.user else {
             logger.debug("[fade] none: fade-in \(self.fadeIn, privacy: .public) s, volume unknown or off")
@@ -148,13 +148,13 @@ package actor VolumeFader {
     }
 
     /// Stops the fade in progress; a fade-out then comes back up without pausing.
-    package func cancel() {
+    func cancel() {
         generation += 1
     }
 
     /// Stops a cancelled fade-out from coming back up, so a new fade-out can
     /// start from where it is. Does nothing otherwise.
-    package func stopComeback() {
+    func stopComeback() {
         guard comingBack != nil else { return }
         comingBack = nil
         generation += 1
@@ -162,7 +162,7 @@ package actor VolumeFader {
 
     /// Stops any fade for good and sets the user's volume back at once, e.g.
     /// when AutoHush quits or restarts monitoring.
-    package func abandon() async {
+    func abandon() async {
         isAbandoned = true
         generation += 1
         await restoreUserVolume()

@@ -7,9 +7,9 @@ package struct AudioProcessInfo: Equatable, Sendable {
     package let bundleID: String
     package let pid: pid_t
     /// Whether its input runs too (the microphone, as in a call).
-    package let isRunningInput: Bool
+    let isRunningInput: Bool
 
-    package init(objectID: AudioObjectID, bundleID: String, pid: pid_t, isRunningInput: Bool = false) {
+    init(objectID: AudioObjectID, bundleID: String, pid: pid_t, isRunningInput: Bool = false) {
         self.objectID = objectID
         self.bundleID = bundleID
         self.pid = pid

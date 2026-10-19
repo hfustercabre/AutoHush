@@ -225,16 +225,6 @@ extension CheckResult.WindowState {
         }
     }
 
-    /// Waits up to `seconds` for `done`.
-    static func wait(_ seconds: Double, until done: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(seconds)
-        while !done() {
-            guard Date() < deadline else { return false }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-        return true
-    }
-
     // MARK: Dragging it to another desktop
 
     /// Marked as this tool's, which `InputBlock` lets through.
@@ -284,7 +274,7 @@ extension CheckResult.WindowState {
             controlArrow(right: to > from)
             Thread.sleep(forTimeInterval: 0.9)
         }
-        return wait(2, until: { Desktops.all()?.current == id })
+        return Polling.wait(seconds: 2, every: 0.1, until: { Desktops.all()?.current == id })
     }
 
     /// Where the window can be held to drag it: right of its zoom button (a

@@ -2,7 +2,7 @@ import AppKit
 import Observation
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
+@testable import AutoHushKit
 import AutoHushTestSupport
 
 @Suite("SettingsModel")
@@ -42,7 +42,7 @@ struct SettingsModelTests {
     func fullVersion() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(model.fullVersion == nil && model.fullVersion(build: "19") == nil)
-        model.currentVersion = "1.2.3"
+        updates.currentVersion = AppVersion("1.2.3")
         #expect(model.fullVersion(build: "19") == "1.2.3 (19)")
         #expect(model.fullVersion(build: nil) == "1.2.3")
         #expect(model.fullVersion?.hasPrefix("1.2.3") == true) // this copy's build, whichever it is
@@ -416,18 +416,51 @@ struct SettingsModelTests {
     func updateRow() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(model.updateTitle == "AutoHush")
-        model.currentVersion = "0.3.11"
+        updates.currentVersion = AppVersion("0.3.11")
         #expect(model.updateTitle == "AutoHush 0.3.11")
         #expect(model.lastCheckedNote() == nil)
 
         let now = Date()
-        model.lastUpdateCheck = now.addingTimeInterval(-2 * 3600)
-        model.updateStatus = "AutoHush 0.3.11 is up to date."
+        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
+        updates.status = "AutoHush 0.3.11 is up to date."
         #expect(model.updateTitle == "AutoHush 0.3.11 is up to date.")
         let formatter = RelativeDateTimeFormatter()
         formatter.dateTimeStyle = .named
         let when = formatter.localizedString(for: now.addingTimeInterval(-2 * 3600), relativeTo: now)
         #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
+    }
+
+    @Test("the update rows read the updates themselves, and follow them as they change (notifications turned off, a check's status and when it ran, the settings), with no one passing them on; the install note as at launch")
+    func updateRowsFollowTheUpdates() async {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let notifier = MockUpdateNotifier()
+        let folder = TemporaryFolder("SettingsModelTests", create: false)
+        let updates = UpdateController(
+            checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(unavailability: .readOnlyLocation),
+            notifier: notifier, preferences: preferences, downloadsFolder: folder.url, currentVersion: AppVersion("0.2.0"),
+            isQuietMoment: { false }, quit: {}, onOffer: { _ in }
+        )
+        let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        #expect(model.currentVersion == "0.2.0" && model.updateStatus == nil && model.lastUpdateCheck == nil)
+        #expect(model.updateInstallNote == UpdateInstallUnavailability.readOnlyLocation.explanation)
+
+        /// Whether what `read` reads is told of `change`, as a view drawn from it is.
+        func follows(_ read: () -> Void, after change: () async -> Void) async -> Bool {
+            let changed = Locked(false)
+            withObservationTracking(read) { changed.value = true }
+            await change()
+            return changed.value
+        }
+        notifier.currentPermission = .off
+        #expect(await follows({ _ = model.notificationsOff }, after: { await updates.followNotificationPermission() }))
+        #expect(model.notificationsOff)
+        #expect(await follows({ _ = model.updateStatus }, after: { await updates.check(userInitiated: false) }))
+        #expect(model.updateStatus == "Version 0.3.0 is available." && model.lastUpdateCheck == preferences.lastUpdateCheck)
+        #expect(await follows({ _ = model.automaticUpdates }, after: { updates.setMode(.notify) }))
+        #expect(model.automaticUpdates == .notify)
+        #expect(await follows({ _ = model.checksForUpdatesAutomatically }, after: { updates.setChecksAutomatically(false) }))
+        #expect(!model.checksForUpdatesAutomatically)
     }
 
     // MARK: - Sound Sources

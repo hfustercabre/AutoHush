@@ -13,10 +13,10 @@ import ScriptablePlayers
 /// com.apple.QuickTimePlayerX`, twice): linear within 2.5 dB, 10 → −21 dB
 /// and 1 → −41 dB, so `VolumeCurve.linear`, the default.
 package enum QuickTime {
-    package static let bundleID = "com.apple.QuickTimePlayerX"
-    package static let name = "QuickTime Player"
+    static let bundleID = "com.apple.QuickTimePlayerX"
+    static let name = "QuickTime Player"
 
-    package static let setup = ScriptSetup(
+    static let setup = ScriptSetup(
         commands: .pauseAndPlay(pause: "MVWRpaus", play: "MVWRplay"),
         actsOnDocuments: true,
         state: .documents(documentClass: "docu", playing: "play"),

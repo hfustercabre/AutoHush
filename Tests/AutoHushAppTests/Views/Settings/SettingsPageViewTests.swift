@@ -12,9 +12,10 @@ struct SettingsPageViewTests {
 
     @Test("About, Fades and Advanced draw", arguments: [SettingsWindowController.Page.about, .fades, .advanced])
     func page(_ page: SettingsWindowController.Page) {
-        let model = SettingsModel.forTests(actions: actions)
+        let updates = FakeUpdateCommands()
+        updates.currentVersion = AppVersion("0.2.0")
+        let model = SettingsModel.forTests(actions: actions, updates: updates)
         model.state.status.choosePlayer(named: "Jukebox")
-        model.currentVersion = "0.2.0"
         let navigation = SettingsNavigation()
         navigation.page = page
         let keys = SettingsKeys()

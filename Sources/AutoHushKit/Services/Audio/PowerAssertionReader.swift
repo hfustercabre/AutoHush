@@ -12,7 +12,7 @@ package struct PowerAssertion: Hashable, Sendable {
     }
 
     package let kind: Kind
-    package let name: String
+    let name: String
 
     package init(_ kind: Kind, _ name: String) {
         self.kind = kind
@@ -46,7 +46,7 @@ package struct IOKitPowerAssertionReader: PowerAssertionReading {
     package init() {}
 
     /// Assertion types that keep the system awake.
-    package static let systemSleepTypes: Set<String> = [
+    static let systemSleepTypes: Set<String> = [
         "PreventUserIdleSystemSleep",
         "NoIdleSleepAssertion",
         "PreventSystemSleep",
@@ -54,7 +54,7 @@ package struct IOKitPowerAssertionReader: PowerAssertionReading {
 
     /// Assertion types that keep only the display awake. Video players often
     /// hold them only for video, so alone they don't say an app is playing.
-    package static let displaySleepTypes: Set<String> = [
+    static let displaySleepTypes: Set<String> = [
         "PreventUserIdleDisplaySleep",
         "NoDisplaySleepAssertion",
     ]
@@ -70,7 +70,7 @@ package struct IOKitPowerAssertionReader: PowerAssertionReading {
     /// Keeps only assertions a process holds itself: those created on its
     /// behalf (coreaudiod for every running audio stream, runningboardd for
     /// background tasks) say nothing about playback.
-    package static func assertionsByProcess(in assertionsByPID: [NSNumber: [[String: Any]]]) -> [pid_t: Set<PowerAssertion>] {
+    static func assertionsByProcess(in assertionsByPID: [NSNumber: [[String: Any]]]) -> [pid_t: Set<PowerAssertion>] {
         var result: [pid_t: Set<PowerAssertion>] = [:]
         for (pid, assertions) in assertionsByPID {
             let own = Set(assertions.compactMap { assertion -> PowerAssertion? in

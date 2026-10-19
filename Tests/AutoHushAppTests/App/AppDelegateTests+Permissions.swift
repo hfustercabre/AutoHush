@@ -118,46 +118,45 @@ extension AppDelegateTests {
         let scratch = Scratch()
         scratch.automationStatus = OSStatus(errAEEventNotPermitted)
         let (sut, _) = makeSUT(scratch)
-        let services = sut.liveAddAppServices()
         let app = CheckableApp(bundleID: "com.example.radio", name: "Radio", url: URL(filePath: "/Applications/Radio.app"))
 
         // Scripted and closed: Automation waits for it to run. Not scripted: no Automation.
-        #expect(await services.permissions(app, true) == CheckPermissions(accessibility: true, audio: .allowed, automation: .playerNotRunning))
-        #expect(await services.permissions(app, false).automation == nil)
+        #expect(await sut.checkPermissions(app, scriptable: true) == CheckPermissions(accessibility: true, audio: .allowed, automation: .playerNotRunning))
+        #expect(await sut.checkPermissions(app, scriptable: false).automation == nil)
         scratch.running = [app.bundleID]
-        let scripted = await services.permissions(app, true)
+        let scripted = await sut.checkPermissions(app, scriptable: true)
         #expect(scripted.automation == .denied)
 
         // macOS can't tell about Audio Recording: allowed while monitoring
         // hears sound, missing once it can't (Add an App read it as allowed
         // before, 2026-10-19).
         scratch.audio = nil
-        #expect(await services.permissions(app, false).audio == .allowed)
+        #expect(await sut.checkPermissions(app, scriptable: false).audio == .allowed)
         sut.status.detection = .unavailable
-        #expect(await services.permissions(app, false).audio == .denied)
+        #expect(await sut.checkPermissions(app, scriptable: false).audio == .denied)
 
         // Read in AntiDot mode too: the window goes by the mode.
         scratch.audio = .denied
         sut.settingsModel.useAntiDotMode()
-        #expect(await services.permissions(app, false).audio == .denied)
+        #expect(await sut.checkPermissions(app, scriptable: false).audio == .denied)
 
         // Allow…: Accessibility's prompt, then System Settings; Automation turned down, System Settings.
         scratch.trusted = false
-        await services.request(.accessibility, app, await services.permissions(app, false))
+        await sut.requestCheckPermission(.accessibility, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked == ["prompt accessibility", "open Privacy_Accessibility"])
-        await services.request(.automation, app, scripted)
+        await sut.requestCheckPermission(.automation, app: app, current: scripted)
         #expect(scratch.asked.last == "open Privacy_Automation")
 
         // Audio Recording turned down: System Settings, then AutoHush waits to reopen, here and in the menu.
         #expect(!sut.status.awaitsReopenForAudioRecording)
-        await services.request(.audioRecording, app, await services.permissions(app, false))
+        await sut.requestCheckPermission(.audioRecording, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked.last == "open Privacy_AudioCapture")
         #expect(sut.status.awaitsReopenForAudioRecording)
-        #expect(await services.permissions(app, false).audio == .needsReopen)
+        #expect(await sut.checkPermissions(app, scriptable: false).audio == .needsReopen)
 
         // Never asked: macOS's own prompt.
         scratch.audio = .notDetermined
-        await services.request(.audioRecording, app, await services.permissions(app, false))
+        await sut.requestCheckPermission(.audioRecording, app: app, current: await sut.checkPermissions(app, scriptable: false))
         #expect(scratch.asked.last == "ask audio")
     }
 

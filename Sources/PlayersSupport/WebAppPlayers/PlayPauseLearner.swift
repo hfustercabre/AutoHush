@@ -23,8 +23,8 @@ package struct PlayPauseLearner {
     /// A button whose words changed between the two looks.
     package struct Candidate: Equatable, Sendable {
         package let handle: ButtonHandle
-        package let playLabel: String
-        package let pauseLabel: String
+        let playLabel: String
+        let pauseLabel: String
     }
 
     /// Each button's words while the music played, and when the user said it
@@ -43,12 +43,12 @@ package struct PlayPauseLearner {
     }
 
     /// Forgets that look: the user starts over.
-    package mutating func forgetPlaying() {
+    mutating func forgetPlaying() {
         playing = nil
     }
 
     /// The look while it played is older than `LearningStatus.pauseWait`.
-    package func playedTooLongAgo(at now: Date) -> Bool {
+    func playedTooLongAgo(at now: Date) -> Bool {
         guard let playing else { return false }
         return now.timeIntervalSince(playing.at) > LearningStatus.pauseWait
     }
@@ -79,7 +79,7 @@ package struct PlayPauseLearner {
 
     /// Among candidates alike in sight and controls: the barest words, then
     /// the lowest in the window. `nil` without one.
-    package static func recipe(amongAlike candidates: [(Candidate, ButtonPlace)]) -> (PlayPauseRecipe, ButtonHandle)? {
+    static func recipe(amongAlike candidates: [(Candidate, ButtonPlace)]) -> (PlayPauseRecipe, ButtonHandle)? {
         let bare = candidates.filter { candidate, _ in
             !candidates.contains { other, _ in
                 other.playLabel != candidate.playLabel && candidate.playLabel.hasPrefix(other.playLabel)

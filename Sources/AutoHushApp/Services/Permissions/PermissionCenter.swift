@@ -4,8 +4,10 @@ import AutoHushKit
 /// Reads the permissions AutoHush needs, without asking, often enough for
 /// windows to follow them (about once a second while one shows), and turns a
 /// click on a missing one into the right request: for the chosen player, and
-/// for the app Add an App checks, by the same rules.
+/// for the app Add an App checks, by the same rules. The chosen player's, as
+/// last read, it keeps for the windows to show (`chosen`).
 @MainActor
+@Observable
 final class PermissionCenter {
     /// The system calls, which tests replace.
     struct System {
@@ -28,9 +30,25 @@ final class PermissionCenter {
     private let system: System
     /// Reading and asking for Automation block: it's done here.
     nonisolated static let queue = DispatchQueue(label: "AutoHush.Permissions", qos: .userInitiated)
+    /// What AutoHush needs for the chosen player, as last read (`refresh`);
+    /// the private harness sets it to draw a given state.
+    var chosen = PermissionsState()
 
     init(system: System = System()) {
         self.system = system
+    }
+
+    /// Reads the chosen player's permissions again, and keeps them. Two
+    /// reads may run at once (the menu opens, a player is chosen from it):
+    /// one for a player that's no longer `chosenPlayer()` when it's done is
+    /// dropped, so a slow read never leaves the previous player's
+    /// permissions shown.
+    func refresh(chosenPlayer: @MainActor () -> (any MusicPlayer)?, detectionMethod: DetectionMethod,
+                 detection: DetectionMode, awaitsReopen: Bool) async {
+        let player = chosenPlayer()
+        let state = await state(player: player, detectionMethod: detectionMethod, detection: detection, awaitsReopen: awaitsReopen)
+        guard chosenPlayer()?.bundleID == player?.bundleID else { return }
+        if chosen != state { chosen = state }
     }
 
     /// The permissions for `player` as they stand. `detection` is what

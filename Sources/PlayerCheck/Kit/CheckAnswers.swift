@@ -23,7 +23,7 @@ package struct NowPlayingListLine: Equatable, Sendable {
     package var state: String
     /// The active one: the Now Playing app.
     package var isActive: Bool
-    package var name: String
+    var name: String
 
     package init(bundleID: String, pid: pid_t, state: String, isActive: Bool, name: String) {
         self.bundleID = bundleID

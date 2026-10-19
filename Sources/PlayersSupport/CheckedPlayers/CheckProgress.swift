@@ -48,7 +48,7 @@ package struct CheckProgress: Equatable, Sendable {
     /// When the request came, for the time left.
     package private(set) var requestSince: Date?
     /// From playercheck's "blocked" line until it says they're free again.
-    package private(set) var inputBlocked = false
+    private(set) var inputBlocked = false
 
     package init() {}
 

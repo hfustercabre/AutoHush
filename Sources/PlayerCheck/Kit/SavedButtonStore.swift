@@ -3,7 +3,7 @@ import Foundation
 /// The check's kept page buttons, by bundle ID, in a JSON file of its caches
 /// (`--caches`: AutoHush's own caches folder when it runs the check).
 package struct SavedButtonStore: Sendable {
-    package let file: URL
+    let file: URL
 
     package init(file: URL) {
         self.file = file

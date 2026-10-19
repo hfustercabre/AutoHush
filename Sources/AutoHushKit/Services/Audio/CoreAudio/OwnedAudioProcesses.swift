@@ -12,7 +12,7 @@ package final class OwnedAudioProcesses: Sendable {
     package init() {}
 
     /// The audio processes of the app running as `appPID`.
-    package func objects(ownedBy appPID: pid_t) -> [AudioObjectID] {
+    func objects(ownedBy appPID: pid_t) -> [AudioObjectID] {
         let all = Self.allProcesses()
         if let kept = kept.withLock({ $0 }), kept.appPID == appPID, kept.all == all { return kept.owned }
         let owned = Self.objects(ownedBy: appPID, among: all)

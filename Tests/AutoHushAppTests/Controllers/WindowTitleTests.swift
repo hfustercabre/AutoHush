@@ -4,7 +4,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
-import CheckPanel
+@testable import CheckPanel
 import CheckedPlayers
 
 @Suite("Windows")
@@ -58,7 +58,7 @@ struct WindowTitleTests {
     func noFullScreen() {
         let model = makeModel()
         let world = World()
-        let addApp = AddAppModel(services: world.services)
+        let addApp = AddAppModel(world)
         let windows: [NSWindow?] = [
             PlayerChooserWindowController(model: model, tallestPage: 600).window,
             AddAppWindowController(model: addApp).window,
@@ -79,7 +79,7 @@ struct WindowTitleTests {
     @Test("a window opens centered, or floating in the top-right corner with its top edge kept as it grows; shown again, it stays put; brought forward as the menu opens, it comes in front if it's open; closed, what it shows stops; the check's warning closes before its Start starts the check")
     func showingAndClosing() async throws {
         let world = World()
-        let addApp = AddAppModel(services: world.services)
+        let addApp = AddAppModel(world)
         let started = CallLog()
         var warningWindow: NSWindow?
         let warning = CheckWarningWindowController(app: world.apps[0], muting: .none) {
@@ -172,7 +172,7 @@ struct WindowTitleTests {
     func checkPanel() async throws {
         let world = World()
         world.playing = true
-        let model = AddAppModel(services: world.services)
+        let model = AddAppModel(world)
         model.reset()
         await model.loadApps()
         model.continueWithApp()

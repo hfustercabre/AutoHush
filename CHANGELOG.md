@@ -385,10 +385,11 @@ This project follows [Semantic Versioning](https://semver.org/).
     status line does ("AutoHush: Auto-Pause is off until 15:30");
   - section headings, and the menu's "Turn off for" and "Playing Now", are
     headings;
-  - Add a Web App says why it couldn't take an address;
+  - Add a Web App says why it couldn't take an address, and moves
+    VoiceOver to the step to do as its checklist moves on, so it's read;
   - a step's warning is said when it shows (AutoHush can't hear the web
     app, nothing changed, the minute ran out…), and the card's line after
-    Retry; a step that asks for a permission reads its words, not only
+    Try Again; a step that asks for a permission reads its words, not only
     where it stands;
   - an untested web app says "Untested" in the menu;
   - Diagnostics' headings say whether their part is expanded or

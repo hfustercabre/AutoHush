@@ -2,17 +2,11 @@ import CoreAudio
 import Foundation
 
 /// The mute of the Mac's outputs, as the mute key sets it.
-package protocol OutputMuting: Sendable {
-    /// The output sound plays through now.
-    func defaultOutput() -> AudioObjectID?
+package protocol OutputMuting: OutputDevices {
     /// Whether the output is muted; `nil` for one with no mute it can set
     /// (some HDMI, DisplayPort and USB outputs).
     func isMuted(_ device: AudioObjectID) -> Bool?
     func setMuted(_ muted: Bool, _ device: AudioObjectID)
-    /// The output's lasting ID, and the output with it now: its object ID
-    /// changes from one launch to the next.
-    func uid(of device: AudioObjectID) -> String?
-    func device(withUID uid: String) -> AudioObjectID?
     /// Calls `onChange` (on a queue of its own) each time the output's mute
     /// changes, until the listener it returns is let go; `nil` when it can't
     /// be listened to.
@@ -29,33 +23,17 @@ package protocol OutputMuting: Sendable {
 package struct CoreAudioOutputMute: OutputMuting {
     package init() {}
 
-    package func defaultOutput() -> AudioObjectID? {
-        CoreAudioSystemVolume().defaultOutput()
-    }
-
     package func isMuted(_ device: AudioObjectID) -> Bool? {
         guard let element = Self.elements(device).first else { return nil }
-        var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyMute, element)
-        var value: UInt32 = 0
-        var size = UInt32(MemoryLayout<UInt32>.size)
-        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr else { return nil }
-        return value != 0
+        return CoreAudioProperty.value(kAudioDevicePropertyMute, of: device, scope: kAudioDevicePropertyScopeOutput,
+                                       element: element, initial: UInt32(0)).map { $0 != 0 }
     }
 
     package func setMuted(_ muted: Bool, _ device: AudioObjectID) {
         for element in Self.elements(device) {
-            var address = CoreAudioProperty.outputAddress(kAudioDevicePropertyMute, element)
-            var value: UInt32 = muted ? 1 : 0
-            AudioObjectSetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<UInt32>.size), &value)
+            CoreAudioProperty.set(kAudioDevicePropertyMute, of: device, scope: kAudioDevicePropertyScopeOutput,
+                                  element: element, to: UInt32(muted ? 1 : 0))
         }
-    }
-
-    package func uid(of device: AudioObjectID) -> String? {
-        CoreAudioProperty.string(kAudioDevicePropertyDeviceUID, of: device)
-    }
-
-    package func device(withUID uid: String) -> AudioObjectID? {
-        CoreAudioProperty.device(withUID: uid)
     }
 
     package func observeMute(of device: AudioObjectID, _ onChange: @escaping @Sendable () -> Void) -> AnyObject? {

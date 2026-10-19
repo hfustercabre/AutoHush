@@ -115,27 +115,27 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// A resume is retried this often, this far apart, while the player does
     /// not answer, or doesn't do what it was told (a page that didn't follow
     /// its Play button): a timed-out query is not the user changing the player.
-    package static let resumeRetries = 2
-    package static let resumeRetryDelay: TimeInterval = 1
+    static let resumeRetries = 2
+    static let resumeRetryDelay: TimeInterval = 1
     /// Once auto-pause is back on, the pause for apps already playing waits
     /// their stop grace plus this: a couple of the monitor's ticks.
-    package static let remeasureMargin: TimeInterval = 0.5
+    static let remeasureMargin: TimeInterval = 0.5
     /// After taking over a pause, how long the monitor, starting afresh, gets
     /// beyond the longest start it applies to find an app still playing.
-    package static let takeOverMargin: TimeInterval = 1.5
+    static let takeOverMargin: TimeInterval = 1.5
     /// The monitor hears an app up to a couple of its ticks after the app's
     /// sound starts (a new app's levels come from the next tick): a pause seen
     /// up to this long before the app was first heard may still be its doing.
-    package static let hearingDelay: TimeInterval = 0.5
+    static let hearingDelay: TimeInterval = 0.5
     /// An app that pauses other players does it as it starts (VLC, 0.3 s
     /// after, measured): a pause up to this long after the app was first
     /// heard may be its doing. A later one, while the app isn't counted as
     /// playing yet (3 s for sound without video in AntiDot mode), is the user's.
-    package static let startPauseWindow: TimeInterval = 1
+    static let startPauseWindow: TimeInterval = 1
     /// A check of the player this long at most after an app counted as
     /// playing is the one that app's start called for, and may find a pause
     /// it made (`takeOverPauseOfStartingApp`).
-    package static let startCheckWindow: TimeInterval = 2
+    static let startCheckWindow: TimeInterval = 2
 
     package init(
         player: any MusicPlayer,

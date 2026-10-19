@@ -16,7 +16,7 @@ package enum PlayingPages {
     }
 
     /// The "Playing audio" assertions the process holds itself.
-    package static func count(in assertions: [[String: Any]]) -> Int {
+    static func count(in assertions: [[String: Any]]) -> Int {
         assertions.filter { $0["AssertionOnBehalfOfPID"] == nil && $0["AssertName"] as? String == "Playing audio" }.count
     }
 

@@ -110,12 +110,12 @@ package enum WebAddress {
     }
 
     /// No cookies, no cache, nothing kept on the Mac.
-    package static let session = URLSession(configuration: .ephemeral)
+    static let session = URLSession(configuration: .ephemeral)
 
     /// Whether a connection to `url`'s host and port (80 unless given)
     /// opens within `timeout`. Network.framework's connections aren't
     /// subject to App Transport Security.
-    package static func connects(to url: URL, timeout: TimeInterval = 10) async -> Bool {
+    static func connects(to url: URL, timeout: TimeInterval = 10) async -> Bool {
         guard let host = url.host(), !host.isEmpty,
               let port = NWEndpoint.Port(rawValue: UInt16(clamping: url.port ?? 80)), port.rawValue != 0 else { return false }
         let connection = NWConnection(host: NWEndpoint.Host(host), port: port, using: .tcp)
@@ -143,15 +143,15 @@ package enum WebAddress {
 
     /// Doesn't follow a redirect to plain http, which App Transport
     /// Security would refuse: the redirect itself is the site's answer.
-    package final class StopsAtPlainHTTP: NSObject, URLSessionTaskDelegate {
-        package func urlSession(_ session: URLSession, task: URLSessionTask,
-                                willPerformHTTPRedirection response: HTTPURLResponse,
-                                newRequest request: URLRequest) async -> URLRequest? {
+    final class StopsAtPlainHTTP: NSObject, URLSessionTaskDelegate {
+        func urlSession(_ session: URLSession, task: URLSessionTask,
+                        willPerformHTTPRedirection response: HTTPURLResponse,
+                        newRequest request: URLRequest) async -> URLRequest? {
             Self.follows(request)
         }
 
         /// `request`, unless it goes to plain http.
-        package static func follows(_ request: URLRequest) -> URLRequest? {
+        static func follows(_ request: URLRequest) -> URLRequest? {
             request.url?.scheme?.lowercased() == "http" ? nil : request
         }
     }

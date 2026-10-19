@@ -9,21 +9,21 @@ import AutoHushKit
 package struct ScriptablePlayerProfile: Sendable {
     package let bundleID: String
     /// Shown to the user, e.g. "Spotify".
-    package let name: String
+    let name: String
     /// The four-char code of the app's own suite, which holds pause and play.
-    package let suite: OSType
+    let suite: OSType
     /// Posted as a distributed notification on every play, pause, stop and
     /// track change, with the new state in userInfo["Player State"].
     package let stateNotification: Notification.Name
     /// How the app's volume number maps to loudness; measure it with
     /// `swift run measure-volume-curve <bundle-id>`.
-    package let volumeCurve: VolumeCurve
+    let volumeCurve: VolumeCurve
     /// The volume the app was set to, from the one it reports: an app that
     /// reports a different number would otherwise lose a step on every fade
     /// that restores the volume it read.
-    package let readVolume: @Sendable (Int) -> Int
+    let readVolume: @Sendable (Int) -> Int
     /// Drawn in place of the app's icon while it isn't installed.
-    package let iconPlaceholder: PlayerIconPlaceholder?
+    let iconPlaceholder: PlayerIconPlaceholder?
 
     package init(
         bundleID: String,
@@ -47,7 +47,7 @@ package struct ScriptablePlayerProfile: Sendable {
 /// Controls a music app with Apple events (see `AppleEventChannel`): its
 /// state, pause, play and volume, as described by its profile.
 package actor ScriptablePlayer: MusicPlayer {
-    package nonisolated let profile: ScriptablePlayerProfile
+    nonisolated let profile: ScriptablePlayerProfile
 
     package nonisolated var bundleID: String { profile.bundleID }
     package nonisolated var name: String { profile.name }

@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -75,6 +76,30 @@ struct PermissionCenterTests {
             .state(app: "com.example.radio", control: nil, detectionMethod: .audioLevels, detection: .pending, awaitsReopen: false)
         #expect(unscripted.control == nil && unscripted.controlAccess == .allowed)
         #expect(!unscripted.accessibility && unscripted.audio == .notAsked)
+    }
+
+    @Test("the chosen player's permissions are kept as last read, which Settings shows and follows; a read for a player no longer chosen once it's done is dropped")
+    func keepsTheChosenPlayers() async {
+        let jukebox = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
+        let radio = MockMusicPlayer(bundleID: "com.example.radio", name: "Radio")
+        let sut = center(running: false)
+        let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), permissionCenter: sut, actions: nil,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        #expect(model.permissions == PermissionsState())
+        let changed = Locked(false)
+        withObservationTracking { _ = model.permissions } onChange: { changed.value = true }
+
+        await sut.refresh(chosenPlayer: { jukebox }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
+        #expect(sut.chosen.player == "com.example.jukebox" && sut.chosen.controlAccess == .playerNotRunning)
+        #expect(model.permissions == sut.chosen && changed.value)
+
+        // Jukebox chosen again while Radio's read ran: Radio's is dropped.
+        var asked = 0
+        await sut.refresh(chosenPlayer: {
+            asked += 1
+            return asked == 1 ? radio : jukebox
+        }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
+        #expect(asked == 2 && sut.chosen.player == "com.example.jukebox")
     }
 
     @Test("a missing control permission counts only as read for that player: the previous player's, read before the switch, doesn't lock the new one's steps")

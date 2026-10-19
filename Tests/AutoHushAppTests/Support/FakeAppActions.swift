@@ -34,7 +34,8 @@ final class FakeAppActions: AppActions {
     func quit() { log.calls.append("quit") }
 }
 
-/// Stands in for the updates' commands: each call is logged.
+/// Stands in for the updates: each command is logged; what Settings shows
+/// of them is as the test sets it.
 @MainActor
 final class FakeUpdateCommands: UpdateCommands {
     let log: CallLog
@@ -58,6 +59,15 @@ final class FakeUpdateCommands: UpdateCommands {
     func presentAvailableUpdate() { log.calls.append("update") }
     func setChecksAutomatically(_ enabled: Bool) { log.calls.append("autoUpdate \(enabled)") }
     func setMode(_ mode: AutomaticUpdates) { log.calls.append("updates \(mode.rawValue)") }
+
+    // What Settings shows of the updates, as the test sets it.
+    var currentVersion: AppVersion?
+    var checksAutomatically = true
+    var mode = AutomaticUpdates.install
+    var installUnavailability: UpdateInstallUnavailability?
+    var status: String?
+    var lastCheck: Date?
+    var notificationsOff = false
 }
 
 extension UserSettings {

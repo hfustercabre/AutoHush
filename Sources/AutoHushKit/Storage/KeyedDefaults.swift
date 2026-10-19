@@ -7,9 +7,9 @@ import Foundation
 package struct KeyedDefaults: Sendable {
     /// Held by every change to any of them, and by `Preferences` clearing
     /// out old recipes.
-    package static let lock = NSLock()
+    static let lock = NSLock()
 
-    package let key: String
+    let key: String
     /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
     private let suiteName: String?
 

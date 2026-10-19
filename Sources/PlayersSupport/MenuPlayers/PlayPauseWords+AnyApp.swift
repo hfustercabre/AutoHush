@@ -14,7 +14,7 @@ extension PlayPauseWords {
     }()
 
     /// These words and `other`'s together.
-    package func merged(with other: PlayPauseWords?) -> PlayPauseWords {
+    func merged(with other: PlayPauseWords?) -> PlayPauseWords {
         guard let other else { return self }
         return PlayPauseWords(play: play.union(other.play), pause: pause.union(other.pause))
     }

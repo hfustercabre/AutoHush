@@ -25,7 +25,7 @@ package protocol AppleEventSending: Sendable {
 /// any thread. The sends run on a serial queue of their own, so they neither
 /// occupy the cooperative thread pool nor overtake one another.
 package final class AppleEventChannel: AppleEventSending {
-    package let bundleID: String
+    let bundleID: String
     private let queue: DispatchQueue
 
     /// How long to wait for the app to answer an event.

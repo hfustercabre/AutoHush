@@ -6,7 +6,7 @@ import Foundation
 ///
 /// Measure a player's curve with `swift run measure-volume-curve`.
 package struct VolumeCurve: Equatable, Sendable {
-    package let exponent: Double
+    let exponent: Double
 
     package init(exponent: Double) {
         self.exponent = exponent
@@ -24,7 +24,7 @@ package struct VolumeCurve: Equatable, Sendable {
     }
 
     /// The volume number that gives `decibels` relative to full volume.
-    package func volume(atDecibels decibels: Double) -> Double {
+    func volume(atDecibels decibels: Double) -> Double {
         100 * pow(10, decibels / (20 * exponent))
     }
 }

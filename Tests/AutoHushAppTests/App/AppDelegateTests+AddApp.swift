@@ -1,5 +1,5 @@
 import AppKit
-import CheckedPlayers
+@testable import CheckedPlayers
 import Foundation
 import os
 import SwiftUI
@@ -84,44 +84,42 @@ extension AppDelegateTests {
     @MainActor
     @Test("Add an App opens at its first step, or as it is while it's open, with the same model and window; its list of apps and the warning before the check open in windows of their own, a new warning replacing the last, which mutes the app only with Audio Recording allowed outside AntiDot mode, else the Mac's sound, if its output can be muted; its Start starts the check")
     func addAppWindows() async throws {
-        let (sut, _) = makeSUT()
+        let scratch = Scratch()
         let world = World()
         world.playing = true
-        var services = world.services
-        // As AutoHush's own services hand these over.
-        services.showChooser = { [weak sut] in sut?.showAppChooser() }
-        services.showWarning = { [weak sut] in sut?.showCheckWarning() }
-        let model = AddAppModel(services: services)
-        sut.addAppModel = model
+        // Add an App on the stand-ins: its windows are AutoHush's own.
+        let (sut, _) = makeSUT(scratch, addApp: world)
+        let feature = try #require(sut.addApp)
 
-        sut.showAddApp()
-        let window = try #require(sut.addAppWindow)
-        #expect(window.isOpen && sut.addAppModel === model)
+        sut.openAddApp()
+        let window = try #require(feature.window)
+        let model = try #require(feature.model)
+        #expect(window.isOpen)
         await TestWait.until { !model.apps.isEmpty } // read at its first step
-        sut.showCheckWarning() // no app chosen yet: no warning
-        #expect(sut.checkWarningWindow == nil)
+        feature.showWarning() // no app chosen yet: no warning
+        #expect(feature.warningWindow == nil)
 
         model.openChooser()
-        let chooser = try #require(sut.appChooserWindow)
+        let chooser = try #require(feature.chooserWindow)
         #expect(chooser.isOpen)
         model.choose(world.apps[0])
         await TestWait.until { model.stage == .ready }
-        sut.showAddApp() // open: shown as it is
-        #expect(model.stage == .ready && sut.addAppWindow === window)
+        sut.openAddApp() // open: shown as it is
+        #expect(model.stage == .ready && feature.window === window && feature.model === model)
 
         model.continueToCheck()
-        let warning = try #require(sut.checkWarningWindow)
+        let warning = try #require(feature.warningWindow)
         let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
         #expect(warning.isOpen && warningView.rootView.muting == .app)
-        world.antiDot = true
+        sut.settingsModel.useAntiDotMode()
         model.continueToCheck()
-        let macMuted = try #require(sut.checkWarningWindow)
+        let macMuted = try #require(feature.warningWindow)
         let macMutedView = try #require(macMuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
         await TestWait.until { !warning.isOpen }
         #expect(macMuted !== warning && macMuted.isOpen && macMutedView.rootView.muting == .mac)
-        world.macCanMute = false
+        scratch.outputs.mutes = [:] // its output has no mute control
         model.continueToCheck()
-        let unmuted = try #require(sut.checkWarningWindow)
+        let unmuted = try #require(feature.warningWindow)
         let unmutedView = try #require(unmuted.window?.contentViewController as? NSHostingController<CheckWarningView>)
         await TestWait.until { !macMuted.isOpen }
         #expect(unmuted.isOpen && unmutedView.rootView.muting == .none)
@@ -134,27 +132,22 @@ extension AppDelegateTests {
         window.close()
         chooser.close()
         await TestWait.until { !window.isOpen }
-        sut.showAddApp()
-        #expect(sut.addAppWindow === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
+        sut.openAddApp()
+        #expect(feature.window === window && window.isOpen && model.stage == .choosing && model.chosen == nil)
         window.close()
     }
 
     @MainActor
     @Test("a check that can't mute only its app (AntiDot mode, or no Audio Recording) mutes the Mac's output while it runs, never one that taps the app's own sound; the output is put back as the check ends, as it stops, as AutoHush quits, and at the next launch after a crash during one")
-    func checkMutesTheMac() async {
+    func checkMutesTheMac() async throws {
         let scratch = Scratch()
-        let (sut, _) = makeSUT(scratch)
         let world = World()
         world.playing = true
         // AutoHush's own start and end of a check, around the stand-in check.
-        let live = sut.liveAddAppServices()
-        var services = world.services
-        services.macCanMute = live.macCanMute
-        services.checkStarted = live.checkStarted
-        services.checkEnded = live.checkEnded
-        let model = AddAppModel(services: services)
-        sut.addAppModel = model
-        model.reset()
+        let (sut, _) = makeSUT(scratch, addApp: world)
+        sut.openAddApp()
+        let model = try #require(sut.addApp.model)
+        defer { sut.addApp.window?.close() }
         await model.loadApps()
         model.choose(world.apps[0])
         await TestWait.until { model.stage == .ready }
@@ -176,7 +169,7 @@ extension AppDelegateTests {
         world.run.finish(.failed(1))
         await TestWait.until { model.stage == .failed }
 
-        world.antiDot = true
+        sut.settingsModel.useAntiDotMode()
         #expect(model.checkMuting == .mac)
         await checkAgain()
         await check()

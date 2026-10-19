@@ -12,16 +12,16 @@ package struct ScriptingDictionary: Equatable, Sendable {
     /// The application's own properties, by code: an app's state is read
     /// there only (QuickTime Player's `playing` is each document's).
     package var properties: [String: String] = [:]
-    package var enumerators: Set<String> = []
+    var enumerators: Set<String> = []
     /// The commands that must be told which document to act on (QuickTime
     /// Player's play and pause: "play document 1"), by code.
-    package var documentCommands: Set<String> = []
+    var documentCommands: Set<String> = []
     /// The document class's code, and its `playing` property's (QuickTime
     /// Player: "docu", "play").
-    package var documentClass: String?
-    package var documentPlaying: String?
+    var documentClass: String?
+    var documentPlaying: String?
 
-    package init() {}
+    init() {}
 
     /// The app's own suite, which holds both pause and play ("spfy").
     package var suite: String? {
@@ -32,7 +32,7 @@ package struct ScriptingDictionary: Equatable, Sendable {
     /// A `player state` (pPlS), as Spotify's and Music's.
     package var hasPlayerState: Bool { properties["pPlS"] != nil }
     /// A true/false `playing` property instead (VLC's): its state too.
-    package var hasPlayingFlag: Bool { properties.values.contains("playing") }
+    var hasPlayingFlag: Bool { properties.values.contains("playing") }
     /// `player state`'s values: stopped, playing, paused.
     package var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
     /// Played and paused through its documents, each with its own `playing`
@@ -59,7 +59,7 @@ package struct ScriptingDictionary: Equatable, Sendable {
 
     /// A command's code ("spfyPaus") by its name: the app's own suite's
     /// first, as ScriptablePlayers sends it.
-    package func commandCode(_ name: String) -> String? {
+    func commandCode(_ name: String) -> String? {
         let codes = commands.filter { $0.value.lowercased() == name.lowercased() }.keys.sorted()
         return codes.first { $0.hasPrefix(suite ?? "????") } ?? codes.first
     }

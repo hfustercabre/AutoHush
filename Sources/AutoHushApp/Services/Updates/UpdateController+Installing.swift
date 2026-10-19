@@ -11,19 +11,19 @@ extension UpdateController {
         defer { isDownloading = false }
         let version = release.version.description
         logger.info("Downloading \(version, privacy: .public)")
-        onStatus(String(localized: "Downloading version \(version)…",
-                        comment: "Update status in Settings; %@ is a version number"))
+        showStatus(String(localized: "Downloading version \(version)…",
+                          comment: "Update status in Settings; %@ is a version number"))
         do {
             try await downloads.store(release, at: now(), allowsConstrainedNetwork: false)
             logger.info("Downloaded \(version, privacy: .public), kept for 7 days")
             preferences.expiredUpdateVersion = nil
             reportOffer()
-            onStatus(availableStatus(release))
+            showStatus(availableStatus(release))
             announce(.downloaded(release.version))
         } catch {
             logger.error("Downloading \(version, privacy: .public) failed: \(error)")
-            onStatus(String(localized: "Couldn’t download version \(version).",
-                            comment: "Update status in Settings; %@ is a version number"))
+            showStatus(String(localized: "Couldn’t download version \(version).",
+                              comment: "Update status in Settings; %@ is a version number"))
         }
     }
 
@@ -37,8 +37,8 @@ extension UpdateController {
         let version = release.version.description
         let image = downloads.image(for: release)
         logger.info("Installing \(version, privacy: .public) (\(userInitiated ? "asked for" : "automatic", privacy: .public), \(image == nil ? "downloading it" : "from the kept download", privacy: .public))")
-        onStatus(String(localized: "Installing version \(version)…",
-                        comment: "Update status in Settings; %@ is a version number"))
+        showStatus(String(localized: "Installing version \(version)…",
+                          comment: "Update status in Settings; %@ is a version number"))
         do {
             // Automatic installs, like automatic downloads, wait out Low Data Mode.
             let update = try await installer.prepare(release, image: image, allowsConstrainedNetwork: userInitiated)
@@ -46,7 +46,7 @@ extension UpdateController {
                 logger.info("AutoHush got busy while \(version, privacy: .public) was prepared: it installs at the next quiet moment")
                 installer.discard(update)
                 isInstalling = false
-                onStatus(availableStatus(release))
+                showStatus(availableStatus(release))
                 return
             }
             try installer.install(update)
@@ -58,8 +58,8 @@ extension UpdateController {
             if image != nil { downloads.remove() }
             isInstalling = false
             logger.error("Installing \(version, privacy: .public) failed: \(error)")
-            onStatus(String(localized: "Couldn’t install version \(version).",
-                            comment: "Update status in Settings; %@ is a version number"))
+            showStatus(String(localized: "Couldn’t install version \(version).",
+                              comment: "Update status in Settings; %@ is a version number"))
             if userInitiated {
                 let reason = error.localizedDescription
                 showAlert { self.presentInstallError(reason, release: release) }

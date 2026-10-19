@@ -11,7 +11,7 @@ import Foundation
 package enum PanelRows {
     /// A text in lowercase, its letters and digits only, one space between
     /// words: "Song (Edit) - Artist" and "song edit artist" compare.
-    package static func normalized(_ text: String) -> String {
+    static func normalized(_ text: String) -> String {
         text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
     }
 
@@ -20,7 +20,7 @@ package enum PanelRows {
     /// DILE REWORK), Jake Dile - Mixes, Bootlegs, Mashups – "); the whole
     /// text without one ("QuickTime Player"). A session with no song shows
     /// its app's name ("TIDAL,  – ").
-    package static func songs(ofRow text: String) -> [String] {
+    static func songs(ofRow text: String) -> [String] {
         let end = text.range(of: " –", options: .backwards)?.lowerBound ?? text.endIndex
         var songs: [String] = [], from = text.startIndex
         while let comma = text.range(of: ", ", range: from..<end) {

@@ -15,7 +15,7 @@ package struct PlayPauseRecipe: Codable, Equatable, Sendable {
 
     /// A site may show its player in more than one layout (a full-screen
     /// view, say); each one learned is kept, up to this many.
-    package static let placeLimit = 3
+    static let placeLimit = 3
 
     package init(playLabel: String, pauseLabel: String, places: [ButtonPlace]) {
         self.playLabel = playLabel
@@ -100,7 +100,7 @@ package protocol PlayPauseRecipeStore: Sendable {
 /// `KeyedDefaults`' lock: another web app may be saving its own, or old ones
 /// being cleared out, at the same time.
 package struct DefaultsRecipeStore: PlayPauseRecipeStore {
-    package static let key = Preferences.webAppButtonsKey
+    static let key = Preferences.webAppButtonsKey
     private let stored: KeyedDefaults
 
     /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).

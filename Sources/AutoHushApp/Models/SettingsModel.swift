@@ -3,13 +3,14 @@ import Observation
 import AutoHushKit
 
 /// What the Settings window shows and edits, and the welcome, learning and
-/// Add a Web App windows with it. What the app's state holds (the chosen
-/// player, the status line, Auto-Pause, learning and its pause, the apps)
-/// it reads from `AppState`, and the timings, detection and the apps' order
-/// from `UserSettings`; the rest `AppDelegate` keeps in sync here. The
-/// views' actions go to the modules that own them (`settings`, `updates`,
-/// `learningSession`), or to `actions` for what only AppDelegate does. Launch at
-/// login is handled here directly.
+/// Add a Web App windows with it. It reads each part from its owner: what
+/// the app's state holds (the chosen player, the status line, Auto-Pause,
+/// learning and its pause, the apps) from `AppState`; the timings,
+/// detection and the apps' order from `UserSettings`; the updates' settings
+/// and status from `updates`; the chosen player's permissions from
+/// `PermissionCenter`. The views' actions go to the modules that own them
+/// (`settings`, `updates`, `learningSession`), or to `actions` for what only
+/// AppDelegate does. Launch at login is handled here directly.
 @MainActor
 @Observable
 final class SettingsModel {
@@ -32,9 +33,9 @@ final class SettingsModel {
     /// dimmed when it can't.
     var playerCanFade: Bool { chosenPlayer?.canFade ?? true }
 
-    /// What AutoHush needs for the chosen player, as it stands; followed
+    /// What AutoHush needs for the chosen player, as last read; read again
     /// about once a second while a window that waits for it shows.
-    var permissions = PermissionsState()
+    var permissions: PermissionsState { permissionCenter.chosen }
     /// The welcome window shows what the chosen player needs, after its list.
     var welcomeAsksPermissions = false
 
@@ -95,19 +96,20 @@ final class SettingsModel {
     var appListOrder: AppListOrder { settings.state.listOrder }
     var timings: TimingSettings { settings.state.timings }
 
-    var checksForUpdatesAutomatically = true
+    // From the updates.
+    var checksForUpdatesAutomatically: Bool { updates.checksAutomatically }
     /// What automatic checks lead to: notify, download or install.
-    var automaticUpdates = AutomaticUpdates.install
+    var automaticUpdates: AutomaticUpdates { updates.mode }
     /// Why AutoHush can't install updates itself, shown under the choice;
-    /// nil when it can. Then only "Notify me" is possible.
-    var updateInstallNote: String?
+    /// nil when it can. Then only "Notify me" is possible. Read once, at launch.
+    @ObservationIgnored let updateInstallNote: String?
     /// The user turned AutoHush's notifications off in System Settings. Then
     /// the update choices that rely on them are unavailable.
-    var notificationsOff = false
+    var notificationsOff: Bool { updates.notificationsOff }
     /// What the last check from Settings found, e.g. "Checking…".
-    var updateStatus: String?
+    var updateStatus: String? { updates.status }
     /// This copy's version, e.g. "0.3.11"; `nil` when unknown.
-    var currentVersion: String?
+    var currentVersion: String? { updates.currentVersion?.description }
     /// The version with its build number, e.g. "0.6.1 (19)", for About and
     /// Diagnostics.
     var fullVersion: String? {
@@ -121,7 +123,7 @@ final class SettingsModel {
         return build.map { "\(currentVersion) (\($0))" } ?? currentVersion
     }
     /// When updates were last checked for, by hand or automatically.
-    var lastUpdateCheck: Date?
+    var lastUpdateCheck: Date? { updates.lastCheck }
 
     // Apps
     /// The apps that played sound, the most recent first, plus the ignored
@@ -211,6 +213,8 @@ final class SettingsModel {
     @ObservationIgnored let settings: UserSettings
     /// Update checks, and their settings.
     @ObservationIgnored let updates: any UpdateCommands
+    /// Reads the permissions; Settings shows the chosen player's as last read.
+    @ObservationIgnored let permissionCenter: PermissionCenter
     /// Learning the chosen web app's controls: its windows' steps.
     @ObservationIgnored let learningSession: LearningSession
     /// What only AppDelegate does: choosing a player, its windows, the
@@ -219,11 +223,14 @@ final class SettingsModel {
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
 
     init(state: AppState = AppState(), settings: UserSettings, updates: any UpdateCommands,
+         permissionCenter: PermissionCenter = PermissionCenter(),
          learningSession: LearningSession = LearningSession(), actions: (any AppActions)?,
          launchAtLoginController: any LaunchAtLoginControlling) {
         self.state = state
         self.settings = settings
         self.updates = updates
+        updateInstallNote = updates.installUnavailability?.explanation
+        self.permissionCenter = permissionCenter
         self.learningSession = learningSession
         self.actions = actions
         self.launchAtLoginController = launchAtLoginController

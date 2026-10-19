@@ -29,8 +29,9 @@ final class FakeCheckRun: CheckRunning {
     }
 }
 
-/// What Add an App's fake services saw and answer, for the model's tests
-/// and its windows'.
+/// What Add an App's stand-ins saw and answer (the apps on the Mac, the
+/// check's helper, the rest of AutoHush and the feature's windows), for the
+/// model's tests and its windows'.
 @MainActor
 final class World {
     var apps = [CheckableApp(bundleID: "com.example.player", name: "Player", url: URL(filePath: "/Applications/Player.app"), nowPlaying: true),
@@ -64,6 +65,8 @@ final class World {
     var hasLog = false
     var logsShown = 0
     var autoHushReopened = 0
+    /// Each time AutoHush's player was held for a check (`true`), and let go.
+    var holds: [Bool] = []
     /// Holds the model's polls until the test ends them.
     var heldSleep: ManualSleep?
     var exists = true
@@ -78,76 +81,107 @@ final class World {
     deinit {
         keptSuite.remove()
     }
+}
 
-    var services: AddAppServices {
-        AddAppServices(
-            listApps: { self.apps },
-            appAt: { url in
-                url.lastPathComponent == "AutoHush.app" ? .failure(.autoHush)
-                    : .success(CheckableApp(bundleID: "com.example.picked", name: "Picked", url: url))
-            },
-            showChooser: { self.choosers += 1 },
-            traits: { _ in self.traits },
-            isRunning: { _ in self.running },
-            exists: { _ in self.exists },
-            open: { app, option in
-                self.opened.append((app.bundleID, option))
-                guard self.opens else { return false }
-                self.running = true
-                return true
-            },
-            runsWithLaunchOption: { _ in self.runsWithOption },
-            reopen: { _ in
-                self.reopened += 1
-                return self.reopens
-            },
-            permissions: { _, scriptable in
-                var permissions = self.permissions
-                if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
-                return permissions
-            },
-            request: { permission, _, _ in
-                guard permission == .audioRecording else { return }
-                self.audioRequests += 1
-                // Turned down: System Settings opens, and AutoHush waits to reopen.
-                if self.permissions.audio == .denied { self.permissions.audio = .needsReopen }
-            },
-            antiDot: { self.antiDot },
-            macCanMute: {
-                self.macCanMuteReads += 1
-                return self.macCanMute
-            },
-            turnOffAntiDot: { self.antiDot = false },
-            openMenuBarSettings: { self.menuBarSettingsOpened += 1 },
-            isPlaying: { _, _ in self.playing },
-            startCheck: { _, taps, onLine in
-                guard self.startsCheck else { return nil }
-                self.taps.append(taps)
-                self.runs += 1
-                self.report = onLine
-                onLine("Press Test")
-                return self.run
-            },
-            showWarning: { self.warnings += 1 },
-            closeWarning: { self.warningsClosed += 1 },
-            checkStarted: { _ in self.panel.append("shown") },
-            checkEnded: { self.panel.append("hidden") },
-            showLog: { self.logsShown += 1 },
-            hasLog: { self.hasLog },
-            reopenAutoHush: { self.autoHushReopened += 1 },
-            keptChecks: kept,
-            use: { result, asks in
-                self.used.append(result)
-                self.asksToReopen.append(asks)
-            },
-            close: { self.closed += 1 },
-            now: { self.now },
-            // The model's polls a moment apart, not spinning on the main
-            // actor, which every main-actor test shares; or held, when a
-            // test ends them itself.
-            sleep: { duration in
-                if let held = self.heldSleep { await held.sleep(duration) } else { try? await Task.sleep(for: .milliseconds(5)) }
-            }
-        )
+extension AddAppModel {
+    /// A model on `world`'s stand-ins, as `AddAppFeature` makes one on AutoHush's.
+    convenience init(_ world: World) {
+        // The model's polls a moment apart, not spinning on the main actor,
+        // which every main-actor test shares; or held, when a test ends them
+        // itself.
+        self.init(reader: world, helper: world, host: world, presenter: world, keptChecks: world.kept, now: { world.now },
+                  sleep: { duration in
+                      if let held = world.heldSleep { await held.sleep(duration) } else { try? await Task.sleep(for: .milliseconds(5)) }
+                  })
     }
+}
+
+/// The apps on the Mac.
+extension World: AppReading {
+    func listApps() async -> [CheckableApp] { apps }
+
+    func app(at url: URL) -> Result<CheckableApp, OtherAppProblem> {
+        url.lastPathComponent == "AutoHush.app" ? .failure(.autoHush)
+            : .success(CheckableApp(bundleID: "com.example.picked", name: "Picked", url: url))
+    }
+
+    func traits(ofAppAt url: URL) -> CheckedAppTraits { traits }
+    func isRunning(_ bundleID: String) -> Bool { running }
+    func appExists(at url: URL) -> Bool { exists }
+
+    func open(_ app: CheckableApp, withLaunchOption: Bool) async -> Bool {
+        opened.append((app.bundleID, withLaunchOption))
+        guard opens else { return false }
+        running = true
+        return true
+    }
+
+    func isPlaying(_ app: CheckableApp, traits: CheckedAppTraits) async -> Bool { playing }
+}
+
+/// The check's helper.
+extension World: CheckHelping {
+    func runsWithLaunchOption(_ app: CheckableApp) async -> Bool? { runsWithOption }
+
+    func reopenWithLaunchOption(_ app: CheckableApp) async -> Bool {
+        reopened += 1
+        return reopens
+    }
+
+    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)? {
+        guard startsCheck else { return nil }
+        self.taps.append(taps)
+        runs += 1
+        report = onLine
+        onLine("Press Test")
+        return run
+    }
+}
+
+/// The rest of AutoHush.
+extension World: AddAppHost {
+    var supportedApps: [PlayerOption] { [] }
+    var isAntiDot: Bool { antiDot }
+    func turnOffAntiDot() { antiDot = false }
+
+    func checkPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
+        var permissions = self.permissions
+        if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
+        return permissions
+    }
+
+    func requestCheckPermission(_ permission: CheckPermission, app: CheckableApp, current: CheckPermissions) async {
+        guard permission == .audioRecording else { return }
+        audioRequests += 1
+        // Turned down: System Settings opens, and AutoHush waits to reopen.
+        if permissions.audio == .denied { permissions.audio = .needsReopen }
+    }
+
+    func holdsPlayerForCheck(_ held: Bool) { holds.append(held) }
+    func reopenForAudioRecording() { autoHushReopened += 1 }
+
+    func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
+        used.append(result)
+        self.asksToReopen.append(asksToReopen)
+    }
+}
+
+/// The feature's windows, the check's panel and its log.
+extension World: AddAppPresenting {
+    func showChooser() { choosers += 1 }
+    func closeChooser() {}
+    func showWarning() { warnings += 1 }
+    func closeWarning() { warningsClosed += 1 }
+    func checkStarted(_ app: CheckableApp) { panel.append("shown") }
+    func checkEnded() { panel.append("hidden") }
+
+    var canMuteOutput: Bool {
+        macCanMuteReads += 1
+        return macCanMute
+    }
+
+    var hasCheckLog: Bool { hasLog }
+    func showCheckLog() { logsShown += 1 }
+    func openMenuBarSettings() { menuBarSettingsOpened += 1 }
+    func closeWindow() { closed += 1 }
 }

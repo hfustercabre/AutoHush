@@ -77,12 +77,7 @@ extension Look {
 /// (its level measured when `level`). A stop doesn't cut it short: it waits
 /// in trials and plays, whose end it waits for anyway.
 @MainActor func waitFor(_ seconds: Double, pid: pid_t, level: Bool = false, until done: (Look) -> Bool) -> Look {
-    let deadline = Date().addingTimeInterval(seconds)
-    var current = look(pid, level: level)
-    while !done(current), Date() < deadline {
-        RunLoop.main.run(until: Date().addingTimeInterval(0.25))
-        current = look(pid, level: level)
-    }
+    let current = Polling.wait(seconds: seconds, every: 0.25, runLoop: true, reading: { look(pid, level: level) }, until: done)
     RunLoop.main.run(until: Date().addingTimeInterval(1))
     return current
 }

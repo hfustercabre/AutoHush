@@ -1,7 +1,7 @@
 import Foundation
 import Network
 import Testing
-import AutoHushKit
+@testable import AutoHushKit
 @testable import WebAppPlayers
 import AutoHushTestSupport
 

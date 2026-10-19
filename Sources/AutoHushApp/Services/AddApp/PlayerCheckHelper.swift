@@ -139,3 +139,24 @@ struct PlayerCheckHelper: Sendable {
         }
     }
 }
+
+/// Add an App's check through this helper.
+extension PlayerCheckHelper: CheckHelping {
+    private static let logger = AutoHushLogger(category: "AddApp")
+
+    @MainActor
+    func runsWithLaunchOption(_ app: CheckableApp) async -> Bool? {
+        await runsWithLaunchOption(app.url)
+    }
+
+    @MainActor
+    func reopenWithLaunchOption(_ app: CheckableApp) async -> Bool {
+        await reopenWithLaunchOption(app.url)
+    }
+
+    @MainActor
+    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)? {
+        Self.logger.notice("Add an App: checking \(app.name, privacy: .public)\(taps ? "" : " (AntiDot mode: no audio taps)", privacy: .public)")
+        return try? check(app.url, taps: taps, onLine: onLine)
+    }
+}

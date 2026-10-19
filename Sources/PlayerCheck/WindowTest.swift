@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 
 // MARK: - A test's trip through the window states
 
@@ -108,7 +109,9 @@ import AppKit
         let appElement = AXUIElement.application(pid, timeout: 1)
         if appElement.value(kAXHiddenAttribute) as? Bool == true {
             WindowStates.set(appElement, kAXHiddenAttribute, false)
-            guard WindowStates.wait(3, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else { return "it couldn't be shown again" }
+            guard Polling.wait(seconds: 3, every: 0.1, until: { appElement.value(kAXHiddenAttribute) as? Bool != true }) else {
+                return "it couldn't be shown again"
+            }
         }
         // Out of sight and out of Accessibility's reach (a scriptable player's
         // window on another desktop: no element number answered): its desktop shown
@@ -118,7 +121,7 @@ import AppKit
         // Control-arrow, as a person would.
         if let (info, element) = WindowStates.main(of: pid), element == nil, info[kCGWindowIsOnscreen as String] as? Bool != true,
            let there = Desktops.of(window: WindowStates.number(of: info)), there != Desktops.all()?.current {
-            guard WindowStates.showDesktop(there), WindowStates.wait(3, until: { self.element != nil }) else {
+            guard WindowStates.showDesktop(there), Polling.wait(seconds: 3, every: 0.1, until: { self.element != nil }) else {
                 comeHome()
                 return "its window can't be reached, even with its desktop shown"
             }
@@ -126,12 +129,16 @@ import AppKit
         guard let element else { return "its window can't be reached" }
         if element.value(kAXMinimizedAttribute) as? Bool == true {
             WindowStates.set(element, kAXMinimizedAttribute, false)
-            guard WindowStates.wait(4, until: { element.value(kAXMinimizedAttribute) as? Bool != true }) else { return "it couldn't be unminimized" }
+            guard Polling.wait(seconds: 4, every: 0.1, until: { element.value(kAXMinimizedAttribute) as? Bool != true }) else {
+                return "it couldn't be unminimized"
+            }
             Thread.sleep(forTimeInterval: 0.6)
         }
         if element.value("AXFullScreen") as? Bool == true {
             WindowStates.set(element, "AXFullScreen", false)
-            guard WindowStates.wait(6, until: { element.value("AXFullScreen") as? Bool != true }) else { return "it couldn't leave full screen" }
+            guard Polling.wait(seconds: 6, every: 0.1, until: { element.value("AXFullScreen") as? Bool != true }) else {
+                return "it couldn't leave full screen"
+            }
             Thread.sleep(forTimeInterval: 1.2)
         }
         let there = WindowStates.main(of: pid).flatMap { Desktops.of(window: WindowStates.number(of: $0.info)) }
@@ -252,12 +259,12 @@ import AppKit
     private func setWindow(_ attribute: String, reads state: WindowState, within seconds: Double) -> String? {
         guard let element else { return "its window can't be reached" }
         WindowStates.set(element, attribute, true)
-        guard WindowStates.wait(seconds, until: { WindowStates.state(of: app) == state }) else { return "it didn't go \(state.title)" }
+        guard Polling.wait(seconds: seconds, every: 0.1, until: { WindowStates.state(of: app) == state }) else { return "it didn't go \(state.title)" }
         if state == .fullScreen {
             // Its own desktop slides in for about a second: coming home meanwhile
             // leaves that desktop shown (and the menu bar hidden with it).
             let window = WindowStates.main(of: pid).map { WindowStates.number(of: $0.info) }
-            _ = WindowStates.wait(3, until: { window.flatMap(Desktops.of(window:)) == Desktops.all()?.current })
+            Polling.wait(seconds: 3, every: 0.1, until: { window.flatMap(Desktops.of(window:)) == Desktops.all()?.current })
             Thread.sleep(forTimeInterval: 1)
         } else {
             Thread.sleep(forTimeInterval: 0.6)
@@ -268,8 +275,8 @@ import AppKit
     private func hide() -> String? {
         let appElement = AXUIElement.application(pid, timeout: 1)
         WindowStates.set(appElement, kAXHiddenAttribute, true)
-        if !WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) { app.hide() }
-        return WindowStates.wait(2, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) ? nil : "it couldn't be hidden"
+        if !Polling.wait(seconds: 2, every: 0.1, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) { app.hide() }
+        return Polling.wait(seconds: 2, every: 0.1, until: { appElement.value(kAXHiddenAttribute) as? Bool == true }) ? nil : "it couldn't be hidden"
     }
 
     /// The other apps' windows that covered it, raised again, the back one

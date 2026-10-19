@@ -25,7 +25,7 @@ package struct TimingSettings: Equatable, Sendable {
     /// during AutoHush's pause.
     package var staysPausedAfterCalls: Bool
 
-    package init(
+    init(
         startConfirmation: TimeInterval = 0.5,
         stopGrace: TimeInterval = 2.0,
         silenceThresholdDB: Double = -60,

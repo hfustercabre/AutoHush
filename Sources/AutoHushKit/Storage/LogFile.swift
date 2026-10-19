@@ -13,7 +13,7 @@ package final class LogFile: Sendable {
     /// How long a line is kept.
     package static let keptFor: TimeInterval = 24 * 60 * 60
     /// The most it holds, the oldest lines going first past it.
-    package static let maxBytes = 4 * 1024 * 1024
+    static let maxBytes = 4 * 1024 * 1024
     /// How often, at most, old lines are dropped while it's written to.
     static let trimInterval: TimeInterval = 60 * 60
 
@@ -30,11 +30,11 @@ package final class LogFile: Sendable {
     }
 
     /// Stops keeping it: lines logged from now on go nowhere (tests).
-    package static func stop() {
+    static func stop() {
         current.withLock { $0 = nil }
     }
 
-    package let url: URL
+    let url: URL
     private let now: @Sendable () -> Date
     /// Writes, trims and reads, one at a time.
     private let queue = DispatchQueue(label: "AutoHush.LogFile", qos: .utility)
@@ -43,14 +43,14 @@ package final class LogFile: Sendable {
     private let lastTrim = OSAllocatedUnfairLock<Date?>(initialState: nil)
     private let observers = OSAllocatedUnfairLock<[UUID: @Sendable (LogEntry) -> Void]>(initialState: [:])
 
-    package init(url: URL, now: @escaping @Sendable () -> Date = { Date() }) {
+    init(url: URL, now: @escaping @Sendable () -> Date = { Date() }) {
         self.url = url
         self.now = now
         queue.async { self.trim() }
     }
 
     /// Adds `entry`, and tells whoever follows the log once it's written.
-    package func append(_ entry: LogEntry) {
+    func append(_ entry: LogEntry) {
         let following = observers.withLock { Array($0.values) }
         queue.async {
             self.write(Self.line(for: entry))
@@ -62,11 +62,7 @@ package final class LogFile: Sendable {
     /// The lines kept since `date`, oldest first, read on the log's own
     /// queue: never on the caller's thread, as the file holds up to a day.
     package func entries(since date: Date) async -> [LogEntry] {
-        await withCheckedContinuation { continuation in
-            queue.async(qos: .userInitiated) {
-                continuation.resume(returning: self.read().filter { $0.date >= date })
-            }
-        }
+        await queue.run(qos: .userInitiated) { self.read().filter { $0.date >= date } }
     }
 
     /// Calls `handler` with each entry appended from now on, on the log's
@@ -84,7 +80,7 @@ package final class LogFile: Sendable {
     }
 
     /// Returns once every line appended so far is written (tests).
-    package func flush() {
+    func flush() {
         queue.sync {}
     }
 

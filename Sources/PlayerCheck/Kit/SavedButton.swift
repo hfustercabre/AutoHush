@@ -8,7 +8,7 @@ package struct SavedButton: Codable, Equatable, Sendable {
     package var recipe: SavedRecipe?
     package var panelRow: String?
 
-    package init(path: ButtonPath? = nil, recipe: SavedRecipe? = nil, panelRow: String? = nil) {
+    init(path: ButtonPath? = nil, recipe: SavedRecipe? = nil, panelRow: String? = nil) {
         self.path = path
         self.recipe = recipe
         self.panelRow = panelRow

@@ -31,7 +31,7 @@ package struct PageAccess: Codable, Equatable, Sendable {
     package var interface: Interface
     /// The switch that showed its page in the check, set on the process
     /// that serves it; `nil` for WebKit.
-    package var switchAttribute: String?
+    var switchAttribute: String?
 
     package init(interface: Interface, switchAttribute: String?) {
         self.interface = interface
@@ -62,7 +62,7 @@ package struct PageAccess: Codable, Equatable, Sendable {
     package var wordsCurrentOutOfSight: Bool { interface == .webKit }
 
     /// Its page is the window's own elements (Flutter's), not a web area.
-    package var pageIsWindow: Bool { interface == .flutter }
+    var pageIsWindow: Bool { interface == .flutter }
 
     /// The browser that serves a Chromium web app's page; `nil` for any other.
     package var browserID: String? {

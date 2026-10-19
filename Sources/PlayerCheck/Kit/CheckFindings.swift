@@ -10,16 +10,16 @@ package struct CheckFindings: Sendable {
     package struct Way: Sendable {
         /// Whether the app has it: AppleScript with commands to try, a
         /// playback menu, a page's Play/Pause, a row in Now Playing.
-        package var isThere: Bool
+        var isThere: Bool
         /// Its mark when it couldn't be looked for (saying why), unless it
         /// was tried after all.
-        package var notChecked: CheckResult.Mark?
+        var notChecked: CheckResult.Mark?
         /// How it did in each window state tested; none when there were none.
-        package var trials: [(state: CheckResult.WindowState, result: TrialResult)]
+        var trials: [(state: CheckResult.WindowState, result: TrialResult)]
         /// How it did in the first window state (visible), or in its only run.
-        package var first: TrialResult?
+        var first: TrialResult?
         /// How AutoHush runs it, when it works.
-        package var setup: PlayerSetup.Way?
+        var setup: PlayerSetup.Way?
 
         package init(isThere: Bool, notChecked: CheckResult.Mark? = nil, trials: [(state: CheckResult.WindowState, result: TrialResult)] = [],
                      first: TrialResult? = nil, setup: PlayerSetup.Way? = nil) {
@@ -33,7 +33,7 @@ package struct CheckFindings: Sendable {
         /// Its mark over the window states it was tested in (its only run
         /// when there were none), and the states it failed in when it
         /// worked in some.
-        package var mark: (mark: CheckResult.Mark, failed: [CheckResult.WindowState]) {
+        var mark: (mark: CheckResult.Mark, failed: [CheckResult.WindowState]) {
             if !trials.isEmpty {
                 let failed = trials.filter { $0.result != .worked }.map(\.state)
                 return (failed.isEmpty ? .works : failed.count == trials.count ? .none : .some, failed)
@@ -43,10 +43,10 @@ package struct CheckFindings: Sendable {
         }
     }
 
-    package var bundleID: String
-    package var appName: String
-    package var appURL: URL
-    package var ways: [CheckResult.WayKind: Way]
+    var bundleID: String
+    var appName: String
+    var appURL: URL
+    var ways: [CheckResult.WayKind: Way]
     /// Now Playing's item never seen in the menu bar, and found missing
     /// there: hidden by the user, which they can change.
     package var nowPlayingHidden = false

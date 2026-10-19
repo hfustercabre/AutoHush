@@ -300,12 +300,9 @@ package final class AudioMonitor: @unchecked Sendable {
     /// resumes: `nil` unless the apps it was paused for were quieter, or
     /// with `levelsMusic` off or levels unmeasured (AntiDot mode).
     package func resumeOffsetDB() async -> Float? {
-        await withCheckedContinuation { continuation in
-            queue.async {
-                guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return continuation.resume(returning: nil) }
-                continuation.resume(returning: self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB,
-                                                                         minCut: self.configuration.levelingMinCutDB))
-            }
+        await queue.run {
+            guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return nil }
+            return self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB, minCut: self.configuration.levelingMinCutDB)
         }
     }
 

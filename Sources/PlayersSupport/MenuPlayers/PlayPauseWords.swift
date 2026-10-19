@@ -19,7 +19,7 @@ package struct PlayPauseWords: Equatable, Sendable {
     /// The words of the app running with `bundleID`, so they match its
     /// version; while none runs, of the copy Launch Services knows. `read`
     /// reads them from a copy of the app.
-    package static func installed(bundleID: String, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
+    static func installed(bundleID: String, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
         let running = NSRunningApplication.running(bundleID)?.bundleURL
         guard let appURL = running ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
         else { return nil }
@@ -31,7 +31,7 @@ package struct PlayPauseWords: Equatable, Sendable {
     /// logged once per copy and version: AutoHush can't tell its state then.
     /// Its version is read from its Info.plist each time: a `Bundle` keeps
     /// the one it read first, so an update while AutoHush runs would be missed.
-    package static func words(ofAppAt appURL: URL, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
+    static func words(ofAppAt appURL: URL, read: (URL) -> PlayPauseWords?) -> PlayPauseWords? {
         let info = CFBundleCopyInfoDictionaryInDirectory(appURL as CFURL) as? [String: Any]
         let version = info?["CFBundleShortVersionString"] as? String ?? ""
         let key = "\(appURL.path)#\(version)"

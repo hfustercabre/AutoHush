@@ -10,11 +10,11 @@ import Foundation
 /// level (root mean square) while heard during the pause, together, calls
 /// (an app playing with its microphone on) left out: a voice says little
 /// about how loud music should be.
-package struct ResumeLevel {
+struct ResumeLevel {
     /// How far back the music's loudness is looked for at a pause.
-    package static let musicWindow: TimeInterval = 6
+    static let musicWindow: TimeInterval = 6
     /// The stretch the music's loudness is averaged over (its loudest one counts).
-    package static let musicStretch: TimeInterval = 1
+    static let musicStretch: TimeInterval = 1
 
     /// The music's average levels while it was heard, oldest first.
     private var music: [(at: Date, rms: Float)] = []
@@ -24,17 +24,17 @@ package struct ResumeLevel {
     private var appsPower: Double = 0
     private var appsLooks = 0
 
-    package init() {}
+    init() {}
 
     /// Notes the music's level, while it's measured and heard.
-    package mutating func noteMusic(rms: Float, at now: Date) {
+    mutating func noteMusic(rms: Float, at now: Date) {
         music.append((now, rms))
         music.removeAll { now.timeIntervalSince($0.at) > Self.musicWindow }
     }
 
     /// Notes the apps' level together, at a look they were heard in during
     /// the pause.
-    package mutating func noteApps(rms: Float) {
+    mutating func noteApps(rms: Float) {
         guard reference != nil else { return }
         appsPower += Double(rms * rms)
         appsLooks += 1
@@ -42,7 +42,7 @@ package struct ResumeLevel {
 
     /// The music was paused by AutoHush (its loudness just before then is
     /// the reference), or isn't any more (everything is forgotten).
-    package mutating func setMusicPaused(_ paused: Bool, at now: Date) {
+    mutating func setMusicPaused(_ paused: Bool, at now: Date) {
         guard paused else {
             reference = nil
             appsPower = 0
@@ -60,14 +60,14 @@ package struct ResumeLevel {
     }
 
     /// The apps' average level during the pause; `nil` when none was heard.
-    package var appsLevel: Float? {
+    var appsLevel: Float? {
         appsLooks == 0 ? nil : Float((appsPower / Double(appsLooks)).squareRoot())
     }
 
     /// How far (dB, below 0) to lower the volume as the music resumes:
     /// down to the apps' level, `maxCut` at most; `nil` when they weren't
     /// quieter by `minCut` or more, or either level is unknown.
-    package func offsetDB(maxCut: Float, minCut: Float) -> Float? {
+    func offsetDB(maxCut: Float, minCut: Float) -> Float? {
         guard let reference, reference > 0, let apps = appsLevel, apps > 0 else { return nil }
         let difference = 20 * log10(apps / reference)
         guard difference <= -minCut else { return nil }

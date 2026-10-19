@@ -16,6 +16,11 @@ struct AddWebAppView: View {
     /// For the learning that follows (the chosen player's status).
     let settings: SettingsModel
     let close: () -> Void
+    /// The step VoiceOver's cursor goes to as the checklist moves on: it reads
+    /// the step then, and again on coming back to the window. An
+    /// announcement alone went unheard after Continue, VoiceOver reading the
+    /// dimmed field or the web app's window instead (2026-10-18/19).
+    @AccessibilityFocusState private var focusedStep: String?
 
     /// The window's width, which its bottom bar's buttons fit in every language.
     static let width: CGFloat = 440
@@ -200,6 +205,9 @@ struct AddWebAppView: View {
             }
         }
         .announcesCurrentStep(announcement, atOnce: locked)
+        .onChange(of: steps.currentTitle) { _, title in
+            if let title { focusedStep = title }
+        }
     }
 
     /// Once the web app is chosen, learning it needs its control permission
@@ -318,7 +326,8 @@ struct AddWebAppView: View {
     }
 
     private func step(_ step: ChecklistStep, locked: Bool) -> some View {
-        ChecklistStepRow(step: step, dimmed: step.state == .done || locked, bold: [.current, .failed].contains(step.state), action: { button in
+        ChecklistStepRow(step: step, dimmed: step.state == .done || locked, bold: [.current, .failed].contains(step.state),
+                         focus: $focusedStep, action: { button in
             if button == .addToDock { model.addTapped() } else { settings.learningSession.step(button) }
         }) {
             StepSymbol(step: step, locked: locked)

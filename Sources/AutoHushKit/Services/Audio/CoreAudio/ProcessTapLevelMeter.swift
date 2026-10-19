@@ -29,7 +29,7 @@ extension AudioLevelMetering {
 /// How loud a process was over a stretch of time.
 package struct AudioLevel: Equatable, Sendable {
     /// Largest absolute sample value (0…1).
-    package var peak: Float
+    var peak: Float
     /// Root-mean-square sample value (0…1): the average loudness.
     package var rms: Float
 }
@@ -97,11 +97,11 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
 
 // MARK: - Single process tap
 
-package struct ProcessTapError: LocalizedError, LoggableError {
-    package let step: String
-    package let status: OSStatus
-    package var errorDescription: String? { "\(step) failed with OSStatus \(status)" }
-    package var logDescription: String { errorDescription ?? "\(step) failed" }
+struct ProcessTapError: LocalizedError, LoggableError {
+    let step: String
+    let status: OSStatus
+    var errorDescription: String? { "\(step) failed with OSStatus \(status)" }
+    var logDescription: String { errorDescription ?? "\(step) failed" }
 }
 
 /// A tap on some processes, read by a private aggregate device whose IO block

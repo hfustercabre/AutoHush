@@ -107,7 +107,7 @@ package enum AccessibilityWindows {
     /// `farStart` (where one was found before) or `elementLimit`, up to
     /// `farLimit`, ending `gapAfterWindow` past the last one found. Never past
     /// `deadline`.
-    package static func windowNumbers(
+    static func windowNumbers(
         farStart: UInt64?,
         hasWindowOutOfSight: () -> Bool,
         deadline: Date,

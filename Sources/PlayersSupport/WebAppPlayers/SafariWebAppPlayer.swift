@@ -18,7 +18,7 @@ import AutoHushKit
 /// the site refuses, or an ad that plays while its button says "Play", mutes
 /// the web app instead.
 package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, FadelessMusicPlayer, PolledMusicPlayer {
-    package nonisolated let app: SafariWebApp
+    nonisolated let app: SafariWebApp
     /// Its site isn't one AutoHush has been tested with.
     package nonisolated let isUntested: Bool
 

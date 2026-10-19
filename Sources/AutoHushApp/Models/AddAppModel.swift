@@ -74,7 +74,19 @@ final class AddAppModel {
     /// waits for it.
     private(set) var isEndingLastCheck = false
 
-    @ObservationIgnored var services: AddAppServices
+    /// The apps on the Mac, and the check's helper (`nil`: missing from
+    /// the app, so nothing can be checked).
+    @ObservationIgnored private let reader: any AppReading
+    @ObservationIgnored private let helper: (any CheckHelping)?
+    /// What it needs from the rest of AutoHush, and what it shows through
+    /// the feature that owns it (weak: they own it).
+    @ObservationIgnored private weak var host: (any AddAppHost)?
+    @ObservationIgnored private weak var presenter: (any AddAppPresenting)?
+    /// Where a finished check's result is kept until it's used or replaced
+    /// (a reopen of AutoHush, or the window closed, doesn't lose it).
+    @ObservationIgnored private let keptChecks: KeptCheckStore
+    @ObservationIgnored private let now: @MainActor () -> Date
+    @ObservationIgnored private let sleep: @MainActor (Duration) async -> Void
     @ObservationIgnored private var run: (any CheckRunning)?
     /// A stopped check still putting things back.
     @ObservationIgnored private var endingRun: (any CheckRunning)?
@@ -84,9 +96,20 @@ final class AddAppModel {
     /// after the window closed, say).
     @ObservationIgnored private var windowIsOpen = false
 
-    init(services: AddAppServices) {
-        self.services = services
+    init(reader: any AppReading, helper: (any CheckHelping)?, host: (any AddAppHost)?, presenter: any AddAppPresenting,
+         keptChecks: KeptCheckStore = KeptCheckStore(), now: @escaping @MainActor () -> Date = { Date() },
+         sleep: @escaping @MainActor (Duration) async -> Void = { try? await Task.sleep(for: $0) }) {
+        self.reader = reader
+        self.helper = helper
+        self.host = host
+        self.presenter = presenter
+        self.keptChecks = keptChecks
+        self.now = now
+        self.sleep = sleep
     }
+
+    /// The check's helper is in the app: without it, nothing can be checked.
+    var hasHelper: Bool { helper != nil }
 
     // MARK: - What the window shows
 
@@ -183,7 +206,7 @@ final class AddAppModel {
     /// AntiDot mode is on: nothing listens to the app, and it can't be muted.
     var antiDot: Bool {
         _ = antiDotChanges // read, so the window follows `turnOffAntiDot`
-        return services.antiDot()
+        return host?.isAntiDot ?? true
     }
 
     /// How many times AntiDot mode was turned off from here.
@@ -213,7 +236,7 @@ final class AddAppModel {
     private(set) var macCanMute = false
 
     private func readMacMuting() {
-        let canMute = services.macCanMute()
+        let canMute = presenter?.canMuteOutput ?? false
         if canMute != macCanMute { macCanMute = canMute }
     }
 
@@ -222,13 +245,13 @@ final class AddAppModel {
     var nowPlayingHidden: Bool { result?.ways.contains { $0.mark == .menuBarHidden } == true }
 
     func openMenuBarSettings() {
-        services.openMenuBarSettings()
+        presenter?.openMenuBarSettings()
     }
 
     /// The last step's Turn Off AntiDot Mode, when nothing that worked can be
     /// used in it: a way only the app's sound tells, or muting, then can.
     func turnOffAntiDot() {
-        services.turnOffAntiDot()
+        host?.turnOffAntiDot()
         antiDotChanges += 1
     }
 
@@ -240,7 +263,7 @@ final class AddAppModel {
         windowIsOpen = true
         resetSteps()
         search = ""
-        if let kept = services.keptChecks.load(now: services.now()), services.exists(kept.app.url) {
+        if let kept = keptChecks.load(now: now()), reader.appExists(at: kept.app.url) {
             restore(kept)
         }
         Task { await loadApps() }
@@ -269,14 +292,14 @@ final class AddAppModel {
     private func restore(_ kept: KeptCheck) {
         chosen = kept.app
         selectedID = kept.app.id
-        let traits = services.traits(kept.app.url)
+        let traits = reader.traits(ofAppAt: kept.app.url)
         self.traits = traits
         needsReopen = kept.needsReopen
         reopenOutcome = kept.reopenOutcome
         stage = .done(kept.result)
         Task { [weak self] in
             guard let self else { return }
-            self.permissions = await self.services.permissions(kept.app, traits.scriptable)
+            self.permissions = await self.readPermissions(kept.app, scriptable: traits.scriptable)
         }
     }
 
@@ -294,7 +317,7 @@ final class AddAppModel {
     func openChooser() {
         guard stage == .choosing else { return }
         search = ""
-        services.showChooser()
+        presenter?.showChooser()
     }
 
     /// Chooses `app` (from the list, or picked on the disk) and goes on.
@@ -303,13 +326,13 @@ final class AddAppModel {
         if !apps.contains(where: { $0.id == app.id }) { apps.append(app) }
         selectedID = app.id
         otherAppProblem = nil
-        services.closeChooser()
+        presenter?.closeChooser()
         continueWithApp()
     }
 
     /// Other App…'s pick: chosen, or why it can't be.
     func chooseOther(at url: URL) {
-        switch services.appAt(url) {
+        switch reader.app(at: url) {
         case .success(let app): choose(app)
         case .failure(let problem): otherAppProblem = problem
         }
@@ -322,15 +345,15 @@ final class AddAppModel {
     /// A kept result is forgotten.
     func changeApp() {
         guard canChangeApp else { return }
-        services.keptChecks.forget()
+        keptChecks.forget()
         resetSteps()
         search = ""
-        services.showChooser()
+        presenter?.showChooser()
     }
 
     func loadApps() async {
         isLoadingApps = true
-        apps = await services.listApps()
+        apps = await reader.listApps()
         isLoadingApps = false
         if !apps.contains(where: { $0.id == selectedID }) {
             selectedID = (apps.first { $0.nowPlaying == true } ?? (apps.count(where: { $0.nowPlaying != nil }) == 1 ? apps.first : nil))?.id
@@ -342,15 +365,15 @@ final class AddAppModel {
     func continueWithApp() {
         guard canContinueWithApp, let app = apps.first(where: { $0.id == selectedID }) else { return }
         chosen = app
-        let traits = services.traits(app.url)
+        let traits = reader.traits(ofAppAt: app.url)
         self.traits = traits
         openFailed = false
         appQuit = false
         stage = .opening
         work = Task { [weak self] in
             guard let self else { return }
-            if !self.services.isRunning(app.bundleID) {
-                guard await self.services.open(app, traits.needsLaunchOption), !Task.isCancelled else {
+            if !self.reader.isRunning(app.bundleID) {
+                guard await self.reader.open(app, withLaunchOption: traits.needsLaunchOption), !Task.isCancelled else {
                     if !Task.isCancelled {
                         self.openFailed = true
                         self.stage = .choosing
@@ -358,7 +381,7 @@ final class AddAppModel {
                     return
                 }
             } else if traits.needsLaunchOption {
-                self.needsReopen = await self.services.runsWithLaunchOption(app) == false
+                self.needsReopen = await self.helper?.runsWithLaunchOption(app) == false
             }
             guard !Task.isCancelled else { return }
             self.stage = .allowing
@@ -372,13 +395,13 @@ final class AddAppModel {
         guard let app = chosen, let traits else { return }
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .allowing {
-                self.permissions = await self.services.permissions(app, traits.scriptable)
+                self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
                 if self.permissions.allAllowed(antiDot: self.antiDot) {
                     self.permissionMissingInCheck = false
                     self.afterPermissions()
                     return
                 }
-                await self.services.sleep(.seconds(1))
+                await self.sleep(.seconds(1))
             }
         }
     }
@@ -399,15 +422,15 @@ final class AddAppModel {
         let current = permissions
         Task { [weak self] in
             guard let self else { return }
-            await self.services.request(permission, app, current)
+            await self.host?.requestCheckPermission(permission, app: app, current: current)
             guard self.chosen == app else { return }
-            self.permissions = await self.services.permissions(app, traits.scriptable)
+            self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
         }
     }
 
     /// Reopen AutoHush, for Audio Recording: a finished check is kept.
     func reopenAutoHush() {
-        services.reopenAutoHush()
+        host?.reopenForAudioRecording()
     }
 
     private func afterPermissions() {
@@ -426,7 +449,7 @@ final class AddAppModel {
         stage = .reopening
         work = Task { [weak self] in
             guard let self else { return }
-            let reopened = await self.services.reopen(app)
+            let reopened = await self.helper?.reopenWithLaunchOption(app) ?? false
             guard !Task.isCancelled else { return }
             if reopened {
                 self.reopenOutcome = .reopened
@@ -450,26 +473,26 @@ final class AddAppModel {
     /// the wait (`appQuit`).
     func waitForPlaying() {
         guard let app = chosen, let traits else { return }
-        let since = services.now()
+        let since = now()
         appQuit = false
         failureReason = nil
         stage = .waitingToPlay(since: since)
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .waitingToPlay(since: since) {
-                if !self.services.isRunning(app.bundleID) {
+                if !self.reader.isRunning(app.bundleID) {
                     self.appQuit = true
                     self.stage = .playTimedOut
                     return
                 }
-                if await self.services.isPlaying(app, traits), self.stage == .waitingToPlay(since: since) {
+                if await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
                     self.stage = .ready
                     return
                 }
-                if self.services.now().timeIntervalSince(since) >= Self.playWait {
+                if self.now().timeIntervalSince(since) >= Self.playWait {
                     self.stage = .playTimedOut
                     return
                 }
-                await self.services.sleep(.milliseconds(500))
+                await self.sleep(.milliseconds(500))
             }
         }
     }
@@ -481,7 +504,7 @@ final class AddAppModel {
         stage = .opening
         work = Task { [weak self] in
             guard let self else { return }
-            let opened = await self.services.open(app, traits.needsLaunchOption)
+            let opened = await self.reader.open(app, withLaunchOption: traits.needsLaunchOption)
             guard !Task.isCancelled else { return }
             if opened {
                 self.waitForPlaying()
@@ -496,7 +519,7 @@ final class AddAppModel {
     func continueToCheck() {
         guard stage == .ready else { return }
         readMacMuting() // what the warning says, and the check does
-        services.showWarning()
+        presenter?.showWarning()
     }
 
     /// The warning's Start: the check runs, with its panel, once a stopped
@@ -510,13 +533,13 @@ final class AddAppModel {
         Task { [weak self] in
             if let ending = self?.endingRun { _ = await ending.waitForEnd() }
             guard let self, self.stage == .checking, self.windowIsOpen, self.run == nil else { return }
-            guard let run = self.services.startCheck(app, !self.antiDot, { [weak self] line in self?.progress.add(line) }) else {
+            guard let run = self.helper?.startCheck(app, taps: !self.antiDot, onLine: { [weak self] line in self?.progress.add(line) }) else {
                 self.stage = .failed
                 self.failureReason = .other
                 return
             }
             self.run = run
-            self.services.checkStarted(app)
+            self.presenter?.checkStarted(app)
             let end = await run.waitForEnd()
             self.ended(run, end, app: app)
         }
@@ -527,32 +550,32 @@ final class AddAppModel {
         if endingRun === ending {
             endingRun = nil
             isEndingLastCheck = false
-            if run == nil { services.checkEnded() }
+            if run == nil { presenter?.checkEnded() }
             return
         }
         guard run === ending else { return } // started again since
-        services.checkEnded()
+        presenter?.checkEnded()
         run = nil
         switch end {
         case .finished(let result?):
-            if result.setup == nil, !services.isRunning(app.bundleID) {
+            if result.setup == nil, !reader.isRunning(app.bundleID) {
                 // It quit during the check: nothing could be tried.
                 failureReason = .appQuit
                 stage = .failed
                 return
             }
             stage = .done(result)
-            services.keptChecks.save(KeptCheck(app: app, result: result, at: services.now(),
+            keptChecks.save(KeptCheck(app: app, result: result, at: now(),
                                                needsReopen: needsReopen, reopenOutcome: reopenOutcome))
             // What muting needs, as it stands now (the last step may offer it).
             if choosableWays.isEmpty, let traits {
                 Task { [weak self] in
                     guard let self else { return }
-                    self.permissions = await self.services.permissions(app, traits.scriptable)
+                    self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
                 }
             }
         case .finished(nil), .failed:
-            failureReason = !services.exists(app.url) ? .appNotFound : !services.isRunning(app.bundleID) ? .appQuit : .other
+            failureReason = !reader.appExists(at: app.url) ? .appNotFound : !reader.isRunning(app.bundleID) ? .appQuit : .other
             stage = .failed
         case .stopped:
             stage = .stopped
@@ -579,11 +602,11 @@ final class AddAppModel {
     }
 
     /// There's a check's log to show.
-    var canShowLog: Bool { services.hasLog() }
+    var canShowLog: Bool { presenter?.hasCheckLog ?? false }
 
     /// Shows the newest check's log (after one couldn't finish).
     func showLog() {
-        services.showLog()
+        presenter?.showCheckLog()
     }
 
     /// Muting needs Audio Recording, and isn't available in AntiDot mode
@@ -595,9 +618,9 @@ final class AddAppModel {
     func useMuting() {
         guard let result, choosableWays.isEmpty, canMute, let app = chosen else { return }
         let setup = PlayerSetup(bundleID: app.bundleID, name: app.name, appURL: app.url, ways: [.mute])
-        services.keptChecks.forget()
-        services.use(CheckResult(ways: result.ways, setup: setup), reopenOutcome != .skipped)
-        services.close()
+        keptChecks.forget()
+        host?.useCheckedApp(CheckResult(ways: result.ways, setup: setup), asksToReopen: reopenOutcome != .skipped)
+        presenter?.closeWindow()
     }
 
     /// Asks for Audio Recording from the last step, for muting, and follows it.
@@ -605,11 +628,11 @@ final class AddAppModel {
         guard let app = chosen, let traits else { return }
         let current = permissions
         Task { [weak self] in
-            await self?.services.request(.audioRecording, app, current)
+            await self?.host?.requestCheckPermission(.audioRecording, app: app, current: current)
             for _ in 0..<60 {
                 guard let self, self.result != nil, !self.canMute else { return }
-                self.permissions = await self.services.permissions(app, traits.scriptable)
-                await self.services.sleep(.seconds(1))
+                self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
+                await self.sleep(.seconds(1))
             }
         }
     }
@@ -620,20 +643,20 @@ final class AddAppModel {
         guard let result, var setup = result.setup, let way = chosenWay else { return }
         // Only the chosen way: the others as its backup are parked (the user, 2026-10-15).
         setup.ways = setup.ways.filter { $0.kind == way }
-        services.keptChecks.forget()
+        keptChecks.forget()
         // The page's learned Play/Pause goes with the page: without it, the
         // app would wait to learn it and never pause (2026-10-18).
-        services.use(CheckResult(ways: result.ways, setup: setup, pageButton: way == .page ? result.pageButton : nil),
-                     reopenOutcome != .skipped)
-        services.close()
+        host?.useCheckedApp(CheckResult(ways: result.ways, setup: setup, pageButton: way == .page ? result.pageButton : nil),
+                            asksToReopen: reopenOutcome != .skipped)
+        presenter?.closeWindow()
     }
 
     /// The window closed: a check under way stops, the warning closes, and
     /// nothing more starts. A finished check stays kept.
     func windowClosed() {
         windowIsOpen = false
-        services.closeChooser()
-        services.closeWarning()
+        presenter?.closeChooser()
+        presenter?.closeWarning()
         stopWork()
         stopRun()
     }
@@ -641,5 +664,10 @@ final class AddAppModel {
     private func stopWork() {
         work?.cancel()
         work = nil
+    }
+
+    /// What the check of `app` needs, as it stands now.
+    private func readPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
+        await host?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions()
     }
 }

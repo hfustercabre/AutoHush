@@ -58,7 +58,7 @@ package final class Preferences {
     package nonisolated static let webAppButtonsKey = "webAppPlayPauseButtons"
 
     /// How many apps that played audio are remembered for Settings → Sound Sources.
-    package static let seenAppsLimit = 50
+    static let seenAppsLimit = 50
 
     private let defaults: any PreferenceStore
 

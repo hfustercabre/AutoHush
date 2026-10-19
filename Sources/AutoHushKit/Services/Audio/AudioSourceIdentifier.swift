@@ -100,7 +100,7 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendab
     }
 
     /// The outermost `.app` in the path, else the outermost `.appex` or `.xpc`.
-    package static func outermostBundle(containing path: String) -> URL? {
+    static func outermostBundle(containing path: String) -> URL? {
         let components = (path as NSString).pathComponents
         for extensions in [["app"], ["appex", "xpc"]] {
             if let index = components.firstIndex(where: { extensions.contains(($0 as NSString).pathExtension) }) {

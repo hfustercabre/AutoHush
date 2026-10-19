@@ -52,8 +52,7 @@ extension AppDelegate {
         case .diagnostics:
             refreshDiagnostics()
         case .notifications:
-            let off = await updates.followNotificationPermission() == .off
-            if settingsModel.notificationsOff != off { settingsModel.notificationsOff = off }
+            await updates.followNotificationPermission() // Settings reads it from there
         case .launchAtLogin:
             settingsModel.refreshLaunchAtLogin()
         case .permissions:

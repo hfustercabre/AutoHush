@@ -1,7 +1,6 @@
 import AppKit
 import AutoHushKit
 import AutoHushPlayers
-import CheckPanel
 import CheckedPlayers
 
 @MainActor
@@ -34,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Runs AutoHush's alerts (removing an added app, reopening a player,
     /// the card's info button) and returns the button pressed. Tests replace it.
     var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
-    /// The Settings window's content, kept in sync with the app's state.
+    /// The Settings window's content, which reads what it shows from its owners.
     private(set) var settingsModel: SettingsModel!
     var settingsWindowController: SettingsWindowController?
     /// AutoHush's logs, from Settings → Diagnostics; made when first shown.
@@ -64,17 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var addWebAppWindow: (any AddWebAppPresenting)?
     let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
     var addingWebApp: Task<Void, Never>?
-    /// Checks an app and adds it ("Add an App…"); made when first opened.
-    var addAppModel: AddAppModel?
-    var addAppWindow: AddAppWindowController?
-    /// The list of apps Add an App's first step opens.
-    var appChooserWindow: AppChooserWindowController?
-    /// Shown before a check starts.
-    var checkWarningWindow: CheckWarningWindowController?
-    /// The check's progress, at the bottom right of the screen while it runs.
-    let checkPanel = CheckPanelController()
-    /// The Mac's output, muted while a check runs that can't mute only its app.
-    let checkOutputMute: OutputMute
+    /// Checks an app and adds it ("Add an App…"): its model, its windows,
+    /// the check's panel and the Mac's output muted during a check.
+    private(set) var addApp: AddAppFeature!
     /// Lowers the Mac's volume as the music resumes after quieter apps
     /// (Settings → Advanced): one for every monitoring.
     let volumeLeveler: SystemVolumeLeveler
@@ -139,7 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateDownloadsFolder: URL = UpdateDownloads.defaultFolder,
         players: MusicPlayerCatalog = SupportedPlayers.catalog,
         checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
-        checkOutputMute: OutputMute = OutputMute(),
+        addAppSystem: AddAppFeature.System = AddAppFeature.System(),
         volumeLeveler: SystemVolumeLeveler = SystemVolumeLeveler(),
         nowPlayingDefaults: UserDefaults = .standard,
         nowPlayingSetting: NowPlayingSetting.Setting = .controlCenter,
@@ -180,7 +171,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.defaults = defaults
         self.players = players
         self.checkedPlayers = checkedPlayers
-        self.checkOutputMute = checkOutputMute
         self.volumeLeveler = volumeLeveler
         self.nowPlayingDefaults = nowPlayingDefaults
         self.nowPlayingSetting = nowPlayingSetting
@@ -227,24 +217,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             currentVersion: currentVersion,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
             quit: { [weak self] in self?.quitToFinishUpdate() },
-            onOffer: { [weak self] in self?.status.updateOffer = $0 },
-            onStatus: { [weak self] in self?.showUpdateStatus($0) },
-            onSettingsChange: { [weak self] in self?.showUpdateSettings() }
+            onOffer: { [weak self] in self?.status.updateOffer = $0 }
         )
         updates.beforePresenting = { [weak self] in await self?.statusMenu?.closeMenu() }
+        addApp = AddAppFeature(host: self, system: addAppSystem, keptChecks: KeptCheckStore(defaults: defaults))
         settingsModel = SettingsModel(
             state: appState,
             settings: userSettings,
             updates: updates,
+            permissionCenter: permissionCenter,
             learningSession: learning,
             actions: self,
             launchAtLoginController: launchAtLoginController
         )
-        settingsModel.checksForUpdatesAutomatically = preferences.checksForUpdatesAutomatically
-        settingsModel.automaticUpdates = preferences.automaticUpdates
-        settingsModel.updateInstallNote = updates.installUnavailability?.explanation
-        settingsModel.currentVersion = currentVersion?.description
-        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
         windowWatch = WindowWatch(sleep: windowWatchSleep,
                                   refresh: { [weak self] in await self?.refresh($0) },
                                   everyTick: { [weak self] in self?.followWelcomeClosed() })
@@ -271,7 +256,7 @@ extension AppDelegate: AppActions {
         Task { [weak self] in await self?.refreshPermissions() }
     }
     func openAddWebApp() { showAddWebApp() }
-    func openAddApp() { showAddApp() }
+    func openAddApp() { addApp.open() }
     func removeAddedApp(_ bundleID: String) { removeAddedAppAfterAsking(bundleID) }
     func reopenPlayer() { reopenChosenPlayer() }
     func unmutePlayer() {

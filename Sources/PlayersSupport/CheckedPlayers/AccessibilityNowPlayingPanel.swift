@@ -20,7 +20,7 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
 
     package init() {}
 
-    package func isInMenuBar() -> Bool { Self.menuItem() != nil }
+    func isInMenuBar() -> Bool { Self.menuItem() != nil }
 
     package func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
         // Hidden by the user: shown for this press only (the user, 2026-10-16),
@@ -113,13 +113,7 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// and takes the keyboard while it's open.
     package static func open(_ item: AXUIElement) -> [ShownRow]? {
         guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else { return nil }
-        var rows: [ShownRow] = []
-        let deadline = Date().addingTimeInterval(2)
-        while rows.isEmpty, Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.05)
-            rows = Self.rows()
-        }
-        return rows
+        return Polling.wait(seconds: 2, every: 0.05, lookingFirst: false, reading: Self.rows, until: { !$0.isEmpty })
     }
 
     /// The open panel's rows, with their Play/Pause; none while it's closed.
@@ -195,7 +189,6 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// Closes it, waiting up to 2 s for its rows to go.
     package static func close(_ item: AXUIElement) {
         _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
-        let deadline = Date().addingTimeInterval(2)
-        while !rows().isEmpty, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+        Polling.wait(seconds: 2, every: 0.05, until: { rows().isEmpty })
     }
 }

@@ -28,9 +28,9 @@ package final class NowPlayingReports: @unchecked Sendable {
         /// When it reported that state.
         package var changed: Date?
         /// When it last changed, in the order lines were read.
-        package var order = 0
+        var order = 0
 
-        package init(id: String, pid: pid_t = 0) {
+        init(id: String, pid: pid_t = 0) {
             self.id = id
             self.pid = pid
         }
@@ -42,9 +42,9 @@ package final class NowPlayingReports: @unchecked Sendable {
     }
 
     /// How far back the past is read when following starts.
-    package static let firstLookBack: TimeInterval = 60 * 60
+    static let firstLookBack: TimeInterval = 60 * 60
     /// How long it's followed with nobody asking.
-    package static let idleLimit: TimeInterval = 60
+    static let idleLimit: TimeInterval = 60
 
     private let lock = NSLock()
     private var clients: [pid_t: Client] = [:]
@@ -87,8 +87,8 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// Reports as `clients` say, not read from the log (tests) until `stop`:
     /// the next question then follows it, through `streamCommand` and `readPast`.
-    package convenience init(clients: [pid_t: Client], streamCommand: [String] = NowPlayingReports.streamCommand,
-                             readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
+    convenience init(clients: [pid_t: Client], streamCommand: [String] = NowPlayingReports.streamCommand,
+                     readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
         self.init(idleLimit: nil, streamCommand: streamCommand, readPast: readPast)
         self.clients = clients
         ready = true
@@ -126,8 +126,8 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// The newest of `clients` that is `bundleID`'s, reported a state, isn't
     /// removed and still runs.
-    package static func latest(of bundleID: String, in clients: [pid_t: Client],
-                               stillRuns: (pid_t) -> Bool = NowPlayingReports.stillRuns) -> Client? {
+    static func latest(of bundleID: String, in clients: [pid_t: Client],
+                       stillRuns: (pid_t) -> Bool = NowPlayingReports.stillRuns) -> Client? {
         clients.values.filter { !$0.removed && $0.appID == bundleID && $0.reported != nil && stillRuns($0.pid) }
             .max { ($0.changed ?? .distantPast, $0.order) < ($1.changed ?? .distantPast, $1.order) }
     }
@@ -291,11 +291,11 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     private static let streamPredicate =
         #"process == "mediaremoted" AND (composedMessage CONTAINS "nowPlayingClient" OR composedMessage CONTAINS "PlaybackState changed")"#
-    package static let streamCommand = ["/usr/bin/log", "stream", "--style", "ndjson", "--predicate", streamPredicate]
+    static let streamCommand = ["/usr/bin/log", "stream", "--style", "ndjson", "--predicate", streamPredicate]
 
     /// What the daemon wrote since `start`, from a store opened now; `nil`
     /// when the log can't be opened.
-    package static func readPast(since start: Date) -> [pid_t: Client]? {
+    static func readPast(since start: Date) -> [pid_t: Client]? {
         guard let store = try? OSLogStore.local() else { return nil }
         var past: [pid_t: Client] = [:]
         read(store, from: start, into: &past)
@@ -321,7 +321,7 @@ package final class NowPlayingReports: @unchecked Sendable {
     private static let statePattern = try! NSRegularExpression(pattern: #"PlaybackState changed from (\w+) to (\w+)"#)
 
     /// One of the daemon's lines, written at `date`, applied to the client it names.
-    package static func apply(_ message: String, at date: Date = Date(), to clients: inout [pid_t: Client]) {
+    static func apply(_ message: String, at date: Date = Date(), to clients: inout [pid_t: Client]) {
         func group(_ match: NSTextCheckingResult, _ index: Int) -> String {
             Range(match.range(at: index), in: message).map { String(message[$0]) } ?? ""
         }

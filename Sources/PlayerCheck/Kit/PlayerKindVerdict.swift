@@ -8,7 +8,7 @@ import ScriptablePlayers
 package enum PlayerKindVerdict {
     /// What the check found that the verdict goes by.
     package struct Facts: Sendable {
-        package var bundleID: String
+        var bundleID: String
         package var isSafariWebApp = false
         /// A Chromium browser's web app: the browser, as its bundle names it.
         package var webAppBrowser: String?
@@ -107,7 +107,7 @@ package enum PlayerKindVerdict {
     }
 
     /// Whether its dictionary has a play, a pause or a playpause command.
-    package static func hasPlayCommands(_ scripting: ScriptingDictionary) -> Bool {
+    static func hasPlayCommands(_ scripting: ScriptingDictionary) -> Bool {
         scripting.commands.values.contains { ["play", "pause", "playpause"].contains($0.lowercased()) }
     }
 }

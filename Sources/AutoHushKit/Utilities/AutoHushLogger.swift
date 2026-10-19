@@ -8,7 +8,7 @@ import OSLog
 /// Private values are left out of both ("<private>").
 package struct AutoHushLogger: Sendable {
     /// The app's bundle identifier, used as the unified-logging subsystem.
-    package static let subsystem = "com.autohush.AutoHush"
+    static let subsystem = "com.autohush.AutoHush"
 
     package let category: String
     private let system: Logger
@@ -49,7 +49,7 @@ package enum LogPrivacy: Sendable {
 /// .public)"`. Numbers and Booleans show unless marked private; anything
 /// else is left out unless marked public, as macOS's own logger does.
 package struct LogMessage: ExpressibleByStringInterpolation, Sendable {
-    package let text: String
+    let text: String
 
     package init(stringLiteral value: String) {
         text = value

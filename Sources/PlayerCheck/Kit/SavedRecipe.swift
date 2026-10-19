@@ -3,12 +3,12 @@ import WebAppPlayers
 /// A learned `PlayPauseRecipe` as the check keeps it between runs: the
 /// site's own words for Play and Pause, and the places the button was found.
 package struct SavedRecipe: Codable, Equatable, Sendable {
-    package struct Place: Codable, Equatable, Sendable {
-        package var path: [String]
-        package var fromBottom: Double
+    struct Place: Codable, Equatable, Sendable {
+        var path: [String]
+        var fromBottom: Double
     }
 
-    package var play: String, pause: String, places: [Place]
+    var play: String, pause: String, places: [Place]
 
     package init(_ recipe: PlayPauseRecipe) {
         play = recipe.playLabel

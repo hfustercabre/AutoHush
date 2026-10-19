@@ -44,7 +44,7 @@ package final class CheckedPlayers: Sendable {
 
     /// The player for `setup`: muted instead of paused when that's its way
     /// (Mute It Instead), else pressed by its ways.
-    package static func player(for setup: PlayerSetup, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) -> any AddedAppPlayer {
+    static func player(for setup: PlayerSetup, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) -> any AddedAppPlayer {
         setup.ways.contains(.mute) ? MutedApp(setup: setup) : CheckedPlayer(setup: setup, store: store)
     }
 

@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
 import WebAppPlayers
@@ -227,18 +228,7 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
     // Read before the panel opens: a page takes a moment, its level half a second.
     let read = choice == .lastOnly ? nil : PanelRead(pid, pausing: pausing, heard: heard)
     let remembered = choice == .lastElseApp ? panelRowText ?? keptPanelRow() : keptPanelRow()
-    func press() -> Bool {
-        guard let item = nowPlayingMenuItem() else {
-            log("    no Now Playing item found; in front: \(WindowStates.frontName)")
-            panelItemMissing = true
-            panelProblem = noPanelItem
-            return false
-        }
-        panelItemSeen = true
-        guard let rows = openPanel(item) else {
-            panelProblem = "the Now Playing item didn't open"
-            return false
-        }
+    return withOpenPanel(failing: false, logsShown: true) { item, rows in
         defer { closePanel(item) }
         let shown = rows.map(\.row)
         let state = pausing ? "Pause" : "Play"
@@ -260,13 +250,34 @@ enum PanelRowChoice { case app, lastElseApp, lastOnly }
             : noRowProblem(rows: candidates.count, mine: candidates.filter { read.showsApp($0) }.count, showing: state)
         return false
     }
-    // Hidden by the user: shown for this press only, as AutoHush does (the user, 2026-10-16).
-    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
-       let pressed = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, { press() }) {
-        log("    Now Playing, hidden in the menu bar, shown for the press and hidden again")
-        return pressed
+}
+
+/// Opens the Now Playing panel for a press, and runs `body` with its menu
+/// bar item and its rows (`body` closes it); `failed` when the item isn't
+/// found or doesn't open, `panelProblem` saying which. Hidden by the user,
+/// Now Playing is shown for this press only, as AutoHush does (the user,
+/// 2026-10-16); `logsShown` notes it in the log.
+@MainActor func withOpenPanel<T>(failing failed: T, logsShown: Bool, _ body: (_ item: AXUIElement, _ rows: [ShownRow]) -> T) -> T {
+    func open() -> T {
+        guard let item = nowPlayingMenuItem() else {
+            log("    no Now Playing item found; in front: \(WindowStates.frontName)")
+            panelItemMissing = true
+            panelProblem = noPanelItem
+            return failed
+        }
+        panelItemSeen = true
+        guard let rows = openPanel(item) else {
+            panelProblem = "the Now Playing item didn't open"
+            return failed
+        }
+        return body(item, rows)
     }
-    return press()
+    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
+       let result = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, open) {
+        if logsShown { log("    Now Playing, hidden in the menu bar, shown for the press and hidden again") }
+        return result
+    }
+    return open()
 }
 
 /// How a press by the panel went (`--via panel`).
@@ -293,22 +304,12 @@ enum PanelPress { case already, changed, pressed, notPressed }
     if !pageRead { _ = useRememberedBar(pid: pid) }
     var read = PanelRead(pid, pausing: pausing, heard: nil)
     let remembered = keptPanelRow()
-    func press() -> PanelPress {
-        guard let item = nowPlayingMenuItem() else {
-            log("    no Now Playing item found; in front: \(WindowStates.frontName)")
-            panelItemMissing = true
-            panelProblem = noPanelItem
-            return .notPressed
-        }
-        panelItemSeen = true
-        guard var rows = openPanel(item) else {
-            panelProblem = "the Now Playing item didn't open"
-            return .notPressed
-        }
+    return withOpenPanel(failing: PanelPress.notPressed, logsShown: false) { item, rows in
+        var rows = rows
         var row = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered)
         var own = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered, asToggle: true)
         // None told by its song or by memory: its page's player bar may show its song.
-        func toldByIt(_ row: PanelRow) -> Bool { read.showsApp(row) || row.text == remembered }
+        @MainActor func toldByIt(_ row: PanelRow) -> Bool { read.showsApp(row) || row.text == remembered }
         if own == nil, row.map({ toldByIt($0) }) != true, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
             closePanel(item)
             readPage()
@@ -350,19 +351,10 @@ enum PanelPress { case already, changed, pressed, notPressed }
             closePanel(item)
             return .pressed
         }
-        let deadline = Date().addingTimeInterval(2)
-        var changed = false
-        while !changed, Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.05)
-            changed = panelRows().first { $0.row.text == row.text }?.row.playing == !pausing
+        let changed = Polling.wait(seconds: 2, every: 0.05, lookingFirst: false) {
+            panelRows().first { $0.row.text == row.text }?.row.playing == !pausing
         }
         closePanel(item)
         return changed ? .changed : .pressed
     }
-    // Hidden by the user: shown for this press only.
-    if nowPlayingMenuItem() == nil, NowPlayingSetting.isHidden,
-       let result = NowPlayingSetting.whileShown(defaults: nowPlayingRecord, until: { nowPlayingMenuItem() != nil }, { press() }) {
-        return result
-    }
-    return press()
 }

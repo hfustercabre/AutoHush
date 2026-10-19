@@ -17,7 +17,7 @@ package enum CheckPanelWindows {
     package static let shadeLevel = Int(CGWindowLevelForKey(.popUpMenuWindow)) + 1
     /// The panel's level while the screen is dimmed: above the shade.
     package static let dimmedLevel = Int(CGWindowLevelForKey(.popUpMenuWindow)) + 2
-    package static let levels: Set<Int> = [floatingLevel, dimmedLevel]
+    static let levels: Set<Int> = [floatingLevel, dimmedLevel]
 
     /// The frames of the panel's windows in `windows` (as
     /// `CGWindowListCopyWindowInfo` lists them), `parent`'s, among `screens`.

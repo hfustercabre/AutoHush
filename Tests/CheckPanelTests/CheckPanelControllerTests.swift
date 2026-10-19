@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import Testing
 @testable import CheckPanel
-import PlayerCheckKit
+@testable import PlayerCheckKit
 
 /// What a panel's content was given: its size and dim callbacks.
 @MainActor

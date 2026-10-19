@@ -8,8 +8,8 @@ package protocol PlaybackArbiterDebounceScheduling: Sendable {
 }
 
 /// Waits with `Task.sleep`.
-package struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
-    package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
+struct TaskSleepDebounceScheduler: PlaybackArbiterDebounceScheduling {
+    func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
         Task { try? await Task.sleep(for: .seconds(delay)) }
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 @testable import PlayerCheckKit
-import CheckedPlayers
+@testable import CheckedPlayers
 import ScriptablePlayers
 
 @Suite("ResultWays")

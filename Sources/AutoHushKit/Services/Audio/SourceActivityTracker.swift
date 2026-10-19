@@ -9,7 +9,7 @@ import Foundation
 ///     so gaps between tracks or videos do not bounce the music.
 ///
 /// A pure value type driven by explicit timestamps, so it is fully deterministic.
-package struct SourceActivityTracker {
+struct SourceActivityTracker {
     /// What is known about one source.
     private struct Entry {
         /// When it was first heard, kept while it's tracked.
@@ -25,13 +25,13 @@ package struct SourceActivityTracker {
 
     private var entries: [String: Entry] = [:]
 
-    package init(startConfirmation: TimeInterval, gapTolerance: TimeInterval, stopGrace: TimeInterval) {
+    init(startConfirmation: TimeInterval, gapTolerance: TimeInterval, stopGrace: TimeInterval) {
         self.startConfirmation = startConfirmation
         self.gapTolerance = gapTolerance
         self.stopGrace = stopGrace
     }
 
-    package init(configuration: AppConfiguration) {
+    init(configuration: AppConfiguration) {
         self.init(
             startConfirmation: configuration.sourceStartConfirmation,
             gapTolerance: configuration.audibleGapTolerance,
@@ -40,30 +40,30 @@ package struct SourceActivityTracker {
     }
 
     /// Applies new timings; tracked sources keep their state.
-    package mutating func updateTimings(from configuration: AppConfiguration) {
+    mutating func updateTimings(from configuration: AppConfiguration) {
         startConfirmation = configuration.sourceStartConfirmation
         gapTolerance = configuration.audibleGapTolerance
         stopGrace = configuration.sourceStopGrace
     }
 
     /// Sources that have started and not yet stopped.
-    package var activeSources: Set<String> {
+    var activeSources: Set<String> {
         Set(entries.filter { $0.value.isActive }.keys)
     }
 
     /// True when the source is active or awaiting confirmation.
-    package func isTracking(_ id: String) -> Bool { entries[id] != nil }
+    func isTracking(_ id: String) -> Bool { entries[id] != nil }
 
     /// When a tracked source was first heard, before it counted as started;
     /// `nil` once it's forgotten.
-    package func firstHeard(_ id: String) -> Date? { entries[id]?.firstHeard }
+    func firstHeard(_ id: String) -> Date? { entries[id]?.firstHeard }
 
     /// True when no source is active or awaiting confirmation.
-    package var isIdle: Bool { entries.isEmpty }
+    var isIdle: Bool { entries.isEmpty }
 
     /// `startConfirmations` replaces the start confirmation for some sources
     /// in this update (e.g. a longer one for sound without video).
-    package mutating func update(
+    mutating func update(
         audible: Set<String>, at now: Date, startConfirmations: [String: TimeInterval] = [:]
     ) -> (started: Set<String>, stopped: Set<String>) {
         var started: Set<String> = []
@@ -98,7 +98,7 @@ package struct SourceActivityTracker {
         return (started, stopped)
     }
 
-    package mutating func reset() {
+    mutating func reset() {
         entries.removeAll()
     }
 }

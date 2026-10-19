@@ -19,7 +19,7 @@ package struct PageButton: Equatable, Sendable {
     /// What it says to VoiceOver, e.g. "Pause" or "Play Discover Weekly", in
     /// the site's language.
     package let label: String
-    package let isEnabled: Bool
+    let isEnabled: Bool
 
     package init(handle: ButtonHandle, label: String, isEnabled: Bool = true) {
         self.handle = handle
@@ -34,12 +34,12 @@ package struct PageButton: Equatable, Sendable {
 /// none around it (measured on SoundCloud and YouTube Music).
 package struct ButtonStanding: Equatable, Sendable {
     /// Inside its window: not scrolled below or above it.
-    package let isInWindow: Bool
+    let isInWindow: Bool
     /// Something just around it holds a slider or a progress bar, as a
     /// player's bar does (its progress, its volume).
     package let isWithPlayerControls: Bool
 
-    package init(isInWindow: Bool = true, isWithPlayerControls: Bool = false) {
+    init(isInWindow: Bool = true, isWithPlayerControls: Bool = false) {
         self.isInWindow = isInWindow
         self.isWithPlayerControls = isWithPlayerControls
     }
@@ -140,7 +140,7 @@ package struct AccessibilityWebPage: WebPage {
     /// The web app's own audio processes, kept between checks of its sound.
     private let audioProcesses = OwnedAudioProcesses()
     /// How the app shows its page.
-    package let access: PageAccess
+    let access: PageAccess
     /// This page, among the users of a switch (its copies are the same page).
     private let id = UUID()
     /// Every page's switches, shared.
@@ -423,7 +423,7 @@ package struct AccessibilityWebPage: WebPage {
     /// A Flutter window's items that can be pressed (its buttons, and the
     /// texts and images it marks pressable); not the window's own close,
     /// minimize and full-screen buttons.
-    package static func pressableItems(in window: AXUIElement) -> [AXUIElement] {
+    static func pressableItems(in window: AXUIElement) -> [AXUIElement] {
         var found: [AXUIElement] = []
         walk(from: window, limit: itemReadLimit, maxDepth: itemDepth) { element, depth in
             if depth == 1, element.string(kAXRoleAttribute) == kAXButtonRole { return false }
@@ -436,7 +436,7 @@ package struct AccessibilityWebPage: WebPage {
     /// Walks an element's tree breadth first, reading at most `limit`
     /// elements and going at most `maxDepth` levels down, each read waiting
     /// `timeout`; `visit` says whether to go into each one's children.
-    package static func walk(from root: AXUIElement, limit: Int, maxDepth: Int, _ visit: (AXUIElement, Int) -> Bool) {
+    static func walk(from root: AXUIElement, limit: Int, maxDepth: Int, _ visit: (AXUIElement, Int) -> Bool) {
         var queue: [(AXUIElement, Int)] = [(root, 0)], next = 0
         while next < queue.count, next < limit {
             let (element, depth) = queue[next]

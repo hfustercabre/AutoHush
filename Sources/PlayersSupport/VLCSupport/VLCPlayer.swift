@@ -12,19 +12,19 @@ import ScriptablePlayers
 /// - `audio volume` goes from 0 to 512 (256 is 100%);
 /// - it announces nothing, so its state is read about once a second.
 package actor VLCPlayer: PolledMusicPlayer {
-    package static let appBundleID = "org.videolan.vlc"
+    static let appBundleID = "org.videolan.vlc"
 
-    package enum Code {
-        package static let suite = fourCharCode("VLC#")
+    enum Code {
+        static let suite = fourCharCode("VLC#")
         /// Plays, or pauses while playing.
-        package static let playPause = fourCharCode("VLC1")
-        package static let playingProperty = fourCharCode("AAPL")
-        package static let currentTimeProperty = fourCharCode("AACT")
-        package static let audioVolumeProperty = fourCharCode("AAAV")
+        static let playPause = fourCharCode("VLC1")
+        static let playingProperty = fourCharCode("AAPL")
+        static let currentTimeProperty = fourCharCode("AACT")
+        static let audioVolumeProperty = fourCharCode("AAAV")
     }
 
     /// VLC's highest `audio volume`, matched to AutoHush's 100.
-    package static let maximumVolume = 512
+    static let maximumVolume = 512
 
     package nonisolated var bundleID: String { Self.appBundleID }
     package nonisolated var name: String { "VLC" }
@@ -73,7 +73,7 @@ package actor VLCPlayer: PolledMusicPlayer {
     }
 
     /// VLC's state from its `playing` and `current time` (-1 without an item).
-    package static func state(playing: Bool, currentTime: Int?) -> PlayerState {
+    static func state(playing: Bool, currentTime: Int?) -> PlayerState {
         if playing { return .playing }
         guard let currentTime else { return .unknown }
         return currentTime < 0 ? .stopped : .paused
@@ -106,12 +106,12 @@ package actor VLCPlayer: PolledMusicPlayer {
     }
 
     /// VLC's 0–512 as AutoHush's 0–100.
-    package static func volume(fromVLC vlc: Int) -> Int {
+    static func volume(fromVLC vlc: Int) -> Int {
         min(max(Int((Double(vlc) * 100 / Double(maximumVolume)).rounded()), 0), 100)
     }
 
     /// AutoHush's 0–100 as VLC's 0–512.
-    package static func vlcVolume(from volume: Int) -> Int {
+    static func vlcVolume(from volume: Int) -> Int {
         Int((Double(volume) * Double(maximumVolume) / 100).rounded())
     }
 

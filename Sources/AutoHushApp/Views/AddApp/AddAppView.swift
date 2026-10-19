@@ -31,7 +31,7 @@ struct AddAppView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 WindowHeader(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.description))
-                if model.services.hasHelper {
+                if model.hasHelper {
                     SectionHeading(Text(verbatim: AddAppText.stepsHeading)).padding(.top, 8)
                     Card {
                         VStack(alignment: .leading, spacing: 10) {

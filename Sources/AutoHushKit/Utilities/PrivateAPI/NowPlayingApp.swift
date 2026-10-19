@@ -55,7 +55,7 @@ package enum NowPlayingApp {
     }
 
     /// What the copy printed.
-    package static func answer(from output: String) -> Answer {
+    static func answer(from output: String) -> Answer {
         let words = output.split(whereSeparator: \.isWhitespace).map(String.init)
         switch words.first {
         case "process"?:

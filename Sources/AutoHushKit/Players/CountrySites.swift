@@ -10,7 +10,7 @@ package struct CountrySites: Equatable, Sendable {
     /// Each country's site, by region code: "DE": "music.amazon.de".
     package let byRegion: [String: String]
     /// The site for every other country.
-    package let elsewhere: String
+    let elsewhere: String
 
     package init(name: String, byRegion: [String: String], elsewhere: String) {
         self.name = name

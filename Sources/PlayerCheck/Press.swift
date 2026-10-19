@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import PlayerCheckKit
 
 // MARK: - Play or pause (--play, --pause)
@@ -26,12 +27,7 @@ import PlayerCheckKit
     }
     /// Waits up to 6 s for `done`, looking every 0.05 s.
     func within(_ done: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(6)
-        while !done() {
-            guard Date() < deadline else { return false }
-            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
-        }
-        return true
+        Polling.wait(seconds: 6, every: 0.05, runLoop: true, until: done)
     }
     var tried: [String] = []
     for way in via.map({ [$0] }) ?? [.script, .page, .menu] {

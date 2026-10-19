@@ -10,7 +10,6 @@ extension UpdateController {
             AutoHushLogger.settings.info("Check for updates automatically: \(enabled ? "on" : "off", privacy: .public)")
         }
         checksAutomatically = enabled
-        onSettingsChange()
         if enabled { Task { await runAutomaticTasks() } }
     }
 
@@ -22,7 +21,6 @@ extension UpdateController {
             AutoHushLogger.settings.info("When an update is found: \(mode.rawValue, privacy: .public) → \(newMode.rawValue, privacy: .public)")
         }
         mode = newMode
-        onSettingsChange()
         if newMode != .install { notifier.requestPermission() }
         Task { await runAutomaticTasks() }
     }

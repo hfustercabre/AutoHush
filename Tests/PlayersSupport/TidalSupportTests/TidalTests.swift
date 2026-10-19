@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import AutoHushKit
-import MenuPlayers
+@testable import MenuPlayers
 @testable import TidalSupport
 
 @Suite("TIDAL")

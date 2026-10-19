@@ -12,8 +12,8 @@ package struct PanelClues: Codable, Equatable, Sendable {
     /// The page whose player bar names the song: how it shows
     /// (`PageAccess`), and its Play/Pause's words, by which its bar is found.
     package struct Page: Codable, Equatable, Sendable {
-        package var access: PageAccess
-        package var labels: [String]
+        var access: PageAccess
+        var labels: [String]
 
         package init(access: PageAccess, labels: [String]) {
             self.access = access
@@ -21,8 +21,8 @@ package struct PanelClues: Codable, Equatable, Sendable {
         }
     }
 
-    package var page: Page?
-    package var script: ScriptedSong?
+    var page: Page?
+    var script: ScriptedSong?
 
     /// `nil` when neither is there.
     package init?(page: Page?, script: ScriptedSong?) {

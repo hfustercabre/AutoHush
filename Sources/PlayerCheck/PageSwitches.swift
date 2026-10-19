@@ -161,12 +161,7 @@ func waitForFullerMode(pid: pid_t) {
 /// turned off and on there.
 @MainActor func rebuildPage(with attribute: String, pid: pid_t) {
     func waitForBar(_ seconds: Double) -> Bool {
-        let deadline = Date().addingTimeInterval(seconds)
-        repeat {
-            Thread.sleep(forTimeInterval: 0.25)
-            if showsPlayerBar(pid) { return true }
-        } while Date() < deadline
-        return false
+        Polling.wait(seconds: seconds, every: 0.25, lookingFirst: false, until: { showsPlayerBar(pid) })
     }
     func switchAgain() {
         _ = setSwitch(attribute, false, pid: pid)

@@ -16,7 +16,7 @@ package protocol AudioLevelProbing: Sendable {
 /// (`ProcessTapLevelMeter`); nothing is kept.
 package struct ProcessTapLevelProbe: AudioLevelProbing {
     /// How long it listens: several of the taps' buffers.
-    package static let listeningTime: TimeInterval = 0.5
+    static let listeningTime: TimeInterval = 0.5
     /// The peak that counts as sound.
     private let threshold: Float
 

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import Observation
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -25,6 +26,7 @@ struct UpdateControllerTests {
         var statuses: [String] = []
         var opened: [URL] = []
         var quits = 0
+        /// How many times the update settings changed, as Settings follows them.
         var settingsChanges = 0
         var alerts: [NSAlert] = []
         /// The button that closes the next alert.
@@ -61,14 +63,26 @@ struct UpdateControllerTests {
                 onStatus: { [weak self] in
                     self?.statuses.append($0)
                     self?.afterStatus($0)
-                },
-                onSettingsChange: { [weak self] in self?.settingsChanges += 1 }
+                }
             )
+            followSettings()
             controller.beforePresenting = { [weak self] in self?.menuClosings += 1 }
             controller.showAlert = { $0() }
             controller.runAlert = { [weak self] alert in
                 self?.alerts.append(alert)
                 return self?.answer ?? .cancel
+            }
+        }
+
+        /// Counts each change to the settings Settings reads, as it's made.
+        private func followSettings() {
+            withObservationTracking {
+                _ = (controller.checksAutomatically, controller.mode)
+            } onChange: { [weak self] in
+                MainActor.assumeIsolated { // changed on the main actor, the controller's
+                    self?.settingsChanges += 1
+                    self?.followSettings()
+                }
             }
         }
 

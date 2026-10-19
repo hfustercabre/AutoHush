@@ -41,17 +41,17 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     package var bundleID: String
     package var name: String
     /// Where the app was when it was checked.
-    package var appURL: URL
+    var appURL: URL
     /// The surest first, the panel, if any, last: in a check's result, the
     /// ways that worked; kept, only the one the user chose at Use (an older
     /// setup may hold several, tried in that order).
     package var ways: [Way]
     /// The notification that announced its pauses and plays in the check.
-    package var stateNotification: String?
+    var stateNotification: String?
     /// An Electron app that takes presses while covered or on another desktop
     /// only when opened with `--disable-backgrounding-occluded-windows`: the
     /// user is asked before AutoHush reopens it so (2026-10-15).
-    package var needsLaunchOption: Bool
+    var needsLaunchOption: Bool
     /// Its Now Playing row shows a state it doesn't follow (Qobuz's always
     /// shows paused, 2026-10-16), as its check found: when its sound says
     /// otherwise, the row is pressed as a toggle (`PanelWay`), so only its
@@ -60,7 +60,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// Where its song shows besides its windows' titles, as its check found
     /// it, which tells its Now Playing row (`PanelWay`); `nil` without the
     /// panel, or with nothing more than its titles.
-    package var panelClues: PanelClues?
+    var panelClues: PanelClues?
 
     package init(bundleID: String, name: String, appURL: URL, ways: [Way], stateNotification: String? = nil,
                  needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil, panelClues: PanelClues? = nil) {
@@ -106,34 +106,34 @@ extension PlayerSetupStore {
 }
 
 /// The setups in AutoHush's preferences, each as JSON by bundle ID.
-package struct DefaultsPlayerSetupStore: PlayerSetupStore {
-    package static let key = "checkedPlayerSetups"
+struct DefaultsPlayerSetupStore: PlayerSetupStore {
+    static let key = "checkedPlayerSetups"
     private let stored: KeyedDefaults
 
     /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
-    package init(suiteName: String? = nil) {
+    init(suiteName: String? = nil) {
         stored = KeyedDefaults(key: Self.key, suiteName: suiteName)
     }
 
     /// The setups that can be read, by name; one that can't is left out.
-    package func setups() -> [PlayerSetup] {
+    func setups() -> [PlayerSetup] {
         stored.values().values.compactMap { ($0 as? Data).flatMap { try? JSONDecoder().decode(PlayerSetup.self, from: $0) } }
             .sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
     }
 
-    package func save(_ setup: PlayerSetup) {
+    func save(_ setup: PlayerSetup) {
         guard let data = try? JSONEncoder().encode(setup) else { return }
         stored.set(data, for: setup.bundleID)
     }
 
-    package func forget(_ bundleID: String) {
+    func forget(_ bundleID: String) {
         stored.set(nil, for: bundleID)
     }
 
     /// Read, changed and saved under the lock: a change (a panel row kept,
     /// a moved app's place) can't bring back a setup the user removed
     /// meanwhile, nor put its old ways over a new check's.
-    package func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
+    func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {
         stored.change { setups in
             guard let data = setups[bundleID] as? Data, var setup = try? JSONDecoder().decode(PlayerSetup.self, from: data) else { return false }
             change(&setup)

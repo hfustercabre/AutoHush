@@ -3,10 +3,11 @@ import Foundation
 extension DispatchQueue {
     /// Runs `work` on this queue and waits for it, without holding one of
     /// Swift's shared threads meanwhile: for calls that block (Accessibility,
-    /// Apple events, macOS's permission prompts), run one at a time.
-    package func run<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
+    /// Apple events, macOS's permission prompts), run one at a time. `qos`
+    /// raises the work's priority above the queue's (a read someone waits for).
+    package func run<T: Sendable>(qos: DispatchQoS = .unspecified, _ work: @escaping @Sendable () -> T) async -> T {
         await withCheckedContinuation { continuation in
-            self.async { continuation.resume(returning: work()) }
+            self.async(qos: qos) { continuation.resume(returning: work()) }
         }
     }
 

@@ -1,8 +1,8 @@
 /// Whether a press took, judged by the surest sign the app showed before
 /// it (`Look.surest`); with none, by its menu's word changing or its sound.
 package struct Sign: Sendable {
-    package let before: Look
-    package let kind: SignKind?
+    let before: Look
+    let kind: SignKind?
 
     package init(before: Look) {
         self.before = before

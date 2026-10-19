@@ -8,8 +8,8 @@ import CheckedPlayers
 package enum RunLogName {
     /// What a run does, last in its log's name: a check, one without the
     /// test, a press (by one way), a relaunch.
-    package static let check = "check"
-    package static let readOnly = "read-only"
+    static let check = "check"
+    static let readOnly = "read-only"
     package static let relaunch = "relaunch"
 
     /// A check (`readOnly`: without the test), or a press, by `way` alone.
@@ -18,7 +18,7 @@ package enum RunLogName {
     }
 
     /// Every run's `doing`.
-    package static let doings: Set<String> = Set([check, readOnly, relaunch] + CommandLineOptions.Action.allCases.flatMap { action in
+    static let doings: Set<String> = Set([check, readOnly, relaunch] + CommandLineOptions.Action.allCases.flatMap { action in
         [doing(action, via: nil, readOnly: false)] + CheckResult.WayKind.allCases.map { doing(action, via: $0, readOnly: false) }
     })
 

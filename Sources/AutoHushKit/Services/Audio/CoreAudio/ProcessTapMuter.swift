@@ -28,7 +28,7 @@ package protocol AudioMuting: Sendable {
 /// that can't be tapped is tried again at the next look.
 package final class ProcessTapMuter: AudioMuting {
     /// How often a muted app's audio processes are looked at again.
-    package static let recheckInterval: TimeInterval = 1
+    static let recheckInterval: TimeInterval = 1
 
     private struct Muted {
         var tap: ProcessTap

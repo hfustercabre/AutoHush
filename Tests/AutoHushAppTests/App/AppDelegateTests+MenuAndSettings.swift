@@ -5,7 +5,7 @@ import os
 import SwiftUI
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
+@testable import AutoHushKit
 import AutoHushTestSupport
 import PlayersTestSupport
 

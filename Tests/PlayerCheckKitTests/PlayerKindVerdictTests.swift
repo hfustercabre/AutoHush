@@ -1,5 +1,5 @@
 import Testing
-import ScriptablePlayers
+@testable import ScriptablePlayers
 @testable import PlayerCheckKit
 
 @Suite("PlayerKindVerdict")

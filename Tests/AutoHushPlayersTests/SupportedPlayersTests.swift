@@ -2,15 +2,15 @@ import CoreGraphics
 import Foundation
 import Testing
 import AutoHushKit
-import AutoHushPlayers
-import CheckedPlayers
+@testable import AutoHushPlayers
+@testable import CheckedPlayers
 import ScriptablePlayers
 import SpotifySupport
 import AppleMusicSupport
 import MenuPlayers
 import VLCSupport
-import QuickTimeSupport
-import WebAppPlayers
+@testable import QuickTimeSupport
+@testable import WebAppPlayers
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {

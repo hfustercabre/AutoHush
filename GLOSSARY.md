@@ -43,7 +43,8 @@ read it part by part, each window drawn again only when a part it shows
 changes; the menu gets a copy each time it changes (its card follows it
 while open, its rows when it next opens). Add an App's windows (the window,
 Choose an App and the check's panel) read their own model instead,
-`AddAppModel`: its steps, from choosing the app to Use. _Avoid_: model
+`AddAppModel`: its steps, from choosing the app to Use, which Add an App's
+own module (`AddAppFeature`) holds with them. _Avoid_: model
 (Settings' model is the windows' own: what they alone show, and their
 actions).
 

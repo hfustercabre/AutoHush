@@ -21,7 +21,7 @@ package final class PlayerStateObserver: NSObject, PlayerStateObserving {
     private var isObserving = false
     private let logger = AutoHushLogger(category: "PlayerStateObserver")
 
-    package init(
+    init(
         notification: Notification.Name,
         bundleID: String,
         distributedCenter: DistributedNotificationCenter = .default(),

@@ -8,10 +8,10 @@ import AutoHushKit
 package struct TestedWebApp: Equatable, Sendable {
     package let name: String
     /// Its address, e.g. "music.youtube.com".
-    package let address: String
+    let address: String
     /// The other hosts its web app may open, e.g. the service's sites for
     /// other countries.
-    package let otherHosts: [String]
+    let otherHosts: [String]
     /// Its sites by country, when it has its own in some (Amazon Music).
     package let countrySites: CountrySites?
 
@@ -36,18 +36,18 @@ package struct TestedWebApp: Equatable, Sendable {
     }
 
     /// Whether `app` opens it: its address's host, or one of the others.
-    package func isAdded(as app: SafariWebApp) -> Bool {
+    func isAdded(as app: SafariWebApp) -> Bool {
         hosts.contains(where: app.opens(host:))
     }
 
     /// Whether `url` is on its site (with or without "www.").
-    package func covers(_ url: URL) -> Bool {
+    func covers(_ url: URL) -> Bool {
         guard let host = url.host() else { return false }
         return hosts.contains { WebAddress.siteHost($0) == WebAddress.siteHost(host) }
     }
 
     /// Those of `tested` that none of `apps` opens, to suggest.
-    package static func notAdded(_ tested: [TestedWebApp], among apps: [SafariWebApp]) -> [WebAppSuggestion] {
+    static func notAdded(_ tested: [TestedWebApp], among apps: [SafariWebApp]) -> [WebAppSuggestion] {
         tested
             .filter { site in !apps.contains(where: site.isAdded(as:)) }
             .map { WebAppSuggestion(name: $0.name, address: $0.address) }

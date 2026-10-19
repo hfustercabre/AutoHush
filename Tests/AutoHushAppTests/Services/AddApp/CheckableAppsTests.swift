@@ -77,9 +77,9 @@ struct CheckableAppsTests {
         let spotify = try app("Spotify", id: "com.spotify.client", in: folder)
         let autoHush = try app("AutoHush Test", id: "com.autohush.Test", in: folder)
         let supported = [PlayerOption(bundleID: "com.spotify.client", name: "Spotify", appURL: spotify)]
-        #expect(try AppDelegate.checkableApp(at: qobuz, supported: supported).get().name == "Qobuz")
-        #expect(AppDelegate.checkableApp(at: spotify, supported: supported) == .failure(.supported("Spotify")))
-        #expect(AppDelegate.checkableApp(at: autoHush, supported: supported) == .failure(.autoHush))
-        #expect(AppDelegate.checkableApp(at: folder, supported: supported) == .failure(.notAnApp))
+        #expect(try AppReader.checkableApp(at: qobuz, supported: supported).get().name == "Qobuz")
+        #expect(AppReader.checkableApp(at: spotify, supported: supported) == .failure(.supported("Spotify")))
+        #expect(AppReader.checkableApp(at: autoHush, supported: supported) == .failure(.autoHush))
+        #expect(AppReader.checkableApp(at: folder, supported: supported) == .failure(.notAnApp))
     }
 }

@@ -9,9 +9,9 @@ package struct AnnouncedAssertions: Equatable, Sendable {
     static let namesLimit = 8
 
     /// Names of assertions that kept the Mac awake.
-    package var system: Set<String>
+    var system: Set<String>
     /// Names of assertions that kept only the display awake.
-    package var display: Set<String>
+    var display: Set<String>
 
     package init(system: Set<String> = [], display: Set<String> = []) {
         self.system = system

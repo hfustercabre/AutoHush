@@ -2,7 +2,7 @@ import AppKit
 import AutoHushKit
 import AutoHushPlayers
 
-// AppDelegate: the user's settings and the updates' settings.
+// AppDelegate: the user's settings.
 extension AppDelegate {
     /// Shows Auto-Pause and the apps in the menu and the windows (Settings
     /// reads the rest from `UserSettings` itself), and passes what the
@@ -32,19 +32,5 @@ extension AppDelegate {
         for app in apps where SupportedPlayers.volumeSoundApps.contains(app.id) {
             userSettings.ignoreByDefault(app)
         }
-    }
-
-    /// Shows how a check from Settings is going, and when updates were last
-    /// checked for (every check reports here).
-    func showUpdateStatus(_ status: String) {
-        settingsModel.updateStatus = status
-        settingsModel.lastUpdateCheck = preferences.lastUpdateCheck
-    }
-
-    /// Shows the update settings as they are, after the user or AutoHush
-    /// changed them.
-    func showUpdateSettings() {
-        settingsModel.checksForUpdatesAutomatically = updates.checksAutomatically
-        settingsModel.automaticUpdates = updates.mode
     }
 }

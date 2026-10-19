@@ -37,7 +37,7 @@ extension AppDelegate {
     /// volume lowered for the music (Level the volume).
     func putBackWhatWasLeft() {
         NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
-        checkOutputMute.restoreIfLeft()
+        addApp.putBackWhatWasLeft()
         volumeLeveler.restoreIfLeft()
     }
 
@@ -92,7 +92,7 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
-        checkOutputMute.restore()
+        addApp.quit()
         // Even when the player's stop outlasted the quit's wait.
         volumeLeveler.restoreNow()
         // Its `log stream` would otherwise outlive AutoHush, until

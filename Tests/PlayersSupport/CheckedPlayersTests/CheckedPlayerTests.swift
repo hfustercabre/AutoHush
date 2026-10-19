@@ -2,8 +2,8 @@ import Foundation
 import Testing
 @testable import CheckedPlayers
 import ScriptablePlayers
-import WebAppPlayers
-import AutoHushKit
+@testable import WebAppPlayers
+@testable import AutoHushKit
 import AutoHushTestSupport
 import PlayersTestSupport
 

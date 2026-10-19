@@ -22,13 +22,13 @@ package enum CheckReportLine {
     }
 
     /// What the check asks whoever runs it to do, within some minutes.
-    package enum Request: Sendable, Equatable {
+    enum Request: Sendable, Equatable {
         case play, pause, allowAccessibility
     }
 
     /// "  waiting: start playing something in Deezer; … (up to 2 minutes)":
     /// `text` starts as `request(in:)` reads it.
-    package static func waiting(_ text: String, minutes: Int) -> String {
+    static func waiting(_ text: String, minutes: Int) -> String {
         waitingPrefix + text + " (up to \(minutes) minutes)"
     }
 
@@ -50,7 +50,7 @@ package enum CheckReportLine {
     }
 
     /// The request a "  waiting: " line makes, and its minutes; `nil` for any other line.
-    package static func request(in line: String) -> (request: Request?, minutes: Int?)? {
+    static func request(in line: String) -> (request: Request?, minutes: Int?)? {
         guard line.hasPrefix(waitingPrefix) else { return nil }
         let text = line.dropFirst(waitingPrefix.count)
         let request: Request? = text.hasPrefix("start playing") ? .play
@@ -70,7 +70,7 @@ package enum CheckReportLine {
 
     /// Lines that answer a request: it plays, it paused, it didn't, the
     /// check stopped, Accessibility was answered.
-    package static let answers = ["  it plays", "  it paused", "  it didn't", "  stopped", "  \(Permission.accessibility.name):"]
+    static let answers = ["  it plays", "  it paused", "  it didn't", "  stopped", "  \(Permission.accessibility.name):"]
 
     // MARK: Permissions
 
@@ -90,7 +90,7 @@ package enum CheckReportLine {
 
         /// The permission `name` names; older checks called Audio Recording
         /// "System Audio Recording".
-        package init?(name: String) {
+        init?(name: String) {
             if name == Permission.accessibility.name {
                 self = .accessibility
             } else if name.hasSuffix(Permission.audioRecording.name) {
@@ -151,7 +151,7 @@ package enum CheckReportLine {
     }
 
     /// The window state a "  State n of m: …" line says.
-    package static func windowState(in line: String) -> (index: Int, count: Int, state: CheckResult.WindowState?)? {
+    static func windowState(in line: String) -> (index: Int, count: Int, state: CheckResult.WindowState?)? {
         guard line.hasPrefix(statePrefix), let colon = line.range(of: ": ") else { return nil }
         let numbers = line.dropFirst(statePrefix.count)[..<colon.lowerBound].components(separatedBy: " of ").compactMap { Int($0) }
         guard numbers.count == 2 else { return nil }
@@ -175,7 +175,7 @@ package enum CheckReportLine {
     }
 
     /// The way a trial's line tries.
-    package static func way(ofTrial line: String) -> CheckResult.WayKind? {
+    static func way(ofTrial line: String) -> CheckResult.WayKind? {
         if line.hasPrefix("  by script") { return .script }
         if line.hasPrefix("  by its menu") { return .menu }
         if line.hasPrefix("  by its page") { return .page }

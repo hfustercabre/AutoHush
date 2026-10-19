@@ -21,7 +21,7 @@ package struct Look: Sendable {
     package var pageToggle: String?
     /// What `pageToggle`'s word says, as the page's learned button reads it
     /// (`wordSays`); nil for a word it doesn't know.
-    package var pageSays: PlayerState?
+    var pageSays: PlayerState?
     /// Whether `pageToggle`'s word is current (`pageWordCurrent`); a stale
     /// one is shown, but nothing is judged by it.
     package var pageCurrent: Bool

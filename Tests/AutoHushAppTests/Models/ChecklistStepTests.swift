@@ -22,6 +22,7 @@ struct ChecklistStepTests {
         #expect(fresh[0].notes == [LearningText.playTip("YT Music")] && fresh[1].notes.isEmpty)
         #expect(fresh.map(\.button) == [.itsPlaying, nil])
         #expect(fresh.currentAnnouncement == "Play something in YT Music")
+        #expect(fresh.currentTitle == "Play something in YT Music") // where VoiceOver's cursor goes
 
         let played = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 44.2,
                                          pauseMode: .byHand)
@@ -30,6 +31,7 @@ struct ChecklistStepTests {
         #expect(played[2].countdown == "You have 0:45 to pause it and click It’s Paused.")
         #expect(played.map(\.button) == [nil, nil, .itsPaused])
         #expect(played.currentAnnouncement == "Pause it yourself")
+        #expect(played.currentTitle == played[2].title) // the one to do, not the one that failed
 
         let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false)
         #expect(learned.map(\.state) == [.done, .done])

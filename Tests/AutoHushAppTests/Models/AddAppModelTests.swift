@@ -15,7 +15,7 @@ struct AddAppModelTests {
 
     /// A model at its first step, its window open, its apps read.
     private func model(_ world: World) async -> AddAppModel {
-        let model = AddAppModel(services: world.services)
+        let model = AddAppModel(world)
         model.reset()
         await model.loadApps()
         return model
@@ -439,7 +439,7 @@ struct AddAppModelTests {
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
         model.windowClosed()
-        let again = AddAppModel(services: world.services)
+        let again = AddAppModel(world)
         again.reset()
         #expect(again.result == result && again.chosen?.bundleID == "com.example.player")
         again.use()
@@ -481,7 +481,7 @@ struct AddAppModelTests {
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
         model.windowClosed()
-        let again = AddAppModel(services: world.services)
+        let again = AddAppModel(world)
         again.reset()
         #expect(again.steps.contains(.reopen) && again.reopenOutcome == .skipped)
         again.use()

@@ -49,10 +49,15 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
   ├── UserSettings ── the user's settings (Auto-Pause and its snooze, the apps, timings, detection),
   │     stored in Preferences
   ├── StatusMenuController ── renders AppStatus into the menu bar item and its panel (MenuPanel)
-  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads AppState
-  │     (and UserSettings for what only Settings shows)
+  ├── SettingsWindowController ── a sidebar of SwiftUI pages backed by SettingsModel, which reads each part
+  │     from its owner: AppState, UserSettings, UpdateController and PermissionCenter
   ├── UpdateController ── daily and manual checks against the latest GitHub release, then notifying,
-  │     downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier)
+  │     downloading (UpdateDownloads) or installing (UpdateInstaller), with notifications (UpdateNotifier);
+  │     observable, so Settings follows its settings and status
+  ├── PermissionCenter ── reads and asks for the permissions, for the chosen player (keeping its last
+  │     read for the windows) and Add an App's app alike
+  ├── AddAppFeature ── Add an App…: its model, windows, the check's panel and the Mac's output muted
+  │     during a check; what it needs from the rest of AutoHush it asks of AppDelegate (AddAppHost)
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by
         │   itself after a failed start, when it opens), checks access again, keeps the held pauses and
         │   the hand-over
@@ -110,8 +115,8 @@ Sources/
   AutoHush/              AutoHushMain (starts AutoHushApp)
   AutoHushApp/            by kind of code first, then by area
     App/                 AutoHushApplication, AppDelegate (wiring; its parts by topic in AppDelegate+Lifecycle,
-                         +Player, +WebApps, +Permissions, +Updates, …), MainMenu (the Mac's
-                         standard menu bar, while a window is open)
+                         +Player, +WebApps, +Permissions, +Updates, +AddApp (Add an App's host), …),
+                         MainMenu (the Mac's standard menu bar, while a window is open)
     Models/              the app-wide state: AppState, which holds AppStatus (what the menu and the windows
                          show, with UpdateOffer), SettingsModel (what only the windows show, and their
                          actions), StatePresentation (the status's icons and text), AppHealthState,
@@ -120,7 +125,7 @@ Sources/
                          keys and the pointer), HighlightKey (the keys it takes, one mapping for both),
                          SettingsKeys (Settings' keys, its sidebar's and page's), AddWebAppModel,
                          PlayerOption (each player and whether it's installed), AppActions (what only
-                         AppDelegate does), UpdateCommands,
+                         AppDelegate does), UpdateCommands (and what Settings reads of the updates),
                          SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
                          the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
                          UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
@@ -137,8 +142,9 @@ Sources/
                          the chosen player from its start until AutoHush quits; MonitoringPipeline, the
                          engine for each start; HeldPauses), Settings/ (UserSettings, LaunchAtLoginController,
                          ReopenChoices: the players reopened without asking),
-                         Permissions/ (PermissionCenter, for the chosen player and Add an App's app alike),
-                         Updates/ (UpdateController, UpdateChecker,
+                         Permissions/ (PermissionCenter, for the chosen player and Add an App's app alike;
+                         the chosen player's as last read, which the windows show),
+                         Updates/ (UpdateController, observable for Settings; UpdateChecker,
                          UpdateInstaller: download, signature check, swap; UpdateDownloads, UpdateNotifier,
                          ReleaseNotes), WebApps/ (LearningSession, learning a web app's controls with the
                          user; FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
@@ -146,8 +152,11 @@ Sources/
                          FocusAutoPause, which notes Auto-Pause as a Focus starts and puts it back as it ends;
                          they reach Auto-Pause through AutoPauseControlling, registered at launch by
                          IntentDependencies), AddApp/ (PlayerCheckHelper and PlayerCheckRun: AutoHush's own
-                         playercheck, and a check running in it, through CheckRunning; AddAppServices:
-                         what adding an app does outside its model; CheckableApps: the apps Add an App offers;
+                         playercheck, and a check running in it, through CheckRunning; the ports of Add an
+                         App's model: AppReading, the apps on the Mac (AppReader reads them live),
+                         CheckHelping, the check's helper (PlayerCheckHelper), AddAppHost, what it needs from
+                         the rest of AutoHush (AppDelegate), and AddAppPresenting, what it shows through
+                         AddAppFeature; CheckableApps: the apps Add an App offers;
                          AppPlaying: whether the chosen app plays, by its level, or by its open output without
                          Audio Recording or in AntiDot mode)
     Controllers/         AppKit's window and menu controllers: StatusMenuController (with +Keys, the
@@ -155,9 +164,11 @@ Sources/
                          menu's window, and its side window's), SettingsWindowController,
                          PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base),
-                         LogsWindowController, AddAppWindowController, AppChooserWindowController (the apps to
-                         choose), CheckWarningWindowController (before a check), CheckPanelController+AddApp
-                         (Add an App's view in the check's panel, CheckPanel's)
+                         LogsWindowController, AddAppFeature (Add an App: its model, its windows, the check's
+                         panel and the Mac's output muted during a check), AddAppWindowController,
+                         AppChooserWindowController (the apps to choose), CheckWarningWindowController (before
+                         a check), CheckPanelController+AddApp (Add an App's view in the check's panel,
+                         CheckPanel's)
     Views/               SwiftUI views, by area: Components/ (what several places show, one component and
                          its small parts per file: Font+AutoHush holds the text sizes, AppearanceStyle the
                          colors; ButtonStyles, Highlightable (the menu's and Settings' highlight tint),
@@ -186,8 +197,9 @@ Sources/
                          AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates, LogEntry
     Services/            Audio/ (AudioMonitor, SourceActivityTracker, PlaybackSignals: AntiDot mode's judge;
                          ResumeLevel and SystemVolumeLeveler: leveling the music; OutputMute: the Mac's output
-                         muted for a check; CoreAudio/: process list, taps, levels, SystemVolume,
-                         CoreAudioOutputMute),
+                         muted for a check; CoreAudio/: process list, taps, levels, SystemVolume and
+                         CoreAudioOutputMute (both find the output sound plays through, and outputs by their
+                         lasting IDs, through OutputDevices), CoreAudioProperty: reading and setting properties),
                          Playback/ (PlaybackArbiter, VolumeFader, PauseHandover, PressCheck),
                          NowPlaying/ (NowPlayingReports: what apps report to Now Playing, from macOS's log,
                          administrators only, an extra sign)
@@ -201,7 +213,8 @@ Sources/
     Storage/             Preferences, LogFile (AutoHush's own log, its last 24 hours)
     Utilities/           logging (AutoHushLogger) and small helpers: ToolRun (the one way a command-line
                          tool is run and waited for, with a timeout), DispatchQueue.run (blocking work off
-                         Swift's shared threads); PrivateAPI/ (TCC, ProcessResponsibility,
+                         Swift's shared threads), Polling (waiting on a thread until something holds, looking
+                         every so often); PrivateAPI/ (TCC, ProcessResponsibility,
                          AccessibilityWindows, NowPlayingApp: undocumented macOS functions, resolved at
                          runtime with fallbacks, through PrivateSymbol; check them, and those listed under
                          Where things go, after every major macOS release)
@@ -321,7 +334,7 @@ Contributions are welcome. The repository has two branches:
 
 To propose a change, fork the repository and create a branch from `dev` whose name starts with what it is: **`fix-`** for a bug fix, **`feature-`** for something new, or **`change-`** for a change to how something already works (for example `fix-vlc-resume` or `feature-qobuz`). Then open a pull request into **`dev`**, not `main`. I review every pull request before approving and merging it, and it reaches `main` with the next release. Before you open it, check that it builds and its tests pass (see [Build and test](#build-and-test)) and that it follows the [style guide](STYLE_GUIDE.md). A check on every pull request flags one whose branch name or target doesn't follow this, and another builds it and runs the tests (on each push to `dev` too); [CONTRIBUTING.md](CONTRIBUTING.md) has it all in one place.
 
-To report a problem or suggest something, [open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose): there's a form for a bug (with Diagnostics' report, from **Settings → Diagnostics → Copy Report**, and the logs, from **Show Logs…** beside it), a feature, a player you'd like AutoHush to support (when **Add an App…** found no way, with its check's log) and a translation fix. A security problem goes privately, as [SECURITY.md](SECURITY.md) says.
+To report a problem or suggest something, [open an issue](https://github.com/hfustercabre/AutoHush/issues/new/choose): there's a form for a bug (with Diagnostics' report, from **Settings → Diagnostics → Copy Report**, and the logs, from **Show Logs…** beside it), a feature, a player you'd like AutoHush to support (when **Add an App…** found no way, with its check's log) and a translation fix. A security problem goes privately, as [SECURITY.md](SECURITY.md) says. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Signing and releases
 

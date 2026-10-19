@@ -5,7 +5,7 @@ package struct PanelRow: Equatable, Sendable {
     package let text: String
     package let playing: Bool
 
-    package init(text: String, playing: Bool) {
+    init(text: String, playing: Bool) {
         self.text = text
         self.playing = playing
     }

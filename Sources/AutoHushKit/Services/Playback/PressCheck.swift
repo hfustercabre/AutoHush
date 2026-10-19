@@ -12,12 +12,12 @@ import Foundation
 /// while the player doesn't answer: nothing can be told then.
 package struct PressCheck: Sendable {
     /// How long a press gets to show.
-    package static let wait: TimeInterval = 3
+    static let wait: TimeInterval = 3
     /// How long a toggle judged by another sign gets: Qobuz, played after a
     /// long pause, buffers for seconds before it's heard.
-    package static let toggleWait: TimeInterval = 10
+    static let toggleWait: TimeInterval = 10
     /// How often the state is read meanwhile.
-    package static let interval: TimeInterval = 0.1
+    static let interval: TimeInterval = 0.1
 
     private let name: String
     private let checksItself: Bool

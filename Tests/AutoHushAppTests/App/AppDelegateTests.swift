@@ -110,8 +110,10 @@ struct AppDelegateTests {
 
     typealias Players = TestPlayers
 
-    /// `chosenPlayer`: the player already chosen before this launch, if any.
-    /// Returns the monitorings its starts made, too.
+    /// `chosenPlayer`: the player already chosen before this launch, if any;
+    /// `addApp`: stand-ins for the apps on the Mac and the check's helper,
+    /// which Add an App then works through. Returns the monitorings its
+    /// starts made, too.
     @MainActor
     func makeSUT(
         _ scratch: Scratch = Scratch(),
@@ -119,7 +121,8 @@ struct AppDelegateTests {
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
         windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-        madeWebAppWait: Duration = .zero
+        madeWebAppWait: Duration = .zero,
+        addApp: World? = nil
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let sut = AppDelegate(
@@ -132,7 +135,8 @@ struct AppDelegateTests {
             updateDownloadsFolder: scratch.downloads,
             players: scratch.players,
             checkedPlayers: scratch.checkedPlayers,
-            checkOutputMute: OutputMute(outputs: scratch.outputs, defaults: scratch.defaults),
+            addAppSystem: AddAppFeature.System(outputMute: OutputMute(outputs: scratch.outputs, defaults: scratch.defaults),
+                                               standIns: addApp.map { (reader: $0, helper: $0) }),
             volumeLeveler: SystemVolumeLeveler(volume: scratch.volume, defaults: scratch.defaults, sleep: { _ in }),
             nowPlayingDefaults: scratch.defaults,
             nowPlayingSetting: scratch.nowPlaying.setting,

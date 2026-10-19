@@ -1,7 +1,8 @@
 # Contributing to AutoHush
 
 Thanks for wanting to help. Every change is reviewed before it's merged, so
-it helps to follow these few rules.
+it helps to follow these few rules. Everyone taking part follows the
+[code of conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting a problem or an idea
 

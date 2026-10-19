@@ -8,13 +8,13 @@ import AutoHushKit
 /// ~/Applications, that Safari's one "Web App" program runs: a template app
 /// with no program inside, only its Info.plist and icon.
 package struct SafariWebApp: Equatable, Sendable {
-    package let bundleID: String
+    let bundleID: String
     /// The name it's offered under (see `shortName`).
-    package let name: String
+    let name: String
     /// Where it's installed.
-    package let url: URL
+    let url: URL
     /// The page it opens on; `nil` when its Info.plist doesn't say.
-    package let startURL: URL?
+    let startURL: URL?
 
     /// Every Safari web app's bundle ID starts with it.
     package static let bundleIDPrefix = "com.apple.Safari.WebApp."
@@ -27,7 +27,7 @@ package struct SafariWebApp: Equatable, Sendable {
     }
 
     /// The web app in the bundle at `url`; `nil` for any other app.
-    package init?(bundleAt url: URL) {
+    init?(bundleAt url: URL) {
         let plist = url.appending(path: "Contents/Info.plist")
         guard let info = NSDictionary(contentsOf: plist) as? [String: Any],
               let bundleID = info["CFBundleIdentifier"] as? String,
@@ -41,12 +41,12 @@ package struct SafariWebApp: Equatable, Sendable {
 
     /// Whether it opens the website at `address`: the same host, with or
     /// without "www.".
-    package func opens(_ address: URL) -> Bool {
+    func opens(_ address: URL) -> Bool {
         address.host().map(opens(host:)) ?? false
     }
 
     /// Whether it opens the website on `host`, with or without "www.".
-    package func opens(host: String) -> Bool {
+    func opens(host: String) -> Bool {
         guard let start = startURL?.host() else { return false }
         return WebAddress.siteHost(start) == WebAddress.siteHost(host)
     }
@@ -55,7 +55,7 @@ package struct SafariWebApp: Equatable, Sendable {
     /// Info.plist first, then its icon, and seals it with a code signature
     /// last, about 0.3 s later; macOS refuses to open it before ("damaged or
     /// incomplete").
-    package static func isSealed(at url: URL) -> Bool {
+    static func isSealed(at url: URL) -> Bool {
         var code: SecStaticCode?
         guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code else { return false }
         return SecStaticCodeCheckValidity(code, [], nil) == errSecSuccess
@@ -65,7 +65,7 @@ package struct SafariWebApp: Equatable, Sendable {
     /// after " | " or a dash: "Amazon Music Unlimited | Escucha millones de
     /// canciones" is offered as "Amazon Music Unlimited", "Deezer - music
     /// streaming" as "Deezer".
-    package static func shortName(_ name: String) -> String {
+    static func shortName(_ name: String) -> String {
         var short = name
         for separator in [" | ", " - ", " – ", " — "] {
             short = short.components(separatedBy: separator).first ?? short

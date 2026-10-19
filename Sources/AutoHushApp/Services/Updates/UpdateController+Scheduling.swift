@@ -78,7 +78,7 @@ extension UpdateController {
             logger.notice("Notifications were reset in System Settings: asking again")
             notifier.requestPermission()
         }
-        lastPermission = permission
+        if lastPermission != permission { lastPermission = permission }
         return permission
     }
 }

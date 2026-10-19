@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import ScriptablePlayers
+@testable import ScriptablePlayers
 @testable import AppleMusicSupport
 
 @Suite("Apple Music")

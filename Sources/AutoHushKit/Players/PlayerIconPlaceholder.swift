@@ -6,7 +6,7 @@ import CoreGraphics
 package struct PlayerIconPlaceholder: Sendable {
     /// An sRGB color, e.g. `RGB(0x1ED760)`.
     package struct RGB: Sendable, Equatable {
-        package let red, green, blue: CGFloat
+        let red, green, blue: CGFloat
 
         package init(_ hex: UInt32) {
             red = CGFloat((hex >> 16) & 0xFF) / 255

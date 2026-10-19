@@ -2,7 +2,7 @@ import CoreAudio
 import Foundation
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
+@testable import AutoHushKit
 import AutoHushTestSupport
 
 /// The pipeline wired as the app wires it, with stand-ins for what it reads

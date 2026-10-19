@@ -4,7 +4,7 @@ import Testing
 import os
 import AutoHushKit
 import PlayersTestSupport
-import ScriptablePlayers
+@testable import ScriptablePlayers
 @testable import VLCSupport
 
 /// VLC as its Apple events show it, without VLC: what it answers, and what

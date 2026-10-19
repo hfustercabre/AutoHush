@@ -3,7 +3,7 @@ import Foundation
 // PlaybackArbiter: waiting for a pause or a resume under way.
 extension PlaybackArbiter {
     /// Waits until no pause is under way. Tests use it to see a pause's outcome.
-    package func waitForPause() async {
+    func waitForPause() async {
         while let pauseTask { await pauseTask.value }
     }
 
@@ -20,7 +20,7 @@ extension PlaybackArbiter {
     /// debounce doesn't count. Tests use it before checking what happened,
     /// or that nothing did; their manual scheduler ends a debounce by
     /// cancelling it.
-    package func waitUntilIdle() async {
+    func waitUntilIdle() async {
         var finished: Set<Task<Void, Never>> = []
         while true {
             let pending = [(pendingResumeTask, pendingResumeWait), (pendingPauseTask, pendingPauseWait)]

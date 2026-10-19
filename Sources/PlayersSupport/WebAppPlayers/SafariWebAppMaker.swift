@@ -166,7 +166,7 @@ package struct SafariTab: @unchecked Sendable {
     /// Its page's Accessibility element (a number in tests).
     let page: AnyHashable
 
-    package init(page: AnyHashable) {
+    init(page: AnyHashable) {
         self.page = page
     }
 }
@@ -221,7 +221,7 @@ package struct SafariUI: SafariDriving {
     private static let queue = DispatchQueue(label: "AutoHush.SafariUI", qos: .userInitiated)
     private let logger = AutoHushLogger(category: "WebAppPlayer")
 
-    package init() {}
+    init() {}
 
     package func isTrusted(prompt: Bool) async -> Bool {
         await Self.queue.run { AccessibilityPermission.isTrusted(prompt: prompt) }

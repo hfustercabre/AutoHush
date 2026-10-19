@@ -54,7 +54,7 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
     /// Each document's own volume, by code, 0–1 (QuickTime Player's `audio
     /// volume`), so it can fade: read from and set on its documents playing,
     /// else those it fades or paused, never another. `nil` without one.
-    package var documentVolume: String?
+    var documentVolume: String?
 
     package init(commands: Commands, actsOnDocuments: Bool = false, state: State?, hasVolume: Bool, documentVolume: String? = nil) {
         self.commands = commands
