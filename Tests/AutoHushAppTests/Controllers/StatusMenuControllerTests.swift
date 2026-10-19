@@ -984,7 +984,7 @@ struct StatusMenuControllerTests {
         }
     }
 
-    @Test("a warning appears under the card as one row that asks for what's missing")
+    @Test("the player's missing permission is said once, on the card, whose Allow… asks for it; Audio Recording missing while monitoring runs is a row under Media Player")
     func warningRow() async {
         let sut = makeController()
         defer { sut.remove() }
@@ -994,10 +994,17 @@ struct StatusMenuControllerTests {
         sut.status = status
         reopen(sut)
 
-        #expect(parts(sut).prefix(4) == ["card", "mediaPlayer", "Allow Jukebox Automation Access…", "snooze"])
-        sut.perform(.resolveWarning(.automation(player: "Jukebox")))
+        #expect(sut.status.statusLine == "Needs Automation access" && sut.status.missingPermission == .automation(player: "Jukebox"))
+        #expect(parts(sut).prefix(3) == ["card", "mediaPlayer", "snooze"]) // no row asking again
+        sut.perform(.resolveWarning(.automation(player: "Jukebox"))) // the card's Allow…
         await wait(for: 2, in: log)
         #expect(log.calls == ["menuWillOpen", "warning Allow Jukebox Automation Access…"])
+
+        var running = readyStatus()
+        running.detection = .unavailable
+        sut.status = running
+        reopen(sut)
+        #expect(parts(sut).prefix(3) == ["card", "mediaPlayer", "Allow Audio Recording Access…"])
     }
 
     @Test("once an update is found, a row above the toolbar shows it", arguments: [UpdateOffer.State.available, .downloaded, .installing])

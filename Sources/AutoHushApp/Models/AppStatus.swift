@@ -242,7 +242,15 @@ struct AppStatus: Equatable {
         }
     }
 
-    /// A missing permission the user can grant; shown as a single menu item.
+    /// The permission the player needs, said on the card's line with Allow…
+    /// (or Reopen AutoHush) under it, never in a row too.
+    var missingPermission: Permission? {
+        if case .needsPermission(let permission) = health { return permission }
+        return nil
+    }
+
+    /// A missing permission the user can grant: the card's (`missingPermission`),
+    /// or Audio Recording while monitoring runs, a row under Media Player.
     var warning: Permission? {
         if case .needsPermission(let permission) = health { return permission }
         if isReady, detection == .unavailable { return .systemAudioRecording }

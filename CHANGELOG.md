@@ -148,6 +148,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   called "Audio Recording" there, as in System Settings; and Settings →
   Updates says "AutoHush's version is unknown." rather than "the app's";
   the card's Retry button says "Try Again", as everywhere one tries again.
+- **A missing permission is said once.** The menu's card says "Needs
+  Automation access" (or Accessibility), with **Allow…** under it, instead
+  of asking again in a row under the media player.
 - **A smaller download.** The app ships without its debugging symbols:
   less than half the size.
 

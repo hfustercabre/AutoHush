@@ -212,7 +212,7 @@ enum AddAppText {
     }
 
     static var allowButton: String {
-        String(localized: "Allow…", comment: "Welcome window and Add an App window: button that asks for a permission (macOS's prompt, or System Settings)")
+        String(localized: "Allow…", comment: "Welcome window, Add an App window and the menu's card (under “Needs Automation access” and the like): button that asks for a permission (macOS's prompt, or System Settings)")
     }
 
     /// The Allow step once done: what's allowed, and what the check goes

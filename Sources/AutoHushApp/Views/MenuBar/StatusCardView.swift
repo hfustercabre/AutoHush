@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import AutoHushKit
 
 /// The card at the top of the menu, which stays put while the rest scrolls:
 /// the media player, what's happening and the Auto-Pause switch, then what
@@ -39,6 +40,7 @@ struct StatusCardView: View {
                         statusLine(withInfo: false)
                     }
                     if status.canRetry { retryButton }
+                    if let missing = status.missingPermission { allowButton(missing) }
                     PlayerFixButtons(player: status.playerName,
                                      reopen: status.playerNeedsReopen && status.isReady ? { model.perform(.reopenPlayer) } : nil,
                                      unmute: status.offersUnmute ? { model.perform(.unmutePlayer) } : nil,
@@ -109,6 +111,20 @@ struct StatusCardView: View {
 
     private static var whyLabel: String {
         String(localized: "Why?", comment: "Tooltip and VoiceOver hint of the menu's status line when the media player couldn't be controlled: a click shows why")
+    }
+
+    /// Asks for the permission its line says is missing (or reopens
+    /// AutoHush, once Audio Recording only needs that); VoiceOver hears what
+    /// it allows.
+    @ViewBuilder private func allowButton(_ permission: Permission) -> some View {
+        if status.offersReopen {
+            CardChip(title: Text(verbatim: PermissionText.reopen), symbol: "arrow.clockwise") { model.perform(.reopenAutoHush) }
+        } else {
+            CardChip(title: Text(verbatim: AddAppText.allowButton), symbol: "hand.raised") {
+                model.perform(.resolveWarning(permission))
+            }
+            .accessibilityLabel(Text(verbatim: permission.grantTitle))
+        }
     }
 
     /// Tries starting again; the menu stays open and the card shows how it went.

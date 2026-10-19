@@ -198,12 +198,15 @@ final class StatusMenuModel {
     }
 
     /// The menu's parts, in order: the card, the media player, a warning
-    /// and its fix, Turn off for, the apps playing and played, Ignored Apps,
+    /// and its fix (not the player's own missing permission, which the card
+    /// asks for), Turn off for, the apps playing and played, Ignored Apps,
     /// the settings, the update found, and the buttons.
     var sections: [MenuSection] {
         var sections: [MenuSection] = [.card, .mediaPlayer]
         if let warning = status.warning {
-            sections.append(status.offersReopen ? .reopenAutoHush : .warning(warning))
+            if status.missingPermission == nil {
+                sections.append(status.offersReopen ? .reopenAutoHush : .warning(warning))
+            }
             // Not for a player that can only be muted: AntiDot mode can't mute it.
             if warning == .systemAudioRecording, !status.playerNeedsLevels { sections.append(.useAntiDot) }
         }

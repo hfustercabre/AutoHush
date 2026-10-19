@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A small chip under the menu card's status line, with its symbol: Retry,
-/// Reopen and Unmute (`PlayerFixButtons`).
+/// A small chip under the menu card's status line, with its symbol: Try
+/// Again, Allow… (a missing permission), Reopen and Unmute (`PlayerFixButtons`).
 struct CardChip: View {
     let title: Text
     let symbol: String

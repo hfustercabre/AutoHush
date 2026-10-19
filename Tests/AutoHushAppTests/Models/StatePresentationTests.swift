@@ -42,9 +42,9 @@ struct StatePresentationTests {
         (.degraded("Jukebox isn’t running"), .attention, "AutoHush: Jukebox isn’t running", "Jukebox isn’t running"),
         (.retrying("Jukebox isn’t responding"), .attention, "AutoHush: Jukebox isn’t responding", "Jukebox isn’t responding"),
         (.needsPermission(.automation(player: "Jukebox")), .attention,
-         "AutoHush: Allow Automation access to control Jukebox", "Allow Automation access to control Jukebox"),
+         "AutoHush: Needs Automation access", "Needs Automation access"),
         (.needsPermission(.accessibility(player: "Jukebox")), .attention,
-         "AutoHush: Allow Accessibility access to control Jukebox", "Allow Accessibility access to control Jukebox"),
+         "AutoHush: Needs Accessibility access", "Needs Accessibility access"),
         (.failed("Monitor failed hard"), .attention, "AutoHush: Monitor failed hard", "Monitor failed hard"),
     ])
     func healthState(state: AppHealthState, icon: MenuBarIcon, label: String, line: String) {

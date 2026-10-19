@@ -111,7 +111,7 @@ struct DiagnosticsReportTests {
             DiagnosticsReport.snapshot(activeAudio: [], status: $0, facts: facts()).overview
         }
         #expect(kinds.map(\.kind) == [.working, .attention, .off, .starting, .starting])
-        #expect(kinds[1].detail == "Allow Automation access to control Jukebox")
+        #expect(kinds[1].detail == "Needs Automation access")
         #expect(kinds[2].title == "Auto-Pause is off until 15:30")
     }
 
