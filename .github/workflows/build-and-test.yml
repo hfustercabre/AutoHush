@@ -32,13 +32,13 @@ jobs:
           persist-credentials: false
       - name: Tools
         run: xcodebuild -version && swift --version
-      - name: Build everything, warnings as errors
-        run: swift build -Xswiftc -warnings-as-errors
+      - name: Build everything, warnings as errors (Package.swift)
+        run: swift build
       - name: Test
         # Without the slow disk image tests; a release runs them all.
         env:
           AUTOHUSH_QUICK_TESTS: "1"
-        run: swift test -Xswiftc -warnings-as-errors
+        run: swift test
       - name: Build the app
         # A debug build signed ad hoc (there's no signing identity here), to
         # check what only build-app.sh does: the helper copied into the app

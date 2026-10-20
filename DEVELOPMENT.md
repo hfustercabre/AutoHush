@@ -293,6 +293,8 @@ Defaults that aren't in Settings, such as tick rates, the gap tolerance and the 
 
 ## Build and test
 
+Developing AutoHush needs macOS 26 or later and Xcode 26 or later (the package's Swift tools are 6.2); AutoHush itself runs on macOS 14.4 and later. Any warning fails a build (`Package.swift`).
+
 ```bash
 swift build      # build every module and the tools
 swift test       # run the tests of every module

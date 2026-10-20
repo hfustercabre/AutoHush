@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 // AutoHush is split into modules, so the compiler keeps the layers apart:
@@ -220,6 +220,7 @@ let package = Package(
     swiftLanguageModes: [.v6]
 )
 
+// Every target: any warning fails the build, not only CI's (SE-0443), and
 // Swift 6.2's isolation rules, ahead of the Swift 7 language mode that turns
 // them on: an async function that isn't isolated runs on its caller's actor,
 // unless it's marked `@concurrent` (SE-0461), and a main-actor type's
@@ -227,6 +228,7 @@ let package = Package(
 // (SE-0470).
 for target in package.targets {
     target.swiftSettings = (target.swiftSettings ?? []) + [
+        .treatAllWarnings(as: .error),
         .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
         .enableUpcomingFeature("InferIsolatedConformances"),
     ]
