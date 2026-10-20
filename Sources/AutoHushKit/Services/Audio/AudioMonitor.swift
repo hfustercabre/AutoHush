@@ -40,10 +40,10 @@ import os
 /// (VLC keeps it open about a minute after a pause, measured). Only "Open audio
 /// streams only" ignores what apps tell macOS.
 ///
-/// The media player's output also tells whether it plays on THIS Mac. Through
-/// Spotify Connect, for example, Spotify reports "playing" while the music
-/// comes out of another device; then its process has no running output
-/// (measured). The monitor reports this to the arbiter, which only pauses the
+/// The media player's output also tells whether it plays on THIS Mac. A
+/// player that plays on another device (its own remote playback) reports
+/// "playing" while the music comes out there; then its process has no
+/// running output (measured). The monitor reports this to the arbiter, which only pauses the
 /// player when it plays here. The player's output is any process it owns: a
 /// Safari web app plays from WebKit's process, which has no name of its own.
 ///

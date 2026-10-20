@@ -52,7 +52,7 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendab
     /// its path alone would name them all alike. `nil` for other processes.
     private let hostedApp: @Sendable (pid_t) -> AudioSource?
 
-    package init(hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil }) {
+    init(hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil }) {
         self.hostedApp = hostedApp
     }
 

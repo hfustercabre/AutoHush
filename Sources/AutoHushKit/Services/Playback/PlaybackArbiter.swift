@@ -12,7 +12,7 @@ import Foundation
 /// state.
 ///
 /// The player is only paused while its audio plays on this Mac: playback on
-/// another device (e.g. through Spotify Connect) does not compete with local
+/// another device (a player's own remote playback) does not compete with local
 /// audio.
 ///
 /// Pauses and resumes run in tasks of their own (`pauseTask`,
@@ -453,7 +453,7 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// Notes when the player stops playing here (`stoppedPlayingAt`), from a
     /// state just learned and the one known until then. A pause on another
-    /// device (through Spotify Connect) isn't noted: it's no concern here.
+    /// device (the player's own remote playback) isn't noted: it's no concern here.
     private func noteStoppedPlaying(_ state: PlayerState) {
         switch state {
         case .paused:

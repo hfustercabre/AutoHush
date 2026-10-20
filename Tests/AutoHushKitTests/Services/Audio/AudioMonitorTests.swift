@@ -1189,6 +1189,22 @@ struct AudioMonitorTests {
         #expect(timer.isCancelled)
     }
 
+    @Test("a stopped monitor keeps no report of the apps it judged, for Diagnostics")
+    func stopForgetsReport() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), assertions: assertions)
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.start()
+        assertions.held = [1001: MockPowerAssertions.playing]
+        h.step([Self.process(1, "com.example.player")])
+        await h.recorder.waitForEvents(count: 1)
+        #expect(!h.monitor.activeAudioReport().isEmpty)
+
+        h.monitor.stop()
+        h.monitor.queue.sync {} // past the stop
+        #expect(h.monitor.activeAudioReport().isEmpty)
+    }
+
     @Test("the timer drives evaluation without HAL callbacks")
     func timerDrivesEvaluation() async {
         let recorder = ArbiterEventRecorder()

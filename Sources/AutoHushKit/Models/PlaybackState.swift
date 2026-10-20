@@ -14,7 +14,7 @@ package enum PlaybackState: Equatable, Sendable {
     /// The player is paused, stopped or not running, and not held paused
     /// for another app (the user paused it, or nothing plays).
     case musicIdle
-    /// The music plays on another device (e.g. Spotify Connect); it is never paused.
+    /// The music plays on another device (the player's own remote playback); it is never paused.
     case playingElsewhere
     /// Another app plays, but the media player refused to pause or failed
     /// to (the arbiter says why); it plays on.
