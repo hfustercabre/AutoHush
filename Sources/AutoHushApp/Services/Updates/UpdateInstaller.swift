@@ -173,6 +173,9 @@ struct UpdateInstaller: UpdateInstalling {
         return nil
     }
 
+    // `download` and `prepare` run off the caller's actor: hashing the disk
+    // image, copying the app out of it and checking its signature block.
+    @concurrent
     func download(_ release: AppRelease, to file: URL, allowsConstrainedNetwork: Bool) async throws -> String {
         guard let image = release.diskImage else { throw UpdateInstallError.noDiskImage }
         var request = URLRequest(url: image.url)
@@ -193,6 +196,7 @@ struct UpdateInstaller: UpdateInstalling {
         }
     }
 
+    @concurrent
     func prepare(_ release: AppRelease, image kept: KeptImage?, allowsConstrainedNetwork: Bool) async throws -> PreparedUpdate {
         if let unavailability { throw UpdateInstallError.unavailable(unavailability) }
         guard release.diskImage != nil else { throw UpdateInstallError.noDiskImage }
