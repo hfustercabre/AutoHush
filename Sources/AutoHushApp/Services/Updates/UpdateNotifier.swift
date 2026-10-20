@@ -150,7 +150,12 @@ final class SystemUpdateNotifier: NSObject, UpdateNotifying {
     }
 }
 
-extension SystemUpdateNotifier: UNUserNotificationCenterDelegate {
+// Not a main-actor conformance: UserNotifications calls it on a queue of its
+// own, through Objective-C (`@concurrent`: there's no caller's actor to run
+// on, and Swift 6.4 can't build that thunk for a method that would); a
+// click reaches the main actor as it's handled.
+extension SystemUpdateNotifier: nonisolated UNUserNotificationCenterDelegate {
+    @concurrent
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
     ) async {
@@ -161,6 +166,7 @@ extension SystemUpdateNotifier: UNUserNotificationCenterDelegate {
     }
 
     /// Shows notifications as banners even while AutoHush is the active app.
+    @concurrent
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {

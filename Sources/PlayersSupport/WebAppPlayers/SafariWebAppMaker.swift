@@ -59,7 +59,10 @@ package final class SafariWebAppMaker: WebAppMaking {
         self.clock = clock
     }
 
-    /// Throws `CancellationError` once cancelled before Add.
+    /// Throws `CancellationError` once cancelled before Add. Off the
+    /// caller's actor: between its steps it lists the web apps on the disk,
+    /// checks their signatures and registers the new one, which all block.
+    @concurrent
     package func makeWebApp(from address: String,
                             onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
                             confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {

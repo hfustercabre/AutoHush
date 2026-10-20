@@ -219,3 +219,15 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
+
+// Swift 6.2's isolation rules, ahead of the Swift 7 language mode that turns
+// them on: an async function that isn't isolated runs on its caller's actor,
+// unless it's marked `@concurrent` (SE-0461), and a main-actor type's
+// conformances are main-actor ones, unless they're marked `nonisolated`
+// (SE-0470).
+for target in package.targets {
+    target.swiftSettings = (target.swiftSettings ?? []) + [
+        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+        .enableUpcomingFeature("InferIsolatedConformances"),
+    ]
+}

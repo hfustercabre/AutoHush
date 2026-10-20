@@ -9,10 +9,12 @@ import AutoHushPlayers
 /// in macOS's Now Playing list first, the playing one first.
 enum CheckableApps {
     /// The apps in `folders` (tests give their own), and their folders one
-    /// level down ("Chrome Apps").
+    /// level down ("Chrome Apps"). Off the caller's actor: reading the
+    /// folders blocks.
+    @concurrent
     static func find(helper: PlayerCheckHelper?, excluding: Set<String>,
                      in folders: [URL] = ApplicationFolders.all) async -> [CheckableApp] {
-        let installed = await Task.detached { installedApps(in: folders, excluding: excluding) }.value
+        let installed = installedApps(in: folders, excluding: excluding)
         guard let helper else { return order(installed) }
         async let playing = helper.canPlay(installed.map(\.url))
         async let nowPlaying = helper.nowPlaying()

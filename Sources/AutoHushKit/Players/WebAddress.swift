@@ -144,6 +144,10 @@ package enum WebAddress {
     /// Doesn't follow a redirect to plain http, which App Transport
     /// Security would refuse: the redirect itself is the site's answer.
     final class StopsAtPlainHTTP: NSObject, URLSessionTaskDelegate {
+        // URLSession calls it from its own queue, through Objective-C: there's
+        // no caller's actor to run on (and Swift 6.4 can't build that thunk
+        // for one that would, 2026-10-20).
+        @concurrent
         func urlSession(_ session: URLSession, task: URLSessionTask,
                         willPerformHTTPRedirection response: HTTPURLResponse,
                         newRequest request: URLRequest) async -> URLRequest? {
