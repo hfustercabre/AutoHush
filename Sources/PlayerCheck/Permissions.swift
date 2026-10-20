@@ -81,8 +81,8 @@ import PlayerCheckKit
         // Not a permission refused: the app doesn't answer, so whether it's
         // allowed can't be known yet.
         say()
-        say(CheckReportLine.notChecked("\(appName) didn't answer whether \(holder) may control it by AppleScript (it may still be starting,"
-            + " or it's busy): check again in a moment."))
+        say(CheckReportLine.notChecked("\(appName) didn't answer whether \(holder) may control it by AppleScript (it may have quit):"
+            + " check again in a moment."))
         exit(CheckExitStatus.permissionMissing)
     }
     guard levelsAllowed else { return } // nothing to mute it with
