@@ -60,6 +60,17 @@ struct AddAppModelTests {
         #expect(model.chosen?.bundleID == "com.example.other")
     }
 
+    @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
+    func selectionDropsOtherAppWarning() async {
+        let world = World()
+        let model = await model(world)
+        model.openChooser()
+        model.chooseOther(at: URL(filePath: "/Applications/AutoHush.app"))
+        #expect(model.otherAppProblem == .autoHush)
+        model.selectedID = world.apps[1].id
+        #expect(model.otherAppProblem == nil)
+    }
+
     @Test("an app that isn't open is opened, with its launch option when it needs one; one that doesn't open says so, back at the first step")
     func opening() async {
         let world = World()

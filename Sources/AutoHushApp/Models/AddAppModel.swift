@@ -46,7 +46,11 @@ final class AddAppModel {
     private(set) var apps: [CheckableApp] = []
     private(set) var isLoadingApps = false
     var search = ""
-    var selectedID: String?
+    /// Another selection drops Other App…'s warning, which was about the
+    /// app picked on the disk (A1, the user, 2026-10-19).
+    var selectedID: String? {
+        didSet { if selectedID != oldValue { otherAppProblem = nil } }
+    }
     private(set) var chosen: CheckableApp?
     private(set) var traits: CheckedAppTraits?
     private(set) var permissions = CheckPermissions() {
