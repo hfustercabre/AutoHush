@@ -18,7 +18,7 @@ package protocol AudioMuting: Sendable {
 /// on the app's processes, muted while it's read, read by a private
 /// aggregate device whose IO block throws the samples away (`ProcessTap`).
 /// macOS mutes nothing for a tap that nothing reads: a bare muted tap left a
-/// YouTube Music ad audible (on macOS 27). Nothing is kept or rerouted;
+/// web player's ad audible (on macOS 27). Nothing is kept or rerouted;
 /// removing the tap unmutes, and taps die with AutoHush, so quitting unmutes
 /// too.
 ///

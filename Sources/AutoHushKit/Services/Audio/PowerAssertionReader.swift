@@ -24,8 +24,8 @@ package struct PowerAssertion: Hashable, Sendable {
 ///
 /// Media apps typically hold such an assertion while they play and release it
 /// the moment they pause, even when their audio output stays open (measured:
-/// Chrome's "Playing audio", VLC's "VLC media playback"). That makes it a
-/// playback signal that needs no permission and captures nothing.
+/// Chrome's "Playing audio", a player's "<its name> media playback"). That
+/// makes it a playback signal that needs no permission and captures nothing.
 package protocol PowerAssertionReading: Sendable {
     /// Each process's own assertions keeping the Mac or the display awake.
     func assertionsByProcess() -> [pid_t: Set<PowerAssertion>]

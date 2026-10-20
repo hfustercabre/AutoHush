@@ -127,10 +127,10 @@ extension PlaybackArbiter {
     }
 
     /// The player was found paused by the check an app's start called for,
-    /// having stopped playing as that app started: the app paused it (VLC
-    /// does, by default, with Spotify and Music). That pause counts as ours,
-    /// so the music comes back once the apps stop, as if AutoHush had paused
-    /// it. A pause from before the app was heard, or more than
+    /// having stopped playing as that app started: the app paused it (some
+    /// players pause others by default as they start). That pause counts as
+    /// ours, so the music comes back once the apps stop, as if AutoHush had
+    /// paused it. A pause from before the app was heard, or more than
     /// `startPauseWindow` after, is the user's, and stays.
     func takeOverPauseOfStartingApp(_ state: PlayerState, checkedAt checked: Date) -> Bool {
         guard state == .paused, !isShutDown, autoPauseEnabled, mayBeStartingAppsPause(checkedAt: checked) else {

@@ -10,7 +10,7 @@ package protocol MusicPlayer: Sendable {
     /// own audio is the music being protected, so it never counts as another
     /// app playing.
     var bundleID: String { get }
-    /// Name shown to the user, e.g. "Spotify".
+    /// Name shown to the user, the app's own.
     var name: String { get }
     /// Drawn in place of the app's icon while it isn't installed; `nil` for
     /// the generic app icon.
@@ -135,7 +135,7 @@ extension PolledMusicPlayer {
 
 /// What kind of app a player is.
 package enum MusicPlayerKind: Sendable {
-    /// An app of its own, such as Spotify.
+    /// An app of its own.
     case app
     /// A website added to the Dock from Safari (File → Add to Dock).
     case safariWebApp

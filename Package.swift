@@ -195,7 +195,7 @@ let package = Package(
         .testTarget(
             name: "PlayerCheckKitTests",
             dependencies: [
-                "PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushPlayers", "AutoHushTestSupport",
+                "PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport",
             ],
             path: "Tests/PlayerCheckKitTests"
         ),

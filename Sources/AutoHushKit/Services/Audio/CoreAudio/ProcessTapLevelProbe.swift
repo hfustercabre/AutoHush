@@ -2,8 +2,8 @@ import CoreAudio
 import Foundation
 
 /// Tells whether an app can be heard right now, for a player whose own
-/// controls can't say: during YouTube Music's ads its Play/Pause reads "Play"
-/// while the ad plays. An open output doesn't tell either, since a paused
+/// controls can't say: during a web player's ads its Play/Pause can read
+/// "Play" while the ad plays. An open output doesn't tell either, since a paused
 /// page keeps its output open, silent, for several seconds.
 package protocol AudioLevelProbing: Sendable {
     /// Listens to every audio process the app running as `appPID` owns, for

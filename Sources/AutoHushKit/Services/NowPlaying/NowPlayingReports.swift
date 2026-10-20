@@ -14,8 +14,9 @@ import OSLog
 /// then, so nothing falls between. It's followed from the first question
 /// on, on a queue of its own, and stops once nobody asks for `idleLimit`.
 package final class NowPlayingReports: @unchecked Sendable {
-    /// One app mediaremoted keeps for Now Playing: "com.spotify.client (380)
-    /// Spotify", or a web app's media process "com.apple.WebKit.GPU/<its ID>".
+    /// One app mediaremoted keeps for Now Playing: "<its bundle ID> (<its
+    /// pid>) <its name>", or a web app's media process
+    /// "com.apple.WebKit.GPU/<its ID>".
     package struct Client: Equatable, Sendable {
         package var id: String
         package var pid: pid_t

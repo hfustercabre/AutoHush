@@ -3,18 +3,18 @@ import Testing
 @testable import AutoHushPlayers
 @testable import WebAppPlayers
 
-/// The helper names no player: outside AutoHushPlayers and PlayersSupport/,
-/// code never does. A name in its report comes from the app it checks.
-@Suite("Sources/PlayerCheck names no player")
+/// Outside AutoHushPlayers and PlayersSupport/, code never names a player,
+/// its comments included: the engine (the full check's N5, 2026-10-20) and
+/// the helper, whose report's names come from the app it checks.
+@Suite("the engine and the helper name no player")
 struct NeutralSourcesTests {
-    private static let folder = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent() // PlayerCheckKitTests
+    private static let package = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent() // AutoHushPlayersTests
         .deletingLastPathComponent() // Tests
         .deletingLastPathComponent() // the package
-        .appending(path: "Sources/PlayerCheck")
 
-    /// Every Swift file there, its Kit's too.
-    private static func swiftFiles() -> [URL] {
+    /// Every Swift file in `folder`, its subfolders' too.
+    private static func swiftFiles(in folder: URL) -> [URL] {
         let found = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil)?.allObjects as? [URL] ?? []
         return found.filter { $0.pathExtension == "swift" }
     }
@@ -33,10 +33,10 @@ struct NeutralSourcesTests {
         return (anyCase, asWords)
     }
 
-    @Test("no Swift file in Sources/PlayerCheck names a supported player or a tested web app")
-    func namesNoPlayer() throws {
-        let files = Self.swiftFiles()
-        try #require(files.count > 20, "Sources/PlayerCheck not found at \(Self.folder.path)")
+    @Test("no Swift file there names a supported player or a tested web app", arguments: ["Sources/AutoHushKit", "Sources/PlayerCheck"])
+    func namesNoPlayer(folder: String) throws {
+        let files = Self.swiftFiles(in: Self.package.appending(path: folder))
+        try #require(files.count > 20, "\(folder) not found in \(Self.package.path)")
         let (anyCase, asWords) = Self.names()
         try #require(!anyCase.isEmpty)
         for file in files {

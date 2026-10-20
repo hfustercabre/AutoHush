@@ -27,12 +27,12 @@ package enum AccessibilityWindows {
     static let elementLimit: UInt64 = 1000
     /// How far numbers are tried when no window is below `elementLimit`: an
     /// Electron app numbers its page's elements in its own process (one read
-    /// of Deezer's page took about 490), so a window it makes again later can
-    /// be well above (Deezer's: #2353, measured on macOS 27).
+    /// of a player's page took about 490), so a window it makes again later
+    /// can be well above (that player's: #2353, measured on macOS 27).
     static let farLimit: UInt64 = 100_000
     /// Above `elementLimit`, the search stops this far past the last window
-    /// found: an app's windows are made close together (Spotify's: #42, #44,
-    /// #46).
+    /// found: an app's windows are made close together (one player's: #42,
+    /// #44, #46).
     static let gapAfterWindow: UInt64 = 1000
     /// How long a single element may take to answer.
     static let timeout: Float = 0.3

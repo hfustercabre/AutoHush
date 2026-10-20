@@ -13,8 +13,8 @@ import Foundation
 package struct PressCheck: Sendable {
     /// How long a press gets to show.
     static let wait: TimeInterval = 3
-    /// How long a toggle judged by another sign gets: Qobuz, played after a
-    /// long pause, buffers for seconds before it's heard.
+    /// How long a toggle judged by another sign gets: a streaming player,
+    /// played after a long pause, can buffer for seconds before it's heard.
     static let toggleWait: TimeInterval = 10
     /// How often the state is read meanwhile.
     static let interval: TimeInterval = 0.1

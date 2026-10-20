@@ -32,11 +32,11 @@ package enum WebAddress {
 
     /// Whether the page shown is the site at `typed`, rather than another
     /// one asking something first: the same host (with or without "www."),
-    /// a part of the site (listen.tidal.com for tidal.com), or the same
-    /// service in another place (music.amazon.es for music.amazon.com: the
+    /// a part of the site (listen.example.com for example.com), or the same
+    /// service in another place (music.example.es for music.example.com: the
     /// same first two parts, then only a place's ending, see `isPlaceEnding`).
-    /// Another part of the same domain is another site (consent.youtube.com
-    /// for music.youtube.com, accounts.spotify.com for open.spotify.com).
+    /// Another part of the same domain is another site (consent.example.com
+    /// for music.example.com, accounts.example.com for open.example.com).
     /// Without hosts to compare, it counts as the site.
     package static func isSameSite(_ shown: URL, as typed: URL) -> Bool {
         guard let shownHost = shown.host(), !shownHost.isEmpty, let typedHost = typed.host() else { return true }

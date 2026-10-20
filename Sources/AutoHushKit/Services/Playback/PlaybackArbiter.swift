@@ -127,7 +127,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// sound starts (a new app's levels come from the next tick): a pause seen
     /// up to this long before the app was first heard may still be its doing.
     static let hearingDelay: TimeInterval = 0.5
-    /// An app that pauses other players does it as it starts (VLC, 0.3 s
+    /// An app that pauses other players does it as it starts (one did 0.3 s
     /// after, measured): a pause up to this long after the app was first
     /// heard may be its doing. A later one, while the app isn't counted as
     /// playing yet (3 s for sound without video in AntiDot mode), is the user's.
@@ -357,7 +357,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// responsible for it and must not resume it later.
     ///
     /// A report can be stale, though: some players post the state they had
-    /// just before the new one (Music, right after our pause: "Playing", then
+    /// just before the new one (one, right after our pause: "Playing", then
     /// "Paused"). So a report that would end our pause is checked with the
     /// player first, and ignored while it's still paused.
     ///

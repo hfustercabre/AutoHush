@@ -48,8 +48,8 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
     private var runningObjects: Set<AudioObjectID> = []
 
     /// macOS 14 sends a process's is-running change when its audio stops but
-    /// not always when it starts again (Apple Music resuming, 14.4,
-    /// 2026-10-16), so there the listeners can't be trusted to find it.
+    /// not always when it starts again (a player resuming, 14.4, 2026-10-16),
+    /// so there the listeners can't be trusted to find it.
     private static let listenersMissStarts: Bool = {
         if #available(macOS 15, *) { return false }
         return true

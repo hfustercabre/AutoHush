@@ -254,7 +254,8 @@ Tests/                   a test module per module, mirroring its folders, plus A
                          fakes, a value behind a lock, a gate, a sleep the test ends) and PlayersTestSupport
                          (the players' stores and a scripted app's Apple events, in memory); PlayerCheckTests
                          runs the helper itself as a read-only check of Calculator;
-                         only the players' code names a player, but any test may use real apps (VLC,
+                         only the players' code names a player (AutoHushPlayersTests checks the engine
+                         and the helper, comments included), but any test may use real apps (VLC,
                          Spotify…) as test data
 Tools/                   tools for measuring the fades and checking apps, never part of the app or its disk
                          image; each has a README.md saying what it does and how (Tools/README.md lists them)

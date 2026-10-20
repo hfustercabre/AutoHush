@@ -1,11 +1,11 @@
 import Foundation
 
 /// A web player with its own site in some countries, where a sign-in works
-/// only on the site of the account's country (Amazon Music's
-/// music.amazon.de for Germany and Austria): Add a Web App offers its sites
-/// by country.
+/// only on the site of the account's country (one store's music site has a
+/// `.de` site for Germany and Austria): Add a Web App offers its sites by
+/// country.
 package struct CountrySites: Equatable, Sendable {
-    /// The service's name, e.g. "Amazon Music".
+    /// The service's name, as the user knows it.
     package let name: String
     /// Each country's site, by region code: "DE": "music.amazon.de".
     package let byRegion: [String: String]

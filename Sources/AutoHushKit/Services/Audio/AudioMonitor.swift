@@ -37,8 +37,8 @@ import os
 /// detection method is `.audioLevels`. AntiDot mode's methods capture nothing.
 /// Meanwhile an app is judged as in AntiDot mode: one seen telling macOS it
 /// plays counts as paused once it stops telling, though its stream stays open
-/// (VLC keeps it open about a minute after a pause, measured). Only "Open audio
-/// streams only" ignores what apps tell macOS.
+/// (one player keeps it open about a minute after a pause, measured). Only
+/// "Open audio streams only" ignores what apps tell macOS.
 ///
 /// The media player's output also tells whether it plays on THIS Mac. A
 /// player that plays on another device (its own remote playback) reports
@@ -76,8 +76,8 @@ final class AudioMonitor: @unchecked Sendable {
     static let postChangeRefreshWindow: TimeInterval = 1
     /// A source's process measured silent this long loses its tap, which
     /// keeps macOS's recording indicator on (an app keeping its output open
-    /// while paused, as Qobuz does). It's tapped again once its output closes
-    /// and opens again, or once it tells macOS it plays anew: one that keeps
+    /// while paused, as some players do). It's tapped again once its output
+    /// closes and opens again, or once it tells macOS it plays anew: one that keeps
     /// saying so in silence (a call app through a quiet stretch) isn't.
     static let silentTapRelease: TimeInterval = 10
 

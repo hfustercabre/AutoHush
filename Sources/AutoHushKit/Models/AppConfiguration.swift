@@ -106,7 +106,7 @@ package struct AppConfiguration: Sendable {
     }
 
     /// True for the chosen media player's own app, or one of its helpers
-    /// (e.g. `com.tidal.desktop.helper`, which plays TIDAL's sound). Other
+    /// (e.g. `<its bundle ID>.helper`, which plays some players' sound). Other
     /// media players count like any other app.
     func isMusicPlayer(_ bundleID: String) -> Bool {
         guard let musicPlayerBundleID else { return false }
