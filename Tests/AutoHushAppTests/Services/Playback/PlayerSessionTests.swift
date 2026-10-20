@@ -169,7 +169,7 @@ struct PlayerSessionTests {
         let bench = Bench()
         let session = await bench.secondNotRunning()
         #expect(await bench.second.verifyCallCount == 1)
-        #expect(session.state.health == .degraded("Second isn’t running"))
+        #expect(session.state.health == .playerClosed("Second isn’t running"))
         #expect(session.retryTimer == nil) // started on as it opens, not before
 
         await bench.second.setFailVerify(nil)
@@ -188,7 +188,7 @@ struct PlayerSessionTests {
         session.playerLaunched(Players.first)
         session.playerLaunched("org.videolan.vlc")
         await session.waitUntilIdle()
-        #expect(session.state.health == .degraded("Second isn’t running"))
+        #expect(session.state.health == .playerClosed("Second isn’t running"))
         #expect(await bench.second.verifyCallCount == 1) // not asked again
     }
 
@@ -249,12 +249,12 @@ struct PlayerSessionTests {
     func listsAppsWhilePlayerIsClosed() async {
         let bench = Bench()
         let session = await bench.secondNotRunning()
-        #expect(session.state.health == .degraded("Second isn’t running"))
+        #expect(session.state.health == .playerClosed("Second isn’t running"))
         let listening = bench.monitorings.of(Players.second)
         #expect(listening.count == 1 && listening[0].starts.map(\.takingOverPause) == [false])
         listening[0].send(.activeSources([Self.vlc]))
         #expect(session.state.activeSources == [Self.vlc]) // listed
-        #expect(session.state.health == .degraded("Second isn’t running")) // still says so
+        #expect(session.state.health == .playerClosed("Second isn’t running")) // still says so
     }
 
     @MainActor

@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 import CheckedPlayers
+import PlayerCheckKit
 
 // "Add an App…", under the menu's Other Apps and their tiles in Settings →
 // General and the welcome window (E3): the user chooses an app that can
@@ -165,7 +166,7 @@ struct AddAppView: View {
         default:
             StepNote(AddAppText.chooseNote)
             if model.openFailed, let app = appName { NoteLabel(AddAppText.couldNotOpen(app)).padding(.top, 2) }
-            StepActionButton(AddAppText.chooseApp) { model.openChooser() }
+            MainButton(AddAppText.chooseApp, inStep: true) { model.openChooser() }
                 .focused($focused, equals: .choose)
         }
     }
@@ -188,7 +189,7 @@ struct AddAppView: View {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
                 } else if !missing.isEmpty {
                     NoteLabel(AddAppText.withoutWarning(missing, app: app, macMuted: model.checkMuting == .mac)).padding(.top, 4)
-                    StepActionButton(AddAppText.continueButton) { model.continueWithoutAll() }
+                    MainButton(AddAppText.continueButton, inStep: true) { model.continueWithoutAll() }
                         .focused($focused, equals: .allow)
                 }
             }
@@ -205,9 +206,9 @@ struct AddAppView: View {
             NoteLabel(AddAppText.reopenAlertMessage(appName ?? "")).padding(.top, 2)
             if model.reopenFailed { NoteLabel(AddAppText.didNotQuit(appName ?? "")).padding(.top, 2) }
             FlowingButtons {
-                StepActionButton(AddAppText.reopenTitle(appName ?? "")) { model.reopen() }
+                MainButton(AddAppText.reopenTitle(appName ?? ""), inStep: true) { model.reopen() }
                     .focused($focused, equals: .reopen)
-                StepActionButton(AddAppText.skip, secondary: true) { model.skipReopen() }
+                MainButton(AddAppText.skip, secondary: true, inStep: true) { model.skipReopen() }
             }
         default:
             StepNote(AddAppText.reopenPending)
@@ -226,11 +227,11 @@ struct AddAppView: View {
             .padding(.top, 2)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
-            StepActionButton(AddAppText.open(appName ?? "")) { model.openAppAgain() }
+            MainButton(AddAppText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
                 .focused($focused, equals: .play)
         case (.failed, _):
             StepNote(AddAppText.didNotPlay(appName ?? ""))
-            StepActionButton(AddAppText.tryAgain) { model.waitForPlaying() }
+            MainButton(AddAppText.tryAgain, inStep: true) { model.waitForPlaying() }
                 .focused($focused, equals: .play)
         default:
             StepNote(AddAppText.playWaits)
@@ -244,19 +245,19 @@ struct AddAppView: View {
         case (.busy, _):
             StepNote(model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
-            StepActionButton(AddAppText.stop, secondary: true, cancels: true) { model.stopCheck() }
+            MainButton(AddAppText.stop, secondary: true, cancels: true, inStep: true) { model.stopCheck() }
                 .focused($focused, equals: .check)
         case (.failed, .stopped):
             StepNote(AddAppText.stoppedNote)
-            StepActionButton(AddAppText.checkAgain) { model.checkAgain() }
+            MainButton(AddAppText.checkAgain, inStep: true) { model.checkAgain() }
                 .focused($focused, equals: .check)
         case (.failed, _):
             StepNote(AddAppText.checkFailed(model.failureReason, app: appName ?? ""))
             FlowingButtons {
-                StepActionButton(AddAppText.checkAgain) { model.checkAgain() }
+                MainButton(AddAppText.checkAgain, inStep: true) { model.checkAgain() }
                     .focused($focused, equals: .check)
                 if model.failureReason == .other {
-                    StepActionButton(AddAppText.showLog, secondary: true) { model.showLog() }
+                    MainButton(AddAppText.showLog, secondary: true, inStep: true) { model.showLog() }
                         .disabled(!model.canShowLog)
                 }
             }
@@ -268,7 +269,7 @@ struct AddAppView: View {
             }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if mark == .current {
-                StepActionButton(AddAppText.continueToCheck) { model.continueToCheck() }
+                MainButton(AddAppText.continueToCheck, inStep: true) { model.continueToCheck() }
                     .focused($focused, equals: .check)
             }
         }
@@ -317,8 +318,8 @@ struct AddAppView: View {
                 }
                 FlowingButtons {
                     // The focus goes to Check Again while Mute It Instead can't be pressed.
-                    let mute = StepActionButton(AddAppText.muteItInstead) { model.useMuting() }.disabled(!model.canMute)
-                    let again = StepActionButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                    let mute = MainButton(AddAppText.muteItInstead, inStep: true) { model.useMuting() }.disabled(!model.canMute)
+                    let again = MainButton(AddAppText.checkAgain, secondary: true, inStep: true) { model.checkAgain() }
                     if model.canMute {
                         mute.focused($focused, equals: .use)
                         again
@@ -331,10 +332,10 @@ struct AddAppView: View {
                 // Now Playing hidden in the menu bar: once it's shown, its
                 // panel can be tried (the user, 2026-10-16).
                 FlowingButtons {
-                    StepActionButton(AddAppText.use(app)) { model.use() }
+                    MainButton(AddAppText.use(app), inStep: true) { model.use() }
                         .focused($focused, equals: .use)
                     if model.offersCheckAgain {
-                        StepActionButton(AddAppText.checkAgain, secondary: true) { model.checkAgain() }
+                        MainButton(AddAppText.checkAgain, secondary: true, inStep: true) { model.checkAgain() }
                     }
                 }
             }

@@ -11,6 +11,18 @@ extension AppDelegateTests {
     // MARK: - Players that learn
 
     @MainActor
+    @Test("SIGTERM closes an alert open first, then quits from the run loop; with none open, it quits")
+    func terminationSignal() {
+        let (sut, _) = makeSUT()
+        var calls: [String] = []
+        sut.terminationSignalArrived(modal: NSWindow(), abortModal: { calls.append("alert closed") }, quit: { calls.append("quit") })
+        #expect(calls == ["alert closed", "quit"])
+        calls = []
+        sut.terminationSignalArrived(modal: nil, abortModal: { calls.append("alert closed") }, quit: { calls.append("quit") })
+        #expect(calls == ["quit"])
+    }
+
+    @MainActor
     @Test("another app's launch, or one without a bundle identifier, doesn't change the health or start again",
           arguments: ["org.videolan.vlc", nil] as [String?])
     func otherAppLaunchDoesNothing(bundleID: String?) async {
@@ -30,7 +42,7 @@ extension AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
+        await TestWait.until { sut.status.health == .playerClosed("First isn’t running") }
 
         await scratch.first.setFailVerify(nil)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
@@ -68,7 +80,7 @@ extension AppDelegateTests {
             if !running { await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning) }
             let (sut, monitorings) = tests.makeSUT(scratch)
             sut.session.launch()
-            let health: AppHealthState = running ? .ready : .degraded("First isn’t running")
+            let health: AppHealthState = running ? .ready : .playerClosed("First isn’t running")
             await TestWait.until { sut.status.health == health }
             sut.registerPlayerLaunchObserver()
             sut.registerSleepObservers()

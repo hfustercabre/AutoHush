@@ -216,8 +216,9 @@ final class SettingsModel {
     /// Back to the welcome window's list, to choose another player.
     func showWelcomePlayers() { welcomeAsksPermissions = false }
 
-    /// AntiDot mode doesn't need Audio Recording: the way past it without allowing it.
-    func useAntiDotMode() { setDetectionMethod(.playbackSignals) }
+    /// AntiDot mode doesn't need Audio Recording: the way past it without
+    /// allowing it, in its way chosen last.
+    func useAntiDotMode() { setDetectionMethod(settings.antiDotMethod) }
 
     func setTimings(_ timings: TimingSettings) {
         settings.setTimings(timings.clamped)
@@ -246,11 +247,12 @@ final class SettingsModel {
         chosenPlayer.flatMap { $0.needsAudioLevels ? $0 : nil }
     }
 
-    /// On: judges apps by what they tell macOS (the indicator-free method
-    /// that keeps the most accuracy). Off: measures audio levels.
+    /// On: in its way chosen last, by what apps tell macOS until one is
+    /// chosen (the indicator-free method that keeps the most accuracy).
+    /// Off: measures audio levels.
     func setAntiDotMode(_ on: Bool) {
         guard on != isAntiDotMode else { return }
-        setDetectionMethod(on ? .playbackSignals : .audioLevels)
+        setDetectionMethod(on ? settings.antiDotMethod : .audioLevels)
     }
 
     /// Settings → Detection's Restore Defaults: the timings it shows only,

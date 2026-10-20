@@ -57,12 +57,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Asks to play and pause a player AutoHush must learn, once it's chosen.
     var learningWindow: any LearningWindowPresenting?
     let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
-    /// Makes a Safari web app from an address ("Add a Web App…").
-    let webAppMaker: any WebAppMaking
-    let addWebAppModel = AddWebAppModel()
-    var addWebAppWindow: any AddWebAppPresenting?
-    let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
-    var addingWebApp: Task<Void, Never>?
+    /// Makes a web app from an address and chooses it ("Add a Web App…"):
+    /// its model, its window and the add under way.
+    private(set) var addWebApp: AddWebAppFeature!
     /// Checks an app and adds it ("Add an App…"): its model, its windows,
     /// the check's panel and the Mac's output muted during a check.
     private(set) var addApp: AddAppFeature!
@@ -73,15 +70,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// and the setting itself (`NowPlayingSetting.restoreIfLeft`).
     let nowPlayingDefaults: UserDefaults
     let nowPlayingSetting: NowPlayingSetting.Setting
-    /// A web app made but not found as installed yet, and the address it was
-    /// made from, while the add window says so (`pickUpListedWebApp`).
-    var webAppAwaitingListing: (bundleID: String, address: String)?
-    /// Opens an app (the web app just added, so it can be played).
+    /// Opens an app (the player, as the learning window opens).
     let openApp: @MainActor (URL) async -> Void
     /// The learning window shows both steps ticked this long before closing.
     let learnedWindowDelay: Duration
-    /// Between two looks for a web app just made that isn't listed yet.
-    let madeWebAppWait: Duration
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
@@ -174,9 +166,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.makePlayerChooser = makePlayerChooser
         self.makeLearningWindow = makeLearningWindow
         self.learnedWindowDelay = learnedWindowDelay
-        self.madeWebAppWait = madeWebAppWait
-        self.webAppMaker = webAppMaker
-        self.makeAddWebAppWindow = makeAddWebAppWindow
         self.openApp = openApp
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
@@ -213,6 +202,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         updates.beforePresenting = { [weak self] in await self?.statusMenu?.closeMenu() }
         addApp = AddAppFeature(host: self, system: addAppSystem, keptChecks: KeptCheckStore(defaults: defaults))
+        addWebApp = AddWebAppFeature(host: self, maker: webAppMaker, makeWindow: makeAddWebAppWindow, openApp: openApp,
+                                     learnedWindowDelay: learnedWindowDelay, madeWebAppWait: madeWebAppWait,
+                                     exampleAddress: players.exampleWebAddress, countrySites: players.countrySites)
         settingsModel = SettingsModel(
             state: appState,
             settings: userSettings,
@@ -231,11 +223,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showUserSettings(userSettings.state)
         followPlayerReopen() // the chosen player may be running without what it needs
         learning.follow(player) // as the session does, from the start (`setChosenPlayer`)
-        addWebAppModel.exampleAddress = players.exampleWebAddress
-        addWebAppModel.countrySites = players.countrySites
-        addWebAppModel.start = { [weak self] in self?.addWebApp(from: $0) }
-        addWebAppModel.cancel = { [weak self] in self?.cancelAddingWebApp() }
-        addWebAppModel.openAccessibilitySettings = { [weak self] in self?.requestPermission(AddWebAppModel.safariAccess) }
     }
 }
 
@@ -247,7 +234,7 @@ extension AppDelegate: AppActions {
         // The menu stays open: its card's checks follow the new player's permission.
         Task { [weak self] in await self?.refreshPermissions() }
     }
-    func openAddWebApp() { showAddWebApp() }
+    func openAddWebApp() { addWebApp.show() }
     func openAddApp() { addApp.open() }
     func removeAddedApp(_ bundleID: String) { removeAddedAppAfterAsking(bundleID) }
     func reopenPlayer() { reopenChosenPlayer() }

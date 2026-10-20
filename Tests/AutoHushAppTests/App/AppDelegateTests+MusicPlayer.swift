@@ -439,7 +439,7 @@ extension AppDelegateTests {
         await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
         let (sut, monitorings) = makeSUT(scratch)
         sut.session.launch()
-        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
+        await TestWait.until { sut.status.health == .playerClosed("First isn’t running") }
 
         scratch.installed = []
         sut.refreshPlayerOptions() // what opening the menu or Settings does

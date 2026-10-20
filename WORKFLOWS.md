@@ -667,7 +667,7 @@ flowchart TD
   S(["AutoHush starts the<br/>player, or checks it again"])
   W{"What’s wrong?"}
   INS["Isn’t installed:<br/>the folders watched"]
-  RUN["Isn’t running: waits<br/>for it to open, then<br/>3 tries, 2 s apart; meanwhile,<br/>with Auto-Pause on, the menu<br/>lists the apps playing"]
+  RUN["Isn’t running: nothing to do<br/>(the card in grey); waits<br/>for it to open, then<br/>3 tries, 2 s apart; meanwhile,<br/>with Auto-Pause on, the menu<br/>lists the apps playing"]
   RESP["Isn’t responding:<br/>tried again after 5 s,<br/>doubling up to a minute;<br/>Try Again on the card"]
   CTRL["Can’t control it<br/>right now: ⓘ says why;<br/>tried again likewise"]
   PERM["A permission missing:<br/>the card in orange,<br/>with Allow…"]

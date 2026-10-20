@@ -211,8 +211,12 @@ final class UserSettings: AutoPauseControlling {
             logger.info("Detection: \(Self.name(of: state.detection), privacy: .public) → \(Self.name(of: method), privacy: .public)")
         }
         preferences.detectionMethod = method
+        if method.isAntiDot { preferences.antiDotMethod = method }
         state.detection = method
     }
+
+    /// AntiDot mode's way chosen last, which it's turned on with again.
+    var antiDotMethod: DetectionMethod { preferences.antiDotMethod }
 
     /// A slider sets the timings at every step while it's dragged: their
     /// change is logged once, when they've stayed the same a moment.

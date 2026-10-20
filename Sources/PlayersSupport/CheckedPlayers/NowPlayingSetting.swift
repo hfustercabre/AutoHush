@@ -50,7 +50,10 @@ package enum NowPlayingSetting {
     }
 
     /// Whether the user hid Now Playing from the menu bar.
-    package static var isHidden: Bool { read().map { $0 & hiddenFlag != 0 } ?? false }
+    package static var isHidden: Bool { isHidden(read()) }
+
+    /// Whether `value` hides it; never set, it shows.
+    static func isHidden(_ value: Int?) -> Bool { value.map { $0 & hiddenFlag != 0 } ?? false }
 
     /// Runs `body` with Now Playing shown in the menu bar, when the user hid
     /// it (and its item shows within a second), then hides it again; `nil`

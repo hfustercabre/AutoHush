@@ -15,7 +15,7 @@ struct AppHealthStateTests {
           arguments: [
             (MusicPlayerError.automationPermissionDenied as any Error, AppHealthState.needsPermission(.automation(player: "Jukebox"))),
             (MusicPlayerError.accessibilityPermissionDenied, .needsPermission(.accessibility(player: "Jukebox"))),
-            (MusicPlayerError.playerNotRunning, .degraded("Jukebox isn’t running")),
+            (MusicPlayerError.playerNotRunning, .playerClosed("Jukebox isn’t running")),
             (MusicPlayerError.playerNotResponding, .retrying("Jukebox isn’t responding")),
             (MusicPlayerError.playerCommandFailed(.appleEventError(-50)), .retrying("Can’t control Jukebox right now")),
             (StubError.failed, .failed("Can’t control Jukebox right now")),

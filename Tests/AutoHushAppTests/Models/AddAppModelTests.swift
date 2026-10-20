@@ -4,6 +4,7 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
+import PlayerCheckKit
 
 @MainActor
 @Suite("AddAppModel", .timeLimit(.minutes(1)))
@@ -406,6 +407,7 @@ struct AddAppModelTests {
         await TestWait.until { world.runs == 2 }
         await TestWait.until { !model.isEndingLastCheck }
         #expect(world.panel.filter { $0 == "shown" }.count == 2 && world.panel.last == "shown")
+        world.run.finish(.stopped) // else its task waits for good, keeping the model and the world
     }
 
     @Test("the app quitting while it's waited for says so; Open opens it and waits again, or says so again when it doesn't open")
@@ -555,6 +557,7 @@ struct AddAppModelTests {
         model.startCheck()
         await TestWait.until { world.panel == ["shown"] }
         #expect(world.taps == [false])
+        world.run.finish(.stopped) // else its task waits for good, keeping the model and the world
     }
 
     @Test("in AntiDot mode, neither muting nor a panel only its sound tells can be used")

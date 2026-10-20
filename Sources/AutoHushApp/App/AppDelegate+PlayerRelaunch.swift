@@ -128,22 +128,6 @@ extension AppDelegate {
         return alert
     }
 
-    /// The Mac going to sleep and waking up, for the player session (see
-    /// `PlayerSession.setAsleep`). The screens waking count as awake too, so
-    /// a wake macOS didn't announce can't leave AutoHush deciding nothing.
-    func registerSleepObservers() {
-        let center = NSWorkspace.shared.notificationCenter
-        sleepObservers = [
-            (NSWorkspace.willSleepNotification, true),
-            (NSWorkspace.didWakeNotification, false),
-            (NSWorkspace.screensDidWakeNotification, false),
-        ].map { name, asleep in
-            center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
-                Task { @MainActor [weak self] in self?.session.setAsleep(asleep) }
-            }
-        }
-    }
-
     func unregisterPlayerLaunchObserver() {
         guard let playerLaunchObserver else { return }
         NSWorkspace.shared.notificationCenter.removeObserver(playerLaunchObserver)

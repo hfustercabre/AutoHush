@@ -35,7 +35,7 @@ struct MenuSidePanelView: View {
                         MenuActionRow(place: .sideWindow, action: { model.perform(.ignoreAnotherApp) }) {
                             Image(systemName: "plus.circle").accessibilityHidden(true)
                         } content: {
-                            Text(verbatim: IgnoreAppsPicker.title)
+                            Text(verbatim: IgnoreAppsPicker.title(noneIgnored: model.status.ignoredApps.isEmpty))
                         }
                     }
                     .padding(.horizontal, 14)

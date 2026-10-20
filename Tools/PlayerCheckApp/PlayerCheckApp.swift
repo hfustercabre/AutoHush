@@ -35,9 +35,9 @@ struct InstalledApp: Identifiable, Hashable {
         case applications, user, system
         var url: URL {
             switch self {
-            case .applications: URL(fileURLWithPath: "/Applications")
-            case .user: URL(fileURLWithPath: NSHomeDirectory() + "/Applications")
-            case .system: URL(fileURLWithPath: "/System/Applications")
+            case .applications: ApplicationFolders.applications
+            case .user: ApplicationFolders.user
+            case .system: ApplicationFolders.system
             }
         }
         var title: String {
@@ -1364,44 +1364,21 @@ struct CheckPanelView: View {
         return text.replacingCharacters(in: start.lowerBound..<end, with: String(format: "%d:%02d left", left / 60, left % 60))
     }
 
+    /// Player Check's look for the parts both apps' panels draw.
+    private static let look = CheckPanelLook(caption: .caption, warningFill: .orange.opacity(0.12), track: .secondary.opacity(0.22))
+
     /// The main window's orange note: what's asked of you, and more under it.
     private func note(_ text: String, detail: String, systemImage: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label(text, systemImage: systemImage).fontWeight(.medium).foregroundStyle(.orange)
-                .fixedSize(horizontal: false, vertical: true)
-            if !detail.isEmpty {
-                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-        .accessibilityElement(children: .combine)
+        CheckRequestNote(text, detail: detail, symbol: systemImage, look: Self.look)
     }
 
     /// The window states as segments, the one it's in, and what it does there.
     private func progress(_ step: CheckProgress.WindowStep) -> some View {
         let title = step.state?.title ?? ""
-        let name = title.prefix(1).uppercased() + title.dropFirst()
         let activity = report?.stateActivity ?? ""
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 3) {
-                ForEach(1...max(step.count, 1), id: \.self) { index in
-                    Capsule()
-                        .fill(index < step.index ? Color.accentColor
-                              : index == step.index ? Color.accentColor.opacity(0.45) : Color.secondary.opacity(0.22))
-                        .frame(height: 5)
-                }
-            }
-            HStack {
-                Text(name).font(.callout.weight(.medium))
-                Spacer()
-                Text("\(step.index) of \(step.count)").font(.caption).foregroundStyle(.secondary).monospacedDigit()
-            }
-            Text(activity).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Window state \(step.index) of \(step.count): \(title). \(activity)")
+        return CheckWindowStepView(index: step.index, count: step.count, name: title.prefix(1).uppercased() + title.dropFirst(),
+                                   stepText: "\(step.index) of \(step.count)", activity: activity,
+                                   accessibilityText: "Window state \(step.index) of \(step.count): \(title). \(activity)", look: Self.look)
     }
 }
 

@@ -1,3 +1,4 @@
+import AutoHushKit
 import Foundation
 
 /// How to control an app by AppleScript, from what its dictionary offers
@@ -40,6 +41,22 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
             } else {
                 return nil
             }
+        }
+
+        /// What a `playing` flag says: playing, else stopped when its
+        /// `current time` is -1 (nothing loaded), else paused. AutoHush and
+        /// the check read it alike; `currentTime` is read only when it
+        /// isn't playing.
+        package static func state(playing: Bool, currentTime: Int?) -> PlayerState {
+            guard !playing else { return .playing }
+            guard let currentTime else { return .paused }
+            return currentTime < 0 ? .stopped : .paused
+        }
+
+        /// What its documents' `playing` says: stopped with none open,
+        /// playing while one plays, else paused.
+        package static func state(documentsPlaying: [Bool]) -> PlayerState {
+            documentsPlaying.isEmpty ? .stopped : documentsPlaying.contains(true) ? .playing : .paused
         }
     }
 

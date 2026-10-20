@@ -1,4 +1,5 @@
 import AutoHushKit
+import CoreGraphics
 import Foundation
 import os
 import Testing
@@ -112,5 +113,52 @@ struct PlayerCheckTests {
         #expect(newest.hasSuffix(" Calculator read-only.log"))
         let text = try String(contentsOfFile: logs.appending(path: newest).path, encoding: .utf8)
         #expect(text.contains("Calculator ") && text.contains("music in ~/Music") && !text.contains(NSHomeDirectory()))
+    }
+    @Test("a trial: paused and played again, it works; not paused, the press is undone; a play that took late, only when pressed again, or not at all works only half; a track that ended meanwhile says so")
+    func trialVerdicts() {
+        let playing = Look(state: .playing, sounding: true), paused = Look(state: .paused, sounding: false)
+        let stopped = Look(state: .stopped, sounding: false)
+        /// A trial on `looks`, what the app shows at each look or wait in turn.
+        func run(_ looks: [Look], sends: Bool = true) -> (result: TrialResult, undone: Bool, problem: String?, ended: Bool) {
+            trialProblem = nil
+            var shown = looks, undone = false
+            func next() -> Look { shown.count > 1 ? shown.removeFirst() : shown[0] }
+            let result = trial("a test", pid: 1, pause: { _ in sends }, play: { _ in true }, undo: { undone = true },
+                               reading: TrialReading(look: { _, _ in next() }, waitFor: { _, _, _, _ in next() }))
+            return (result, undone, trialProblem, trialTrackEnded)
+        }
+        #expect(run([playing, paused, playing]).result == .worked)
+        let notPaused = run([playing, playing])
+        #expect(notPaused.result == .didNotPause && notPaused.undone)
+        #expect(run([playing], sends: false).result == .didNotPause)
+        let late = run([playing, paused, paused, playing]) // played again only by the next look
+        #expect(late.result == .pausedOnly && late.problem?.contains("only after more than 4 s") == true)
+        let twice = run([playing, paused, paused, paused, playing])
+        #expect(twice.result == .pausedOnly && twice.problem?.contains("only when pressed a second time") == true)
+        let neither = run([playing, paused, paused, paused, paused])
+        #expect(neither.result == .pausedOnly && neither.problem == nil && !neither.ended)
+        let ended = run([playing, paused, stopped])
+        #expect(ended.result == .pausedOnly && ended.ended)
+    }
+
+    @Test("a window is covered only when the windows above it hold every point of a 9×9 grid over it, edges included, within half a point")
+    func covered() {
+        let box = CGRect(x: 100, y: 100, width: 400, height: 300)
+        let left = CGRect(x: 100, y: 100, width: 200, height: 300), right = CGRect(x: 300, y: 100, width: 200, height: 300)
+        #expect(WindowStates.isCovered(box: box, above: [box]))
+        #expect(WindowStates.isCovered(box: box, above: [box.insetBy(dx: 0.4, dy: 0.4)])) // within half a point
+        #expect(!WindowStates.isCovered(box: box, above: [box.insetBy(dx: 1, dy: 1)])) // its edges show
+        #expect(WindowStates.isCovered(box: box, above: [left, right]))
+        #expect(!WindowStates.isCovered(box: box, above: [left]))
+        #expect(!WindowStates.isCovered(box: box, above: []))
+    }
+
+    @Test("an ordinary window: a document window's layer, and a standard window whatever its height, or any other at least 200 points tall")
+    func ordinaryWindows() {
+        #expect(WindowStates.isOrdinary(layer: 0, height: 130, isStandard: true)) // a movie player's for sound alone
+        #expect(WindowStates.isOrdinary(layer: 0, height: 200, isStandard: false))
+        #expect(!WindowStates.isOrdinary(layer: 0, height: 199, isStandard: false)) // a strip, a helper
+        #expect(!WindowStates.isOrdinary(layer: 3, height: 600, isStandard: true))
+        #expect(!WindowStates.isOrdinary(layer: nil, height: 600, isStandard: true))
     }
 }

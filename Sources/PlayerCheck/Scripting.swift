@@ -1,5 +1,6 @@
 import AppKit
 import CheckedPlayers
+import PlayerCheckKit
 import os
 import AutoHushKit
 import ScriptablePlayers
@@ -270,7 +271,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
     case .documents(let documentClass, let playing):
         switch scriptedDocuments(documentClass, playing: playing) {
         case .failure(let error): return failed(error)
-        case .success(let documents): return documents.isEmpty ? .stopped : documents.contains(where: \.playing) ? .playing : .paused
+        case .success(let documents): return ScriptSetup.State.state(documentsPlaying: documents.map(\.playing))
         }
     case .playingFlag(let playing, let currentTime):
         switch getProperty(playing) {
@@ -278,11 +279,11 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
             return failed(error)
         case .success(let result):
             guard let result else { return nil }
-            if result.booleanValue { return .playing }
-            // Not playing: a `current time` of -1 means nothing is loaded, so
-            // it's stopped, else paused, as AutoHush tells them apart.
-            guard let currentTime, case .success(let reply?) = getProperty(currentTime) else { return .paused }
-            return reply.int32Value < 0 ? .stopped : .paused
+            // Not playing: its `current time` tells stopped from paused, as
+            // AutoHush reads it (an unread one: paused).
+            var time: Int?
+            if !result.booleanValue, let currentTime, case .success(let reply?) = getProperty(currentTime) { time = Int(reply.int32Value) }
+            return ScriptSetup.State.state(playing: result.booleanValue, currentTime: time)
         }
     case .playerState:
         switch getProperty("pPlS") {

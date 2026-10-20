@@ -1,3 +1,4 @@
+import CheckedPlayers
 import Foundation
 
 /// The lines of playercheck's report that AutoHush and the Player Check app
@@ -26,7 +27,7 @@ package enum CheckReportLine {
         case play, pause, allowAccessibility
     }
 
-    /// "  waiting: start playing something in Deezer; … (up to 2 minutes)":
+    /// "  waiting: start playing something in Jukebox; … (up to 2 minutes)":
     /// `text` starts as `request(in:)` reads it.
     static func waiting(_ text: String, minutes: Int) -> String {
         waitingPrefix + text + " (up to \(minutes) minutes)"

@@ -40,7 +40,7 @@ struct BottomBarFitTests {
 
     static let bars: [Bar] = [
         Bar(name: "Settings → Sound Sources", width: { settingsPage }, margin: 20, items: [
-            Item(keys: ["Ignore Another App…"]), Item(keys: ["Remove"]), Item(keys: ["Reset List…"]),
+            Item(keys: ["Ignore Another App…", "Ignore an App…"]), Item(keys: ["Remove"]), Item(keys: ["Reset List…"]),
         ], slots: 4),
         Bar(name: "Settings → Diagnostics", width: { settingsPage }, margin: 20, items: [
             // "Updated as it happens." is at the top of the page; "Copied" shows on the button.

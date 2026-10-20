@@ -153,6 +153,12 @@ This project follows [Semantic Versioning](https://semver.org/).
   of asking again in a row under the media player.
 - **A smaller download.** The app ships without its debugging symbols:
   less than half the size.
+- **A closed player no longer reads as a problem.** Started before it (at
+  login, say), the card says "Spotify isn't running" in grey, the menu bar
+  icon is as with no music, and Diagnostics says it's working: AutoHush
+  starts on once the player opens.
+- **AntiDot mode keeps its way.** Turned off and on again, it uses the way
+  you chose last (**Open audio streams only**, say).
 
 ### Added
 

@@ -70,6 +70,18 @@ struct UpdateCheckerTests {
         #expect(release.diskImage == nil)
     }
 
+    @Test("a disk image named for another version is ignored: only AutoHush-<the release's version>.dmg is the update")
+    func ignoresOtherVersionsImage() async throws {
+        let body = #"""
+            {"tag_name": "v0.3.0", "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0",
+             "assets": [{"name": "AutoHush-0.2.9.dmg",
+                         "browser_download_url": "https://github.com/hfustercabre/AutoHush/releases/download/v0.3.0/AutoHush-0.2.9.dmg"}]}
+            """#
+        let result = try await checker(status: 200, body: body).check(currentVersion: AppVersion("0.2.0")!)
+        guard case .available(let release) = result else { Issue.record("no update: \(result)"); return }
+        #expect(release.diskImage == nil)
+    }
+
     @Test("only well-formed SHA-256 digests are kept")
     func digests() {
         #expect(UpdateChecker.sha256(fromDigest: "sha256:" + String(repeating: "Ab", count: 32)) == String(repeating: "ab", count: 32))

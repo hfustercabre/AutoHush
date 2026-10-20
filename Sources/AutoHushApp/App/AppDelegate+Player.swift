@@ -19,7 +19,7 @@ extension AppDelegate {
         refreshPlayerOptions()
         let option = status.playerOptions.first { $0.bundleID == bundleID }
         if let address = option?.webAddress {
-            showAddWebApp(address: address)
+            addWebApp.show(address: address)
             return
         }
         guard bundleID != player?.bundleID || replacing,
@@ -74,7 +74,7 @@ extension AppDelegate {
         if let window = learningWindow, window.isOpen {
             closeLater(after: delay, ifStill: learningStatus) { window.close() }
         }
-        if let window = addWebAppWindow, window.isOpen, case .learning = addWebAppModel.phase {
+        if let window = addWebApp.window, window.isOpen, case .learning = addWebApp.model.phase {
             closeLater(after: delay, ifStill: learningStatus) { window.close() }
         }
     }
@@ -104,7 +104,7 @@ extension AppDelegate {
         let options = PlayerOption.list(players, locate: locateApp)
         status.playerOptions = options
         forgetDeletedWebApps(among: options)
-        pickUpListedWebApp(among: options)
+        addWebApp.pickUpListed(among: options)
         guard let player else {
             showSession() // waiting for a player, among these
             return

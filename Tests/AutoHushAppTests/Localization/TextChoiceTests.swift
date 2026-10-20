@@ -4,6 +4,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import CheckedPlayers
+import PlayerCheckKit
 
 /// The texts that pick their words by what they're given, wherever they
 /// are: Add an App's (`AddAppText`), the permissions' notes and button,

@@ -39,6 +39,9 @@ struct MenuPanelViewTests {
         case noPlayer
         /// Detection's and Fades' other settings unfolded.
         case moreSettings
+        /// The player must be reopened, and is muted for another app: the
+        /// card's Reopen and Unmute.
+        case fixes
     }
 
     private func status(_ state: State) -> AppStatus {
@@ -60,6 +63,11 @@ struct MenuPanelViewTests {
             status.updateOffer = UpdateOffer(release: release, state: .available)
         case .needsPermission:
             status.setHealth(.needsPermission(.systemAudioRecording))
+        case .fixes:
+            status.playerOptions[0].pausesByMuting = true
+            status.playerNeedsReopen = true
+            status.setActiveSources([vlc])
+            status.playback = .pausedByMonitor
         case .playing, .moreSettings, .noPlayer:
             status.playback = .musicPlaying
         }
@@ -90,6 +98,7 @@ struct MenuPanelViewTests {
                 #expect(sut.model.sections.contains(.update))
             }
             if state == .needsPermission { #expect(sut.model.sections.contains(.useAntiDot)) }
+            if state == .fixes { #expect(sut.status.playerNeedsReopen && sut.status.isReady && sut.status.offersUnmute) }
             let size = drawn(MenuPanelView(model: sut.model, settings: settingsModel, onHeight: { _ in }), width: menuContentWidth)
             #expect(size.height > 0)
         }

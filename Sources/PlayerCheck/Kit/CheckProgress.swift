@@ -1,3 +1,4 @@
+import CheckedPlayers
 import Foundation
 
 /// How far a check has got, from its report's lines as they come: the part

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
-@testable import CheckedPlayers
+import CheckedPlayers
+@testable import PlayerCheckKit
 
 @Suite("CheckProgress")
 struct CheckProgressTests {

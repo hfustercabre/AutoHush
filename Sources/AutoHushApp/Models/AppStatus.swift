@@ -199,7 +199,7 @@ struct AppStatus: Equatable {
     /// what, and the card shows it.
     var needsAttention: Bool {
         switch health {
-        case .starting:                                          return false
+        case .starting, .playerClosed:                           return false
         case .ready:                                             return playerNeedsReopen || (playback == .pauseFailed && autoPause == .on)
         case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
         }
@@ -269,7 +269,7 @@ struct AppStatus: Equatable {
     var canRetry: Bool {
         switch health {
         case .retrying, .failed:                                  return true
-        case .starting, .ready, .needsPlayer, .degraded, .needsPermission: return false
+        case .starting, .ready, .needsPlayer, .degraded, .playerClosed, .needsPermission: return false
         }
     }
 }

@@ -49,11 +49,18 @@ extension StatePresentation {
         StatePresentation(icon: .attention, label: iconLabel(line), line: line)
     }
 
+    /// The player is closed: its line, calmly (grey, as nothing needs the
+    /// user), and the icon as while no music plays.
+    static func playerClosed(_ line: String) -> StatePresentation {
+        StatePresentation(icon: .noMusic, label: iconLabel(line), line: line)
+    }
+
     /// The menu bar icon's VoiceOver label that says the status line: while
-    /// something needs the user, and while Auto-Pause is off.
+    /// something needs the user, the player is closed, and while Auto-Pause
+    /// is off.
     static func iconLabel(_ line: String) -> String {
         String(localized: "AutoHush: \(line)",
-               comment: "VoiceOver label of the menu bar icon while something needs the user or Auto-Pause is off; %@ is the menu's status line, e.g. “Spotify isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”")
+               comment: "VoiceOver label of the menu bar icon while something needs the user, the media player is closed or Auto-Pause is off; %@ is the menu's status line, e.g. “Spotify isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”")
     }
 }
 
@@ -125,6 +132,8 @@ extension AppHealthState {
             return nil
         case .needsPlayer(let message), .degraded(let message), .retrying(let message), .failed(let message):
             return .needingAttention(message)
+        case .playerClosed(let message):
+            return .playerClosed(message)
         case .needsPermission(let permission):
             return .needingAttention(permission.missingLine)
         }

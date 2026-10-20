@@ -94,14 +94,12 @@ package actor ScriptedAppPlayer: MusicPlayer {
         case .playerState:
             return ScriptablePlayer.playerState(fromReply: try await channel.send(ScriptablePlayer.makeGetPlayerStateEvent(processIdentifier:), to: pid))
         case .playingFlag(let property, let currentTime):
-            let playing = try await get(property, of: pid)
-            if playing.directObjectBoolean == true { return .playing }
-            // Not playing: -1 for its current time means nothing is loaded.
-            guard let currentTime, let time = try await get(currentTime, of: pid).directObjectInteger else { return .paused }
-            return time < 0 ? .stopped : .paused
+            let playing = try await get(property, of: pid).directObjectBoolean == true
+            var time: Int?
+            if !playing, let currentTime { time = try await get(currentTime, of: pid).directObjectInteger }
+            return ScriptSetup.State.state(playing: playing, currentTime: time)
         case .documents:
-            let documents = try await documents(of: pid)
-            return documents.isEmpty ? .stopped : documents.contains(where: \.playing) ? .playing : .paused
+            return ScriptSetup.State.state(documentsPlaying: try await documents(of: pid).map(\.playing))
         }
     }
 

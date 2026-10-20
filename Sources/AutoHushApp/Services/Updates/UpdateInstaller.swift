@@ -376,15 +376,21 @@ struct UpdateInstaller: UpdateInstalling {
     /// the loop outlives AutoHush. Calling the returned closure ends the loop
     /// instead.
     static func openAfterExit(_ app: URL) throws -> @Sendable () -> Void {
+        try openAfterExit(app, waitingFor: getpid(), opener: URL(filePath: "/usr/bin/open"))
+    }
+
+    /// The same loop waiting for `pid` to exit, then running `opener` with
+    /// `app`: tests give a process and a script of their own.
+    static func openAfterExit(_ app: URL, waitingFor pid: pid_t, opener: URL) throws -> @Sendable () -> Void {
         let waiter = Process()
         waiter.executableURL = URL(filePath: "/bin/sh")
         waiter.arguments = [
-            "-c", #"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.2; done; exec /usr/bin/open "$2""#,
-            "autohush-relaunch", String(getpid()), app.path,
+            "-c", #"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.2; done; exec "$3" "$2""#,
+            "autohush-relaunch", String(pid), app.path, opener.path,
         ]
         try waiter.run()
-        let pid = waiter.processIdentifier
-        return { kill(pid, SIGTERM) }
+        let waiting = waiter.processIdentifier
+        return { kill(waiting, SIGTERM) }
     }
 
     /// `url`'s path with symbolic links resolved, the way macOS records where

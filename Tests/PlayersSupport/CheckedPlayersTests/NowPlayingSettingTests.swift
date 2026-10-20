@@ -13,6 +13,13 @@ struct NowPlayingSettingTests {
         body(suite.defaults)
     }
 
+    @Test("hidden by its flag 8 (8, 24), shown by any other value (2, 16, 18) or never set", arguments: [
+        (8, true), (24, true), (2, false), (16, false), (18, false), (nil, false),
+    ] as [(Int?, Bool)])
+    func hiddenFlag(value: Int?, hidden: Bool) {
+        #expect(NowPlayingSetting.isHidden(value) == hidden)
+    }
+
     @Test("shown for a press, then put back, unless the user changed it meanwhile; not shown within a second, no press; the record goes either way")
     func whileShown() {
         withDefaults { defaults in

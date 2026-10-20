@@ -1,5 +1,7 @@
 import AppKit
+import CheckPanel
 import CheckedPlayers
+import PlayerCheckKit
 import SwiftUI
 
 /// The check's panel, at the bottom right of the screen on every desktop
@@ -82,40 +84,20 @@ struct CheckPanelView: View {
         }
     }
 
+    /// AutoHush's look for the parts both apps' panels draw.
+    private static let look = CheckPanelLook(caption: .appCaption, warningFill: .warningBadgeFill, track: .chipHoverFill)
+
     /// What's asked of the user, tinted, with the time left under it.
     private func note(_ text: String, detail: String, symbol: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label(text, systemImage: symbol).fontWeight(.medium).foregroundStyle(.appWarning)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(verbatim: detail).font(.appCaption).foregroundStyle(.appSecondary)
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.warningBadgeFill))
-        .accessibilityElement(children: .combine)
+        CheckRequestNote(text, detail: detail, symbol: symbol, look: Self.look)
     }
 
     /// The window states as segments, the one it's in, and what it does there.
     private func windowStep(_ step: CheckProgress.WindowStep) -> some View {
         let name = step.state.map(AddAppText.stateLabel) ?? ""
         let activity = progress.activity.map(AddAppText.activity) ?? ""
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 3) {
-                ForEach(1...max(step.count, 1), id: \.self) { index in
-                    Capsule()
-                        .fill(index < step.index ? AnyShapeStyle(Color.accentColor)
-                              : index == step.index ? AnyShapeStyle(Color.accentColor.opacity(0.45)) : AnyShapeStyle(Color.chipHoverFill))
-                        .frame(height: 5)
-                }
-            }
-            HStack {
-                Text(verbatim: name).font(.appCallout.weight(.medium))
-                Spacer()
-                Text(verbatim: AddAppText.stepOf(step.index, step.count)).font(.appCaption).foregroundStyle(.appSecondary).monospacedDigit()
-            }
-            Text(verbatim: activity).font(.appCaption).foregroundStyle(.appSecondary).fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: [name, AddAppText.stepOf(step.index, step.count), activity].joined(separator: ", ")))
+        let stepText = AddAppText.stepOf(step.index, step.count)
+        return CheckWindowStepView(index: step.index, count: step.count, name: name, stepText: stepText, activity: activity,
+                                   accessibilityText: [name, stepText, activity].joined(separator: ", "), look: Self.look)
     }
 }

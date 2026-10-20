@@ -6,12 +6,25 @@ import AutoHushKit
 import AutoHushTestSupport
 @testable import CheckPanel
 import CheckedPlayers
+import PlayerCheckKit
 
+/// The logs window and Settings keep their place under a name of their
+/// own, which AppKit gives one window at a time: tests run at once, each
+/// with its own, removed after.
 @Suite("Windows")
 @MainActor
-struct WindowTitleTests {
+final class WindowTitleTests {
     private let actions = FakeAppActions()
     private let updates = FakeUpdateCommands()
+    private let frameName = "WindowTitleTests-\(UUID().uuidString)"
+
+    deinit {
+        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(frameName)")
+    }
+
+    private func makeLogs(_ source: LogsModelTests.FakeLog = LogsModelTests.FakeLog()) -> LogsWindowController {
+        LogsWindowController(model: LogsModel(source: source), frameName: frameName)
+    }
 
     private func makeModel() -> SettingsModel { .forTests(actions: actions, updates: updates) }
 
@@ -48,9 +61,9 @@ struct WindowTitleTests {
         #expect(closes.calls == ["closed"])
     }
 
-    /// Settings and the logs window are checked where they're made one at a
-    /// time (SettingsWindowControllerTests.limits, logsWindow): each takes
-    /// the name its place is kept under, which a second can't have.
+    /// Settings and the logs window take the name their place is kept
+    /// under, which a second window can't have: their tests give each one a
+    /// name of its own (SettingsWindowControllerTests, logsWindow).
     @Test("no AutoHush window can go full screen: welcome and Add an App's none; Add a Web App and learning only over another app's")
     func noFullScreen() {
         let model = makeModel()
@@ -193,17 +206,17 @@ struct WindowTitleTests {
 
     @Test("the logs window keeps its place and size under its name")
     func logsWindow() {
-        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
+        let logs = makeLogs()
         // Its place and size kept between launches: the controller gives its
         // window its name (on macOS 14 and 15 it would clear one set before).
-        #expect(logs.windowFrameAutosaveName == LogsWindowController.frameName)
-        #expect(logs.window?.frameAutosaveName == LogsWindowController.frameName)
+        #expect(logs.windowFrameAutosaveName == frameName)
+        #expect(logs.window?.frameAutosaveName == frameName)
+        #expect(LogsWindowController.frameName == "Logs Window")
     }
 
     @Test("the logs window, never opened before, opens centered, at least its smallest size")
     func logsWindowCentered() throws {
-        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LogsWindowController.frameName)") // never opened before
-        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
+        let logs = makeLogs() // never opened before: its name is new
         defer { logs.close() }
         logs.show()
         let logsArea = try #require(logs.window?.screen?.visibleFrame)
@@ -214,7 +227,7 @@ struct WindowTitleTests {
 
     @Test("the logs window can be resized, but never goes full screen")
     func logsWindowResizable() {
-        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
+        let logs = makeLogs()
         #expect(logs.window?.styleMask.contains(.resizable) == true)
         #expect(logs.window?.collectionBehavior.contains(.fullScreenNone) == true) // never full screen
     }
@@ -222,7 +235,7 @@ struct WindowTitleTests {
     @Test("the logs window shown again while open keeps its search")
     func logsWindowKeepsSearch() {
         let log = LogsModelTests.FakeLog()
-        let logs = LogsWindowController(model: LogsModel(source: log))
+        let logs = makeLogs(log)
         defer { logs.close() }
         logs.show()
         logs.model.search = "fade"
@@ -233,7 +246,7 @@ struct WindowTitleTests {
     @Test("the logs window follows new lines while it's open, and no longer once closed")
     func logsWindowFollowsLines() async {
         let log = LogsModelTests.FakeLog()
-        let logs = LogsWindowController(model: LogsModel(source: log))
+        let logs = makeLogs(log)
         logs.show()
         #expect(logs.window?.isOpen == true && log.handlers.count == 1) // new lines follow
         logs.close()

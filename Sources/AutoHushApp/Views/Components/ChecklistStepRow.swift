@@ -140,8 +140,8 @@ struct ChecklistStepRow<Icon: View, Accessory: View>: View {
     }
 
     @ViewBuilder private var buttons: some View {
-        if let button = step.button { StepActionButton(button.title) { action(button) } }
-        if let other = step.secondaryButton { StepActionButton(other.title, secondary: true) { action(other) } }
+        if let button = step.button { MainButton(button.title, inStep: true) { action(button) } }
+        if let other = step.secondaryButton { MainButton(other.title, secondary: true, inStep: true) { action(other) } }
     }
 }
 

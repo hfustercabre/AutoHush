@@ -54,7 +54,7 @@ struct SoundSourcesSettingsView: View {
             // little room.
             BottomBar {
                 Button { IgnoreAppsPicker.run { model.settings.setIgnored($0, true) } } label: {
-                    Text(verbatim: IgnoreAppsPicker.title)
+                    Text(verbatim: IgnoreAppsPicker.title(noneIgnored: model.state.ignoredApps.isEmpty))
                 }
                     .buttonStyle(.chip)
                     .fixedSize()

@@ -29,8 +29,8 @@ extension AppDelegate {
         }
         windowWatch.register(isOpen: { [weak self] in self?.learningWindow?.isOpen == true }) { [.permissions] }
         // While it says a web app it made can't be found, the players too.
-        windowWatch.register(isOpen: { [weak self] in self?.addWebAppWindow?.isOpen == true }) { [weak self] in
-            self?.webAppAwaitingListing == nil ? [.permissions] : [.permissions, .players]
+        windowWatch.register(isOpen: { [weak self] in self?.addWebApp.isOpen == true }) { [weak self] in
+            self?.addWebApp.awaitingListing == nil ? [.permissions] : [.permissions, .players]
         }
     }
 

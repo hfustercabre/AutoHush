@@ -129,16 +129,16 @@ extension Look {
 /// trial heard it last (nil when it wasn't measured), for a press that needs
 /// it (the panel's, for a row that doesn't follow the app).
 @MainActor func trial(_ label: String, pid: pid_t, pause: (_ heard: Bool?) -> Bool, play: (_ heard: Bool?) -> Bool,
-                      undo: (() -> Void)? = nil, whilePaused: (() -> Void)? = nil) -> TrialResult {
+                      undo: (() -> Void)? = nil, whilePaused: (() -> Void)? = nil, reading: TrialReading = .live) -> TrialResult {
     stopState.setInTrial(true)
     defer { stopState.setInTrial(false) }
     trialTrackEnded = false
-    let before = look(pid, level: true)
+    let before = reading.look(pid, true)
     let sign = Sign(before: before)
     say("  \(label): before, \(before.line)")
     let pausedAt = Date()
     guard pause(before.audible) else { say("    couldn't send it"); return .didNotPause }
-    let after = waitFor(4, pid: pid, level: sign.byLevel, until: sign.paused)
+    let after = reading.waitFor(4, pid, sign.byLevel, sign.paused)
     guard sign.paused(after) else {
         say("\(CheckReportLine.afterPause): \(after.line) → it didn't pause in 4 s")
         announcementLine(since: pausedAt).map { say($0) }
@@ -152,7 +152,7 @@ extension Look {
     /// Once more, before anyone is asked: a play it missed shows as such, and
     /// still fails the way. Not when it plays by now (a toggle would pause it again).
     func pressedOnceMore() -> TrialResult {
-        let now = look(pid, level: sign.byLevel)
+        let now = reading.look(pid, sign.byLevel)
         guard !sign.playing(now) else {
             say("    now: \(now.line) → it plays: its play took late")
             trialProblem = "it paused, but played again only after more than 4 s"
@@ -162,7 +162,7 @@ extension Look {
             say("    pressed once more: couldn't play it again either")
             return .pausedOnly
         }
-        let second = waitFor(4, pid: pid, level: sign.byLevel, until: sign.playing)
+        let second = reading.waitFor(4, pid, sign.byLevel, sign.playing)
         if sign.playing(second) {
             say("    pressed once more: \(second.line) → it plays: the first didn't take")
             trialProblem = "it paused, but played again only when pressed a second time" + (trialProblem.map { " (the first: \($0))" } ?? "")
@@ -179,7 +179,7 @@ extension Look {
         say("    couldn't play it again")
         return pressedOnceMore()
     }
-    let back = waitFor(4, pid: pid, level: sign.byLevel, until: sign.playing)
+    let back = reading.waitFor(4, pid, sign.byLevel, sign.playing)
     let again = sign.playing(back)
     if !again, back.stopped, !after.stopped {
         say("    after playing again: \(back.line) → it stopped: its track ended meanwhile")
@@ -192,4 +192,14 @@ extension Look {
         announcingNotification = announcingNotification ?? pauseAnnounced
     }
     return again ? .worked : pressedOnceMore()
+}
+
+/// How a trial reads the app: `look` and `waitFor` (its level measured when
+/// asked), unless a test gives it what the app shows instead.
+struct TrialReading {
+    var look: @MainActor (_ pid: pid_t, _ level: Bool) -> Look
+    var waitFor: @MainActor (_ seconds: Double, _ pid: pid_t, _ level: Bool, _ done: (Look) -> Bool) -> Look
+
+    static let live = TrialReading(look: { pid, level in PlayerCheck.look(pid, level: level) },
+                                   waitFor: { seconds, pid, level, done in PlayerCheck.waitFor(seconds, pid: pid, level: level, until: done) })
 }

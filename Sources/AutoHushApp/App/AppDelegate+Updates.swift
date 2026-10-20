@@ -24,13 +24,18 @@ extension AppDelegate {
         signal(SIGTERM, SIG_IGN)
         let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         source.setEventHandler { [weak self] in
-            MainActor.assumeIsolated {
-                if NSApp.modalWindow != nil { NSApp.abortModal() }
-                self?.quitFromRunLoop()
-            }
+            MainActor.assumeIsolated { self?.terminationSignalArrived() }
         }
         source.resume()
         terminationSignal = source
+    }
+
+    /// What SIGTERM does: closes the alert open (`modal`), then quits from
+    /// the run loop (`quit`; tests give their own).
+    func terminationSignalArrived(modal: NSWindow? = NSApp.modalWindow, abortModal: () -> Void = { NSApp.abortModal() },
+                                  quit: (() -> Void)? = nil) {
+        if modal != nil { abortModal() }
+        if let quit { quit() } else { quitFromRunLoop() }
     }
 
     /// A moment when AutoHush can restart for an update unnoticed: it isn't

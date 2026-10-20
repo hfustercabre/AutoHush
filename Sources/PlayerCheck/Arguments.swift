@@ -85,8 +85,8 @@ func findApp(_ target: String) -> URL? {
     }
     if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: target) { return url }
     let name = target.hasSuffix(".app") ? target : target + ".app"
-    let folders = ["/Applications", NSHomeDirectory() + "/Applications", "/System/Applications",
-                   "/System/Applications/Utilities", "/Applications/Utilities"]
+    let folders = ApplicationFolders.all.map(\.path)
+        + [ApplicationFolders.system, ApplicationFolders.applications].map { $0.appending(path: "Utilities").path }
     for folder in folders where FileManager.default.fileExists(atPath: folder + "/" + name) {
         return URL(fileURLWithPath: folder + "/" + name)
     }

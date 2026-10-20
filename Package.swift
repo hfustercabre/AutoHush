@@ -201,7 +201,7 @@ let package = Package(
         .testTarget(
             name: "AutoHushAppTests",
             dependencies: [
-                "AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "CheckPanel",
+                "AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "CheckPanel", "PlayerCheckKit",
                 "AutoHushTestSupport", "PlayersTestSupport",
             ]
         ),

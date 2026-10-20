@@ -7,10 +7,14 @@ import UniformTypeIdentifiers
 /// menu's, under the ignored apps.
 @MainActor
 enum IgnoreAppsPicker {
-    /// The button's and the menu row's title.
-    static var title: String {
-        String(localized: "Ignore Another App…",
-               comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps: opens a panel to pick apps that never pause your player")
+    /// The button's and the menu row's title: Ignore an App… while no app
+    /// is ignored yet, then Ignore Another App… (the user, 2026-10-20).
+    static func title(noneIgnored: Bool) -> String {
+        noneIgnored
+            ? String(localized: "Ignore an App…",
+                     comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, while no app is ignored yet: opens a panel to pick apps that never pause your player")
+            : String(localized: "Ignore Another App…",
+                     comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, once an app is ignored: opens a panel to pick more apps that never pause your player")
     }
 
     /// Asks for apps, then ignores each one (`ignore`) AutoHush can tell

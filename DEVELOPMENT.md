@@ -59,6 +59,8 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
   │     read for the windows) and Add an App's app alike
   ├── AddAppFeature ── Add an App…: its model, windows, the check's panel and the Mac's output muted
   │     during a check; what it needs from the rest of AutoHush it asks of AppDelegate (AddAppHost)
+  ├── AddWebAppFeature ── Add a Web App…: its model and window, making the web app and choosing it, one
+  │     made but not listed yet; as Add an App, through AppDelegate (AddWebAppHost)
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by
         │   itself after a failed start, when it opens), checks access again, keeps the held pauses and
         │   the hand-over
@@ -97,9 +99,11 @@ AutoHush (executable: the entry point only)
        │    ├─ MenuPlayers         shared by the players controlled through their playback menu
        │    ├─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
        │    └─ CheckedPlayers      the apps added with Add an App…, controlled the way the user chose
-       ├─ CheckedPlayers    also used directly: a check's result, the report's lines and the progress they show
-       ├─ PlayerCheckKit    the helper's command line, exit statuses and answers, to run it
-       ├─ CheckPanel        a check's panel and shade (Sources/CheckPanel), shown while it runs
+       ├─ CheckedPlayers    also used directly: a check's result
+       ├─ PlayerCheckKit    the helper's command line, exit statuses and answers, to run it, and the
+       │                    report's lines and the progress they show
+       ├─ CheckPanel        a check's panel and shade (Sources/CheckPanel), shown while it runs, and
+       │                    the parts both apps draw in it (CheckRequestNote, CheckWindowStepView)
        └─ AutoHushKit       the engine, reached through MonitoringPipeline: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
@@ -138,7 +142,7 @@ Sources/
                          (its app's PermissionsState, as its rows) and CheckPermission (one of them),
                          PlayerCheckEnd (how it ended), KeptCheck (a finished
                          check not used yet), OtherAppProblem (why an app picked from the disk can't be
-                         checked)
+                         checked), CopiedFeedback (a Copy button's "Copied" for 2 s)
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open), Playback/ (PlayerSession,
@@ -150,7 +154,8 @@ Sources/
                          Updates/ (UpdateController, observable for Settings; UpdateChecker,
                          UpdateInstaller: download, signature check, swap; UpdateDownloads, UpdateNotifier,
                          ReleaseNotes), WebApps/ (LearningSession, learning a web app's controls with the
-                         user; FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
+                         user; AddWebAppHost, what Add a Web App needs from the rest of AutoHush;
+                         FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
                          (Shortcuts' actions and their choices, the two App Shortcuts, the Focus filter, and
                          FocusAutoPause, which notes Auto-Pause as a Focus starts and puts it back as it ends;
                          they reach Auto-Pause through AutoPauseControlling, registered at launch by
@@ -165,7 +170,8 @@ Sources/
     Controllers/         AppKit's window and menu controllers: StatusMenuController (with +Keys, the
                          keys as in macOS's menus, and +SideWindow, the side window), MenuPanel (the
                          menu's window, and its side window's), SettingsWindowController,
-                         PlayerChooserWindowController (the welcome window), AddWebAppWindowController,
+                         PlayerChooserWindowController (the welcome window), AddWebAppFeature (Add a Web
+                         App: its model, its window and the add under way), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base),
                          LogsWindowController, AddAppFeature (Add an App: its model, its windows, the check's
                          panel and the Mac's output muted during a check), AddAppWindowController,
@@ -235,9 +241,8 @@ Sources/
                          its own dictionary allows, documents too), MenuPlayerProfile.found with
                          PlayPauseWords.found (any app's menu and words); and CheckedPlayers: PlayerSetup
                          (the way the user chose, kept), CheckedPlayer (pressing by it, and checking its
-                         presses), MutedApp (muted instead of paused), LateState and LateHearing (a toggle's state, and a stale row's sound),
-                         MuteState, CheckReportLine (the report's lines AutoHush and Player Check follow) and
-                         CheckProgress (how far a check has got, read from them), and the Now Playing panel
+                         presses), MutedApp (muted instead of paused), LateState and LateHearing (a
+                         toggle's state, and a stale row's sound), MuteState, and the Now Playing panel
                          (NowPlayingPanel, AccessibilityNowPlayingPanel, PanelRows, PanelWay: the last way,
                          its row told by the clues its check found, PanelClues; NowPlayingSetting: showing it
                          for a press while hidden)
@@ -249,7 +254,8 @@ Sources/
                          it found (CheckResult), --partial goes on without Audio Recording or Automation,
                          --logs and --caches put its logs and caches in AutoHush's folders, --no-taps taps no
                          sound (AntiDot mode); Kit/ is PlayerCheckKit, with the flags, exit statuses and
-                         answers whoever runs it uses
+                         answers whoever runs it uses, and CheckReportLine (the report's lines AutoHush and
+                         Player Check follow) and CheckProgress (how far a check has got, read from them)
 Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
                          fakes, a value behind a lock, a gate, a sleep the test ends) and PlayersTestSupport
                          (the players' stores and a scripted app's Apple events, in memory); PlayerCheckTests

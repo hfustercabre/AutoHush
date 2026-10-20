@@ -4,16 +4,21 @@ import SwiftUI
 /// semibold, and Return presses it (Continue, Done, Choose, Start the
 /// Check). `secondary`: grey and regular, the other way on beside it, with
 /// no key of its own. `cancels`: Escape presses it instead (the check's Stop).
+/// `inStep`: a step's button, under its lines (a checklist's, Add an App's),
+/// on one line, so two that don't fit side by side go one under the other
+/// (`FlowingButtons`).
 struct MainButton: View {
     let title: String
     var secondary = false
     var cancels = false
+    var inStep = false
     let action: () -> Void
 
-    init(_ title: String, secondary: Bool = false, cancels: Bool = false, action: @escaping () -> Void) {
+    init(_ title: String, secondary: Bool = false, cancels: Bool = false, inStep: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.secondary = secondary
         self.cancels = cancels
+        self.inStep = inStep
         self.action = action
     }
 
@@ -23,28 +28,7 @@ struct MainButton: View {
         }
         .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
         .keyboardShortcut(cancels ? .cancelAction : secondary ? nil : .defaultAction)
-    }
-}
-
-/// A step's button, under its lines (a checklist's, Add an App's): a
-/// `MainButton` on one line, so two that don't fit side by side go one
-/// under the other (`FlowingButtons`).
-struct StepActionButton: View {
-    let title: String
-    var secondary = false
-    var cancels = false
-    let action: () -> Void
-
-    init(_ title: String, secondary: Bool = false, cancels: Bool = false, action: @escaping () -> Void) {
-        self.title = title
-        self.secondary = secondary
-        self.cancels = cancels
-        self.action = action
-    }
-
-    var body: some View {
-        MainButton(title, secondary: secondary, cancels: cancels, action: action)
-            .fixedSize()
-            .padding(.top, 2)
+        .fixedSize(horizontal: inStep, vertical: inStep)
+        .padding(.top, inStep ? 2 : 0)
     }
 }

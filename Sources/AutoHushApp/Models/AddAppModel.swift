@@ -1,5 +1,6 @@
 import Foundation
 import CheckedPlayers
+import PlayerCheckKit
 
 /// How adding an app goes (Add an App…), step by step, for its window
 /// (W2): choose the app, allow what the check needs (only what that app

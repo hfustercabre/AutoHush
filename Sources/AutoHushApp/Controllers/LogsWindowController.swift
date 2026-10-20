@@ -16,7 +16,9 @@ final class LogsWindowController: NSWindowController, NSWindowDelegate {
     /// The window has a place: kept from a previous launch, or centered once.
     private var isPlaced: Bool
 
-    init(model: LogsModel) {
+    /// `frameName`: where the window's place and size are kept; tests give
+    /// each window a name of its own, as Settings' do.
+    init(model: LogsModel, frameName: String = LogsWindowController.frameName) {
         self.model = model
         let hosting = NSHostingController(rootView: LogsView(model: model))
         hosting.sizingOptions = []
@@ -33,11 +35,11 @@ final class LogsWindowController: NSWindowController, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.contentMinSize = Self.minimumSize
         window.setContentSize(Self.initialSize)
-        isPlaced = window.setFrameUsingName(Self.frameName)
+        isPlaced = window.setFrameUsingName(frameName)
         window.title = Self.title
         super.init(window: window)
         // The controller's, as Settings' (`SettingsWindowController`).
-        windowFrameAutosaveName = Self.frameName
+        windowFrameAutosaveName = frameName
         window.delegate = self
     }
 

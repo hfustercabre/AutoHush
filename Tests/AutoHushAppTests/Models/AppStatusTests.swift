@@ -230,32 +230,32 @@ struct AppStatusTests {
     func healthBeatsAutoPause() {
         var status = AppStatus()
         status.autoPause = .off
-        status.setHealth(.degraded("Jukebox isn’t running"))
+        status.setHealth(.playerClosed("Jukebox isn’t running"))
         #expect(status.statusLine == "Jukebox isn’t running")
         #expect(!status.dimsIcon)
     }
 
-    @Test("degraded health clears sources; it ends by itself when the player opens, so no Retry")
-    func degradedClearsSources() {
+    @Test("a closed player clears sources and needs nothing: it starts on by itself once it opens, so no Try Again, and the icon is as with no music")
+    func closedPlayerIsCalm() {
         var status = ready(.musicPlaying)
         status.setActiveSources([chrome])
-        status.setHealth(.degraded("Jukebox isn’t running"))
+        status.setHealth(.playerClosed("Jukebox isn’t running"))
         #expect(status.activeSources.isEmpty)
-        #expect(status.icon == .attention)
+        #expect(status.icon == .noMusic && !status.needsAttention)
         #expect(!status.canRetry)
         #expect(status.warning == nil)
     }
 
-    @Test("Retry is offered only after a failed start nothing announces the end of; every problem needs attention", arguments: [
+    @Test("Retry is offered only after a failed start nothing announces the end of; every problem needs attention, a closed player none", arguments: [
         (AppHealthState.retrying("Jukebox isn’t responding"), true), (.failed("Monitor failed hard"), true),
         (.degraded("Jukebox isn’t installed"), false), (.needsPermission(.automation(player: "Jukebox")), false),
-        (.needsPlayer("Choose a media player"), false), (.starting, false), (.ready, false),
+        (.needsPlayer("Choose a media player"), false), (.playerClosed("Jukebox isn’t running"), false), (.starting, false), (.ready, false),
     ])
     func retryOffered(health: AppHealthState, offered: Bool) {
         var status = AppStatus()
         status.setHealth(health)
         #expect(status.canRetry == offered)
-        #expect(status.needsAttention == (health != .starting && health != .ready))
+        #expect(status.needsAttention == (health != .starting && health != .ready && health != .playerClosed("Jukebox isn’t running")))
     }
 
     @Test("waiting for a music player to be chosen needs attention, but no Retry or warning")
@@ -312,7 +312,7 @@ struct AppStatusTests {
         #expect(status.warning == nil)
         status.detection = .unavailable
         #expect(status.warning == .systemAudioRecording)
-        status.setHealth(.degraded("Jukebox isn’t running"))
+        status.setHealth(.playerClosed("Jukebox isn’t running"))
         #expect(status.warning == nil)
     }
 

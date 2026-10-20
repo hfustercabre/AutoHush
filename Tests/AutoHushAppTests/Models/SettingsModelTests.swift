@@ -61,6 +61,21 @@ struct SettingsModelTests {
         #expect(!model.welcomeAsksPermissions)
     }
 
+    @Test("AntiDot mode keeps its way: turned off and on again, or used past Audio Recording, it's the way chosen last")
+    func antiDotKeepsItsWay() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.setAntiDotMode(true)
+        #expect(model.detectionMethod == .playbackSignals) // none chosen yet
+        model.setDetectionMethod(.openStreams)
+        model.setAntiDotMode(false)
+        #expect(model.detectionMethod == .audioLevels)
+        model.setAntiDotMode(true)
+        #expect(model.detectionMethod == .openStreams)
+        model.setAntiDotMode(false)
+        model.useAntiDotMode()
+        #expect(model.detectionMethod == .openStreams)
+    }
+
     @Test("AntiDot mode can't be turned on while the player can only be muted: its switch is off, saying why")
     func antiDotUnavailable() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

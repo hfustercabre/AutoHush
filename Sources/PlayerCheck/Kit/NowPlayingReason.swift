@@ -22,7 +22,7 @@ package enum NowPlayingReason {
         if case .chromiumWebApp(let browserID) = PageAccess.interface(ofAppAt: url) {
             return "Chromium, as a \(BundleNames.name(of: browserID)) web app"
         }
-        if bundleID == "com.apple.Safari" || bundleID?.hasPrefix("com.apple.SafariTechnologyPreview") == true { return "WebKit" }
+        if bundleID == SafariUI.bundleID || bundleID?.hasPrefix("com.apple.SafariTechnologyPreview") == true { return "WebKit" }
         var binaries: [URL] = []
         if let items = FileManager.default.enumerator(at: url.appendingPathComponent("Contents/MacOS"), includingPropertiesForKeys: [.isRegularFileKey]) {
             for case let item as URL in items where (try? item.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {

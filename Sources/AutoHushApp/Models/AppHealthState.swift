@@ -7,9 +7,12 @@ enum AppHealthState: Equatable, Sendable {
     case ready
     /// No media player is chosen yet: AutoHush waits for the user.
     case needsPlayer(String)
-    /// The player isn't running or isn't installed: AutoHush starts on when
-    /// it opens or is back.
+    /// The player isn't installed: AutoHush starts on once it's back.
     case degraded(String)
+    /// The player is closed: AutoHush listens anyway, has nothing to pause,
+    /// and starts on once it opens, so nothing needs the user (the user,
+    /// 2026-10-20: said calmly).
+    case playerClosed(String)
     /// The player didn't answer, or answered with an error, and nothing
     /// announces when it's fixed: AutoHush tries again by itself, and the
     /// menu offers Try Again.
@@ -40,7 +43,7 @@ extension AppHealthState {
         case .accessibilityPermissionDenied:
             self = .needsPermission(.accessibility(player: playerName))
         case .playerNotRunning:
-            self = .degraded(String(localized: "\(playerName) isn’t running",
+            self = .playerClosed(String(localized: "\(playerName) isn’t running",
                                     comment: "Status line; %@ is the media player, e.g. Spotify"))
         case .playerNotResponding:
             self = .retrying(String(localized: "\(playerName) isn’t responding",

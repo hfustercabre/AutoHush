@@ -60,7 +60,12 @@ extension CheckResult.WindowState {
     /// sound alone can be about 130 points tall), or at least 200 points tall
     /// (not a strip or a helper).
     static func isOrdinary(_ info: Info, standard: Set<Int>) -> Bool {
-        info[kCGWindowLayer as String] as? Int == 0 && (standard.contains(number(of: info)) || frame(of: info).height >= 200)
+        isOrdinary(layer: info[kCGWindowLayer as String] as? Int, height: frame(of: info).height, isStandard: standard.contains(number(of: info)))
+    }
+
+    /// `isOrdinary`'s rule, on what it reads of the window.
+    nonisolated static func isOrdinary(layer: Int?, height: CGFloat, isStandard: Bool) -> Bool {
+        layer == 0 && (isStandard || height >= 200)
     }
 
     /// The numbers of the windows Accessibility calls standard ones, and of
@@ -107,8 +112,12 @@ extension CheckResult.WindowState {
     /// Whether the windows on screen above it cover every point of a grid over it.
     static func isCovered(_ info: Info) -> Bool {
         guard infos(.optionOnScreenOnly).contains(where: { number(of: $0) == number(of: info) }) else { return false }
-        let above = windowsAbove(info).map(\.frame)
-        let box = frame(of: info)
+        return isCovered(box: frame(of: info), above: windowsAbove(info).map(\.frame))
+    }
+
+    /// `isCovered`'s rule: whether `above` holds every point of a 9×9 grid
+    /// over `box`, edges included, a window within half a point counting.
+    nonisolated static func isCovered(box: CGRect, above: [CGRect]) -> Bool {
         for row in 0...8 {
             for column in 0...8 {
                 let point = CGPoint(x: box.minX + box.width * CGFloat(column) / 8, y: box.minY + box.height * CGFloat(row) / 8)

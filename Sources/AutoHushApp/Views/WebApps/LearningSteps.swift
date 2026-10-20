@@ -68,7 +68,7 @@ enum LearningText {
     /// Under the user's pause step, standing out: how long is left before
     /// learning starts over from “Play something in …”.
     static func countdown(_ remaining: TimeInterval) -> String {
-        let time = Duration.seconds(Int(remaining.rounded(.up))).formatted(.time(pattern: .minuteSecond))
+        let time = remaining.countdownText
         return String(localized: "You have \(time) to pause it and click It’s Paused.",
                       comment: "Under the step “Pause it yourself” while AutoHush learns a web app's controls, on a tinted line: a countdown, after which learning starts over; %@ is the time left, e.g. 0:45; “It’s Paused” is the button under it")
     }
@@ -104,30 +104,6 @@ enum LearningText {
     static var learnAgainButton: String {
         String(localized: "Learn Again…",
                comment: "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window; what was learned keeps working until the user clicks “It’s Playing” there")
-    }
-}
-
-/// A web app's controls, in the menu's card and Settings → General: whether
-/// they're learned, and Learn Controls (Learn Again once learned), which
-/// opens a new learning window from the first step.
-struct ControlsRow: View {
-    let name: String
-    let isLearned: Bool
-    /// The button's text: the menu's are a step smaller than Settings'.
-    var buttonFont: Font = .appBody
-    let learn: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            RowTitle(Text(verbatim: LearningText.controlsTitle),
-                     subtitle: Text(verbatim: isLearned ? LearningText.learnedNote : LearningText.notLearnedNote(name)))
-            Spacer(minLength: 8)
-            Button(action: learn) {
-                Text(verbatim: isLearned ? LearningText.learnAgainButton : LearningText.learnButton).font(buttonFont)
-            }
-            .buttonStyle(.chip)
-            .fixedSize()
-        }
     }
 }
 

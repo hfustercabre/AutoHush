@@ -1,5 +1,6 @@
 import AutoHushKit
 import CheckedPlayers
+import PlayerCheckKit
 import Foundation
 
 /// What the Add an App window (W2), the warning before its check (W6) and
@@ -321,15 +322,10 @@ enum AddAppText {
                comment: "Add an App window, under the step “Play something in %@” while it waits; %@ is the app")
     }
 
-    /// A time left, as "1:45".
-    private static func time(_ remaining: TimeInterval) -> String {
-        Duration.seconds(max(0, Int(remaining.rounded(.up)))).formatted(.time(pattern: .minuteSecond))
-    }
-
     /// The countdown while AutoHush waits for the app to play (the window,
     /// the panel).
     static func timeToPlay(_ remaining: TimeInterval) -> String {
-        String(localized: "You have \(time(remaining)) to start it playing.",
+        String(localized: "You have \(remaining.countdownText) to start it playing.",
                comment: "Add an App window and the check's panel, on a tinted line counting down while AutoHush waits for the app to play; %@ is the time left, e.g. 1:45")
     }
 
@@ -338,10 +334,10 @@ enum AddAppText {
         switch request {
         case .play: timeToPlay(remaining)
         case .pause:
-            String(localized: "You have \(time(remaining)) to pause it.",
+            String(localized: "You have \(remaining.countdownText) to pause it.",
                    comment: "The check's panel, on a tinted line counting down while the check waits for the user to pause the app; %@ is the time left, e.g. 1:45")
         case .allowAccessibility:
-            String(localized: "You have \(time(remaining)) to allow it.",
+            String(localized: "You have \(remaining.countdownText) to allow it.",
                    comment: "The check's panel, on a tinted line counting down while the check waits for Accessibility to be allowed; %@ is the time left, e.g. 1:45")
         }
     }

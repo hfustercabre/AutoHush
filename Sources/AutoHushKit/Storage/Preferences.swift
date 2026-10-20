@@ -35,6 +35,7 @@ package final class Preferences {
         static let pauseHandedOver = "pauseHandedOverAt"
         static let pauseHandedOverPlayer = "pauseHandedOverPlayer"
         static let detectionMethod = "detectionMethod"
+        static let antiDotMethod = "antiDotMethod"
         static let playbackAssertions = "playbackAssertions"
         /// Earlier list of apps seen announcing playback, without the names
         /// AntiDot mode now learns; dropped, so apps are learned again.
@@ -178,6 +179,21 @@ package final class Preferences {
         set {
             defaults.set(newValue.rawValue, forKey: Key.detectionMethod)
             defaults.set(nil, forKey: Key.legacyMeasuresAudioLevels)
+        }
+    }
+
+    /// AntiDot mode's way chosen last, which it's turned on with again (the
+    /// user, 2026-10-20); by what apps tell macOS until one is chosen.
+    package var antiDotMethod: DetectionMethod {
+        get {
+            if let stored = (defaults.object(forKey: Key.antiDotMethod) as? String).flatMap(DetectionMethod.init), stored.isAntiDot {
+                return stored
+            }
+            return detectionMethod.isAntiDot ? detectionMethod : .playbackSignals
+        }
+        set {
+            guard newValue.isAntiDot else { return }
+            defaults.set(newValue.rawValue, forKey: Key.antiDotMethod)
         }
     }
 

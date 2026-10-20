@@ -104,7 +104,7 @@ extension AppDelegateTests {
     func permissionRequestAsksAccessibility() async {
         let (scratch, sut) = permissionsTurnedDown()
         scratch.trusted = false
-        sut.addWebAppModel.openAccessibilitySettings()
+        sut.addWebApp.model.openAccessibilitySettings()
         await TestWait.until { scratch.asked.count == 2 }
         #expect(scratch.asked.suffix(2) == ["prompt accessibility", "open Privacy_Accessibility"])
     }
@@ -269,9 +269,14 @@ extension AppDelegateTests {
         let scratch = Scratch()
         let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
-        sut.settingsWindowController = SettingsWindowController(model: sut.settingsModel)
+        // A place of its own: AppKit gives a name to one window at a time.
+        let frameName = "watchFollowsSettings-\(UUID().uuidString)"
+        sut.settingsWindowController = SettingsWindowController(model: sut.settingsModel, frameName: frameName)
         sut.settingsWindowController?.show(page: .general)
-        defer { sut.settingsWindowController?.close() }
+        defer {
+            sut.settingsWindowController?.close()
+            UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(frameName)")
+        }
         sut.windowWatch.wake()
         await TestWait.until { clock.sleeping == 1 }
         #expect(!sut.settingsModel.launchAtLoginEnabled)

@@ -118,7 +118,7 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         sut.chooseMusicPlayer(webApp.bundleID)
         await TestWait.until { sut.status.learning == .learned }
-        sut.showAddWebApp() // another site's address being typed
+        sut.addWebApp.show() // another site's address being typed
         #expect(scratch.addWindow.isOpen)
 
         sut.learnControlsAgain()
@@ -170,7 +170,7 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
 
         sut.chooseMusicPlayer(webApp.bundleID)
-        await TestWait.until { sut.status.health == .degraded("YT Music isn’t running") }
+        await TestWait.until { sut.status.health == .playerClosed("YT Music isn’t running") }
         #expect(scratch.learningWindow.isOpen)
     }
 
@@ -187,16 +187,16 @@ extension AppDelegateTests {
         scratch.maker.onMake = { found.value = [webApp] }
         let (sut, _) = makeSUT(scratch)
 
-        sut.showAddWebApp()
+        sut.addWebApp.show()
         #expect(scratch.addWindow.isOpen)
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") }
         #expect(found.value.isEmpty) // nothing's added before the user clicks Add to Dock
-        sut.addWebAppModel.addTapped()
+        sut.addWebApp.model.addTapped()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && !scratch.opened.isEmpty }
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
-        #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: false))
+        #expect(sut.addWebApp.model.phase == .learning(name: "Qobuz", alreadyThere: false))
         #expect(scratch.opened == [appURL])
         #expect(!scratch.learningWindow.isOpen) // the add window shows the steps
 
@@ -226,11 +226,11 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
 
         sut.openAddWebApp() // the menu's Add a Web App…
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
-        sut.addWebAppModel.addTapped()
-        await TestWait.until { sut.addWebAppModel.problem != nil }
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebApp.model.addTapped()
+        await TestWait.until { sut.addWebApp.model.problem != nil }
         return (scratch, sut, webApp, {
             found.value = [webApp]
             scratch.maker.result = .success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true))
@@ -242,9 +242,9 @@ extension AppDelegateTests {
     @Test("a web app made but not listed yet is looked for a few times; still missing, the add window says so and Continue tries again")
     func addedWebAppNotFound() async {
         let (scratch, sut, webApp, _) = await webAppNotListed()
-        #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
-        #expect(sut.addWebAppModel.phase == .entering)
-        #expect(sut.addWebAppModel.address == "play.qobuz.com") // Continue tries again
+        #expect(sut.addWebApp.model.problem == .notFound(name: "Qobuz"))
+        #expect(sut.addWebApp.model.phase == .entering)
+        #expect(sut.addWebApp.model.address == "play.qobuz.com") // Continue tries again
         #expect(sut.status.chosenPlayerID != webApp.bundleID)
         #expect(scratch.addWindow.isOpen)
     }
@@ -255,8 +255,8 @@ extension AppDelegateTests {
         let (_, sut, webApp, listNow) = await webAppNotListed()
         listNow()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
-        #expect(sut.addWebAppModel.problem == nil)
-        #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: true))
+        #expect(sut.addWebApp.model.problem == nil)
+        #expect(sut.addWebApp.model.phase == .learning(name: "Qobuz", alreadyThere: true))
     }
 
     @MainActor
@@ -265,15 +265,15 @@ extension AppDelegateTests {
     func addedWebAppNoLongerLookedFor(meanwhile: WhileNotFound) async {
         let (scratch, sut, _, listNow) = await webAppNotListed()
         switch meanwhile {
-        case .addressChanged: sut.addWebAppModel.address = "deezer.com"
+        case .addressChanged: sut.addWebApp.model.address = "deezer.com"
         case .windowClosed: scratch.addWindow.close()
         }
         listNow()
-        #expect(sut.webAppAwaitingListing == nil) // no longer looked for
+        #expect(sut.addWebApp.awaitingListing == nil) // no longer looked for
         sut.refreshPlayerOptions()
         await sut.session.waitUntilIdle()
         #expect(sut.status.chosenPlayerID == Players.first)
-        #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
+        #expect(sut.addWebApp.model.problem == .notFound(name: "Qobuz"))
     }
 
     @MainActor
@@ -288,14 +288,14 @@ extension AppDelegateTests {
         scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true)))
         let (sut, _) = makeSUT(scratch, madeWebAppWait: .milliseconds(30))
 
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.madeBundleID == webApp.bundleID }
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.madeBundleID == webApp.bundleID }
         sut.chooseMusicPlayer(Players.second) // from the menu, meanwhile
-        await TestWait.until { sut.addingWebApp == nil }
+        await TestWait.until { sut.addWebApp.adding == nil }
         #expect(sut.status.chosenPlayerID == Players.second)
-        #expect(sut.addWebAppModel.problem == nil)
+        #expect(sut.addWebApp.model.problem == nil)
     }
 
     @MainActor
@@ -313,11 +313,11 @@ extension AppDelegateTests {
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         #expect(sut.isShowingPlayerChooser)
 
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
-        sut.addWebAppModel.addTapped()
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebApp.model.addTapped()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isOpen }
         #expect(!scratch.addWindow.isOpen) // one window asks: the welcome window
         #expect(sut.isShowingPlayerChooser)
@@ -341,15 +341,15 @@ extension AppDelegateTests {
 
         sut.chooseMusicPlayer(suggestion)
         #expect(scratch.addWindow.isOpen)
-        #expect(sut.addWebAppModel.address == "deezer.com")
-        #expect(sut.addWebAppModel.phase == .entering)
+        #expect(sut.addWebApp.model.address == "deezer.com")
+        #expect(sut.addWebApp.model.phase == .entering)
         #expect(sut.status.chosenPlayerID == Players.first)
 
-        sut.addWebAppModel.address = "something else"
-        sut.showAddWebApp() // the window's open: what's typed stays
-        #expect(sut.addWebAppModel.address == "something else")
+        sut.addWebApp.model.address = "something else"
+        sut.addWebApp.show() // the window's open: what's typed stays
+        #expect(sut.addWebApp.model.address == "something else")
         sut.chooseMusicPlayer(suggestion) // another click fills it in again
-        #expect(sut.addWebAppModel.address == "deezer.com")
+        #expect(sut.addWebApp.model.address == "deezer.com")
     }
 
     @MainActor
@@ -365,11 +365,11 @@ extension AppDelegateTests {
                                                             alreadyThere: false)))
         scratch.maker.onMake = { found.value = [webApp] }
         let (sut, _) = makeSUT(scratch)
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
-        sut.addWebAppModel.addTapped()
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") }
+        sut.addWebApp.model.addTapped()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID } // not in `scratch.installed`: macOS doesn't know it
         #expect(sut.status.playerOptions.first { $0.bundleID == webApp.bundleID }?.appURL == appURL)
     }
@@ -383,13 +383,13 @@ extension AppDelegateTests {
         let made = OSAllocatedUnfairLock(initialState: false)
         scratch.maker.onMake = { made.withLock { $0 = true } }
         let (sut, _) = makeSUT(scratch)
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
-        let adding = sut.addingWebApp
-        sut.addWebAppModel.windowClosed()
-        #expect(sut.addWebAppModel.phase == .entering)
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") }
+        let adding = sut.addWebApp.adding
+        sut.addWebApp.model.windowClosed()
+        #expect(sut.addWebApp.model.phase == .entering)
         await adding?.value // the cancelled add is over
         #expect(!made.withLock { $0 })
         #expect(scratch.opened.isEmpty)
@@ -403,24 +403,24 @@ extension AppDelegateTests {
         scratch.maker.result = .success(MadeWebApp(bundleID: "x", name: "X", url: URL(fileURLWithPath: "/x.app"), alreadyThere: false))
         scratch.maker.waitsForCancel = true
         let (sut, _) = makeSUT(scratch)
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.phase == .opening }
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .opening }
 
-        sut.addWebAppModel.windowClosed() // the window's Cancel, or its close button
-        #expect(sut.addWebAppModel.phase == .entering)
+        sut.addWebApp.model.windowClosed() // the window's Cancel, or its close button
+        #expect(sut.addWebApp.model.phase == .entering)
         await TestWait.until { scratch.maker.wasCancelled }
         #expect(scratch.opened.isEmpty)
         #expect(sut.status.chosenPlayerID == Players.first)
 
         scratch.maker.waitsForCancel = false
         scratch.maker.result = .failure(.noAnswer(host: "play.qobuz.com"))
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.problem != nil }
-        #expect(sut.addWebAppModel.problem == .noAnswer(host: "play.qobuz.com"))
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.problem != nil }
+        #expect(sut.addWebApp.model.problem == .noAnswer(host: "play.qobuz.com"))
     }
 
     @MainActor
@@ -435,9 +435,9 @@ extension AppDelegateTests {
                                                             alreadyThere: true)))
         let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
         #expect(sut.status.chosenPlayerID == webApp.bundleID)
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "play.qobuz.com"
-        sut.addWebAppModel.continueTapped()
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
         await TestWait.until { !scratch.addWindow.isOpen }
     }
 
@@ -464,14 +464,14 @@ extension AppDelegateTests {
         let scratch = Scratch()
         scratch.maker = FakeWebAppMaker(.failure(.noAnswer(host: "nowhere.example")))
         let (sut, _) = makeSUT(scratch)
-        sut.showAddWebApp()
-        sut.addWebAppModel.address = "nowhere.example"
-        sut.addWebAppModel.continueTapped()
-        await TestWait.until { sut.addWebAppModel.problem != nil }
-        #expect(sut.addWebAppModel.problem == .noAnswer(host: "nowhere.example"))
-        #expect(sut.addWebAppModel.phase == .entering)
-        #expect(sut.addWebAppModel.address == "nowhere.example")
-        #expect(sut.addWebAppModel.problemText?.contains("nowhere.example") == true)
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "nowhere.example"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.problem != nil }
+        #expect(sut.addWebApp.model.problem == .noAnswer(host: "nowhere.example"))
+        #expect(sut.addWebApp.model.phase == .entering)
+        #expect(sut.addWebApp.model.address == "nowhere.example")
+        #expect(sut.addWebApp.model.problemText?.contains("nowhere.example") == true)
         #expect(sut.status.chosenPlayerID == Players.first)
     }
 

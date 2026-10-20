@@ -1,5 +1,6 @@
 import Testing
-@testable import CheckedPlayers
+import CheckedPlayers
+@testable import PlayerCheckKit
 
 @Suite("CheckReportLine")
 struct CheckReportLineTests {
