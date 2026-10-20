@@ -9,19 +9,6 @@ import PlayerCheckKit
 /// test's Permissions.
 @MainActor var automationAnswer: AutomationPermission?
 
-/// Automation for the app, asked of macOS (its prompt shows when it hasn't
-/// asked yet). An app still starting doesn't answer Apple events yet (-600,
-/// as one Player Check opened just before), so it's asked again for up to
-/// 20 s while the app runs.
-@MainActor func askAutomation(pid: pid_t) -> AutomationPermission {
-    let answer = AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true))
-    guard answer == .notRunning else { return answer }
-    say(CheckReportLine.permission(.automation(app: appName), "\(appName) didn't answer yet (it may still be starting): asked again for up to 20 s"))
-    return Polling.wait(seconds: 20, every: 0.5, runLoop: true, from: answer,
-                        reading: { AutomationPermission(status: AutomationPermission.check(pid: pid, ask: true)) },
-                        until: { $0 != .notRunning || running?.isTerminated != false })
-}
-
 /// What a test needs, asked before it does anything: Accessibility (the
 /// window's states, the menu, the page, the panel), Audio Recording (its
 /// level, and the mute that keeps it silent meanwhile), and Automation for
@@ -54,7 +41,11 @@ import PlayerCheckKit
     }
     var unanswered = false
     if scriptControls() != nil {
-        let answer = askAutomation(pid: running.processIdentifier)
+        // Asked once: macOS waits for an app still starting before it answers
+        // (measured on macOS 14.4, 15 and 27, 2026-10-20), so `.notRunning`
+        // means it quit meanwhile, or answered something else. Its prompt
+        // shows when it hasn't asked yet.
+        let answer = AutomationPermission(status: AutomationPermission.check(pid: running.processIdentifier, ask: true))
         if answer == .allowed || answer == .denied { automationAnswer = answer }
         let automation = CheckReportLine.Permission.automation(app: appName)
         switch answer {

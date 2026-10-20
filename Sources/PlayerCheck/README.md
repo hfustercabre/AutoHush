@@ -89,8 +89,8 @@ plays is told by other signs, and without Automation its AppleScript isn't
 tried.
 With `--no-taps`, which AutoHush passes in AntiDot mode, no sound is tapped
 at all, as without Audio Recording. An app that doesn't answer whether it
-may be controlled (one still starting) is asked again for up to 20 s, and
-the check stops the same way, saying so, if it never answers.
+may be controlled (it quit meanwhile) stops the check the same way, saying
+so; macOS itself waits for an app still starting before it answers.
 `--read-only`, `--play` and `--pause` ask nothing up front.
 
 **The app is muted through a test** (with Audio Recording, and without

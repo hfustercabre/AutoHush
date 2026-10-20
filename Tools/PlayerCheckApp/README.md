@@ -57,9 +57,9 @@ to it and loses its permissions; one signed with a certificate keeps them.
   without all of them it's cancelled before it does anything, and an orange
   warning says which is missing, with Open System Settings (the last
   finished check stays shown). An app that doesn't answer whether it may be
-  controlled (one still starting) is asked again for up to 20 s; if it never
-  answers, the check is cancelled the same way, with no button, as there's
-  no permission to allow. The app is muted all through the check (you don't
+  controlled (it quit meanwhile; macOS itself waits for one still starting)
+  cancels the check the same way, with no button, as there's no permission
+  to allow. The app is muted all through the check (you don't
   hear it; Player Check still hears whether it plays) and heard again at the
   end; a Chromium browser's web app plays through its browser, so the whole
   browser is, its other tabs and web apps too. Then it makes sure the app
